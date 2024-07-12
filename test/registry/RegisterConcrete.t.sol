@@ -189,24 +189,30 @@ contract RegisterConcreteTest is RegistryTestBase {
         */
     }
 
-    function test_registerWithGlobalRegistryAsParent() public
+    function test_register_WithGlobalRegistryAsParent() public
     {
         // register for global registry
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
-            NftIdLib.toNftId(0),
-            registry.GLOBAL_REGISTRY_NFT_ID(),
+            NftIdLib.zero(),
+            globalRegistryNftId,
             INSTANCE(), // or SERVICE
-            false,
+            false, // isInterceptor
             address(uint160(randomNumber(type(uint160).max))),
             registryOwner,
             ""
         );
 
         _startPrank(address(registryServiceMock));
-        _assert_register(
-            info, 
-            true, 
-            abi.encodeWithSelector(IRegistry.ErrorRegistryGlobalRegistryAsParent.selector, info.objectType, info.parentNftId));
+
+        if(block.chainid == 1) {
+            _assert_register(info, false, "");
+        } else {
+            _assert_register(
+                info, 
+                true, 
+                abi.encodeWithSelector(IRegistry.ErrorRegistryGlobalRegistryAsParent.selector, info.objectType, info.parentNftId));
+        }
+
         _stopPrank();
     }
 
@@ -244,8 +250,8 @@ contract RegisterConcreteTest is RegistryTestBase {
             abi.encodeWithSelector(IAccessManaged.AccessManagedUnauthorized.selector, _sender));
 
         // transfer to outsider
-        chainNft.approve(outsider, registryServiceNftId.toInt());
-        chainNft.safeTransferFrom(registryOwner, outsider, registryServiceNftId.toInt(), "");
+        core.chainNft.approve(outsider, registryServiceNftId.toInt());
+        core.chainNft.safeTransferFrom(registryOwner, outsider, registryServiceNftId.toInt(), "");
 
         // registryOwner is not owner anymore, still can not register
         _assert_register(
@@ -267,6 +273,22 @@ contract RegisterConcreteTest is RegistryTestBase {
             true,
             abi.encodeWithSelector(IAccessManaged.AccessManagedUnauthorized.selector, _sender));
         _stopPrank();
+    }
+}
+
+contract RegisterConcreteTestL1 is RegisterConcreteTest
+{
+    function setUp() public virtual override {
+        vm.chainId(1);
+        super.setUp();
+    }
+}
+
+contract RegisterConcreteTestL2 is RegisterConcreteTest
+{
+    function setUp() public virtual override {
+        vm.chainId(_getRandomChainId());
+        super.setUp();
     }
 }
 

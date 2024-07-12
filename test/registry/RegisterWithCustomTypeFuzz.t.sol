@@ -15,8 +15,26 @@ import {RegistryTestBaseWithPreset} from "./RegistryTestBaseWithPreset.sol";
 
 contract RegisterWithCustomTypeFuzzTest is RegistryTestBase 
 {    
-    function testFuzz_registerWithCustomType(address sender, IRegistry.ObjectInfo memory info, bytes32 salt) public
+    // sender - random
+    // nftId - always random
+    // parentNftId - random
+    // objectType - random
+    // isInterceptor - random
+    // salt - always random
+    // initialOwner - random
+    // data - always random
+    function testFuzz_registerWithCustomType_00000000(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data) public
     {
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            nftId,
+            parentNftId,
+            objectType,
+            isInterceptor,
+            address(0),
+            initialOwner,
+            data
+        );
+
         registerWithCustomType_testFunction(sender, info, salt);
     }
 
@@ -26,7 +44,7 @@ contract RegisterWithCustomTypeFuzzTest is RegistryTestBase
     // objectType - random
     // isInterceptor - random
     // salt - always random
-    // initialOwner - set of addresses (actors + registered + initial owners)
+    // initialOwner - from addresses set (actors + registered + initial owners)
     // data - always random
     function testFuzz_registerWithCustomType_00000010(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, bytes32 salt, uint initialOwnerIdx, bytes memory data) public
     {
@@ -274,7 +292,7 @@ contract RegisterWithCustomTypeFuzzTest is RegistryTestBase
         registerWithCustomType_testFunction(sender, info);
     }
 
-    function testFuzz_registerWithCustomType_withZeroObjectAddress(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, address initialOwner, bytes memory data) public
+    function testFuzz_registerWithCustomType_withZeroObjectAddress_0000000(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, address initialOwner, bytes memory data) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -393,9 +411,387 @@ contract RegisterWithCustomTypeFuzzTest is RegistryTestBase
 
         registerWithCustomType_testFunction(sender, info);
     }
+
+    function testFuzz_registerWithCustomType_withValidSender_0000000(NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data) public
+    {
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            nftId,
+            parentNftId,
+            objectType,
+            isInterceptor,
+            address(0),
+            initialOwner,
+            data
+        );
+
+        registerWithCustomType_testFunction(address(registryServiceMock), info, salt);
+    }
+
+    function testFuzz_registerWithCustomType_withValidSender_0000010(NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, bytes32 salt, uint initialOwnerIdx, bytes memory data) public
+    {
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            nftId,
+            parentNftId,
+            objectType,
+            isInterceptor,
+            address(0),
+            _getAddressAtIndex(initialOwnerIdx),
+            data
+        );
+
+        registerWithCustomType_testFunction(address(registryServiceMock), info, salt);
+    }
+
+    function testFuzz_registerWithCustomType_withValidSender_000100(NftId nftId, NftId parentNftId, ObjectType objectType, uint objectAddressIdx, address initialOwner, bytes memory data) public
+    {
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            nftId,
+            parentNftId,
+            objectType,
+            false,
+            _getAddressAtIndex(objectAddressIdx),
+            initialOwner,
+            data
+        );
+
+        registerWithCustomType_testFunction(address(registryServiceMock), info);
+    }
+
+    function testFuzz_registerWithCustomType_withValidSender_000110(NftId nftId, NftId parentNftId, ObjectType objectType, uint objectAddressIdx, uint initialOwnerIdx, bytes memory data) public
+    {
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            nftId,
+            parentNftId,
+            objectType,
+            false,
+            _getAddressAtIndex(objectAddressIdx),
+            _getAddressAtIndex(initialOwnerIdx),
+            data
+        );
+
+        registerWithCustomType_testFunction(address(registryServiceMock), info);
+    }
+
+    function testFuzz_registerWithCustomType_withValidSender_0010000(NftId nftId, NftId parentNftId, uint8 objectTypeIdx, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data) public
+    {
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            nftId,
+            parentNftId,
+            _getObjectTypeAtIndex(objectTypeIdx),
+            isInterceptor,
+            address(0),
+            initialOwner,
+            data
+        );
+
+        registerWithCustomType_testFunction(address(registryServiceMock), info, salt);
+    }
+
+    function testFuzz_registerWithCustomType_withValidSender_0010010(NftId nftId, NftId parentNftId, uint8 objectTypeIdx, bool isInterceptor, bytes32 salt, uint initialOwnerIdx, bytes memory data) public
+    {
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            nftId,
+            parentNftId,
+            _getObjectTypeAtIndex(objectTypeIdx),
+            isInterceptor,
+            address(0),
+            _getAddressAtIndex(initialOwnerIdx),
+            data
+        );
+
+        registerWithCustomType_testFunction(address(registryServiceMock), info, salt);
+    }
+
+    function testFuzz_registerWithCustomType_withValidSender_001100(NftId nftId, NftId parentNftId, uint8 objectTypeIdx, uint objectAddressIdx, address initialOwner, bytes memory data) public
+    {
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            nftId,
+            parentNftId,
+            _getObjectTypeAtIndex(objectTypeIdx),
+            false,
+            _getAddressAtIndex(objectAddressIdx),
+            initialOwner,
+            data
+        );
+
+        registerWithCustomType_testFunction(address(registryServiceMock), info);
+    }
+
+    function testFuzz_registerWithCustomType_withValidSender_001110(NftId nftId, NftId parentNftId, uint8 objectTypeIdx, uint objectAddressIdx, uint initialOwnerIdx, bytes memory data) public
+    {
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            nftId,
+            parentNftId,
+            _getObjectTypeAtIndex(objectTypeIdx),
+            false,
+            _getAddressAtIndex(objectAddressIdx),
+            _getAddressAtIndex(initialOwnerIdx),
+            data
+        );
+
+        registerWithCustomType_testFunction(address(registryServiceMock), info);
+    }
+
+    function testFuzz_registerWithCustomType_withValidSender_0100000(NftId nftId, uint parentNftIdIdx, ObjectType objectType, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data) public
+    {
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            nftId,
+            _getNftIdAtIndex(parentNftIdIdx),
+            objectType,
+            isInterceptor,
+            address(0),
+            initialOwner,
+            data
+        );
+
+        registerWithCustomType_testFunction(address(registryServiceMock), info, salt);
+    }
+
+    function testFuzz_registerWithCustomType_withValidSender_0100010(NftId nftId, uint parentNftIdIdx, ObjectType objectType, bool isInterceptor, bytes32 salt, uint initialOwnerIdx, bytes memory data) public
+    {
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            nftId,
+            _getNftIdAtIndex(parentNftIdIdx),
+            objectType,
+            isInterceptor,
+            address(0),
+            _getAddressAtIndex(initialOwnerIdx),
+            data
+        );
+
+        registerWithCustomType_testFunction(address(registryServiceMock), info, salt);
+    }
+
+    function testFuzz_registerWithCustomType_withValidSender_010100(NftId nftId, uint parentNftIdIdx, ObjectType objectType, uint objectAddressIdx, address initialOwner, bytes memory data) public
+    {
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            nftId,
+            _getNftIdAtIndex(parentNftIdIdx),
+            objectType,
+            false,
+            _getAddressAtIndex(objectAddressIdx),
+            initialOwner,
+            data
+        );
+
+        registerWithCustomType_testFunction(address(registryServiceMock), info);
+    }
+
+    function testFuzz_registerWithCustomType_withValidSender_010110(NftId nftId, uint parentNftIdIdx, ObjectType objectType, uint objectAddressIdx, uint initialOwnerIdx, bytes memory data) public
+    {
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            nftId,
+            _getNftIdAtIndex(parentNftIdIdx),
+            objectType,
+            false,
+            _getAddressAtIndex(objectAddressIdx),
+            _getAddressAtIndex(initialOwnerIdx),
+            data
+        );
+
+        registerWithCustomType_testFunction(address(registryServiceMock), info);
+    }
+
+    function testFuzz_registerWithCustomType_withValidSender_0110000(NftId nftId, uint parentNftIdIdx, uint8 objectTypeIdx, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data) public
+    {
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            nftId,
+            _getNftIdAtIndex(parentNftIdIdx),
+            _getObjectTypeAtIndex(objectTypeIdx),
+            isInterceptor,
+            address(0),
+            initialOwner,
+            data
+        );
+
+        registerWithCustomType_testFunction(address(registryServiceMock), info, salt);
+    }
+
+    function testFuzz_registerWithCustomType_withValidSender_0110010(NftId nftId, uint parentNftIdIdx, uint8 objectTypeIdx, bool isInterceptor, bytes32 salt, uint initialOwnerIdx, bytes memory data) public
+    {
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            nftId,
+            _getNftIdAtIndex(parentNftIdIdx),
+            _getObjectTypeAtIndex(objectTypeIdx),
+            isInterceptor,
+            address(0),
+            _getAddressAtIndex(initialOwnerIdx),
+            data
+        );
+
+        registerWithCustomType_testFunction(address(registryServiceMock), info, salt);
+    }
+
+    function testFuzz_registerWithCustomType_withValidSender_011100(NftId nftId, uint parentNftIdIdx, uint8 objectTypeIdx, uint objectAddressIdx, address initialOwner, bytes memory data) public
+    {
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            nftId,
+            _getNftIdAtIndex(parentNftIdIdx),
+            _getObjectTypeAtIndex(objectTypeIdx),
+            false,
+            _getAddressAtIndex(objectAddressIdx),
+            initialOwner,
+            data
+        );
+
+        registerWithCustomType_testFunction(address(registryServiceMock), info);
+    }
+
+    function testFuzz_registerWithCustomType_withValidSender_011110(NftId nftId, uint parentNftIdIdx, uint8 objectTypeIdx, uint objectAddressIdx, uint initialOwnerIdx, bytes memory data) public
+    {
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            nftId,
+            _getNftIdAtIndex(parentNftIdIdx),
+            _getObjectTypeAtIndex(objectTypeIdx),
+            false,
+            _getAddressAtIndex(objectAddressIdx),
+            _getAddressAtIndex(initialOwnerIdx),
+            data
+        );
+
+        registerWithCustomType_testFunction(address(registryServiceMock), info);
+    }
+
+    function testFuzz_registerWithCustomType_withValidSenderAndZeroObjectAddress_000000(NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, address initialOwner, bytes memory data) public
+    {
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            nftId,
+            parentNftId,
+            objectType,
+            isInterceptor,
+            address(0),
+            initialOwner,
+            data
+        );
+
+        registerWithCustomType_testFunction(address(registryServiceMock), info);
+    }
+
+    function testFuzz_registerWithCustomType_withValidSenderAndZeroObjectAddress_000010(NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, uint initialOwnerIdx, bytes memory data) public
+    {
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            nftId,
+            parentNftId,
+            objectType,
+            isInterceptor,
+            address(0),
+            _getAddressAtIndex(initialOwnerIdx),
+            data
+        );
+
+        registerWithCustomType_testFunction(address(registryServiceMock), info);
+    }
+
+    function testFuzz_registerWithCustomType_withValidSenderAndZeroObjectAddress_001000(NftId nftId, NftId parentNftId, uint8 objectTypeIdx, bool isInterceptor, address initialOwner, bytes memory data) public
+    {
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            nftId,
+            parentNftId,
+            _getObjectTypeAtIndex(objectTypeIdx),
+            isInterceptor,
+            address(0),
+            initialOwner,
+            data
+        );
+
+        registerWithCustomType_testFunction(address(registryServiceMock), info);
+    }
+
+    function testFuzz_registerWithCustomType_withValidSenderAndZeroObjectAddress_001010(NftId nftId, NftId parentNftId, uint8 objectTypeIdx, bool isInterceptor, uint initialOwnerIdx, bytes memory data) public
+    {
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            nftId,
+            parentNftId,
+            _getObjectTypeAtIndex(objectTypeIdx),
+            isInterceptor,
+            address(0),
+            _getAddressAtIndex(initialOwnerIdx),
+            data
+        );
+
+        registerWithCustomType_testFunction(address(registryServiceMock), info);
+    }
+
+    function testFuzz_registerWithCustomType_withValidSenderAndZeroObjectAddress_010000(NftId nftId, uint parentNftIdIdx, ObjectType objectType, bool isInterceptor, address initialOwner, bytes memory data) public
+    {
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            nftId,
+            _getNftIdAtIndex(parentNftIdIdx),
+            objectType,
+            isInterceptor,
+            address(0),
+            initialOwner,
+            data
+        );
+
+        registerWithCustomType_testFunction(address(registryServiceMock), info);
+    }
+
+    function testFuzz_registerWithCustomType_withValidSenderAndZeroObjectAddress_010010(NftId nftId, uint parentNftIdIdx, ObjectType objectType, bool isInterceptor, uint initialOwnerIdx, bytes memory data) public
+    {
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            nftId,
+            _getNftIdAtIndex(parentNftIdIdx),
+            objectType,
+            isInterceptor,
+            address(0),
+            _getAddressAtIndex(initialOwnerIdx),
+            data
+        );
+
+        registerWithCustomType_testFunction(address(registryServiceMock), info);
+    }
+
+    function testFuzz_registerWithCustomType_withValidSenderAndZeroObjectAddress_011000(NftId nftId, uint parentNftIdIdx, uint8 objectTypeIdx, bool isInterceptor, address initialOwner, bytes memory data) public
+    {
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            nftId,
+            _getNftIdAtIndex(parentNftIdIdx),
+            _getObjectTypeAtIndex(objectTypeIdx),
+            isInterceptor,
+            address(0),
+            initialOwner,
+            data
+        );
+
+        registerWithCustomType_testFunction(address(registryServiceMock), info);
+    }
+
+    function testFuzz_registerWithCustomType_withValidSenderAndZeroObjectAddress_011010(NftId nftId, uint parentNftIdIdx, uint8 objectTypeIdx, bool isInterceptor, uint initialOwnerIdx, bytes memory data) public
+    {
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            nftId,
+            _getNftIdAtIndex(parentNftIdIdx),
+            _getObjectTypeAtIndex(objectTypeIdx),
+            isInterceptor,
+            address(0),
+            _getAddressAtIndex(initialOwnerIdx),
+            data
+        );
+
+        registerWithCustomType_testFunction(address(registryServiceMock), info);
+    }
 }
 
-contract RegisterWithPresetFuzzTest is RegistryTestBaseWithPreset, RegisterWithCustomTypeFuzzTest
+contract RegisterWithCustomTypeFuzzTestL1 is RegisterWithCustomTypeFuzzTest
+{
+    function setUp() public virtual override {
+        vm.chainId(1);
+        super.setUp();
+    }
+}
+
+contract RegisterWithCustomTypeFuzzTestL2 is RegisterWithCustomTypeFuzzTest
+{
+    function setUp() public virtual override {
+        vm.chainId(_getRandomChainId());
+        super.setUp();
+    }
+}
+
+
+
+contract RegisterWithCustomTypeWithPresetFuzzTest is RegistryTestBaseWithPreset, RegisterWithCustomTypeFuzzTest
 {
     function setUp() public virtual override(RegistryTestBaseWithPreset, RegistryTestBase)
     {
@@ -430,5 +826,51 @@ contract RegisterWithPresetFuzzTest is RegistryTestBaseWithPreset, RegisterWithC
         );
 
         registerWithCustomType_testFunction(sender, info);
+    }
+
+    function testFuzz_registerWithCustomType_withValidSender_0P1000(NftId nftId, uint parentNftIdIdx, uint8 objectTypeIdx, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data) public
+    {
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            nftId,
+            _nftIdByType[parentNftIdIdx % _nftIdByType.length],
+            _getObjectTypeAtIndex(objectTypeIdx),
+            isInterceptor,
+            address(0),
+            initialOwner,
+            data
+        );
+
+        registerWithCustomType_testFunction(address(registryServiceMock), info, salt);
+    }
+
+    function testFuzz_registerWithCustomType_withValidSenderAndZeroObjectAddress_0P100(NftId nftId, uint parentNftIdIdx, uint8 objectTypeIdx, bool isInterceptor, address initialOwner, bytes memory data) public
+    {
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            nftId,
+            _nftIdByType[parentNftIdIdx % _nftIdByType.length],
+            _getObjectTypeAtIndex(objectTypeIdx),
+            isInterceptor,
+            address(0),
+            initialOwner,
+            data
+        );
+
+        registerWithCustomType_testFunction(address(registryServiceMock), info);
+    }
+}
+
+contract RegisterWithCustomTypeWithPresetFuzzTestL1 is RegisterWithCustomTypeWithPresetFuzzTest
+{
+    function setUp() public virtual override {
+        vm.chainId(1);
+        super.setUp();
+    }
+}
+
+contract RegisterWithCustomTypeWithPresetFuzzTestL2 is RegisterWithCustomTypeWithPresetFuzzTest
+{
+    function setUp() public virtual override {
+        vm.chainId(_getRandomChainId());
+        super.setUp();
     }
 }

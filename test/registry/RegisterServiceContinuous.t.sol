@@ -47,10 +47,12 @@ contract RegisterServiceContinousTests is RegistryTestBase
     // nftId - always random
     // parenNftId - random
     // objectType random
-    // objectAddress - random
-    // isInterseptor - always random
+    // isInterceptor - random
     // initialOwner - random
-    function test_continuous_registerService_00000000() public
+    // version - always random
+    // domain - always random
+    // salt - always random
+    function test_continuous_registerService_withValidSender_00000000() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -61,19 +63,26 @@ contract RegisterServiceContinousTests is RegistryTestBase
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
                     ObjectTypeLib.toObjectType(randomNumber(type(uint8).max)),
                     toBool(randomNumber(1)),
-                    address(0),
+                    address(0), // uses created with salt address
                     address(uint160(randomNumber(type(uint160).max))),
                     ""                  
                 ),
                 VersionLib.toVersionPart(randomNumber(type(uint8).max)),
                 ObjectTypeLib.toObjectType(randomNumber(type(uint8).max)),
-                bytes32(randomNumber(type(uint256).max))
+                bytes32(randomNumber(type(uint256).max)) // salt
             );
         }
     }
 
+    // nftId - always random
+    // parenNftId - random
+    // objectType random
+    // isInterceptor - random
     // initialOwner - from address set
-    function test_continuous_registerService_00001000() public
+    // version - always random
+    // domain - always random
+    // salt - always random
+    function test_continuous_registerService_withValidSender_00001000() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -95,7 +104,7 @@ contract RegisterServiceContinousTests is RegistryTestBase
         }
     }
 
-    function test_continuous_registerService_0001000() public
+    function test_continuous_registerService_withValidSender_0001000() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -116,7 +125,7 @@ contract RegisterServiceContinousTests is RegistryTestBase
         }
     }
 
-    function test_continuous_registerService_0001100() public
+    function test_continuous_registerService_withValidSender_0001100() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -137,7 +146,7 @@ contract RegisterServiceContinousTests is RegistryTestBase
         }
     }
 
-    function test_continuous_registerService_00100000() public
+    function test_continuous_registerService_withValidSender_00100000() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -159,7 +168,7 @@ contract RegisterServiceContinousTests is RegistryTestBase
         }
     }
 
-    function test_continuous_registerService_00101000() public
+    function test_continuous_registerService_withValidSender_00101000() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -181,7 +190,7 @@ contract RegisterServiceContinousTests is RegistryTestBase
         }
     }
 
-    function test_continuous_registerService_0011000() public
+    function test_continuous_registerService_withValidSender_0011000() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -202,7 +211,7 @@ contract RegisterServiceContinousTests is RegistryTestBase
         }
     }
 
-    function test_continuous_registerService_0011100() public
+    function test_continuous_registerService_withValidSender_0011100() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -223,7 +232,7 @@ contract RegisterServiceContinousTests is RegistryTestBase
         }
     }
     
-    function test_continuous_registerService_01000000() public
+    function test_continuous_registerService_withValidSender_01000000() public
     {
         for(uint idx = 0; idx < 100; idx++)
         {
@@ -245,7 +254,7 @@ contract RegisterServiceContinousTests is RegistryTestBase
         }
     }
 
-    function test_continuous_registerService_01001000() public
+    function test_continuous_registerService_withValidSender_01001000() public
     {
         for(uint idx = 0; idx < 100; idx++)
         {
@@ -267,7 +276,7 @@ contract RegisterServiceContinousTests is RegistryTestBase
         }
     }
     
-    function test_continuous_registerService_0101000() public
+    function test_continuous_registerService_withValidSender_0101000() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -288,7 +297,7 @@ contract RegisterServiceContinousTests is RegistryTestBase
         }
     }
 
-    function test_continuous_registerService_0101100() public
+    function test_continuous_registerService_withValidSender_0101100() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -309,7 +318,7 @@ contract RegisterServiceContinousTests is RegistryTestBase
         }
     }
 
-    function test_continuous_registerService_01100000() public
+    function test_continuous_registerService_withValidSender_01100000() public
     {
         for(uint idx = 0; idx < 100; idx++)
         {
@@ -331,7 +340,7 @@ contract RegisterServiceContinousTests is RegistryTestBase
         }
     }
 
-    function test_continuous_registerService_01101000() public
+    function test_continuous_registerService_withValidSender_01101000() public
     {
         for(uint idx = 0; idx < 100; idx++)
         {
@@ -353,7 +362,7 @@ contract RegisterServiceContinousTests is RegistryTestBase
         }
     }
 
-    function test_continuous_registerService_0111000() public
+    function test_continuous_registerService_withValidSender_0111000() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -374,7 +383,7 @@ contract RegisterServiceContinousTests is RegistryTestBase
         }
     }
 
-    function test_continuous_registerService_0111100() public
+    function test_continuous_registerService_withValidSender_0111100() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -385,6 +394,136 @@ contract RegisterServiceContinousTests is RegistryTestBase
                     _getNftIdAtIndex(randomNumber(type(uint256).max)),
                     _getObjectTypeAtIndex(randomNumber(type(uint8).max)),
                     false,
+                    _getAddressAtIndex(randomNumber(type(uint256).max)),
+                    _getAddressAtIndex(randomNumber(type(uint256).max)),
+                    ""                  
+                ),
+                VersionLib.toVersionPart(randomNumber(type(uint8).max)),
+                ObjectTypeLib.toObjectType(randomNumber(type(uint8).max))
+            );
+        }
+    }
+
+    function test_continuous_registerService_withValidSenderAndValidObjectType_0000000() public
+    {
+        for(uint idx = 0; idx < ITTERATIONS; idx++)
+        {
+            test_continuous_registerService(
+                address(registryServiceMock),
+                IRegistry.ObjectInfo(
+                    NftIdLib.toNftId(randomNumber(type(uint96).max)),
+                    NftIdLib.toNftId(randomNumber(type(uint96).max)),
+                    SERVICE(),
+                    toBool(randomNumber(1)),
+                    address(0),
+                    address(uint160(randomNumber(type(uint160).max))),
+                    ""                  
+                ),
+                VersionLib.toVersionPart(randomNumber(type(uint8).max)),
+                ObjectTypeLib.toObjectType(randomNumber(type(uint8).max)),
+                bytes32(randomNumber(type(uint256).max))
+            );
+        }
+    }
+
+    function test_continuous_registerService_withValidSenderAndValidObjectType_0001000() public
+    {
+        for(uint idx = 0; idx < ITTERATIONS; idx++)
+        {
+            test_continuous_registerService(
+                address(registryServiceMock),
+                IRegistry.ObjectInfo(
+                    NftIdLib.toNftId(randomNumber(type(uint96).max)),
+                    NftIdLib.toNftId(randomNumber(type(uint96).max)),
+                    SERVICE(),
+                    toBool(randomNumber(1)),
+                    address(0),
+                    _getAddressAtIndex(randomNumber(type(uint256).max)),
+                    ""                  
+                ),
+                VersionLib.toVersionPart(randomNumber(type(uint8).max)),
+                ObjectTypeLib.toObjectType(randomNumber(type(uint8).max)),
+                bytes32(randomNumber(type(uint256).max))
+            );
+        }
+    }
+
+    function test_continuous_registerService_withValidSenderAndValidObjectType_0001100() public
+    {
+        for(uint idx = 0; idx < ITTERATIONS; idx++)
+        {
+            test_continuous_registerService(
+                address(registryServiceMock),
+                IRegistry.ObjectInfo(
+                    NftIdLib.toNftId(randomNumber(type(uint96).max)),
+                    NftIdLib.toNftId(randomNumber(type(uint96).max)),
+                    SERVICE(),
+                    toBool(randomNumber(1)),
+                    _getAddressAtIndex(randomNumber(type(uint256).max)),
+                    _getAddressAtIndex(randomNumber(type(uint256).max)),
+                    ""                  
+                ),
+                VersionLib.toVersionPart(randomNumber(type(uint8).max)),
+                ObjectTypeLib.toObjectType(randomNumber(type(uint8).max))
+            );
+        }
+    }
+
+    function test_continuous_registerService_withValidSenderAndValidObjectType_0100000() public
+    {
+        for(uint idx = 0; idx < 100; idx++)
+        {
+            test_continuous_registerService(
+                address(registryServiceMock),
+                IRegistry.ObjectInfo(
+                    NftIdLib.toNftId(randomNumber(type(uint96).max)),
+                    _getNftIdAtIndex(randomNumber(type(uint256).max)),
+                    SERVICE(),
+                    toBool(randomNumber(1)),
+                    address(0),
+                    address(uint160(randomNumber(type(uint160).max))),
+                    ""                  
+                ),
+                VersionLib.toVersionPart(randomNumber(type(uint8).max)),
+                ObjectTypeLib.toObjectType(randomNumber(type(uint8).max)),
+                bytes32(randomNumber(type(uint256).max))
+            );
+        }
+    }
+
+    function test_continuous_registerService_withValidSenderAndValidObjectType_0101000() public
+    {
+        for(uint idx = 0; idx < 100; idx++)
+        {
+            test_continuous_registerService(
+                address(registryServiceMock),
+                IRegistry.ObjectInfo(
+                    NftIdLib.toNftId(randomNumber(type(uint96).max)),
+                    _getNftIdAtIndex(randomNumber(type(uint256).max)),
+                    SERVICE(),
+                    toBool(randomNumber(1)),
+                    address(0),
+                    _getAddressAtIndex(randomNumber(type(uint256).max)),
+                    ""                  
+                ),
+                VersionLib.toVersionPart(randomNumber(type(uint8).max)),
+                ObjectTypeLib.toObjectType(randomNumber(type(uint8).max)),
+                bytes32(randomNumber(type(uint256).max))
+            );
+        }
+    }
+
+    function test_continuous_registerService_withValidSenderAndValidObjectType_0101100() public
+    {
+        for(uint idx = 0; idx < 100; idx++)
+        {
+            test_continuous_registerService(
+                address(registryServiceMock),
+                IRegistry.ObjectInfo(
+                    NftIdLib.toNftId(randomNumber(type(uint96).max)),
+                    _getNftIdAtIndex(randomNumber(type(uint256).max)),
+                    SERVICE(),
+                    toBool(randomNumber(1)),
                     _getAddressAtIndex(randomNumber(type(uint256).max)),
                     _getAddressAtIndex(randomNumber(type(uint256).max)),
                     ""                  
@@ -485,6 +624,25 @@ contract RegisterServiceContinousTests is RegistryTestBase
 }
 
 
+contract RegisterServiceContinousTestL1 is RegisterServiceContinousTests
+{
+    function setUp() public virtual override {
+        vm.chainId(1);
+        super.setUp();
+    }
+}
+
+contract RegisterServiceContinousTestL2 is RegisterServiceContinousTests
+{
+    function setUp() public virtual override {
+        vm.chainId(_getRandomChainId());
+        super.setUp();
+    }
+}
+
+
+
+
 contract RegisterServiceWithPresetContinuousTests is RegistryTestBaseWithPreset, RegisterServiceContinousTests
 {
     function setUp() public virtual override(RegistryTestBaseWithPreset, RegistryTestBase)
@@ -492,11 +650,10 @@ contract RegisterServiceWithPresetContinuousTests is RegistryTestBaseWithPreset,
         RegistryTestBaseWithPreset.setUp();
     }
     // registerService accepts only one object - parent combinations
-    function test_continuous_registerService_0P100000() public
+    function test_continuous_registerService_withValidSender_0P100000() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
-
             test_continuous_registerService(
                 address(registryServiceMock),
                 IRegistry.ObjectInfo(
@@ -515,11 +672,10 @@ contract RegisterServiceWithPresetContinuousTests is RegistryTestBaseWithPreset,
         }
     }
 
-    function test_continuous_registerService_0P11100() public
+    function test_continuous_registerService_withValidSender_0P11100() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
-
             test_continuous_registerService(
                 address(registryServiceMock),
                 IRegistry.ObjectInfo(
@@ -535,5 +691,21 @@ contract RegisterServiceWithPresetContinuousTests is RegistryTestBaseWithPreset,
                 ObjectTypeLib.toObjectType(randomNumber(type(uint8).max))
             );
         }
+    }
+}
+
+contract RegisterServiceWithPresetContinousTestL1 is RegisterServiceWithPresetContinuousTests
+{
+    function setUp() public virtual override {
+        vm.chainId(1);
+        super.setUp();
+    }
+}
+
+contract RegisterServiceWithPresetContinousTestL2 is RegisterServiceWithPresetContinuousTests
+{
+    function setUp() public virtual override {
+        vm.chainId(_getRandomChainId());
+        super.setUp();
     }
 }

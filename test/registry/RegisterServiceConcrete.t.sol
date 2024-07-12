@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 import {VersionLib, VersionPart, VersionPartLib} from "../../contracts/type/Version.sol";
-import {NftIdLib} from "../../contracts/type/NftId.sol";
+import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {ObjectType, ObjectTypeLib, SERVICE} from "../../contracts/type/ObjectType.sol";
 
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
@@ -126,7 +126,7 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
         // args=[0x0000000000000000000000000000000000001262, 11159 [1.115e4], 2099035519 [2.099e9], 148, true, 0x000000000000000000000000000000007e273289, 804448731 [8.044e8], 0x00000000000000000000000000000000000000000000000000000000000026a3, 115, 250]] 
         // testFuzz_registerService_0011001(address,uint96,uint256,uint8,bool,address,uint256,bytes,uint8,uint8) (runs: 2, μ: 73578, ~: 73578)
 
-        _startPrank(address(releaseRegistry));
+        _startPrank(address(core.releaseRegistry));
 
         _assert_registerService_withChecks(IRegistry.ObjectInfo(
             NftIdLib.toNftId(11159),
@@ -187,21 +187,22 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
         registerService_testFunction(sender, info, version, domain);
     }
 
-    function test_registerServiceWithDuplicateVersionAndDomain_specificCase() public
+    function test_registerService_withDuplicateVersionAndDomain_specificCase() public
     {
         // args=[ObjectInfo({ nftId: 58320260334610590964687536414 [5.832e28], parentNftId: 23060 [2.306e4], objectType: 7, isInterceptor: false, objectAddress: 0x35EEEF71D74d608fe53AB0d76CF84F261a2B81E5, initialOwner: 0x000000000000000000000000000000001641c88f, data: 0x0000000000000000000000000000000000000000000000000000000000000f7b }), ObjectInfo({ nftId: 129, parentNftId: 1148, objectType: 181, isInterceptor: true, objectAddress: 0x0000000000000000000000000000000000001C12, initialOwner: 0x00000000000000000000000000000000000017c5, data: 0x000000000000000000000000000000000000000000000000000000002255341b }), 224, 27]] 
         // testFuzz_registerService_withDuplicateVersionAndDomain((uint96,uint96,uint8,bool,address,address,bytes),(uint96,uint96,uint8,bool,address,address,bytes),uint8,uint8)
 
-        require(!EnumerableSet.contains(_registeredAddresses, 0x35EEEF71D74d608fe53AB0d76CF84F261a2B81E5), "Test error: address already registered #1");
-        // !!! TODO this address is registered but not part of _registeredAddresses set
-        require(!registry.isRegistered(0x35EEEF71D74d608fe53AB0d76CF84F261a2B81E5), "Test error: address already registered #2");
+
+        // TODO use this parameters
+        // args=[17933918450742370540801522842 [1.793e28], 0x8e66961A6eFe5853ef595cC12A1f3e1b1d961EfE, 0x0000000000000000000000000000000000000000000000000000000000002c4a, 14677 [1.467e4], 0x000000000000000000000000000000000000160f, 0x0000000000000000000000000000000000000000000000000000000000003fee, 70, 250]] 
+
 
         IRegistry.ObjectInfo memory info_1 = IRegistry.ObjectInfo(
             NftIdLib.toNftId(58320260334610590964687536414),
             NftIdLib.toNftId(23060),
             ObjectTypeLib.toObjectType(7),
             false,
-            address(0x35EEEF71D74d608fe53AB0d76CF84F261a2B81E5),
+            address(0x35eeeF71d74d608fE53Ab0d76cf84F261a2b81E6),
             address(0x000000000000000000000000000000001641c88f),
             "0x0000000000000000000000000000000000000000000000000000000000000f7b"
         );
@@ -229,7 +230,7 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
         info_2.isInterceptor = false;
 
 
-        _startPrank(address(releaseRegistry));
+        _startPrank(address(core.releaseRegistry));
 
         _assert_registerService(info_1, version, domain, false, "");
 
@@ -247,6 +248,55 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
 
         _stopPrank();
 
+    }
+
+    function test_registerService_withRegisteredChainRegistryAddress() public
+    {
+        uint64 chainId = _getNotRegisteredRandomChainId();
+        address chainRegistryAddress = _getRandomNotRegisteredAddress();
+        NftId chainRegistryNftId = NftIdLib.toNftId(core.chainNft.calculateTokenId(core.registry.REGISTRY_TOKEN_SEQUENCE_ID(), chainId));
+
+        // register chain registry
+        _startPrank(gifAdmin);
+
+        _assert_registerRegistry(
+            chainRegistryNftId,
+            chainId,
+            chainRegistryAddress,
+            false,
+            ""
+        );
+
+        _stopPrank();
+
+        // register service
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            NftIdLib.toNftId(randomNumber(type(uint96).max)),
+            registryNftId,
+            SERVICE(),
+            false, // isInterceptor
+            chainRegistryAddress,
+            _getRandomNotRegisteredAddress(),
+            "0xd65a6b878facf5db1fb422199394c9190a24f63bcf984404134eb0867bed5c4b0a1675ba2da124de18a0897e460b5c22b635957e19b24af75a006242e9aeff5144f9cc9ec2f04a17278dafa058"
+        );
+
+        VersionPart version = VersionLib.toVersionPart(13);
+        ObjectType domain = ObjectTypeLib.toObjectType(8);
+
+        _startPrank(address(core.releaseRegistry));
+
+        _assert_registerService(
+            info, 
+            version, 
+            domain,
+            true,
+            abi.encodeWithSelector(
+                IRegistry.ErrorRegistryContractAlreadyRegistered.selector,
+                chainRegistryAddress
+            )
+        );
+
+        _stopPrank();
     }
 
     // TODO move to release manager tests
@@ -278,10 +328,31 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
         _stopPrank();
     }*/
 }
-
-
-contract RegisterServiceWithPresetConcreteTest is RegistryTestBaseWithPreset
+contract RegisterServiceConcreteTestL1 is RegisterServiceConcreteTest
 {
+    function setUp() public virtual override {
+        vm.chainId(1);
+        super.setUp();
+    }
+}
+
+contract RegisterServiceConcreteTestL2 is RegisterServiceConcreteTest
+{
+    function setUp() public virtual override {
+        vm.chainId(_getRandomChainId());
+        super.setUp();
+    }
+}
+
+
+
+
+contract RegisterServiceWithPresetConcreteTest is RegistryTestBaseWithPreset, RegisterServiceConcreteTest
+{
+    function setUp() public virtual override(RegistryTestBaseWithPreset, RegistryTestBase)
+    {
+        RegistryTestBaseWithPreset.setUp();
+    }
 
     function test_registerService_specificCases_9() public
     {
@@ -305,4 +376,21 @@ contract RegisterServiceWithPresetConcreteTest is RegistryTestBaseWithPreset
         registerService_testFunction(sender, info, version, domain);
     }
 
+}
+
+
+contract RegisterServiceWithPresetConcreteTestL1 is RegisterServiceWithPresetConcreteTest
+{
+    function setUp() public virtual override {
+        vm.chainId(1);
+        super.setUp();
+    }
+}
+
+contract RegisterServiceWithPresetConcreteTestL2 is RegisterServiceWithPresetConcreteTest
+{
+    function setUp() public virtual override {
+        vm.chainId(_getRandomChainId());
+        super.setUp();
+    }
 }

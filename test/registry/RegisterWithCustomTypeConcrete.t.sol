@@ -28,6 +28,22 @@ contract RegisterWithCustomTypeConcreteTest is RegistryTestBase {
 
 }
 
+contract RegisterWithCustomTypeConcreteTestL1 is RegisterWithCustomTypeConcreteTest
+{
+    function setUp() public virtual override {
+        vm.chainId(1);
+        super.setUp();
+    }
+}
+
+contract RegisterWithCustomTypeConcreteTestL2 is RegisterWithCustomTypeConcreteTest
+{
+    function setUp() public virtual override {
+        vm.chainId(_getRandomChainId());
+        super.setUp();
+    }
+}
+
 
 contract RegisterWithCustomTypeWithPresetConcreteTest is RegistryTestBaseWithPreset
 {
@@ -56,3 +72,18 @@ contract RegisterWithCustomTypeWithPresetConcreteTest is RegistryTestBaseWithPre
 
 }
 
+contract RegisterWithCustomTypeWithPresetConcreteTestL1 is RegisterWithCustomTypeWithPresetConcreteTest
+{
+    function setUp() public virtual override {
+        vm.chainId(1);
+        super.setUp();
+    }
+}
+
+contract RegisterWithCustomTypeWithPresetConcreteTestL2 is RegisterWithCustomTypeWithPresetConcreteTest
+{
+    function setUp() public virtual override {
+        vm.chainId(_getRandomChainId());
+        super.setUp();
+    }
+}
