@@ -29,7 +29,7 @@ To link all chains together a global registry is deployed on mainnet.
 This global registry then holds the links to all chain specific registries as shown in the diagram below.
 
 
-image::../assets/images/multi-chain-setup.png[Multi-chain setup]
+image::multi-chain-setup.png[Multi-chain setup]
 
 === Global Registry
 
