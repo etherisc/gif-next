@@ -836,7 +836,10 @@ contract TestProduct is GifTest {
 
         // solhint-disable-next-line 
         console.log("before collateralization of", policyNftId.toInt());
-        product.collateralize(policyNftId, true, TimestampLib.blockTimestamp()); 
+        product.collateralize(
+            policyNftId, 
+            true, 
+            TimestampLib.blockTimestamp()); 
 
         assertTrue(instanceReader.getPolicyState(policyNftId) == COLLATERALIZED(), "policy state not COLLATERALIZED");
 
@@ -1152,7 +1155,7 @@ contract TestProduct is GifTest {
         
         // THEN - expect revert
         vm.expectRevert(abi.encodeWithSelector(
-            IPolicyService.ErrorIPolicyServicePolicyNotActive.selector, 
+            IPolicyService.ErrorPolicyServicePolicyNotActive.selector, 
             policyNftId,
             DECLINED()));
 
@@ -1212,7 +1215,7 @@ contract TestProduct is GifTest {
         
         // THEN - expect revert
         vm.expectRevert(abi.encodeWithSelector(
-            IPolicyService.ErrorIPolicyServicePolicyExpirationTooLate.selector, 
+            IPolicyService.ErrorPolicyServicePolicyExpirationTooLate.selector, 
             policyNftId,
             expireAtTs,
             expireAtTs));
@@ -1225,7 +1228,7 @@ contract TestProduct is GifTest {
         Timestamp expireAtTs2 = TimestampLib.toTimestamp(expireAt);
 
         vm.expectRevert(abi.encodeWithSelector(
-            IPolicyService.ErrorIPolicyServicePolicyExpirationTooLate.selector, 
+            IPolicyService.ErrorPolicyServicePolicyExpirationTooLate.selector, 
             policyNftId,
             expireAtTs,
             expireAtTs2));
@@ -1288,7 +1291,7 @@ contract TestProduct is GifTest {
         
         // THEN - expect revert
         vm.expectRevert(abi.encodeWithSelector(
-            IPolicyService.ErrorIPolicyServicePolicyExpirationTooEarly.selector, 
+            IPolicyService.ErrorPolicyServicePolicyExpirationTooEarly.selector, 
             policyNftId,
             vm.getBlockTimestamp(),
             expireAtTs));

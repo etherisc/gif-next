@@ -27,16 +27,16 @@ interface IPolicyService is IService {
     error ErrorPolicyServiceBalanceInsufficient(address policyOwner, uint256 premiumAmount, uint256 balance);
     error ErrorPolicyServiceAllowanceInsufficient(address policyOwner, address tokenHandler, uint256 premiumAmount, uint256 allowance);
 
-    error ErrorIPolicyServiceInsufficientAllowance(address customer, address tokenHandlerAddress, uint256 amount);
+    error ErrorPolicyServiceInsufficientAllowance(address customer, address tokenHandlerAddress, uint256 amount);
     error ErrorPolicyServicePremiumAlreadyPaid(NftId policyNftId, Amount premiumPaidAmount);
-    error ErrorIPolicyServicePolicyNotActivated(NftId policyNftId);
-    error ErrorIPolicyServicePolicyAlreadyClosed(NftId policyNftId);
-    error ErrorIPolicyServicePolicyNotActive(NftId policyNftId, StateId state);
+    error ErrorPolicyServicePolicyNotActivated(NftId policyNftId);
+    error ErrorPolicyServicePolicyAlreadyClosed(NftId policyNftId);
+    error ErrorPolicyServicePolicyNotActive(NftId policyNftId, StateId state);
     error ErrorPolicyServicePremiumNotFullyPaid(NftId policyNftId, Amount premiumAmount, Amount premiumPaidAmount);
-    error ErrorIPolicyServiceOpenClaims(NftId policyNftId, uint16 openClaimsCount);
-    error ErrorIPolicyServicePolicyHasNotExpired(NftId policyNftId, Timestamp expiredAt);
-    error ErrorIPolicyServicePolicyExpirationTooLate(NftId policyNftId, Timestamp upperLimit, Timestamp expiredAt);
-    error ErrorIPolicyServicePolicyExpirationTooEarly(NftId policyNftId, Timestamp lowerLimit, Timestamp expiredAt);
+    error ErrorPolicyServiceOpenClaims(NftId policyNftId, uint16 openClaimsCount);
+    error ErrorPolicyServicePolicyHasNotExpired(NftId policyNftId, Timestamp expiredAt);
+    error ErrorPolicyServicePolicyExpirationTooLate(NftId policyNftId, Timestamp upperLimit, Timestamp expiredAt);
+    error ErrorPolicyServicePolicyExpirationTooEarly(NftId policyNftId, Timestamp lowerLimit, Timestamp expiredAt);
 
     error ErrorPolicyServicePremiumMismatch(NftId policyNftId, Amount expectedPremiumAmount, Amount recalculatedPremiumAmount);
     error ErrorPolicyServiceTransferredPremiumMismatch(NftId policyNftId, Amount expectedPremiumAmount, Amount transferredPremiumAmount);
