@@ -58,7 +58,7 @@ contract ClaimService is
     )
         internal
         virtual override
-        initializer()
+        onlyInitializing()
     {
         (
             address registryAddress,, 

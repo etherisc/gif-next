@@ -52,8 +52,8 @@ contract BundleService is
         bytes memory data
     )
         internal
-        initializer
         virtual override
+        onlyInitializing()
     {
         address registryAddress;
         address initialOwner;

@@ -35,8 +35,8 @@ contract ContractV01 is Versionable {
 
     function _initialize(address owner, bytes memory data)
         internal
-        onlyInitializing
         virtual override
+        onlyInitializing()
     {}
 
     function _getStorage() private pure returns (StorageV1 storage $) {

@@ -62,8 +62,8 @@ contract PoolService is
         bytes memory data
     )
         internal
-        initializer
         virtual override
+        onlyInitializing()
     {
         (
             address registryAddress,, 

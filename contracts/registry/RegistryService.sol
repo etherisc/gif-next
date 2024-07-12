@@ -39,14 +39,13 @@ contract RegistryService is
 
     // from Versionable
 
-    /// @dev top level initializer
     function _initialize(
         address owner, 
         bytes memory data
     )
         internal
         virtual override
-        initializer()
+        onlyInitializing()
     {
         (
             address registryAddress,

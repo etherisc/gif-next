@@ -327,7 +327,7 @@ contract StakingService is
     )
         internal
         virtual override
-        initializer()
+        onlyInitializing()
     {
         (
             address authority,

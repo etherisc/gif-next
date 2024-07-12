@@ -42,7 +42,7 @@ contract PricingService is
     )
         internal
         virtual override
-        initializer()
+        onlyInitializing()
     {
         (
             address registryAddress,, 

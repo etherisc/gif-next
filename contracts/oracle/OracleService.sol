@@ -27,8 +27,8 @@ contract OracleService is
         bytes memory data
     )
         internal
-        initializer
         virtual override
+        onlyInitializing()
     {
         address initialOwner;
         address registryAddress;

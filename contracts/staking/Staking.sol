@@ -463,7 +463,7 @@ contract Staking is
     )
         internal
         virtual override
-        initializer
+        onlyInitializing()
     {
         (
             address registryAddress,

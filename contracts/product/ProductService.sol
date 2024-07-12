@@ -56,8 +56,8 @@ contract ProductService is
         bytes memory data
     )
         internal
-        initializer
         virtual override
+        onlyInitializing()
     {
         (
             address registryAddress,, 

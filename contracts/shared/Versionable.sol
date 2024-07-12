@@ -41,8 +41,8 @@ abstract contract Versionable is
     // each implementation MUST call intializers of all base contracts...
     function _initialize(address owner, bytes memory data) 
         internal
-        onlyInitializing
-        virtual 
+        virtual
+        onlyInitializing()
     {
         revert();
     }

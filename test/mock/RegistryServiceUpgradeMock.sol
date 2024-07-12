@@ -12,14 +12,14 @@ contract RegistryServiceUpgradeMock is RegistryService {
 
     function _initialize(address owner, bytes memory data)
         internal
-        onlyInitializing
         virtual override
+        onlyInitializing()
     { }
 
     function _upgrade(bytes memory data)
         internal
-        onlyInitializing
         virtual override
+        onlyInitializing()
     { }
 
     function getVersion()

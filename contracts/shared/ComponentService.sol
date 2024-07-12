@@ -49,7 +49,7 @@ contract ComponentService is
     )
         internal
         virtual override
-        initializer()
+        onlyInitializing()
     {
         // TODO check this, might no longer be the way, refactor if necessary
         address registryAddress;

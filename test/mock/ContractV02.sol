@@ -29,8 +29,8 @@ contract ContractV02 is ContractV01 {
 
     function _initialize(address owner, bytes memory data)
         internal
-        onlyInitializing
         virtual override
+        onlyInitializing()
     {
         // copy paste V1
         // add changes 
@@ -38,8 +38,8 @@ contract ContractV02 is ContractV01 {
 
     function _upgrade(bytes memory data)
         internal
-        onlyInitializing
         virtual override
+        onlyInitializing()
     {
         // add changes
     }

@@ -391,15 +391,14 @@ contract InstanceService is
             // instanceAdmin.setTargetFunctionRoleByService(targetName, selectors[roleIdx], roles[roleIdx]);
         }
     }
-    
-    /// @dev top level initializer
+
     function _initialize(
         address owner, 
         bytes memory data
     )
         internal
-        initializer
         virtual override
+        onlyInitializing()
     {
         (
             address registryAddress,, 

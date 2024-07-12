@@ -40,15 +40,15 @@ contract RegistryServiceMock is Service {
 
     function _initialize(address owner, bytes memory data)
         internal
-        onlyInitializing
         virtual override
+        onlyInitializing()
     // solhint-disable-next-line no-empty-blocks
     {}
 
     function _upgrade(bytes memory data)
         internal
-        onlyInitializing
         virtual override
+        onlyInitializing()
     // solhint-disable-next-line no-empty-blocks
     {}
 
