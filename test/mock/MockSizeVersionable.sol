@@ -6,6 +6,6 @@ import {Version, VersionLib} from "../../contracts/type/Version.sol";
 
 contract MockSizeVersionable is Versionable {
     function getVersion() public pure virtual override returns(Version) {
-        return VersionLib.zeroVersion();
+        return VersionLib.zero();
     }
 }

@@ -17,6 +17,7 @@ contract RegistryTestBaseWithPreset is RegistryTestBase
 {
     NftId[] _nftIdByType; // keeps 1 nftId of each type
 
+    NftId chainRegistryNftId; // used on mainnet only
     NftId instanceNftId;
     NftId productNftId;
     NftId distributionNftId;
@@ -32,16 +33,26 @@ contract RegistryTestBaseWithPreset is RegistryTestBase
     function setUp() public virtual override
     {
         super.setUp();
-
+        // TODO _nftIdByType is actually == _nftIds?
         _nftIdByType.push(protocolNftId);
         _nftIdByType.push(globalRegistryNftId);
-        _nftIdByType.push(registryNftId); // have same type as globalRegistryNftId 
+        _nftIdByType.push(registryNftId); // same as globalRegistryNftId on mainnet 
         _nftIdByType.push(stakingNftId);
         _nftIdByType.push(registryServiceNftId);
 
         _startPrank(address(registryServiceMock));
 
         _register_all_types();
+
+        _stopPrank();
+
+        _startPrank(gifAdmin);
+        
+        // when not on mainnet there are only 2 registry objects, both created at deployment time
+        // when on mainnet there is only 1 registry object created at deployment, but arbitrary number can be created after...
+        if(block.chainid == 1) {
+            _registerChainRegistry();
+        }
 
         _stopPrank();
     }
@@ -72,6 +83,27 @@ contract RegistryTestBaseWithPreset is RegistryTestBase
         return _assert_register(info, false, "");
     }
 
+    function _registerChainRegistry() internal returns (NftId)
+    {
+        uint64 chainId;
+        
+        do{
+            chainId = uint64(randomNumber(type(uint64).max));
+        } while(chainId == 0 || chainId == 1);
+        
+        NftId nftId = NftIdLib.toNftId(
+            core.chainNft.calculateTokenId(core.registry.REGISTRY_TOKEN_SEQUENCE_ID(), chainId)
+        );
+
+        _assert_registerRegistry(
+            nftId,
+            chainId,
+            address(uint160(randomNumber(11, type(uint160).max))), 
+            false, "");
+
+        return nftId;
+    }
+
     // TODO register service AND registry (if mainnet)
     function _register_all_types() internal
     {
@@ -93,8 +125,6 @@ contract RegistryTestBaseWithPreset is RegistryTestBase
 
         instanceNftId = _registerContractType(INSTANCE(), registryNftId);
         _nftIdByType.push(instanceNftId);
-
-
 
         productNftId = _registerContractType(PRODUCT(), instanceNftId);
         _nftIdByType.push(productNftId);
@@ -123,4 +153,15 @@ contract RegistryTestBaseWithPreset is RegistryTestBase
         stakeForInstanceNftId = _registerObjectType(STAKE(), instanceNftId);
         _nftIdByType.push(stakeForInstanceNftId);
     }
+/*
+    function prepapreTestForChainId(uint64 chainId) internal virtual override returns (RegistryTestBase test) {
+        vm.assume(chainId > 0);
+
+        // forge: chain ID must be less than 2^64 - 1
+        vm.chainId(chainId);
+
+        test = new RegistryTestBaseWithPreset();
+        test.setUp();
+    }
+*/
 }

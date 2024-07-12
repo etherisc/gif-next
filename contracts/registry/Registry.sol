@@ -136,7 +136,7 @@ contract Registry is
         _stakingNftId = _registerStaking();
     }
 
-    // TODO why nftId is given as arg?
+    // TODO check chainId for 0?
     /// @inheritdoc IRegistry
     function registerRegistry(
         NftId nftId,
@@ -152,12 +152,12 @@ contract Registry is
         }
 
         // check registry is not already registered
-        // TODO chainNft handles this check during mint, same nftId can not be minted twice
         if (isRegistered(nftId)) {
             revert ErrorRegistryAlreadyRegistered(nftId);
         }
 
         // check nft id matches with expected registry nft id for specified chain
+        // TODO just calculate nftId from chainId, do not use nftId as arg?
         uint256 expectedRegistryId = CHAIN_NFT.calculateTokenId(REGISTRY_TOKEN_SEQUENCE_ID, chainId);
         if (nftId != NftIdLib.toNftId(expectedRegistryId)) {
             revert ErrorRegistryNftIdInvalid(nftId, chainId);
@@ -173,7 +173,7 @@ contract Registry is
             chainId,
             ObjectInfo({
                 nftId: nftId,
-                parentNftId: REGISTRY_NFT_ID, // TODO better to use GLOBAL_REGISTRY_NFT_ID?
+                parentNftId: REGISTRY_NFT_ID,
                 objectType: REGISTRY(),
                 isInterceptor: false,
                 objectAddress: registryAddress,
@@ -181,12 +181,13 @@ contract Registry is
                 data: ""  
             }),
             false); // don't update address lookup for registries on different chains
-            // TODO means 1) non of getters "by address" will work for chain registries; 2) chain regerstries can have same address
+            // TODO means 1) non of getters "by address" will work for chain registry (when registered after deployment); 2) chain registries can have same address
+            // 3) other contracts can have same address as chain registries registered after deployment (eg. service and chain registries have same address) 
 
         emit LogChainRegistryRegistration(nftId, chainId, registryAddress);
     }
 
-
+    // TODO !!! registration succedes if service have address of previouslly registered with registerRegistry() chain registry (no update )
     /// @inheritdoc IRegistry
     function registerService(
         ObjectInfo memory info, 
@@ -203,6 +204,8 @@ contract Registry is
             revert ErrorRegistryServiceAddressZero();
         }
 
+        // TODO if(version.toInt() < getInitialVersion().toInt()) {
+        // TODO check with ReleaseRegistry: version == version undergoing deployment ?
         // check version is defined
         if(version.eqz()) {
             revert ErrorRegistryServiceVersionZero();
@@ -314,7 +317,7 @@ contract Registry is
         return _chainId[idx];
     }
 
-    function getRegistryNftid(uint256 chainId) public view returns (NftId nftId) {
+    function getRegistryNftId(uint256 chainId) public view returns (NftId nftId) {
         return _registryNftIdByChainId[chainId];
     }
 
@@ -329,7 +332,7 @@ contract Registry is
     function getProtocolNftId() external view returns (NftId nftId) {
         return PROTOCOL_NFT_ID;
     }
-
+    // TODO for chain registry _nftIdByAddress[] is 0 -> will return 0 if no other non REGISTRY object where registered with the same address
     function getNftId(address object) external view returns (NftId id) {
         return _nftIdByAddress[object];
     }
@@ -337,7 +340,7 @@ contract Registry is
     function ownerOf(NftId nftId) public view returns (address) {
         return CHAIN_NFT.ownerOf(nftId.toInt());
     }
-
+    // TODO for chain registry _nftIdByAddress[] is 0 -> will always revert
     function ownerOf(address contractAddress) public view returns (address) {
         return CHAIN_NFT.ownerOf(_nftIdByAddress[contractAddress].toInt());
     }
@@ -345,7 +348,7 @@ contract Registry is
     function getObjectInfo(NftId nftId) external view returns (ObjectInfo memory) {
         return _info[nftId];
     }
-
+    // TODO for chain registry _nftIdByAddress[] is 0 -> will always return 0
     function getObjectInfo(address object) external view returns (ObjectInfo memory) {
         return _info[_nftIdByAddress[object]];
     }
@@ -353,11 +356,11 @@ contract Registry is
     function isRegistered(NftId nftId) public view returns (bool) {
         return _info[nftId].objectType.gtz();
     }
-
+    // TODO for chain registry _nftIdByAddress[] is 0 -> will always return false
     function isRegistered(address object) external view returns (bool) {
         return _nftIdByAddress[object].gtz();
     }
-
+    // TODO in order to get version and domain of the address have to call address directlly -> potentially it can gave invalid values or non constant values?
     function isRegisteredService(address object) external view returns (bool) {
         return _info[_nftIdByAddress[object]].objectType == SERVICE();
     }
@@ -430,7 +433,7 @@ contract Registry is
         ObjectType objectType = info.objectType; // do not care here, never PROTOCOL(), REGISTRY()
         bool isInterceptor = info.isInterceptor;
         address objectAddress = info.objectAddress; // do not care here, can be 0
-        address owner = info.initialOwner; // do not care here, can be 0
+        address owner = info.initialOwner; // do not care here, can be 0, can be equal info.objectAddress
 
         NftId parentNftId = info.parentNftId; // do not care here, can not be 0
         ObjectInfo memory parentInfo = _info[parentNftId];
@@ -540,6 +543,7 @@ contract Registry is
     }
 
     /// @dev register this registry
+    // !!! TODO global registry and registry can not have same address here...
     function _registerRegistry() 
         internal 
         virtual
@@ -557,7 +561,7 @@ contract Registry is
                 parentNftId: PROTOCOL_NFT_ID,
                 objectType: REGISTRY(),
                 isInterceptor: false,
-                objectAddress: GLOBAL_REGISTRY_ADDRESS,
+                objectAddress: GLOBAL_REGISTRY_ADDRESS, // if not mainnet -> GLOBAL_REGISTRY_ADDRESS have to != address(this)
                 initialOwner: NFT_LOCK_ADDRESS,
                 data: ""}),
             true);
@@ -577,7 +581,7 @@ contract Registry is
                     parentNftId: GLOBAL_REGISTRY_NFT_ID,
                     objectType: REGISTRY(),
                     isInterceptor: false,
-                    objectAddress: address(this), 
+                    objectAddress: address(this), // if not mainnet -> GLOBAL_REGISTRY_ADDRESS have to != address(this) -> no address lookup update for this registry?
                     initialOwner: NFT_LOCK_ADDRESS,
                     data: ""}),
                 true);

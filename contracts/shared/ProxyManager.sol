@@ -176,7 +176,7 @@ contract ProxyManager is
     )
         private
     {
-        if(newVersion == VersionLib.zeroVersion()) {
+        if(newVersion == VersionLib.zero()) {
             revert ErrorProxyManagerZeroVersion();
         }
 

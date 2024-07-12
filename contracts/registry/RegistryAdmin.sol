@@ -265,7 +265,7 @@ contract RegistryAdmin is
         FunctionInfo[] memory functions;
         functions = new FunctionInfo[](1);
         functions[0] = toFunction(IRegistry.registerRegistry.selector, "registerRegistry");
-        _authorizeTargetFunctions(_releaseRegistry, GIF_ADMIN_ROLE(), functions);
+        _authorizeTargetFunctions(_registry, GIF_ADMIN_ROLE(), functions);
 
         // for ReleaseRegistry
         functions = new FunctionInfo[](4);

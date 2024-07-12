@@ -20,6 +20,10 @@ library VersionPartLib {
     function eqz(VersionPart a) external pure returns(bool) { return VersionPart.unwrap(a) == 0; }
     function toInt(VersionPart a) external pure returns(uint256) { return VersionPart.unwrap(a); }
     function toVersionPart(uint256 a) external pure returns(VersionPart) { return VersionPart.wrap(uint8(a)); }
+
+    function zero() external pure returns(VersionPart) {
+        return VersionPart.wrap(0);
+    }
 }
 
 type Version is uint24; // contains major,minor,patch version parts
@@ -103,8 +107,7 @@ library VersionLib {
         return Version.wrap(uint24(versionNumber));
     }
 
-    // TODO rename to zero()
-    function zeroVersion() external pure returns(Version) {
+    function zero() external pure returns(Version) {
         return Version.wrap(0);
     }
 }

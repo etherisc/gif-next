@@ -55,7 +55,7 @@ interface IRegistry is IERC165 {
         address initialOwner;
         bytes data;
     }
-
+    // TODO consider adding serviceAuth and release state
     struct ReleaseInfo {
         VersionPart version;
         bytes32 salt;
@@ -103,13 +103,14 @@ interface IRegistry is IERC165 {
     function getReleaseInfo(VersionPart version) external view returns (ReleaseInfo memory);
 
     /// @dev Returns the number of supported chains.
+    // TODO consider adding such functon for services -> services(), getService(uint256 idx)
     function chainIds() external view returns (uint256);
 
     /// @dev Returns the chain id at the specified index.
     function getChainId(uint256 idx) external view returns (uint256);
 
     /// @dev Returns the NFT ID of the registry for the specified chain.
-    function getRegistryNftid(uint256 chainId) external returns (NftId nftId); 
+    function getRegistryNftId(uint256 chainId) external returns (NftId nftId); 
 
     function getObjectCount() external view returns (uint256);
 
