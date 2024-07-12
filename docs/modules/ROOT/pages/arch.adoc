@@ -1,6 +1,5 @@
 = Architecture
-
-NOTE: This document is under construction
+:toc:
 
 == Introduction
 
@@ -105,45 +104,338 @@ Currently, products, distributions, oracles, and pools as supported by GIF as co
 Services are used to implement the generic insurance business logic of the GIF.
 Components, instances, the registry and the staking module may only interact with each other through these generic service contracts.
 
-A set of consistent service contracts define the functionality of a GIF release.
-Even though the service contracts are upgradeable, only non breaking changes are ever allowed inside a specific major release.
-For simplicity the above diagram only shows the setup for a single major release.
-
 == Modules and Services
 
 === Overview
 
 === Modules
 
-Modules are defined as a set of contracts that serve a specific purpose.
-Each contract in a module has its clear role and responsibility and interacts with other contracts in the module to fulfill its purpose.
-Contracts in the same module may directly interact with each other without the need to go over a service contract.
+Modules are defined as a set of one or more contracts that serve a specific purpose.
+Each contract in a module has its clear role and responsibility.
+Contracts in the same module may directly interact with each other. 
+Module contracts may never directly interact with contracts from other modules.
+Instead, a module contract may call a service contract that then interact with a contract in another module on its behalf.
 
-Examples of modules are the registry module, the staking module, and instance modules.
+Examples of modules are the registry module, the staking module, instance and component modules.
+Except for the staking module, all modules are non-upgradeable.
 
 === Services
 
-Services contracts implement the GIF business logic that operates on the state of module contracts.
+Services have a domain scope such as "Registry" or "Policy" and implement the domain specific business logic.
+Services are stateless and only operate on the state of the involved module contracts.
 Service contract may also interact with other service contracts.
 
-In general, services do not have any state that is not fixed at deployment/registration time.
-The only exception being the instance service that holds the addresses of the so called master instance which is used to clone new instances.
+All service contracts are upgradeable to allow for bug fixing and minor enhancements.
+Service contract upgrades are only allowed for non-breaking changes.
 
 === Registry Module
 
+The registry module diagram below provides an overview of the registry related contracts of a GIF deployment.
+
 image::./images/registry-module.png[Registry Module]
+
+Contracts and their responsibilities are outlined below.
+
+[cols="1,3"]
+|===
+| Contract | Responsibility
+
+| GIF Admin
+(Actor)
+| The account with the GIF Admin role initiates and confirms new GIF releases.
+
+| GIF Manager
+(Actor)
+| An account with a GIF Manager role deploys and registers service contracts of new GIF releases.
+Manages token white listing.
+
+| ChainNft
+| Mints and manages all NFTs related to the objects stored in the registry.
+Only the registry contract may call state changing functions on this contract.
+
+| Registry
+| Stores entries for all protocol relevant objects on this chain.
+
+| ReleaseRegistry
+| Keeps track of all deployed major releases so far.
+Manages deployment of new releases.
+
+| TokenRegistry
+| Manages whitelisting of supported ERC20 tokens per major release.
+
+| RegistryAdmin
+| Central authorization for all core contracts (resistry module and staking module) and all service contracts from all major releases.
+
+| RegistryService
+| A registry service contract from a specific GIF release.
+Registry service contracts are authoriezd to register new objects with the registry.
+
+| Other Services
+| TODO remove this component also remove dashed line beween registry and registry service.
+
+| Dip
+| The DIP token deployed outside of the GIF deployment.
+The DIP token is always registered with the Token registry.
+
+|===
 
 === Staking Module
 
+The staking module diagram below provides an overview of the registry related contracts of a GIF deployment.
+
 image::./images/staking-module.png[Staking Module]
 
-- Keep track of total value locked (TVL) per instance
-- TVL: amount of tokens locked by active policies
-- Creating policies increase TVL, executing payouts and closing policies decrease TVL
-- TVL in USD may be calculated using price feeds or CEX/DEX exchange rates
-- Staking will initially be supported on instance level (bundle staking too fine grained)
-- A corresponding amount of DIP token shall be staked using a staking rate
-- For the tracking of TVL and related DIP stakes a global dashboard will be provided
+Contracts and their responsibilities are outlined below.
+
+[cols="1,3"]
+|===
+| Contract | Responsibility
+
+| StakingReader
+| Provides all read access functions to staking related data.
+
+| StakingStore
+| Stores all staking related data like staked DIPs per staker and target, available staking targets, total locked value per target staked DIPs per target.
+
+| Staking
+| The central staking contract that implements to upgradeable business logic for staking.
+
+| StakingService
+| A release specific service contract that is authorized to create new stakes and manage existing stakes.
+
+| PoolService
+| Informs the staking contract about changes in the total locked value (TVL) amounts of the instances.
+
+| RegistryAdmin
+| Central authorization for all core contracts (resistry module and staking module) and all service contracts from all major releases.
+
+|===
+
+
+=== Instance Module
+
+The instance module diagram below provides an overview of the instance related contracts.
+
+image::./images/instance-module.png[Instance Module]
+
+Contracts and their responsibilities are outlined below.
+
+[cols="1,3"]
+|===
+| Contract/Account | Responsibility
+
+| Instance Owner
+(Actor)
+| Contract/Account that is the holder of the instance NFT that represents this particular instance.
+The instance NFT is linked to the instance contract and registered in the registry.
+
+| Instance
+| Central instance contract that manages instance authorization and references to other instance module contracts.
+
+| InstanceReader
+| Provides all read access functions to instance related data.
+This includes data access for all components linked to the instance.
+
+| InstanceStore
+| Stores all instance related data like managed components, polices, bundles, distributors etc.
+
+| BundleSet
+| Manages the set of active policies for each bundle.
+
+| RiskSet
+| Manages the set of active policies for each risk.
+
+| InstanceAdmin
+| Central authorization for all instance and linked component contracts as well as all service contracts that need write access to instance data.
+
+| Services ...
+| The set of services that interact with the instance module.
+
+|===
+
+
+=== Component Modules
+
+Component modules are are always linked to a specific instance module.
+The term "component module" covers four distinct types of components that together implement the actual use case specific business logic of a concrete use case.
+
+The diagram below shows the architecture of an exemplary "My Product" use case.
+
+image::./images/component-modules.png[Component Modules]
+
+Moudle contracts and their responsibilities are outlined below.
+
+[cols="1,3"]
+|===
+| Contract/Account | Responsibility
+
+| Product Owner
+(Actor)
+| Contract/Account that is the holder of the product NFT that represents this particular product.
+The NFT is linked to the product contract and registered in the registry.
+
+| Distribution Owner
+(Actor)
+| Contract/Account that is the holder of the distribution NFT that represents this particular distribution contract.
+The NFT is linked to the distribution contract and registered in the registry.
+
+| Oracle Owner
+(Actor)
+| Contract/Account that is the holder of the oracle NFT that represents this particular oracle contract.
+The NFT is linked to the oracle contract and registered in the registry.
+
+| Pool Owner
+(Actor)
+| Contract/Account that is the holder of the pool NFT that represents this particular pool contract.
+The NFT is linked to the pool contract and registered in the registry.
+
+| My Product
+| Does not contain actual contracts, It represents the use case specific collection of component moudules that are required to implement and operate the use case.
+
+| Product Module
+| The use case specific product contract that manages policies, claims and payouts.
+The product contract is based on product template contract provided by the framework.
+The module may includes additional supporting contracts.
+A Pool module always needs to be linked to a pool module.
+Links to a distribution module and oracle modules are optional
+
+| Distribution Module
+| The use case specific distribution contract that manages distributors, referral codes and policy sales.
+The distribution contract is based on distribution template contract provided by the framework.
+The module may includes additional supporting contracts.
+A distribution module is always linked to a single product module
+
+| Oracle Module
+| One or more use case specific oracle modules. 
+Each oracle module contains an oracle contract that manages oracle requests and responses that connect the product to real world (off-chain) data.
+The oracle contracts are based on a oracle template contract provided by the framework.
+The modules may includes additional supporting contracts.
+Any oracle module is always linked to a single product module.
+
+| Pool Module
+| The use case specific pool contract that manages bundles which in turn provide the risk capital of the use case.
+The pool contract is based on pool template contract provided by the framework.
+The module may includes additional supporting contracts.
+A pool moudle is always linked to a single product module
+
+| Instance Module
+| The instance module that links all component modules and also holds the data related to the component modules.
+During operation the linked instance module manages the data related to all relevant business objects like policies, claims, payouts, bundles, distributors, etc.
+
+| Registry Module
+| When setting up a new use case, component modules are registerd with the instance module and the registry module.
+For each registered component module an associated registry entry is created and a component module specific NFT is minted.
+Additional registry entries and NFTs are created during the operation of the use case.
+In this phase NFTs are also minted for most business relevant objects such as policies or bundles.
+|===
+
+== Instances
+=== Overview
+=== Stakeholders
+=== Business Objects
+=== Creating a new Instance
+=== Registering Components
+=== Authorization Management
+=== Instance Staking
+
+== Components
+=== General Principles
+=== Token Management
+=== Contracts
+
+The component diagram below provides the overview of the component contract hierarchy.
+
+image::./images/component-diagram.png[Component Diagram]
+
+
+[cols="1,3"]
+|===
+| Contract | Responsibility
+
+| `(I)RegistryLinked` +
+(shared) 
+| Base interface and implementation for contracts that are linked to the registry.
+Any contract that needs to query or interact with the registry is derived from this base contract.
+This base class is also derived from OpenZeppelin's `Initializable` to support upgradeability and contract cloning.
+
+| `(I)NftOwnable` +
+(shared) 
+| Base interface and implementation for contracts which define ownability via the owner of the NFT corresponding to a contract registered in the registry. 
+The linking to the NFT is done via the `linkToRegisteredNftId` function that looks up the NFT ID in the registry using the contract address.
+
+| `(I)Registerable` +
+(shared) 
+| Base interface and implementation for contracts that need to be registered with the registry.
+Registerable contracts provide all necessary information to be registered via its `getInitialInfo` function.
+
+
+| `(I)Component` +
+(shared) 
+| Base interface and implementation for all component contracts.
+
+|===
+
+== Product Components
+=== Overview
+=== Stakeholders
+==== Product Owner
+==== Policy Holder
+=== Business Objects
+==== Risks
+==== Applications
+==== Policies
+==== Claims
+==== Payouts
+=== Business Processes
+==== Pricing
+==== Application Creation
+==== Policy Collateralization
+==== Policy Expiry
+==== Policy Closure
+==== Claims Creation
+==== Payout Handling
+=== Contracts
+
+== Distribution Components
+=== Overview
+=== Stakeholders
+==== Distribution Owner
+==== Distributors
+=== Business Objects
+==== Distributor Types
+==== Distributors
+==== Referral Codes
+=== Business Processes
+==== Distributor Type Creation
+==== Distributor Creation
+==== Referral Code Creation
+=== Fee and Commissions Management
+=== Contracts
+
+== Oracle Components
+=== Overview
+=== Business Objects
+==== Requests
+==== Responses
+=== Business Processes
+==== Request Creation
+==== Response Handling
+=== Contracts
+
+== Pool Components
+=== Overview
+=== Stakeholders
+==== Pool Owner
+==== Bundle Owner
+=== Pool Properties
+=== Bundles
+=== Business Processes
+==== Bundle Creation
+==== Bundle Locking and Unlocking
+==== Bundle Staking and Unstaking
+==== Bundle Expiry
+=== Fee Management
+=== Contracts
 
 == Authorization
 
@@ -151,6 +443,18 @@ image::./images/staking-module.png[Staking Module]
 
 Autorization is a key concept in the GIF.
 Authorization is organized per supported chain and implemented in access admin contracts using role based access control.
+Role based access control involves roles, targets and functions level authorization.
+
+Roles can be considered as lables or IDs that can be assigned (granted) to accounts or removed (revoked) from accounts.
+*Accounts* can either be externally owned accounts or contract accounts.
+The set of accounts that have a specific role is called the role members.
+
+The term *Targets* is used for contracts for which function level authorization is managed by an access admin contract.
+That particular access admin contract is then called the authority of the target contract.
+
+*Function Level Authorization* defines which fuctions of a target may be executed through which role.
+For each authorized function of a target the required role to access it is defined.
+Only a single role can be specified per function and only members of that role (both contracts and externally owned accounts) may then execute the function.
 
 === Access Admin
 
@@ -189,6 +493,7 @@ Upgradeability relies on OpenZeppelin's `TransparentUpgradeableProxy` and `Proxy
 == Release Management
 
 === Overview
+
 GIF releases follow semantic versioning, which includes major, minor, and patch releases. 
 The major version number is incremented whenever there are breaking changes that could potentially disrupt existing functionality or compatibility.
 
@@ -200,38 +505,71 @@ Instance modules are non-upgradeable and directly linked to the service contract
 
 Adding a new major release is guarded by role based authorization including two roles, a GIF Admin role and the GIF Manager role.
 
-=== Initial Chain Deployment
+=== Core Deployment
 
-An initial chain deployment deploys the registry contracts and the staking contracts.
+The core deployment sets up the registry and the staking modules and includes all the wiring between the contracts needed for actual relese deployment.
+For each supported chain a core deployment is the required first step.
 
+For the registry module deployments the contracts Registry, ChainNft, TokenRegistry, and RegistryAdmin are deployed and initialized.
+Where neceesary these contracts are linked to the registry admin contract that manages all authorization for both the registry and the staking module.
+
+On mainnet the *Regsitry* contract is deployed and initialized with two entries, one for the protocol object and one for global registry.
+On any other chain the initial setup includes an additional entry for the chain registry.
+
+The registry istelf deployes the *ChainNFT* contract that will hold NFT representations of all protocol relevant objects on this chain.
+
+The *TokenRegistry* is deployed and initialized with the DIP token as staking token.
+
+The *RegistryAdmin* contract is deployed intialized with the GIF Admin role and the GIF Manager role.
+
+* The necessary authorizations are put in place to allow the GIF Admin and GIF Manager roles to deploy the first major release.
+* For the whitelisting of tokens the GIF Manager role is granted the necessary authorizations.
+* For release deployment the release registry contract is authorized to register new service contracts with the registry.
+* Regstry services (for all releases) are granted access to register objects with the registry contract.
+* Staking services (for all releases) are granted access to the staking contract.
+* Pool services (for all releases) are granted access to the staking contract to update the total value locked in instances.s
+
+For the staking module deployment the contracts StakingReader, StakingStore, StakingManager and Staking are deployed and initialized.
+The staking contract is also registerd with the registry.
 
 === Release Deployment
 
+The release deployment is the second and final GIF deployment step to a specific chain.
+For each supported chain a release deployment is required.
+A release deployment to a new chain will only include the deployment of the latest major release.
+Initially this will be the GIF v3 release.
+In the future new major releases should be deployed on all chains that are actively supported by the protocol.
 
-== Instances
+A release deployment consist of the deployment and authorization of a release specific and consistent set of service contracts.
+As the service authorization is restricted to other services of the same release, services are assigned release specific roles.
+Service authorization is managed by the registry admin contract and defines which service fuction may be called by which other service.
 
-=== Overview
+The process of a release deployment invlovles the GIF Admin and the GIF Manager roles.
+The GIF Admin role represents the principal owner of the protocol and GIF Manager role is the role that is authorized to deploy and register the service contracts with the release registry.
 
-=== Instance Module
+[cols="1,2,2,4"]
+|===
+| Step | Role | Action | Comment
 
-- Instance contracts are non upgradable
-- Instance contracts support minor and patch updates of services
-- Instance contracts do not support major updates of services
-- New instances are created by the instancer owner calling `InstanceService.createInstance`
-- Transactional operations (writing) are only via services
-- Read access to the instance is done through the `InstanceReader` and/or services
-- Every instance has its own `AuthorizationManager` for managing authorizations
-- Authorization is managed by the instance owner
-- GIF provides default set of authorizations when cloning the instance
-- Instances are not upgradable
+| 1
+| GIF Admin
+| `createNextRelease`
+| Initiates the deployment of the next major relase, sets the release registry contract into the state where release deployment is enabled.
 
-=== Component Modules
+| 2
+| GIF Manager
+| `prepareNextRelease`
+| Lets the release manager provide the authorization specification for the new release. 
+This includes the ordered list of service domains relevant to the release.
 
-- Components are built and deployed by the component owners (which are not the same as the protocol owner)
-- Components interact with the instance through the services
-- Components are bound to a fixed major version of a service
-  Patch/Minor version upgrades of a service will be done by the protocol owner and will be completely transparent to the component owner
-  Major version upgrades will require a new component version to be deployed by the component owner
-- End users (consumers) interact with the system through components
-- Components must provide all necessary functions for consumer interaction 
-- Components use the instance's `AuthorizationManager` for authorization checks
+| 3
+| GIF Manager
+| `registerService` +
+n times, once for each service contract.
+| The deployed release service contracts are registered with the release registry in the same order as defined in the authorization specification.
+
+| 4
+| GIF Admin
+| `activateNextRelease`
+| After verifying the release deployment the GIF Admin can activate the new release.
+|===

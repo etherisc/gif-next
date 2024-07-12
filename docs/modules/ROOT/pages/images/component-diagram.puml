@@ -1,0 +1,38 @@
+@startuml
+
+class Initializable <<OpenZeppelin>>
+class AccessManagedUpgradeable <<OpenZeppelin>>
+
+class RegistryLinked implements IRegistryLinked
+class RegistryLinked extends Initializable
+RegistryLinked : getRegistry()
+
+class NftOwnable implements INftOwnable
+class NftOwnable extends RegistryLinked
+class NftOwnable extends ERC165
+NftOwnable : linkToRegisteredNftId()
+NftOwnable : getNftId()
+NftOwnable : getOwner()
+
+class Registerable implements IRegisterable
+class Registerable extends NftOwnable
+Registerable : getInitialInfo()
+
+class Component implements IComponent
+class Component extends Registerable
+class Component extends AccessManagedUpgradeable
+Component : getName()
+Component : getToken()
+Component : getTokenHandler()
+Component : getWallet()
+
+class InstanceLinkedComponent implements IInstanceLinkedComponent
+class InstanceLinkedComponent extends Component
+InstanceLinkedComponent : regsiter()
+InstanceLinkedComponent : lock/unlock()
+InstanceLinkedComponent : withdrawFees()
+InstanceLinkedComponent : getAuthorization()
+InstanceLinkedComponent : getInstance()
+InstanceLinkedComponent : getProductNftId()
+
+@enduml

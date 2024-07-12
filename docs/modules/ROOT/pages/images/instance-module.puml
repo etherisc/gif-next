@@ -1,0 +1,34 @@
+@startuml
+
+"Instance Owner" as owner
+
+package "Instance Module" as instanceModule {
+    [Instance] as instance
+    [InstanceReader] as reader
+    [InstanceStore] as store
+    [BundleSet] as bundleSet
+    [RiskSet] as riskSet
+    [InstanceAdmin] as admin
+}
+
+
+[Services ...] as services
+
+owner .> instance
+instance --> admin
+instance ..> store
+instance .> reader
+bundleSet <.. instance
+riskSet <.. instance
+
+reader -> instance
+reader --> store
+reader --> admin
+bundleSet <-- reader
+riskSet <-- reader
+
+
+store --> admin
+instanceModule <- services
+
+@enduml
