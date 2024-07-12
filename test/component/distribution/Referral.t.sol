@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {ACTIVE, APPLIED} from "../../../contracts/type/StateId.sol";
+import {APPLIED, COLLATERALIZED} from "../../../contracts/type/StateId.sol";
 import {Amount} from "../../../contracts/type/Amount.sol";
 import {console} from "../../../lib/forge-std/src/Test.sol";
 import {FeeLib} from "../../../contracts/type/Fee.sol";
@@ -123,7 +123,7 @@ contract ReferralTest is ReferralTestBase {
         vm.stopPrank();
 
         // THEN - check 13 tokens in distribution wallet (120 premium ), 887 tokens in customer wallet, 10100 tokens in pool wallet
-        assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not ACTIVE");
+        assertTrue(instanceReader.getPolicyState(policyNftId) == COLLATERALIZED(), "policy state not COLLATERALIZED");
 
         uint256 netPremium = 100;
         uint256 expectedPremium = netPremium + 17; // 100 (net premium) + 14 (distribution fee 3 + pool fee 3 + 11 distributor commission)
@@ -230,8 +230,8 @@ contract ReferralTest is ReferralTestBase {
         product.collateralize(policyNftId2, true, TimestampLib.blockTimestamp()); 
 
         // THEN - check 13 tokens in distribution wallet (120 premium ), 887 tokens in customer wallet, 10100 tokens in pool wallet
-        assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not ACTIVE");
-        assertTrue(instanceReader.getPolicyState(policyNftId2) == ACTIVE(), "policy state not ACTIVE");
+        assertTrue(instanceReader.getPolicyState(policyNftId) == COLLATERALIZED(), "policy state not COLLATERALIZED");
+        assertTrue(instanceReader.getPolicyState(policyNftId2) == COLLATERALIZED(), "policy state not COLLATERALIZED");
 
         Amount lockedAmount = instanceReader.getLockedAmount(bundleNftId);
         assertEq(lockedAmount.toInt(), 2000, "unexpected lockedAmount (not 2000)");
@@ -284,7 +284,7 @@ contract ReferralTest is ReferralTestBase {
         product.collateralize(policyNftId3, true, TimestampLib.blockTimestamp()); 
 
         // THEN 
-        assertTrue(instanceReader.getPolicyState(policyNftId3) == ACTIVE(), "policy3 state not ACTIVE");
+        assertTrue(instanceReader.getPolicyState(policyNftId3) == COLLATERALIZED(), "policy3 state not COLLATERALIZED");
 
         lockedAmount = instanceReader.getLockedAmount(bundleNftId);
         assertEq(lockedAmount.toInt(), 3000, "unexpected lockedAmount (not 3000)");
