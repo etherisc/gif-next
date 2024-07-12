@@ -7,6 +7,9 @@ import {NftId} from "../type/NftId.sol";
 import {ObjectType} from "../type/ObjectType.sol";
 import {VersionPart} from "../type/Version.sol";
 import {Timestamp} from "../type/Timestamp.sol";
+import {StateId} from "../type/StateId.sol";
+
+import {IServiceAuthorization} from "../authorization/IServiceAuthorization.sol";
 
 /// @title Chain Registry interface.
 /// A chain registry holds all protocol relevant objects with basic metadata.
@@ -55,13 +58,15 @@ interface IRegistry is IERC165 {
         address initialOwner;
         bytes data;
     }
-    // TODO consider adding serviceAuth and release state
+
     struct ReleaseInfo {
+        StateId state;
         VersionPart version;
         bytes32 salt;
         address[] addresses;
         string[] names;
         ObjectType[] domains;
+        IServiceAuthorization auth;
         Timestamp activatedAt;
         Timestamp disabledAt;
     }
@@ -103,7 +108,6 @@ interface IRegistry is IERC165 {
     function getReleaseInfo(VersionPart version) external view returns (ReleaseInfo memory);
 
     /// @dev Returns the number of supported chains.
-    // TODO consider adding such functon for services -> services(), getService(uint256 idx)
     function chainIds() external view returns (uint256);
 
     /// @dev Returns the chain id at the specified index.

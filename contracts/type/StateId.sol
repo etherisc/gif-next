@@ -31,6 +31,10 @@ function ACTIVE() pure returns (StateId) {
     return toStateId(4);
 }
 
+function SKIPPED() pure returns (StateId) {
+    return toStateId(5);
+}
+
 function APPLIED() pure returns (StateId) {
     return toStateId(10);
 }

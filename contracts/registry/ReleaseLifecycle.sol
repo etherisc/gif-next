@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {RELEASE} from "../type/ObjectType.sol";
-import {SCHEDULED, DEPLOYING, ACTIVE, PAUSED, CLOSED/*, FREE*/} from "../type/StateId.sol";
+import {SCHEDULED, DEPLOYING, SKIPPED, ACTIVE, PAUSED, CLOSED} from "../type/StateId.sol";
 import {Lifecycle} from "../shared/Lifecycle.sol";
 
 contract ReleaseLifecycle is
@@ -18,8 +18,10 @@ contract ReleaseLifecycle is
     {
         setInitialState(RELEASE(), SCHEDULED());
 
+        setStateTransition(RELEASE(), SCHEDULED(), SKIPPED());
         setStateTransition(RELEASE(), SCHEDULED(), DEPLOYING());
         setStateTransition(RELEASE(), DEPLOYING(), DEPLOYING());
+        setStateTransition(RELEASE(), DEPLOYING(), SKIPPED());
         setStateTransition(RELEASE(), DEPLOYING(), ACTIVE());
         setStateTransition(RELEASE(), ACTIVE(), PAUSED());
         setStateTransition(RELEASE(), PAUSED(), ACTIVE());
