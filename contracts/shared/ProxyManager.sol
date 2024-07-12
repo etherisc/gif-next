@@ -29,7 +29,7 @@ contract ProxyManager is
     event LogProxyManagerVersionableDeployed(address indexed proxy, address initialImplementation);
     event LogProxyManagerVersionableUpgraded(address indexed proxy, address upgradedImplementation);
 
-    error ErrorProxyManagerAlreadyDeployed();
+    error ErrorProxyManagerProxyAlreadyDeployed();
     error ErrorProxyManagerNotYetDeployed();
 
     error ErrorProxyManagerZeroVersion();
@@ -62,20 +62,20 @@ contract ProxyManager is
         returns (IVersionable versionable)
     {
         if (_versions.length > 0) {
-            revert ErrorProxyManagerAlreadyDeployed();
+            revert ErrorProxyManagerProxyAlreadyDeployed();
         }
 
-        address currentProxyOwner = getOwner(); // used by implementation
-        address initialProxyAdminOwner = address(this); // used by proxy
+        address proxyManagerOwner = getOwner(); // used by implementation
+        address proxyAdminOwner = address(this); // used by proxy
         
         _proxy = new UpgradableProxyWithAdmin(
             initialImplementation,
-            initialProxyAdminOwner,
-            getDeployData(currentProxyOwner, initializationData)
+            proxyAdminOwner,
+            getDeployData(proxyManagerOwner, initializationData)
         );
 
         versionable = IVersionable(address(_proxy));
-        _updateVersionHistory(versionable.getVersion(), initialImplementation, currentProxyOwner);
+        _updateVersionHistory(versionable.getVersion(), initialImplementation, proxyManagerOwner);
 
         emit LogProxyManagerVersionableDeployed(address(_proxy), initialImplementation);
     }
@@ -87,20 +87,20 @@ contract ProxyManager is
         returns (IVersionable versionable)
     {
         if (_versions.length > 0) {
-            revert ErrorProxyManagerAlreadyDeployed();
+            revert ErrorProxyManagerProxyAlreadyDeployed();
         }
 
-        address currentProxyOwner = getOwner();
-        address initialProxyAdminOwner = address(this);
+        address proxyManagerOwner = getOwner();
+        address proxyAdminOwner = address(this);
 
         _proxy = new UpgradableProxyWithAdmin{salt: salt}(
             initialImplementation,
-            initialProxyAdminOwner,
-            getDeployData(currentProxyOwner, initializationData)
+            proxyAdminOwner,
+            getDeployData(proxyManagerOwner, initializationData)
         );
 
         versionable = IVersionable(address(_proxy));
-        _updateVersionHistory(versionable.getVersion(), initialImplementation, currentProxyOwner);
+        _updateVersionHistory(versionable.getVersion(), initialImplementation, proxyManagerOwner);
 
         emit LogProxyManagerVersionableDeployed(address(_proxy), initialImplementation);
     }

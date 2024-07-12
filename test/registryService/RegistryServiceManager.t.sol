@@ -115,7 +115,7 @@ contract RegistryServiceManagerTest is RegistryServiceTestBase {
         // attempt to redeploy with owner account
         vm.expectRevert(
             abi.encodeWithSelector(
-                ProxyManager.ErrorProxyManagerAlreadyDeployed.selector));
+                ProxyManager.ErrorProxyManagerProxyAlreadyDeployed.selector));
         vm.prank(registryOwner);
         registryServiceManager.deploy(
             mockImplementation,
