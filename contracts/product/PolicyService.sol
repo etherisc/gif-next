@@ -14,7 +14,7 @@ import {TokenHandler} from "../shared/TokenHandler.sol";
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {Timestamp, TimestampLib, zeroTimestamp} from "../type/Timestamp.sol";
 import {ObjectType, APPLICATION, COMPONENT, DISTRIBUTION, PRODUCT, POOL, POLICY, BUNDLE, CLAIM, PRICE} from "../type/ObjectType.sol";
-import {APPLIED, COLLATERALIZED, ACTIVE, KEEP_STATE, CLOSED, DECLINED} from "../type/StateId.sol";
+import {APPLIED, COLLATERALIZED, KEEP_STATE, CLOSED, DECLINED} from "../type/StateId.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
 import {ReferralId} from "../type/Referral.sol";
 import {StateId} from "../type/StateId.sol";
@@ -162,7 +162,6 @@ contract PolicyService is
 
         // optional activation of policy
         if(activateAt > zeroTimestamp()) {
-            newPolicyState = ACTIVE();
             applicationInfo.activatedAt = activateAt;
             applicationInfo.expiredAt = activateAt.addSeconds(applicationInfo.lifetime);
         }
@@ -209,8 +208,8 @@ contract PolicyService is
         StateId stateId = instanceReader.getPolicyState(policyNftId);
 
         // check policy is in state collateralized or active
-        if (!(stateId == COLLATERALIZED() || stateId == ACTIVE())) {
-            revert ErrorPolicyServicePolicyStateNotCollateralizedOrApplied(policyNftId);
+        if (!(stateId == COLLATERALIZED())) {
+            revert ErrorPolicyServicePolicyStateNotCollateralized(policyNftId);
         }
 
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
@@ -247,14 +246,14 @@ contract PolicyService is
 
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
 
-        require(
-            policyInfo.activatedAt.eqz(),
-            "ERROR:PRS-020:ALREADY_ACTIVATED");
+        if(! policyInfo.activatedAt.eqz()) {
+            revert ErrorPolicyServicePolicyAlreadyActivated(policyNftId);
+        }
 
         policyInfo.activatedAt = activateAt;
         policyInfo.expiredAt = activateAt.addSeconds(policyInfo.lifetime);
 
-        instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, ACTIVE());
+        instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, KEEP_STATE());
 
         // TODO: add logging
     }
@@ -272,11 +271,6 @@ contract PolicyService is
         (NftId productNftId,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
         InstanceReader instanceReader = instance.getInstanceReader();
 
-        // check policy is in state applied
-        if (instanceReader.getPolicyState(policyNftId) != ACTIVE()) {
-            revert ErrorIPolicyServicePolicyNotActive(policyNftId, instanceReader.getPolicyState(policyNftId));
-        }
-
         // check policy matches with calling product
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
         if(policyInfo.productNftId != productNftId) {
@@ -286,21 +280,26 @@ contract PolicyService is
                 productNftId);
         }
 
+        // check policy is active
+        StateId policyState = instanceReader.getPolicyState(policyNftId);
+        if (!_policyHasBeenActivated(policyState, policyInfo)) {
+            revert ErrorPolicyServicePolicyNotActive(policyNftId, policyState);
+        }
+
+        // set expiryAt to current block timestamp if not set
         if (expireAt.eqz()) {
             expireAt = TimestampLib.blockTimestamp();
         }
 
-        // check preconditions
+        // check expiryAt represents a valid expiry time
         if (expireAt >= policyInfo.expiredAt) {
-            revert ErrorIPolicyServicePolicyExpirationTooLate(policyNftId, policyInfo.expiredAt, expireAt);
+            revert ErrorPolicyServicePolicyExpirationTooLate(policyNftId, policyInfo.expiredAt, expireAt);
         }
         if (expireAt < TimestampLib.blockTimestamp()) {
-            revert ErrorIPolicyServicePolicyExpirationTooEarly(policyNftId, TimestampLib.blockTimestamp(), expireAt);
-        }
-        if (policyInfo.openClaimsCount > 0) {
-            revert ErrorIPolicyServiceOpenClaims(policyNftId, policyInfo.openClaimsCount);
+            revert ErrorPolicyServicePolicyExpirationTooEarly(policyNftId, TimestampLib.blockTimestamp(), expireAt);
         }
 
+        // update policyInfo with new expiryAt timestamp
         policyInfo.expiredAt = expireAt;
         instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, KEEP_STATE());
 
@@ -318,19 +317,21 @@ contract PolicyService is
         (,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
         InstanceReader instanceReader = instance.getInstanceReader();
 
+        // check that policy has been activated
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
-
-        if (policyInfo.activatedAt.eqz()) {
-            revert ErrorIPolicyServicePolicyNotActivated(policyNftId);
+        StateId policyState = instanceReader.getPolicyState(policyNftId);
+        if (!_policyHasBeenActivated(policyState, policyInfo)) {
+            revert ErrorPolicyServicePolicyNotActive(policyNftId, policyState);
         }
 
-        StateId state = instanceReader.getPolicyState(policyNftId);
-        if (state != ACTIVE()) {
-            revert ErrorIPolicyServicePolicyNotActive(policyNftId, state);
-        }
-
+        // check that policy has not already been closed
         if (policyInfo.closedAt.gtz()) {
-            revert ErrorIPolicyServicePolicyAlreadyClosed(policyNftId);
+            revert ErrorPolicyServicePolicyAlreadyClosed(policyNftId);
+        }
+
+        // check that policy does not have any open claims
+        if (policyInfo.openClaimsCount > 0) {
+            revert ErrorPolicyServiceOpenClaims(policyNftId, policyInfo.openClaimsCount);
         }
 
         // TODO consider to allow for underpaid premiums (with the effects of reducing max payouts accordingly)
@@ -338,19 +339,32 @@ contract PolicyService is
             revert ErrorPolicyServicePremiumNotFullyPaid(policyNftId, policyInfo.premiumAmount, policyInfo.premiumPaidAmount);
         }
 
-        if (policyInfo.openClaimsCount > 0) {
-            revert ErrorIPolicyServiceOpenClaims(policyNftId, policyInfo.openClaimsCount);
-        }
-
-        policyInfo.closedAt = TimestampLib.blockTimestamp();
-
+        // release (remaining) collateral that was blocked by policy
         _poolService.releaseCollateral(
             instance, 
             address(instanceReader.getComponentInfo(policyInfo.productNftId).token),
             policyNftId, 
             policyInfo);
 
+        // update policy state to closed
+        policyInfo.closedAt = TimestampLib.blockTimestamp();
         instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, CLOSED());
+    }
+
+
+    /// @dev checks that policy has been collateralized and has been activated.
+    /// does not check if policy has been expired or closed.
+    function _policyHasBeenActivated(
+        StateId policyState,
+        IPolicy.PolicyInfo memory policyInfo
+    )
+        internal
+        view
+        returns (bool)
+    {
+        if (policyState != COLLATERALIZED()) { return false; } 
+        if (TimestampLib.blockTimestamp() < policyInfo.activatedAt) { return false; } 
+        return true;
     }
 
 

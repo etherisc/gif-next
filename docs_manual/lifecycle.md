@@ -46,9 +46,7 @@ stateDiagram-v2
     APPLIED --> REVOKED
     APPLIED --> DECLINED 
     APPLIED --> COLLATERALIZED
-    APPLIED --> ACTIVE
-    COLLATERALIZED --> ACTIVE
-    ACTIVE --> CLOSED
+    COLLATERALIZED --> CLOSED
     CLOSED --> [*]
     REVOKED --> [*]
     DECLINED --> [*]

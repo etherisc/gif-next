@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {console} from "../lib/forge-std/src/Test.sol";
-
+import {COLLATERALIZED} from "../contracts/type/StateId.sol";
 import {DistributorType} from "../contracts/type/DistributorType.sol";
 import {IDistributionService} from "../contracts/distribution/IDistributionService.sol";
 import {GifTest} from "./base/GifTest.sol";
@@ -10,13 +10,13 @@ import {NftId, NftIdLib} from "../contracts/type/NftId.sol";
 import {IBundleService} from "../contracts/pool/IBundleService.sol";
 import {IComponentService} from "../contracts/shared/IComponentService.sol";
 import {IComponents} from "../contracts/instance/module/IComponents.sol";
+import {IPolicy} from "../contracts/instance/module/IPolicy.sol";
 import {IPoolComponent} from "../contracts/pool/IPoolComponent.sol";
 import {FeeLib} from "../contracts/type/Fee.sol";
 import {RiskId, RiskIdLib} from "../contracts/type/RiskId.sol";
 import {ReferralId, ReferralLib} from "../contracts/type/Referral.sol";
 import {Seconds, SecondsLib} from "../contracts/type/Seconds.sol";
-import {ACTIVE} from "../contracts/type/StateId.sol";
-import {TimestampLib, toTimestamp} from "../contracts/type/Timestamp.sol";
+import {Timestamp, TimestampLib} from "../contracts/type/Timestamp.sol";
 import {Amount, AmountLib} from "../contracts/type/Amount.sol";
 import {INftOwnable} from "../contracts/shared/INftOwnable.sol";
 
@@ -719,7 +719,7 @@ contract TestFees is GifTest {
                 "DEAL", 
                 instanceReader.toUFixed(5, -2), 
                 10, 
-                toTimestamp(30 * 24 * 60 * 60), 
+                TimestampLib.toTimestamp(30 * 24 * 60 * 60), 
                 "");
             vm.stopPrank();
         } else {
@@ -757,9 +757,12 @@ contract TestFees is GifTest {
 
         // solhint-disable-next-line 
         console.log("before collateralization of", policyNftId.toInt());
-        product.collateralize(policyNftId, true, TimestampLib.blockTimestamp()); 
+        Timestamp activateAt = TimestampLib.blockTimestamp();
+        product.collateralize(policyNftId, true, activateAt); 
 
-        assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not COLLATERALIZED");
+        assertTrue(instanceReader.getPolicyState(policyNftId) == COLLATERALIZED(), "policy state not COLLATERALIZED");
+        IPolicy.PolicyInfo memory productInfo = instanceReader.getPolicyInfo(policyNftId);
+        assertEq(productInfo.activatedAt.toInt(), activateAt.toInt(), "policy activation time not as expected");
     }
 
     
