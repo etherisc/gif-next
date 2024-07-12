@@ -1,4 +1,5 @@
 = Architecture
+:toc:
 
 == Introduction
 
@@ -140,10 +141,12 @@ Contracts and their responsibilities are outlined below.
 | Contract | Responsibility
 
 | GIF Admin
-| Account with the GIF Admin role initiates and confirms new GIF releases.
+(Actor)
+| The account with the GIF Admin role initiates and confirms new GIF releases.
 
 | GIF Manager
-| Deployes and registers service contracts of new GIF releases.
+(Actor)
+| An account with a GIF Manager role deploys and registers service contracts of new GIF releases.
 Manages token white listing.
 
 | ChainNft
@@ -315,7 +318,124 @@ The pool contract is based on pool template contract provided by the framework.
 The module may includes additional supporting contracts.
 A pool moudle is always linked to a single product module
 
+| Instance Module
+| The instance module that links all component modules and also holds the data related to the component modules.
+During operation the linked instance module manages the data related to all relevant business objects like policies, claims, payouts, bundles, distributors, etc.
+
+| Registry Module
+| When setting up a new use case, component modules are registerd with the instance module and the registry module.
+For each registered component module an associated registry entry is created and a component module specific NFT is minted.
+Additional registry entries and NFTs are created during the operation of the use case.
+In this phase NFTs are also minted for most business relevant objects such as policies or bundles.
 |===
+
+== Instances
+=== Overview
+=== Stakeholders
+=== Business Objects
+=== Creating a new Instance
+=== Registering Components
+=== Authorization Management
+=== Instance Staking
+
+== Components
+=== General Principles
+=== Token Management
+=== Contracts
+
+The component diagram below provides the overview of the component contract hierarchy.
+
+image::./images/component-diagram.png[Component Diagram]
+
+
+[cols="1,3"]
+|===
+| Contract | Responsibility
+
+| `(I)RegistryLinked` +
+(shared) 
+| Base interface and implementation for contracts that are linked to the registry.
+Any contract that needs to query or interact with the registry is derived from this base contract.
+This base class is also derived from OpenZeppelin's `Initializable` to support upgradeability and contract cloning.
+
+| `(I)NftOwnable` +
+(shared) 
+| Base interface and implementation for contracts which define ownability via the owner of the NFT corresponding to a contract registered in the registry. 
+The linking to the NFT is done via the `linkToRegisteredNftId` function that looks up the NFT ID in the registry using the contract address.
+
+| `(I)Registerable` +
+(shared) 
+| Base interface and implementation for contracts that need to be registered with the registry.
+Registerable contracts provide all necessary information to be registered via its `getInitialInfo` function.
+
+
+| `(I)Component` +
+(shared) 
+| Base interface and implementation for all component contracts.
+
+|===
+
+== Product Components
+=== Overview
+=== Stakeholders
+==== Product Owner
+==== Policy Holder
+=== Business Objects
+==== Risks
+==== Applications
+==== Policies
+==== Claims
+==== Payouts
+=== Business Processes
+==== Pricing
+==== Application Creation
+==== Policy Collateralization
+==== Policy Expiry
+==== Policy Closure
+==== Claims Creation
+==== Payout Handling
+=== Contracts
+
+== Distribution Components
+=== Overview
+=== Stakeholders
+==== Distribution Owner
+==== Distributors
+=== Business Objects
+==== Distributor Types
+==== Distributors
+==== Referral Codes
+=== Business Processes
+==== Distributor Type Creation
+==== Distributor Creation
+==== Referral Code Creation
+=== Fee and Commissions Management
+=== Contracts
+
+== Oracle Components
+=== Overview
+=== Business Objects
+==== Requests
+==== Responses
+=== Business Processes
+==== Request Creation
+==== Response Handling
+=== Contracts
+
+== Pool Components
+=== Overview
+=== Stakeholders
+==== Pool Owner
+==== Bundle Owner
+=== Pool Properties
+=== Bundles
+=== Business Processes
+==== Bundle Creation
+==== Bundle Locking and Unlocking
+==== Bundle Staking and Unstaking
+==== Bundle Expiry
+=== Fee Management
+=== Contracts
 
 == Authorization
 
@@ -453,31 +573,3 @@ n times, once for each service contract.
 | `activateNextRelease`
 | After verifying the release deployment the GIF Admin can activate the new release.
 |===
-
-== Instances
-
-=== Overview
-
-=== Instance Module
-
-- Instance contracts are non upgradable
-- Instance contracts support minor and patch updates of services
-- Instance contracts do not support major updates of services
-- New instances are created by the instancer owner calling `InstanceService.createInstance`
-- Transactional operations (writing) are only via services
-- Read access to the instance is done through the `InstanceReader` and/or services
-- Every instance has its own `AuthorizationManager` for managing authorizations
-- Authorization is managed by the instance owner
-- GIF provides default set of authorizations when cloning the instance
-- Instances are not upgradable
-
-=== Component Modules
-
-- Components are built and deployed by the component owners (which are not the same as the protocol owner)
-- Components interact with the instance through the services
-- Components are bound to a fixed major version of a service
-  Patch/Minor version upgrades of a service will be done by the protocol owner and will be completely transparent to the component owner
-  Major version upgrades will require a new component version to be deployed by the component owner
-- End users (consumers) interact with the system through components
-- Components must provide all necessary functions for consumer interaction 
-- Components use the instance's `AuthorizationManager` for authorization checks
