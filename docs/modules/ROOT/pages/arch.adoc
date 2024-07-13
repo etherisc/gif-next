@@ -1,3 +1,9 @@
+:imagesdir: 
+
+ifndef::env-site[]
+:imagesdir: ../images/
+endif::[]
+
 = Architecture
 :toc:
 
@@ -80,7 +86,7 @@ The following objects are managed by the protocol:
 
 The GIF setup on any specific chain always consists of a registry and staking modules, services and instances as shown in the diagram below.
 
-image::./images/single-chain-setup.png[Single-chain setup]
+image::{imagesdir}single-chain-setup.png[Single-chain setup]
 
 === Registry
 
