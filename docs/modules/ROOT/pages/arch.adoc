@@ -1,11 +1,14 @@
-:imagesdir:
+:imgbase: ../images/
+:empty-string:
 
-ifndef::site-gen-antora[]
-:imagesdir: ../images/
+ifdef::site-gen-antora[]
+:imgbase: {empty-string}
 endif::[]
 
 = Architecture
+ifndef::site-gen-antora[]
 :toc:
+endif::[]
 
 == Introduction
 
@@ -35,7 +38,7 @@ To link all chains together a global registry is deployed on mainnet.
 This global registry then holds the links to all chain specific registries as shown in the diagram below.
 
 
-image::multi-chain-setup.png[Multi-chain setup]
+image::{imgbase}multi-chain-setup.png[Multi-chain setup]
 
 === Global Registry
 
@@ -86,7 +89,7 @@ The following objects are managed by the protocol:
 
 The GIF setup on any specific chain always consists of a registry and staking modules, services and instances as shown in the diagram below.
 
-image::{imagesdir}single-chain-setup.png[Single-chain setup]
+image::{imgbase}single-chain-setup.png[Single-chain setup]
 
 === Registry
 
