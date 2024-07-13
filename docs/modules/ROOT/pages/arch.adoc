@@ -142,7 +142,7 @@ Service contract upgrades are only allowed for non-breaking changes.
 
 The registry module diagram below provides an overview of the registry related contracts of a GIF deployment.
 
-image::./images/registry-module.png[Registry Module]
+image::{imgbase}registry-module.png[Registry Module]
 
 Contracts and their responsibilities are outlined below.
 
@@ -193,7 +193,7 @@ The DIP token is always registered with the Token registry.
 
 The staking module diagram below provides an overview of the registry related contracts of a GIF deployment.
 
-image::./images/staking-module.png[Staking Module]
+image::{imgbase}staking-module.png[Staking Module]
 
 Contracts and their responsibilities are outlined below.
 
@@ -226,7 +226,7 @@ Contracts and their responsibilities are outlined below.
 
 The instance module diagram below provides an overview of the instance related contracts.
 
-image::./images/instance-module.png[Instance Module]
+image::{imgbase}instance-module.png[Instance Module]
 
 Contracts and their responsibilities are outlined below.
 
@@ -271,7 +271,7 @@ The term "component module" covers four distinct types of components that togeth
 
 The diagram below shows the architecture of an exemplary "My Product" use case.
 
-image::./images/component-modules.png[Component Modules]
+image::{imgbase}component-modules.png[Component Modules]
 
 Moudle contracts and their responsibilities are outlined below.
 
@@ -355,7 +355,7 @@ In this phase NFTs are also minted for most business relevant objects such as po
 
 The component diagram below provides the overview of the component contract hierarchy.
 
-image::./images/component-diagram.png[Component Diagram]
+image::{imgbase}component-diagram.png[Component Diagram]
 
 
 [cols="1,3"]
