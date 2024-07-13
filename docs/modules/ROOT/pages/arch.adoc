@@ -344,7 +344,6 @@ In this phase NFTs are also minted for most business relevant objects such as po
 === Stakeholders
 === Business Objects
 === Creating a new Instance
-=== Registering Components
 === Authorization Management
 === Instance Staking
 
@@ -358,6 +357,8 @@ Components provide the shared functionality of the different types of components
 1. Components come in four different types: products, distributions, oracles, and pools.
 1. Components need a use case specific implementation.
 The framework provides templates for each component type that need to be extended and customized accordingly.
+1. Components may be upgradeable or non-upgradeable.
+Only the actual implementation of the component determines if the component is upgradeable or not.
 1. Every component needs to be registered with exactly one instance.
 1. To register a component the registrar account needs to be authorized via the instance admin contract.
 1. Every component contract is also registered with the registry and comes with an associated NFT.
@@ -415,6 +416,10 @@ The table below provides additional contract specific information.
 |===
 | Contract | Responsibility
 
+| `Initializable` +
+| provides the initialization mechanism for upgradeable components.
+It is up to the use case specific implementation to take advantage of this capability.
+
 | `(I)RegistryLinked` +
 (shared) 
 | Base interface and implementation for contracts that are linked to the registry.
@@ -430,6 +435,9 @@ The linking to the NFT is done via the `linkToRegisteredNftId` function that loo
 (shared) 
 | Base interface and implementation for contracts that need to be registered with the registry.
 Registerable contracts provide all necessary information to be registered via its `getInitialInfo` function.
+
+| `AccessManagedUpgradeable` +
+| As components might need to be upgradeable they also need to derive from OpenZeppelin's upgradeable base contract.
 
 | `(I)Component` +
 (shared) 
@@ -457,6 +465,8 @@ image::{imgbase}product-component.png[Product Component Diagram]
 The responsibilities of the services interacting with the product component are described in detail in the business processes section below.
 
 === Stakeholders
+Product owners and policy holders are the relevant stakeholder accounts for product components.
+
 ==== Product Owner
 The product owner is represented by the account that holds the product NFT.
 The initial product owner is the account that first registers the product component contract with the instance module.
@@ -627,13 +637,43 @@ This is a terminal state.
 |===
 
 === Business Processes
+
+==== Product Registration
+To register a product component with the linked instance module two conditions need to be met.
+The product component needs to be deployed by the future product owner.
+The product owner needs to be authorized by the instance admin contract via the product owner role.
+
+
+Product registration is the responsibility of the `ComponentService`.
+The principal registration process steps can be summarized as follows:
+
+1. Registration of the new component contract with the `Registry` and minting of the product NFT by the `ChainNft`
+
+1. Setup component authorization at the `InstanceAdmin` via the `InstanceService`
+
+1. Creation of the component object in the `InstanceStore`
+
+1. Creation of the product object in the `InstanceStore`
+
+The actual registration can then be performed by executing the `register()` function of the products `Component` base contract.
+A sequence diagram of the product registration process is shown below.
+
+image::{imgbase}bp-product-register.png[Product Registration Process]
+
 ==== Pricing
+
 ==== Application Creation
+
 ==== Policy Collateralization
+
 ==== Policy Expiry
+
 ==== Policy Closure
+
 ==== Claims Creation
+
 ==== Payout Handling
+
 === Contracts
 
 == Distribution Components

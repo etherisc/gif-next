@@ -152,6 +152,8 @@ contract ComponentService is
             PRODUCT(),
             PRODUCT_OWNER_ROLE());
 
+        // TODO consider to relocate the steps below to the instance service
+        
         // create product info
         IComponents.ProductInfo memory productInfo = IProductComponent(contractAddress).getInitialProductInfo();
         instanceStore.createProduct(productNftId, productInfo);
@@ -531,7 +533,7 @@ contract ComponentService is
         instanceReader = instance.getInstanceReader();
         instanceStore = instance.getInstanceStore();
 
-        IComponents.ComponentInfo memory componentInfo = component.getComponentInfo();
+        IComponents.ComponentInfo memory componentInfo = component.getInitialComponentInfo();
         componentInfo.tokenHandler = new TokenHandler(address(componentInfo.token));
 
         instanceStore.createComponent(
