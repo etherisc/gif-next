@@ -1,0 +1,21 @@
+@startuml
+
+object Instance
+object MyProduct
+
+object Risk
+object Policy
+object Claim
+object Payout
+
+Instance . MyProduct
+
+MyProduct o- Risk
+MyProduct o-- Policy
+
+Risk .. Policy
+
+Policy o- Claim
+Claim o- Payout
+
+@enduml

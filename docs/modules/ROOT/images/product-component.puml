@@ -1,0 +1,23 @@
+@startuml
+
+package "Product Module" as productModule {
+  [Product] as product
+}
+
+[PricingService] as pricingS
+[ComponentService] as componentS
+[ProductService] as productS
+[ApplicationService] as applicationS
+[PolicyService] as policyS
+[ClaimService] as claimS
+
+
+componentS <-- product
+productS <-- product
+pricingS <- product
+
+product --> applicationS
+product --> policyS
+product -> claimS
+
+@enduml

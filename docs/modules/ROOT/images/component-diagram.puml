@@ -26,9 +26,14 @@ Component : getToken()
 Component : getTokenHandler()
 Component : getWallet()
 
+class IERC20Metadata  <<OpenZeppelin>>
+IERC20Metadata -* Component
+Component --* TokenHandler
+IERC20Metadata -[hidden]- TokenHandler
+
 class InstanceLinkedComponent implements IInstanceLinkedComponent
 class InstanceLinkedComponent extends Component
-InstanceLinkedComponent : regsiter()
+InstanceLinkedComponent : register()
 InstanceLinkedComponent : lock/unlock()
 InstanceLinkedComponent : withdrawFees()
 InstanceLinkedComponent : getAuthorization()

@@ -66,6 +66,7 @@ contract ObjectLifecycle is
 
     function _setupPayoutLifecycle() private {
         setInitialState(PAYOUT(), EXPECTED());
+        // TODO: add state cancelled
         setStateTransition(PAYOUT(), EXPECTED(), PAID());
     }
 

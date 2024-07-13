@@ -349,14 +349,67 @@ In this phase NFTs are also minted for most business relevant objects such as po
 === Instance Staking
 
 == Components
+
+The term component is used as a summary term for use case specific product, distribution, oracle, and pool contracts/modules.
+Components provide the shared functionality of the different types of components that does not depend on any specifc use case.
+
 === General Principles
+
+1. Components come in four different types: products, distributions, oracles, and pools.
+1. Components need a use case specific implementation.
+The framework provides templates for each component type that need to be extended and customized accordingly.
+1. Every component needs to be registered with exactly one instance.
+1. To register a component the registrar account needs to be authorized via the instance admin contract.
+1. Every component contract is also registered with the registry and comes with an associated NFT.
+1. Component ownership is defined as the owner of the NFT associated with the componet contract.
+1. Component owners may lock and unlock their components.
+A locked component may no longer accept state changing transactions.
+Note that this behaviour needs to be ensured by the use case specific implementation of the component contracts.
+1. Component owners may withdraw collected component fees.
+1. Every component contract has a defined ERC20 token that represents the principal token for the specific use case.
+All components that together implement a specific use case must share the same ERC20 token.
+1. Every component contract comes with its own wallet address. 
+The default wallet address is the contract address itself.
+Depending on the component type this wallet holds ERC20 token that represent fees, commissions, or funds.
+1. Every component contract has its own token handling contract that manages token transfers to and from the component contract.
+1. All business object data defined by the framework are stored with the instance contract and not the component contracts.
+1. For all framework related business logic components may only interact through services with other components or the linked instance contract.
+1. Authorization for interaction of components with framework services is managed by the instance admin contract.
+1. Use case specific component implementations should follow these patterns and not store business or security relevant data in the component contracts and not directly interact with any other components.
+1. Authorization for communication with use case specific supporting contracts should also be managed by the instance admin contract.
+
+=== Wallet Management
+
+Every component contract has its own wallet address.
+As mentioned above the default wallet address is the component contract address.
+
+To increase flexibility for use case specific implementations the component owner may also define an external wallet address.
+For example a gnosis safe or a multisig wallet.
+In such cases it is the responsibility of the external wallet owner to maintain adequate allowances from the external wallet to the components token handling contract.
+
 === Token Management
+
+Every component contract has its own token handling contract that manages token transfers to and from the component contract.
+
+Moving tokens form an account to the component wallet requires a corresponding allowance from that account to the token handling contract.
+Moving tokens from the component wallet to a receiving account also requires an allowance from the component wallet to the token handling contract.
+
+To illustrate this setup consider a premium payment.
+To buy a policy, a policy holder first needs to create an approval for the token handling contract of the policy component over the premium amount.
+The buying transaction then calculates the associated fees, commissions, and net premium amount.
+The token handler of the product component then executes the transfer of the product fee to the product wallet, the transfers of the distribution fee and commission to the distribution wallet, and the transfer of the pool fee, the bundle fee and the net premium to the pool wallet.
+
+In the case of a payout the token handler of the pool component transfers the payout amount from the pool wallet to the policy holder.
+
+Other uses component token handlers include fee withdrawals for component owners, commission withdrawals and risk capital collection from investors.
+
 === Contracts
 
 The component diagram below provides the overview of the component contract hierarchy.
 
 image::{imgbase}component-diagram.png[Component Diagram]
 
+The table below provides additional contract specific information.
 
 [cols="1,3"]
 |===
@@ -378,24 +431,201 @@ The linking to the NFT is done via the `linkToRegisteredNftId` function that loo
 | Base interface and implementation for contracts that need to be registered with the registry.
 Registerable contracts provide all necessary information to be registered via its `getInitialInfo` function.
 
-
 | `(I)Component` +
 (shared) 
 | Base interface and implementation for all component contracts.
+
+| `TokenHandler` +
+(shared)
+| Component specific token transfer manager contract.
+
+| `IERC20Metadata` +
+| Use case specific principal ERC20 token.
 
 |===
 
 == Product Components
 === Overview
+
+The product component forms the central part of a use case implementation.
+It is responsible for the management of risk, application, policy, claim, and payout business objects.
+
+Via the services shown in the diagram below, the product component stores its business objects data with the instance module and interacts with the other components that jointly implement the use case.
+
+image::{imgbase}product-component.png[Product Component Diagram]
+
+The responsibilities of the services interacting with the product component are described in detail in the business processes section below.
+
 === Stakeholders
 ==== Product Owner
+The product owner is represented by the account that holds the product NFT.
+The initial product owner is the account that first registers the product component contract with the instance module.
+
 ==== Policy Holder
+As all policies created by the framework have an associated NFT a policy holder is defined as the current holder of the NFT that represents the policy.
+
+When no specific beneficiary is defined for a claim/payout the payout recipient is the policy holder.
+
 === Business Objects
+
+==== Overview
+
+The business objects relevant to the product component and their relations are shown in the diagram below.
+To indicate the use case specific nature of products the product component is named "MyProduct"in the diagram.
+
+image::{imgbase}product-er.png[Product Business Objects]
+
+* A product may defines one or more risks.
+* For each application/policy a policy object is created.
+* Policy objects are always linked to a product component.
+Each policy object is also linked to one risk object.
+* A policy may has from zero to many claim objects.
+* A claim object may has from one to many payout objects.
+
+Detailed information regarding the different business objects is provided below.
+
 ==== Risks
-==== Applications
-==== Policies
+Risks are product specific and have unique IDs that represent an insurable event.
+Examples of insurable events are a delayed flight, a flood in a specific area and time window, or a failed harvest in a specific area and growing season.
+
+All policies linked to the same risk will share the claim/payout characteristics. 
+
+Risk objects have a simple lifecycle that indicates if the risk is active, paused or archived.
+Once risks are no longer relevant from a business perspective, risks can be paused or archived.
+Paused risks may be reactivated at a later point in time.
+Once a risk is in archived state it can no longer be reactivated.
+
+New policies can only be created for risks in active state.
+
+==== Application and Policies
+Applications and Policies are two terms for the same business object in two different livecyle states.
+An application is also registered in the registry and represented by an NFT that is used to define the application/policy holder as the current owner of the NFT.
+
+An application is the request for a policy and holds all information necessary to specify the covered risk, the policy holder, the premium, and the sum insured (maximum payout amount).
+Applications can be created by any account that is authorized to interact with the product component.
+
+A policy is an application that has been approved by the product component and collateralized by locking capital in the pool component.
+The policy business object also holds summary information about the policy like the number of open claims and the total payout amount.
+
+The framework does not enforce a specific policy management process.
+It is therefore up to the use case specific implementation to define the final process that defines who can create applications, how applications are approved or rejected etc.
+
+The framework does however enforce a policy lifecycle that is illustrated below.
+
+image::{imgbase}policy-lifecycle.png[Policy Lifecycle Diagram]
+
+The table below provides additional information about the policy lifecycle.
+
+[cols="1,3"]
+|===
+| State | Description
+
+| Applied
+| The initial state of a new policy business object.
+In this state the object is called an application.
+
+| Declined
+| The application has not been accepted by the product component.
+The business object will never become a policy.
+This is a terminal state and no policy will be created.
+
+| Revoked
+| The application has been declared irrelevant by the application holder.
+The business object will never become a policy.
+This is a terminal state and no policy will be created.
+
+| Collateralized
+| The application has been accepted by the product component and the necessary collateral has been locked in the pool component linked to the product component.
+
+| Active +
+(virtual)
+| Active is a virtual state that indicates that the policy is in a state where claims can be created.
+Active can be considered as a sub state of state Collateralized.
+A policy may only be in state active if the current block timestamp has reached or passed the activatedAt property of the policy and has not yet been expired.
+
+| Expired +
+(virtual)
+| Expired is a virtual state that indicates that the policy has reached a state where claims can no longer be made.
+Payouts may still be created for confirmed claims even though the policy is expired.
+Expired is a sub state of state Collateralized.
+A policy becomes expired if the current block timestamp has reached or passed the expiredAt property of the policy.
+
+| Closed
+| A policy can be closed once has been expired and all its confirmed claims have been payed out in full.
+A policy may also be closed once the total of the processed payout amounts has reached the sum insured amount.
+TODO: decide if the policy should be explicityl expired first of if it should be sufficient to set the closedAt property.
+
+|===
+
 ==== Claims
+A claim represents a request for a payout in the context of a specific policy.
+Claim creation is only possible for policies in state active.
+
+The framework does not enforce a specific claim management process.
+It is therefore up to the use case specific implementation that defines who can create claims, how claims are approved or rejected etc.
+
+As in the case of policies the framework does enforce a claim lifecycle. The table below provides information for the available claim lifecycle states.
+
+[cols="1,3"]
+|===
+| State | Description
+
+| Submitted
+| The initial state of a newly created claim business object.
+Claims can only be submitted for policies in active state.
+A submitted claim must also specify a claim amount.
+
+| Declined
+| The claim has been rejected.
+No associated payout object(s) will be created and no payout(s) will be made.
+This is a terminal state.
+
+| Revoked
+| The claim has been declared irrelevant and no claim evaluation needs to be made.
+As for declined claims no associated payout object(s) will be created and no payout(s) will be made.
+This is a terminal state and no policy will be created.
+
+| Confirmed
+| The claim has been accepted and includes a decision about the claim amount.
+The framework ensures that the sum total of confirmed claim amounts of a policy does not exceed the sum insured amount of the same policy.
+For confirmed claims one or more payout objects linked to the claim object may now be created and payouts can then be executed.
+
+| Closed
+| A confirmed claim can only be closed once the associated payout object(s) have been processed and the payout(s) have been made.
+
+|===
+
 ==== Payouts
+Confirmed claims may have one or more associated payout objects.
+This implies that each payout object is linked to a specific claim object and indirectly to a specific policy object.
+
+The framework does not enforce a specific payout management process.
+It is therefore up to the use case specific implementation that defines who can create, cancel or execute payouts.
+As in the case of claims, the framework enforces a payout lifecycle.
+The framework futher ensures that the sum total of all processed payout amounts does never exceed the the confirmed claim amount and that the associated claim can only be closed the full claim amount has been paid out.
+
+The table below describes the payout lifecycle states.
+
+[cols="1,3"]
+|===
+| State | Description
+
+| Expected
+| The initial state of a newly created payout business object.
+Payout objects can only be created for claim objects in confirmed state and as long as the sum total of the payout amounts does not exceed the claim amount.
+
+| Cancelled
+| The payout has been cancelled.
+A payout can only move to the cancelled state from the expected state.
+For cancelled payouts no payout will ever be made.
+This is a terminal state.
+
+| Executed
+| The payout has been executed and the specified token amount has been transferred to the payout recipient.
+This is a terminal state.
+
+|===
+
 === Business Processes
 ==== Pricing
 ==== Application Creation
