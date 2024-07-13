@@ -1,6 +1,6 @@
-:imagesdir: 
+:imagesdir:
 
-ifndef::env-site[]
+ifndef::site-gen-antora[]
 :imagesdir: ../images/
 endif::[]
 
