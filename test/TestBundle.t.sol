@@ -944,7 +944,7 @@ contract TestBundle is GifTest {
         vm.stopPrank();
 
         vm.startPrank(productOwner);
-        product.collateralize(policyNftId, true, TimestampLib.blockTimestamp());
+        product.createPolicy(policyNftId, true, TimestampLib.blockTimestamp());
         vm.stopPrank();
 
         vm.startPrank(investor);
@@ -1038,7 +1038,7 @@ contract TestBundle is GifTest {
         vm.stopPrank();
 
         vm.startPrank(productOwner);
-        product.collateralize(policyNftId, true, TimestampLib.blockTimestamp());
+        product.createPolicy(policyNftId, true, TimestampLib.blockTimestamp());
         product.expire(policyNftId, TimestampLib.zero());
         product.close(policyNftId);
         vm.stopPrank();

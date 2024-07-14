@@ -148,12 +148,12 @@ contract SimpleProduct is
         );
     }
 
-    function collateralize(
-        NftId policyNftId,
+    function createPolicy(
+        NftId applicationNftId,
         bool requirePremiumPayment,
         Timestamp activateAt
     ) public {
-        _collateralize(policyNftId, requirePremiumPayment, activateAt);
+        _createPolicy(applicationNftId, requirePremiumPayment, activateAt);
     }
 
     function decline(

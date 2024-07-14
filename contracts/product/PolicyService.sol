@@ -78,13 +78,6 @@ contract PolicyService is
     }
 
 
-    function _getAndVerifyInstanceAndProduct() internal view returns (Product product) {
-        IRegistry.ObjectInfo memory productInfo;
-        (, productInfo,) = _getAndVerifyActiveComponent(PRODUCT());
-        product = Product(productInfo.objectAddress);
-    }
-    
-
     function decline(
         NftId applicationNftId // = policyNftId
     )
@@ -117,10 +110,9 @@ contract PolicyService is
         emit LogPolicyServicePolicyDeclined(applicationNftId);
     }
 
-    event LogDebug(uint idx, string message);
 
     /// @inheritdoc IPolicyService
-    function collateralize(
+    function createPolicy(
         NftId applicationNftId, // = policyNftId
         bool requirePremiumPayment,
         Timestamp activateAt
@@ -192,7 +184,10 @@ contract PolicyService is
         if(requirePremiumPayment) {
             _transferFunds(instanceReader, applicationNftId, applicationInfo.productNftId, premium);
         }
+
+        // TODO: add callback IPolicyHolder.policyActivated() if applicable
     }
+
 
     /// @inheritdoc IPolicyService
     function collectPremium(
@@ -237,6 +232,8 @@ contract PolicyService is
         // TODO: add logging
 
         _transferFunds(instanceReader, policyNftId, policyInfo.productNftId, premium);
+
+        // TODO: add callback IPolicyHolder.policyActivated() if applicable
     }
 
     /// @inheritdoc IPolicyService
@@ -251,26 +248,8 @@ contract PolicyService is
         instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, KEEP_STATE());
 
         // TODO: add logging
-    }
 
-    function _activate(
-        NftId policyNftId, 
-        IPolicy.PolicyInfo memory policyInfo,
-        Timestamp activateAt
-    )
-        internal
-        virtual
-        view 
-        returns (IPolicy.PolicyInfo memory)
-    {
-        if(! policyInfo.activatedAt.eqz()) {
-            revert ErrorPolicyServicePolicyAlreadyActivated(policyNftId);
-        }
-
-        policyInfo.activatedAt = activateAt;
-        policyInfo.expiredAt = activateAt.addSeconds(policyInfo.lifetime);
-
-        return policyInfo;
+        // TODO: add callback IPolicyHolder.policyActivated() if applicable
     }
 
 
@@ -324,6 +303,7 @@ contract PolicyService is
         return expireAt;
     }
 
+
     function close(
         NftId policyNftId
     )
@@ -368,22 +348,6 @@ contract PolicyService is
     }
 
 
-    /// @dev checks that policy has been collateralized and has been activated.
-    /// does not check if policy has been expired or closed.
-    function _policyHasBeenActivated(
-        StateId policyState,
-        IPolicy.PolicyInfo memory policyInfo
-    )
-        internal
-        view
-        returns (bool)
-    {
-        if (policyState != COLLATERALIZED()) { return false; } 
-        if (TimestampLib.blockTimestamp() < policyInfo.activatedAt) { return false; } 
-        return true;
-    }
-
-
     /// @dev calculates the premium and updates all counters in the other services
     function _calculateAndProcessPremium(
         IInstance instance,
@@ -411,7 +375,7 @@ contract PolicyService is
 
         // check if premium balance and allowance of policy holder is sufficient
         {
-            TokenHandler tokenHandler = instanceReader.getComponentInfo(productNftId).tokenHandler;
+            TokenHandler tokenHandler = _getTokenHandler(instanceReader, productNftId);
             address policyHolder = getRegistry().ownerOf(applicationNftId);
         
             _checkPremiumBalanceAndAllowance(
@@ -431,28 +395,25 @@ contract PolicyService is
             premium);
     }
 
-    /// @dev checks the balance and allowance of the policy holder
-    function _checkPremiumBalanceAndAllowance(
-        IERC20Metadata token,
-        address tokenHandlerAddress, 
-        address policyHolder, 
-        Amount premiumAmount
+
+    function _activate(
+        NftId policyNftId, 
+        IPolicy.PolicyInfo memory policyInfo,
+        Timestamp activateAt
     )
         internal
         virtual
-        view
+        view 
+        returns (IPolicy.PolicyInfo memory)
     {
-        uint256 premium = premiumAmount.toInt();
-        uint256 balance = token.balanceOf(policyHolder);
-        uint256 allowance = token.allowance(policyHolder, tokenHandlerAddress);
-    
-        if (balance < premium) {
-            revert ErrorPolicyServiceBalanceInsufficient(policyHolder, premium, balance);
+        if(! policyInfo.activatedAt.eqz()) {
+            revert ErrorPolicyServicePolicyAlreadyActivated(policyNftId);
         }
 
-        if (allowance < premium) {
-            revert ErrorPolicyServiceAllowanceInsufficient(policyHolder, tokenHandlerAddress, premium, allowance);
-        }
+        policyInfo.activatedAt = activateAt;
+        policyInfo.expiredAt = activateAt.addSeconds(policyInfo.lifetime);
+
+        return policyInfo;
     }
 
     /// @dev update counters by calling the involved services
@@ -494,6 +455,7 @@ contract PolicyService is
             premium);
     }
 
+
     /// @dev transfer the premium to the wallets the premium is distributed to
     function _transferFunds(
         InstanceReader instanceReader,
@@ -504,7 +466,7 @@ contract PolicyService is
         internal
         virtual
     {
-        TokenHandler tokenHandler = instanceReader.getComponentInfo(productNftId).tokenHandler;
+        TokenHandler tokenHandler = _getTokenHandler(instanceReader, productNftId);
         address policyHolder = getRegistry().ownerOf(policyNftId);
 
         (
@@ -524,7 +486,48 @@ contract PolicyService is
     }
 
 
-    function _getTokenHandlerAndProductWallet(
+    /// @dev checks that policy has been collateralized and has been activated.
+    /// does not check if policy has been expired or closed.
+    function _policyHasBeenActivated(
+        StateId policyState,
+        IPolicy.PolicyInfo memory policyInfo
+    )
+        internal
+        view
+        returns (bool)
+    {
+        if (policyState != COLLATERALIZED()) { return false; } 
+        if (TimestampLib.blockTimestamp() < policyInfo.activatedAt) { return false; } 
+        return true;
+    }
+
+
+    /// @dev checks the balance and allowance of the policy holder
+    function _checkPremiumBalanceAndAllowance(
+        IERC20Metadata token,
+        address tokenHandlerAddress, 
+        address policyHolder, 
+        Amount premiumAmount
+    )
+        internal
+        virtual
+        view
+    {
+        uint256 premium = premiumAmount.toInt();
+        uint256 balance = token.balanceOf(policyHolder);
+        uint256 allowance = token.allowance(policyHolder, tokenHandlerAddress);
+    
+        if (balance < premium) {
+            revert ErrorPolicyServiceBalanceInsufficient(policyHolder, premium, balance);
+        }
+
+        if (allowance < premium) {
+            revert ErrorPolicyServiceAllowanceInsufficient(policyHolder, tokenHandlerAddress, premium, allowance);
+        }
+    }
+
+
+    function _getTokenHandler(
         InstanceReader instanceReader,
         NftId productNftId
     )
@@ -556,6 +559,13 @@ contract PolicyService is
         distributionWallet = instanceReader.getComponentInfo(distributionNftId).wallet;
         poolWallet = instanceReader.getComponentInfo(productInfo.poolNftId).wallet;
         productWallet = instanceReader.getComponentInfo(productNftId).wallet;
+    }
+
+
+    function _getAndVerifyInstanceAndProduct() internal view returns (Product product) {
+        IRegistry.ObjectInfo memory productInfo;
+        (, productInfo,) = _getAndVerifyActiveComponent(PRODUCT());
+        product = Product(productInfo.objectAddress);
     }
 
 

@@ -747,7 +747,7 @@ contract TestProductClaim is GifTest {
         Timestamp activateAt = TimestampLib.blockTimestamp();
 
         vm.startPrank(productOwner);
-        prdct.collateralize(policyNftId, collectPremium, activateAt); 
+        prdct.createPolicy(policyNftId, collectPremium, activateAt); 
         vm.stopPrank();
 
         // create claim with payout
@@ -848,7 +848,7 @@ contract TestProductClaim is GifTest {
         internal
     {
         vm.startPrank(productOwner);
-        prdct.collateralize(nftId, collectPremium, activateAt); 
+        prdct.createPolicy(nftId, collectPremium, activateAt); 
         vm.stopPrank();
     }
 

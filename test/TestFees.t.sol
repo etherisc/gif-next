@@ -758,7 +758,7 @@ contract TestFees is GifTest {
         // solhint-disable-next-line 
         console.log("before collateralization of", policyNftId.toInt());
         Timestamp activateAt = TimestampLib.blockTimestamp();
-        product.collateralize(policyNftId, true, activateAt); 
+        product.createPolicy(policyNftId, true, activateAt); 
 
         assertTrue(instanceReader.getPolicyState(policyNftId) == COLLATERALIZED(), "policy state not COLLATERALIZED");
         IPolicy.PolicyInfo memory productInfo = instanceReader.getPolicyInfo(policyNftId);

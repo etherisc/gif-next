@@ -205,7 +205,7 @@ contract TestProduct is GifTest {
         // WHEN - collateralize application
         bool requirePremiumPayment = false;
         Timestamp activateAt = TimestampLib.blockTimestamp();
-        product.collateralize(policyNftId, requirePremiumPayment, activateAt); 
+        product.createPolicy(policyNftId, requirePremiumPayment, activateAt); 
 
         // THEN
         assertTrue(instanceReader.getPolicyState(policyNftId) == COLLATERALIZED(), "policy state not COLLATERALIZED");
@@ -300,7 +300,7 @@ contract TestProduct is GifTest {
         // solhint-disable-next-line 
         console.log("before collateralization of", policyNftId.toInt());
         Timestamp activateAt = TimestampLib.blockTimestamp();
-        product.collateralize(policyNftId, true, activateAt); 
+        product.createPolicy(policyNftId, true, activateAt); 
 
         // THEN
         assertTrue(instanceReader.getPolicyState(policyNftId) == COLLATERALIZED(), "policy state not COLLATERALIZED");
@@ -439,7 +439,7 @@ contract TestProduct is GifTest {
         vm.startPrank(productOwner);
         bool collectPremiumAmount = true;
         Timestamp activateAt = TimestampLib.blockTimestamp();
-        product.collateralize(policyNftId, collectPremiumAmount, activateAt);
+        product.createPolicy(policyNftId, collectPremiumAmount, activateAt);
 
         // THEN
         assertTrue(instanceReader.getPolicyState(policyNftId) == COLLATERALIZED(), "policy state not COLLATERALIZED");
@@ -550,7 +550,7 @@ contract TestProduct is GifTest {
         //         AmountLib.toAmount(137), 
         //         AmountLib.toAmount(140)));
 
-        product.collateralize(
+        product.createPolicy(
             policyNftId, 
             collectPremiumAmount, 
             activationAt);
@@ -600,11 +600,11 @@ contract TestProduct is GifTest {
 
         // THEN - WHEN - try collateralize on locked bundle
         vm.expectRevert();
-        product.collateralize(policyNftId, false, timeNow); 
+        product.createPolicy(policyNftId, false, timeNow); 
 
         // WHEN - unlock bundle and try collateralize again
         pool.unlockBundle(bundleNftId);
-        product.collateralize(policyNftId, false, timeNow);
+        product.createPolicy(policyNftId, false, timeNow);
 
         // THEN
         assertEq(instanceReader.getPolicyState(policyNftId).toInt(), COLLATERALIZED().toInt(), "unexpected policy state (not COLLATERALIZED)");
@@ -641,7 +641,7 @@ contract TestProduct is GifTest {
         assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
 
         // WHEN
-        product.collateralize(policyNftId, false, zeroTimestamp()); 
+        product.createPolicy(policyNftId, false, zeroTimestamp()); 
 
         // THEN 
         assertTrue(instanceReader.getPolicyState(policyNftId) == COLLATERALIZED(), "policy state not COLLATERALIZED");
@@ -728,7 +728,7 @@ contract TestProduct is GifTest {
 
         vm.startPrank(productOwner);
 
-        product.collateralize(policyNftId, false, zeroTimestamp()); 
+        product.createPolicy(policyNftId, false, zeroTimestamp()); 
         
         assertTrue(policyNftId.gtz(), "policyNftId was zero");
         assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
@@ -840,7 +840,7 @@ contract TestProduct is GifTest {
 
         // solhint-disable-next-line 
         console.log("before collateralization of", policyNftId.toInt());
-        product.collateralize(
+        product.createPolicy(
             policyNftId, 
             true, 
             TimestampLib.blockTimestamp()); 
@@ -967,7 +967,7 @@ contract TestProduct is GifTest {
 
         // solhint-disable-next-line 
         console.log("before collateralization of", policyNftId.toInt());
-        product.collateralize(policyNftId, true, TimestampLib.blockTimestamp()); 
+        product.createPolicy(policyNftId, true, TimestampLib.blockTimestamp()); 
 
         assertTrue(instanceReader.getPolicyState(policyNftId) == COLLATERALIZED(), "policy state not COLLATERALIZED");
         IPolicy.PolicyInfo memory policyInfoBefore = instanceReader.getPolicyInfo(policyNftId);
@@ -1030,7 +1030,7 @@ contract TestProduct is GifTest {
 
         // solhint-disable-next-line 
         console.log("before collateralization of", policyNftId.toInt());
-        product.collateralize(policyNftId, true, TimestampLib.blockTimestamp()); 
+        product.createPolicy(policyNftId, true, TimestampLib.blockTimestamp()); 
 
         assertTrue(instanceReader.getPolicyState(policyNftId) == COLLATERALIZED(), "policy state not COLLATERALIZED");
         IPolicy.PolicyInfo memory policyInfoBefore = instanceReader.getPolicyInfo(policyNftId);
@@ -1092,7 +1092,7 @@ contract TestProduct is GifTest {
 
         // solhint-disable-next-line 
         console.log("before collateralization of", policyNftId.toInt());
-        product.collateralize(policyNftId, true, TimestampLib.blockTimestamp()); 
+        product.createPolicy(policyNftId, true, TimestampLib.blockTimestamp()); 
 
         // WHEN
         Timestamp expireAtTs = TimestampLib.zero();
@@ -1211,7 +1211,7 @@ contract TestProduct is GifTest {
         vm.stopPrank();
 
         vm.startPrank(productOwner);
-        product.collateralize(policyNftId, true, TimestampLib.blockTimestamp()); 
+        product.createPolicy(policyNftId, true, TimestampLib.blockTimestamp()); 
         assertTrue(instanceReader.getPolicyState(policyNftId) == COLLATERALIZED(), "policy state not COLLATERALIZED");
 
         uint256 expireAt = createdAt + 30;
@@ -1287,7 +1287,7 @@ contract TestProduct is GifTest {
         vm.stopPrank();
 
         vm.startPrank(productOwner);
-        product.collateralize(policyNftId, true, TimestampLib.blockTimestamp()); 
+        product.createPolicy(policyNftId, true, TimestampLib.blockTimestamp()); 
         assertTrue(instanceReader.getPolicyState(policyNftId) == COLLATERALIZED(), "policy state not COLLATERALIZED");
 
         uint256 expireAt = createdAt - 5;

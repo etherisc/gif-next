@@ -43,16 +43,16 @@ interface IPolicyService is IService {
     event LogPolicyServicePolicyDeclined(NftId policyNftId);
     event LogPolicyServicePolicyExpirationUpdated(NftId policyNftId, Timestamp expiredAt);
 
-    /// @dev collateralizes the policy represented by {policyNftId}. locks the sum insured amount in the pool.
+    /// @dev creates the policy from {applicationNftId}. 
+    /// After successful completion of the function the policy can be referenced using the application NftId.
+    /// Locks the sum insured amount in the pool.
     /// sets the policy state to collateralized
-    /// may set the policy state to activated and set the activation date
     /// optionally collects premiums and activates the policy.
     /// - premium payment is only attempted if requirePremiumPayment is set to true
     /// - activation is only done if activateAt is a non-zero timestamp
-    /// an application can only be collateralized in applied state
-    /// only the related product may collateralize an application
-    function collateralize(
-        NftId policyNftId,
+    /// only the related product may create a policy from an application
+    function createPolicy(
+        NftId applicationNftId,
         bool requirePremiumPayment,
         Timestamp activateAt
     ) external;
