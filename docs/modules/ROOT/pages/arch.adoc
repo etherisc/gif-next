@@ -678,7 +678,7 @@ The commission amount depends on the availability and validity of the referral c
 1. For each component wallet calculate the inidividual amounts that would result from a policy sale.
 The sum of all these component specific amounts is equal to the premium amount.
 
-image::{imgbase}bp-product-pricing.png[Product Pricing Process]
+image::{imgbase}bp-product-pricing.png[Pricing Process]
 
 ==== Application Creation
 
@@ -690,10 +690,34 @@ The resulting NFT is used to define ownership of the application.
 
 1. Create the application object in the `InstanceStore`.
 
-image::{imgbase}bp-product-application.png[Product Application Creation Process]
+image::{imgbase}bp-product-application.png[Application Creation Process]
 
 
-==== Policy Collateralization
+==== Policy Creation
+
+Policies are created from applications.
+Policy creation is the responsibility of the `PolicyService`.
+
+The policy creation process steps can be summarized as follows:
+
+1. Given the NFT Id of a new application object the policy creation is started by the `PolicyService` function `createPolicy`.
+
+1. The policy service calls the `PoolService` function `lockCollateral` which in turn tasks the `BundleService` to lock the necessary collateral amount.
+The bundle service also links the new policy to the `BundleSet` that is collateralized by the specified bundle NFT Id.
+This step ends with updating the total locked value for the linked instance with the `Staking` contract.
+
+1. The policy service calls the function `calculatePremium` of the `PricingService`.
+This ensures that for premium collection the correct pricing process is involved.
+See above for the description of this pricing process.
+
+1. In turn the policy service triggers the calculation of all resulting fees, commission and net premiums for the policy sale in the product, distribution and pool components.
+The resulting balance updates are stored in the `InstanceStore`.
+
+1. The actual token transfers from the policy holder to the involved component wallets according to the above calculated fee, commission and net premium amounts.
+
+1. In case the policy holder is a contract that implements the `IPolicyHolder` interface the callback function `policyActivated` is called.
+
+image::{imgbase}bp-product-policy.png[Policy Creation Process]
 
 ==== Policy Expiry
 
