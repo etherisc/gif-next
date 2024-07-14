@@ -82,6 +82,16 @@ The following objects are managed by the protocol:
 |Stake |Stake object linked to its target object (instance or protocol)
 |===
 
+Except for the protocol object each object in the registry is linked to a parent object.
+Every object has its defined parent object.
+The only exception are stake objects which may either have the protocol object or an instance object as its parent object.
+
+The diagram below shows the registry object hierarchy.
+
+image::{imgbase}registry-er.png[Registry Object Hierarchy]
+
+The global registry is the parent object for all chain registries.
+The global registry may also serve as a parent object for service, staking and instance objects on mainnet.
 
 == Single-Chain Setup
 
@@ -455,7 +465,7 @@ This function creates a complete set of instance contracts via cloning the contr
 This "master instance" is part of the deployment of every GIF release.
 
 The principal steps of the instance creation process are outlined below:
-
+g
 1. A new `InstanceAdmin` contract with its `AccessManagerCloneable` contract is cloned from the master instance.
 
 1. A new `Instance` contract is cloned from the master instance.
