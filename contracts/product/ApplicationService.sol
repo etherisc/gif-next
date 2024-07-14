@@ -152,7 +152,42 @@ contract ApplicationService is
         applicationNftId = _registerApplication(productNftId, applicationOwner);
 
         // create policy info for application
-        IPolicy.PolicyInfo memory applicationInfo = IPolicy.PolicyInfo({
+        IPolicy.PolicyInfo memory applicationInfo = _createApplicationInfo(
+            productNftId,
+            riskId,
+            sumInsuredAmount,
+            lifetime,
+            bundleNftId,
+            referralId,
+            applicationData);
+
+        // TODO consider to provide this amount externally
+        // actual calculation is done 2nd time anyway for premium collection
+        // calculate premium amount
+        applicationInfo.premiumAmount = _calculatePremiumAmount(applicationInfo);
+
+        // register application with instance
+        instance.getInstanceStore().createApplication(
+            applicationNftId, 
+            applicationInfo);
+
+        // TODO: add logging
+    }
+
+    function _createApplicationInfo(
+        NftId productNftId,
+        RiskId riskId,
+        Amount sumInsuredAmount,
+        Seconds lifetime,
+        NftId bundleNftId,
+        ReferralId referralId,
+        bytes memory applicationData
+    )
+        internal
+        virtual
+        returns (IPolicy.PolicyInfo memory applicationInfo)
+    {
+        return IPolicy.PolicyInfo({
             productNftId:       productNftId,
             bundleNftId:        bundleNftId,
             referralId:         referralId,
@@ -171,20 +206,7 @@ contract ApplicationService is
             expiredAt:          zeroTimestamp(),
             closedAt:           zeroTimestamp()
         });
-
-        // TODO consider to provide this amount externally
-        // actual calculation is done 2nd time anyway for premium collection
-        // calculate premium amount
-        applicationInfo.premiumAmount = _calculatePremiumAmount(applicationInfo);
-
-        // register application with instance
-        instance.getInstanceStore().createApplication(
-            applicationNftId, 
-            applicationInfo);
-
-        // TODO: add logging
     }
-
 
     function renew(
         NftId policyNftId, // policy to be renewd (renewal inherits policy attributes)

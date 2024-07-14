@@ -84,6 +84,7 @@ contract PricingService is
                 IInstance instance
             ) = _getAndVerifyComponentInfo(productNftId, PRODUCT(), false);
 
+            // get instance reader from local instance variable
             reader = instance.getInstanceReader();
 
             // calculate net premium
@@ -104,19 +105,21 @@ contract PricingService is
                 revert ErrorIPricingServiceBundlePoolMismatch(bundleNftId, bundleInfo.poolNftId, productInfo.poolNftId);
             }
 
-            // calculate premium, order is important
+            // calculate fixed fees for product, pool, bundle
             premium = _getFixedFeeAmounts(
                 netPremiumAmount,
                 productInfo,
                 bundleInfo
             );
 
+            // calculate variable fees for product, pool, bundle
             premium = _calculateVariableFeeAmounts(
                 premium,
                 productInfo,
                 bundleInfo
             );
 
+            // calculate distribution fee and (if applicable) commission
             premium = _calculateDistributionOwnerFeeAmount(
                 premium,
                 productInfo,
@@ -124,6 +127,7 @@ contract PricingService is
                 reader
             );
 
+            // calculate resulting amounts for product, pool, and distribution wallets
             premium = _calculateTargetWalletAmounts(premium);
 
             // sanity check to validate the fee calculation

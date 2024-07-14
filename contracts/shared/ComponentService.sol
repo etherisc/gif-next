@@ -151,8 +151,6 @@ contract ComponentService is
             contractAddress,
             PRODUCT(),
             PRODUCT_OWNER_ROLE());
-
-        // TODO consider to relocate the steps below to the instance service
         
         // create product info
         IComponents.ProductInfo memory productInfo = IProductComponent(contractAddress).getInitialProductInfo();

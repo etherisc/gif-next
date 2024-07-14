@@ -643,7 +643,6 @@ To register a product component with the linked instance module two conditions n
 The product component needs to be deployed by the future product owner.
 The product owner needs to be authorized by the instance admin contract via the product owner role.
 
-
 Product registration is the responsibility of the `ComponentService`.
 The principal registration process steps can be summarized as follows:
 
@@ -651,18 +650,48 @@ The principal registration process steps can be summarized as follows:
 
 1. Setup component authorization at the `InstanceAdmin` via the `InstanceService`
 
-1. Creation of the component object in the `InstanceStore`
+1. Creation of a component specific `TokenHandler` and the component object in the `InstanceStore`
 
-1. Creation of the product object in the `InstanceStore`
+1. Creation of the product object in the `InstanceStore`.
+The product objects holds the information of the linked distribution and pool component as well as all pricing releevant fess for all involved components.
 
 The actual registration can then be performed by executing the `register()` function of the products `Component` base contract.
 A sequence diagram of the product registration process is shown below.
 
 image::{imgbase}bp-product-register.png[Product Registration Process]
 
+The same process flow is used to register distribution, oracle and pool components. 
+These processes only differ in the last step where component specific objects are created in the `InstanceStore`.
+
 ==== Pricing
 
+Product pricing is the responsibility of the `PricingService`.
+The pricing process steps can be summarized as follows:
+
+1. Obtain the use case specific net premium amount from the product object itself.
+1. Obtain the product and bundle information using the `InstanceReader`.
+The product information provides all fees specifications for the product and the pool.
+The bundle information also provides the bundle fee specification.
+1. Calculate fixed and variable fee amounts for the product and the pool component.
+1. Calculate the fee and commission amounts for the distribution component.
+The commission amount depends on the availability and validity of the referral code used for the policy application.
+1. For each component wallet calculate the inidividual amounts that would result from a policy sale.
+The sum of all these component specific amounts is equal to the premium amount.
+
+image::{imgbase}bp-product-pricing.png[Product Pricing Process]
+
 ==== Application Creation
+
+Application creation is the responsibility of the `ApplicationService`.
+The application creation process steps can be summarized as follows:
+
+1. Create and register a new registry object with the registry.
+The resulting NFT is used to define ownership of the application.
+
+1. Create the application object in the `InstanceStore`.
+
+image::{imgbase}bp-product-application.png[Product Application Creation Process]
+
 
 ==== Policy Collateralization
 
