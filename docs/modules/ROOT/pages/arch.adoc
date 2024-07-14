@@ -91,7 +91,7 @@ The diagram below shows the registry object hierarchy.
 image::{imgbase}registry-er.png[Registry Object Hierarchy]
 
 The global registry is the parent object for all chain registries.
-The global registry may also serve as a parent object for service, staking and instance objects on mainnet.
+On Mainnet the global registry may also serve as a parent object for service, staking and instance objects on mainnet.
 
 == Single-Chain Setup
 
@@ -480,7 +480,70 @@ This step includes the cloning of the supportint `InstanceReader`, `InstanceStor
 image::{imgbase}bp-instance-create.png[Instance Creation Process]
 
 === Authorization Management
-=== Instance Staking
+
+The instance owner is responsible for granting and revoking of the predefined component owner roles.
+The instance owner may also define additional use case specific roles.
+The instance owner can also extend the authorization to use case specific supporting contracts.
+
+The instance owner only interacts with the `Instance` contract although the actual authorization is managed by the `InstanceAdmin` contract.
+The available instance functions for authorization management are listed in the table below.
+
+[cols="1,3"]
+|===
+| Function
+| Description
+
+| `createRole()`
+| Creates a new use case specific role.
+
+| `grantRole()`
+| Grants a role to an account/contract.
+
+| `revokeRole()`
+| Revokes a role from an account/contract.
+
+| `createTarget()`
+| Creates a new use case specific contract target.
+
+| `setTargetFunctionRole()`
+| Links a function of a target contract to a role.
+
+| `setTargetLocked()`
+| Locks/unlockes a target contract.
+A locked target contract may no longer accept state changing transactions.
+
+|===
+
+=== Staking Management
+When an instance is created it is automatically registered as a staking target with the staking module.
+It is then in the responsibility of the instance owner to define the staking parameters for the instance.
+For this purpose the instance provides the functions listed in the table below.
+
+[cols="1,3"]
+|===
+
+| Function 
+| Description
+
+| `setStakingLockingPeriod()`
+| Sets the locking period for DIP stakes for the instance.
+Once an instance stake is created by a staker the staked DIP tokens cannot be unstaked before the locking period has passed.
+Only the instance owner may set the locking period.
+
+| `setStakingRewardRate()`
+| Sets the reward rate for DIP stakes for the instance in the form of an annual percentage rate.
+Only the instance owner may set the reward rate.
+
+| `refillStakingRewardReserves()`
+| Refills the reward reserves of the instance.
+The reward reserves are used to pay out rewards to stakers.
+This function is not limited to the instance owner but callable by any account/contract.
+
+| `withdrawStakingRewardReserves()`
+| Withdraws the reward reserves for this instance.
+Only the instance owner may withdraw the reward reserves.
+
+|===
 
 == Components
 
