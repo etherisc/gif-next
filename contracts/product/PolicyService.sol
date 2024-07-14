@@ -261,7 +261,7 @@ contract PolicyService is
         external
         override
         virtual
-        returns (Timestamp)
+        returns (Timestamp expiredAt)
     {
         (NftId productNftId,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
         InstanceReader instanceReader = instance.getInstanceReader();
@@ -281,26 +281,29 @@ contract PolicyService is
             revert ErrorPolicyServicePolicyNotActive(policyNftId, policyState);
         }
 
-        // set expiryAt to current block timestamp if not set
-        if (expireAt.eqz()) {
-            expireAt = TimestampLib.blockTimestamp();
+        // set return value to provided timestamp
+        expiredAt = expireAt;
+
+        // update expiredAt to current block timestamp if not set
+        if (expiredAt.eqz()) {
+            expiredAt = TimestampLib.blockTimestamp();
         }
 
-        // check expiryAt represents a valid expiry time
-        if (expireAt >= policyInfo.expiredAt) {
+        // check expiredAt represents a valid expiry time
+        if (expiredAt >= policyInfo.expiredAt) {
             revert ErrorPolicyServicePolicyExpirationTooLate(policyNftId, policyInfo.expiredAt, expireAt);
         }
-        if (expireAt < TimestampLib.blockTimestamp()) {
+        if (expiredAt < TimestampLib.blockTimestamp()) {
             revert ErrorPolicyServicePolicyExpirationTooEarly(policyNftId, TimestampLib.blockTimestamp(), expireAt);
         }
 
-        // update policyInfo with new expiryAt timestamp
-        policyInfo.expiredAt = expireAt;
+        // update policyInfo with new expiredAt timestamp
+        policyInfo.expiredAt = expiredAt;
         instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, KEEP_STATE());
 
-        emit LogPolicyServicePolicyExpirationUpdated(policyNftId, expireAt);
+        emit LogPolicyServicePolicyExpirationUpdated(policyNftId, expiredAt);
 
-        return expireAt;
+        // TODO: add callback IPolicyHolder.policyExpired() if applicable
     }
 
 

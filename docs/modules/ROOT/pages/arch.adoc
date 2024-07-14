@@ -340,10 +340,135 @@ In this phase NFTs are also minted for most business relevant objects such as po
 |===
 
 == Instances
+
 === Overview
+Instances provide the central context to create and operate actual protection/insurance use cases.
+The recommendation is to create a new instance for each new use case.
+
+The purpose of an instance is to manage all necessary aspects and components to implement a use case.
+An instance is responsible for the handling of the following aspects:
+
+* Registration of the product, distribution, oracle and pool components needed to implement the use case.
+* Managing the lifecycle and the data of all business objects involved in the use case
+* Managing the data necessary for the bookkeeping of all fees, commissions, and funds related to the use case.
+* Authorization management for all linked components and services
+
 === Stakeholders
+
+==== Instance Owner
+The instance owner is represented by the account that holds the instance NFT.
+Instances can be created by any account using the instance service through the `createInstance()` function.
+The initial instance owner is the account that created the instance.
+
+The instance owner is in charge of the following tasks:
+
+* Upgrading of the instance reader when necessary
+* Locking / unlocking linked components
+* Managing component owner roles for the instance
+* Managing authorization for all linked components
+* Defining the instance staking parameters
+
+==== Product Owner
+Product owners are defined as accounts/contracts that have been granted the product owner role by the instance owner.
+Only accounts/contracts with the product owner role may register a product component with the instance.
+
+Additional tasks may be defined through the use case specific implementation of the component.
+
+==== Distribution Owner
+Distribution owners are defined as accounts/contracts that have been granted the distribution owner role by the instance owner.
+Only accounts/contracts with the distribution owner role may register a distribution component with the instance.
+
+Additional tasks for distribution owners may be defined through the use case specific implementation of the component.
+
+==== Oracle Owner
+Oracle owners are defined as accounts/contracts that have been granted the oracle owner role by the instance owner.
+Only accounts/contracts with the oracle owner role may register a oracle component with the instance.
+
+Additional tasks for oracle owners may be defined through the use case specific implementation of the component.
+
+==== Pool Owner
+Pool owners are defined as accounts/contracts that have been granted the pool owner role by the instance owner.
+Only accounts/contracts with the pool owner role may register a pool component with the instance.
+
+Additional tasks for pool owners may be defined through the use case specific implementation of the component.
+
+==== Use Case Specific Stakeholders
+The instance owner may introduce use case specific stakeholders through additional use case specific roles.
+
 === Business Objects
+
+==== Components
+Components are the building blocks of a use case implementation that is managed in the context of the instance.
+For every component registered with the instance the instance manages a component object.
+
+The component objects holds component meta data such as its name, the product NFT Id it is related to, token, tokenHandler, and its wallet address.
+Once a component is registered with the instance only the wallet address may be updated.
+
+Component objects are stored with the InstanceStore contract.
+
+==== Products
+Products are the principal components of a use case implementation.
+The use case specific implementation defines what products are available and how they are structured.
+
+For products registered with the instance an additional product object is created.
+This product object holds the information of the linked distribution and pool component as well as all pricing relevant fees for all involved components.
+
+Product objects are stored with the InstanceStore contract.
+
+==== Pools
+Pools are the risk capital providers of a use case implementation.
+
+For pools registered with the instance an additional pool object is created.
+This pool object holds pool meta data such as the maximal allowed balance amount for the pool, its collateralization level or the retention level of the pool.
+
+Pool objects are stored with the InstanceStore contract.
+
+==== Roles
+Roles are named IDs that are managed by the InstanceAdmin.
+Roles may be granted to any accounts/contracts.
+
+The instance can list all registered roles and the current set of accounts/contracts that have been assigned a specific role.
+
+Role objects are stored with the InstanceAdmin contract. 
+
+==== Targets and Functions
+Targets are named contract addresses that are managed by the InstanceAdmin.
+The instance can list all registered targets.
+
+For each registered target named functions may be defined and linked to the necessary role.
+The function of this target contract can then only be called/executed when the caller has been granted the necessary role.
+
+The instance can list all registered targets together with the all related functions that are linked to a specific role.
+
+Target and function objects are stored with the InstanceAdmin contract.
+
 === Creating a new Instance
+New instances can only be created through the instance service contract.
+To enforce this behaviour only the instance service is authorized to register instances with the registry through the registry service.
+
+This process ensures that it is not possible to deploy and register malicious instances when using the framework.
+The process also ensures that the inital wiring and authorization of a newly created instance is done completely and correctly.
+
+Instance creation is the responsibility of the `InstanceService`.
+New instances are created using the function createInstance().
+This function creates a complete set of instance contracts via cloning the contracts of its "master instance".
+This "master instance" is part of the deployment of every GIF release.
+
+The principal steps of the instance creation process are outlined below:
+
+1. A new `InstanceAdmin` contract with its `AccessManagerCloneable` contract is cloned from the master instance.
+
+1. A new `Instance` contract is cloned from the master instance.
+This step includes the cloning of the supportint `InstanceReader`, `InstanceStore` and `RiskSet` and `BundleSet` contracts from the same master instance.
+
+1. The newly cloned instance is registered with the registry via the `RegistryService`.
+
+1. The instance is registered as a staking target with staking through the `StakingService`.
+
+1. Instance creation is completed by setting up the inital instancde authorization through the `InstanceAdmin`.
+
+image::{imgbase}bp-instance-create.png[Instance Creation Process]
+
 === Authorization Management
 === Instance Staking
 
