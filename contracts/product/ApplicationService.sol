@@ -214,7 +214,7 @@ contract ApplicationService is
         virtual override
         returns (NftId applicationNftId)
     {
-
+        // TODO implement
     }
 
 
@@ -230,7 +230,7 @@ contract ApplicationService is
         external
         virtual override
     {
-
+        // TODO implement
     }
 
     function revoke(NftId applicationNftId)

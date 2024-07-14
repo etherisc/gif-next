@@ -544,16 +544,20 @@ contract TestProduct is GifTest {
 
         // THEN
         Timestamp activationAt = TimestampLib.blockTimestamp();
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                IPolicyService.ErrorPolicyServicePremiumHigherThanExpected.selector, 
-                AmountLib.toAmount(137), 
-                AmountLib.toAmount(140)));
+        // vm.expectRevert(
+        //     abi.encodeWithSelector(
+        //         IPolicyService.ErrorPolicyServicePremiumHigherThanExpected.selector, 
+        //         AmountLib.toAmount(137), 
+        //         AmountLib.toAmount(140)));
 
         product.collateralize(
             policyNftId, 
             collectPremiumAmount, 
             activationAt);
+
+        IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
+        assertEq(policyInfo.premiumAmount.toInt(), 137, "unexpected premium amount from application");
+        assertEq(policyInfo.premiumPaidAmount.toInt(), 140, "unexpected actual premium amount");
     }
 
 

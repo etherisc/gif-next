@@ -227,11 +227,12 @@ contract PolicyService is
 
         policyInfo.premiumPaidAmount = AmountLib.toAmount(premium.premiumAmount);
 
-        instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, KEEP_STATE());
-
-        if(activateAt.gtz() && policyInfo.activatedAt.eqz()) {
-            activate(policyNftId, activateAt);
+        // optionally activate policy
+        if(activateAt.gtz()) {
+            policyInfo = _activate(policyNftId, policyInfo, activateAt);
         }
+
+        instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, KEEP_STATE());
 
         // TODO: add logging
 
@@ -245,7 +246,23 @@ contract PolicyService is
         InstanceReader instanceReader = instance.getInstanceReader();
 
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
+        policyInfo = _activate(policyNftId, policyInfo, activateAt);
 
+        instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, KEEP_STATE());
+
+        // TODO: add logging
+    }
+
+    function _activate(
+        NftId policyNftId, 
+        IPolicy.PolicyInfo memory policyInfo,
+        Timestamp activateAt
+    )
+        internal
+        virtual
+        view 
+        returns (IPolicy.PolicyInfo memory)
+    {
         if(! policyInfo.activatedAt.eqz()) {
             revert ErrorPolicyServicePolicyAlreadyActivated(policyNftId);
         }
@@ -253,10 +270,9 @@ contract PolicyService is
         policyInfo.activatedAt = activateAt;
         policyInfo.expiredAt = activateAt.addSeconds(policyInfo.lifetime);
 
-        instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, KEEP_STATE());
-
-        // TODO: add logging
+        return policyInfo;
     }
+
 
     /// @inheritdoc IPolicyService
     function expire(
@@ -393,11 +409,6 @@ contract PolicyService is
             applicationInfo.bundleNftId,
             applicationInfo.referralId);
 
-        // ensure the calculated premium is not higher than the expected premium from the application
-        if (applicationInfo.premiumAmount.toInt() < premium.premiumAmount) {
-            revert ErrorPolicyServicePremiumHigherThanExpected(applicationInfo.premiumAmount.toInt(), premium.premiumAmount);
-        }
-
         // check if premium balance and allowance of policy holder is sufficient
         {
             TokenHandler tokenHandler = instanceReader.getComponentInfo(productNftId).tokenHandler;
@@ -407,7 +418,6 @@ contract PolicyService is
                 tokenHandler.getToken(), 
                 address(tokenHandler),
                 policyHolder, 
-                applicationInfo.premiumAmount,
                 AmountLib.toAmount(premium.premiumAmount));
         }
 
@@ -426,7 +436,6 @@ contract PolicyService is
         IERC20Metadata token,
         address tokenHandlerAddress, 
         address policyHolder, 
-        Amount premiumExpectedAmount,
         Amount premiumAmount
     )
         internal
