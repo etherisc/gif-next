@@ -62,7 +62,7 @@ abstract contract Product is
         NftId bundleNftId,
         ReferralId referralId
     )
-        external 
+        public 
         view 
         override 
         returns (Amount premiumAmount)
@@ -233,6 +233,7 @@ abstract contract Product is
         address applicationOwner,
         RiskId riskId,
         Amount sumInsuredAmount,
+        Amount premiumAmount,
         Seconds lifetime,
         NftId bundleNftId,
         ReferralId referralId,
@@ -245,6 +246,7 @@ abstract contract Product is
             applicationOwner,
             riskId,
             sumInsuredAmount,
+            premiumAmount,
             lifetime,
             bundleNftId,
             referralId,

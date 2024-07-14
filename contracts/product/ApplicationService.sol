@@ -128,6 +128,7 @@ contract ApplicationService is
         address applicationOwner,
         RiskId riskId,
         Amount sumInsuredAmount,
+        Amount premiumAmount,
         Seconds lifetime,
         NftId bundleNftId,
         ReferralId referralId,
@@ -156,15 +157,11 @@ contract ApplicationService is
             productNftId,
             riskId,
             sumInsuredAmount,
+            premiumAmount,
             lifetime,
             bundleNftId,
             referralId,
             applicationData);
-
-        // TODO consider to provide this amount externally
-        // actual calculation is done 2nd time anyway for premium collection
-        // calculate premium amount
-        applicationInfo.premiumAmount = _calculatePremiumAmount(applicationInfo);
 
         // register application with instance
         instance.getInstanceStore().createApplication(
@@ -178,6 +175,7 @@ contract ApplicationService is
         NftId productNftId,
         RiskId riskId,
         Amount sumInsuredAmount,
+        Amount premiumAmount,
         Seconds lifetime,
         NftId bundleNftId,
         ReferralId referralId,
@@ -193,7 +191,7 @@ contract ApplicationService is
             referralId:         referralId,
             riskId:             riskId,
             sumInsuredAmount:   sumInsuredAmount,
-            premiumAmount:      AmountLib.zero(),
+            premiumAmount:      premiumAmount,
             premiumPaidAmount:  AmountLib.zero(),
             lifetime:           lifetime,
             applicationData:    applicationData,

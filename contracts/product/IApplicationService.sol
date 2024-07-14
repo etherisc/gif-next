@@ -24,6 +24,7 @@ interface IApplicationService is IService {
         address applicationOwner,
         RiskId riskId,
         Amount sumInsuredAmount,
+        Amount premiumAmount,
         Seconds lifetime,
         NftId bundleNftId,
         ReferralId referralId,
