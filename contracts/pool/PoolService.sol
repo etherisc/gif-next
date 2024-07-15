@@ -266,10 +266,6 @@ contract PoolService is
             revert ErrorPoolServiceBundlePoolMismatch(bundleNftId, poolNftId);
         }
 
-        if (amount.eqz()) {
-            revert ErrorPoolServiceAmountIsZero();
-        }
-
         // call bundle service for bookkeeping and additional checks
         Amount unstakedAmount = _bundleService.unstake(instance, bundleNftId, amount);
 

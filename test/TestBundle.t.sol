@@ -472,7 +472,7 @@ contract TestBundle is GifTest {
         
         // THEN - expect revert
         vm.expectRevert(abi.encodeWithSelector(
-            IPoolService.ErrorPoolServiceAmountIsZero.selector));
+            TokenTransferLib.ErrorTokenTransferLibAmountIsZero.selector));
 
         // WHEN - 0 tokens are unstaked
         pool.unstake(bundleNftId, unstakeAmount);
