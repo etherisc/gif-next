@@ -980,7 +980,7 @@ contract TestBundle is GifTest {
 
         // THEN - expect revert
         vm.expectRevert(abi.encodeWithSelector(
-            IPoolService.ErrorPoolServiceWalletAllowanceTooSmall.selector, 
+            TokenTransferLib.ErrorTokenTransferLibAllowanceTooSmall.selector, 
             externalWallet,
             address(pool.getTokenHandler()),
             0,

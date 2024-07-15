@@ -191,24 +191,11 @@ contract PoolService is
 
         if ((unstakedAmount + feeAmount).gtz()){
             IComponents.ComponentInfo memory poolComponentInfo = instance.getInstanceReader().getComponentInfo(poolNftId);
-            TokenHandler tokenHandler = poolComponentInfo.tokenHandler;
-            IERC20Metadata token = IERC20Metadata(poolComponentInfo.token);
-
-            // TODO: centralize token handling (issue #471)
-            
-            // check allowance
-            uint256 tokenAllowance = token.allowance(poolComponentInfo.wallet, address(tokenHandler));
-            if (tokenAllowance < (unstakedAmount.toInt() +  feeAmount.toInt())) {
-                revert ErrorPoolServiceWalletAllowanceTooSmall(
-                    poolComponentInfo.wallet, 
-                    address(tokenHandler), 
-                    tokenAllowance, 
-                    unstakedAmount.toInt() + feeAmount.toInt());
-            }
-
-            // transfer amount to bundle owner
-            address bundleOwner = getRegistry().ownerOf(bundleNftId);
-            tokenHandler.transfer(poolComponentInfo.wallet, bundleOwner, unstakedAmount + feeAmount);
+            TokenTransferLib.distributeTokens(
+                poolComponentInfo.wallet, 
+                getRegistry().ownerOf(bundleNftId), 
+                unstakedAmount + feeAmount, 
+                poolComponentInfo.tokenHandler);
         }
     }
 
