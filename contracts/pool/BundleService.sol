@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-
 import {IBundle} from "../instance/module/IBundle.sol";
 import {IBundleService} from "./IBundleService.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
@@ -23,6 +21,7 @@ import {ObjectType, COMPONENT, POOL, BUNDLE, REGISTRY} from "../type/ObjectType.
 import {StateId, ACTIVE, PAUSED, CLOSED, KEEP_STATE} from "../type/StateId.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {Timestamp, TimestampLib, zeroTimestamp} from "../type/Timestamp.sol";
+import {TokenTransferLib} from "../shared/TokenTransferLib.sol";
 
 string constant BUNDLE_SERVICE_NAME = "BundleService";
 
@@ -399,17 +398,6 @@ contract BundleService is
             }
         }
 
-        if (withdrawnAmount.eqz()) {
-            revert ErrorBundleServiceFeesWithdrawAmountIsZero();
-        }
-
-        // check allowance
-        IERC20Metadata token = IERC20Metadata(poolInfo.token);
-        uint256 tokenAllowance = token.allowance(poolWallet, address(poolInfo.tokenHandler));
-        if (tokenAllowance < withdrawnAmount.toInt()) {
-            revert ErrorBundleServiceWalletAllowanceTooSmall(poolWallet, address(poolInfo.tokenHandler), tokenAllowance, withdrawnAmount.toInt());
-        }
-
         // decrease fee counters by withdrawnAmount
         {
             InstanceStore store = instance.getInstanceStore();
@@ -422,9 +410,8 @@ contract BundleService is
         // transfer amount to bundle owner
         {
             address owner = getRegistry().ownerOf(bundleNftId);
-            emit LogBundleServiceFeesWithdrawn(bundleNftId, owner, address(token), withdrawnAmount);
-            // TODO: centralize token handling (issue #471)
-            poolInfo.tokenHandler.transfer(poolWallet, owner, withdrawnAmount);
+            emit LogBundleServiceFeesWithdrawn(bundleNftId, owner, address(poolInfo.token), withdrawnAmount);
+            TokenTransferLib.distributeTokens(poolWallet, owner, withdrawnAmount, poolInfo.tokenHandler);
         }
     }
 

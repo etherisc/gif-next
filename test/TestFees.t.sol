@@ -19,6 +19,7 @@ import {Seconds, SecondsLib} from "../contracts/type/Seconds.sol";
 import {Timestamp, TimestampLib} from "../contracts/type/Timestamp.sol";
 import {Amount, AmountLib} from "../contracts/type/Amount.sol";
 import {INftOwnable} from "../contracts/shared/INftOwnable.sol";
+import {TokenTransferLib} from "../contracts/shared/TokenTransferLib.sol";
 
 contract TestFees is GifTest {
     using NftIdLib for NftId;
@@ -154,7 +155,7 @@ contract TestFees is GifTest {
         
         // THEN
         vm.expectRevert(abi.encodeWithSelector(
-            IComponentService.ErrorComponentServiceWalletAllowanceTooSmall.selector, 
+            TokenTransferLib.ErrorTokenTransferLibAllowanceTooSmall.selector, 
             externalWallet, 
             address(distribution.getTokenHandler()),
             0,
@@ -419,7 +420,7 @@ contract TestFees is GifTest {
 
         // THEN 
         vm.expectRevert(abi.encodeWithSelector(
-            IDistributionService.ErrorDistributionServiceCommissionWithdrawAmountIsZero.selector));
+            TokenTransferLib.ErrorTokenTransferLibAmountIsZero.selector));
         
         // WHEN - the distributor withdraws part of his commission
         distribution.withdrawCommission(distributorNftId, withdrawAmount);
@@ -440,7 +441,7 @@ contract TestFees is GifTest {
 
         // THEN 
         vm.expectRevert(abi.encodeWithSelector(
-            IDistributionService.ErrorDistributionServiceWalletAllowanceTooSmall.selector,
+            TokenTransferLib.ErrorTokenTransferLibAllowanceTooSmall.selector,
             externalWallet,
             address(distribution.getTokenHandler()),
             0,
@@ -633,7 +634,7 @@ contract TestFees is GifTest {
         
         // THEN - expect a revert
         vm.expectRevert(abi.encodeWithSelector(
-            IBundleService.ErrorBundleServiceWalletAllowanceTooSmall.selector, 
+            TokenTransferLib.ErrorTokenTransferLibAllowanceTooSmall.selector, 
             externalWallet,
             address(pool.getTokenHandler()),
             0,
@@ -660,7 +661,7 @@ contract TestFees is GifTest {
         
         // THEN - expect a revert
         vm.expectRevert(abi.encodeWithSelector(
-            IBundleService.ErrorBundleServiceFeesWithdrawAmountIsZero.selector));
+            TokenTransferLib.ErrorTokenTransferLibAmountIsZero.selector));
         
         // WHEN - the investor tries to withdraw more tokens than available 
         pool.withdrawBundleFees(bundleNftId, withdrawAmount);

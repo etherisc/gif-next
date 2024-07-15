@@ -27,9 +27,7 @@ interface IBundleService is IService {
     error ErrorBundleServicePolicyNotCloseable(NftId policyNftId);
 
     error ErrorBundleServiceFeesWithdrawAmountExceedsLimit(Amount amount, Amount limit);
-    error ErrorBundleServiceFeesWithdrawAmountIsZero();
-    error ErrorBundleServiceWalletAllowanceTooSmall(address wallet, address tokenHandler, uint256 allowance, uint256 amount);
-
+    
     error ErrorBundleServiceUnstakeAmountExceedsLimit(Amount amount, Amount limit);
 
     error ErrorBundleServiceExtensionLifetimeIsZero();

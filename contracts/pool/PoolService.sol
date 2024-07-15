@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-
 import {IBundle} from "../instance/module/IBundle.sol";
 import {IBundleService} from "./IBundleService.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
@@ -24,6 +22,7 @@ import {Fee, FeeLib} from "../type/Fee.sol";
 import {KEEP_STATE} from "../type/StateId.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
+import {TokenTransferLib} from "../shared/TokenTransferLib.sol";
 import {UFixed} from "../type/UFixed.sol";
 import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
@@ -192,24 +191,11 @@ contract PoolService is
 
         if ((unstakedAmount + feeAmount).gtz()){
             IComponents.ComponentInfo memory poolComponentInfo = instance.getInstanceReader().getComponentInfo(poolNftId);
-            TokenHandler tokenHandler = poolComponentInfo.tokenHandler;
-            IERC20Metadata token = IERC20Metadata(poolComponentInfo.token);
-
-            // TODO: centralize token handling (issue #471)
-            
-            // check allowance
-            uint256 tokenAllowance = token.allowance(poolComponentInfo.wallet, address(tokenHandler));
-            if (tokenAllowance < (unstakedAmount.toInt() +  feeAmount.toInt())) {
-                revert ErrorPoolServiceWalletAllowanceTooSmall(
-                    poolComponentInfo.wallet, 
-                    address(tokenHandler), 
-                    tokenAllowance, 
-                    unstakedAmount.toInt() + feeAmount.toInt());
-            }
-
-            // transfer amount to bundle owner
-            address bundleOwner = getRegistry().ownerOf(bundleNftId);
-            tokenHandler.transfer(poolComponentInfo.wallet, bundleOwner, unstakedAmount + feeAmount);
+            TokenTransferLib.distributeTokens(
+                poolComponentInfo.wallet, 
+                getRegistry().ownerOf(bundleNftId), 
+                unstakedAmount + feeAmount, 
+                poolComponentInfo.tokenHandler);
         }
     }
 
@@ -280,10 +266,6 @@ contract PoolService is
             revert ErrorPoolServiceBundlePoolMismatch(bundleNftId, poolNftId);
         }
 
-        if (amount.eqz()) {
-            revert ErrorPoolServiceAmountIsZero();
-        }
-
         // call bundle service for bookkeeping and additional checks
         Amount unstakedAmount = _bundleService.unstake(instance, bundleNftId, amount);
 
@@ -301,21 +283,14 @@ contract PoolService is
 
         IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
         address poolWallet = poolComponentInfo.wallet;
-
-        // check allowance
-        {
-            IERC20Metadata token = IERC20Metadata(poolComponentInfo.token);
-            uint256 tokenAllowance = token.allowance(poolWallet, address(poolComponentInfo.tokenHandler));
-            if (tokenAllowance < unstakedAmount.toInt()) {
-                revert ErrorPoolServiceWalletAllowanceTooSmall(poolWallet, address(poolComponentInfo.tokenHandler), tokenAllowance, amount.toInt());
-            }
-        }
-
         // transfer amount to bundle owner
         address owner = getRegistry().ownerOf(bundleNftId);
         emit LogPoolServiceBundleUnstaked(instance.getNftId(), poolNftId, bundleNftId, unstakedAmount);
-        // TODO: centralize token handling (issue #471)
-        poolComponentInfo.tokenHandler.transfer(poolWallet, owner, unstakedAmount);
+        TokenTransferLib.distributeTokens(
+            poolWallet, 
+            owner, 
+            unstakedAmount, 
+            poolComponentInfo.tokenHandler);
         return unstakedAmount;
     }
 
@@ -521,7 +496,6 @@ contract PoolService is
     }
 
 
-    // TODO create (I)TreasuryService that deals with all gif related token transfers
     /// @dev transfers the specified amount from the bundle owner to the pool's wallet
     function _collectStakingAmount(
         InstanceReader instanceReader,
@@ -537,20 +511,11 @@ contract PoolService is
         TokenHandler tokenHandler = componentInfo.tokenHandler;
         address poolWallet = componentInfo.wallet;
 
-        if(amount.gtz()) {
-            uint256 allowance = IERC20Metadata(componentInfo.token).allowance(bundleOwner, address(tokenHandler));
-            if (allowance < amount.toInt()) {
-                revert ErrorPoolServiceWalletAllowanceTooSmall(bundleOwner, address(tokenHandler), allowance, amount.toInt());
-            }
-
-            // TODO: centralize token handling (issue #471)
-            tokenHandler.transfer(
-                bundleOwner,
-                poolWallet,
-                amount);
-        } else {
-            revert ErrorPoolServiceAmountIsZero();
-        }
+        TokenTransferLib.collectTokens(
+            bundleOwner,
+            poolWallet,
+            amount,
+            tokenHandler);
     }
 
     function _getDomain() internal pure override returns(ObjectType) {

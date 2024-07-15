@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IInstance} from "../instance/IInstance.sol";
 import {IComponentService} from "../shared/IComponentService.sol";
@@ -19,12 +17,13 @@ import {KEEP_STATE} from "../type/StateId.sol";
 import {ObjectType, COMPONENT, DISTRIBUTION, INSTANCE, DISTRIBUTION, DISTRIBUTOR, REGISTRY} from "../type/ObjectType.sol";
 import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
 import {IDistributionService} from "./IDistributionService.sol";
-import {UFixed, UFixedLib} from "../type/UFixed.sol";
+import {UFixed} from "../type/UFixed.sol";
 import {DistributorType, DistributorTypeLib} from "../type/DistributorType.sol";
 import {ReferralId, ReferralLib} from "../type/Referral.sol";
 import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
 import {IDistribution} from "../instance/module/IDistribution.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
+import {TokenTransferLib} from "../shared/TokenTransferLib.sol";
 
 
 contract DistributionService is
@@ -275,17 +274,6 @@ contract DistributionService is
             }
         }
 
-        if (withdrawnAmount.eqz()) {
-            revert ErrorDistributionServiceCommissionWithdrawAmountIsZero();
-        }
-
-        // check allowance
-        IERC20Metadata token = IERC20Metadata(distributionInfo.token);
-        uint256 tokenAllowance = token.allowance(distributionWallet, address(distributionInfo.tokenHandler));
-        if (tokenAllowance < withdrawnAmount.toInt()) {
-            revert ErrorDistributionServiceWalletAllowanceTooSmall(distributionWallet, address(distributionInfo.tokenHandler), tokenAllowance, withdrawnAmount.toInt());
-        }
-
         // decrease fee counters by withdrawnAmount and update distributor info
         {
             InstanceStore store = instance.getInstanceStore();
@@ -298,9 +286,8 @@ contract DistributionService is
         // transfer amount to distributor
         {
             address distributor = getRegistry().ownerOf(distributorNftId);
-            emit LogDistributionServiceCommissionWithdrawn(distributorNftId, distributor, address(token), withdrawnAmount);
-            // TODO: centralize token handling (issue #471)
-            distributionInfo.tokenHandler.transfer(distributionWallet, distributor, withdrawnAmount);
+            emit LogDistributionServiceCommissionWithdrawn(distributorNftId, distributor, address(distributionInfo.token), withdrawnAmount);
+            TokenTransferLib.distributeTokens(distributionWallet, distributor, withdrawnAmount, distributionInfo.tokenHandler);
         }
     }
 
