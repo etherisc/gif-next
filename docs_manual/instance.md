@@ -38,5 +38,5 @@ sequenceDiagram
     IADM ->> IADM: create roles
     IADM ->> IADM: create target and grant roles
     IADM ->> IADM: create target authorizations
-    IADM ->> IADM: greant component owner roles to initial admin
+    IADM ->> IADM: grant component owner roles to initial admin
 ```
