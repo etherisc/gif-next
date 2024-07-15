@@ -335,6 +335,7 @@ contract PolicyService is
         }
 
         // TODO consider to allow for underpaid premiums (with the effects of reducing max payouts accordingly)
+        // TODO consider to remove requirement for fully paid premiums altogether
         if (!(policyInfo.premiumAmount == policyInfo.premiumPaidAmount)) {
             revert ErrorPolicyServicePremiumNotFullyPaid(policyNftId, policyInfo.premiumAmount, policyInfo.premiumPaidAmount);
         }
@@ -346,9 +347,13 @@ contract PolicyService is
             policyNftId, 
             policyInfo);
 
+        // TODO consider to also set expiredAt to current block timestamp if that timestamp is still in the futue
+
         // update policy state to closed
         policyInfo.closedAt = TimestampLib.blockTimestamp();
         instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, CLOSED());
+
+        // TODO add logging
     }
 
 

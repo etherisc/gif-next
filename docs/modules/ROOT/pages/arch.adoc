@@ -685,12 +685,12 @@ image::{imgbase}product-er.png[Product Business Objects]
 
 * A product may defines one or more risks.
 * For each application/policy a policy object is created.
-* Policy objects are always linked to a product component.
-Each policy object is also linked to one risk object.
+* Policy objects are always linked to a single product component.
+* Each policy object is also linked to a single risk object.
 * A policy may has from zero to many claim objects.
 * A claim object may has from one to many payout objects.
 
-Detailed information regarding the different business objects is provided below.
+More information regarding these business objects is provided in the sections below.
 
 ==== Risks
 Risks are product specific and have unique IDs that represent an insurable event.
@@ -918,10 +918,28 @@ The resulting balance updates are stored in the `InstanceStore`.
 image::{imgbase}bp-product-policy.png[Policy Creation Process]
 
 ==== Policy Expiry
+A policy expires when the current block timestamp has reached or passed the expiredAt property of the policy.
+
+The initial `expiryAt` property is when activating a policy and is calculated as the current block timestamp plus the policy lifetime set in the application phase of the policy.
+In a typical policy lifecycle this expiry property will not be changed and the policy will expire at the end of the policy period.
+
+There are two exceptions to this rule.
+The first exception is enforced by the framework and cannot be changed: When the total payout amount of a policy has reached the sum insured amount of the policy.
+In this case the expiryAt timestamp is set to the block timestamp that corresponds to the confirmation of the claim amount that leads to reaching the sum insured amount.
+
+The second exception is use case specific and needs to be explicitly implemented by the product component.
+The product implementation may decide to expire the policy at any time that falls inbetween the current block timestamp and the previously set expiryAt timestamp.
+The expiry process is the responsibility of the `PolicyService`.
+
+image::{imgbase}bp-product-policy-expire.png[Policy Expiry Process]
 
 ==== Policy Closure
+Once a policy has expired and all claims have been payed out in full a policy can be closed.
+Closing a policy is the responsibility of the `PolicyService`.
 
-==== Claims Creation
+image::{imgbase}bp-product-policy-close.png[Policy Closing Process]
+
+==== Claims Handling
 
 ==== Payout Handling
 

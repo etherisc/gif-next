@@ -1,19 +1,18 @@
 @startuml
 
 object Instance
-object MyProduct
+object Product
 
 object Risk
 object Policy
 object Claim
 object Payout
 
-Instance . MyProduct
+Instance o- Product
 
-MyProduct o- Risk
-MyProduct o-- Policy
-
-Risk .. Policy
+Product o-- Risk
+Product o-- Policy
+Risk o-- Policy
 
 Policy o- Claim
 Claim o- Payout
