@@ -14,7 +14,8 @@ contract TokenHandlerTest is Test {
 
     function setUp() public {
         dip = new Dip();
-        tokenHandler = new TokenHandler(address(dip));
+        // FIXME: use a real authority for testing
+        tokenHandler = new TokenHandler(address(dip), address(0));
     }
 
     function test_TokenHandler_getToken() public {

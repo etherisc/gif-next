@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManaged.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -9,7 +10,7 @@ import {Amount} from "../type/Amount.sol";
 /// @dev token specific transfer helper
 /// a default token contract is provided via contract constructor
 /// relies internally on oz SafeERC20.safeTransferFrom
-contract TokenHandler {
+contract TokenHandler is AccessManaged {
     error ErrorTokenHandlerAmountIsZero();
     error ErrorTokenHandlerBalanceTooLow(address token, address from, uint256 balance, uint256 expectedBalance);
     error ErrorTokenHandlerAllowanceTooSmall(address token, address from, address spender, uint256 allowance, uint256 expectedAllowance);
@@ -19,7 +20,7 @@ contract TokenHandler {
 
     IERC20Metadata private _token;
 
-    constructor(address token) {
+    constructor(address token, address initialAuthority) AccessManaged(initialAuthority) {
         _token = IERC20Metadata(token);
     }
 
@@ -40,6 +41,7 @@ contract TokenHandler {
         Amount amount
     )
         external
+        restricted()
     {
         _transfer(from, to, amount);
     }
@@ -56,6 +58,7 @@ contract TokenHandler {
         Amount amount3
     )
         external
+        restricted()
     {
         if (to == to2 || to == to3 || to2 == to3) {
             revert ErrorTokenHandlerRecipientWalletsMustBeDistinct(to, to2, to3);
@@ -82,6 +85,7 @@ contract TokenHandler {
         Amount amount
     )
         external
+        restricted()
     {
         _transfer(from, to, amount);
     }

@@ -482,7 +482,7 @@ contract Staking is
         $._store = StakingStore(stakingStoreAddress);
         $._reader = StakingStore(stakingStoreAddress).getStakingReader();
         $._tokenRegistry = TokenRegistry(tokenRegistryAddress);
-        $._tokenHandler = new TokenHandler(address(getToken()));
+        $._tokenHandler = new TokenHandler(address(getToken()), authority);
 
         registerInterface(type(IStaking).interfaceId);
     }

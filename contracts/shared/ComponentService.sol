@@ -521,7 +521,7 @@ contract ComponentService is
         instanceStore = instance.getInstanceStore();
 
         IComponents.ComponentInfo memory componentInfo = component.getInitialComponentInfo();
-        componentInfo.tokenHandler = new TokenHandler(address(componentInfo.token));
+        componentInfo.tokenHandler = new TokenHandler(address(componentInfo.token), address(instance.getInstanceAdmin()));
 
         instanceStore.createComponent(
             component.getNftId(), 
