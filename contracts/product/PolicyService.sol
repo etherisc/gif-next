@@ -481,25 +481,14 @@ contract PolicyService is
             instanceReader, 
             productNftId);
 
-        // FIXME: use one interface with three recipients and amounts
-        if (premium.productFeeAmount.gtz()) {
-            tokenHandler.collectTokens(
-                policyHolder,
-                productWallet,
-                premium.productFeeAmount);
-        }
-        if (premium.distributionFeeAndCommissionAmount.gtz()) {
-            tokenHandler.collectTokens(
-                policyHolder,
-                distributionWallet,
-                premium.distributionFeeAndCommissionAmount);
-        }
-        if (premium.poolPremiumAndFeeAmount.gtz()) {
-            tokenHandler.collectTokens(
-                policyHolder,
-                poolWallet,
-                premium.poolPremiumAndFeeAmount);
-        }
+        tokenHandler.collectTokens(
+            policyHolder,
+            productWallet,
+            premium.productFeeAmount,
+            distributionWallet,
+            premium.distributionFeeAndCommissionAmount,
+            poolWallet,
+            premium.poolPremiumAndFeeAmount);
     }
 
 

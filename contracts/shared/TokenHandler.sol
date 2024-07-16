@@ -12,6 +12,7 @@ import {Amount} from "../type/Amount.sol";
 contract TokenHandler {
     error ErrorTokenHandlerAmountIsZero();
     error ErrorTokenHandlerAllowanceTooSmall(address from, address spender, uint256 allowance, uint256 amount);
+    error ErrorTokenHandlerRecipientWalletsMustBeDistinct(address to, address to2, address to3);
     
     event LogTokenHandlerTokenTransfer(address token, address from, address to, uint256 amount);
 
@@ -30,7 +31,8 @@ contract TokenHandler {
         return _token;
     }
     
-    /// @dev collect tokens from outside of the gif and transfer them to a wallet within the scope of gif
+    /// @dev collect tokens from outside of the gif and transfer them to one wallet within the scope of gif.
+    /// This method also checks balance and allowance and makes sure the amount is greater than zero.
     function collectTokens(
         address from,
         address to,
@@ -39,6 +41,36 @@ contract TokenHandler {
         external
     {
         _transfer(from, to, amount);
+    }
+
+    /// @dev collect tokens from outside of the gif and transfer them to three distinct wallets within the scope of gif
+    /// This method also checks balance and allowance and makes sure the amount is greater than zero.
+    function collectTokens(
+        address from,
+        address to,
+        Amount amount,
+        address to2,
+        Amount amount2,
+        address to3,
+        Amount amount3
+    )
+        external
+    {
+        if (to == to2 || to == to3 || to2 == to3) {
+            revert ErrorTokenHandlerRecipientWalletsMustBeDistinct(to, to2, to3);
+        }
+
+        _checkPreconditons(from, amount + amount2 + amount3);
+
+        if (amount.gtz()) {
+            _transfer(from, to, amount);
+        }
+        if (amount2.gtz()) {
+            _transfer(from, to2, amount2);
+        }
+        if (amount3.gtz()) {
+            _transfer(from, to3, amount3);
+        }
     }
 
     /// @dev distribute tokens from a wallet within the scope of gif to an external address
@@ -59,6 +91,24 @@ contract TokenHandler {
     )
         internal
     {
+        // check amount and allowance
+        _checkPreconditons(from, amount);
+
+        // transfer the tokens
+        emit LogTokenHandlerTokenTransfer(address(_token), from, to, amount.toInt());
+        SafeERC20.safeTransferFrom(
+            _token, 
+            from, 
+            to, 
+            amount.toInt());
+    }
+
+    function _checkPreconditons(
+        address from,
+        Amount amount
+    ) 
+        internal
+    {
         // check preconditions
         if (amount.eqz()) {
             revert ErrorTokenHandlerAmountIsZero();
@@ -68,13 +118,5 @@ contract TokenHandler {
         if (allowance < amount.toInt()) {
             revert ErrorTokenHandlerAllowanceTooSmall(from, address(this), allowance, amount.toInt());
         }
-
-        // transfer the tokens
-        emit LogTokenHandlerTokenTransfer(address(_token), from, to, amount.toInt());
-        SafeERC20.safeTransferFrom(
-            _token, 
-            from, 
-            to, 
-            amount.toInt());
     }
 }
