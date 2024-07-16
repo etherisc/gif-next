@@ -147,17 +147,11 @@ abstract contract Component is
             // move tokens from old to new wallet 
             emit LogComponentWalletTokensTransferred(currentWallet, newWallet, currentBalance);
 
-            // FIXME: check if this is necessary or is this should be done by user
             if (currentWallet == address(this)) {
-                // transferFrom requires self allowance too
-                token.approve(address(getTokenHandler()), currentBalance);
-            }
-            
-            if (newWallet == address(this)) {
-                // transfer tokens from external wallet to component smart contract
-                getTokenHandler().collectTokens(currentWallet, newWallet, AmountLib.toAmount(currentBalance));
-            } else {
+                // transfer from the component requires an allowance
                 getTokenHandler().distributeTokens(currentWallet, newWallet, AmountLib.toAmount(currentBalance));
+            } else {
+                getTokenHandler().collectTokens(currentWallet, newWallet, AmountLib.toAmount(currentBalance));
             }
         }
     }
