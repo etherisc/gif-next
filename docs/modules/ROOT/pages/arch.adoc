@@ -986,6 +986,32 @@ image::{imgbase}bp-product-policy-close.png[Policy Closing Process]
 === Fee Management
 === Contracts
 
+== Staking
+
+=== Overview
+The protocl currently provides two options for staking the DIP protocol token.
+
+The first option is to stake the DIP token directly to the protocol. 
+In this case the staker receives a reward in the form of DIP tokens. 
+The reward rate, locking period and reserves are managed by the DIF as the protocol owner.
+
+The second option is to stake DIP to a specific instance.
+In that case the instance owner is responsible for setting the reward rate, the locking period and providing the reward reserves.
+The instance owner also has the possibility to cap the total amount of DIP that can be staked to the instance in relation to the total locked value of the instance.
+
+=== Business Objects
+=== Targets
+=== Stakes
+
+=== Business Processes
+==== Creating Stakes
+==== Increasing Stakes
+==== Restake
+==== Unstake
+==== Claim Rewards
+
+=== Contracts
+
 == Authorization
 
 === Overview
