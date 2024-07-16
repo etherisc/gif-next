@@ -153,7 +153,7 @@ library StakeManagerLib {
         // TODO add check for target specific max dip amount (min stake + tvl * stake rate + buffer)
     }
 
-
+    // FIXME: remove
     function checkDipBalanceAndAllowance(
         IERC20Metadata dip, 
         address owner, 

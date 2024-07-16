@@ -21,7 +21,6 @@ import {ObjectType, COMPONENT, POOL, BUNDLE, REGISTRY} from "../type/ObjectType.
 import {StateId, ACTIVE, PAUSED, CLOSED, KEEP_STATE} from "../type/StateId.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {Timestamp, TimestampLib, zeroTimestamp} from "../type/Timestamp.sol";
-import {TokenTransferLib} from "../shared/TokenTransferLib.sol";
 
 string constant BUNDLE_SERVICE_NAME = "BundleService";
 
@@ -411,7 +410,7 @@ contract BundleService is
         {
             address owner = getRegistry().ownerOf(bundleNftId);
             emit LogBundleServiceFeesWithdrawn(bundleNftId, owner, address(poolInfo.token), withdrawnAmount);
-            TokenTransferLib.distributeTokens(poolWallet, owner, withdrawnAmount, poolInfo.tokenHandler);
+            poolInfo.tokenHandler.distributeTokens(poolWallet, owner, withdrawnAmount);
         }
     }
 

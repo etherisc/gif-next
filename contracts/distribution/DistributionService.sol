@@ -23,7 +23,6 @@ import {ReferralId, ReferralLib} from "../type/Referral.sol";
 import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
 import {IDistribution} from "../instance/module/IDistribution.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
-import {TokenTransferLib} from "../shared/TokenTransferLib.sol";
 
 
 contract DistributionService is
@@ -287,7 +286,7 @@ contract DistributionService is
         {
             address distributor = getRegistry().ownerOf(distributorNftId);
             emit LogDistributionServiceCommissionWithdrawn(distributorNftId, distributor, address(distributionInfo.token), withdrawnAmount);
-            TokenTransferLib.distributeTokens(distributionWallet, distributor, withdrawnAmount, distributionInfo.tokenHandler);
+            distributionInfo.tokenHandler.distributeTokens(distributionWallet, distributor, withdrawnAmount);
         }
     }
 

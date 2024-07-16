@@ -22,7 +22,6 @@ import {Fee, FeeLib} from "../type/Fee.sol";
 import {KEEP_STATE} from "../type/StateId.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
-import {TokenTransferLib} from "../shared/TokenTransferLib.sol";
 import {UFixed} from "../type/UFixed.sol";
 import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
@@ -191,11 +190,10 @@ contract PoolService is
 
         if ((unstakedAmount + feeAmount).gtz()){
             IComponents.ComponentInfo memory poolComponentInfo = instance.getInstanceReader().getComponentInfo(poolNftId);
-            TokenTransferLib.distributeTokens(
+            poolComponentInfo.tokenHandler.distributeTokens(
                 poolComponentInfo.wallet, 
                 getRegistry().ownerOf(bundleNftId), 
-                unstakedAmount + feeAmount, 
-                poolComponentInfo.tokenHandler);
+                unstakedAmount + feeAmount);
         }
     }
 
@@ -286,11 +284,10 @@ contract PoolService is
         // transfer amount to bundle owner
         address owner = getRegistry().ownerOf(bundleNftId);
         emit LogPoolServiceBundleUnstaked(instance.getNftId(), poolNftId, bundleNftId, unstakedAmount);
-        TokenTransferLib.distributeTokens(
+        poolComponentInfo.tokenHandler.distributeTokens(
             poolWallet, 
             owner, 
-            unstakedAmount, 
-            poolComponentInfo.tokenHandler);
+            unstakedAmount);
         return unstakedAmount;
     }
 
@@ -508,14 +505,11 @@ contract PoolService is
 
         // collecting investor token
         IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
-        TokenHandler tokenHandler = componentInfo.tokenHandler;
         address poolWallet = componentInfo.wallet;
-
-        TokenTransferLib.collectTokens(
+        componentInfo.tokenHandler.collectTokens(
             bundleOwner,
             poolWallet,
-            amount,
-            tokenHandler);
+            amount);
     }
 
     function _getDomain() internal pure override returns(ObjectType) {

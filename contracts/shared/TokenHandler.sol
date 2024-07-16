@@ -10,45 +10,15 @@ import {Amount} from "../type/Amount.sol";
 /// a default token contract is provided via contract constructor
 /// relies internally on oz SafeERC20.safeTransferFrom
 contract TokenHandler {
+    error ErrorTokenHandlerAmountIsZero();
+    error ErrorTokenHandlerAllowanceTooSmall(address from, address spender, uint256 allowance, uint256 amount);
+    
     event LogTokenHandlerTokenTransfer(address token, address from, address to, uint256 amount);
 
     IERC20Metadata private _token;
 
     constructor(address token) {
         _token = IERC20Metadata(token);
-    }
-
-    /// @dev transfer amount default tokens 
-    function transfer(
-        address from,
-        address to,
-        Amount amount
-    )
-        external
-    {
-        emit LogTokenHandlerTokenTransfer(address(_token), from, to, amount.toInt());
-        SafeERC20.safeTransferFrom(
-            _token, 
-            from, 
-            to, 
-            amount.toInt());
-    }
-
-    /// @dev transfer amount of the specified token
-    function safeTransferFrom(
-        address token,
-        address from,
-        address to,
-        Amount amount
-    )
-        external
-    {
-        emit LogTokenHandlerTokenTransfer(token, from, to, amount.toInt());
-        SafeERC20.safeTransferFrom(
-            IERC20Metadata(token), 
-            from, 
-            to, 
-            amount.toInt());
     }
 
     /// @dev returns the default token defined for this TokenHandler
@@ -58,5 +28,53 @@ contract TokenHandler {
         returns (IERC20Metadata)
     {
         return _token;
+    }
+    
+    /// @dev collect tokens from outside of the gif and transfer them to a wallet within the scope of gif
+    function collectTokens(
+        address from,
+        address to,
+        Amount amount
+    )
+        external
+    {
+        _transfer(from, to, amount);
+    }
+
+    /// @dev distribute tokens from a wallet within the scope of gif to an external address
+    function distributeTokens(
+        address from,
+        address to,
+        Amount amount
+    )
+        external
+    {
+        _transfer(from, to, amount);
+    }
+
+    function _transfer(
+        address from,
+        address to,
+        Amount amount
+    )
+        internal
+    {
+        // check preconditions
+        if (amount.eqz()) {
+            revert ErrorTokenHandlerAmountIsZero();
+        }
+
+        uint256 allowance = _token.allowance(from, address(this));
+        if (allowance < amount.toInt()) {
+            revert ErrorTokenHandlerAllowanceTooSmall(from, address(this), allowance, amount.toInt());
+        }
+
+        // transfer the tokens
+        emit LogTokenHandlerTokenTransfer(address(_token), from, to, amount.toInt());
+        SafeERC20.safeTransferFrom(
+            _token, 
+            from, 
+            to, 
+            amount.toInt());
     }
 }
