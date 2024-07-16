@@ -153,31 +153,6 @@ library StakeManagerLib {
         // TODO add check for target specific max dip amount (min stake + tvl * stake rate + buffer)
     }
 
-    // FIXME: remove
-    function checkDipBalanceAndAllowance(
-        IERC20Metadata dip, 
-        address owner, 
-        address tokenHandlerAddress, 
-        Amount dipAmount
-    )
-        public
-        view
-    {
-        // check balance
-        uint256 amount = dipAmount.toInt();
-        uint256 dipBalance = dip.balanceOf(owner);
-        if (dipBalance < amount) {
-            revert IStaking.ErrorStakingDipBalanceInsufficient(owner, amount, dipBalance);
-        }
-
-        // check allowance
-        uint256 dipAllowance = dip.allowance(owner, tokenHandlerAddress);
-        if (dipAllowance < amount) {
-            revert IStaking.ErrorStakingDipAllowanceInsufficient(owner, tokenHandlerAddress, amount, dipAllowance);
-        }
-    }
-
-
     function calculateRewardIncrease(
         StakingReader stakingReader,
         NftId stakeNftId,
