@@ -11,11 +11,11 @@ import {Amount} from "../type/Amount.sol";
 /// relies internally on oz SafeERC20.safeTransferFrom
 contract TokenHandler {
     error ErrorTokenHandlerAmountIsZero();
-    error ErrorTokenHandlerBalanceTooLow(address from, address spender, uint256 balance, uint256 amount);
-    error ErrorTokenHandlerAllowanceTooSmall(address from, address spender, uint256 allowance, uint256 amount);
+    error ErrorTokenHandlerBalanceTooLow(address token, address from, uint256 balance, uint256 expectedBalance);
+    error ErrorTokenHandlerAllowanceTooSmall(address token, address from, address spender, uint256 allowance, uint256 expectedAllowance);
     error ErrorTokenHandlerRecipientWalletsMustBeDistinct(address to, address to2, address to3);
     
-    event LogTokenHandlerTokenTransfer(address token, address from, address to, uint256 amount);
+    event LogTokenHandlerTokenTransfer(address token, address from, address to, uint256 amountTransferred);
 
     IERC20Metadata private _token;
 
@@ -110,6 +110,7 @@ contract TokenHandler {
         Amount amount
     ) 
         internal
+        view
     {
         // amount must be greater than zero
         if (amount.eqz()) {
@@ -119,13 +120,13 @@ contract TokenHandler {
         // balance must be >= amount
         uint256 balance = _token.balanceOf(from);
         if (balance < amount.toInt()) {
-            revert ErrorTokenHandlerBalanceTooLow(from, address(this), balance, amount.toInt());
+            revert ErrorTokenHandlerBalanceTooLow(address(_token), from, balance, amount.toInt());
         }
 
         // allowance must be >= amount
         uint256 allowance = _token.allowance(from, address(this));
         if (allowance < amount.toInt()) {
-            revert ErrorTokenHandlerAllowanceTooSmall(from, address(this), allowance, amount.toInt());
+            revert ErrorTokenHandlerAllowanceTooSmall(address(_token), from, address(this), allowance, amount.toInt());
         }
     }
 }
