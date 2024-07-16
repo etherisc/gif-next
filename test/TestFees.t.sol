@@ -156,6 +156,7 @@ contract TestFees is GifTest {
         // THEN
         vm.expectRevert(abi.encodeWithSelector(
             TokenHandler.ErrorTokenHandlerAllowanceTooSmall.selector, 
+            address(token),
             externalWallet, 
             address(distribution.getTokenHandler()),
             0,
@@ -442,6 +443,7 @@ contract TestFees is GifTest {
         // THEN 
         vm.expectRevert(abi.encodeWithSelector(
             TokenHandler.ErrorTokenHandlerAllowanceTooSmall.selector,
+            address(token),
             externalWallet,
             address(distribution.getTokenHandler()),
             0,
@@ -635,6 +637,7 @@ contract TestFees is GifTest {
         // THEN - expect a revert
         vm.expectRevert(abi.encodeWithSelector(
             TokenHandler.ErrorTokenHandlerAllowanceTooSmall.selector, 
+            address(token),
             externalWallet,
             address(pool.getTokenHandler()),
             0,

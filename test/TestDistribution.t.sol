@@ -213,6 +213,7 @@ contract TestDistribution is GifTest {
         vm.expectRevert(
             abi.encodeWithSelector(
                 TokenHandler.ErrorTokenHandlerAllowanceTooSmall.selector, 
+                address(token),
                 externallyOwnedWallet, 
                 address(distribution.getTokenHandler()), 
                 0, 

@@ -204,6 +204,7 @@ contract TestBundle is GifTest {
         // THEN  
         vm.expectRevert(abi.encodeWithSelector(
             TokenHandler.ErrorTokenHandlerAllowanceTooSmall.selector, 
+            address(token),
             investor,
             address(pool.getTokenHandler()),
             0,
@@ -511,6 +512,7 @@ contract TestBundle is GifTest {
         // THEN - expect revert
         vm.expectRevert(abi.encodeWithSelector(
             TokenHandler.ErrorTokenHandlerAllowanceTooSmall.selector,
+            address(token),
             externalWallet,
             address(pool.getTokenHandler()),
             0,
@@ -981,6 +983,7 @@ contract TestBundle is GifTest {
         // THEN - expect revert
         vm.expectRevert(abi.encodeWithSelector(
             TokenHandler.ErrorTokenHandlerAllowanceTooSmall.selector, 
+            address(token),
             externalWallet,
             address(pool.getTokenHandler()),
             0,
