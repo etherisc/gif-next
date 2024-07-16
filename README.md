@@ -187,7 +187,10 @@ forge coverage --report lcov
 | fbcw | forge build --watch contracts/ |
 | ft | forge test |
 | ftf | forge test --nmt "testFuzz\|test_continuous" |
-| ftmw | forge test -vvvv --watch --mt |
+| ftt | forge test -vvvv --mt |
+| fttw | forge test -vvvv --watch --mt |
+| ftc | forge test -vvvv --mc |
+| ftcw | forge test -vvvv --watch --mc |
 
 **Important**: All profiles are run using the foundry `ci` profile which disables the optimizer (for speed).
 

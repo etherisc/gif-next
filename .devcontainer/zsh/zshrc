@@ -8,4 +8,7 @@ alias fbcw='FOUNDRY_PROFILE=ci forge build --watch contracts/'
 alias ft='FOUNDRY_PROFILE=ci forge test'
 # exclude all fuzz and continuous tests
 alias ftf='FOUNDRY_PROFILE=ci forge test --nmt "testFuzz|test_continuous"'
-alias ftmw='FOUNDRY_PROFILE=ci forge test -vvvv --watch --mt'
+alias ftw='FOUNDRY_PROFILE=ci forge test -vvvv --mt'
+alias fttw='FOUNDRY_PROFILE=ci forge test -vvvv --watch --mt'
+alias ftc='FOUNDRY_PROFILE=ci forge test -vvvv --mc'
+alias ftcw='FOUNDRY_PROFILE=ci forge test -vvvv --watch --mc'
