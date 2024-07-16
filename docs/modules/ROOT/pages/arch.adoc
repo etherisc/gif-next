@@ -42,27 +42,69 @@ image::{imgbase}multi-chain-setup.png[Multi-chain setup]
 
 === Global Registry
 
-The global registry is deployed on mainnet can be understood as the directory and entry point for the complete protocol ecosystem. 
+The global registry is deployed on mainnet can be understood as the directory and entry point for the entire protocol ecosystem. 
 
 The global registry contains entries for all protocol relevant objects on mainnet and a chain registry entry for each supported chain in the ecosystem.
 At the same time the global registy plays the role of the mainnet chain registry.
 
 === Chain Registries
 
-On each chain supported by the protocol a chain registry is deployed.
+On each chain supported by the protocol, a chain registry is deployed.
 A chain registry contains entries for all protocol relevant objects on that specific chain.
-These entries hold basic metadata of the object and are backed by an NFT that defines the ownership of the object.
+These entries hold basic metadata for each registered object.
+Each registry entry is backed by an NFT that defines the ownership of the object.
 
-The list below provides the basic metadata for each object in the registry:
+== Single-Chain Setup
+
+=== Overview
+
+The GIF setup on any specific chain always consists of a registry and staking modules, services and instances as shown in the diagram below.
+
+image::{imgbase}single-chain-setup.png[Single-chain setup]
+
+=== Registry
+
+Registries have already been introduced in the text above.
+As mentioned above, a registry is the central entry point for all protocol objects on a specific chain.
+Registries also serve as the trusted source for protocol object information and relationships between different objects. 
+
+=== Components
+Once the instance is created it can be used to deploy a set of components contracts that are required to implement the use case.
+The framework provides template contracts for products, distributions, oracles, and pools that need to be extended to implement the actual business logic.
+
+=== Staking
+The staking module is used to manage the DIP that are staked by users to either the protocol itself or to an instance that is registered as a staking target.
+
+=== Services
+Services implement the generic insurance business logic of the protocol. They also manage the communication between components, instances, the registry, and the staking module. 
+
+Each service is associated with a specific GIF release and has a defined domain scope, such as "Registry" or "Policy". Services are stateless and operate solely on the state of the module contracts they are involved with. 
+Additionally, service contracts may interact with other service contracts. It is important to note that all service contracts are designed to be upgradeable, allowing for bug fixes and minor enhancements. 
+
+Breaking changes in any service, instance or component template contract would imply the deployment of a new GIF release.
+
+== Registry
+
+=== Overview
+The registry maintains a complete and reliable record of all relevant protocol objects.
+The registry module plays a critical role in the overall architecture of the protocol, facilitating the seamless integration and interoperability of the different instances, components, services and staking.
+
+By centralizing object information and their relationships, registries ensure consistency and integrity across the protocol ecosystem. They provide a reliable foundation for the decentralized insurance protocol, enabling efficient and secure management of insurance products.
+
+Registries are non-upgradeable. Once deployed, the registry contracts remain unchanged to maintain the integrity of the protocol's object ecosystem.
+In addition, registry entries are immutable and cannot be altered or deleted once they have been written to the registry. 
+This ensures that the protocol's object ecosystem remains consistent and reliable.
+
+=== Registry Objects
+Protocol objects are stored in the registry in the form of registry objects.
+A registry object is a simple data structure that holds the following properties.
 
 * NFT ID: A protocol unique ID
 * Parent NFT ID: A pointer to the parent object in the registry
 * Object Type: The type of the object (registry, service, instance, product, policy, etc)
 * Object Address: The contract address for contract objects
 
-=== Protocol Objects
-
-The following objects are managed by the protocol:
+The table below lists the different object types that can be stored in the registry.
 
 [cols="1,3"]
 |===
@@ -70,6 +112,9 @@ The following objects are managed by the protocol:
 
 |Protocol |The object representing the protocol itself
 |Registry |Registry contracts
+|Staking |The staking contract for the chain
+|Service |Service contracts linked to the chain registry.
+In addition to storing the service contract address, services also carry the information regarding the release and the domain of the service. 
 |Instance |Instance contracts linked to the chain registry
 |Product |Product contracts linked to an instance
 |Policy |Policy object linked to a product contract
@@ -78,8 +123,9 @@ The following objects are managed by the protocol:
 |Oracle |Oracle contracts linked to an instance
 |Pool |Pool contracts linked to an instance
 |Bundle |Bundle object linked to a pool contract
-|Staking |Staking contracts linked to the chain registry
-|Stake |Stake object linked to its target object (instance or protocol)
+|Stake |Stake object linked to its target object.
+Stakes are the only objects that can have a parent object with a non unique parent type.
+Currently, stakes are allowed to have a parent of type protocol or instance.
 |===
 
 Except for the protocol object each object in the registry is linked to a parent object.
@@ -93,63 +139,7 @@ image::{imgbase}registry-er.png[Registry Object Hierarchy]
 The global registry is the parent object for all chain registries.
 On Mainnet the global registry may also serve as a parent object for service, staking and instance objects on mainnet.
 
-== Single-Chain Setup
-
-=== Overview
-
-The GIF setup on any specific chain always consists of a registry and staking modules, services and instances as shown in the diagram below.
-
-image::{imgbase}single-chain-setup.png[Single-chain setup]
-
-=== Registry
-
-Registries have already been introduced in the text above.
-As already mentioned a registry is the central entry point for all protocol objects on a specific chain.
-
-=== Staking
-
-The staking module is used to manage the DIP that are staked by users to either the protocol itself or to an instance that is registered as a staking target.
-
-=== Instance
-
-Instances are used by ecosystem participants to create and operate actual use cases/products.
-Instances consist of a set of instance contracts and a number of so-called components that are required to implement an actual use cases. 
-
-=== Components
-
-Currently, products, distributions, oracles, and pools as supported by GIF as component types.
-
-=== Services
-
-Services are used to implement the generic insurance business logic of the GIF.
-Components, instances, the registry and the staking module may only interact with each other through these generic service contracts.
-
-== Modules and Services
-
-=== Overview
-
-=== Modules
-
-Modules are defined as a set of one or more contracts that serve a specific purpose.
-Each contract in a module has its clear role and responsibility.
-Contracts in the same module may directly interact with each other. 
-Module contracts may never directly interact with contracts from other modules.
-Instead, a module contract may call a service contract that then interact with a contract in another module on its behalf.
-
-Examples of modules are the registry module, the staking module, instance and component modules.
-Except for the staking module, all modules are non-upgradeable.
-
-=== Services
-
-Services have a domain scope such as "Registry" or "Policy" and implement the domain specific business logic.
-Services are stateless and only operate on the state of the involved module contracts.
-Service contract may also interact with other service contracts.
-
-All service contracts are upgradeable to allow for bug fixing and minor enhancements.
-Service contract upgrades are only allowed for non-breaking changes.
-
-=== Registry Module
-
+=== Contracts
 The registry module diagram below provides an overview of the registry related contracts of a GIF deployment.
 
 image::{imgbase}registry-module.png[Registry Module]
@@ -197,156 +187,6 @@ Registry service contracts are authoriezd to register new objects with the regis
 | The DIP token deployed outside of the GIF deployment.
 The DIP token is always registered with the Token registry.
 
-|===
-
-=== Staking Module
-
-The staking module diagram below provides an overview of the registry related contracts of a GIF deployment.
-
-image::{imgbase}staking-module.png[Staking Module]
-
-Contracts and their responsibilities are outlined below.
-
-[cols="1,3"]
-|===
-| Contract | Responsibility
-
-| StakingReader
-| Provides all read access functions to staking related data.
-
-| StakingStore
-| Stores all staking related data like staked DIPs per staker and target, available staking targets, total locked value per target staked DIPs per target.
-
-| Staking
-| The central staking contract that implements to upgradeable business logic for staking.
-
-| StakingService
-| A release specific service contract that is authorized to create new stakes and manage existing stakes.
-
-| PoolService
-| Informs the staking contract about changes in the total locked value (TVL) amounts of the instances.
-
-| RegistryAdmin
-| Central authorization for all core contracts (resistry module and staking module) and all service contracts from all major releases.
-
-|===
-
-
-=== Instance Module
-
-The instance module diagram below provides an overview of the instance related contracts.
-
-image::{imgbase}instance-module.png[Instance Module]
-
-Contracts and their responsibilities are outlined below.
-
-[cols="1,3"]
-|===
-| Contract/Account | Responsibility
-
-| Instance Owner
-(Actor)
-| Contract/Account that is the holder of the instance NFT that represents this particular instance.
-The instance NFT is linked to the instance contract and registered in the registry.
-
-| Instance
-| Central instance contract that manages instance authorization and references to other instance module contracts.
-
-| InstanceReader
-| Provides all read access functions to instance related data.
-This includes data access for all components linked to the instance.
-
-| InstanceStore
-| Stores all instance related data like managed components, polices, bundles, distributors etc.
-
-| BundleSet
-| Manages the set of active policies for each bundle.
-
-| RiskSet
-| Manages the set of active policies for each risk.
-
-| InstanceAdmin
-| Central authorization for all instance and linked component contracts as well as all service contracts that need write access to instance data.
-
-| Services ...
-| The set of services that interact with the instance module.
-
-|===
-
-
-=== Component Modules
-
-Component modules are are always linked to a specific instance module.
-The term "component module" covers four distinct types of components that together implement the actual use case specific business logic of a concrete use case.
-
-The diagram below shows the architecture of an exemplary "My Product" use case.
-
-image::{imgbase}component-modules.png[Component Modules]
-
-Moudle contracts and their responsibilities are outlined below.
-
-[cols="1,3"]
-|===
-| Contract/Account | Responsibility
-
-| Product Owner
-(Actor)
-| Contract/Account that is the holder of the product NFT that represents this particular product.
-The NFT is linked to the product contract and registered in the registry.
-
-| Distribution Owner
-(Actor)
-| Contract/Account that is the holder of the distribution NFT that represents this particular distribution contract.
-The NFT is linked to the distribution contract and registered in the registry.
-
-| Oracle Owner
-(Actor)
-| Contract/Account that is the holder of the oracle NFT that represents this particular oracle contract.
-The NFT is linked to the oracle contract and registered in the registry.
-
-| Pool Owner
-(Actor)
-| Contract/Account that is the holder of the pool NFT that represents this particular pool contract.
-The NFT is linked to the pool contract and registered in the registry.
-
-| My Product
-| Does not contain actual contracts, It represents the use case specific collection of component moudules that are required to implement and operate the use case.
-
-| Product Module
-| The use case specific product contract that manages policies, claims and payouts.
-The product contract is based on product template contract provided by the framework.
-The module may includes additional supporting contracts.
-A Pool module always needs to be linked to a pool module.
-Links to a distribution module and oracle modules are optional
-
-| Distribution Module
-| The use case specific distribution contract that manages distributors, referral codes and policy sales.
-The distribution contract is based on distribution template contract provided by the framework.
-The module may includes additional supporting contracts.
-A distribution module is always linked to a single product module
-
-| Oracle Module
-| One or more use case specific oracle modules. 
-Each oracle module contains an oracle contract that manages oracle requests and responses that connect the product to real world (off-chain) data.
-The oracle contracts are based on a oracle template contract provided by the framework.
-The modules may includes additional supporting contracts.
-Any oracle module is always linked to a single product module.
-
-| Pool Module
-| The use case specific pool contract that manages bundles which in turn provide the risk capital of the use case.
-The pool contract is based on pool template contract provided by the framework.
-The module may includes additional supporting contracts.
-A pool moudle is always linked to a single product module
-
-| Instance Module
-| The instance module that links all component modules and also holds the data related to the component modules.
-During operation the linked instance module manages the data related to all relevant business objects like policies, claims, payouts, bundles, distributors, etc.
-
-| Registry Module
-| When setting up a new use case, component modules are registerd with the instance module and the registry module.
-For each registered component module an associated registry entry is created and a component module specific NFT is minted.
-Additional registry entries and NFTs are created during the operation of the use case.
-In this phase NFTs are also minted for most business relevant objects such as policies or bundles.
 |===
 
 == Instances
@@ -545,12 +385,130 @@ Only the instance owner may withdraw the reward reserves.
 
 |===
 
+=== Contracts
+
+The instance module diagram below provides an overview of the instance related contracts.
+
+image::{imgbase}instance-module.png[Instance Module]
+
+Contracts and their responsibilities are outlined below.
+
+[cols="1,3"]
+|===
+| Contract/Account | Responsibility
+
+| Instance Owner
+(Actor)
+| Contract/Account that is the holder of the instance NFT that represents this particular instance.
+The instance NFT is linked to the instance contract and registered in the registry.
+
+| Instance
+| Central instance contract that manages instance authorization and references to other instance module contracts.
+
+| InstanceReader
+| Provides all read access functions to instance related data.
+This includes data access for all components linked to the instance.
+
+| InstanceStore
+| Stores all instance related data like managed components, polices, bundles, distributors etc.
+
+| BundleSet
+| Manages the set of active policies for each bundle.
+
+| RiskSet
+| Manages the set of active policies for each risk.
+
+| InstanceAdmin
+| Central authorization for all instance and linked component contracts as well as all service contracts that need write access to instance data.
+
+| Services ...
+| The set of services that interact with the instance module.
+
+|===
+
+
 == Components
 
 The term component is used as a summary term for use case specific product, distribution, oracle, and pool contracts/modules.
 Components provide the shared functionality of the different types of components that does not depend on any specifc use case.
 
-=== General Principles
+=== Overview
+
+Components are are always linked to a specific instance.
+The term "component" covers four distinct types of components that together implement the actual use case specific business logic of a concrete use case.
+
+The diagram below shows the architecture of an exemplary "My Product" use case.
+TODO remove module packages in diagram
+
+image::{imgbase}component-modules.png[Component Modules]
+
+Moudle contracts and their responsibilities are outlined below.
+
+[cols="1,3"]
+|===
+| Contract/Account | Responsibility
+
+| Product Owner
+(Actor)
+| Contract/Account that is the holder of the product NFT that represents this particular product.
+The NFT is linked to the product contract and registered in the registry.
+
+| Distribution Owner
+(Actor)
+| Contract/Account that is the holder of the distribution NFT that represents this particular distribution contract.
+The NFT is linked to the distribution contract and registered in the registry.
+
+| Oracle Owner
+(Actor)
+| Contract/Account that is the holder of the oracle NFT that represents this particular oracle contract.
+The NFT is linked to the oracle contract and registered in the registry.
+
+| Pool Owner
+(Actor)
+| Contract/Account that is the holder of the pool NFT that represents this particular pool contract.
+The NFT is linked to the pool contract and registered in the registry.
+
+| My Product
+| Does not contain actual contracts, It represents the use case specific collection of component moudules that are required to implement and operate the use case.
+
+| Product Module
+| The use case specific product contract that manages policies, claims and payouts.
+The product contract is based on product template contract provided by the framework.
+The module may includes additional supporting contracts.
+A Pool module always needs to be linked to a pool module.
+Links to a distribution module and oracle modules are optional
+
+| Distribution Module
+| The use case specific distribution contract that manages distributors, referral codes and policy sales.
+The distribution contract is based on distribution template contract provided by the framework.
+The module may includes additional supporting contracts.
+A distribution module is always linked to a single product module
+
+| Oracle Module
+| One or more use case specific oracle modules. 
+Each oracle module contains an oracle contract that manages oracle requests and responses that connect the product to real world (off-chain) data.
+The oracle contracts are based on a oracle template contract provided by the framework.
+The modules may includes additional supporting contracts.
+Any oracle module is always linked to a single product module.
+
+| Pool Module
+| The use case specific pool contract that manages bundles which in turn provide the risk capital of the use case.
+The pool contract is based on pool template contract provided by the framework.
+The module may includes additional supporting contracts.
+A pool moudle is always linked to a single product module
+
+| Instance Module
+| The instance module that links all component modules and also holds the data related to the component modules.
+During operation the linked instance module manages the data related to all relevant business objects like policies, claims, payouts, bundles, distributors, etc.
+
+| Registry Module
+| When setting up a new use case, component modules are registerd with the instance module and the registry module.
+For each registered component module an associated registry entry is created and a component module specific NFT is minted.
+Additional registry entries and NFTs are created during the operation of the use case.
+In this phase NFTs are also minted for most business relevant objects such as policies or bundles.
+|===
+
+=== Component Principles
 
 1. Components come in four different types: products, distributions, oracles, and pools.
 1. Components need a use case specific implementation.
@@ -991,26 +949,79 @@ image::{imgbase}bp-product-policy-close.png[Policy Closing Process]
 === Overview
 The protocl currently provides two options for staking the DIP protocol token.
 
-The first option is to stake the DIP token directly to the protocol. 
-In this case the staker receives a reward in the form of DIP tokens. 
+The first option is protocol staking where a DIP holder directly stakes DIP token to the protocol. 
+The staker receives a reward in the form of DIP tokens to incentivize the participation in the protocol.
+In the future staking to the protocol will be required to actively participate in the governance of the protocol.
 The reward rate, locking period and reserves are managed by the DIF as the protocol owner.
 
-The second option is to stake DIP to a specific instance.
-In that case the instance owner is responsible for setting the reward rate, the locking period and providing the reward reserves.
+The second option is instance staking where DIP tokens are staked to a specific instance.
+Instance staking is required to enable the operation of the instance in relation to the total value locked by that instance.
+The instance owner may decide to stake the required DIP tokens from its own funds or incentivice other DIP holders to stake to the instance.
+When an instance owner decides to invite the community to stake to the instance the instance owner is responsible for setting the reward rate, the locking period and providing the reward reserves.
 The instance owner also has the possibility to cap the total amount of DIP that can be staked to the instance in relation to the total locked value of the instance.
 
+These two staking options are managed by the staking module and the staking service.
+
 === Business Objects
-=== Targets
-=== Stakes
+==== Targets
+Staking is always linked to a specific target that needs to be registered in both the registry and the staking module.
+In the current release two stake target types are supported. 
+The protocol target is used for protocol staking and the instance target is used for instance staking.
+
+The protocol target is registered with the staking module during the initial protocol deployment on each supported chain.
+Instance targets are automatically registered with the staking module when a new instance is created.
+
+==== Stakes
+A stake represents a specific amount of DIP tokens that is staked to a registered target and is initially locked for a specific period of time.
+Every stake is also registered with the registry an backed by an NFT that represents the stake and defines the ownership of the stake.
+
+Only the owner of a stake may unstake or restake the stake to a different target.
+As the ownership is defined by the NFT the current owner of a stake may sell the stake NFT to another account.
+This transfer of ownership can be done at any time which allows selling a stake NFT even during the time when the stake is still locked.
 
 === Business Processes
-==== Creating Stakes
-==== Increasing Stakes
-==== Restake
-==== Unstake
-==== Claim Rewards
+==== Target Management
+Creating the protocol target and the instance target is does not need an explicit interaction of any stakeholder.
+
+Setting the reward rates and loking period for protocol staking is the responsibility of the staking owner.
+The staking owner is also responsible for refilling the reward reserves.
+
+Setting the reward rates, locking period, reward reserves and total stake cap for instance staking is the responsibility of the instance owner.
+The instance owner may also refill the reward reserves.
+
+==== Stake Management
 
 === Contracts
+
+The staking module diagram below provides an overview of the registry related contracts of a GIF deployment.
+
+image::{imgbase}staking-module.png[Staking Module]
+
+Contracts and their responsibilities are outlined below.
+
+[cols="1,3"]
+|===
+| Contract | Responsibility
+
+| StakingReader
+| Provides all read access functions to staking related data.
+
+| StakingStore
+| Stores all staking related data like staked DIPs per staker and target, available staking targets, total locked value per target staked DIPs per target.
+
+| Staking
+| The central staking contract that implements to upgradeable business logic for staking.
+
+| StakingService
+| A release specific service contract that is authorized to create new stakes and manage existing stakes.
+
+| PoolService
+| Informs the staking contract about changes in the total locked value (TVL) amounts of the instances.
+
+| RegistryAdmin
+| Central authorization for all core contracts (resistry module and staking module) and all service contracts from all major releases.
+
+|===
 
 == Authorization
 
