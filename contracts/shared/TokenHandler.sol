@@ -11,6 +11,7 @@ import {Amount} from "../type/Amount.sol";
 /// relies internally on oz SafeERC20.safeTransferFrom
 contract TokenHandler {
     error ErrorTokenHandlerAmountIsZero();
+    error ErrorTokenHandlerBalanceTooLow(address from, address spender, uint256 balance, uint256 amount);
     error ErrorTokenHandlerAllowanceTooSmall(address from, address spender, uint256 allowance, uint256 amount);
     error ErrorTokenHandlerRecipientWalletsMustBeDistinct(address to, address to2, address to3);
     
@@ -60,7 +61,7 @@ contract TokenHandler {
             revert ErrorTokenHandlerRecipientWalletsMustBeDistinct(to, to2, to3);
         }
 
-        _checkPreconditons(from, amount + amount2 + amount3);
+        _checkPreconditions(from, amount + amount2 + amount3);
 
         if (amount.gtz()) {
             _transfer(from, to, amount);
@@ -73,7 +74,8 @@ contract TokenHandler {
         }
     }
 
-    /// @dev distribute tokens from a wallet within the scope of gif to an external address
+    /// @dev distribute tokens from a wallet within the scope of gif to an external address.
+    /// This method also checks balance and allowance and makes sure the amount is greater than zero.
     function distributeTokens(
         address from,
         address to,
@@ -91,8 +93,8 @@ contract TokenHandler {
     )
         internal
     {
-        // check amount and allowance
-        _checkPreconditons(from, amount);
+        // check amount > 0, balance >= amount and allowance >= amount
+        _checkPreconditions(from, amount);
 
         // transfer the tokens
         emit LogTokenHandlerTokenTransfer(address(_token), from, to, amount.toInt());
@@ -103,17 +105,24 @@ contract TokenHandler {
             amount.toInt());
     }
 
-    function _checkPreconditons(
+    function _checkPreconditions(
         address from,
         Amount amount
     ) 
         internal
     {
-        // check preconditions
+        // amount must be greater than zero
         if (amount.eqz()) {
             revert ErrorTokenHandlerAmountIsZero();
         }
 
+        // balance must be >= amount
+        uint256 balance = _token.balanceOf(from);
+        if (balance < amount.toInt()) {
+            revert ErrorTokenHandlerBalanceTooLow(from, address(this), balance, amount.toInt());
+        }
+
+        // allowance must be >= amount
         uint256 allowance = _token.allowance(from, address(this));
         if (allowance < amount.toInt()) {
             revert ErrorTokenHandlerAllowanceTooSmall(from, address(this), allowance, amount.toInt());

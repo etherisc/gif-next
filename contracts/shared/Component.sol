@@ -124,20 +124,7 @@ abstract contract Component is
     {
         // checks
         address currentWallet = getWallet();
-        IERC20Metadata token = getToken();
-        uint256 currentBalance = token.balanceOf(currentWallet);
-
-        if (currentBalance > 0) {
-            if (currentWallet == address(this)) {
-                // move tokens from component smart contract to external wallet
-            } else {
-                // move tokens from external wallet to component smart contract or another external wallet
-                uint256 allowance = token.allowance(currentWallet, address(getTokenHandler()));
-                if (allowance < currentBalance) {
-                    revert ErrorComponentWalletAllowanceTooSmall(currentWallet, newWallet, allowance, currentBalance);
-                }
-            }
-        }
+        uint256 currentBalance = getToken().balanceOf(currentWallet);
 
         // effects
         _setWallet(newWallet);

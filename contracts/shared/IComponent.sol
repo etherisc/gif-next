@@ -23,7 +23,6 @@ interface IComponent is
     error ErrorComponentNameLengthZero();
     error ErrorComponentWalletAddressZero();
     error ErrorComponentWalletAddressIsSameAsCurrent();
-    error ErrorComponentWalletAllowanceTooSmall(address oldWallet, address newWallet, uint256 allowance, uint256 balance);
     error ErrorComponentWalletNotComponent();
 
     event LogComponentWalletAddressChanged(address oldWallet, address newWallet);
