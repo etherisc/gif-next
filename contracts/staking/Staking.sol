@@ -377,17 +377,7 @@ contract Staking is
         external
         restricted() // only staking service
     {
-        TokenHandler tokenHandler = getTokenHandler();
-        address stakingWallet = getWallet();
-
-        StakeManagerLib.checkDipBalanceAndAllowance(
-            getToken(), 
-            from, 
-            address(tokenHandler), 
-            dipAmount);
-
-        // TODO: centralize token handling (issue #471)
-        tokenHandler.transfer(from, stakingWallet, dipAmount);
+        getTokenHandler().collectTokens(from, getWallet(), dipAmount);
     }
 
 
@@ -395,17 +385,7 @@ contract Staking is
         external
         restricted() // only staking service
     {
-        TokenHandler tokenHandler = getTokenHandler();
-        address stakingWallet = getWallet();
-
-        StakeManagerLib.checkDipBalanceAndAllowance(
-            getToken(), 
-            stakingWallet, 
-            address(tokenHandler), 
-            dipAmount);
-        
-        // TODO: centralize token handling (issue #471)
-        tokenHandler.transfer(stakingWallet, to, dipAmount);
+        getTokenHandler().distributeTokens(getWallet(), to, dipAmount);
     }
 
 

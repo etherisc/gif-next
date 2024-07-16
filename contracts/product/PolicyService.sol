@@ -10,7 +10,6 @@ import {IInstance} from "../instance/IInstance.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
 
 import {TokenHandler} from "../shared/TokenHandler.sol";
-import {TokenTransferLib} from "../shared/TokenTransferLib.sol";
 
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {Timestamp, TimestampLib, zeroTimestamp} from "../type/Timestamp.sol";
@@ -487,27 +486,14 @@ contract PolicyService is
             instanceReader, 
             productNftId);
 
-        if (premium.productFeeAmount.gtz()) {
-            TokenTransferLib.collectTokens(
-                policyHolder,
-                productWallet,
-                premium.productFeeAmount,
-                tokenHandler);
-        }
-        if (premium.distributionFeeAndCommissionAmount.gtz()) {
-            TokenTransferLib.collectTokens(
-                policyHolder,
-                distributionWallet,
-                premium.distributionFeeAndCommissionAmount,
-                tokenHandler);
-        }
-        if (premium.poolPremiumAndFeeAmount.gtz()) {
-            TokenTransferLib.collectTokens(
-                policyHolder,
-                poolWallet,
-                premium.poolPremiumAndFeeAmount,
-                tokenHandler);
-        }
+        tokenHandler.collectTokens(
+            policyHolder,
+            productWallet,
+            premium.productFeeAmount,
+            distributionWallet,
+            premium.distributionFeeAndCommissionAmount,
+            poolWallet,
+            premium.poolPremiumAndFeeAmount);
     }
 
 

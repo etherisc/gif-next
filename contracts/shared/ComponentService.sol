@@ -20,7 +20,6 @@ import {NftId} from "../type/NftId.sol";
 import {ObjectType, REGISTRY, COMPONENT, DISTRIBUTION, INSTANCE, ORACLE, POOL, PRODUCT} from "../type/ObjectType.sol";
 import {RoleId, DISTRIBUTION_OWNER_ROLE, ORACLE_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE} from "../type/RoleId.sol";
 import {TokenHandler} from "./TokenHandler.sol";
-import {TokenTransferLib} from "../shared/TokenTransferLib.sol";
 
 contract ComponentService is
     ComponentVerifyingService,
@@ -120,7 +119,7 @@ contract ComponentService is
         // transfer amount to component owner
         address componentOwner = getRegistry().ownerOf(componentNftId);
         emit LogComponentServiceComponentFeesWithdrawn(componentNftId, componentOwner, address(info.token), withdrawnAmount);
-        TokenTransferLib.distributeTokens(componentWallet, componentOwner, withdrawnAmount, info.tokenHandler);
+        info.tokenHandler.distributeTokens(componentWallet, componentOwner, withdrawnAmount);
     }
 
 

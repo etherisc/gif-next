@@ -24,9 +24,9 @@ import {Seconds, SecondsLib} from "../contracts/type/Seconds.sol";
 import {SimplePool} from "./mock/SimplePool.sol";
 import {StateId, ACTIVE, PAUSED, CLOSED} from "../contracts/type/StateId.sol";
 import {Timestamp, TimestampLib, toTimestamp} from "../contracts/type/Timestamp.sol";
+import {TokenHandler} from "../contracts/shared/TokenHandler.sol";
 import {GifTest} from "./base/GifTest.sol";
 import {UFixedLib} from "../contracts/type/UFixed.sol";
-import {TokenTransferLib} from "../contracts/shared/TokenTransferLib.sol";
 
 contract TestBundle is GifTest {
 
@@ -203,7 +203,7 @@ contract TestBundle is GifTest {
 
         // THEN  
         vm.expectRevert(abi.encodeWithSelector(
-            TokenTransferLib.ErrorTokenTransferLibAllowanceTooSmall.selector, 
+            TokenHandler.ErrorTokenHandlerAllowanceTooSmall.selector, 
             investor,
             address(pool.getTokenHandler()),
             0,
@@ -237,7 +237,7 @@ contract TestBundle is GifTest {
 
         // THEN  
         vm.expectRevert(abi.encodeWithSelector(
-            TokenTransferLib.ErrorTokenTransferLibAmountIsZero.selector));
+            TokenHandler.ErrorTokenHandlerAmountIsZero.selector));
 
         // WHEN 
         pool.stake(bundleNftId, stakeAmount);
@@ -472,7 +472,7 @@ contract TestBundle is GifTest {
         
         // THEN - expect revert
         vm.expectRevert(abi.encodeWithSelector(
-            TokenTransferLib.ErrorTokenTransferLibAmountIsZero.selector));
+            TokenHandler.ErrorTokenHandlerAmountIsZero.selector));
 
         // WHEN - 0 tokens are unstaked
         pool.unstake(bundleNftId, unstakeAmount);
@@ -510,7 +510,7 @@ contract TestBundle is GifTest {
         
         // THEN - expect revert
         vm.expectRevert(abi.encodeWithSelector(
-            TokenTransferLib.ErrorTokenTransferLibAllowanceTooSmall.selector,
+            TokenHandler.ErrorTokenHandlerAllowanceTooSmall.selector,
             externalWallet,
             address(pool.getTokenHandler()),
             0,
@@ -980,7 +980,7 @@ contract TestBundle is GifTest {
 
         // THEN - expect revert
         vm.expectRevert(abi.encodeWithSelector(
-            TokenTransferLib.ErrorTokenTransferLibAllowanceTooSmall.selector, 
+            TokenHandler.ErrorTokenHandlerAllowanceTooSmall.selector, 
             externalWallet,
             address(pool.getTokenHandler()),
             0,

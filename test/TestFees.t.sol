@@ -17,9 +17,9 @@ import {RiskId, RiskIdLib} from "../contracts/type/RiskId.sol";
 import {ReferralId, ReferralLib} from "../contracts/type/Referral.sol";
 import {Seconds, SecondsLib} from "../contracts/type/Seconds.sol";
 import {Timestamp, TimestampLib} from "../contracts/type/Timestamp.sol";
+import {TokenHandler} from "../contracts/shared/TokenHandler.sol";
 import {Amount, AmountLib} from "../contracts/type/Amount.sol";
 import {INftOwnable} from "../contracts/shared/INftOwnable.sol";
-import {TokenTransferLib} from "../contracts/shared/TokenTransferLib.sol";
 
 contract TestFees is GifTest {
     using NftIdLib for NftId;
@@ -155,7 +155,7 @@ contract TestFees is GifTest {
         
         // THEN
         vm.expectRevert(abi.encodeWithSelector(
-            TokenTransferLib.ErrorTokenTransferLibAllowanceTooSmall.selector, 
+            TokenHandler.ErrorTokenHandlerAllowanceTooSmall.selector, 
             externalWallet, 
             address(distribution.getTokenHandler()),
             0,
@@ -420,7 +420,7 @@ contract TestFees is GifTest {
 
         // THEN 
         vm.expectRevert(abi.encodeWithSelector(
-            TokenTransferLib.ErrorTokenTransferLibAmountIsZero.selector));
+            TokenHandler.ErrorTokenHandlerAmountIsZero.selector));
         
         // WHEN - the distributor withdraws part of his commission
         distribution.withdrawCommission(distributorNftId, withdrawAmount);
@@ -441,7 +441,7 @@ contract TestFees is GifTest {
 
         // THEN 
         vm.expectRevert(abi.encodeWithSelector(
-            TokenTransferLib.ErrorTokenTransferLibAllowanceTooSmall.selector,
+            TokenHandler.ErrorTokenHandlerAllowanceTooSmall.selector,
             externalWallet,
             address(distribution.getTokenHandler()),
             0,
@@ -634,7 +634,7 @@ contract TestFees is GifTest {
         
         // THEN - expect a revert
         vm.expectRevert(abi.encodeWithSelector(
-            TokenTransferLib.ErrorTokenTransferLibAllowanceTooSmall.selector, 
+            TokenHandler.ErrorTokenHandlerAllowanceTooSmall.selector, 
             externalWallet,
             address(pool.getTokenHandler()),
             0,
@@ -661,7 +661,7 @@ contract TestFees is GifTest {
         
         // THEN - expect a revert
         vm.expectRevert(abi.encodeWithSelector(
-            TokenTransferLib.ErrorTokenTransferLibAmountIsZero.selector));
+            TokenHandler.ErrorTokenHandlerAmountIsZero.selector));
         
         // WHEN - the investor tries to withdraw more tokens than available 
         pool.withdrawBundleFees(bundleNftId, withdrawAmount);

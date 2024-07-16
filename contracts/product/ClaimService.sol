@@ -17,7 +17,6 @@ import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {IClaimService} from "./IClaimService.sol";
 import {IPoolService} from "../pool/IPoolService.sol";
-import {TokenTransferLib} from "../shared/TokenTransferLib.sol";
 
 
 contract ClaimService is 
@@ -308,7 +307,7 @@ contract ClaimService is
         {
             NftId poolNftId = getRegistry().getObjectInfo(policyInfo.bundleNftId).parentNftId;
             IComponents.ComponentInfo memory poolInfo = instanceReader.getComponentInfo(poolNftId);
-            TokenTransferLib.distributeTokens(poolInfo.wallet, beneficiary, netPayoutAmount, poolInfo.tokenHandler);
+            poolInfo.tokenHandler.distributeTokens(poolInfo.wallet, beneficiary, netPayoutAmount);
         }
     }
 
