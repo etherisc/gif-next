@@ -1076,6 +1076,74 @@ The ownership of an GIF relevant upgradeable contract is defined via its NFT as 
 
 Upgradeability relies on OpenZeppelin's `TransparentUpgradeableProxy` and `ProxyAdmin` contracts.
 
+== Logging
+
+=== Overview
+Logging is one of the key feature of the framework and ensures the transparency and traceability of all business processes.
+As described below complete and accurate logs are crucial for compliance assurance, data integrity and accuracy, audit trail for accountability, and legal and forensic evidence.
+
+*Compliance Assurance*
+Depending on the use case this is a mandatory requirement to demonstrate how the operation of the product adheres to legal and regulatory standards by providing a clear, indisputable record of all transactions, modifications.
+
+*Data Integrity and Accuracy*
+Complete logs also enable interested parties to ensure that all financial and operational data is accurate and unaltered. This is crucial to maintain the trust of external stakeholder trust.
+
+*Audit Trail for Accountability*
+Complete and accurate logs serve as an audit trail that details who did what and when
+
+*Legal and Forensic Evidence*
+In cases of disputes or litigation, logs can serve as evidence. Complete and accurate logging ensures that the evidence is credible and can be used in legal proceedings.
+
+=== General Principles
+
+==== Requirements
+
+* Complete token transfer history: This includes all actual token transfers related to the framework, such as the NFT linked to protocol objects, the product token, and the DIP token.
+* Complete balance history: This tracks all token balances related to the framework, allowing stakeholders to keep track of which account holds how many tokens at any given time.
+* Complete trace through the lifecycle of every business object: This provides a record of the context and reason behind every change to a business object, as well as related token balances and transfers.
+
+==== Logging Sources
+
+* ChainNft
+** Minting and Transfers of NFT
+** Calls to interceptor addresses
+* Registry
+** Registration of new protocol objects including the meta data of the object
+* RegistryAdmin
+* ReleaseRegistry
+* TokenRegistry
+* Staking
+* Instance (InstanceStore)
+* InstanceAdmin
+* BundleSet/RiskSet
+* Services
+* Components
+
+==== What to Log
+
+Any changes to a balances, a token transfer, and a business object change under the control of the framework.
+
+* Fees, Commissions, Rewards, etc
+
+Changes to Business Objects
+
+* Business process: contract/function?
+* Actor: Address that triggered the change through and instance, components, services, registry and staking
+* Object Id: Business object involved in the transaction, parent object id if object id not unique on its own
+* Business object state change, if any
+* Addtional properties that provide insight into the reason behind the change
+* Pointer to the previous change of this specific business object (blocknumber)
+
+==== When to Log
+
+=== Registry Logging
+
+=== Staking Logging
+
+=== Instance Logging
+
+=== Service Logging
+
 == Release Management
 
 === Overview

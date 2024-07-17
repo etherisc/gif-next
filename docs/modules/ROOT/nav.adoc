@@ -1,6 +1,5 @@
 * xref:index.adoc[Overview]
 * xref:arch.adoc[Architecture]
 * xref:howto-documentation.adoc[Documentation Howto]
-* xref:authz.adoc[Authorization]
 * xref:setup.adoc[Development setup]
 * https://github.com/etherisc/gif-next/issues/new[Report a bug]
