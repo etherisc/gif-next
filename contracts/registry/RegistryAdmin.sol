@@ -360,15 +360,15 @@ contract RegistryAdmin is
         functions[12] = toFunction(StakingStore.claimUpTo.selector, "claimUpTo");
         functions[13] = toFunction(StakingStore.unstakeUpTo.selector, "unstakeUpTo");
         _authorizeTargetFunctions(_stakingStore, stakingRoleId, functions);
-
+        
+        _grantRoleToAccount(stakingRoleId, _staking);
+    
         // grant token handler authorizations
         IStaking staking = IStaking(_staking);
         functions = new FunctionInfo[](2);
         functions[0] = toFunction(TokenHandler.collectTokens.selector, "collectTokens");
         functions[1] = toFunction(TokenHandler.distributeTokens.selector, "distributeTokens");
-        // FIXME: replace this with a more specific role instead if public role - access to token handler must be restricted
-        _authorizeTargetFunctions(address(staking.getTokenHandler()), PUBLIC_ROLE(), functions);
-
-        _grantRoleToAccount(stakingRoleId, _staking);
+        
+        _authorizeTargetFunctions(address(staking.getTokenHandler()), stakingRoleId, functions);
     }
 }
