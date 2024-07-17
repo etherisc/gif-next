@@ -7,6 +7,7 @@ import {AccessAdmin} from "../authorization/AccessAdmin.sol";
 import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
 import {IAccessAdmin} from "../authorization/IAccessAdmin.sol";
 import {IAuthorization} from "../authorization/IAuthorization.sol";
+import {IComponent} from "../shared/IComponent.sol";
 import {IModuleAuthorization} from "../authorization/IModuleAuthorization.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IInstance} from "./IInstance.sol";
@@ -14,6 +15,7 @@ import {IService} from "../shared/IService.sol";
 import {ObjectType, ObjectTypeLib, ALL, POOL, RELEASE} from "../type/ObjectType.sol";
 import {RoleId, RoleIdLib, ADMIN_ROLE, PUBLIC_ROLE, DISTRIBUTION_OWNER_ROLE, ORACLE_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE} from "../type/RoleId.sol";
 import {Str, StrLib} from "../type/String.sol";
+import {TokenHandler} from "../shared/TokenHandler.sol";
 import {VersionPart} from "../type/Version.sol";
 
 
@@ -111,26 +113,43 @@ contract InstanceAdmin is
     /// @dev Initializes the authorization for the specified component.
     /// Important: The component MUST be registered.
     function initializeComponentAuthorization(
-        address componentAddress,
+        IComponent component,
         IAuthorization authorization
     )
         external
     {
-        _checkTargetIsReadyForAuthorization(componentAddress);
+        _checkTargetIsReadyForAuthorization(address(component));
 
         _createRoles(authorization);
 
         // create component target
         _createTarget(
-            componentAddress, 
+            address(component), 
             authorization.getTargetName(), 
             true, // checkAuthority
             false); // custom
 
+        _createTarget(
+            address(component.getTokenHandler()), 
+            string(abi.encodePacked(authorization.getTargetName(), "TH")), 
+            true, 
+            false);
+        
+        // FIXME: make this a bit nicer and work with IAuthorization. Use a specific role, not public - access to TokenHandler must be restricted
+        FunctionInfo[] memory functions = new FunctionInfo[](3);
+        functions[0] = toFunction(TokenHandler.collectTokens.selector, "collectTokens");
+        functions[1] = toFunction(TokenHandler.collectTokensToThreeRecipients.selector, "collectTokensToThreeRecipients");
+        functions[2] = toFunction(TokenHandler.distributeTokens.selector, "distributeTokens");
+
+        _authorizeTargetFunctions(
+            address(component.getTokenHandler()),
+            getPublicRole(),
+            functions);
+
         _grantRoleToAccount(
             authorization.getTargetRole(
                 authorization.getTarget()), 
-            componentAddress);
+            address(component));
         
         _createTargetAuthorizations(authorization);
     }

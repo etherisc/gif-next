@@ -124,6 +124,7 @@ interface IBundleService is IService {
         NftId policyNftId
     ) external;
 
+    // FIXME: move to pool service
     /// @dev Withdraw bundle feeds for the given bundle
     /// @param bundleNftId the bundle Nft Id
     /// @param amount the amount to withdraw. If set to AMOUNT_MAX, the full commission available is withdrawn

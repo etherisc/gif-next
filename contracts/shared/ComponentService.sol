@@ -19,7 +19,7 @@ import {KEEP_STATE} from "../type/StateId.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType, REGISTRY, COMPONENT, DISTRIBUTION, INSTANCE, ORACLE, POOL, PRODUCT} from "../type/ObjectType.sol";
 import {RoleId, DISTRIBUTION_OWNER_ROLE, ORACLE_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE} from "../type/RoleId.sol";
-import {TokenHandler} from "./TokenHandler.sol";
+import {TokenHandlerDeployerLib} from "../shared/TokenHandlerDeployerLib.sol";
 
 contract ComponentService is
     ComponentVerifyingService,
@@ -511,21 +511,23 @@ contract ComponentService is
 
         component.linkToRegisteredNftId();
 
-        // setup initial component authorization
-        _instanceService.initializeAuthorization(
-            instance.getNftId(),
-            component);
-
         // save amended component info with instance
         instanceReader = instance.getInstanceReader();
         instanceStore = instance.getInstanceStore();
 
         IComponents.ComponentInfo memory componentInfo = component.getInitialComponentInfo();
-        componentInfo.tokenHandler = new TokenHandler(address(componentInfo.token));
+        componentInfo.tokenHandler = TokenHandlerDeployerLib.deployTokenHandler(
+            address(componentInfo.token), 
+            address(instance.getInstanceAdmin().authority()));
 
         instanceStore.createComponent(
             component.getNftId(), 
             componentInfo);
+
+        // setup initial component authorization
+        _instanceService.initializeAuthorization(
+            instance.getNftId(),
+            component);
 
         // TODO add logging
     }

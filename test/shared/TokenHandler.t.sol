@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
 
 import {Amount, AmountLib} from "../../contracts/type/Amount.sol";
 import {Dip} from "../../contracts/mock/Dip.sol";
@@ -11,13 +12,22 @@ import {TokenHandler} from "../../contracts/shared/TokenHandler.sol";
 contract TokenHandlerTest is Test {
     Dip public dip;
     TokenHandler public tokenHandler;
+    AccessManager public accessManager;
 
     function setUp() public {
-        dip = new Dip();
-        tokenHandler = new TokenHandler(address(dip));
+        dip = new Dip();        
+        accessManager = new AccessManager(address(this));
+        tokenHandler = new TokenHandler(address(dip), address(accessManager));
+
+        // configure rights for tokenHandler (all public for test)
+        bytes4[] memory selectors = new bytes4[](3);
+        selectors[0] = TokenHandler.collectTokens.selector;
+        selectors[1] = TokenHandler.collectTokensToThreeRecipients.selector;
+        selectors[2] = TokenHandler.distributeTokens.selector;
+        accessManager.setTargetFunctionRole(address(tokenHandler), selectors, type(uint64).max);
     }
 
-    function test_TokenHandler_getToken() public {
+    function test_TokenHandler_getToken() public view {
         assertEq(address(dip), address(tokenHandler.getToken()));
     }
 
@@ -180,7 +190,7 @@ contract TokenHandlerTest is Test {
         emit TokenHandler.LogTokenHandlerTokenTransfer(address(dip), sender, recipient3, amountInt);
 
         // WHEN
-        tokenHandler.collectTokens(sender, recipient1, amount, recipient2, amount, recipient3, amount);
+        tokenHandler.collectTokensToThreeRecipients(sender, recipient1, amount, recipient2, amount, recipient3, amount);
         
         // THEN
         assertEq(dip.balanceOf(sender), 0);
@@ -201,7 +211,7 @@ contract TokenHandlerTest is Test {
         _approveTokenHandler(sender, amountInt * 3);
         
         // WHEN
-        tokenHandler.collectTokens(sender, recipient1, AmountLib.zero(), recipient2, amount, recipient3, amount);
+        tokenHandler.collectTokensToThreeRecipients(sender, recipient1, AmountLib.zero(), recipient2, amount, recipient3, amount);
         
         // THEN
         assertEq(dip.balanceOf(sender), 100);
@@ -223,7 +233,7 @@ contract TokenHandlerTest is Test {
         _approveTokenHandler(sender, amountInt * 3);
         
         // WHEN
-        tokenHandler.collectTokens(sender, recipient1, amount, recipient2, AmountLib.zero(), recipient3, amount);
+        tokenHandler.collectTokensToThreeRecipients(sender, recipient1, amount, recipient2, AmountLib.zero(), recipient3, amount);
         
         // THEN
         assertEq(dip.balanceOf(sender), 100);
@@ -244,7 +254,7 @@ contract TokenHandlerTest is Test {
         _approveTokenHandler(sender, amountInt * 3);
         
         // WHEN
-        tokenHandler.collectTokens(sender, recipient1, amount, recipient2, amount, recipient3, AmountLib.zero());
+        tokenHandler.collectTokensToThreeRecipients(sender, recipient1, amount, recipient2, amount, recipient3, AmountLib.zero());
         
         // THEN
         assertEq(dip.balanceOf(sender), 100);
@@ -274,7 +284,7 @@ contract TokenHandlerTest is Test {
             ));
 
         // WHEN
-        tokenHandler.collectTokens(sender, recipient1, amount, recipient2, amount, recipient3, amount);
+        tokenHandler.collectTokensToThreeRecipients(sender, recipient1, amount, recipient2, amount, recipient3, amount);
     }
 
     function test_TokenHandler_collectTokens_3rcpt_rcptEqual1() public {
@@ -296,7 +306,7 @@ contract TokenHandlerTest is Test {
             ));
 
         // WHEN
-        tokenHandler.collectTokens(sender, recipient1, amount, recipient1, amount, recipient3, amount);
+        tokenHandler.collectTokensToThreeRecipients(sender, recipient1, amount, recipient1, amount, recipient3, amount);
     }
 
         function test_TokenHandler_collectTokens_3rcpt_rcptEqual2() public {
@@ -318,7 +328,7 @@ contract TokenHandlerTest is Test {
             ));
 
         // WHEN
-        tokenHandler.collectTokens(sender, recipient1, amount, recipient2, amount, recipient1, amount);
+        tokenHandler.collectTokensToThreeRecipients(sender, recipient1, amount, recipient2, amount, recipient1, amount);
     }
 
         function test_TokenHandler_collectTokens_3rcpt_rcptEqual3() public {
@@ -340,7 +350,7 @@ contract TokenHandlerTest is Test {
             ));
 
         // WHEN
-        tokenHandler.collectTokens(sender, recipient1, amount, recipient2, amount, recipient2, amount);
+        tokenHandler.collectTokensToThreeRecipients(sender, recipient1, amount, recipient2, amount, recipient2, amount);
     }
 
     function test_TokenHandler_allowanceTooSmall() public {
