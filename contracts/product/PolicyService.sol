@@ -486,7 +486,7 @@ contract PolicyService is
             instanceReader, 
             productNftId);
 
-        tokenHandler.collectTokens(
+        tokenHandler.collectTokensThreeRecipients(
             policyHolder,
             productWallet,
             premium.productFeeAmount,

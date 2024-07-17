@@ -48,7 +48,7 @@ contract TokenHandler is AccessManaged {
 
     /// @dev collect tokens from outside of the gif and transfer them to three distinct wallets within the scope of gif
     /// This method also checks balance and allowance and makes sure the amount is greater than zero.
-    function collectTokens(
+    function collectTokensThreeRecipients( // TODO: find a better name
         address from,
         address to,
         Amount amount,
