@@ -314,7 +314,7 @@ contract InstanceService is
 
         InstanceAdmin instanceAdmin = instance.getInstanceAdmin();
         instanceAdmin.initializeComponentAuthorization(
-            address(component),
+            component,
             component.getAuthorization());
     }
 

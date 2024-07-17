@@ -134,7 +134,6 @@ contract Authorization
                RoleIdLib.toComponentRoleId(componentType, 0),
                _toTargetRoleName(
                     getTargetName()));
-
      }
 
      /// @dev Add a contract role for the provided role id and name.
