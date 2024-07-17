@@ -43,7 +43,7 @@ contract TokenHandler is AccessManaged {
         external
         restricted()
     {
-        _transfer(from, to, amount);
+        _transfer(from, to, amount, true);
     }
 
     /// @dev collect tokens from outside of the gif and transfer them to three distinct wallets within the scope of gif
@@ -67,13 +67,13 @@ contract TokenHandler is AccessManaged {
         _checkPreconditions(from, amount + amount2 + amount3);
 
         if (amount.gtz()) {
-            _transfer(from, to, amount);
+            _transfer(from, to, amount, false);
         }
         if (amount2.gtz()) {
-            _transfer(from, to2, amount2);
+            _transfer(from, to2, amount2, false);
         }
         if (amount3.gtz()) {
-            _transfer(from, to3, amount3);
+            _transfer(from, to3, amount3, false);
         }
     }
 
@@ -87,18 +87,21 @@ contract TokenHandler is AccessManaged {
         external
         restricted()
     {
-        _transfer(from, to, amount);
+        _transfer(from, to, amount, true);
     }
 
     function _transfer(
         address from,
         address to,
-        Amount amount
+        Amount amount,
+        bool checkPreconditions
     )
         internal
     {
-        // check amount > 0, balance >= amount and allowance >= amount
-        _checkPreconditions(from, amount);
+        if (checkPreconditions) {
+            // check amount > 0, balance >= amount and allowance >= amount
+            _checkPreconditions(from, amount);
+        }
 
         // transfer the tokens
         emit LogTokenHandlerTokenTransfer(address(_token), from, to, amount.toInt());
