@@ -138,7 +138,7 @@ contract InstanceAdmin is
         // FIXME: make this a bit nicer and work with IAuthorization. Use a specific role, not public - access to TokenHandler must be restricted
         FunctionInfo[] memory functions = new FunctionInfo[](3);
         functions[0] = toFunction(TokenHandler.collectTokens.selector, "collectTokens");
-        functions[1] = toFunction(TokenHandler.collectTokensThreeRecipients.selector, "collectTokensThreeRecipients");
+        functions[1] = toFunction(TokenHandler.collectTokensToThreeRecipients.selector, "collectTokensToThreeRecipients");
         functions[2] = toFunction(TokenHandler.distributeTokens.selector, "distributeTokens");
 
         _authorizeTargetFunctions(
