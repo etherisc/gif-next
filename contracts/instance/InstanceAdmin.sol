@@ -135,7 +135,7 @@ contract InstanceAdmin is
             true, 
             false);
         
-        // TODO: make this a bit nicer and work with IAuthorization
+        // FIXME: make this a bit nicer and work with IAuthorization. Use a specific role, not public - access to TokenHandler must be restricted
         FunctionInfo[] memory functions = new FunctionInfo[](3);
         functions[0] = toFunction(TokenHandler.collectTokens.selector, "collectTokens");
         functions[1] = toFunction(TokenHandler.collectTokensThreeRecipients.selector, "collectTokensThreeRecipients");

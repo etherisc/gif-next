@@ -12,6 +12,7 @@ import {ReleaseRegistry} from "./ReleaseRegistry.sol";
 import {RoleId, RoleIdLib, ADMIN_ROLE, GIF_MANAGER_ROLE, GIF_ADMIN_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {StakingStore} from "../staking/StakingStore.sol";
 import {STAKING} from "../type/ObjectType.sol";
+import {TokenHandler} from "../shared/TokenHandler.sol";
 import {TokenRegistry} from "./TokenRegistry.sol";
 import {VersionPart} from "../type/Version.sol";
 
@@ -359,6 +360,14 @@ contract RegistryAdmin is
         functions[12] = toFunction(StakingStore.claimUpTo.selector, "claimUpTo");
         functions[13] = toFunction(StakingStore.unstakeUpTo.selector, "unstakeUpTo");
         _authorizeTargetFunctions(_stakingStore, stakingRoleId, functions);
+
+        // grant token handler authorizations
+        IStaking staking = IStaking(_staking);
+        functions = new FunctionInfo[](2);
+        functions[0] = toFunction(TokenHandler.collectTokens.selector, "collectTokens");
+        functions[1] = toFunction(TokenHandler.distributeTokens.selector, "distributeTokens");
+        // FIXME: replace this with a more specific role instead if public role - access to token handler must be restricted
+        _authorizeTargetFunctions(address(staking.getTokenHandler()), PUBLIC_ROLE(), functions);
 
         _grantRoleToAccount(stakingRoleId, _staking);
     }
