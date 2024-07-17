@@ -19,7 +19,7 @@ import {KEEP_STATE} from "../type/StateId.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType, REGISTRY, COMPONENT, DISTRIBUTION, INSTANCE, ORACLE, POOL, PRODUCT} from "../type/ObjectType.sol";
 import {RoleId, DISTRIBUTION_OWNER_ROLE, ORACLE_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE} from "../type/RoleId.sol";
-import {TokenHandler} from "./TokenHandler.sol";
+import {TokenHandlerDeployerLib} from "../shared/TokenHandlerDeployerLib.sol";
 
 contract ComponentService is
     ComponentVerifyingService,
@@ -516,7 +516,7 @@ contract ComponentService is
         instanceStore = instance.getInstanceStore();
 
         IComponents.ComponentInfo memory componentInfo = component.getInitialComponentInfo();
-        componentInfo.tokenHandler = new TokenHandler(
+        componentInfo.tokenHandler = TokenHandlerDeployerLib.deployTokenHandler(
             address(componentInfo.token), 
             address(instance.getInstanceAdmin().authority()));
 

@@ -18,6 +18,7 @@ import {StakingStore} from "./StakingStore.sol";
 import {TargetManagerLib} from "./TargetManagerLib.sol";
 import {Timestamp} from "../type/Timestamp.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
+import {TokenHandlerDeployerLib} from "../shared/TokenHandlerDeployerLib.sol";
 import {TokenRegistry} from "../registry/TokenRegistry.sol";
 import {UFixed} from "../type/UFixed.sol";
 import {Version, VersionLib} from "../type/Version.sol";
@@ -300,7 +301,7 @@ contract Staking is
         StakingStorage storage $ = _getStakingStorage();
 
         // TODO implement
-   }
+    }
 
 
     function updateRewards(NftId stakeNftId)
@@ -482,7 +483,7 @@ contract Staking is
         $._store = StakingStore(stakingStoreAddress);
         $._reader = StakingStore(stakingStoreAddress).getStakingReader();
         $._tokenRegistry = TokenRegistry(tokenRegistryAddress);
-        $._tokenHandler = new TokenHandler(address(getToken()), authority);
+        $._tokenHandler = TokenHandlerDeployerLib.deployTokenHandler(dipTokenAddress, authority);
 
         registerInterface(type(IStaking).interfaceId);
     }
