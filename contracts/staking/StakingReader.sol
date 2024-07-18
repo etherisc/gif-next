@@ -1,21 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Amount} from "../type/Amount.sol";
-import {Blocknumber}  from "../type/Blocknumber.sol";
-import {IKeyValueStore} from "../shared/IKeyValueStore.sol";
-import {IComponent} from "../shared/IComponent.sol";
-import {InitializableCustom} from "../shared/InitializableCustom.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegistryLinked} from "../shared/IRegistryLinked.sol";
 import {IStaking} from "../staking/IStaking.sol";
-import {IVersionable} from "../shared/IVersionable.sol";
+
+import {Amount} from "../type/Amount.sol";
+import {Blocknumber}  from "../type/Blocknumber.sol";
+import {InitializableCustom} from "../shared/InitializableCustom.sol";
 import {NftId} from "../type/NftId.sol";
-import {ObjectType, STAKE, TARGET} from "../type/ObjectType.sol";
-import {Seconds} from "../type/Seconds.sol";
+import {STAKE, TARGET} from "../type/ObjectType.sol";
 import {StakingStore} from "./StakingStore.sol";
 import {Timestamp} from "../type/Timestamp.sol";
-import {UFixed, UFixedLib} from "../type/UFixed.sol";
+import {UFixed} from "../type/UFixed.sol";
 
 contract StakingReader is
     IRegistryLinked,

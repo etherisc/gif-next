@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {Version, VersionLib} from "../../contracts/type/Version.sol";
-import {Versionable} from "../../contracts/shared/Versionable.sol";
+import {Versionable} from "../../contracts/upgradeability/Versionable.sol";
 
 
 contract ContractV01 is Versionable {

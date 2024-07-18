@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 
 import {IRegisterable} from "./IRegisterable.sol";
-import {IVersionable} from "./IVersionable.sol";
+import {IVersionable} from "../upgradeability/IVersionable.sol";
 import {ObjectType} from "../type/ObjectType.sol";
 import {RoleId} from "../type/RoleId.sol";
 

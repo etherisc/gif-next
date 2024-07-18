@@ -1,32 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
-// import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
-
-import {IRegistry} from "./IRegistry.sol";
-import {IInstance} from "../instance/IInstance.sol";
-
 import {IComponent} from "../../contracts/shared/IComponent.sol";
+import {IDistributionComponent} from "../../contracts/distribution/IDistributionComponent.sol";
+import {IInstance} from "../instance/IInstance.sol";
 import {IPoolComponent} from "../../contracts/pool/IPoolComponent.sol";
 import {IProductComponent} from "../../contracts/product/IProductComponent.sol";
-import {IDistributionComponent} from "../../contracts/distribution/IDistributionComponent.sol";
-
-import {IVersionable} from "../../contracts/shared/IVersionable.sol";
-import {Versionable} from "../../contracts/shared/Versionable.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
-
-import {RoleId, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, ORACLE_OWNER_ROLE} from "../../contracts/type/RoleId.sol";
-import {ObjectType, REGISTRY, SERVICE, PRODUCT, ORACLE, POOL, INSTANCE, COMPONENT, DISTRIBUTION, DISTRIBUTOR, APPLICATION, POLICY, CLAIM, BUNDLE, STAKE, STAKING, PRICE} from "../../contracts/type/ObjectType.sol";
-import {StateId, ACTIVE, PAUSED} from "../../contracts/type/StateId.sol";
-import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
-import {Fee, FeeLib} from "../../contracts/type/Fee.sol";
-import {Version, VersionPart, VersionLib} from "../../contracts/type/Version.sol";
-
-import {Service} from "../shared/Service.sol";
-import {IService} from "../shared/IService.sol";
+import {IRegistry} from "./IRegistry.sol";
 import {IRegistryService} from "./IRegistryService.sol";
-import {Registry} from "./Registry.sol";
+
+import {ObjectType, REGISTRY, SERVICE, PRODUCT, ORACLE, POOL, INSTANCE, COMPONENT, DISTRIBUTION, DISTRIBUTOR, APPLICATION, POLICY, CLAIM, BUNDLE, STAKE, STAKING, PRICE} from "../../contracts/type/ObjectType.sol";
+import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
+import {Service} from "../shared/Service.sol";
 
 contract RegistryService is
     Service,

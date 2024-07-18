@@ -1,0 +1,44 @@
+@startuml
+
+
+"GIF Admin" as gifAdmin
+"GIF Manager" as gifManager
+
+package "Registry Module" {
+    [ChainNft] as nft
+    [Registry] as registry
+    [ReleaseRegistry] as releaseRegistry
+    [TokenRegistry] as tokenRegistry
+    [RegistryAdmin] as admin
+}
+
+
+[RegistryServices] as registryService
+[Other Services ...] as services
+
+[Dip] as dip
+
+gifAdmin -[hidden]- gifManager
+
+gifAdmin . releaseRegistry
+gifManager . releaseRegistry
+gifManager . tokenRegistry
+
+tokenRegistry . dip
+
+nft <- registry
+registry --> admin
+registry <-- releaseRegistry
+
+releaseRegistry -> admin
+admin <-- tokenRegistry
+
+registryService . registry
+registryService -> registry
+
+registry . services
+registryService -[hidden]- services
+
+
+
+@enduml

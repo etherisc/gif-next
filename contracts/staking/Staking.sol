@@ -1,27 +1,27 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Amount, AmountLib} from "../type/Amount.sol";
-import {ChainNft} from "../registry/ChainNft.sol";
-import {Component} from "../shared/Component.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegistryService} from "../registry/IRegistryService.sol";
 import {IStaking} from "./IStaking.sol";
-import {IVersionable} from "../shared/IVersionable.sol";
-import {Key32} from "../type/Key32.sol";
-import {NftId, NftIdLib} from "../type/NftId.sol";
-import {ObjectType, INSTANCE, PROTOCOL, STAKE, STAKING, TARGET} from "../type/ObjectType.sol";
-import {Seconds, SecondsLib} from "../type/Seconds.sol";
+import {IVersionable} from "../upgradeability/IVersionable.sol";
+
+import {Amount, AmountLib} from "../type/Amount.sol";
+import {Component} from "../shared/Component.sol";
+import {IComponent} from "../shared/IComponent.sol";
+import {NftId} from "../type/NftId.sol";
+import {ObjectType, STAKING} from "../type/ObjectType.sol";
+import {Seconds} from "../type/Seconds.sol";
 import {StakeManagerLib} from "./StakeManagerLib.sol";
 import {StakingReader} from "./StakingReader.sol";
 import {StakingStore} from "./StakingStore.sol";
 import {TargetManagerLib} from "./TargetManagerLib.sol";
-import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
+import {Timestamp} from "../type/Timestamp.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {TokenRegistry} from "../registry/TokenRegistry.sol";
-import {UFixed, UFixedLib} from "../type/UFixed.sol";
+import {UFixed} from "../type/UFixed.sol";
 import {Version, VersionLib} from "../type/Version.sol";
-import {Versionable} from "../shared/Versionable.sol";
+import {Versionable} from "../upgradeability/Versionable.sol";
 
 contract Staking is 
     Component,
@@ -37,6 +37,7 @@ contract Staking is
     struct StakingStorage {
         IRegistryService _registryService;
         TokenRegistry _tokenRegistry;
+        TokenHandler _tokenHandler;
         StakingStore _store;
         StakingReader _reader;
         NftId _protocolNftId;
@@ -420,6 +421,9 @@ contract Staking is
         return address(_getStakingStorage()._tokenRegistry);
     }
 
+    function getTokenHandler() public virtual override(Component, IComponent) view returns (TokenHandler tokenHandler) {
+        return _getStakingStorage()._tokenHandler;
+    }
 
     // from Versionable
     function getVersion()
@@ -490,14 +494,13 @@ contract Staking is
             "", // registry data
             ""); // component data
 
-        _createAndSetTokenHandler();
-
         // wiring to external contracts
         StakingStorage storage $ = _getStakingStorage();
         $._protocolNftId = getRegistry().getProtocolNftId();
         $._store = StakingStore(stakingStoreAddress);
         $._reader = StakingStore(stakingStoreAddress).getStakingReader();
         $._tokenRegistry = TokenRegistry(tokenRegistryAddress);
+        $._tokenHandler = new TokenHandler(address(getToken()));
 
         registerInterface(type(IStaking).interfaceId);
     }

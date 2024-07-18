@@ -4,3 +4,7 @@ version: 3.x
 nav:
   - modules/ROOT/nav.adoc
   - modules/api/nav.adoc
+
+asciidoc:
+  # attributes:
+  #   imagesdir: ./modules/ROOT/pages

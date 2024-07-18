@@ -1,6 +1,6 @@
-= Shared
+= Upgradeability
 
-Contains interfaces and contracts used across the project.
+Contains interfaces/contracts linked to contract upgradeability. 
 
 == Contracts
 

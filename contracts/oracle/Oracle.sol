@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {Amount} from "../type/Amount.sol";
 import {COMPONENT, ORACLE} from "../type/ObjectType.sol";
 import {IAuthorization} from "../authorization/IAuthorization.sol";
 import {IComponentService} from "../shared/IComponentService.sol";
+import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
 import {IOracleComponent} from "./IOracleComponent.sol";
 import {IOracleService} from "./IOracleService.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
@@ -71,6 +73,17 @@ abstract contract Oracle is
         returns (bool verifying)
     {
         return false;
+    }
+
+    function withdrawFees(Amount amount)
+        external
+        virtual
+        override(IInstanceLinkedComponent, InstanceLinkedComponent)
+        onlyOwner()
+        restricted()
+        returns (Amount withdrawnAmount)
+    {
+        revert ErrorOracleNotImplemented("withdrawFees");
     }
 
 

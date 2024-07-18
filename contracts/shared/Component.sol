@@ -26,7 +26,6 @@ abstract contract Component is
     struct ComponentStorage {
         string _name; // unique (per instance) component name
         IERC20Metadata _token; // token for this component
-        TokenHandler _tokenHandler;
         address _wallet;
         bool _isInterceptor;
         bytes _data;
@@ -40,6 +39,12 @@ abstract contract Component is
         _;
     }
 
+    modifier onlyNftOwner(NftId nftId) {
+        if(msg.sender != getRegistry().ownerOf(nftId)) {
+            revert ErrorNftOwnableNotOwner(msg.sender);
+        }
+        _;
+    }
 
     function _getComponentStorage() private pure returns (ComponentStorage storage $) {
         assembly {
@@ -78,7 +83,6 @@ abstract contract Component is
         ComponentStorage storage $ = _getComponentStorage();
         $._name = name;
         $._token = IERC20Metadata(token);
-        $._tokenHandler = TokenHandler(address(0));
         $._wallet = address(this);
         $._isInterceptor = isInterceptor;
         $._data = componentData;
@@ -253,29 +257,24 @@ abstract contract Component is
     }
 
 
-    /// @dev for component contracts that hold its own component information 
-    /// this function creates and sets a token hanlder for the components tokens
-    function _createAndSetTokenHandler()
-        internal
-    {
-        ComponentStorage storage $ = _getComponentStorage();
-        $._tokenHandler = new TokenHandler(address($._token));
-    }
-
-
     /// @dev depending on the source of the component information this function needs to be overwritten. 
     /// eg for instance linked components that externally store this information with the instance store contract
     function _getComponentInfo() internal virtual view returns (IComponents.ComponentInfo memory info) {
         ComponentStorage storage $ = _getComponentStorage();
-
+        
         return IComponents.ComponentInfo({
             name: $._name,
             productNftId: NftIdLib.zero(),
             token: $._token,
-            tokenHandler: $._tokenHandler,
+            tokenHandler: TokenHandler(address(0)),
             wallet: $._wallet, // initial wallet address
             data: $._data // user specific component data
         });
+    }
+
+    function _approveTokenHandler(uint256 amount) internal {
+        ComponentStorage storage $ = _getComponentStorage();
+        $._token.approve(address(getComponentInfo().tokenHandler), amount);
     }
 
 }

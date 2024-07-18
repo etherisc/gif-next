@@ -23,7 +23,7 @@ import {ChainNft} from "../../contracts/registry/ChainNft.sol";
 import {IService} from "../../contracts/shared/IService.sol";
 import {ObjectType, ObjectTypeLib} from "../../contracts/type/ObjectType.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
-import {ProxyManager} from "../../contracts/shared/ProxyManager.sol";
+import {ProxyManager} from "../../contracts/upgradeability/ProxyManager.sol";
 import {SCHEDULED, DEPLOYING} from "../../contracts/type/StateId.sol";
 import {VersionPart} from "../../contracts/type/Version.sol";
 

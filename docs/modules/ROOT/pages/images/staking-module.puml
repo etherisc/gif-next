@@ -1,0 +1,28 @@
+@startuml
+
+package "Staking Module" {
+    [StakingReader] as reader
+    [Staking] as staking
+    [StakingStore] as store
+}
+
+package "Registry Module" {
+    [RegistryAdmin] as admin
+}
+
+[StakingService] as stakingService
+[PoolService] as poolService
+
+reader -> staking
+reader --> store
+
+staking --> admin
+staking --> store
+
+store --> admin
+
+stakingService -[hidden]- poolService
+stakingService -> staking
+poolService -u-> staking
+
+@enduml

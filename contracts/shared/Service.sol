@@ -6,13 +6,12 @@ import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessMana
 
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IService} from "./IService.sol";
-import {IVersionable} from "./IVersionable.sol";
-import {NftId} from "../type/NftId.sol";
+import {IVersionable} from "../upgradeability/IVersionable.sol";
 import {ObjectType, REGISTRY, SERVICE} from "../type/ObjectType.sol";
 import {Registerable} from "./Registerable.sol";
 import {RoleId, RoleIdLib} from "../type/RoleId.sol";
-import {Version, VersionPart, VersionLib, VersionPartLib} from "../type/Version.sol";
-import {Versionable} from "./Versionable.sol";
+import {Version, VersionLib, VersionPartLib} from "../type/Version.sol";
+import {Versionable} from "../upgradeability/Versionable.sol";
 
 
 /// @dev service base contract

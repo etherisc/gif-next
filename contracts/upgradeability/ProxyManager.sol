@@ -1,17 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import {ITransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 import {Blocknumber, blockNumber} from "../type/Blocknumber.sol";
 import {IVersionable} from "./IVersionable.sol";
-import {NftOwnable} from "./NftOwnable.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+import {NftId} from "../type/NftId.sol";
+import {NftOwnable} from "../shared/NftOwnable.sol";
 import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
 import {UpgradableProxyWithAdmin} from "./UpgradableProxyWithAdmin.sol";
 import {Version, VersionLib} from "../type/Version.sol";
-import {NftId} from "../type/NftId.sol";
 
 /// @dev manages proxy deployments for upgradable contracs of type IVersionable
 contract ProxyManager is

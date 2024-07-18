@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {ObjectType, DISTRIBUTION, REGISTRY} from "../../contracts/type/ObjectType.sol";
+import {ObjectType, REGISTRY} from "../../contracts/type/ObjectType.sol";
 
 import {Version, VersionLib} from "../../contracts/type/Version.sol";
-import {Versionable} from "../../contracts/shared/Versionable.sol";
-import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 import {Service} from "../../contracts/shared/Service.sol";
 
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";

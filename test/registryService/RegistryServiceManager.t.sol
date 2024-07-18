@@ -5,13 +5,13 @@ import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
 import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
-import {IVersionable} from "../../contracts/shared/IVersionable.sol";
+import {IVersionable} from "../../contracts/upgradeability/IVersionable.sol";
 
 import {ChainNft} from "../../contracts/registry/ChainNft.sol";
 import {Dip} from "../../contracts/mock/Dip.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {INftOwnable} from "../../contracts/shared/INftOwnable.sol";
-import {ProxyManager} from "../../contracts/shared/ProxyManager.sol";
+import {ProxyManager} from "../../contracts/upgradeability/ProxyManager.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
 import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
 import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";

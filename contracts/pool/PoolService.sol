@@ -1,45 +1,30 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Pool} from "./Pool.sol";
-import {IRegistry} from "../registry/IRegistry.sol";
-import {IInstance} from "../instance/IInstance.sol";
-import {IBundle} from "../instance/module/IBundle.sol";
+import {IBundleService} from "./IBundleService.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
+import {IComponentService} from "../shared/IComponentService.sol";
+import {IInstance} from "../instance/IInstance.sol";
+import {IInstanceService} from "../instance/IInstanceService.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
-
-import {IVersionable} from "../shared/IVersionable.sol";
-import {Versionable} from "../shared/Versionable.sol";
-import {INftOwnable} from "../shared/INftOwnable.sol";
+import {IPoolService} from "./IPoolService.sol";
+import {IRegistry} from "../registry/IRegistry.sol";
+import {IRegistryService} from "../registry/IRegistryService.sol";
+import {IStaking} from "../staking/IStaking.sol";
 
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
-import {ObjectType, POOL, BUNDLE, COMPONENT, INSTANCE, REGISTRY, STAKING} from "../type/ObjectType.sol";
+import {ObjectType, POOL, BUNDLE, COMPONENT, INSTANCE, REGISTRY} from "../type/ObjectType.sol";
 import {RoleId, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
-import {Version, VersionLib} from "../type/Version.sol";
-import {KEEP_STATE, StateId} from "../type/StateId.sol";
+import {KEEP_STATE} from "../type/StateId.sol";
 import {Seconds} from "../type/Seconds.sol";
-import {TimestampLib, zeroTimestamp} from "../type/Timestamp.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {UFixed} from "../type/UFixed.sol";
-import {Version, VersionLib} from "../type/Version.sol";
-
-import {IService} from "../shared/IService.sol";
-import {Service} from "../shared/Service.sol";
 import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
-import {IBundleService} from "./IBundleService.sol";
-import {IComponentService} from "../shared/IComponentService.sol";
-import {IInstanceService} from "../instance/IInstanceService.sol";
-import {IPoolService} from "./IPoolService.sol";
-import {IRegistryService} from "../registry/IRegistryService.sol";
-import {IStaking} from "../staking/IStaking.sol";
-import {InstanceService} from "../instance/InstanceService.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
-import {IComponent} from "../shared/IComponent.sol";
-import {IPoolComponent} from "./IPoolComponent.sol";
 
 string constant POOL_SERVICE_NAME = "PoolService";
 

@@ -5,6 +5,7 @@ import {Authorization} from "../authorization/Authorization.sol";
 import {BasicProduct} from "./BasicProduct.sol"; 
 import {PRODUCT} from "../type/ObjectType.sol";
 import {IAccess} from "../authorization/IAccess.sol";
+import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
 import {PUBLIC_ROLE} from "../../contracts/type/RoleId.sol";
 import {RoleId} from "../type/RoleId.sol";
 
@@ -35,6 +36,8 @@ contract BasicProductAuthorization
           // authorize public role (open access to any account, only allows to lock target)
           functions = _authorizeForTarget(getTargetName(), PUBLIC_ROLE());
           _authorize(functions, BasicProduct.setFees.selector, "setFees");
+
+          _authorize(functions, IInstanceLinkedComponent.withdrawFees.selector, "withdrawFees");
      }
 }
 

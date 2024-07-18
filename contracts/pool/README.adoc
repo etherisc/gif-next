@@ -1,0 +1,19 @@
+= Pool
+ 
+Contains interfaces and contracts related to pools. 
+
+== Contracts
+
+{{IPoolComponent}}
+{{IPoolService}}
+{{IBundleService}}
+
+{{Pool}}
+{{BasicPool}}
+{{BasicPoolAuthorization}}
+
+{{PoolService}}
+{{BundleService}}
+
+{{PoolServiceManager}}
+{{BundleServiceManager}}

@@ -6,6 +6,7 @@ import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessMana
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+import {Amount} from "../type/Amount.sol";
 import {Component} from "./Component.sol";
 import {IComponentService} from "./IComponentService.sol";
 import {IInstanceLinkedComponent} from "./IInstanceLinkedComponent.sol";
@@ -36,6 +37,7 @@ abstract contract InstanceLinkedComponent is
         IInstance _instance; // instance for this component
         InstanceReader _instanceReader; // instance reader for this component
         IAuthorization _initialAuthorization;
+        IComponentService _componentService;
     }
 
     function lock() external onlyOwner {
@@ -56,6 +58,17 @@ abstract contract InstanceLinkedComponent is
 
     function getAuthorization() external view returns (IAuthorization authorization) {
         return _getInstanceLinkedComponentStorage()._initialAuthorization;
+    }
+
+    /// @inheritdoc IInstanceLinkedComponent
+    function withdrawFees(Amount amount)
+        external
+        virtual
+        onlyOwner()
+        restricted()
+        returns (Amount withdrawnAmount)
+    {
+        return _withdrawFees(amount);
     }
 
     function _getInstanceLinkedComponentStorage() private pure returns (InstanceLinkedComponentStorage storage $) {
@@ -105,6 +118,7 @@ abstract contract InstanceLinkedComponent is
         // set component state
         $._instanceReader = $._instance.getInstanceReader();
         $._initialAuthorization = authorization;
+        $._componentService = IComponentService(_getServiceAddress(COMPONENT())); 
 
         registerInterface(type(IAccessManaged).interfaceId);
         registerInterface(type(IInstanceLinkedComponent).interfaceId);
@@ -139,6 +153,13 @@ abstract contract InstanceLinkedComponent is
     /// @dev returns reader for linked instance
     function _getInstanceReader() internal view returns (InstanceReader reader) {
         return _getInstanceLinkedComponentStorage()._instanceReader;
+    }
+
+    function _withdrawFees(Amount amount)
+        internal
+        returns (Amount withdrawnAmount)
+    {
+        return _getInstanceLinkedComponentStorage()._componentService.withdrawFees(amount);
     }
 
 
