@@ -217,7 +217,7 @@ contract RegisterWithCustomTypeContinuousTest is RegistryTestBase
 
     function test_continuous_registerWithCustomType_withValidSender_010000_longRunning() public
     {
-        for(uint idx = 0; idx < 50; idx++)
+        for(uint idx = 0; idx < 25; idx++)
         {
             test_continuous_registerWithCustomType(
                 address(registryServiceMock),

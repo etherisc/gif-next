@@ -1615,6 +1615,8 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
     // assert call to registryWithCustomType() function
     function _assert_registerWithCustomType(IRegistry.ObjectInfo memory info, bool expectRevert, bytes memory revertMsg) internal returns (NftId nftId)
     {
+        console.log("chain id ", block.chainid);
+
         if(expectRevert)
         {
             vm.expectRevert(revertMsg);
