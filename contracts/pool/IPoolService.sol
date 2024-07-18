@@ -80,19 +80,16 @@ interface IPoolService is IService {
     ) external;
 
 
-    /// @dev create a new bundle for the provided parameters
-    /// staking fees will be deducted by the pool service from the staking amount
+    /// @dev create a new empty bundle with the provided parameters
     /// may only be called by registered and unlocked pool components.
-    /// The pool balance is equal to the pool fees plus the capital of all bundles. 
     function createBundle(
         address owner, // initial bundle owner
         Fee memory fee, // fees deducted from premium that go to bundle owner
-        Amount stakingAmount, // staking amount - staking fees result in initial bundle capital
         Seconds lifetime, // initial duration for which new policies are covered
         bytes calldata filter // optional use case specific criteria that define if a policy may be covered by this bundle
     )
         external 
-        returns(NftId bundleNftId, Amount netStakedAmount); // the nft id of the newly created bundle
+        returns(NftId bundleNftId); // the nft id of the newly created bundle
 
 
     /// @dev increase stakes for bundle

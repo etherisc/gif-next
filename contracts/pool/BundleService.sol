@@ -121,12 +121,14 @@ contract BundleService is
             })
         );
 
-        // bundle book keeping
-        _componentService.increaseBundleBalance(
-            instanceStore, 
-            bundleNftId, 
-            stakingAmount, 
-            AmountLib.zero()); // fee amount
+        if (stakingAmount.gtz()) {
+            // bundle book keeping
+            _componentService.increaseBundleBalance(
+                instanceStore, 
+                bundleNftId, 
+                stakingAmount, 
+                AmountLib.zero()); // fee amount
+        }
 
         // put bundle under bundle managemet
         BundleSet bundleManager = instance.getBundleSet();
