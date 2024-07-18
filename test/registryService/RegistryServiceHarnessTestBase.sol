@@ -3,28 +3,21 @@ pragma solidity ^0.8.20;
 
 import {FoundryRandom} from "foundry-random/FoundryRandom.sol";
 
-import {Vm, console} from "../../lib/forge-std/src/Test.sol";
+import {console} from "../../lib/forge-std/src/Test.sol";
 
-import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
-import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {ObjectType} from "../../contracts/type/ObjectType.sol";
-import {VersionPartLib, VersionPart} from "../../contracts/type/Version.sol";
-import {RoleId} from "../../contracts/type/RoleId.sol";
+import {VersionPart, VersionPartLib} from "../../contracts/type/Version.sol";
 
-import {Dip} from "../../contracts/mock/Dip.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
-import {Registry} from "../../contracts/registry/Registry.sol";
 import {IRegistryService} from "../../contracts/registry/IRegistryService.sol";
-import {RegistryService} from "../../contracts/registry/RegistryService.sol";
-import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
-import {ReleaseRegistry} from "../../contracts/registry/ReleaseRegistry.sol";
+
 import {RegistryServiceManagerMockWithHarness} from "../mock/RegistryServiceManagerMock.sol";
-import {RegistryServiceHarness} from "./RegistryServiceHarness.sol";
-import {ServiceMockAuthorizationV3} from "../registry/ServiceMockAuthorizationV3.sol";
+import {ServiceAuthorizationMock} from "../mock/ServiceAuthorizationMock.sol";
 
 import {GifDeployer} from "../base/GifDeployer.sol";
-import {GifTest} from "../base/GifTest.sol";
+
+import {RegistryServiceHarness} from "./RegistryServiceHarness.sol";
 
 
 contract RegistryServiceHarnessTestBase is GifDeployer, FoundryRandom {
@@ -75,7 +68,7 @@ contract RegistryServiceHarnessTestBase is GifDeployer, FoundryRandom {
             VersionPart releaseVersion,
             bytes32 releaseSalt
         ) = core.releaseRegistry.prepareNextRelease(
-            new ServiceMockAuthorizationV3(),
+            new ServiceAuthorizationMock(VersionPartLib.toVersionPart(3)),
             salt);
 
         registryServiceManagerWithHarness = new RegistryServiceManagerMockWithHarness{salt: releaseSalt}(
@@ -87,7 +80,7 @@ contract RegistryServiceHarnessTestBase is GifDeployer, FoundryRandom {
         core.releaseRegistry.registerService(registryServiceHarness);
         registryServiceManagerWithHarness.linkToProxy();
 
-        // TODO check if this nees to be re-enabled
+        // TODO check if this needs to be re-enabled
         // assertEq(serviceAddresses[0], address(registryServiceHarness), "error: registry service address mismatch");
 
         core.releaseRegistry.activateNextRelease();

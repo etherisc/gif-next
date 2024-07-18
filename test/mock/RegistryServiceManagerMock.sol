@@ -6,7 +6,7 @@ import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceMa
 import {RegistryServiceHarness} from "../registryService/RegistryServiceHarness.sol";
 import {RegistryServiceMock} from "./RegistryServiceMock.sol";
 
-
+// TODO add service manager mock with service with configurable domain and version -> pure getVersion() and getDomain() prevents this
 contract RegistryServiceManagerMock is RegistryServiceManager
 {
     constructor(address initialAuthority, address registry, bytes32 salt)

@@ -11,30 +11,6 @@ import {Service} from "../../contracts/shared/Service.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 
-/*
-contract RegistryServiceMock is Versionable {
-
-
-    function _initialize(address owner, bytes memory data)
-        internal
-        onlyInitializing
-        virtual override
-    {}
-
-    function getVersion()
-        public
-        pure
-        virtual override
-        returns(Version)
-    {
-        return VersionLib.toVersion(3, 0, 1);
-    }
-
-    function getMessage() external virtual returns (string memory message) {
-        return "hi from mock";
-    }
-}
-*/
 contract RegistryServiceMock is Service {
 
 

@@ -11,6 +11,7 @@ import {IService} from "../../contracts/shared/IService.sol";
 import {RegisterableMock} from "./RegisterableMock.sol";
 import {RoleId, RoleIdLib} from "../../contracts/type/RoleId.sol";
 
+// TODO service mock with configurable domain and version
 contract ServiceMock is RegisterableMock, AccessManagedUpgradeable, IService {
 
     constructor(NftId nftId, NftId registryNftId, bool isInterceptor, address initialOwner)
