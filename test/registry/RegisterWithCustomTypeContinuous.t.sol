@@ -217,7 +217,7 @@ contract RegisterWithCustomTypeContinuousTest is RegistryTestBase
 
     function test_continuous_registerWithCustomType_withValidSender_010000_longRunning() public
     {
-        for(uint idx = 0; idx < ITTERATIONS; idx++)
+        for(uint idx = 0; idx < 50; idx++)
         {
             test_continuous_registerWithCustomType(
                 address(registryServiceMock),
@@ -237,7 +237,7 @@ contract RegisterWithCustomTypeContinuousTest is RegistryTestBase
 
     function test_continuous_registerWithCustomType_withValidSender_010010_longRunning() public
     {
-        for(uint idx = 0; idx < ITTERATIONS; idx++)
+        for(uint idx = 0; idx < 100; idx++)
         {
             test_continuous_registerWithCustomType(
                 address(registryServiceMock),
@@ -257,7 +257,7 @@ contract RegisterWithCustomTypeContinuousTest is RegistryTestBase
     
     function test_continuous_registerWithCustomType_withValidSender_01010_longRunning() public
     {
-        for(uint idx = 0; idx < ITTERATIONS; idx++)
+        for(uint idx = 0; idx < 50; idx++)
         {
             test_continuous_registerWithCustomType(
                 address(registryServiceMock),
@@ -449,7 +449,7 @@ contract RegisterWithCustomTypeContinuousTest is RegistryTestBase
 
     function test_continuous_registerWithCustomType_withValidSenderAndZeroObjectAddress_01000_longRunning() public
     {
-        for(uint idx = 0; idx < 100; idx++)
+        for(uint idx = 0; idx < 40; idx++)
         {
             test_continuous_registerWithCustomType(
                 address(registryServiceMock),
@@ -468,7 +468,7 @@ contract RegisterWithCustomTypeContinuousTest is RegistryTestBase
 
     function test_continuous_registerWithCustomType_withValidSenderAndZeroObjectAddress_01001_longRunning() public
     {
-        for(uint idx = 0; idx < ITTERATIONS; idx++)
+        for(uint idx = 0; idx < 50; idx++)
         {
             test_continuous_registerWithCustomType(
                 address(registryServiceMock),

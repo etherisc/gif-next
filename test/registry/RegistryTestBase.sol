@@ -1329,23 +1329,23 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         bool expectRevert;
         bytes memory expectedRevertMsg;
 
-        console.log("   Doing registerService() function checks");
+        //console.log("   Doing registerService() function checks");
         (expectRevert, expectedRevertMsg) = _registerServiceChecks(info, version, domain);
 
         if(expectRevert) {
-            console.log("       expectRevert : ", expectRevert);
-            console.log("       revert reason:", _errorName[bytes4(expectedRevertMsg)]);
-            console.log("   Skipping _register() checks due to expected revert");
+            //console.log("       expectRevert : ", expectRevert);
+            //console.log("       revert reason:", _errorName[bytes4(expectedRevertMsg)]);
+            //console.log("   Skipping _register() checks due to expected revert");
         } else {
-            console.log("   Doing _register() function checks");// TODO log on/off flag
+            //console.log("   Doing _register() function checks");// TODO log on/off flag
             (expectRevert, expectedRevertMsg) = _internalRegisterChecks(info);
             if(expectRevert) {
-                console.log("       expectRevert : ", expectRevert);
-                console.log("       revert reason:", _errorName[bytes4(expectedRevertMsg)]);
+                //console.log("       expectRevert : ", expectRevert);
+                //console.log("       revert reason:", _errorName[bytes4(expectedRevertMsg)]);
             }
         }
 
-        console.log("   Calling _registerService()");
+        //console.log("   Calling _registerService()");
         nftId = _assert_registerService(info, version, domain, expectRevert, expectedRevertMsg);
     }
 
@@ -1518,23 +1518,23 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         bool expectRevert;
         bytes memory expectedRevertMsg;
 
-        console.log("   Doing register() function checks");
+        //console.log("   Doing register() function checks");
         (expectRevert, expectedRevertMsg) = _registerChecks(info);
 
         if(expectRevert) {
-            console.log("       expectRevert : ", expectRevert);
-            console.log("       revert reason:", _errorName[bytes4(expectedRevertMsg)]);
-            console.log("   Skipping _register() checks due to expected revert");
+            //console.log("       expectRevert : ", expectRevert);
+            //console.log("       revert reason:", _errorName[bytes4(expectedRevertMsg)]);
+            //console.log("   Skipping _register() checks due to expected revert");
         } else {
-            console.log("   Doing _register() function checks");// TODO log on/off flag
+            //console.log("   Doing _register() function checks");// TODO log on/off flag
             (expectRevert, expectedRevertMsg) = _internalRegisterChecks(info);
             if(expectRevert) {
-                console.log("       expectRevert : ", expectRevert);
-                console.log("       revert reason:", _errorName[bytes4(expectedRevertMsg)]);
+                //console.log("       expectRevert : ", expectRevert);
+                //console.log("       revert reason:", _errorName[bytes4(expectedRevertMsg)]);
             }
         }
 
-        console.log("   Calling register()");
+        //console.log("   Calling register()");
         nftId = _assert_register(info, expectRevert, expectedRevertMsg);
     }
 
@@ -1682,23 +1682,23 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         bool expectRevert;
         bytes memory expectedRevertMsg;
 
-        console.log("   Doing registerWithCustomType() function checks");
+        //console.log("   Doing registerWithCustomType() function checks");
         (expectRevert, expectedRevertMsg) = _registerWithCustomTypeChecks(info);
 
         if(expectRevert) {
-            console.log("       expectRevert : ", expectRevert);
-            console.log("       revert reason:", _errorName[bytes4(expectedRevertMsg)]);
-            console.log("   Skipping _register() checks due to expected revert");
+            //console.log("       expectRevert : ", expectRevert);
+            //console.log("       revert reason:", _errorName[bytes4(expectedRevertMsg)]);
+            //console.log("   Skipping _register() checks due to expected revert");
         } else {
-            console.log("   Doing _register() function checks");
+            //console.log("   Doing _register() function checks");
             (expectRevert, expectedRevertMsg) = _internalRegisterChecks(info);
             if(expectRevert) {
-                console.log("       expectRevert : ", expectRevert);
-                console.log("       revert reason:", _errorName[bytes4(expectedRevertMsg)]);
+                //console.log("       expectRevert : ", expectRevert);
+                //console.log("       revert reason:", _errorName[bytes4(expectedRevertMsg)]);
             }
         }
 
-        console.log("   Calling registerWithCustomType()");
+        //console.log("   Calling registerWithCustomType()");
         nftId = _assert_registerWithCustomType(info, expectRevert, expectedRevertMsg);
     }
 
