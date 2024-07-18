@@ -47,8 +47,6 @@ contract PolicyService is
     IPoolService internal _poolService;
     IPricingService internal _pricingService;
 
-    event LogProductServiceSender(address sender);
-
     function _initialize(
         address owner, 
         bytes memory data

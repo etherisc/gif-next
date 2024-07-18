@@ -12,11 +12,11 @@ import {IApplicationService} from "./IApplicationService.sol";
 import {IAuthorization} from "../authorization/IAuthorization.sol";
 import {IComponentService} from "../shared/IComponentService.sol";
 import {IPolicyService} from "./IPolicyService.sol";
-import {IProductService} from "./IProductService.sol";
+import {IRiskService} from "./IRiskService.sol";
 import {IClaimService} from "./IClaimService.sol";
 import {IPricingService} from "./IPricingService.sol";
 import {IProductComponent} from "./IProductComponent.sol";
-import {NftId, NftIdLib} from "../type/NftId.sol";
+import {NftId} from "../type/NftId.sol";
 import {PayoutId} from "../type/PayoutId.sol";
 import {COMPONENT, PRODUCT, APPLICATION, POLICY, CLAIM, PRICE } from "../type/ObjectType.sol";
 import {ReferralId} from "../type/Referral.sol";
@@ -25,9 +25,6 @@ import {Seconds} from "../type/Seconds.sol";
 import {StateId} from "../type/StateId.sol";
 import {Timestamp} from "../type/Timestamp.sol";
 
-import {TokenHandler} from "../shared/TokenHandler.sol";
-
-import {InstanceReader} from "../instance/InstanceReader.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {Pool} from "../pool/Pool.sol";
@@ -41,7 +38,7 @@ abstract contract Product is
     bytes32 public constant PRODUCT_STORAGE_LOCATION_V1 = 0x0bb7aafdb8e380f81267337bc5b5dfdf76e6d3a380ecadb51ec665246d9d6800;
 
     struct ProductStorage {
-        IProductService _productService;
+        IRiskService _riskService;
         IApplicationService _applicationService;
         IPolicyService _policyService;
         IClaimService _claimService;
@@ -167,7 +164,7 @@ abstract contract Product is
         ProductStorage storage $ = _getProductStorage();
         // TODO add validation
         // TODO refactor to go via registry ?
-        $._productService = IProductService(_getServiceAddress(PRODUCT())); 
+        $._riskService = IRiskService(_getServiceAddress(PRODUCT())); 
         $._applicationService = IApplicationService(_getServiceAddress(APPLICATION())); 
         $._policyService = IPolicyService(_getServiceAddress(POLICY())); 
         $._claimService = IClaimService(_getServiceAddress(CLAIM())); 
@@ -197,7 +194,7 @@ abstract contract Product is
         RiskId id,
         bytes memory data
     ) internal {
-        _getProductService().createRisk(
+        _getRiskService().createRisk(
             id,
             data
         );
@@ -207,7 +204,7 @@ abstract contract Product is
         RiskId id,
         bytes memory data
     ) internal {
-        _getProductService().updateRisk(
+        _getRiskService().updateRisk(
             id,
             data
         );
@@ -217,7 +214,7 @@ abstract contract Product is
         RiskId id,
         StateId state
     ) internal {
-        _getProductService().updateRiskState(
+        _getRiskService().updateRiskState(
             id,
             state
         );
@@ -407,7 +404,7 @@ abstract contract Product is
         }
     }
 
-    function _getProductService() internal view returns (IProductService) {
-        return _getProductStorage()._productService;
+    function _getRiskService() internal view returns (IRiskService) {
+        return _getProductStorage()._riskService;
     }
 }

@@ -4,39 +4,16 @@ pragma solidity ^0.8.20;
 import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 
 import {Amount} from "../type/Amount.sol";
-import {ClaimId} from "../type/ClaimId.sol";
-import {DistributorType} from "../type/DistributorType.sol";
-import {PayoutId} from "../type/PayoutId.sol";
-import {NftId} from "../type/NftId.sol";
-import {StateId} from "../type/StateId.sol";
-import {ReferralId} from "../type/Referral.sol";
-import {RiskId} from "../type/RiskId.sol";
-import {VersionPart} from "../type/Version.sol";
-import {Key32} from "../type/Key32.sol";
+import {BundleSet} from "./BundleSet.sol";
+import {InstanceAdmin} from "./InstanceAdmin.sol";
+import {InstanceReader} from "./InstanceReader.sol";
+import {InstanceStore} from "./InstanceStore.sol";
+import {IRegisterable} from "../shared/IRegisterable.sol";
+import {ITransferInterceptor} from "../registry/ITransferInterceptor.sol";
 import {RoleId} from "../type/RoleId.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {UFixed} from "../type/UFixed.sol";
-
-import {IRegisterable} from "../shared/IRegisterable.sol";
-
-import {ITransferInterceptor} from "../registry/ITransferInterceptor.sol";
-
-import {InstanceAdmin} from "./InstanceAdmin.sol";
-import {BundleSet} from "./BundleSet.sol";
-import {InstanceReader} from "./InstanceReader.sol";
-import {InstanceStore} from "./InstanceStore.sol";
-
-import {IKeyValueStore} from "../shared/IKeyValueStore.sol";
-
-import {IAccess} from "./module/IAccess.sol";
-
-import {IBundleService} from "../pool/IBundleService.sol";
-import {IDistributionService} from "../distribution/IDistributionService.sol";
-import {IPolicyService} from "../product/IPolicyService.sol";
-import {IPoolService} from "../pool/IPoolService.sol";
-import {IProductService} from "../product/IProductService.sol";
-import {IPolicyService} from "../product/IPolicyService.sol";
-import {IBundleService} from "../pool/IBundleService.sol";
+import {VersionPart} from "../type/Version.sol";
 
 
 interface IInstance is 

@@ -12,8 +12,7 @@ import {Timestamp} from "../type/Timestamp.sol";
 import {UFixed} from "../type/UFixed.sol";
 import {Fee} from "../type/Fee.sol";
 
-// TODO consider renaming to IRiskService
-interface IProductService is IService {
+interface IRiskService is IService {
 
     function createRisk(
         RiskId riskId,

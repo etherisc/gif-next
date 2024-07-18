@@ -109,8 +109,8 @@ contract TestDeployAll is GifTest {
         assertTrue(address(oracleServiceManager) != address(0), "oracle service manager is zero address");
 
         // validate product service
-        assertTrue(registry.getNftId(address(productService)).eq(productServiceNftId), "product service nft does not match");
-        assertTrue(address(productServiceManager) != address(0), "product service manager is zero address");
+        assertTrue(registry.getNftId(address(riskService)).eq(riskServiceNftId), "risk service nft does not match");
+        assertTrue(address(riskServiceManager) != address(0), "risk service manager is zero address");
 
         // validate claim service
         assertTrue(registry.getNftId(address(claimService)).eq(claimServiceNftId), "claim service nft does not match");

@@ -8,7 +8,6 @@ import {Test, console} from "../../lib/forge-std/src/Test.sol";
 import {AmountLib} from "../../contracts/type/Amount.sol";
 import {NftId} from "../../contracts/type/NftId.sol";
 import {SecondsLib} from "../../contracts/type/Seconds.sol";
-// import {ObjectTypeLib, REGISTRY, SERVICE, INSTANCE, POOL, ORACLE, PRODUCT, DISTRIBUTION, BUNDLE, POLICY} from "../../contracts/type/ObjectType.sol";
 import {Fee, FeeLib} from "../../contracts/type/Fee.sol";
 import {
     // GIF_MANAGER_ROLE,
@@ -33,45 +32,15 @@ import {BasicOracleAuthorization} from "../../contracts/oracle/BasicOracleAuthor
 import {BasicPoolAuthorization} from "../../contracts/pool/BasicPoolAuthorization.sol";
 import {BasicProductAuthorization} from "../../contracts/product/BasicProductAuthorization.sol";
 
-// import {RegistryService} from "../../contracts/registry/RegistryService.sol";
-// import {IRegistryService} from "../../contracts/registry/RegistryService.sol";
 import {IServiceAuthorization} from "../../contracts/authorization/IServiceAuthorization.sol";
-// import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
 import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
 import {ReleaseRegistry} from "../../contracts/registry/ReleaseRegistry.sol";
 import {ServiceAuthorizationV3} from "../../contracts/registry/ServiceAuthorizationV3.sol";
 import {ChainNft} from "../../contracts/registry/ChainNft.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
-// import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
 
 import {IComponents} from "../../contracts/instance/module/IComponents.sol";
-// import {ComponentService} from "../../contracts/shared/ComponentService.sol";
-// import {ComponentServiceManager} from "../../contracts/shared/ComponentServiceManager.sol";
-// import {DistributionService} from "../../contracts/distribution/DistributionService.sol";
-// import {DistributionServiceManager} from "../../contracts/distribution/DistributionServiceManager.sol";
-// import {OracleService} from "../../contracts/oracle/OracleService.sol";
-// import {OracleServiceManager} from "../../contracts/oracle/OracleServiceManager.sol";
-// import {ProductService} from "../../contracts/product/ProductService.sol";
-// import {ProductServiceManager} from "../../contracts/product/ProductServiceManager.sol";
-// import {PoolService} from "../../contracts/pool/PoolService.sol";
-// import {PoolServiceManager} from "../../contracts/pool/PoolServiceManager.sol";
-
-// import {ApplicationService} from "../../contracts/product/ApplicationService.sol";
-// import {ApplicationServiceManager} from "../../contracts/product/ApplicationServiceManager.sol";
-// import {PolicyService} from "../../contracts/product/PolicyService.sol";
-// import {PolicyServiceManager} from "../../contracts/product/PolicyServiceManager.sol";
-// import {ClaimService} from "../../contracts/product/ClaimService.sol";
-// import {ClaimServiceManager} from "../../contracts/product/ClaimServiceManager.sol";
-// import {BundleService} from "../../contracts/pool/BundleService.sol";
-// import {BundleServiceManager} from "../../contracts/pool/BundleServiceManager.sol";
-// import {PricingService} from "../../contracts/product/PricingService.sol";
-// import {PricingServiceManager} from "../../contracts/product/PricingServiceManager.sol";
-// import {StakingService} from "../../contracts/staking/StakingService.sol";
-// import {StakingServiceManager} from "../../contracts/staking/StakingServiceManager.sol";
-
-// import {InstanceService} from "../../contracts/instance/InstanceService.sol";
-// import {InstanceServiceManager} from "../../contracts/instance/InstanceServiceManager.sol";
 
 import {Staking} from "../../contracts/staking/Staking.sol";
 import {StakingReader} from "../../contracts/staking/StakingReader.sol";
@@ -85,10 +54,6 @@ import {InstanceReader} from "../../contracts/instance/InstanceReader.sol";
 import {BundleSet} from "../../contracts/instance/BundleSet.sol";
 import {InstanceStore} from "../../contracts/instance/InstanceStore.sol";
 
-// import {Dip} from "../../contracts/mock/Dip.sol";
-// import {Distribution} from "../../contracts/distribution/Distribution.sol";
-// import {Product} from "../../contracts/product/Product.sol";
-// import {Pool} from "../../contracts/pool/Pool.sol";
 import {Usdc} from "../mock/Usdc.sol";
 import {SimpleDistribution} from "../mock/SimpleDistribution.sol";
 import {SimpleOracle} from "../mock/SimpleOracle.sol";

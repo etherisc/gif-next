@@ -3,11 +3,11 @@ pragma solidity ^0.8.20;
 
 import {IVersionable} from "../upgradeability/IVersionable.sol";
 import {ProxyManager} from "../upgradeability/ProxyManager.sol";
-import {ProductService} from "./ProductService.sol";
+import {RiskService} from "./RiskService.sol";
 
-contract ProductServiceManager is ProxyManager {
+contract RiskServiceManager is ProxyManager {
 
-    ProductService private _productService;
+    RiskService private _riskService;
 
     /// @dev initializes proxy manager with product service implementation 
     constructor(
@@ -17,23 +17,23 @@ contract ProductServiceManager is ProxyManager {
     ) 
         ProxyManager(registryAddress)
     {
-        ProductService svc = new ProductService{salt: salt}();
+        RiskService svc = new RiskService{salt: salt}();
         bytes memory data = abi.encode(registryAddress, address(this), authority);
         IVersionable versionable = deployDetermenistic(
             address(svc), 
             data,
             salt);
 
-        _productService = ProductService(address(versionable));
+        _riskService = RiskService(address(versionable));
     }
 
     //--- view functions ----------------------------------------------------//
-    function getProductService()
+    function getRiskService()
         external
         view
-        returns (ProductService productService)
+        returns (RiskService riskService)
     {
-        return _productService;
+        return _riskService;
     }
 
 }
