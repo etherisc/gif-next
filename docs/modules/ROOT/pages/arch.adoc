@@ -1096,27 +1096,75 @@ In cases of disputes or litigation, logs can serve as evidence. Complete and acc
 
 === General Principles
 
-==== Requirements
+1. Logging of complete token transfer history: This includes all actual token transfers related to the framework, such as the NFT linked to protocol objects, the product token, and the DIP token.
 
-* Complete token transfer history: This includes all actual token transfers related to the framework, such as the NFT linked to protocol objects, the product token, and the DIP token.
-* Complete balance history: This tracks all token balances related to the framework, allowing stakeholders to keep track of which account holds how many tokens at any given time.
-* Complete trace through the lifecycle of every business object: This provides a record of the context and reason behind every change to a business object, as well as related token balances and transfers.
+1. Logging of complete balance history: This tracks all token balances related to the framework, allowing stakeholders to keep track of which account holds how many tokens at any given time.
 
-==== Logging Sources
+1. Logging of complete trace through the lifecycle of every business object: This provides a record of the context and reason behind every change to a business object, as well as related token balances and transfers.
 
-* ChainNft
-** Minting and Transfers of NFT
-** Calls to interceptor addresses
-* Registry
-** Registration of new protocol objects including the meta data of the object
-* RegistryAdmin
-* ReleaseRegistry
-* TokenRegistry
-* Staking
-* Instance (InstanceStore)
+1. Business objects have either NFT IDs that are registerd in a registry and are unique over the the complete protocol ecosystem (e.g. Policy NFT ID) or are only unique in the context of such a NFT ID (e.g. Claim ID which is only unique per policy).
+
+1. Business objects have a property `lastUpdatedIn` that refers to the blocknumber this business object has been last updated in.
+Events that refer to changes in these business objects include this property to allow to assemble a logging trace through the complete lifecycle of the objecet.
+
+1. Log events are emitted at the end of state changing functions.
+Should the function interact with contracts outside of the framework, the log event is emitted before the external call.
+This applies to token transfers, calls to components and interceptor calls of the `ChainNft` contract.
+
+1. Logging event names star with the prefix "Log" and are derived from the contract name that emits the log event. 
+Example: `LogRegistryAdminGifAdminRoleSetUp`.
+The contract name used for the event might also be derived from the base contract that emits the event.
+Example: `LogAccessAdminRoleGranted`.
+
+=== Sources and Events
+
+==== Core Contract Sources
+
+*ChainNft*
+Minting and transfers of NFTs for protocol objects.
+Interceptor Calls where applicable
+
+*Registry*
+Registration of new protocol objects.
+Including object type, parent NFT ID, and initial owner. 
+
+*RegistryAdmin*
+Every action that has an impact on authorization.
+Creating Roles, Targets, and setting function level authorizations.
+
+*ReleaseRegistry*
+Creating and activation of new releases and pausing/unpausing releases by GIF Admin.
+Preparation of new release and service registration by GIF Manager.
+
+*TokenRegistry*
+Registration of new tokens. 
+Activation/deactivation of tokens. 
+Activation/deactivation of tokens per release.
+
+*StakingStore*
+StakingRate changes.
+Staking target creation and target management regarding reward rates and locking periods.
+Stake creation, stake restaking, stake unstaking.
+Any staking and reward balance changes.
+Any token transfers related to staking.
+
+==== Release Contract Sources
+
+*ReleaseAdmin*
+Every action that has an impact on authorization.
+As in the case of the RegistryAdmin.
+
+*<Domain>Service*
+All state changing functions emit logs for every business object involved the reason for the change.
+All state chaning functions emit logs to report the completion of the function.
+TODO decide if state chaning functions should also emit logs to indicate the start of the function.
+
+==== Instance Contract Sources
+
+* Instance
+* InstanceStore
 * InstanceAdmin
 * BundleSet/RiskSet
-* Services
 * Components
 
 ==== What to Log
@@ -1133,16 +1181,6 @@ Changes to Business Objects
 * Business object state change, if any
 * Addtional properties that provide insight into the reason behind the change
 * Pointer to the previous change of this specific business object (blocknumber)
-
-==== When to Log
-
-=== Registry Logging
-
-=== Staking Logging
-
-=== Instance Logging
-
-=== Service Logging
 
 == Release Management
 
