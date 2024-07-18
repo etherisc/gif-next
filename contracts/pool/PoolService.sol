@@ -149,6 +149,7 @@ contract PoolService is
             netStakedAmount, 
             stakingFeeAmount);
 
+        // TODO only collect staking token when pool is not externally managed 
         // pool bookkeeping and collect tokens from bundle owner
         _collectStakingAmount(
             instance.getInstanceReader(), 
@@ -241,6 +242,8 @@ contract PoolService is
         // collect tokens from bundle owner
         address bundleOwner = getRegistry().ownerOf(bundleNftId);
         emit LogPoolServiceBundleStaked(instance.getNftId(), poolNftId, bundleNftId, amount, netAmount);
+
+        // TODO only collect staking token when pool is not externally managed 
         _collectStakingAmount(
             instanceReader, 
             poolNftId, 
@@ -289,6 +292,26 @@ contract PoolService is
             owner, 
             unstakedAmount);
         return unstakedAmount;
+    }
+
+
+    function fundPoolWallet(NftId poolNftId, Amount amount)
+        external
+        virtual
+        restricted()
+    {
+        // TODO check that poolNftId is externally managed
+        // TODO implement
+    }
+
+
+    function defundPoolWallet(NftId poolNftId, Amount amount)
+        external
+        virtual
+        restricted()
+    {
+        // TODO check that poolNftId is externally managed
+        // TODO implement
     }
 
     function processSale(

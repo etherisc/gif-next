@@ -95,6 +95,18 @@ interface IPoolService is IService {
         returns(NftId bundleNftId, Amount netStakedAmount); // the nft id of the newly created bundle
 
 
+    /// @dev increase stakes for bundle
+    /// staking fees will be deducted by the pool service from the staking amount
+    /// may only be called by registered and unlocked pool components
+    function stake(NftId bundleNftId, Amount amount) external returns(Amount netAmount);
+
+
+    /// @dev decrease stakes for bundle
+    /// performance fees will be deducted by the pool service from the staking amount
+    /// may only be called by registered and unlocked pool components
+    function unstake(NftId bundleNftId, Amount amount) external returns(Amount netAmount);
+
+
     /// @dev closes the specified bundle
     /// only open bundles (active or locked) may be closed
     /// to close a bundle it may not have any non-closed polices attached to it
@@ -103,18 +115,22 @@ interface IPoolService is IService {
     function closeBundle(NftId bundleNftId) external;
 
 
+    /// @dev Fund the specified pool wallet with the provided amount.
+    /// This function will collect the amount from the sender address and transfers it to the pool wallet.
+    /// The function will not update balance amounts managed by the framework.
+    /// Only available for externally managed pools.
+    function fundPoolWallet(NftId poolNftId, Amount amount) external;
+
+
+    /// @dev Defund the specified pool wallet with the provided amount.
+    /// This function will transfer the amount from the pool wallet to the sender address.
+    /// The function will not update balance amounts managed by the framework.
+    /// Only available for externally managed pools.
+    function defundPoolWallet(NftId poolNftId, Amount amount) external;
+
+
     /// @dev processes the sale of a bundle and track the pool fee and bundle fee amounts
     function processSale(NftId bundleNftId, IPolicy.Premium memory premium) external;
-
-    /// @dev increase stakes for bundle
-    /// staking fees will be deducted by the pool service from the staking amount
-    /// may only be called by registered and unlocked pool components
-    function stake(NftId bundleNftId, Amount amount) external returns(Amount netAmount);
-
-    /// @dev decrease stakes for bundle
-    /// performance fees will be deducted by the pool service from the staking amount
-    /// may only be called by registered and unlocked pool components
-    function unstake(NftId bundleNftId, Amount amount) external returns(Amount netAmount);
 
 
     /// @dev calulate required collateral for the provided parameters
