@@ -113,15 +113,15 @@ abstract contract Pool is
         view 
         returns (IComponents.PoolInfo memory poolInfo)
     {
-        return IComponents.PoolInfo(
-            PUBLIC_ROLE(), // bundleOwnerRole
-            AmountLib.max(), // maxCapitalAmount,
-            isNftInterceptor(), // isInterceptingBundleTransfers
-            false, // isExternallyManaged,
-            false, // isVerifyingApplications,
-            UFixedLib.toUFixed(1), // collateralizationLevel,
-            UFixedLib.toUFixed(1) // retentionLevel,
-        );
+        return IComponents.PoolInfo({
+            maxBalanceAmount: AmountLib.max(),
+            bundleOwnerRole: PUBLIC_ROLE(), 
+            isInterceptingBundleTransfers: isNftInterceptor(),
+            isExternallyManaged: false,
+            isVerifyingApplications: false,
+            collateralizationLevel: UFixedLib.toUFixed(1),
+            retentionLevel: UFixedLib.toUFixed(1)
+        });
     }
 
     // Internals
