@@ -216,7 +216,7 @@ contract PolicyService is
         }
 
         IPolicy.PremiumInfo memory premium = instanceReader.getPremiumInfo(policyNftId); 
-        policyInfo.premiumPaidAmount = AmountLib.toAmount(premium.premiumAmount);
+        policyInfo.premiumPaidAmount = premium.premiumAmount;
 
         _processPremium(
             instance,
@@ -380,7 +380,7 @@ contract PolicyService is
                 tokenHandler.getToken(), 
                 address(tokenHandler),
                 policyHolder, 
-                AmountLib.toAmount(premium.premiumAmount));
+                premium.premiumAmount);
         }
 
         // update the counters
@@ -439,7 +439,7 @@ contract PolicyService is
         _componentService.increaseProductFees(
             instanceStore, 
             productNftId, 
-            AmountLib.toAmount(premium.productFeeVarAmount + premium.productFeeFixAmount));
+            premium.productFeeVarAmount + premium.productFeeFixAmount);
 
         // update distribution fees and distributor commission and pool fees 
         _distributionService.processSale(

@@ -72,7 +72,7 @@ abstract contract Product is
             referralId
         );
 
-        return AmountLib.toAmount(premium.premiumAmount);
+        return premium.premiumAmount;
     }
 
     function calculateNetPremium(
