@@ -127,7 +127,7 @@ interface IPoolService is IService {
 
 
     /// @dev processes the sale of a bundle and track the pool fee and bundle fee amounts
-    function processSale(NftId bundleNftId, IPolicy.Premium memory premium) external;
+    function processSale(NftId bundleNftId, IPolicy.PremiumInfo memory premium) external;
 
 
     /// @dev calulate required collateral for the provided parameters

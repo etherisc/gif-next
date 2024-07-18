@@ -107,7 +107,7 @@ contract TestProduct is GifTest {
 
         Amount sumInsured = AmountLib.toAmount(1000);
         Seconds  lifetime = SecondsLib.toSeconds(30);
-        IPolicy.Premium memory premiumExpected = pricingService.calculatePremium(
+        IPolicy.PremiumInfo memory premiumExpected = pricingService.calculatePremium(
             productNftId,
             riskId,
             sumInsured,
@@ -275,7 +275,7 @@ contract TestProduct is GifTest {
         assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
         
         // calculate expected premium/fee amounts
-        IPolicy.Premium memory ep = pricingService.calculatePremium(
+        IPolicy.PremiumInfo memory ep = pricingService.calculatePremium(
             productNftId, 
             riskId, 
             AmountLib.toAmount(sumInsuredAmount), 
@@ -420,7 +420,7 @@ contract TestProduct is GifTest {
         pb[customer] = token.balanceOf(customer);
 
         // calculate premium
-        IPolicy.Premium memory premiumExpected = pricingService.calculatePremium(
+        IPolicy.PremiumInfo memory premiumExpected = pricingService.calculatePremium(
             productNftId,
             riskId,
             AmountLib.toAmount(sumInsured),
@@ -530,7 +530,7 @@ contract TestProduct is GifTest {
         vm.stopPrank();
 
         // calculate premium
-        IPolicy.Premium memory premiumExpected = pricingService.calculatePremium(
+        IPolicy.PremiumInfo memory premiumExpected = pricingService.calculatePremium(
             productNftId,
             riskId,
             AmountLib.toAmount(sumInsured),
@@ -816,7 +816,7 @@ contract TestProduct is GifTest {
         vm.stopPrank();
 
         // calculate expected premium/fee amounts
-        IPolicy.Premium memory ep = pricingService.calculatePremium(
+        IPolicy.PremiumInfo memory ep = pricingService.calculatePremium(
             productNftId, 
             riskId, 
             AmountLib.toAmount(sumInsuredAmount), 
@@ -926,7 +926,7 @@ contract TestProduct is GifTest {
         vm.stopPrank();
 
         // calculate expected premium/fee amounts
-        IPolicy.Premium memory ep = pricingService.calculatePremium(
+        IPolicy.PremiumInfo memory ep = pricingService.calculatePremium(
             productNftId, 
             riskId, 
             AmountLib.toAmount(sumInsuredAmount), 

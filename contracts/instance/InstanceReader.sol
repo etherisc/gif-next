@@ -83,11 +83,11 @@ contract InstanceReader {
     function getPremiumInfo(NftId policyNftId) 
         public
         view
-        returns (IPolicy.Premium memory info)
+        returns (IPolicy.PremiumInfo memory info)
     {
         bytes memory data = _store.getData(toPremiumKey(policyNftId));
         if (data.length > 0) {
-            return abi.decode(data, (IPolicy.Premium));
+            return abi.decode(data, (IPolicy.PremiumInfo));
         }
     }
 

@@ -227,7 +227,7 @@ contract DistributionService is
     function processSale(
         NftId distributionNftId, // assume always of distribution type
         ReferralId referralId,
-        IPolicy.Premium memory premium
+        IPolicy.PremiumInfo memory premium
     )
         external
         virtual

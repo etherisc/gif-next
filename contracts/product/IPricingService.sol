@@ -35,5 +35,5 @@ interface IPricingService is IService
     )
         external
         view
-        returns (IPolicy.Premium memory premium);
+        returns (IPolicy.PremiumInfo memory premium);
 }

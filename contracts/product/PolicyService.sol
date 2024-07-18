@@ -161,7 +161,7 @@ contract PolicyService is
             COLLATERALIZED());
 
         // calculate and store premium
-        IPolicy.Premium memory premium = _pricingService.calculatePremium(
+        IPolicy.PremiumInfo memory premium = _pricingService.calculatePremium(
             productNftId,
             applicationInfo.riskId,
             applicationInfo.sumInsuredAmount,
@@ -215,7 +215,7 @@ contract PolicyService is
             revert ErrorPolicyServicePremiumAlreadyPaid(policyNftId, policyInfo.premiumPaidAmount);
         }
 
-        IPolicy.Premium memory premium = instanceReader.getPremiumInfo(policyNftId); 
+        IPolicy.PremiumInfo memory premium = instanceReader.getPremiumInfo(policyNftId); 
         policyInfo.premiumPaidAmount = AmountLib.toAmount(premium.premiumAmount);
 
         _processPremium(
@@ -363,7 +363,7 @@ contract PolicyService is
         IInstance instance,
         NftId applicationNftId,
         IPolicy.PolicyInfo memory applicationInfo,
-        IPolicy.Premium memory premium
+        IPolicy.PremiumInfo memory premium
     )
         internal
         virtual
@@ -426,7 +426,7 @@ contract PolicyService is
         NftId productNftId,
         NftId bundleNftId,
         ReferralId referralId,
-        IPolicy.Premium memory premium
+        IPolicy.PremiumInfo memory premium
     )
         internal
         virtual
@@ -459,7 +459,7 @@ contract PolicyService is
         InstanceReader instanceReader,
         NftId policyNftId,
         NftId productNftId,
-        IPolicy.Premium memory premium
+        IPolicy.PremiumInfo memory premium
     )
         internal
         virtual

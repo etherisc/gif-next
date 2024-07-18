@@ -284,7 +284,7 @@ contract PoolService is
 
     function processSale(
         NftId bundleNftId, 
-        IPolicy.Premium memory premium 
+        IPolicy.PremiumInfo memory premium 
     ) 
         external
         virtual

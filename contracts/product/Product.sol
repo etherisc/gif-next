@@ -62,7 +62,7 @@ abstract contract Product is
         override 
         returns (Amount premiumAmount)
     {
-        IPolicy.Premium memory premium = _getProductStorage()._pricingService.calculatePremium(
+        IPolicy.PremiumInfo memory premium = _getProductStorage()._pricingService.calculatePremium(
             getNftId(),
             riskId,
             sumInsuredAmount,

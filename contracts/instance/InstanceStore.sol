@@ -197,11 +197,11 @@ contract InstanceStore is
 
     
     //--- Premium (Policy) ----------------------------------------------//
-    function createPremium(NftId policyNftId, IPolicy.Premium memory premium) external restricted() {
+    function createPremium(NftId policyNftId, IPolicy.PremiumInfo memory premium) external restricted() {
         _create(_toNftKey32(policyNftId, PREMIUM()), abi.encode(premium));
     }
 
-    function updatePremium(NftId policyNftId, IPolicy.Premium memory premium, StateId newState) external restricted() {
+    function updatePremium(NftId policyNftId, IPolicy.PremiumInfo memory premium, StateId newState) external restricted() {
         _update(_toNftKey32(policyNftId, PREMIUM()), abi.encode(premium), newState);
     }
 

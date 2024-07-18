@@ -33,7 +33,7 @@ contract TestPricingService is GifTest {
         );
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
-        IPolicy.Premium memory premium = pricingService.calculatePremium(
+        IPolicy.PremiumInfo memory premium = pricingService.calculatePremium(
             productNftId, 
             riskId, 
             AmountLib.toAmount(1000), 
@@ -58,7 +58,7 @@ contract TestPricingService is GifTest {
         );
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
-        IPolicy.Premium memory premium = pricingService.calculatePremium(
+        IPolicy.PremiumInfo memory premium = pricingService.calculatePremium(
             productNftId, 
             riskId, 
             AmountLib.toAmount(1000), 
@@ -92,7 +92,7 @@ contract TestPricingService is GifTest {
         );
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
-        IPolicy.Premium memory premium = pricingService.calculatePremium(
+        IPolicy.PremiumInfo memory premium = pricingService.calculatePremium(
             productNftId, 
             riskId, 
             AmountLib.toAmount(1000), 
@@ -126,7 +126,7 @@ contract TestPricingService is GifTest {
         );
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
-        IPolicy.Premium memory premium = pricingService.calculatePremium(
+        IPolicy.PremiumInfo memory premium = pricingService.calculatePremium(
             productNftId, 
             riskId, 
             AmountLib.toAmount(1000), 
@@ -188,7 +188,7 @@ contract TestPricingService is GifTest {
         vm.stopPrank();
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
-        IPolicy.Premium memory premium = pricingService.calculatePremium(
+        IPolicy.PremiumInfo memory premium = pricingService.calculatePremium(
             productNftId, 
             riskId, 
             AmountLib.toAmount(1000), 
@@ -252,7 +252,7 @@ contract TestPricingService is GifTest {
         vm.stopPrank();
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
-        IPolicy.Premium memory premium = pricingService.calculatePremium(
+        IPolicy.PremiumInfo memory premium = pricingService.calculatePremium(
             productNftId, 
             riskId, 
             AmountLib.toAmount(1000), 
@@ -316,7 +316,7 @@ contract TestPricingService is GifTest {
         vm.stopPrank();
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
-        IPolicy.Premium memory premium = pricingService.calculatePremium(
+        IPolicy.PremiumInfo memory premium = pricingService.calculatePremium(
             productNftId, 
             riskId, 
             AmountLib.toAmount(1000), 

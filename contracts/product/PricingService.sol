@@ -71,7 +71,7 @@ contract PricingService is
         view
         virtual override
         returns (
-            IPolicy.Premium memory premium
+            IPolicy.PremiumInfo memory premium
         )
     {
         InstanceReader reader;
@@ -172,7 +172,7 @@ contract PricingService is
         internal
         pure
         returns (
-            IPolicy.Premium memory premium
+            IPolicy.PremiumInfo memory premium
         )
     {
         // initial premium amount is the net premium
@@ -197,14 +197,14 @@ contract PricingService is
     }
 
     function _calculateVariableFeeAmounts(
-        IPolicy.Premium memory premium,
+        IPolicy.PremiumInfo memory premium,
         IComponents.ProductInfo memory productInfo,
         IBundle.BundleInfo memory bundleInfo
     )
         internal
         pure
         returns (
-            IPolicy.Premium memory intermadiatePremium
+            IPolicy.PremiumInfo memory intermadiatePremium
         )
     {
         UFixed netPremiumAmount = UFixedLib.toUFixed(premium.netPremiumAmount);
@@ -229,7 +229,7 @@ contract PricingService is
     }
 
     function _calculateDistributionOwnerFeeAmount(
-        IPolicy.Premium memory premium,
+        IPolicy.PremiumInfo memory premium,
         IComponents.ProductInfo memory productInfo,
         // ISetup.DistributionSetupInfo memory distInfo,
         ReferralId referralId,
@@ -237,7 +237,7 @@ contract PricingService is
     )
         internal
         view 
-        returns (IPolicy.Premium memory finalPremium)
+        returns (IPolicy.PremiumInfo memory finalPremium)
     {
 
         // if the referral is not valid, then the distribution owner gets everything
@@ -270,13 +270,13 @@ contract PricingService is
 
 
     function _calculateTargetWalletAmounts(
-        IPolicy.Premium memory premium
+        IPolicy.PremiumInfo memory premium
     )
         internal
         virtual
         view
         returns (
-            IPolicy.Premium memory premiumWithTargetWalletAmounts
+            IPolicy.PremiumInfo memory premiumWithTargetWalletAmounts
         )
     {
         // fees for product owner
