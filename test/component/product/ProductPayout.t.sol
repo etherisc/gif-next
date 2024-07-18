@@ -25,7 +25,7 @@ import {PayoutId, PayoutIdLib} from "../../../contracts/type/PayoutId.sol";
 import {POLICY} from "../../../contracts/type/ObjectType.sol";
 import {RiskId, RiskIdLib, eqRiskId} from "../../../contracts/type/RiskId.sol";
 import {ReferralLib} from "../../../contracts/type/Referral.sol";
-import {SUBMITTED, COLLATERALIZED, CONFIRMED, DECLINED, CLOSED, EXPECTED, PAID, ACTIVE} from "../../../contracts/type/StateId.sol";
+import {SUBMITTED, COLLATERALIZED, CONFIRMED, DECLINED, CLOSED, EXPECTED, PAID} from "../../../contracts/type/StateId.sol";
 import {StateId} from "../../../contracts/type/StateId.sol";
 
 contract TestProductClaim is GifTest {
@@ -304,7 +304,7 @@ contract TestProductClaim is GifTest {
         {
             assertTrue(policyNftId.gtz(), "policy nft id zero");
             assertEq(core.registry.ownerOf(policyNftId), newCustomer, "unexpected policy holder");
-            assertEq(instanceReader.getPolicyState(policyNftId).toInt(), ACTIVE().toInt(), "unexpected policy state");
+            assertEq(instanceReader.getPolicyState(policyNftId).toInt(), COLLATERALIZED().toInt(), "unexpected policy state");
 
             IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
             assertEq(policyInfo.claimsCount, 1, "unexpected claims count");
@@ -369,7 +369,7 @@ contract TestProductClaim is GifTest {
         {
             assertTrue(policyNftId.gtz(), "policy nft id zero");
             assertEq(core.registry.ownerOf(policyNftId), newCustomer, "unexpected policy holder");
-            assertEq(instanceReader.getPolicyState(policyNftId).toInt(), ACTIVE().toInt(), "unexpected policy state");
+            assertEq(instanceReader.getPolicyState(policyNftId).toInt(), COLLATERALIZED().toInt(), "unexpected policy state");
 
             IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
             assertEq(policyInfo.claimsCount, 1, "unexpected claims count");
@@ -427,7 +427,7 @@ contract TestProductClaim is GifTest {
         {
             assertTrue(policyNftId.gtz(), "policy nft id zero");
             assertEq(core.registry.ownerOf(policyNftId), newCustomer, "unexpected policy holder");
-            assertEq(instanceReader.getPolicyState(policyNftId).toInt(), ACTIVE().toInt(), "unexpected policy state");
+            assertEq(instanceReader.getPolicyState(policyNftId).toInt(), COLLATERALIZED().toInt(), "unexpected policy state");
 
             IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
             assertEq(policyInfo.claimsCount, 1, "unexpected claims count");
@@ -504,7 +504,7 @@ contract TestProductClaim is GifTest {
         {
             assertTrue(policyNftId.gtz(), "policy nft id zero");
             assertEq(core.registry.ownerOf(policyNftId), newCustomer, "unexpected policy holder");
-            assertEq(instanceReader.getPolicyState(policyNftId).toInt(), ACTIVE().toInt(), "unexpected policy state");
+            assertEq(instanceReader.getPolicyState(policyNftId).toInt(), COLLATERALIZED().toInt(), "unexpected policy state");
 
             IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
             assertEq(policyInfo.claimsCount, 1, "unexpected claims count");
@@ -607,7 +607,7 @@ contract TestProductClaim is GifTest {
         {
             assertTrue(policyNftId.gtz(), "policy nft id zero");
             assertEq(core.registry.ownerOf(policyNftId), newCustomer, "unexpected policy holder");
-            assertEq(instanceReader.getPolicyState(policyNftId).toInt(), ACTIVE().toInt(), "unexpected policy state");
+            assertEq(instanceReader.getPolicyState(policyNftId).toInt(), COLLATERALIZED().toInt(), "unexpected policy state");
 
             IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
             assertEq(policyInfo.claimsCount, 3, "unexpected claims count");
