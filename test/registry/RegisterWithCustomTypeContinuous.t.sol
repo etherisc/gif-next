@@ -13,7 +13,7 @@ import {Registry} from "../../contracts/registry/Registry.sol";
 import {RegistryTestBase} from "./RegistryTestBase.sol";
 import {RegistryTestBaseWithPreset} from "./RegistryTestBaseWithPreset.sol";
 
-contract RegisterWithCustomTypeContinousTest is RegistryTestBase 
+contract RegisterWithCustomTypeContinuousTest is RegistryTestBase 
 {
     uint constant ITTERATIONS = 150;
 
@@ -524,7 +524,7 @@ contract RegisterWithCustomTypeContinousTest is RegistryTestBase
     }
 }
 
-contract RegisterWithCustomTypeContinousTestL1 is RegisterWithCustomTypeContinousTest
+contract RegisterWithCustomTypeContinuousTestL1 is RegisterWithCustomTypeContinuousTest
 {
     function setUp() public virtual override {
         vm.chainId(1);
@@ -532,7 +532,7 @@ contract RegisterWithCustomTypeContinousTestL1 is RegisterWithCustomTypeContinou
     }
 }
 
-contract RegisterWithCustomTypeContinousTestL2 is RegisterWithCustomTypeContinousTest
+contract RegisterWithCustomTypeContinuousTestL2 is RegisterWithCustomTypeContinuousTest
 {
     function setUp() public virtual override {
         vm.chainId(_getRandomChainId());
@@ -542,7 +542,7 @@ contract RegisterWithCustomTypeContinousTestL2 is RegisterWithCustomTypeContinou
 
 
 
-contract RegisterWithCustomTypeWithPresetContinuousTest is RegistryTestBaseWithPreset, RegisterWithCustomTypeContinousTest
+contract RegisterWithCustomTypeWithPresetContinuousTest is RegistryTestBaseWithPreset, RegisterWithCustomTypeContinuousTest
 {
     function setUp() public virtual override(RegistryTestBaseWithPreset, RegistryTestBase)
     {

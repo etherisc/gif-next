@@ -13,9 +13,35 @@ import {Registry} from "../../contracts/registry/Registry.sol";
 import {RegistryTestBase} from "./RegistryTestBase.sol";
 import {RegistryTestBaseWithPreset} from "./RegistryTestBaseWithPreset.sol";
 
-contract RegisterRegistryContinousTest is RegistryTestBase 
+contract RegisterRegistryContinuousTest is RegistryTestBase 
 {
     uint constant ITTERATIONS = 150;
+
+    function test_continuous_registerRegistry_0000() public
+    {
+        for(uint idx = 0; idx < ITTERATIONS; idx++)
+        {
+            registerRegistry_testFunction(
+                address(uint160(randomNumber(type(uint160).max))), // sender
+                NftIdLib.toNftId(randomNumber(type(uint96).max)), // nftId
+                uint64(randomNumber(type(uint64).max)), // chainId
+                address(uint160(randomNumber(type(uint160).max))) // registryAddress
+            );
+        }
+    }
+    // note: each itteration will fail because of 0 chainId, running this test in order to reach all possible reverts during continuous tests
+    function test_continuous_registerRegistry_withValidSenerAndZeroRegistryChainId_00() public
+    {
+        for(uint idx = 0; idx < ITTERATIONS; idx++)
+        {
+            registerRegistry_testFunction(
+                gifAdmin,
+                NftIdLib.toNftId(randomNumber(type(uint96).max)), // nftId
+                0, // chainId
+                address(uint160(randomNumber(type(uint160).max))) // registryAddress
+            );
+        }
+    }
 
     function test_continuous_registerRegistry_withValidSender_000() public
     {
@@ -122,20 +148,16 @@ contract RegisterRegistryContinousTest is RegistryTestBase
     }
 }
 
-contract RegisterRegistryContinousTestL1 is RegisterRegistryContinousTest
+contract RegisterRegistryContinuousTestL1 is RegisterRegistryContinuousTest
 {
-    uint64 chainId;
-
     function setUp() public virtual override {
         vm.chainId(1);
         super.setUp();
     }
 }
 
-contract RegisterRegistryContinousTestL2 is RegisterRegistryContinousTest
+contract RegisterRegistryContinuousTestL2 is RegisterRegistryContinuousTest
 {
-    uint64 chainId;
-
     function setUp() public virtual override {
         vm.chainId(_getRandomChainId());
         super.setUp();
@@ -146,7 +168,7 @@ contract RegisterRegistryContinousTestL2 is RegisterRegistryContinousTest
 
 
 
-contract RegisterRegistryWithPresetContinousTest is RegistryTestBaseWithPreset, RegisterRegistryContinousTest
+contract RegisterRegistryWithPresetContinousTest is RegistryTestBaseWithPreset, RegisterRegistryContinuousTest
 {
     function setUp() public virtual override(RegistryTestBase, RegistryTestBaseWithPreset)
     {
@@ -156,8 +178,6 @@ contract RegisterRegistryWithPresetContinousTest is RegistryTestBaseWithPreset, 
 
 contract RegisterRegistryWithPresetContinousTestL1 is RegisterRegistryWithPresetContinousTest
 {
-    uint64 chainId;
-
     function setUp() public virtual override {
         vm.chainId(1);
         super.setUp();
@@ -166,8 +186,6 @@ contract RegisterRegistryWithPresetContinousTestL1 is RegisterRegistryWithPreset
 
 contract RegisterRegistryWithPresetContinousTestL2 is RegisterRegistryWithPresetContinousTest
 {
-    uint64 chainId;
-
     function setUp() public virtual override {
         vm.chainId(_getRandomChainId());
         super.setUp();

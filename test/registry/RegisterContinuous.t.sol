@@ -529,7 +529,7 @@ contract RegisterContinuousTests is RegistryTestBase
         }
     }
 }
-contract RegisterContinousTestL1 is RegisterContinuousTests
+contract RegisterContinuousTestL1 is RegisterContinuousTests
 {
     function setUp() public virtual override {
         vm.chainId(1);
@@ -537,7 +537,7 @@ contract RegisterContinousTestL1 is RegisterContinuousTests
     }
 }
 
-contract RegisterContinousTestL2 is RegisterContinuousTests
+contract RegisterContinuousTestL2 is RegisterContinuousTests
 {
     function setUp() public virtual override {
         vm.chainId(_getRandomChainId());
@@ -621,7 +621,7 @@ contract RegisterWithPresetContinuousTests is RegistryTestBaseWithPreset, Regist
     }
 }
 
-contract RegisterWithPresetContinousTestL1 is RegisterWithPresetContinuousTests
+contract RegisterWithPresetContinuousTestL1 is RegisterWithPresetContinuousTests
 {
     function setUp() public virtual override {
         vm.chainId(1);
@@ -629,7 +629,7 @@ contract RegisterWithPresetContinousTestL1 is RegisterWithPresetContinuousTests
     }
 }
 
-contract RegisterWithPresetContinousTestL2 is RegisterWithPresetContinuousTests
+contract RegisterWithPresetContinuousTestL2 is RegisterWithPresetContinuousTests
 {
     function setUp() public virtual override {
         vm.chainId(_getRandomChainId());

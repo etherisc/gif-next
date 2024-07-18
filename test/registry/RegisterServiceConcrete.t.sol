@@ -6,7 +6,6 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 import {VersionLib, VersionPart, VersionPartLib} from "../../contracts/type/Version.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {ObjectType, ObjectTypeLib, SERVICE} from "../../contracts/type/ObjectType.sol";
-
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 
 import {RegistryTestBase} from "./RegistryTestBase.sol";
@@ -189,18 +188,10 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
 
     function test_registerService_withDuplicateVersionAndDomain_specificCase() public
     {
-        // args=[ObjectInfo({ nftId: 58320260334610590964687536414 [5.832e28], parentNftId: 23060 [2.306e4], objectType: 7, isInterceptor: false, objectAddress: 0x35EEEF71D74d608fe53AB0d76CF84F261a2B81E5, initialOwner: 0x000000000000000000000000000000001641c88f, data: 0x0000000000000000000000000000000000000000000000000000000000000f7b }), ObjectInfo({ nftId: 129, parentNftId: 1148, objectType: 181, isInterceptor: true, objectAddress: 0x0000000000000000000000000000000000001C12, initialOwner: 0x00000000000000000000000000000000000017c5, data: 0x000000000000000000000000000000000000000000000000000000002255341b }), 224, 27]] 
-        // testFuzz_registerService_withDuplicateVersionAndDomain((uint96,uint96,uint8,bool,address,address,bytes),(uint96,uint96,uint8,bool,address,address,bytes),uint8,uint8)
-
-
-        // TODO use this parameters
-        // args=[17933918450742370540801522842 [1.793e28], 0x8e66961A6eFe5853ef595cC12A1f3e1b1d961EfE, 0x0000000000000000000000000000000000000000000000000000000000002c4a, 14677 [1.467e4], 0x000000000000000000000000000000000000160f, 0x0000000000000000000000000000000000000000000000000000000000003fee, 70, 250]] 
-
-
         IRegistry.ObjectInfo memory info_1 = IRegistry.ObjectInfo(
-            NftIdLib.toNftId(58320260334610590964687536414),
-            NftIdLib.toNftId(23060),
-            ObjectTypeLib.toObjectType(7),
+            NftIdLib.toNftId(17933918450742370540801522842),
+            registryNftId,
+            SERVICE(),
             false,
             address(0x35eeeF71d74d608fE53Ab0d76cf84F261a2b81E6),
             address(0x000000000000000000000000000000001641c88f),
@@ -209,9 +200,9 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
 
         IRegistry.ObjectInfo memory info_2 = IRegistry.ObjectInfo(
             NftIdLib.toNftId(129),
-            NftIdLib.toNftId(1148),
-            ObjectTypeLib.toObjectType(181),
-            true,
+            registryNftId,
+            SERVICE(),
+            false,
             address(0x0000000000000000000000000000000000001C12),
             address(0x00000000000000000000000000000000000017c5),
             "0x000000000000000000000000000000000000000000000000000000002255341b"
@@ -219,16 +210,6 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
 
         VersionPart version = VersionLib.toVersionPart(224);
         ObjectType domain = ObjectTypeLib.toObjectType(27);
-
-
-        info_1.parentNftId = registryNftId;
-        info_1.objectType = SERVICE();
-        info_1.isInterceptor = false;
-
-        info_2.parentNftId = registryNftId;
-        info_2.objectType = SERVICE();
-        info_2.isInterceptor = false;
-
 
         _startPrank(address(core.releaseRegistry));
 
@@ -240,61 +221,45 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
             domain,
             true, 
             abi.encodeWithSelector(
-                IRegistry.ErrorRegistryDomainAlreadyRegistered.selector,
+                IRegistry.ErrorRegistryServiceDomainAlreadyRegistered.selector,
                 info_2.objectAddress,
                 version,
                 domain)
         );
 
         _stopPrank();
-
     }
 
-    function test_registerService_withRegisteredChainRegistryAddress() public
+    function test_registerService_withGlobalRegistryAsParent() public
     {
-        uint64 chainId = _getNotRegisteredRandomChainId();
-        address chainRegistryAddress = _getRandomNotRegisteredAddress();
-        NftId chainRegistryNftId = NftIdLib.toNftId(core.chainNft.calculateTokenId(core.registry.REGISTRY_TOKEN_SEQUENCE_ID(), chainId));
-
-        // register chain registry
-        _startPrank(gifAdmin);
-
-        _assert_registerRegistry(
-            chainRegistryNftId,
-            chainId,
-            chainRegistryAddress,
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            NftIdLib.toNftId(10017),
+            globalRegistryNftId,
+            SERVICE(),
             false,
+            _getRandomNotRegisteredAddress(),
+            address(uint160(randomNumber(1, type(uint160).max))),
             ""
         );
 
-        _stopPrank();
-
-        // register service
-        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
-            NftIdLib.toNftId(randomNumber(type(uint96).max)),
-            registryNftId,
-            SERVICE(),
-            false, // isInterceptor
-            chainRegistryAddress,
-            _getRandomNotRegisteredAddress(),
-            "0xd65a6b878facf5db1fb422199394c9190a24f63bcf984404134eb0867bed5c4b0a1675ba2da124de18a0897e460b5c22b635957e19b24af75a006242e9aeff5144f9cc9ec2f04a17278dafa058"
-        );
-
-        VersionPart version = VersionLib.toVersionPart(13);
-        ObjectType domain = ObjectTypeLib.toObjectType(8);
+        VersionPart version = VersionLib.toVersionPart(22);
+        ObjectType domain = ObjectTypeLib.toObjectType(244);
 
         _startPrank(address(core.releaseRegistry));
 
-        _assert_registerService(
-            info, 
-            version, 
-            domain,
-            true,
-            abi.encodeWithSelector(
-                IRegistry.ErrorRegistryContractAlreadyRegistered.selector,
-                chainRegistryAddress
-            )
-        );
+        if(block.chainid == 1) {
+            _assert_registerService(info, version, domain, false, "");
+        } else {
+            _assert_registerService(
+                info, version, domain, true, 
+                abi.encodeWithSelector(
+                    IRegistry.ErrorRegistryServiceParentNotRegistry.selector,
+                    info.objectAddress,
+                    version,
+                    info.parentNftId
+                )
+            );
+        }
 
         _stopPrank();
     }

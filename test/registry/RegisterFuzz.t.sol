@@ -287,7 +287,7 @@ contract RegisterFuzzTest is RegistryTestBase
         register_testFunction(sender, info);
     }
 
-    function testFuzz_register_withZeroObjectAddress(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, address initialOwner, bytes memory data) public
+    function testFuzz_register_withZeroObjectAddress_0000000(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, address initialOwner, bytes memory data) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,

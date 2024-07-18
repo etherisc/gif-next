@@ -12,7 +12,7 @@ import {ObjectType, ObjectTypeLib, PROTOCOL, REGISTRY, SERVICE, INSTANCE, PRODUC
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
 import {RegistryTestBase} from "./RegistryTestBase.sol";
-
+import {RegistryTestBaseWithPreset} from "./RegistryTestBaseWithPreset.sol";
 
 import {RegisterFuzzTest} from "./RegisterFuzz.t.sol";
 
@@ -189,15 +189,14 @@ contract RegisterConcreteTest is RegistryTestBase {
         */
     }
 
-    function test_register_WithGlobalRegistryAsParent() public
+    function test_register_withGlobalRegistryAsParent() public
     {
-        // register for global registry
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             NftIdLib.zero(),
             globalRegistryNftId,
             INSTANCE(), // or SERVICE
             false, // isInterceptor
-            address(uint160(randomNumber(type(uint160).max))),
+            _getRandomNotRegisteredAddress(),
             registryOwner,
             ""
         );
@@ -210,7 +209,7 @@ contract RegisterConcreteTest is RegistryTestBase {
             _assert_register(
                 info, 
                 true, 
-                abi.encodeWithSelector(IRegistry.ErrorRegistryGlobalRegistryAsParent.selector, info.objectType, info.parentNftId));
+                abi.encodeWithSelector(IRegistry.ErrorRegistryGlobalRegistryAsParent.selector, info.objectAddress, info.objectType));
         }
 
         _stopPrank();
@@ -293,3 +292,104 @@ contract RegisterConcreteTestL2 is RegisterConcreteTest
 }
 
 
+contract RegisterWithPresetConcreteTest is RegistryTestBaseWithPreset, RegisterConcreteTest
+{
+    function setUp() public virtual override(RegistryTestBaseWithPreset, RegistryTestBase)
+    {
+        RegistryTestBaseWithPreset.setUp();
+    }
+
+   function test_register_withRegisteredChainRegistryAddress() 
+        public
+    {
+        _startPrank(address(registryServiceMock));
+
+        if(block.chainid == 1) {
+            assert(_chainRegistryAddress != address(0));
+
+            // register product with registered chain registry address
+            IRegistry.ObjectInfo memory info_1 = IRegistry.ObjectInfo(
+                NftIdLib.zero(),
+                _instanceNftId,
+                PRODUCT(),
+                false, // isInterceptor
+                _chainRegistryAddress,
+                address(uint160(randomNumber(1, type(uint160).max))),
+                ""
+            );
+
+            _assert_register(info_1, false, "");
+
+            // register instance with global registry address (address lookup set)
+            IRegistry.ObjectInfo memory info_2 = IRegistry.ObjectInfo(
+                NftIdLib.zero(),
+                globalRegistryNftId,
+                INSTANCE(),
+                false, // isInterceptor
+                globalRegistryInfo.objectAddress,
+                address(uint160(randomNumber(1, type(uint160).max))),
+                ""
+            );
+
+            _assert_register(
+                info_2, true, 
+                abi.encodeWithSelector(
+                    IRegistry.ErrorRegistryContractAlreadyRegistered.selector,
+                    info_2.objectAddress
+                )
+            );
+        }
+        else 
+        {
+            // register instance with global registry address (address lookup not set)
+            IRegistry.ObjectInfo memory info_1 = IRegistry.ObjectInfo(
+                NftIdLib.zero(),
+                registryNftId,
+                INSTANCE(),
+                false, // isInterceptor
+                globalRegistryInfo.objectAddress,
+                address(uint160(randomNumber(1, type(uint160).max))),
+                ""
+            );
+
+            _assert_register(info_1, false, "");
+
+            // register pool with registry address 
+            IRegistry.ObjectInfo memory info_2 = IRegistry.ObjectInfo(
+                NftIdLib.zero(),
+                _instanceNftId,
+                POOL(),
+                false, // isInterceptor
+                address(core.registry),
+                address(uint160(randomNumber(1, type(uint160).max))),
+                ""
+            );
+
+            _assert_register(
+                info_2, true, 
+                abi.encodeWithSelector(
+                    IRegistry.ErrorRegistryContractAlreadyRegistered.selector,
+                    info_2.objectAddress
+                )
+            );
+        }
+
+        _stopPrank();
+    }
+}
+
+contract RegisterWithPresetConcreteTestL1 is RegisterWithPresetConcreteTest
+{
+    function setUp() public virtual override {
+        vm.chainId(1);
+        super.setUp();
+    }
+}
+
+contract RegisterWithPresetConcreteTestL2 is RegisterWithPresetConcreteTest
+{
+    function setUp() public virtual override {
+        vm.chainId(_getRandomChainId());
+        super.setUp();
+    }
+}

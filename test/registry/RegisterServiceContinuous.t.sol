@@ -14,7 +14,7 @@ import {RegistryTestBase} from "./RegistryTestBase.sol";
 import {RegistryTestBaseWithPreset} from "./RegistryTestBaseWithPreset.sol";
 
 
-contract RegisterServiceContinousTests is RegistryTestBase 
+contract RegisterServiceContinuousTests is RegistryTestBase 
 {
     uint constant ITTERATIONS = 150;
 
@@ -57,7 +57,7 @@ contract RegisterServiceContinousTests is RegistryTestBase
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
             test_continuous_registerService(
-                address(registryServiceMock),
+                address(core.releaseRegistry),
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
@@ -87,7 +87,7 @@ contract RegisterServiceContinousTests is RegistryTestBase
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
             test_continuous_registerService(
-                address(registryServiceMock),
+                address(core.releaseRegistry),
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
@@ -109,7 +109,7 @@ contract RegisterServiceContinousTests is RegistryTestBase
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
             test_continuous_registerService(
-                address(registryServiceMock),
+                address(core.releaseRegistry),
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
@@ -130,7 +130,7 @@ contract RegisterServiceContinousTests is RegistryTestBase
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
             test_continuous_registerService(
-                address(registryServiceMock),
+                address(core.releaseRegistry),
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
@@ -151,7 +151,7 @@ contract RegisterServiceContinousTests is RegistryTestBase
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
             test_continuous_registerService(
-                address(registryServiceMock),
+                address(core.releaseRegistry),
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
@@ -173,7 +173,7 @@ contract RegisterServiceContinousTests is RegistryTestBase
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
             test_continuous_registerService(
-                address(registryServiceMock),
+                address(core.releaseRegistry),
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
@@ -195,7 +195,7 @@ contract RegisterServiceContinousTests is RegistryTestBase
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
             test_continuous_registerService(
-                address(registryServiceMock),
+                address(core.releaseRegistry),
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
@@ -216,7 +216,7 @@ contract RegisterServiceContinousTests is RegistryTestBase
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
             test_continuous_registerService(
-                address(registryServiceMock),
+                address(core.releaseRegistry),
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
@@ -237,7 +237,7 @@ contract RegisterServiceContinousTests is RegistryTestBase
         for(uint idx = 0; idx < 100; idx++)
         {
             test_continuous_registerService(
-                address(registryServiceMock),
+                address(core.releaseRegistry),
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
                     _getNftIdAtIndex(randomNumber(type(uint256).max)),
@@ -259,7 +259,7 @@ contract RegisterServiceContinousTests is RegistryTestBase
         for(uint idx = 0; idx < 100; idx++)
         {
             test_continuous_registerService(
-                address(registryServiceMock),
+                address(core.releaseRegistry),
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
                     _getNftIdAtIndex(randomNumber(type(uint256).max)),
@@ -281,7 +281,7 @@ contract RegisterServiceContinousTests is RegistryTestBase
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
             test_continuous_registerService(
-                address(registryServiceMock),
+                address(core.releaseRegistry),
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
                     _getNftIdAtIndex(randomNumber(type(uint256).max)),
@@ -302,7 +302,7 @@ contract RegisterServiceContinousTests is RegistryTestBase
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
             test_continuous_registerService(
-                address(registryServiceMock),
+                address(core.releaseRegistry),
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
                     _getNftIdAtIndex(randomNumber(type(uint256).max)),
@@ -323,7 +323,7 @@ contract RegisterServiceContinousTests is RegistryTestBase
         for(uint idx = 0; idx < 100; idx++)
         {
             test_continuous_registerService(
-                address(registryServiceMock),
+                address(core.releaseRegistry),
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
                     _getNftIdAtIndex(randomNumber(type(uint256).max)),
@@ -345,7 +345,7 @@ contract RegisterServiceContinousTests is RegistryTestBase
         for(uint idx = 0; idx < 100; idx++)
         {
             test_continuous_registerService(
-                address(registryServiceMock),
+                address(core.releaseRegistry),
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
                     _getNftIdAtIndex(randomNumber(type(uint256).max)),
@@ -367,7 +367,7 @@ contract RegisterServiceContinousTests is RegistryTestBase
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
             test_continuous_registerService(
-                address(registryServiceMock),
+                address(core.releaseRegistry),
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
                     _getNftIdAtIndex(randomNumber(type(uint256).max)),
@@ -388,7 +388,7 @@ contract RegisterServiceContinousTests is RegistryTestBase
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
             test_continuous_registerService(
-                address(registryServiceMock),
+                address(core.releaseRegistry),
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
                     _getNftIdAtIndex(randomNumber(type(uint256).max)),
@@ -409,7 +409,7 @@ contract RegisterServiceContinousTests is RegistryTestBase
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
             test_continuous_registerService(
-                address(registryServiceMock),
+                address(core.releaseRegistry),
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
@@ -431,7 +431,7 @@ contract RegisterServiceContinousTests is RegistryTestBase
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
             test_continuous_registerService(
-                address(registryServiceMock),
+                address(core.releaseRegistry),
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
@@ -448,17 +448,38 @@ contract RegisterServiceContinousTests is RegistryTestBase
         }
     }
 
-    function test_continuous_registerService_withValidSenderAndValidObjectType_0001100() public
+    function test_continuous_registerService_withValidSenderAndValidObjectType_001000() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
             test_continuous_registerService(
-                address(registryServiceMock),
+                address(core.releaseRegistry),
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
                     SERVICE(),
-                    toBool(randomNumber(1)),
+                    false,
+                    _getAddressAtIndex(randomNumber(type(uint256).max)),
+                    address(uint160(randomNumber(type(uint160).max))),
+                    ""                  
+                ),
+                VersionLib.toVersionPart(randomNumber(type(uint8).max)),
+                ObjectTypeLib.toObjectType(randomNumber(type(uint8).max))
+            );
+        }
+    }
+
+    function test_continuous_registerService_withValidSenderAndValidObjectType_001100() public
+    {
+        for(uint idx = 0; idx < ITTERATIONS; idx++)
+        {
+            test_continuous_registerService(
+                address(core.releaseRegistry),
+                IRegistry.ObjectInfo(
+                    NftIdLib.toNftId(randomNumber(type(uint96).max)),
+                    NftIdLib.toNftId(randomNumber(type(uint96).max)),
+                    SERVICE(),
+                    false,
                     _getAddressAtIndex(randomNumber(type(uint256).max)),
                     _getAddressAtIndex(randomNumber(type(uint256).max)),
                     ""                  
@@ -474,7 +495,7 @@ contract RegisterServiceContinousTests is RegistryTestBase
         for(uint idx = 0; idx < 100; idx++)
         {
             test_continuous_registerService(
-                address(registryServiceMock),
+                address(core.releaseRegistry),
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
                     _getNftIdAtIndex(randomNumber(type(uint256).max)),
@@ -496,7 +517,7 @@ contract RegisterServiceContinousTests is RegistryTestBase
         for(uint idx = 0; idx < 100; idx++)
         {
             test_continuous_registerService(
-                address(registryServiceMock),
+                address(core.releaseRegistry),
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
                     _getNftIdAtIndex(randomNumber(type(uint256).max)),
@@ -513,17 +534,38 @@ contract RegisterServiceContinousTests is RegistryTestBase
         }
     }
 
-    function test_continuous_registerService_withValidSenderAndValidObjectType_0101100() public
+    function test_continuous_registerService_withValidSenderAndValidObjectType_011000() public
     {
         for(uint idx = 0; idx < 100; idx++)
         {
             test_continuous_registerService(
-                address(registryServiceMock),
+                address(core.releaseRegistry),
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
                     _getNftIdAtIndex(randomNumber(type(uint256).max)),
                     SERVICE(),
-                    toBool(randomNumber(1)),
+                    false,
+                    _getAddressAtIndex(randomNumber(type(uint256).max)),
+                    address(uint160(randomNumber(type(uint160).max))),
+                    ""                  
+                ),
+                VersionLib.toVersionPart(randomNumber(type(uint8).max)),
+                ObjectTypeLib.toObjectType(randomNumber(type(uint8).max))
+            );
+        }
+    }
+
+    function test_continuous_registerService_withValidSenderAndValidObjectType_011100() public
+    {
+        for(uint idx = 0; idx < 100; idx++)
+        {
+            test_continuous_registerService(
+                address(core.releaseRegistry),
+                IRegistry.ObjectInfo(
+                    NftIdLib.toNftId(randomNumber(type(uint96).max)),
+                    _getNftIdAtIndex(randomNumber(type(uint256).max)),
+                    SERVICE(),
+                    false,
                     _getAddressAtIndex(randomNumber(type(uint256).max)),
                     _getAddressAtIndex(randomNumber(type(uint256).max)),
                     ""                  
@@ -624,7 +666,7 @@ contract RegisterServiceContinousTests is RegistryTestBase
 }
 
 
-contract RegisterServiceContinousTestL1 is RegisterServiceContinousTests
+contract RegisterServiceContinuousTestL1 is RegisterServiceContinuousTests
 {
     function setUp() public virtual override {
         vm.chainId(1);
@@ -632,7 +674,7 @@ contract RegisterServiceContinousTestL1 is RegisterServiceContinousTests
     }
 }
 
-contract RegisterServiceContinousTestL2 is RegisterServiceContinousTests
+contract RegisterServiceContinuousTestL2 is RegisterServiceContinuousTests
 {
     function setUp() public virtual override {
         vm.chainId(_getRandomChainId());
@@ -643,7 +685,7 @@ contract RegisterServiceContinousTestL2 is RegisterServiceContinousTests
 
 
 
-contract RegisterServiceWithPresetContinuousTests is RegistryTestBaseWithPreset, RegisterServiceContinousTests
+contract RegisterServiceWithPresetContinuousTests is RegistryTestBaseWithPreset, RegisterServiceContinuousTests
 {
     function setUp() public virtual override(RegistryTestBaseWithPreset, RegistryTestBase)
     {
@@ -655,7 +697,7 @@ contract RegisterServiceWithPresetContinuousTests is RegistryTestBaseWithPreset,
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
             test_continuous_registerService(
-                address(registryServiceMock),
+                address(core.releaseRegistry),
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
                     _nftIdByType[randomNumber(_nftIdByType.length - 1)],
@@ -677,7 +719,7 @@ contract RegisterServiceWithPresetContinuousTests is RegistryTestBaseWithPreset,
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
             test_continuous_registerService(
-                address(registryServiceMock),
+                address(core.releaseRegistry),
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
                     _nftIdByType[randomNumber(_nftIdByType.length - 1)],

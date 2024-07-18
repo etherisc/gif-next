@@ -258,65 +258,47 @@ contract RegisterRegistryWithPresetFuzzTestL1 is RegisterRegistryWithPresetFuzzT
         super.setUp();
     }
 
-
+    // !!! TODO check that each itteration has unique chainRegistryChainId -> setUp() is executed for each itteration
     // Mainnet only tests
-    function testFuzz_registerRegistry_withDuplicateChainId(uint64 chainId, address registryAddress_1, address registryAddress_2) public
+    function testFuzz_registerRegistry_withDuplicateChainId(address registryAddress) public
     {
-        vm.assume(
-            chainId != 0 &&
-            !EnumerableSet.contains(_chainIds, chainId) &&
-            !EnumerableSet.contains(_registeredAddresses, registryAddress_1) &&
-            !EnumerableSet.contains(_registeredAddresses, registryAddress_2)
-        );
+        vm.assume(block.chainid == 1);
+        vm.assume(registryAddress != address(0));
+        assert(_chainRegistryChainId != 0);
+        //vm.assume(!EnumerableSet.contains(_registeredAddresses, registryAddress)); // chain registries can have same addresses
 
+        // duplicate registration with random chain id from setUp()
         NftId nftId = NftIdLib.toNftId(
-            core.chainNft.calculateTokenId(core.registry.REGISTRY_TOKEN_SEQUENCE_ID(), chainId)
+            core.chainNft.calculateTokenId(core.registry.REGISTRY_TOKEN_SEQUENCE_ID(), _chainRegistryChainId)
         );
 
-        _startPrank(gifAdmin);
-
-        // register random chain id
-        _assert_registerRegistry(
+        // must revert with abi.encodeWithSelector(IRegistry.ErrorRegistryChainRegistryAlreadyRegistered.selector, nftId, _chainRegistryChainId)
+        registerRegistry_testFunction(
+            gifAdmin,
             nftId,
-            chainId,
-            registryAddress_1,
-            false,
-            ""
+            _chainRegistryChainId,
+            registryAddress
         );
 
-        // duplicate registration with random chain id
-        _assert_registerRegistry(
-            nftId,
-            chainId,
-            registryAddress_2,
-            true,
-            abi.encodeWithSelector(IRegistry.ErrorRegistryAlreadyRegistered.selector, nftId)
-        );
-
-
-        nftId = NftIdLib.toNftId(
-            core.chainNft.calculateTokenId(core.registry.REGISTRY_TOKEN_SEQUENCE_ID(), block.chainid)
-        );
         // duplicate registration with mainnet chain id
-        _assert_registerRegistry(
-            nftId,
-            uint64(block.chainid),
-            registryAddress_2,
-            true,
-            abi.encodeWithSelector(IRegistry.ErrorRegistryAlreadyRegistered.selector, nftId)
+        nftId = NftIdLib.toNftId(
+            core.chainNft.calculateTokenId(core.registry.REGISTRY_TOKEN_SEQUENCE_ID(), 1)
         );
 
-        _stopPrank();
+        // must revert with abi.encodeWithSelector(IRegistry.ErrorRegistryChainRegistryAlreadyRegistered.selector, nftId, 1)
+        registerRegistry_testFunction(
+            gifAdmin,
+            nftId,
+            1,
+            registryAddress
+        );
     }
 }
 
 contract RegisterRegistryWithPresetFuzzTestL2 is RegisterRegistryWithPresetFuzzTest
 {
     function setUp() public virtual override {
-        //vm.chainId(_getRandomChainId());
-        vm.chainId(type(uint64).max);
+        vm.chainId(_getRandomChainId());
         super.setUp();
-
-        core.chainNft.calculateTokenId(100000000000000000000000000, type(uint256).max);
     }
 }

@@ -12,49 +12,34 @@ import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 
 import {RegistryTestBase} from "./RegistryTestBase.sol";
 
+import {RegisterableMock} from "../mock/RegisterableMock.sol";
+
 
 contract RegistryTestBaseWithPreset is RegistryTestBase
-{
+{   // TODO _nftIdByType is actually == _nftIds?
     NftId[] _nftIdByType; // keeps 1 nftId of each type
 
-    NftId chainRegistryNftId; // used on mainnet only
-    NftId instanceNftId;
-    NftId productNftId;
-    NftId distributionNftId;
-    NftId poolNftId;
-    NftId oracleNftId;
-    NftId distributorNftId;
-    NftId policyNftId;
-    NftId bundleNftId;
-    NftId stakeForProtocolNftId;
-    NftId stakeForInstanceNftId;
+    NftId _chainRegistryNftId; // use on mainnet only
+    address _chainRegistryAddress;
+    uint64 _chainRegistryChainId;
+
+    NftId _instanceNftId;
+    NftId _productNftId;
+    NftId _distributionNftId;
+    NftId _poolNftId;
+    NftId _oracleNftId;
+    NftId _distributorNftId;
+    NftId _policyNftId;
+    NftId _bundleNftId;
+    NftId _stakeForProtocolNftId;
+    NftId _stakeForInstanceNftId;
 
 
     function setUp() public virtual override
     {
         super.setUp();
-        // TODO _nftIdByType is actually == _nftIds?
-        _nftIdByType.push(protocolNftId);
-        _nftIdByType.push(globalRegistryNftId);
-        _nftIdByType.push(registryNftId); // same as globalRegistryNftId on mainnet 
-        _nftIdByType.push(stakingNftId);
-        _nftIdByType.push(registryServiceNftId);
-
-        _startPrank(address(registryServiceMock));
 
         _register_all_types();
-
-        _stopPrank();
-
-        _startPrank(gifAdmin);
-        
-        // when not on mainnet there are only 2 registry objects, both created at deployment time
-        // when on mainnet there is only 1 registry object created at deployment, but arbitrary number can be created after...
-        if(block.chainid == 1) {
-            _registerChainRegistry();
-        }
-
-        _stopPrank();
     }
 
     function _registerContractType(ObjectType objectType, NftId parentNftId) internal returns (NftId)
@@ -64,8 +49,23 @@ contract RegistryTestBaseWithPreset is RegistryTestBase
         info.nftId = NftIdLib.toNftId(randomNumber(type(uint96).max));
         info.parentNftId = parentNftId;
         info.objectType = objectType;
-        info.objectAddress = address(uint160(randomNumber(11, type(uint160).max)));
-        info.initialOwner = address(uint160(randomNumber(type(uint160).max)));
+        info.isInterceptor = true;
+        //info.objectAddress = _getRandomNotRegisteredAddress();
+        info.initialOwner = address(uint160(randomNumber(1, type(uint160).max)));
+        info.data = "";
+
+        bytes32 salt = bytes32(randomNumber(type(uint256).max));
+
+        RegisterableMock registerableMock = new RegisterableMock{salt: salt}(
+            info.nftId,
+            info.parentNftId,
+            info.objectType,
+            info.isInterceptor,
+            info.initialOwner,
+            info.data
+        );
+
+        info.objectAddress = address(registerableMock);
 
         return _assert_register(info, false, "");
     }
@@ -78,33 +78,30 @@ contract RegistryTestBaseWithPreset is RegistryTestBase
         info.parentNftId = parentNftId;
         info.objectType = objectType;
         info.objectAddress = address(0);
-        info.initialOwner = address(uint160(randomNumber(type(uint160).max)));
+        info.initialOwner = address(uint160(randomNumber(1, type(uint160).max)));
 
         return _assert_register(info, false, "");
     }
 
     function _registerChainRegistry() internal returns (NftId)
     {
-        uint64 chainId;
-        
-        do{
-            chainId = uint64(randomNumber(type(uint64).max));
-        } while(chainId == 0 || chainId == 1);
-        
+        assert(block.chainid == 1);
+
+        _chainRegistryChainId = _getRandomNotRegisteredChainId();
         NftId nftId = NftIdLib.toNftId(
-            core.chainNft.calculateTokenId(core.registry.REGISTRY_TOKEN_SEQUENCE_ID(), chainId)
+            core.chainNft.calculateTokenId(core.registry.REGISTRY_TOKEN_SEQUENCE_ID(), _chainRegistryChainId)
         );
+        _chainRegistryAddress = address(uint160(randomNumber(1, type(uint160).max)));// can have duplicate address, never 0
 
         _assert_registerRegistry(
             nftId,
-            chainId,
-            address(uint160(randomNumber(11, type(uint160).max))), 
+            _chainRegistryChainId,
+            _chainRegistryAddress, 
             false, "");
 
         return nftId;
     }
 
-    // TODO register service AND registry (if mainnet)
     function _register_all_types() internal
     {
         IRegistry.ObjectInfo memory info;
@@ -123,35 +120,55 @@ contract RegistryTestBaseWithPreset is RegistryTestBase
         }
         */
 
-        instanceNftId = _registerContractType(INSTANCE(), registryNftId);
-        _nftIdByType.push(instanceNftId);
+        // push already registered types
+        _nftIdByType.push(protocolNftId);
+        _nftIdByType.push(globalRegistryNftId);
+        _nftIdByType.push(registryNftId); // same as globalRegistryNftId on mainnet 
+        _nftIdByType.push(stakingNftId);
+        _nftIdByType.push(registryServiceNftId);
 
-        productNftId = _registerContractType(PRODUCT(), instanceNftId);
-        _nftIdByType.push(productNftId);
+        _startPrank(address(registryServiceMock));
 
-        distributionNftId = _registerContractType(DISTRIBUTION(), instanceNftId);
-        _nftIdByType.push(distributionNftId);
+        _instanceNftId = _registerContractType(INSTANCE(), registryNftId);
+        _nftIdByType.push(_instanceNftId);
 
-        poolNftId = _registerContractType(POOL(), instanceNftId);
-        _nftIdByType.push(poolNftId);
+        _productNftId = _registerContractType(PRODUCT(), _instanceNftId);
+        _nftIdByType.push(_productNftId);
 
-        oracleNftId = _registerContractType(ORACLE(), instanceNftId);
-        _nftIdByType.push(oracleNftId);
+        _distributionNftId = _registerContractType(DISTRIBUTION(), _instanceNftId);
+        _nftIdByType.push(_distributionNftId);
 
-        distributorNftId = _registerObjectType(DISTRIBUTOR(), distributionNftId);
-        _nftIdByType.push(distributorNftId);
+        _poolNftId = _registerContractType(POOL(), _instanceNftId);
+        _nftIdByType.push(_poolNftId);
 
-        policyNftId = _registerObjectType(POLICY(), productNftId);
-        _nftIdByType.push(policyNftId);
+        _oracleNftId = _registerContractType(ORACLE(), _instanceNftId);
+        _nftIdByType.push(_oracleNftId);
 
-        bundleNftId = _registerObjectType(BUNDLE(), poolNftId);
-        _nftIdByType.push(bundleNftId);
+        _distributorNftId = _registerObjectType(DISTRIBUTOR(), _distributionNftId);
+        _nftIdByType.push(_distributorNftId);
 
-        stakeForProtocolNftId = _registerObjectType(STAKE(), protocolNftId);
-        _nftIdByType.push(stakeForProtocolNftId);
+        _policyNftId = _registerObjectType(POLICY(), _productNftId);
+        _nftIdByType.push(_policyNftId);
 
-        stakeForInstanceNftId = _registerObjectType(STAKE(), instanceNftId);
-        _nftIdByType.push(stakeForInstanceNftId);
+        _bundleNftId = _registerObjectType(BUNDLE(), _poolNftId);
+        _nftIdByType.push(_bundleNftId);
+
+        _stakeForProtocolNftId = _registerObjectType(STAKE(), protocolNftId);
+        _nftIdByType.push(_stakeForProtocolNftId);
+
+        _stakeForInstanceNftId = _registerObjectType(STAKE(), _instanceNftId);
+        _nftIdByType.push(_stakeForInstanceNftId);
+
+        _stopPrank();
+        _startPrank(gifAdmin);
+        
+        // when not on mainnet there are only 2 registry objects, both created at deployment time
+        // when on mainnet there is only 1 registry object created at deployment, but arbitrary number can be created after
+        if(block.chainid == 1) {
+            _nftIdByType.push(_registerChainRegistry());
+        }
+
+        _stopPrank();
     }
 /*
     function prepapreTestForChainId(uint64 chainId) internal virtual override returns (RegistryTestBase test) {

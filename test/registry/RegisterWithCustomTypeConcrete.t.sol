@@ -57,7 +57,7 @@ contract RegisterWithCustomTypeWithPresetConcreteTest is RegistryTestBaseWithPre
 
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             NftIdLib.toNftId(0),
-            policyNftId, // or bundleNftId, stakeNftId, distrbutorNftId
+            _policyNftId, // or bundleNftId, stakeNftId, distrbutorNftId
             customObjectType,
             false,
             address(uint160(randomNumber(type(uint160).max))),
