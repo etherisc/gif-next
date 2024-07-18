@@ -114,7 +114,7 @@ contract PolicyService is
     /// @inheritdoc IPolicyService
     function createPolicy(
         NftId applicationNftId, // = policyNftId
-        bool requirePremiumPayment,
+        bool requirePremiumPayment, // TODO: remove this and never collect tokens (use collectPremium instead)
         Timestamp activateAt
     )
         external 
@@ -160,13 +160,17 @@ contract PolicyService is
 
         IPolicy.Premium memory premium;
 
+        // TODO: always calculate and then store premium object (in separate object)
+        // TODO: update referral counter during create policy
+        // TODO: no balances are updated during create policy
+
         // optional: calculate the premium and update counters for collection at the end of this function
         if(requirePremiumPayment) {
             premium = _calculateAndProcessPremium(
                 instance,
                 applicationNftId,
                 applicationInfo);
-
+            // TODO: store premium in separate object 
             applicationInfo.premiumPaidAmount = AmountLib.toAmount(premium.premiumAmount);
         }
 
@@ -214,12 +218,14 @@ contract PolicyService is
             revert ErrorPolicyServicePremiumAlreadyPaid(policyNftId, policyInfo.premiumPaidAmount);
         }
 
+        // TODO: update all balances except referral counter as those are already updated
+
         // calculate premium
         IPolicy.Premium memory premium = _calculateAndProcessPremium(
                 instance,
                 policyNftId,
                 policyInfo);
-
+                
         policyInfo.premiumPaidAmount = AmountLib.toAmount(premium.premiumAmount);
 
         // optionally activate policy

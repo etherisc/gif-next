@@ -107,6 +107,7 @@ contract PoolService is
     function createBundle(
         address bundleOwner, // initial bundle owner
         Fee memory fee, // fees deducted from premium that go to bundle owner
+        // TODO: remove stakingAmount and just create an empty bundle without tokens
         Amount stakingAmount, // staking amount - staking fees result in initial bundle capital
         Seconds lifetime, // initial duration for which new policies are covered
         bytes calldata filter // optional use case specific criteria that define if a policy may be covered by this bundle
