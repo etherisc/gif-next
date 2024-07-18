@@ -8,6 +8,8 @@ import {ITransferInterceptor} from "./ITransferInterceptor.sol";
 
 contract ChainNft is ERC721Enumerable {
 
+    event LogTokenInterceptorAddress(uint256 tokenId, address interceptor);
+
     // constants
     string public constant NAME = "Dezentralized Insurance Protocol NFT";
     string public constant SYMBOL = "DIPNFT";
@@ -74,10 +76,8 @@ contract ChainNft is ERC721Enumerable {
         external
         onlyRegistry()
     {
-        _totalMinted++;
-        _safeMint(to, tokenId);
+        _safeMintWithInterceptorAddress(to, tokenId, address(0));
     }
-
 
     /**
     * @dev mints the next token to register new objects
@@ -103,8 +103,7 @@ contract ChainNft is ERC721Enumerable {
             _uri[tokenId] = uri;
         }
 
-        _totalMinted++;
-        _safeMint(to, tokenId);
+        _safeMintWithInterceptorAddress(to, tokenId, interceptor);
 
         if(interceptor != address(0)) {
             ITransferInterceptor(interceptor).nftMint(to, tokenId);
@@ -219,12 +218,14 @@ contract ChainNft is ERC721Enumerable {
         return calculateTokenId(_idNext);
     }
 
+    // ---------------- private functions ----------------- //
+
     function _getNextTokenId() private returns (uint256 id) {
         id = calculateTokenId(_idNext);
         _idNext++;
     }
 
-    function _calculateChainIdDigits(uint256 chainId) internal view returns (uint256) {
+    function _calculateChainIdDigits(uint256 chainId) private pure returns (uint256) {
         uint256 num = chainId;
         uint256 digits = 0;
         while (num != 0) {
@@ -232,5 +233,18 @@ contract ChainNft is ERC721Enumerable {
             num /= 10;
         }
         return digits;
+    }
+
+    function _safeMintWithInterceptorAddress(
+        address to,
+        uint256 tokenId,
+        address interceptor
+    )
+        private
+    {
+        emit LogTokenInterceptorAddress(tokenId, interceptor);
+        
+        _totalMinted++;
+        _safeMint(to, tokenId);
     }
 }
