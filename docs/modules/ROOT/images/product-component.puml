@@ -6,14 +6,14 @@ package "Product Module" as productModule {
 
 [PricingService] as pricingS
 [ComponentService] as componentS
-[ProductService] as productS
+[RiskService] as riskS
 [ApplicationService] as applicationS
 [PolicyService] as policyS
 [ClaimService] as claimS
 
 
 componentS <-- product
-productS <-- product
+riskS <-- product
 pricingS <- product
 
 product --> applicationS

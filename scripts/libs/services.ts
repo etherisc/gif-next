@@ -13,7 +13,7 @@ import {
     PolicyService, PolicyServiceManager, PolicyService__factory,
     PoolService, PoolServiceManager, PoolService__factory,
     PricingService, PricingServiceManager, PricingService__factory,
-    ProductService, ProductServiceManager, ProductService__factory,
+    RiskService, RiskServiceManager, RiskService__factory,
     RegistryService,
     RegistryServiceManager,
     RegistryService__factory,
@@ -64,10 +64,10 @@ export type ServiceAddresses = {
     poolService: PoolService,
     poolServiceManagerAddress: AddressLike,
 
-    productServiceNftId: string,
-    productServiceAddress: AddressLike,
-    productService: ProductService,
-    productServiceManagerAddress: AddressLike,
+    riskServiceNftId: string,
+    riskServiceAddress: AddressLike,
+    riskService: RiskService,
+    riskServiceManagerAddress: AddressLike,
 
     applicationServiceNftId : string,
     applicationServiceAddress: AddressLike,
@@ -480,8 +480,8 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     logger.info(`oracleServiceManager deployed - oracleServiceAddress: ${oracleServiceAddress} oracleServiceManagerAddress: ${oracleServiceManagerAddress} nftId: ${oracleServiceNftId}`);
 
     logger.info("-------- product service --------");
-    const { address: productServiceManagerAddress, contract: productServiceManagerBaseContract, } = await deployContract(
-        "ProductServiceManager",
+    const { address: riskServiceManagerAddress, contract: riskServiceManagerBaseContract, } = await deployContract(
+        "RiskServiceManager",
         owner,
         [
             authority,
@@ -497,28 +497,28 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
                 VersionPartLib: libraries.versionPartLibAddress, 
             }});
 
-    const productServiceManager = productServiceManagerBaseContract as ProductServiceManager;
-    const productServiceAddress = await productServiceManager.getProductService();
-    const productService = ProductService__factory.connect(productServiceAddress, owner);
+    const riskServiceManager = riskServiceManagerBaseContract as RiskServiceManager;
+    const riskServiceAddress = await riskServiceManager.getRiskService();
+    const riskService = RiskService__factory.connect(riskServiceAddress, owner);
 
     // verify service implementation 
     prepareVerificationData(
-        "ProductService", 
-        await getImplementationAddress(hhEthers.provider, await productServiceManager.getProxy()), 
+        "RiskService", 
+        await getImplementationAddress(hhEthers.provider, await riskServiceManager.getProxy()), 
         [], 
         undefined);
 
     const rcptPrd = await executeTx(
-        async () => await releaseRegistry.registerService(productServiceAddress, getTxOpts()),
-        "registerService - productService"
+        async () => await releaseRegistry.registerService(riskServiceAddress, getTxOpts()),
+        "registerService - riskService"
     );
     const logRegistrationInfoPrd = getFieldFromTxRcptLogs(rcptPrd!, registry.registry.interface, "LogRegistration", "nftId");
-    const productServiceNftId = (logRegistrationInfoPrd as unknown);
+    const riskServiceNftId = (logRegistrationInfoPrd as unknown);
     await executeTx(
-        async () => await productServiceManager.linkToProxy(getTxOpts()),
-        "linkToProxy - productService"
+        async () => await riskServiceManager.linkToProxy(getTxOpts()),
+        "linkToProxy - riskService"
     );
-    logger.info(`productServiceManager deployed - productServiceAddress: ${productServiceAddress} productServiceManagerAddress: ${productServiceManagerAddress} nftId: ${productServiceNftId}`);
+    logger.info(`riskServiceManager deployed - riskServiceAddress: ${riskServiceAddress} riskServiceManagerAddress: ${riskServiceManagerAddress} nftId: ${riskServiceNftId}`);
 
     logger.info("-------- claim service --------");
     const { address: claimServiceManagerAddress, contract: claimServiceManagerBaseContract, } = await deployContract(
@@ -694,10 +694,10 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         poolService: poolService,
         poolServiceManagerAddress: poolServiceManagerAddress,
 
-        productServiceNftId: productServiceNftId as string,
-        productServiceAddress: productServiceAddress,
-        productService: productService,
-        productServiceManagerAddress: productServiceManagerAddress,
+        riskServiceNftId: riskServiceNftId as string,
+        riskServiceAddress: riskServiceAddress,
+        riskService: riskService,
+        riskServiceManagerAddress: riskServiceManagerAddress,
 
         applicationServiceNftId: applicationServiceNftId as string,
         applicationServiceAddress: applicationServiceAddress,
