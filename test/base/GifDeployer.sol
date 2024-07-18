@@ -49,8 +49,8 @@ import {PoolService} from "../../contracts/pool/PoolService.sol";
 import {PoolServiceManager} from "../../contracts/pool/PoolServiceManager.sol";
 import {PricingService} from "../../contracts/product/PricingService.sol";
 import {PricingServiceManager} from "../../contracts/product/PricingServiceManager.sol";
-import {ProductService} from "../../contracts/product/ProductService.sol";
-import {ProductServiceManager} from "../../contracts/product/ProductServiceManager.sol";
+import {RiskService} from "../../contracts/product/RiskService.sol";
+import {RiskServiceManager} from "../../contracts/product/RiskServiceManager.sol";
 import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {StakingService} from "../../contracts/staking/StakingService.sol";
@@ -100,9 +100,9 @@ contract GifDeployer is Test {
     OracleService public oracleService;
     NftId public oracleServiceNftId;
 
-    ProductServiceManager public productServiceManager;
-    ProductService public productService;
-    NftId public productServiceNftId;
+    RiskServiceManager public riskServiceManager;
+    RiskService public riskService;
+    NftId public riskServiceNftId;
 
     ClaimServiceManager public claimServiceManager;
     ClaimService public claimService;
@@ -335,9 +335,9 @@ contract GifDeployer is Test {
         oracleService = oracleServiceManager.getOracleService();
         oracleServiceNftId = _registerService(releaseRegistry, oracleServiceManager, oracleService);
 
-        productServiceManager = new ProductServiceManager{salt: salt}(authority, registryAddress, salt);
-        productService = productServiceManager.getProductService(); 
-        productServiceNftId = _registerService(releaseRegistry, productServiceManager, productService);
+        riskServiceManager = new RiskServiceManager{salt: salt}(authority, registryAddress, salt);
+        riskService = riskServiceManager.getRiskService(); 
+        riskServiceNftId = _registerService(releaseRegistry, riskServiceManager, riskService);
 
         claimServiceManager = new ClaimServiceManager{salt: salt}(authority, registryAddress, salt);
         claimService = claimServiceManager.getClaimService();

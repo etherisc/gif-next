@@ -7,21 +7,14 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import {Amount} from "../type/Amount.sol";
 import {IComponent} from "../shared/IComponent.sol";
 import {IAuthorization} from "../authorization/IAuthorization.sol";
-import {IComponents} from "../instance/module/IComponents.sol";
 import {IInstance} from "../instance/IInstance.sol";
-import {IInstanceService} from "../instance/IInstanceService.sol";
-import {IProductService} from "../product/IProductService.sol";
-import {IRegisterable} from "../shared/IRegisterable.sol";
 import {NftId} from "../type/NftId.sol";
-import {ObjectType} from "../type/ObjectType.sol";
-import {TokenHandler} from "../shared/TokenHandler.sol";
 
 /// @dev component base class
 /// component examples are product, distribution, pool and oracle
 interface IInstanceLinkedComponent is 
     IComponent
 {
-    error ErrorComponentNotProductService(address caller);
     error ErrorComponentNotInstance(NftId instanceNftId);
     error ErrorComponentProductNftAlreadySet();
 
