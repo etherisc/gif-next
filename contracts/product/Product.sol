@@ -140,8 +140,9 @@ abstract contract Product is
         string memory name,
         address token,
         bool isInterceptor,
-        address pool,
-        address distribution,
+        address pool, // switch to pool nft id (#527)
+        address distribution, // switch to distribution nft id  (#527)
+        // add NftId [] oracleNftIds (#527)
         bytes memory registryData, // writeonly data that will saved in the object info record of the registry
         bytes memory componentData // writeonly data that will saved in the object info record of the registry
     )
@@ -163,7 +164,7 @@ abstract contract Product is
 
         ProductStorage storage $ = _getProductStorage();
         // TODO add validation
-        // TODO refactor to go via registry ?
+        // TODO refactor to go via registry for all components linked to this product (#527)
         $._riskService = IRiskService(_getServiceAddress(PRODUCT())); 
         $._applicationService = IApplicationService(_getServiceAddress(APPLICATION())); 
         $._policyService = IPolicyService(_getServiceAddress(POLICY())); 

@@ -71,6 +71,7 @@ abstract contract Oracle is
         return false;
     }
 
+    /// @dev Not relevant for oracle components
     function withdrawFees(Amount amount)
         external
         virtual

@@ -21,6 +21,7 @@ abstract contract BasicProduct is
     {
         _setFees(productFee, processingFee);
     }
+
     function _initializeBasicProduct(
         address registry,
         NftId instanceNftId,

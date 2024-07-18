@@ -905,6 +905,17 @@ image::{imgbase}bp-product-policy-close.png[Policy Closing Process]
 
 == Distribution Components
 === Overview
+
+The distribution component manages the process of selling policies.
+This includes the management of distributors (brokers) and referral codes associated with distributors.
+A distribution component is always linked to a single product component and cannot be shared between multiple product components.
+
+Via the services shown in the diagram below, the distribution component stores its business objects data with the instance module.
+
+image::{imgbase}distribution-component.png[Distribution Component Diagram]
+
+The responsibilities of the services interacting with the distribution component are described in detail in the business processes section below.
+
 === Stakeholders
 ==== Distribution Owner
 ==== Distributors
@@ -921,6 +932,16 @@ image::{imgbase}bp-product-policy-close.png[Policy Closing Process]
 
 == Oracle Components
 === Overview
+
+The oracle component manages the interactions of the product cluster with the "real" worls.
+An oracle component is always linked to a single product component and cannot be shared between multiple product components.
+
+Via the services shown in the diagram below, the oracle component stores its business objects data with the instance module.
+
+image::{imgbase}oracle-component.png[Oracle Component Diagram]
+
+The responsibilities of the services interacting with the oracle component are described in detail in the business processes section below.
+
 === Business Objects
 ==== Requests
 ==== Responses
@@ -931,6 +952,17 @@ image::{imgbase}bp-product-policy-close.png[Policy Closing Process]
 
 == Pool Components
 === Overview
+
+The pool component manages the funds required to collateralize policies.
+A pool component is always linked to a single product component and cannot be shared between multiple product components.
+
+Via the services shown in the diagram below, the pool component stores its business objects data with the instance module.
+
+image::{imgbase}pool-component.png[Pool Component Diagram]
+
+The responsibilities of the services interacting with the pool component are described in detail in the business processes section below.
+
+
 === Stakeholders
 ==== Pool Owner
 ==== Bundle Owner

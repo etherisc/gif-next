@@ -1,0 +1,16 @@
+@startuml
+
+package "Distribution Module" as DistributionModule {
+  [Distribution] as distribution
+  [TokenHandler] as th
+}
+
+[ComponentService] as componentS
+[DistributionService] as distributionS
+
+componentS <- distribution
+
+distribution --> distributionS
+distribution *- th
+
+@enduml
