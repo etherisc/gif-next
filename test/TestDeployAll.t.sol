@@ -1,14 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/utils/Strings.sol";
 
-import {console} from "../lib/forge-std/src/Script.sol";
 import {GifTest} from "./base/GifTest.sol";
 import {InstanceLinkedComponent} from "../contracts/shared/InstanceLinkedComponent.sol";
 import {IRegistry} from "../contracts/registry/IRegistry.sol";
-import {IStaking} from "../contracts/staking/IStaking.sol";
-import {IStakingService} from "../contracts/staking/IStakingService.sol";
 import {NftId, NftIdLib} from "../contracts/type/NftId.sol";
 import {ObjectType} from "../contracts/type/ObjectType.sol";
 import {BUNDLE, COMPONENT, DISTRIBUTION, ORACLE, POOL, PRODUCT, POLICY, RISK, REQUEST, SERVICE, STAKING} from "../contracts/type/ObjectType.sol";
@@ -112,9 +108,9 @@ contract TestDeployAll is GifTest {
         assertTrue(core.registry.getNftId(address(oracleService)).eq(oracleServiceNftId), "oracle service nft does not match");
         assertTrue(address(oracleServiceManager) != address(0), "oracle service manager is zero address");
 
-        // validate product service
-        assertTrue(core.registry.getNftId(address(productService)).eq(productServiceNftId), "product service nft does not match");
-        assertTrue(address(productServiceManager) != address(0), "product service manager is zero address");
+        // validate risk service
+        assertTrue(core.registry.getNftId(address(riskService)).eq(riskServiceNftId), "risk service nft does not match");
+        assertTrue(address(riskServiceManager) != address(0), "risk service manager is zero address");
 
         // validate claim service
         assertTrue(core.registry.getNftId(address(claimService)).eq(claimServiceNftId), "claim service nft does not match");

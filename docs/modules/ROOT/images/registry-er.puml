@@ -1,0 +1,35 @@
+@startuml
+
+object Protocol
+object "Registry (global)" as gr
+object "Registry (chain)" as cr
+object Service
+object Staking
+object Instance
+
+object Product
+object Distribution
+object Oracle
+object Pool
+
+object Policy
+object Distributor
+object Bundle
+
+Protocol *-- "1" gr
+gr *-- "n" cr
+
+Service "n" -* cr
+cr *- "1" Staking
+cr *-- "n" Instance
+
+Product "n" -* Instance
+Instance *- "n" Pool
+Instance *-- "n" Distribution
+Instance *-- "n" Oracle
+
+Policy "n" -* Product
+Distributor "n" -* Distribution
+Pool *- "n" Bundle
+
+@enduml

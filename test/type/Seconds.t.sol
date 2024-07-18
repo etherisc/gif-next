@@ -33,6 +33,14 @@ contract SecondsTest is Test {
         assertFalse(SecondsLib.toSeconds(0).gtz(), "0 > zero");
     }
 
+    function test_SecondsAdd() public {
+        uint40 duration1 = 1691321541;
+        uint40 duration2 = 1691321541;
+        uint40 duration3 = 3382643082;
+        assertTrue(SecondsLib.add(SecondsLib.toSeconds(duration1), SecondsLib.toSeconds(duration2)).toInt() == duration3, "unexpected duration");
+        assertTrue(SecondsLib.toSeconds(duration1) + SecondsLib.toSeconds(duration2) == SecondsLib.toSeconds(duration3), "unexpected duration");
+    }
+
     function test_SecondsToIntDurationTooBig() public {
         uint256 duration = SecondsLib.max().toInt() + 1;
 

@@ -32,8 +32,6 @@ import {Registry} from "./Registry.sol";
 import {TokenRegistry} from "./TokenRegistry.sol";
 import {ReleaseLifecycle} from "./ReleaseLifecycle.sol";
 
-// TODO rename to something that does not end with 'Manager' 
-// everywhere else *Manager points to an upgradeable contract
 contract ReleaseRegistry is 
     AccessManaged,
     ReleaseLifecycle, 

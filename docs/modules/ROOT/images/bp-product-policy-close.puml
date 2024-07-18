@@ -1,0 +1,28 @@
+@startuml
+
+participant Product
+
+participant PolicyService
+participant PoolService
+participant BundleService
+
+participant InstanceStore
+participant BundleSet
+participant Staking
+
+Product -> PolicyService : close()
+
+PolicyService -> PolicyService : check preconditions
+PolicyService -> PoolService : releaseCollateral()
+
+PoolService -> BundleService : releaseCollateral()
+BundleService -> InstanceStore: decreaseLocked()
+
+PoolService -> BundleService : unlinkPolicy()
+BundleService -> BundleSet: unlinkPolicy()
+
+PoolService -> Staking : decreaseTotalValueLocked()
+
+PolicyService -> InstanceStore : updatePolicy()
+
+@enduml

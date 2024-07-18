@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {ERC165} from "./ERC165.sol";
+import {InitializableERC165} from "./InitializableERC165.sol";
 import {INftOwnable} from "./INftOwnable.sol";
 import {NftId} from "../type/NftId.sol";
 import {RegistryLinked} from "./RegistryLinked.sol";
 
 contract NftOwnable is
-    ERC165,
+    InitializableERC165,
     RegistryLinked,
     INftOwnable
 {

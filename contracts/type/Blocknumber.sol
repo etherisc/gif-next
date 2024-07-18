@@ -11,8 +11,14 @@ using {
     eqBlocknumber as ==,
     neBlocknumber as !=,
     BlocknumberLib.toInt,
+    BlocknumberLib.eq,
+    BlocknumberLib.ne,
     BlocknumberLib.eqz,
-    BlocknumberLib.gtz
+    BlocknumberLib.gtz,
+    BlocknumberLib.gt,
+    BlocknumberLib.gte,
+    BlocknumberLib.lt,
+    BlocknumberLib.lte
 } for Blocknumber global;
 
 /// @dev return true if Blocknumber a is greater than Blocknumber b

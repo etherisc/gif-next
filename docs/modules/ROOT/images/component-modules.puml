@@ -1,0 +1,51 @@
+@startuml
+
+"Product Owner" as pro
+"Distribution Owner" as do
+"Pool Owner" as poo
+"Oracle Owner" as oro
+"Instance Owner" as io
+
+package "My Product" {
+  package "Product Module" as productModule {
+    [Product] as product
+  }
+
+  package "Distribution Module" as distributionModule {
+    [Distribution] as distribution
+  }
+
+  package "Oracle Module" as oracleModule {
+    [Oracle] as oracle
+  }
+
+  package "Pool Module" as poolModule {
+    [Pool] as pool
+  }
+}
+
+package "Registry Module" as registryModule {
+    [Registry Contracts...] as registry
+}
+
+package "Instance Module" as instanceModule {
+    [Instance Contracts...] as instance
+}
+
+[Services ...] as services
+
+pro ..> product
+do ..> distribution
+oro ..> oracle
+poo ..> pool
+io .> instance
+
+product --> services
+distribution --> services
+oracle --> services
+pool --> services
+
+services --> registry
+services --> instance
+
+@enduml

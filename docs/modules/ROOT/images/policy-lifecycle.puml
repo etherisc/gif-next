@@ -1,0 +1,20 @@
+@startuml
+
+Active : activatedAt
+Expired : expiredAt
+Closed : closedAt
+
+[*] --> Applied
+Declined <- Applied
+Applied --> Revoked
+Applied -> Collateralized
+
+Collateralized -> Active
+Active --> Expired
+Expired --> Closed
+
+Revoked --> [*]
+Declined --> [*]
+[*] <- Closed
+
+@enduml

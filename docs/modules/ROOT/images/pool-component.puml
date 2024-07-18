@@ -1,0 +1,18 @@
+@startuml
+
+package "Pool Module" as poolModule {
+  [Pool] as pool
+  [TokenHandler] as th
+}
+
+[ComponentService] as componentS
+[PoolService] as poolS
+[BundleService] as bundleS
+
+componentS <-- pool
+
+pool --> poolS
+pool --> bundleS
+pool *- th
+
+@enduml

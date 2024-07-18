@@ -25,7 +25,7 @@ import {PayoutId, PayoutIdLib} from "../../../contracts/type/PayoutId.sol";
 import {POLICY} from "../../../contracts/type/ObjectType.sol";
 import {RiskId, RiskIdLib, eqRiskId} from "../../../contracts/type/RiskId.sol";
 import {ReferralLib} from "../../../contracts/type/Referral.sol";
-import {SUBMITTED, ACTIVE, COLLATERALIZED, CONFIRMED, DECLINED, CLOSED, EXPECTED, PAID} from "../../../contracts/type/StateId.sol";
+import {SUBMITTED, COLLATERALIZED, CONFIRMED, DECLINED, CLOSED, EXPECTED, PAID, ACTIVE} from "../../../contracts/type/StateId.sol";
 import {StateId} from "../../../contracts/type/StateId.sol";
 
 contract TestProductClaim is GifTest {
@@ -214,10 +214,10 @@ contract TestProductClaim is GifTest {
 
         // THEN
         // checking last of 8 logs
-        assertEq(entries.length, 8, "unexpected number of logs");
-        assertEq(entries[7].emitter, address(claimService), "unexpected emitter");
-        assertEq(entries[7].topics[0], keccak256("LogClaimServicePayoutProcessed(uint96,uint24,uint96,address,uint96)"), "unexpected log signature");
-        (uint96 nftIdInt ,uint24 payoutIdInt, uint96 payoutAmntInt) = abi.decode(entries[7].data, (uint96,uint24,uint96));
+        assertEq(entries.length, 9, "unexpected number of logs");
+        assertEq(entries[6].topics[0], keccak256("LogClaimServicePayoutProcessed(uint96,uint24,uint96,address,uint96)"), "unexpected log signature");
+        assertEq(entries[6].emitter, address(claimService), "unexpected emitter");
+        (uint96 nftIdInt ,uint24 payoutIdInt, uint96 payoutAmntInt) = abi.decode(entries[6].data, (uint96,uint24,uint96));
         assertEq(nftIdInt, policyNftId.toInt(), "unexpected policy nft id");
         assertEq(payoutIdInt, payoutId.toInt(), "unexpected payout id");
         assertEq(payoutAmntInt, payoutAmountInt, "unexpected payout amount");
@@ -747,7 +747,7 @@ contract TestProductClaim is GifTest {
         Timestamp activateAt = TimestampLib.blockTimestamp();
 
         vm.startPrank(productOwner);
-        prdct.collateralize(policyNftId, collectPremium, activateAt); 
+        prdct.createPolicy(policyNftId, collectPremium, activateAt); 
         vm.stopPrank();
 
         // create claim with payout
@@ -848,7 +848,7 @@ contract TestProductClaim is GifTest {
         internal
     {
         vm.startPrank(productOwner);
-        prdct.collateralize(nftId, collectPremium, activateAt); 
+        prdct.createPolicy(nftId, collectPremium, activateAt); 
         vm.stopPrank();
     }
 
@@ -906,7 +906,7 @@ contract TestProductClaim is GifTest {
         token.approve(address(poolComponentInfo.tokenHandler), BUNDLE_CAPITAL);
 
         // SimplePool spool = SimplePool(address(pool));
-        bundleNftId = SimplePool(address(pool)).createBundle(
+        (bundleNftId,) = SimplePool(address(pool)).createBundle(
             FeeLib.zero(), 
             BUNDLE_CAPITAL, 
             SecondsLib.toSeconds(604800), 

@@ -64,6 +64,7 @@ contract OracleService is
             ORACLE(), 
             true); // only active
 
+        // TODO move to stronger validation, requester and oracle need to belong to same product cluster
         // check that requester and oracle share same instance
         if (componentInfo.parentNftId != oracleInfo.parentNftId) {
             revert ErrorOracleServiceInstanceMismatch(componentInfo.parentNftId, oracleInfo.parentNftId);

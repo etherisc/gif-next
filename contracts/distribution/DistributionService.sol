@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IInstance} from "../instance/IInstance.sol";
 import {IComponentService} from "../shared/IComponentService.sol";
@@ -19,26 +17,18 @@ import {KEEP_STATE} from "../type/StateId.sol";
 import {ObjectType, COMPONENT, DISTRIBUTION, INSTANCE, DISTRIBUTION, DISTRIBUTOR, REGISTRY} from "../type/ObjectType.sol";
 import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
 import {IDistributionService} from "./IDistributionService.sol";
-import {UFixed, UFixedLib} from "../type/UFixed.sol";
+import {UFixed} from "../type/UFixed.sol";
 import {DistributorType, DistributorTypeLib} from "../type/DistributorType.sol";
 import {ReferralId, ReferralLib} from "../type/Referral.sol";
 import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
 import {IDistribution} from "../instance/module/IDistribution.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
-import {TokenHandler} from "../shared/TokenHandler.sol";
 
 
 contract DistributionService is
     ComponentVerifyingService,
     IDistributionService
 {
-    using AmountLib for Amount;
-    using NftIdLib for NftId;
-    using TimestampLib for Timestamp;
-    using UFixedLib for UFixed;
-    using FeeLib for Fee;
-    using ReferralLib for ReferralId;
-
     IComponentService private _componentService;
     IInstanceService private _instanceService;
     IRegistryService private _registryService;
@@ -142,7 +132,6 @@ contract DistributionService is
             distributorType,
             true, // active
             data,
-            AmountLib.zero(),
             0);
 
         instance.getInstanceStore().createDistributor(distributorNftId, info);
@@ -247,10 +236,10 @@ contract DistributionService is
             referralInfo.usedReferrals += 1;
             store.updateReferral(referralId, referralInfo, KEEP_STATE());
 
+            _componentService.increaseDistributorBalance(store, referralInfo.distributorNftId, AmountLib.zero(), commissionAmount);
+
             // update book keeping for distributor info
             IDistribution.DistributorInfo memory distributorInfo = reader.getDistributorInfo(referralInfo.distributorNftId);
-            // TODO refactor sum of commission amount into a fee balance for distributors
-            distributorInfo.commissionAmount = distributorInfo.commissionAmount + commissionAmount;
             distributorInfo.numPoliciesSold += 1;
             store.updateDistributor(referralInfo.distributorNftId, distributorInfo, KEEP_STATE());
         } else {
@@ -259,10 +248,7 @@ contract DistributionService is
         }
     }
 
-    /// @dev Withdraw commission for the distributor
-    /// @param distributorNftId the distributor Nft Id
-    /// @param amount the amount to withdraw. If set to UINT256_MAX, the full commission available is withdrawn
-    /// @return withdrawnAmount the effective withdrawn amount
+    /// @inheritdoc IDistributionService
     function withdrawCommission(NftId distributorNftId, Amount amount) 
         public 
         virtual
@@ -275,48 +261,32 @@ contract DistributionService is
         IComponents.ComponentInfo memory distributionInfo = reader.getComponentInfo(distributionNftId);
         address distributionWallet = distributionInfo.wallet;
         
-        IDistribution.DistributorInfo memory distributorInfo = reader.getDistributorInfo(distributorNftId);
-
-        if (!distributorInfo.active) {
-            revert ErrorDistributionServiceDistributorNotActive(distributorNftId);
-        }
+        Amount commissionAmount = reader.getFeeAmount(distributorNftId);
         
         // determine withdrawn amount
         withdrawnAmount = amount;
-        if (withdrawnAmount.eq(AmountLib.max())) {
-            withdrawnAmount = distributorInfo.commissionAmount;
+        if (withdrawnAmount.gte(AmountLib.max())) {
+            withdrawnAmount = commissionAmount;
         } else {
-            if (withdrawnAmount.gt(distributorInfo.commissionAmount)) {
-                revert ErrorDistributionServiceCommissionWithdrawAmountExceedsLimit(withdrawnAmount, distributorInfo.commissionAmount);
+            if (withdrawnAmount.gt(commissionAmount)) {
+                revert ErrorDistributionServiceCommissionWithdrawAmountExceedsLimit(withdrawnAmount, commissionAmount);
             }
-        }
-
-        if (withdrawnAmount.eqz()) {
-            revert ErrorDistributionServiceCommissionWithdrawAmountIsZero();
-        }
-
-        // check allowance
-        IERC20Metadata token = IERC20Metadata(distributionInfo.token);
-        uint256 tokenAllowance = token.allowance(distributionWallet, address(distributionInfo.tokenHandler));
-        if (tokenAllowance < withdrawnAmount.toInt()) {
-            revert ErrorDistributionServiceWalletAllowanceTooSmall(distributionWallet, address(distributionInfo.tokenHandler), tokenAllowance, withdrawnAmount.toInt());
         }
 
         // decrease fee counters by withdrawnAmount and update distributor info
         {
             InstanceStore store = instance.getInstanceStore();
+            // decrease fee counter for distribution balance
             _componentService.decreaseDistributionBalance(store, distributionNftId, withdrawnAmount, AmountLib.zero());
-
-            distributorInfo.commissionAmount = distributorInfo.commissionAmount - withdrawnAmount;
-            store.updateDistributor(distributorNftId, distributorInfo, KEEP_STATE());
+            // decrease fee counter for distributor fee
+            _componentService.decreaseDistributorBalance(store, distributorNftId, AmountLib.zero(), withdrawnAmount);
         }
 
         // transfer amount to distributor
         {
             address distributor = getRegistry().ownerOf(distributorNftId);
-            distributionInfo.tokenHandler.transfer(distributionWallet, distributor, withdrawnAmount);
-
-            emit LogDistributionServiceCommissionWithdrawn(distributorNftId, distributor, address(token), withdrawnAmount);
+            emit LogDistributionServiceCommissionWithdrawn(distributorNftId, distributor, address(distributionInfo.token), withdrawnAmount);
+            distributionInfo.tokenHandler.distributeTokens(distributionWallet, distributor, withdrawnAmount);
         }
     }
 

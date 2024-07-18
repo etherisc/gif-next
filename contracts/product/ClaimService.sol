@@ -294,7 +294,7 @@ contract ClaimService is
         (
             Amount netPayoutAmount,
             address beneficiary
-        ) = _transferPayoutAmount(
+        ) = _calculatePayoutAmount(
             instanceReader,
             policyNftId,
             policyInfo,
@@ -303,10 +303,15 @@ contract ClaimService is
         // TODO callback IPolicyHolder
 
         emit LogClaimServicePayoutProcessed(policyNftId, payoutId, payoutAmount, beneficiary, netPayoutAmount);
+
+        {
+            NftId poolNftId = getRegistry().getObjectInfo(policyInfo.bundleNftId).parentNftId;
+            IComponents.ComponentInfo memory poolInfo = instanceReader.getComponentInfo(poolNftId);
+            poolInfo.tokenHandler.distributeTokens(poolInfo.wallet, beneficiary, netPayoutAmount);
+        }
     }
 
-    // TODO create (I)TreasuryService that deals with all gif related token transfers
-    function _transferPayoutAmount(
+    function _calculatePayoutAmount(
         InstanceReader instanceReader,
         NftId policyNftId,
         IPolicy.PolicyInfo memory policyInfo,
@@ -336,11 +341,6 @@ contract ClaimService is
                 // TODO transfer processing fees to product wallet
                 // TODO inform product to update fee book keeping
             }
-
-            poolInfo.tokenHandler.transfer(
-                poolInfo.wallet,
-                beneficiary,
-                netPayoutAmount);
         }
     }
 

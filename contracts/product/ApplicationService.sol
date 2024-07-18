@@ -128,6 +128,7 @@ contract ApplicationService is
         address applicationOwner,
         RiskId riskId,
         Amount sumInsuredAmount,
+        Amount premiumAmount,
         Seconds lifetime,
         NftId bundleNftId,
         ReferralId referralId,
@@ -152,13 +153,45 @@ contract ApplicationService is
         applicationNftId = _registerApplication(productNftId, applicationOwner);
 
         // create policy info for application
-        IPolicy.PolicyInfo memory applicationInfo = IPolicy.PolicyInfo({
+        IPolicy.PolicyInfo memory applicationInfo = _createApplicationInfo(
+            productNftId,
+            riskId,
+            sumInsuredAmount,
+            premiumAmount,
+            lifetime,
+            bundleNftId,
+            referralId,
+            applicationData);
+
+        // register application with instance
+        instance.getInstanceStore().createApplication(
+            applicationNftId, 
+            applicationInfo);
+
+        // TODO: add logging
+    }
+
+    function _createApplicationInfo(
+        NftId productNftId,
+        RiskId riskId,
+        Amount sumInsuredAmount,
+        Amount premiumAmount,
+        Seconds lifetime,
+        NftId bundleNftId,
+        ReferralId referralId,
+        bytes memory applicationData
+    )
+        internal
+        virtual
+        returns (IPolicy.PolicyInfo memory applicationInfo)
+    {
+        return IPolicy.PolicyInfo({
             productNftId:       productNftId,
             bundleNftId:        bundleNftId,
             referralId:         referralId,
             riskId:             riskId,
             sumInsuredAmount:   sumInsuredAmount,
-            premiumAmount:      AmountLib.zero(),
+            premiumAmount:      premiumAmount,
             premiumPaidAmount:  AmountLib.zero(),
             lifetime:           lifetime,
             applicationData:    applicationData,
@@ -171,20 +204,7 @@ contract ApplicationService is
             expiredAt:          zeroTimestamp(),
             closedAt:           zeroTimestamp()
         });
-
-        // TODO consider to provide this amount externally
-        // actual calculation is done 2nd time anyway for premium collection
-        // calculate premium amount
-        applicationInfo.premiumAmount = _calculatePremiumAmount(applicationInfo);
-
-        // register application with instance
-        instance.getInstanceStore().createApplication(
-            applicationNftId, 
-            applicationInfo);
-
-        // TODO: add logging
     }
-
 
     function renew(
         NftId policyNftId, // policy to be renewd (renewal inherits policy attributes)
@@ -194,7 +214,7 @@ contract ApplicationService is
         virtual override
         returns (NftId applicationNftId)
     {
-
+        // TODO implement
     }
 
 
@@ -210,7 +230,7 @@ contract ApplicationService is
         external
         virtual override
     {
-
+        // TODO implement
     }
 
     function revoke(NftId applicationNftId)

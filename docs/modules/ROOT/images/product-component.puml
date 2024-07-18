@@ -1,0 +1,26 @@
+@startuml
+
+package "Product Module" as productModule {
+  [Product] as product
+  [TokenHandler] as th
+}
+
+[ComponentService] as componentS
+[RiskService] as riskS
+[PricingService] as pricingS
+[ApplicationService] as applicationS
+[PolicyService] as policyS
+[ClaimService] as claimS
+[OracleService] as oracleS
+
+componentS <-- product
+riskS <-- product
+oracleS <-- product
+pricingS <- product
+
+product *- th
+product --> applicationS
+product --> policyS
+product --> claimS
+
+@enduml

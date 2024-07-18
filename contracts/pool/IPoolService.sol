@@ -17,29 +17,26 @@ import {UFixed} from "../type/UFixed.sol";
 
 interface IPoolService is IService {
 
-    event LogPoolServiceMaxCapitalAmountUpdated(NftId poolNftId, Amount previousMaxCapitalAmount, Amount currentMaxCapitalAmount);
+    event LogPoolServiceMaxBalanceAmountUpdated(NftId poolNftId, Amount previousMaxCapitalAmount, Amount currentMaxCapitalAmount);
     event LogPoolServiceBundleOwnerRoleSet(NftId poolNftId, RoleId bundleOwnerRole);
 
     event LogPoolServiceBundleCreated(NftId instanceNftId, NftId poolNftId, NftId bundleNftId);
     event LogPoolServiceBundleClosed(NftId instanceNftId, NftId poolNftId, NftId bundleNftId);
 
+    event LogPoolServiceBundleStaked(NftId instanceNftId, NftId poolNftId, NftId bundleNftId, Amount amount, Amount netAmount);
+    event LogPoolServiceBundleUnstaked(NftId instanceNftId, NftId poolNftId, NftId bundleNftId, Amount amount);
+
     error ErrorPoolServiceBundleOwnerRoleAlreadySet(NftId poolNftId);
     error ErrorPoolServiceInvalidTransferAmount(Amount expectedAmount, Amount actualAmount);
-
+    error ErrorPoolServiceBundlePoolMismatch(NftId bundleNftId, NftId poolNftId);
+    error ErrorPoolServiceMaxBalanceAmountExceeded(NftId poolNftId, Amount maxBalanceAmount, Amount currentBalanceAmount, Amount transferAmount);
+    
     /// @dev defines the required role for bundle owners for the calling pool
     /// default implementation returns PUBLIC ROLE
     function setBundleOwnerRole(RoleId bundleOwnerRole) external;
 
-    /// @dev sets the max capital amount for the calling pool
-    function setMaxCapitalAmount(Amount maxCapitalAmount) external;
-
-    /// @dev set pool sepecific fees
-    function setFees(
-        Fee memory poolFee,
-        Fee memory stakingFee,
-        Fee memory performanceFee
-    ) external;
-
+    /// @dev sets the max balance amount for the calling pool
+    function setMaxBalanceAmount(Amount maxBalanceAmount) external;
 
     /// @dev locks required collateral to cover the specified application (and turn it into a policy)
     /// - retention level == 1: the full collateral amount will be locked by the specified bundle
@@ -85,7 +82,8 @@ interface IPoolService is IService {
 
     /// @dev create a new bundle for the provided parameters
     /// staking fees will be deducted by the pool service from the staking amount
-    /// may only be called by registered and unlocked pool components
+    /// may only be called by registered and unlocked pool components.
+    /// The pool balance is equal to the pool fees plus the capital of all bundles. 
     function createBundle(
         address owner, // initial bundle owner
         Fee memory fee, // fees deducted from premium that go to bundle owner
@@ -94,7 +92,19 @@ interface IPoolService is IService {
         bytes calldata filter // optional use case specific criteria that define if a policy may be covered by this bundle
     )
         external 
-        returns(NftId bundleNftId); // the nft id of the newly created bundle
+        returns(NftId bundleNftId, Amount netStakedAmount); // the nft id of the newly created bundle
+
+
+    /// @dev increase stakes for bundle
+    /// staking fees will be deducted by the pool service from the staking amount
+    /// may only be called by registered and unlocked pool components
+    function stake(NftId bundleNftId, Amount amount) external returns(Amount netAmount);
+
+
+    /// @dev decrease stakes for bundle
+    /// performance fees will be deducted by the pool service from the staking amount
+    /// may only be called by registered and unlocked pool components
+    function unstake(NftId bundleNftId, Amount amount) external returns(Amount netAmount);
 
 
     /// @dev closes the specified bundle
@@ -105,19 +115,22 @@ interface IPoolService is IService {
     function closeBundle(NftId bundleNftId) external;
 
 
+    /// @dev Fund the specified pool wallet with the provided amount.
+    /// This function will collect the amount from the sender address and transfers it to the pool wallet.
+    /// The function will not update balance amounts managed by the framework.
+    /// Only available for externally managed pools.
+    function fundPoolWallet(NftId poolNftId, Amount amount) external;
+
+
+    /// @dev Defund the specified pool wallet with the provided amount.
+    /// This function will transfer the amount from the pool wallet to the sender address.
+    /// The function will not update balance amounts managed by the framework.
+    /// Only available for externally managed pools.
+    function defundPoolWallet(NftId poolNftId, Amount amount) external;
+
+
     /// @dev processes the sale of a bundle and track the pool fee and bundle fee amounts
     function processSale(NftId bundleNftId, IPolicy.Premium memory premium) external;
-
-    /// @dev increase stakes for bundle
-    /// staking fees will be deducted by the pool service from the staking amount
-    /// may only be called by registered and unlocked pool components
-    // function stake(NftId bundleNftId, uint256 amount) external returns(uint256 netAmount);
-
-
-    /// @dev decrease stakes for bundle
-    /// performance fees will be deducted by the pool service from the staking amount
-    /// may only be called by registered and unlocked pool components
-    // function unstake(NftId bundleNftId, uint256 amount) external returns(uint256 netAmount);
 
 
     /// @dev calulate required collateral for the provided parameters

@@ -12,6 +12,7 @@ import {ReleaseRegistry} from "./ReleaseRegistry.sol";
 import {RoleId, RoleIdLib, ADMIN_ROLE, GIF_MANAGER_ROLE, GIF_ADMIN_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {StakingStore} from "../staking/StakingStore.sol";
 import {TokenRegistry} from "./TokenRegistry.sol";
+import {TokenHandler} from "../shared/TokenHandler.sol";
 import {VersionPart} from "../type/Version.sol";
 
 /*
@@ -449,7 +450,15 @@ contract RegistryAdmin is
         functions[12] = toFunction(StakingStore.claimUpTo.selector, "claimUpTo");
         functions[13] = toFunction(StakingStore.unstakeUpTo.selector, "unstakeUpTo");
         _authorizeTargetFunctions(_stakingStore, stakingRoleId, functions);
-
+        
         _grantRoleToAccount(stakingRoleId, _staking);
+    
+        // grant token handler authorizations
+        IStaking staking = IStaking(_staking);
+        functions = new FunctionInfo[](2);
+        functions[0] = toFunction(TokenHandler.collectTokens.selector, "collectTokens");
+        functions[1] = toFunction(TokenHandler.distributeTokens.selector, "distributeTokens");
+        
+        _authorizeTargetFunctions(address(staking.getTokenHandler()), stakingRoleId, functions);
     }
 }

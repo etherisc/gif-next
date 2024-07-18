@@ -32,8 +32,10 @@
 				"ryanluker.vscode-coverage-gutters",
 				"ms-vsliveshare.vsliveshare",
 				"bierner.markdown-mermaid",
+				"bpruitt-goddard.mermaid-markdown-syntax-highlighting",
 				"asciidoctor.asciidoctor-vscode",
 				"alefragnani.bookmarks",
+				"olympixai.olympix",
 			]
 		}
 	},

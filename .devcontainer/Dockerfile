@@ -25,6 +25,9 @@ RUN echo 'eval "$(mcfly init zsh)"' >> ~/.zshrc \
 # [Optional] Uncomment if you want to install more global node packages
 RUN npm install -g hardhat-shorthand solhint
 
+COPY .devcontainer/zsh/zshrc /tmp/zshrc
+RUN cat /tmp/zshrc >> ~/.zshrc
+
 # Install foundry
 RUN curl -L https://foundry.paradigm.xyz | bash
 RUN echo 'export PATH="$PATH:/home/node/.foundry/bin"' >> ~/.zshrc

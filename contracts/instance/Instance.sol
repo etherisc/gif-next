@@ -4,44 +4,19 @@ pragma solidity ^0.8.20;
 import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 
 import {Amount} from "../type/Amount.sol";
-import {Key32} from "../type/Key32.sol";
-import {NftId} from "../type/NftId.sol";
-import {RiskId} from "../type/RiskId.sol";
-import {ObjectType, BUNDLE, DISTRIBUTION, INSTANCE, POLICY, POOL, ROLE, PRODUCT, TARGET, COMPONENT, DISTRIBUTOR, DISTRIBUTOR_TYPE} from "../type/ObjectType.sol";
-import {RoleId} from "../type/RoleId.sol";
-import {ClaimId} from "../type/ClaimId.sol";
-import {ReferralId} from "../type/Referral.sol";
-import {PayoutId} from "../type/PayoutId.sol";
-import {DistributorType} from "../type/DistributorType.sol";
-import {Seconds} from "../type/Seconds.sol";
-import {UFixed} from "../type/UFixed.sol";
-import {VersionPart, VersionPartLib} from "../type/Version.sol";
-
-import {Registerable} from "../shared/Registerable.sol";
-import {TokenHandler} from "../shared/TokenHandler.sol";
-
-import {IRegistry} from "../registry/IRegistry.sol";
-
+import {BundleSet} from "./BundleSet.sol";
 import {IInstance} from "./IInstance.sol";
 import {IInstanceService} from "./IInstanceService.sol";
 import {InstanceReader} from "./InstanceReader.sol";
 import {InstanceAdmin} from "./InstanceAdmin.sol";
-import {BundleSet} from "./BundleSet.sol";
 import {InstanceStore} from "./InstanceStore.sol";
-
-import {KeyValueStore} from "../shared/KeyValueStore.sol";
-
-import {IBundle} from "./module/IBundle.sol";
-import {IComponents} from "./module/IComponents.sol";
-import {IDistribution} from "./module/IDistribution.sol";
-import {IPolicy} from "./module/IPolicy.sol";
-import {IRisk} from "./module/IRisk.sol";
-
-import {IDistributionService} from "../distribution/IDistributionService.sol";
-import {IPoolService} from "../pool/IPoolService.sol";
-import {IProductService} from "../product/IProductService.sol";
-import {IPolicyService} from "../product/IPolicyService.sol";
-import {IBundleService} from "../pool/IBundleService.sol";
+import {INSTANCE} from "../type/ObjectType.sol";
+import {IRegistry} from "../registry/IRegistry.sol";
+import {Registerable} from "../shared/Registerable.sol";
+import {RoleId} from "../type/RoleId.sol";
+import {Seconds} from "../type/Seconds.sol";
+import {UFixed} from "../type/UFixed.sol";
+import {VersionPart, VersionPartLib} from "../type/Version.sol";
 
 contract Instance is
     IInstance,

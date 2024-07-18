@@ -6,17 +6,13 @@ import {console} from "../../../lib/forge-std/src/Script.sol";
 import {GifTest} from "../../base/GifTest.sol";
 import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
 import {PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE} from "../../../contracts/type/RoleId.sol";
-import {Pool} from "../../../contracts/pool/Pool.sol";
-import {IRegistry} from "../../../contracts/registry/IRegistry.sol";
-import {Fee, FeeLib} from "../../../contracts/type/Fee.sol";
-import {UFixedLib} from "../../../contracts/type/UFixed.sol";
 import {ComponentService} from "../../../contracts/shared/ComponentService.sol";
 import {SimpleProduct} from "../../mock/SimpleProduct.sol";
 
-contract TestProductService is GifTest {
+contract TestComponentService is GifTest {
     using NftIdLib for NftId;
 
-    function test_ProductService_register_missingProductOwnerRole() public {
+    function test_ComponentService_register_missingProductOwnerRole() public {
         _prepareDistributionAndPool();
 
         vm.startPrank(productOwner);
@@ -41,7 +37,7 @@ contract TestProductService is GifTest {
         product.register();
     }
 
-    function test_ProductService_register() public {
+    function test_ComponentService_register() public {
         vm.startPrank(instanceOwner);
         instance.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
         vm.stopPrank();

@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {FoundryRandom} from "foundry-random/FoundryRandom.sol";
 
 
@@ -13,7 +14,7 @@ import {Blocknumber, BlocknumberLib} from "../../contracts/type/Blocknumber.sol"
 import {ObjectType, ObjectTypeLib} from "../../contracts/type/ObjectType.sol";
 import {RoleId} from "../../contracts/type/RoleId.sol";
 
-import {ERC165, IERC165} from "../../contracts/shared/ERC165.sol";
+import {InitializableERC165} from "../../contracts/shared/InitializableERC165.sol";
 
 import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
 import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
@@ -43,7 +44,7 @@ contract RegistryServiceTestBase is GifTest, FoundryRandom {
     IService componentOwnerService;
 
     address public contractWithoutIERC165 = address(new Dip());
-    address public erc165 = address(new ERC165()); 
+    address public erc165 = address(new InitializableERC165()); 
 
     function _deployRegistryService() internal
     {

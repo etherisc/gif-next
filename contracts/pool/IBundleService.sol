@@ -26,6 +26,15 @@ interface IBundleService is IService {
 
     error ErrorBundleServicePolicyNotCloseable(NftId policyNftId);
 
+    error ErrorBundleServiceFeesWithdrawAmountExceedsLimit(Amount amount, Amount limit);
+    
+    error ErrorBundleServiceUnstakeAmountExceedsLimit(Amount amount, Amount limit);
+
+    error ErrorBundleServiceExtensionLifetimeIsZero();
+
+    event LogBundleServiceFeesWithdrawn(NftId bundleNftId, address recipient, address tokenAddress, Amount amount);
+    event LogBundleServiceBundleExtended(NftId bundleNftId, Seconds lifetimeExtension, Timestamp extendedExpiredAt);
+
     /// @dev create a new bundle for the specified attributes
     /// may only be called by pool service
     function create(
@@ -41,11 +50,20 @@ interface IBundleService is IService {
         returns(NftId bundleNftId); // the nft id of the newly created bundle
 
 
-    /// @dev increase bundle stakes by the specified amount
-    /// may only be called by the bundle owner
-    // function stake(NftId bundleNftId, uint256 amount) external returns(uint256 netAmount);
+    /// @dev increase bundle stakes by the specified amount. bundle must not be expired or closed
+    /// may only be called by the pool service
+    function stake(IInstance instance, NftId bundleNftId, Amount amount) external;
 
-    // function unstake(NftId bundleNftId, uint256 amount) external returns(uint256 netAmount);
+    /// @dev decrease bundle stakes by the specified amount
+    /// may only be called by the pool service
+    /// @param instance the instance relevant for the bundle
+    /// @param bundleNftId the bundle nft id
+    /// @param amount the amount to unstake (set to AmountLib.max() to unstake all available stakes)
+    /// @return unstakedAmount the effective unstaked amount
+    function unstake(IInstance instance, NftId bundleNftId, Amount amount) external returns (Amount unstakedAmount);
+
+    /// @dev extend the lifetime of the bundle by the specified time in seconds
+    function extend(NftId bundleNftId, Seconds lifetimeExtension) external returns (Timestamp extendedExpiredAt);
 
     /// @dev locks the specified bundle, locked bundles are not available to collateralize new policies
     /// only active bundles may be locked
@@ -61,10 +79,12 @@ interface IBundleService is IService {
     /// only open bundles (active or locked) may be closed
     /// to close a bundle it may not have any non-closed polices attached to it
     /// may only be called by registered and unlocked pool components
+    /// @return balanceAmount the unstaked amount that was remaining in the bundle
+    /// @return feeAmount the fee amount that was remaining for the bundle
     function close(
         IInstance instance, 
         NftId bundleNftId
-    ) external;
+    ) external returns (Amount balanceAmount, Amount feeAmount);
 
     /// @dev set bundle fee to provided value
     /// may only be called by registered and unlocked pool components
@@ -103,4 +123,12 @@ interface IBundleService is IService {
         IInstance instance, 
         NftId policyNftId
     ) external;
+
+    // FIXME: move to pool service
+    /// @dev Withdraw bundle feeds for the given bundle
+    /// @param bundleNftId the bundle Nft Id
+    /// @param amount the amount to withdraw. If set to AMOUNT_MAX, the full commission available is withdrawn
+    /// @return withdrawnAmount the effective withdrawn amount
+    function withdrawBundleFees(NftId bundleNftId, Amount amount) external returns (Amount withdrawnAmount);
+
 }

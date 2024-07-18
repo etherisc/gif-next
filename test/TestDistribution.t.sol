@@ -13,6 +13,7 @@ import {IComponents} from "../contracts/instance/module/IComponents.sol";
 import {IComponentService} from "../contracts/shared/IComponentService.sol";
 import {NftId, NftIdLib} from "../contracts/type/NftId.sol";
 import {SimpleDistribution} from "./mock/SimpleDistribution.sol";
+import {TokenHandler} from "../contracts/shared/TokenHandler.sol";
 import {UFixedLib} from "../contracts/type/UFixed.sol";
 
 
@@ -178,7 +179,7 @@ contract TestDistribution is GifTest {
 
         // allowance from externally owned wallet to distribution component
         vm.startPrank(externallyOwnedWallet);
-        token.approve(address(distribution), INITIAL_BALANCE);
+        token.approve(address(distribution.getTokenHandler()), INITIAL_BALANCE);
         vm.stopPrank();
 
         vm.startPrank(distributionOwner);
@@ -211,9 +212,10 @@ contract TestDistribution is GifTest {
         // THEN
         vm.expectRevert(
             abi.encodeWithSelector(
-                IComponent.ErrorComponentWalletAllowanceTooSmall.selector, 
+                TokenHandler.ErrorTokenHandlerAllowanceTooSmall.selector, 
+                address(token),
                 externallyOwnedWallet, 
-                address(distribution), 
+                address(distribution.getTokenHandler()), 
                 0, 
                 INITIAL_BALANCE));
 
@@ -238,7 +240,7 @@ contract TestDistribution is GifTest {
 
         // allowance from externally owned wallet to distribution component
         vm.startPrank(externallyOwnedWallet);
-        token.approve(address(distribution), INITIAL_BALANCE);
+        token.approve(address(distribution.getTokenHandler()), INITIAL_BALANCE);
         vm.stopPrank();
 
         vm.startPrank(distributionOwner);

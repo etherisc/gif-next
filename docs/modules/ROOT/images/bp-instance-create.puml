@@ -1,0 +1,28 @@
+@startuml
+
+actor InstanceOwner
+participant InstanceService
+participant InstanceAdmin
+participant Instance
+
+participant RegistryService
+participant StakingService
+
+participant Registry
+participant ChainNft
+participant Staking
+
+InstanceOwner -> InstanceService : createInstance()
+InstanceService -> InstanceAdmin : clone() using "master instance admin contracts"
+InstanceService -> Instance : clone() using "master instance contracts"
+
+InstanceService -> RegistryService : registerInstance()
+RegistryService -> Registry : register()
+Registry -> ChainNft : getNextNftId/mint()
+
+InstanceService -> StakingService : createInstanceTarget()
+StakingService -> Staking : registerTarget()
+
+InstanceService -> InstanceAdmin : initializeInstanceAuthorization()
+
+@enduml

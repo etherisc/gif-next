@@ -27,18 +27,15 @@ interface IDistributionService is IService {
     error ErrorIDistributionServiceCommissionTooHigh(uint256 commissionPercentage, uint256 maxCommissionPercentage);
     error ErrorIDistributionServiceMinFeeTooHigh(uint256 minFee, uint256 limit);
 
-    error ErrorDistributionServiceDistributorNotActive(NftId distributorNftId);
     error ErrorDistributionServiceCommissionWithdrawAmountExceedsLimit(Amount amount, Amount limit);
-    error ErrorDistributionServiceCommissionWithdrawAmountIsZero();
-    error ErrorDistributionServiceWalletAllowanceTooSmall(address wallet, address tokenHandler, uint256 allowance, uint256 amount);
-
+    
     error ErrorDistributionServiceVariableFeesTooHight(uint256 maxDiscountPercentage, uint256 limit);
     error ErrorDistributionServiceMaxDiscountTooHigh(uint256 maxDiscountPercentage, uint256 limit);
 
     error ErrorIDistributionServiceReferralInvalid(NftId distributionNftId, ReferralId referralId);
     error ErrorDistributionServiceInvalidFeeTransferred(Amount transferredDistributionFeeAmount, Amount expectedDistributionFeeAmount);
 
-    event LogDistributionServiceCommissionWithdrawn(NftId distributorNftId, address distributorAddress, address tokenAddress, Amount amount);
+    event LogDistributionServiceCommissionWithdrawn(NftId distributorNftId, address recipient, address tokenAddress, Amount amount);
 
     function createDistributorType(
         string memory name,
@@ -92,7 +89,7 @@ interface IDistributionService is IService {
 
     /// @dev Withdraw commission for the distributor
     /// @param distributorNftId the distributor Nft Id
-    /// @param amount the amount to withdraw. If set to UINT256_MAX, the full commission available is withdrawn
+    /// @param amount the amount to withdraw. If set to AMOUNT_MAX, the full commission available is withdrawn
     /// @return withdrawnAmount the effective withdrawn amount
     function withdrawCommission(NftId distributorNftId, Amount amount) external returns (Amount withdrawnAmount);
 }

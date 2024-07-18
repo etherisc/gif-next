@@ -15,9 +15,10 @@ using {
     lteUFixed as <=,
     eqUFixed as ==,
     neUFixed as !=,
+    UFixedLib.gt,
+    UFixedLib.gtz,
     UFixedLib.toInt,
-    UFixedLib.toInt1000,
-    UFixedLib.gtz
+    UFixedLib.toInt1000
 } for UFixed global;
 
 // TODO move to UFixedLib and rename to zero()
@@ -30,7 +31,9 @@ function addUFixed(UFixed a, UFixed b) pure returns (UFixed) {
 }
 
 function subUFixed(UFixed a, UFixed b) pure returns (UFixed) {
-    require(a >= b, "ERROR:UFM-010:NEGATIVE_RESULT");
+    if (a < b) {
+        revert UFixedLib.UFixedLibNegativeResult();
+    }
     return UFixed.wrap(UFixed.unwrap(a) - UFixed.unwrap(b));
 }
 
@@ -40,8 +43,10 @@ function mulUFixed(UFixed a, UFixed b) pure returns (UFixed) {
 }
 
 function divUFixed(UFixed a, UFixed b) pure returns (UFixed) {
-    require(UFixed.unwrap(b) > 0, "ERROR:UFM-020:DIVISOR_ZERO");
-
+    if (UFixed.unwrap(b) == 0) {
+        revert UFixedLib.UFixedLibDivisionByZero();
+    }
+    
     return
         UFixed.wrap(MathLib.mulDiv(UFixed.unwrap(a), 10 ** 18, UFixed.unwrap(b)));
 }
@@ -89,6 +94,8 @@ function deltaUFixed(UFixed a, UFixed b) pure returns (UFixed) {
 /// @dev copied from https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.9.3/contracts/utils/math/Math.sol
 library MathLib {
 
+    error MathLigMulDivOverflow();
+
     enum Rounding {
         Down, // Toward negative infinity
         Up, // Toward infinity
@@ -122,8 +129,10 @@ library MathLib {
             }
 
             // Make sure the result is less than 2^256. Also prevents denominator == 0.
-            require(denominator > prod1, "Math: mulDiv overflow");
-
+            if (denominator <= prod1) {
+                revert MathLigMulDivOverflow();
+            }
+            
             ///////////////////////////////////////////////
             // 512 by 256 division.
             ///////////////////////////////////////////////
@@ -195,6 +204,12 @@ library MathLib {
 }
 
 library UFixedLib {
+    error UFixedLibNegativeResult();
+    error UFixedLibDivisionByZero();
+
+    error UFixedLibExponentTooSmall(int8 exp);
+    error UFixedLibExponentTooLarge(int8 exp);
+
     int8 public constant EXP = 18;
     uint256 public constant MULTIPLIER = 10 ** uint256(int256(EXP));
     uint256 public constant MULTIPLIER_HALF = MULTIPLIER / 2;
@@ -221,9 +236,13 @@ library UFixedLib {
 
     /// @dev Converts the uint256 to a UFixed with given exponent.
     function toUFixed(uint256 a, int8 exp) public pure returns (UFixed) {
-        require(EXP + exp >= 0, "ERROR:FM-010:EXPONENT_TOO_SMALL");
-        require(EXP + exp <= 64, "ERROR:FM-011:EXPONENT_TOO_LARGE");
-
+        if (EXP + exp < 0) {
+            revert UFixedLibExponentTooSmall(exp);
+        }
+        if (EXP + exp > 64) {
+            revert UFixedLibExponentTooLarge(exp);
+        }
+        
         return UFixed.wrap(a * 10 ** uint8(EXP + exp));
     }
 

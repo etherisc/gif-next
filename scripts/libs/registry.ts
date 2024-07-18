@@ -207,11 +207,12 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         ],
         { 
             libraries: { 
-                StakeManagerLib: libraries.stakeManagerLibAddress, 
-                TargetManagerLib: libraries.targetManagerLibAddress, 
                 AmountLib: libraries.amountLibAddress, 
                 NftIdLib: libraries.nftIdLibAddress, 
+                StakeManagerLib: libraries.stakeManagerLibAddress, 
+                TargetManagerLib: libraries.targetManagerLibAddress, 
                 TimestampLib: libraries.timestampLibAddress,
+                TokenHandlerDeployerLib: libraries.tokenHandlerDeployerLibAddress,
                 VersionLib: libraries.versionLibAddress,
             }
         });

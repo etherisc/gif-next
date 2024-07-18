@@ -46,6 +46,13 @@ interface IPoolComponent is IInstanceLinkedComponent {
         view
         returns (bool isMatching);
 
+    /// @dev Withdraw bundle feeds for the given bundle
+    /// @param bundleNftId the bundle Nft Id
+    /// @param amount the amount to withdraw. If set to AMOUNT_MAX, the full commission available is withdrawn
+    /// @return withdrawnAmount the effective withdrawn amount
+    function withdrawBundleFees(NftId bundleNftId, Amount amount) external returns (Amount withdrawnAmount);
+
     /// @dev returns initial pool specific infos for this pool
     function getInitialPoolInfo() external view returns (IComponents.PoolInfo memory info);
+
 }

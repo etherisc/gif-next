@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol"; 
 
-contract ERC165 is
+contract InitializableERC165 is
     Initializable,
     IERC165
 {

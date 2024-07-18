@@ -32,6 +32,7 @@ export type LibraryAddresses = {
     selectorLibAddress: AddressLike;
     selectorSetLibAddress: AddressLike;
     strLibAddress: AddressLike;
+    tokenHandlerDeployerLibAddress: AddressLike;
 }
 
 export const LIBRARY_ADDRESSES: Map<string, AddressLike> = new Map<string, AddressLike>();
@@ -285,6 +286,16 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
             }
         });
     LIBRARY_ADDRESSES.set("StrLib", strLibAddress);
+
+    const { address: tokenHandlerDeployerLibAddress } = await deployContract(
+        "TokenHandlerDeployerLib",
+        owner,
+        undefined,
+        {
+            libraries: {
+                AmountLib: amountLibAddress,
+            }
+        });
         
     logger.info("======== Finished deployment of libraries ========");
 
@@ -317,6 +328,7 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         selectorLibAddress,
         selectorSetLibAddress,
         strLibAddress,
+        tokenHandlerDeployerLibAddress
     };
     
 }

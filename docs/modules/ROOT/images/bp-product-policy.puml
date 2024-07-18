@@ -1,0 +1,57 @@
+@startuml
+
+actor PolicyHolder
+participant Product
+
+participant PolicyService
+participant PoolService
+participant BundleService
+participant PricingService
+participant DistributionService
+participant ComponentService
+
+participant InstanceStore
+participant BundleSet
+participant TokenHandler
+participant Token
+participant Staking
+
+PolicyHolder -> Token : approve() premium amount for TokenHandler
+PolicyHolder -> Product : "buy()"
+Product -> PolicyService : createPolicy()
+
+PolicyService -> PoolService : lockCollateral()
+PoolService -> PoolService: calculateRequiredCollateral()
+PoolService -> BundleService : lockCollateral()
+BundleService -> InstanceStore : increaseLocked()
+BundleService -> BundleSet : linkPolicy()
+
+PoolService -> Staking : increaseTotalValueLocked()
+
+PolicyService -> PricingService : calculatePremium()
+PolicyService -> Token : balanceOf()/allowance()
+PolicyService -> ComponentService : increaseProductFees()
+ComponentService -> InstanceStore : increaseBalance/increaseFees()
+
+PolicyService -> DistributionService : processSale()
+DistributionService -> ComponentService : increaseDistributionBalance()
+ComponentService -> InstanceStore : increaseBalance/increaseFees()
+
+DistributionService -> InstanceStore : updateReferral()
+DistributionService -> ComponentService : increaseDistributorBalance()
+ComponentService -> InstanceStore : increaseBalance/increaseFees()
+
+PolicyService -> PoolService : processSale()
+PoolService -> ComponentService : increasePoolBalance()
+ComponentService -> InstanceStore : increaseBalance/increaseFees()
+PoolService -> ComponentService : increaseBundleBalance()
+ComponentService -> InstanceStore : increaseBalance/increaseFees()
+
+PolicyService -> InstanceStore : updatePolicy()
+PolicyService -> PolicyService : _getTokenHandler()
+PolicyService -> TokenHandler : 3 times transfer(), from policyHolder to product, distribution and pool wallets
+TokenHandler -> Token : 3x transferFrom()
+
+PolicyService -> PolicyHolder : policyActivated(), for contracts only
+
+@enduml

@@ -1,0 +1,23 @@
+@startuml
+
+participant Product
+
+participant ApplicationService
+participant RegistryService
+
+participant Instance
+participant InstanceStore
+participant Registry
+participant ChainNft
+
+Product -> ApplicationService : create()
+
+ApplicationService -> RegistryService : registerPolicy()
+RegistryService -> Registry : register()
+Registry -> ChainNft : getNextNftId/mint()
+
+ApplicationService -> ApplicationService : _createApplicationInfo()
+ApplicationService -> Instance : getInstanceStore()
+ApplicationService -> InstanceStore : createApplication()
+
+@enduml

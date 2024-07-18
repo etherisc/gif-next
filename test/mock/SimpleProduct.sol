@@ -118,16 +118,29 @@ contract SimpleProduct is
     function createApplication(
         address applicationOwner,
         RiskId riskId,
-        uint256 sumInsuredAmount,
+        uint256 sumInsured,
         Seconds lifetime,
         bytes memory applicationData,
         NftId bundleNftId,
         ReferralId referralId
-    ) public returns (NftId nftId) {
+    )
+        public
+        returns (NftId nftId)
+    {
+        Amount sumInsuredAmount = AmountLib.toAmount(sumInsured);
+        Amount premiumAmount = calculatePremium(
+            sumInsuredAmount,
+            riskId,
+            lifetime,
+            applicationData,
+            bundleNftId,
+            referralId);
+
         return _createApplication(
             applicationOwner,
             riskId,
-            AmountLib.toAmount(sumInsuredAmount),
+            sumInsuredAmount,
+            premiumAmount,
             lifetime,
             bundleNftId,
             referralId,
@@ -135,12 +148,28 @@ contract SimpleProduct is
         );
     }
 
-    function collateralize(
-        NftId policyNftId,
+    function createPolicy(
+        NftId applicationNftId,
         bool requirePremiumPayment,
         Timestamp activateAt
     ) public {
-        _collateralize(policyNftId, requirePremiumPayment, activateAt);
+        _createPolicy(applicationNftId, requirePremiumPayment, activateAt);
+    }
+
+    function decline(
+        NftId policyNftId
+    ) public {
+        _decline(policyNftId);
+    }
+
+    function expire(
+        NftId policyNftId,
+        Timestamp expireAt
+    ) 
+        public 
+        returns (Timestamp)
+    {
+        return _expire(policyNftId, expireAt);
     }
 
     function collectPremium(
