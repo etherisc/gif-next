@@ -11,15 +11,12 @@ ifndef::site-gen-antora[]
 endif::[]
 
 == Introduction
-
 === Decentralized Insurance Protocol (DIP)
-
 The Decentralized Insurance Protocol (DIP) enables the creation and management of decentralized insurance products. The protocol is designed to be flexible and extensible, allowing for the creation of a wide range of insurance products. 
 
 The protocol supports a multi-chain ecosystem to let users choose the chain that best fits their needs. The protocol is designed to be chain agnostic, allowing for the deployment of the protocol on any EVM compatible chain.
 
 === Generalized Insurance Framework (GIF)
-
 The Generalized Insurance Framework (GIF) is a set of smart contracts that implement the Decentralized Insurance Protocol (DIP). 
 The main Goal of the GIF is to support its users in creating and managing decentralized insurance products as efficitiently and safe as possible. 
 
@@ -30,9 +27,7 @@ The GIF itself is a highly modularized and flexible infrastructure that can be d
 Most contracts of the GIF will already be deployed and are ready to be used by the users.
 
 == Multi-Chain Setup
-
 === Overview
-
 For each supported chain a chain specific GIF setup is deployed.
 To link all chains together a global registry is deployed on mainnet.
 This global registry then holds the links to all chain specific registries as shown in the diagram below.
@@ -41,29 +36,24 @@ This global registry then holds the links to all chain specific registries as sh
 image::{imgbase}multi-chain-setup.png[Multi-chain setup]
 
 === Global Registry
-
 The global registry is deployed on mainnet can be understood as the directory and entry point for the entire protocol ecosystem. 
 
 The global registry contains entries for all protocol relevant objects on mainnet and a chain registry entry for each supported chain in the ecosystem.
 At the same time the global registy plays the role of the mainnet chain registry.
 
 === Chain Registries
-
 On each chain supported by the protocol, a chain registry is deployed.
 A chain registry contains entries for all protocol relevant objects on that specific chain.
 These entries hold basic metadata for each registered object.
 Each registry entry is backed by an NFT that defines the ownership of the object.
 
 == Single-Chain Setup
-
 === Overview
-
 The GIF setup on any specific chain always consists of a registry and staking modules, services and instances as shown in the diagram below.
 
 image::{imgbase}single-chain-setup.png[Single-chain setup]
 
 === Registry
-
 Registries have already been introduced in the text above.
 As mentioned above, a registry is the central entry point for all protocol objects on a specific chain.
 Registries also serve as the trusted source for protocol object information and relationships between different objects. 
@@ -84,7 +74,6 @@ Additionally, service contracts may interact with other service contracts. It is
 Breaking changes in any service, instance or component template contract would imply the deployment of a new GIF release.
 
 == Registry
-
 === Overview
 The registry maintains a complete and reliable record of all relevant protocol objects.
 The registry module plays a critical role in the overall architecture of the protocol, facilitating the seamless integration and interoperability of the different instances, components, services and staking.
@@ -190,7 +179,6 @@ The DIP token is always registered with the Token registry.
 |===
 
 == Instances
-
 === Overview
 Instances provide the central context to create and operate actual protection/insurance use cases.
 The recommendation is to create a new instance for each new use case.
@@ -204,7 +192,6 @@ An instance is responsible for the handling of the following aspects:
 * Authorization management for all linked components and services
 
 === Stakeholders
-
 ==== Instance Owner
 The instance owner is represented by the account that holds the instance NFT.
 Instances can be created by any account using the instance service through the `createInstance()` function.
@@ -246,7 +233,6 @@ Additional tasks for pool owners may be defined through the use case specific im
 The instance owner may introduce use case specific stakeholders through additional use case specific roles.
 
 === Business Objects
-
 ==== Components
 Components are the building blocks of a use case implementation that is managed in the context of the instance.
 For every component registered with the instance the instance manages a component object.
@@ -320,7 +306,6 @@ This step includes the cloning of the supportint `InstanceReader`, `InstanceStor
 image::{imgbase}bp-instance-create.png[Instance Creation Process]
 
 === Authorization Management
-
 The instance owner is responsible for granting and revoking of the predefined component owner roles.
 The instance owner may also define additional use case specific roles.
 The instance owner can also extend the authorization to use case specific supporting contracts.
@@ -386,7 +371,6 @@ Only the instance owner may withdraw the reward reserves.
 |===
 
 === Contracts
-
 The instance module diagram below provides an overview of the instance related contracts.
 
 image::{imgbase}instance-module.png[Instance Module]
@@ -428,12 +412,10 @@ This includes data access for all components linked to the instance.
 
 
 == Components
-
 The term component is used as a summary term for use case specific product, distribution, oracle, and pool contracts/modules.
 Components provide the shared functionality of the different types of components that does not depend on any specifc use case.
 
 === Overview
-
 Components are are always linked to a specific instance.
 The term "component" covers four distinct types of components that together implement the actual use case specific business logic of a concrete use case.
 
@@ -509,7 +491,6 @@ In this phase NFTs are also minted for most business relevant objects such as po
 |===
 
 === Component Principles
-
 1. Components come in four different types: products, distributions, oracles, and pools.
 1. Components need a use case specific implementation.
 The framework provides templates for each component type that need to be extended and customized accordingly.
@@ -536,7 +517,6 @@ Depending on the component type this wallet holds ERC20 token that represent fee
 1. Authorization for communication with use case specific supporting contracts should also be managed by the instance admin contract.
 
 === Wallet Management
-
 Every component contract has its own wallet address.
 As mentioned above the default wallet address is the component contract address.
 
@@ -545,7 +525,6 @@ For example a gnosis safe or a multisig wallet.
 In such cases it is the responsibility of the external wallet owner to maintain adequate allowances from the external wallet to the components token handling contract.
 
 === Token Management
-
 Every component contract has its own token handling contract that manages token transfers to and from the component contract.
 
 Moving tokens form an account to the component wallet requires a corresponding allowance from that account to the token handling contract.
@@ -561,7 +540,6 @@ In the case of a payout the token handler of the pool component transfers the pa
 Other uses component token handlers include fee withdrawals for component owners, commission withdrawals and risk capital collection from investors.
 
 === Contracts
-
 The component diagram below provides the overview of the component contract hierarchy.
 
 image::{imgbase}component-diagram.png[Component Diagram]
@@ -610,7 +588,6 @@ Registerable contracts provide all necessary information to be registered via it
 
 == Product Components
 === Overview
-
 The product component forms the central part of a use case implementation.
 It is responsible for the management of risk, application, policy, claim, and payout business objects.
 
@@ -624,8 +601,11 @@ The responsibilities of the services interacting with the product component are 
 Product owners and policy holders are the relevant stakeholder accounts for product components.
 
 ==== Product Owner
+The product owner is responsible for managing the variable product parameters including the pool and processing fees.
+
 The product owner is represented by the account that holds the product NFT.
-The initial product owner is the account that first registers the product component contract with the instance module.
+The initial owner is specified via the `getInitialInfo()` function of the product component
+
 
 ==== Policy Holder
 As all policies created by the framework have an associated NFT a policy holder is defined as the current holder of the NFT that represents the policy.
@@ -633,9 +613,7 @@ As all policies created by the framework have an associated NFT a policy holder 
 When no specific beneficiary is defined for a claim/payout the payout recipient is the policy holder.
 
 === Business Objects
-
 ==== Overview
-
 The business objects relevant to the product component and their relations are shown in the diagram below.
 To indicate the use case specific nature of products the product component is named "MyProduct"in the diagram.
 
@@ -793,7 +771,6 @@ This is a terminal state.
 |===
 
 === Business Processes
-
 ==== Product Registration
 To register a product component with the linked instance module two conditions need to be met.
 The product component needs to be deployed by the future product owner.
@@ -820,7 +797,6 @@ The same process flow is used to register distribution, oracle and pool componen
 These processes only differ in the last step where component specific objects are created in the `InstanceStore`.
 
 ==== Pricing
-
 Product pricing is the responsibility of the `PricingService`.
 The pricing process steps can be summarized as follows:
 
@@ -837,7 +813,6 @@ The sum of all these component specific amounts is equal to the premium amount.
 image::{imgbase}bp-product-pricing.png[Pricing Process]
 
 ==== Application Creation
-
 Application creation is the responsibility of the `ApplicationService`.
 The application creation process steps can be summarized as follows:
 
@@ -850,7 +825,6 @@ image::{imgbase}bp-product-application.png[Application Creation Process]
 
 
 ==== Policy Creation
-
 Policies are created from applications.
 Policy creation is the responsibility of the `PolicyService`.
 
@@ -905,7 +879,6 @@ image::{imgbase}bp-product-policy-close.png[Policy Closing Process]
 
 == Distribution Components
 === Overview
-
 The distribution component manages the process of selling policies.
 This includes the management of distributors (brokers) and referral codes associated with distributors.
 A distribution component is always linked to a single product component and cannot be shared between multiple product components.
@@ -917,12 +890,39 @@ image::{imgbase}distribution-component.png[Distribution Component Diagram]
 The responsibilities of the services interacting with the distribution component are described in detail in the business processes section below.
 
 === Stakeholders
+Distribution owners and distributors are the relevant stakeholder accounts for distribution components.
+
 ==== Distribution Owner
+The distribution owner is responsible for managing the distribution parameters including the distribution fee and the minimum distribution owner fee.
+
+The distribution owner is represented by the account that holds the distribution NFT.
+The initial owner is specified via the `getInitialInfo()` function of the distribution component.
+
 ==== Distributors
+Distributors are linnked accounts that support selling policies.
+Distributors can provide referral codes to incentivice prospects to buy policies at a discounted rate.
+For their role/work distributors receive a commission that is also linked to the referral code.
+
+To act as a distributor is typically not implemented permissionless but requires possession of a distributor NFT.
+The use case specific implementation of the distribution component then defines the process to gain this role.
+Once an account qualifies to become a distributor the distribution component creates a new NFT that is transferred to the newly entitled account.
+
 === Business Objects
 ==== Distributor Types
+Distributor types represent objects that define the degrees of freedom distributors have in referrals.
+A distributor type may define the minimum and maximum discount rates a distributor that can be used when creating a referral code.
+
 ==== Distributors
+As mentioned in the stakeholder section, a distributor can be understood as a role with associated properties that is linked to an account.
+The linking is achieved through an NFT that represents a specific distributor.
+The distributor object then defines the properties of a distributor that also includes its distributor type.
+
 ==== Referral Codes
+Referral codes are simple strings that must be unique in the context of a distribution component.
+
+The referral object then links the referral code to a specific distributor and defines the discount rate that is associated with the referral code.
+The referral object also holds additional properties, such as the maximum number of uses of the referral code and an expiry date.
+
 === Business Processes
 ==== Distributor Type Creation
 ==== Distributor Creation
@@ -942,9 +942,21 @@ image::{imgbase}oracle-component.png[Oracle Component Diagram]
 
 The responsibilities of the services interacting with the oracle component are described in detail in the business processes section below.
 
+=== Stakeholders
+Oracles only have oracle owners as stakeholders.
+In contrast to the other component types, the oracle owner does not need to manage any framework relevant variable parameters.
+
+The oracle owner is represented by the account that holds the oracle NFT.
+The initial owner is specified via the `getInitialInfo()` function of the oracle component.
+
 === Business Objects
 ==== Requests
+Requests are objects that define which oracle component is requested to fetch which from the off-chain world.
+The request object also holds the parameters to store the response data and the information to which function of which component the response data has to be routed once it becomes available.
+
 ==== Responses
+Reponses are not technically independent business objects but only update data fields of response objects that are waiting for response data.ß
+
 === Business Processes
 ==== Request Creation
 ==== Response Handling
@@ -964,10 +976,78 @@ The responsibilities of the services interacting with the pool component are des
 
 
 === Stakeholders
+Pool owners and bundle owners are the relevant stakeholder accounts for pool components.
+
 ==== Pool Owner
+The pool owner is responsible for managing the variable pool parameters including the pool fee, tha staking fee and the performance fee and the pool's maximum balance amount.
+
+The pool owner is represented by the account that holds the pool NFT.
+The initial owner is specified via the `getInitialInfo()` function of the pool component
+
 ==== Bundle Owner
-=== Pool Properties
-=== Bundles
+Bundle owners are accounts that have staked product specific tokens to the pool of a product cluster.
+These tokens are then used to collateralize policies.
+
+A Bundle owner is responsible to manage the bundle fee and funding of its bundle.
+Bundle owners may also pause and resume their bundle.
+Paused bundles may no longer be used to collateralize policies.
+
+=== Business Objects
+==== Pools
+The pool object stores the properties of the pool that is implemented in the pool component.
+The individual properties are described in the table below.
+
+[cols="1,3"]
+|===
+| Property | Description
+
+| `maxBalanceAmount`
+| The maximum amount of project tokens the pool is allowed to manage at any time.
+
+The default is not to restrict the maximum balance amount.
+
+| `bundleOwnerRole`
+| The required role for an account to create a new bundle.
+Setting this to a non public role ensures that only authorized accounts can create new bundles.
+
+The default role is the public role.
+
+| `isInterceptingBundleTransfers`
+| Ensures the pool receives a callback when a bundle is transferred to a new bundle owner.
+To illustrate this property consider a this property in combination with the bundle owner role to ensure that only authorized accounts can receive a bundle.
+
+The default is not to intercept bundle transfers.
+
+| `isExternallyManaged`
+| Externally managed pools only use bundles for book keeping and do not collect tokens from bundle owners when creating new bundles or staking to bundles.
+Instead, it is the responsibility of the pool owner to ensure proper funding of the pool with tokens.
+
+The default for pools is not to be externally managed.
+
+| `isVerifyingApplications`
+| Verifying pools require the bundle service to execute a callback to function asdfasf of the pool component when the bundle is asked to collateralize a new application.
+This allows for the implementation of custom logic to verify and approve the application during collateralization.
+
+The default behaviour is not to verify applications.
+
+| `collateralizationLevel`
+| Defines the multiplicator to be used when calculating the required collateral to match the sum insured of a policy.
+
+The default collateralization level value is 1,0.
+
+| `retentionLevel`
+| Specifies the percentage of the calculated collateral amount that is to be held by the pool itself.
+Setting the retention level to less than 1,0 implies that the pool component implementation will need to provide the remaining collateral amount throug an external funding mechanism.
+
+The default retention level value is 1,0 to avoid the requirement of an external funding mechanism.
+
+|===
+
+==== Bundles
+A Bundle object is always linked to exactly one pool and represents the book keeping unit that ensures that risks and rewards of a bundle owner are correctly calculated and assigned to the bundle owner.
+
+Bundle objects have additional properties that define the lifetime of the bundle and set the bundle fee that is used to collect a part of the premium to incentivice the bundle owner to stake tokens to the bundle.
+
 === Business Processes
 ==== Bundle Creation
 ==== Bundle Locking and Unlocking
@@ -1054,62 +1134,7 @@ Contracts and their responsibilities are outlined below.
 | Central authorization for all core contracts (resistry module and staking module) and all service contracts from all major releases.
 
 |===
-
-== Authorization
-
-=== Overview
-
-Autorization is a key concept in the GIF.
-Authorization is organized per supported chain and implemented in access admin contracts using role based access control.
-Role based access control involves roles, targets and functions level authorization.
-
-Roles can be considered as lables or IDs that can be assigned (granted) to accounts or removed (revoked) from accounts.
-*Accounts* can either be externally owned accounts or contract accounts.
-The set of accounts that have a specific role is called the role members.
-
-The term *Targets* is used for contracts for which function level authorization is managed by an access admin contract.
-That particular access admin contract is then called the authority of the target contract.
-
-*Function Level Authorization* defines which fuctions of a target may be executed through which role.
-For each authorized function of a target the required role to access it is defined.
-Only a single role can be specified per function and only members of that role (both contracts and externally owned accounts) may then execute the function.
-
-=== Access Admin
-
-Access admin contracts manage explicit lists of named targets, roles and functions that are granted to these roles.
-It also provides view functions that allow to enumerate all available roles, current role members and all granted functions for every managed target.
-
-The implementation of the access admin contract is based on OpenZeppelin's `AccessManagerUpgradeable` and `AccessManagedUpgradeable` contracts.
-
-The access admin contract extends the OpenZeppelin functionality by providing named roles, targets and functions and by providing the capability to enumerate all current role members and all granted functions for every managed target.
-
-The access admin contract is the base contract for two specialized admin contracts.
-Per supported chain there is a registry admin contract and for each instance there is an instance admin contract.
-
-=== Registry Admin
-
-The registry admin contract is the central contract that controls access to the registry, to staking as well as interactions between service contracts.
-
-In the case of services the registry admin maintains access to service functions per major release in the sense that a service of a specific major release may only interact with services of the same major release.
-
-=== Instance Admin
-
-For each instance an individual instance admin contract exits.
-This instance admin is used to manage authorizations for the interactions between the instance and all its linked components with all linked services.
-
-=== Upgrading Contracts
-
-Authorization for upgrading upgradeable contracts is a special case.
-Every upgradeable contract in GIF comes with its own proxy manager contract.
-Only this proxy manager contract may be used to upgrade an upgradeable contract.
-And only the owner of an upgradeable contract may execute an upgrade via this proxy manager contract.
-
-The ownership of an GIF relevant upgradeable contract is defined via its NFT as recorded in the chain registry.
-
-Upgradeability relies on OpenZeppelin's `TransparentUpgradeableProxy` and `ProxyAdmin` contracts.
-
 == Logging
-
 === Overview
 Logging is one of the key feature of the framework and ensures the transparency and traceability of all business processes.
 As described below complete and accurate logs are crucial for compliance assurance, data integrity and accuracy, audit trail for accountability, and legal and forensic evidence.
@@ -1214,10 +1239,56 @@ Changes to Business Objects
 * Addtional properties that provide insight into the reason behind the change
 * Pointer to the previous change of this specific business object (blocknumber)
 
-== Release Management
-
+== Authorization
 === Overview
+Autorization is a key concept in the GIF.
+Authorization is organized per supported chain and implemented in access admin contracts using role based access control.
+Role based access control involves roles, targets and functions level authorization.
 
+Roles can be considered as lables or IDs that can be assigned (granted) to accounts or removed (revoked) from accounts.
+*Accounts* can either be externally owned accounts or contract accounts.
+The set of accounts that have a specific role is called the role members.
+
+The term *Targets* is used for contracts for which function level authorization is managed by an access admin contract.
+That particular access admin contract is then called the authority of the target contract.
+
+*Function Level Authorization* defines which fuctions of a target may be executed through which role.
+For each authorized function of a target the required role to access it is defined.
+Only a single role can be specified per function and only members of that role (both contracts and externally owned accounts) may then execute the function.
+
+=== Access Admin
+Access admin contracts manage explicit lists of named targets, roles and functions that are granted to these roles.
+It also provides view functions that allow to enumerate all available roles, current role members and all granted functions for every managed target.
+
+The implementation of the access admin contract is based on OpenZeppelin's `AccessManagerUpgradeable` and `AccessManagedUpgradeable` contracts.
+
+The access admin contract extends the OpenZeppelin functionality by providing named roles, targets and functions and by providing the capability to enumerate all current role members and all granted functions for every managed target.
+
+The access admin contract is the base contract for two specialized admin contracts.
+Per supported chain there is a registry admin contract and for each instance there is an instance admin contract.
+
+=== Registry Admin
+The registry admin contract is the central contract that controls access to the registry, to staking as well as interactions between service contracts.
+
+In the case of services the registry admin maintains access to service functions per major release in the sense that a service of a specific major release may only interact with services of the same major release.
+
+=== Instance Admin
+For each instance an individual instance admin contract exits.
+This instance admin is used to manage authorizations for the interactions between the instance and all its linked components with all linked services.
+
+=== Upgrading Contracts
+Authorization for upgrading upgradeable contracts is a special case.
+Every upgradeable contract in GIF comes with its own proxy manager contract.
+Only this proxy manager contract may be used to upgrade an upgradeable contract.
+And only the owner of an upgradeable contract may execute an upgrade via this proxy manager contract.
+
+The ownership of an GIF relevant upgradeable contract is defined via its NFT as recorded in the chain registry.
+
+Upgradeability relies on OpenZeppelin's `TransparentUpgradeableProxy` and `ProxyAdmin` contracts.
+
+
+== Release Management
+=== Overview
 GIF releases follow semantic versioning, which includes major, minor, and patch releases. 
 The major version number is incremented whenever there are breaking changes that could potentially disrupt existing functionality or compatibility.
 
@@ -1230,7 +1301,6 @@ Instance modules are non-upgradeable and directly linked to the service contract
 Adding a new major release is guarded by role based authorization including two roles, a GIF Admin role and the GIF Manager role.
 
 === Core Deployment
-
 The core deployment sets up the registry and the staking modules and includes all the wiring between the contracts needed for actual relese deployment.
 For each supported chain a core deployment is the required first step.
 
@@ -1257,7 +1327,6 @@ For the staking module deployment the contracts StakingReader, StakingStore, Sta
 The staking contract is also registerd with the registry.
 
 === Release Deployment
-
 The release deployment is the second and final GIF deployment step to a specific chain.
 For each supported chain a release deployment is required.
 A release deployment to a new chain will only include the deployment of the latest major release.
