@@ -18,7 +18,7 @@ import {RegisterableMock} from "../mock/RegisterableMock.sol";
 contract RegisterServiceFuzzTest is RegistryTestBase 
 {
     //TODO postfix all registry tests with _longRunning -> testFuzz_registerService_longRunning
-    function testFuzz_registerService_0000000000(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_0000000000_longRunning(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -42,7 +42,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
     // data - random
     // version - random
     // domain - random
-    function testFuzz_registerService_0000001000(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, bytes32 salt, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_0000001000_longRunning(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, bytes32 salt, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -65,7 +65,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
     // data - random
     // version - random
     // domain - random
-    function testFuzz_registerService_000010000(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, uint objectAddressIdx, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_000010000_longRunning(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, uint objectAddressIdx, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -81,7 +81,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
     }
 
     
-    function testFuzz_registerService_000011000(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, uint objectAddressIdx, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_000011000_longRunning(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, uint objectAddressIdx, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -97,7 +97,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
     }
 
     
-    function testFuzz_registerService_0001000000(address sender, NftId nftId, NftId parentNftId, uint8 objectTypeIdx, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public 
+    function testFuzz_registerService_0001000000_longRunning(address sender, NftId nftId, NftId parentNftId, uint8 objectTypeIdx, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public 
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -113,7 +113,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
     }
 
     
-    function testFuzz_registerService_0001001000(address sender, NftId nftId, NftId parentNftId, uint8 objectTypeIdx, bool isInterceptor, bytes32 salt, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_0001001000_longRunning(address sender, NftId nftId, NftId parentNftId, uint8 objectTypeIdx, bool isInterceptor, bytes32 salt, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -129,7 +129,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
     }
 
     
-    function testFuzz_registerService_000110000(address sender, NftId nftId, NftId parentNftId, uint8 objectTypeIdx,  uint objectAddressIdx, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public 
+    function testFuzz_registerService_000110000_longRunning(address sender, NftId nftId, NftId parentNftId, uint8 objectTypeIdx,  uint objectAddressIdx, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public 
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -145,7 +145,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
     }
 
     
-    function testFuzz_registerService_000111000(address sender, NftId nftId, NftId parentNftId, uint8 objectTypeIdx,  uint objectAddressIdx, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public 
+    function testFuzz_registerService_000111000_longRunning(address sender, NftId nftId, NftId parentNftId, uint8 objectTypeIdx,  uint objectAddressIdx, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public 
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -161,7 +161,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
     }
 
     
-    function testFuzz_registerService_0010000000(address sender, NftId nftId, uint parentIdx, ObjectType objectType, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_0010000000_longRunning(address sender, NftId nftId, uint parentIdx, ObjectType objectType, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -177,7 +177,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
     }
 
     
-    function testFuzz_registerService_0010001000(address sender, NftId nftId, uint parentIdx, ObjectType objectType, bool isInterceptor, bytes32 salt, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_0010001000_longRunning(address sender, NftId nftId, uint parentIdx, ObjectType objectType, bool isInterceptor, bytes32 salt, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -193,7 +193,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
     }
 
     
-    function testFuzz_registerService_001010000(address sender, NftId nftId, uint parentIdx, ObjectType objectType, uint objectAddressIdx, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_001010000_longRunning(address sender, NftId nftId, uint parentIdx, ObjectType objectType, uint objectAddressIdx, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -209,7 +209,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
     }
 
     
-    function testFuzz_registerService_001011000(address sender, NftId nftId, uint parentIdx, ObjectType objectType, uint objectAddressIdx, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public 
+    function testFuzz_registerService_001011000_longRunning(address sender, NftId nftId, uint parentIdx, ObjectType objectType, uint objectAddressIdx, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public 
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -225,7 +225,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
     }
 
     
-    function testFuzz_registerService_0011000000(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public 
+    function testFuzz_registerService_0011000000_longRunning(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public 
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -241,7 +241,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
     }
 
     
-    function testFuzz_registerService_0011001000(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, bool isInterceptor, bytes32 salt, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_0011001000_longRunning(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, bool isInterceptor, bytes32 salt, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -256,7 +256,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
         registerService_testFunction(sender, info, version, domain, salt);
     }
 
-    function testFuzz_registerService_001110000(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, uint objectAddressIdx, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_001110000_longRunning(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, uint objectAddressIdx, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -272,7 +272,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
     }
 
     
-    function testFuzz_registerService_001111000(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, uint objectAddressIdx, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_001111000_longRunning(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, uint objectAddressIdx, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -287,7 +287,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
         registerService_testFunction(sender, info, version, domain);
     }
 
-    function testFuzz_registerService_withValidSender_000000000(NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_withValidSender_000000000_longRunning(NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -302,7 +302,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
         registerService_testFunction(address(core.releaseRegistry), info, version, domain, salt);
     }
 
-    function testFuzz_registerService_withValidSender_000001000(NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, bytes32 salt, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_withValidSender_000001000_longRunning(NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, bytes32 salt, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -317,7 +317,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
         registerService_testFunction(address(core.releaseRegistry), info, version, domain, salt);
     }
 
-    function testFuzz_registerService_withValidSender_00010000(NftId nftId, NftId parentNftId, ObjectType objectType, uint objectAddressIdx, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_withValidSender_00010000_longRunning(NftId nftId, NftId parentNftId, ObjectType objectType, uint objectAddressIdx, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -332,7 +332,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
         registerService_testFunction(address(core.releaseRegistry), info, version, domain);
     }
 
-    function testFuzz_registerService_withValidSender_00011000(NftId nftId, NftId parentNftId, ObjectType objectType, uint objectAddressIdx, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_withValidSender_00011000_longRunning(NftId nftId, NftId parentNftId, ObjectType objectType, uint objectAddressIdx, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -347,7 +347,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
         registerService_testFunction(address(core.releaseRegistry), info, version, domain);
     }
 
-    function testFuzz_registerService_withValidSender_001000000(NftId nftId, NftId parentNftId, uint objectTypeIdx, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_withValidSender_001000000_longRunning(NftId nftId, NftId parentNftId, uint objectTypeIdx, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -362,7 +362,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
         registerService_testFunction(address(core.releaseRegistry), info, version, domain, salt);
     }
 
-    function testFuzz_registerService_withValidSender_001001000(NftId nftId, NftId parentNftId, uint objectTypeIdx, bool isInterceptor, bytes32 salt, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_withValidSender_001001000_longRunning(NftId nftId, NftId parentNftId, uint objectTypeIdx, bool isInterceptor, bytes32 salt, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -377,7 +377,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
         registerService_testFunction(address(core.releaseRegistry), info, version, domain, salt);
     }
 
-    function testFuzz_registerService_withValidSender_00110000(NftId nftId, NftId parentNftId, uint objectTypeIdx, uint objectAddressIdx, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_withValidSender_00110000_longRunning(NftId nftId, NftId parentNftId, uint objectTypeIdx, uint objectAddressIdx, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -392,7 +392,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
         registerService_testFunction(address(core.releaseRegistry), info, version, domain);
     }
 
-    function testFuzz_registerService_withValidSender_00111000(NftId nftId, NftId parentNftId, uint objectTypeIdx, uint objectAddressIdx, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_withValidSender_00111000_longRunning(NftId nftId, NftId parentNftId, uint objectTypeIdx, uint objectAddressIdx, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -407,7 +407,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
         registerService_testFunction(address(core.releaseRegistry), info, version, domain);
     }
 
-    function testFuzz_registerService_withValidSender_010000000(NftId nftId, uint parentIdx, ObjectType objectType, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_withValidSender_010000000_longRunning(NftId nftId, uint parentIdx, ObjectType objectType, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -422,7 +422,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
         registerService_testFunction(address(core.releaseRegistry), info, version, domain, salt);
     }
 
-    function testFuzz_registerService_withValidSender_010001000(NftId nftId, uint parentIdx, ObjectType objectType, bool isInterceptor, bytes32 salt, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_withValidSender_010001000_longRunning(NftId nftId, uint parentIdx, ObjectType objectType, bool isInterceptor, bytes32 salt, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -437,7 +437,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
         registerService_testFunction(address(core.releaseRegistry), info, version, domain, salt);
     }
 
-    function testFuzz_registerService_withValidSender_01010000(NftId nftId, uint parentIdx, ObjectType objectType, uint objectAddressIdx, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_withValidSender_01010000_longRunning(NftId nftId, uint parentIdx, ObjectType objectType, uint objectAddressIdx, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -452,7 +452,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
         registerService_testFunction(address(core.releaseRegistry), info, version, domain);
     }
 
-    function testFuzz_registerService_withValidSender_01011000(NftId nftId, uint parentIdx, ObjectType objectType, uint objectAddressIdx, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_withValidSender_01011000_longRunning(NftId nftId, uint parentIdx, ObjectType objectType, uint objectAddressIdx, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -467,7 +467,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
         registerService_testFunction(address(core.releaseRegistry), info, version, domain);
     }
 
-    function testFuzz_registerService_withValidSender_011000000(NftId nftId, uint parentIdx, uint8 objectTypeIdx, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_withValidSender_011000000_longRunning(NftId nftId, uint parentIdx, uint8 objectTypeIdx, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -482,7 +482,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
         registerService_testFunction(address(core.releaseRegistry), info, version, domain, salt);
     }
 
-    function testFuzz_registerService_withValidSender_011001000(NftId nftId, uint parentIdx, uint8 objectTypeIdx, bool isInterceptor, bytes32 salt, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_withValidSender_011001000_longRunning(NftId nftId, uint parentIdx, uint8 objectTypeIdx, bool isInterceptor, bytes32 salt, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -497,7 +497,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
         registerService_testFunction(address(core.releaseRegistry), info, version, domain, salt);
     }
 
-    function testFuzz_registerService_withValidSender_01110000(NftId nftId, uint parentIdx, uint8 objectTypeIdx, uint objectAddressIdx, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_withValidSender_01110000_longRunning(NftId nftId, uint parentIdx, uint8 objectTypeIdx, uint objectAddressIdx, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -512,7 +512,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
         registerService_testFunction(address(core.releaseRegistry), info, version, domain);
     }
 
-    function testFuzz_registerService_withValidSender_01111000(NftId nftId, uint parentIdx, uint8 objectTypeIdx, uint objectAddressIdx, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_withValidSender_01111000_longRunning(NftId nftId, uint parentIdx, uint8 objectTypeIdx, uint objectAddressIdx, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -527,7 +527,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
         registerService_testFunction(address(core.releaseRegistry), info, version, domain);
     }
 
-    function testFuzz_registerService_withValidObjectType_000000000(address sender, NftId nftId, NftId parentNftId, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_withValidObjectType_000000000_longRunning(address sender, NftId nftId, NftId parentNftId, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -542,7 +542,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
         registerService_testFunction(sender, info, version, domain, salt);
     }
 
-    function testFuzz_registerService_withValidObjectType_000001000(address sender, NftId nftId, NftId parentNftId, bool isInterceptor, bytes32 salt, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_withValidObjectType_000001000_longRunning(address sender, NftId nftId, NftId parentNftId, bool isInterceptor, bytes32 salt, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -557,7 +557,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
         registerService_testFunction(sender, info, version, domain, salt);
     }
 
-    function testFuzz_registerService_withValidObjectType_00010000(address sender, NftId nftId, NftId parentNftId, uint objectAddressIdx, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_withValidObjectType_00010000_longRunning(address sender, NftId nftId, NftId parentNftId, uint objectAddressIdx, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -572,7 +572,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
         registerService_testFunction(sender, info, version, domain);
     }
 
-    function testFuzz_registerService_withValidObjectType_00011000(address sender, NftId nftId, NftId parentNftId, uint objectAddressIdx, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_withValidObjectType_00011000_longRunning(address sender, NftId nftId, NftId parentNftId, uint objectAddressIdx, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -587,7 +587,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
         registerService_testFunction(sender, info, version, domain);
     }
 
-    function testFuzz_registerService_withValidObjectType_001000000(address sender, NftId nftId, uint parentIdx, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_withValidObjectType_001000000_longRunning(address sender, NftId nftId, uint parentIdx, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -602,7 +602,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
         registerService_testFunction(sender, info, version, domain, salt);
     }
 
-    function testFuzz_registerService_withValidObjectType_001001000(address sender, NftId nftId, uint parentIdx, bool isInterceptor, bytes32 salt, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_withValidObjectType_001001000_longRunning(address sender, NftId nftId, uint parentIdx, bool isInterceptor, bytes32 salt, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -617,7 +617,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
         registerService_testFunction(sender, info, version, domain, salt);
     }
 
-    function testFuzz_registerService_withValidObjectType_00110000(address sender, NftId nftId, uint parentIdx, uint objectAddressIdx, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_withValidObjectType_00110000_longRunning(address sender, NftId nftId, uint parentIdx, uint objectAddressIdx, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -632,7 +632,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
         registerService_testFunction(sender, info, version, domain);
     }
 
-    function testFuzz_registerService_withValidObjectType_00111000(address sender, NftId nftId, uint parentIdx, uint objectAddressIdx, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_withValidObjectType_00111000_longRunning(address sender, NftId nftId, uint parentIdx, uint objectAddressIdx, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -648,7 +648,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
     }
 
     /*
-    function testFuzz_registerService_withValidVersion_000000000(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data, ObjectType domain) public
+    function testFuzz_registerService_withValidVersion_000000000_longRunning(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -663,7 +663,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
         registerService_testFunction(sender, info, _next, domain, salt);
     }
 
-    function testFuzz_registerService_withValidVersionAndObjectType_00000000(address sender, NftId nftId, NftId parentNftId, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data, ObjectType domain) public
+    function testFuzz_registerService_withValidVersionAndObjectType_00000000_longRunning(address sender, NftId nftId, NftId parentNftId, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -678,7 +678,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
         registerService_testFunction(sender, info, _next, domain, salt);
     }
 
-    function testFuzz_registerService_withValidSenderAndObjectTypeAndVersion_0000000(NftId nftId, NftId parentNftId, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data, ObjectType domain) public
+    function testFuzz_registerService_withValidSenderAndObjectTypeAndVersion_0000000_longRunning(NftId nftId, NftId parentNftId, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -694,7 +694,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
     }
     */
 
-    function testFuzz_registerService_withValidSenderAndValidObjectType_00000000(NftId nftId, NftId parentNftId, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_withValidSenderAndValidObjectType_00000000_longRunning(NftId nftId, NftId parentNftId, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -709,7 +709,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
         registerService_testFunction(address(core.releaseRegistry), info, version, domain, salt);
     }
 
-    function testFuzz_registerService_withValidSenderAndValidObjectType_00001000(NftId nftId, NftId parentNftId, bool isInterceptor, bytes32 salt, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_withValidSenderAndValidObjectType_00001000_longRunning(NftId nftId, NftId parentNftId, bool isInterceptor, bytes32 salt, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -724,7 +724,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
         registerService_testFunction(address(core.releaseRegistry), info, version, domain, salt);
     }
 
-    function testFuzz_registerService_withValidSenderAndValidObjectType_0010000(NftId nftId, NftId parentNftId, uint objectAddressIdx, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_withValidSenderAndValidObjectType_0010000_longRunning(NftId nftId, NftId parentNftId, uint objectAddressIdx, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -739,7 +739,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
         registerService_testFunction(address(core.releaseRegistry), info, version, domain);
     }
 
-    function testFuzz_registerService_withValidSenderAndValidObjectType_0011000(NftId nftId, NftId parentNftId, uint objectAddressIdx, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_withValidSenderAndValidObjectType_0011000_longRunning(NftId nftId, NftId parentNftId, uint objectAddressIdx, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -754,7 +754,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
         registerService_testFunction(address(core.releaseRegistry), info, version, domain);
     }
 
-    function testFuzz_registerService_withValidSenderAndValidObjectType_01000000(NftId nftId, uint parentIdx, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_withValidSenderAndValidObjectType_01000000_longRunning(NftId nftId, uint parentIdx, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -769,7 +769,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
         registerService_testFunction(address(core.releaseRegistry), info, version, domain, salt);
     }
 
-    function testFuzz_registerService_withValidSenderAndValidObjectType_01001000(NftId nftId, uint parentIdx, bool isInterceptor, bytes32 salt, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_withValidSenderAndValidObjectType_01001000_longRunning(NftId nftId, uint parentIdx, bool isInterceptor, bytes32 salt, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -784,7 +784,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
         registerService_testFunction(address(core.releaseRegistry), info, version, domain, salt);
     }
 
-    function testFuzz_registerService_withValidSenderAndValidObjectType_0110000(NftId nftId, uint parentIdx, uint objectAddressIdx, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_withValidSenderAndValidObjectType_0110000_longRunning(NftId nftId, uint parentIdx, uint objectAddressIdx, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -799,7 +799,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
         registerService_testFunction(address(core.releaseRegistry), info, version, domain);
     }
 
-    function testFuzz_registerService_withValidSenderAndValidObjectType_0111000(NftId nftId, uint parentIdx, uint objectAddressIdx, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_withValidSenderAndValidObjectType_0111000_longRunning(NftId nftId, uint parentIdx, uint objectAddressIdx, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -817,7 +817,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
 
     // TODO rename and fix, current implementation fails frequently with error message below
     // [FAIL. Reason: The `vm.assume` cheatcode rejected too many inputs (100 allowed)] 
-    function testFuzz_registerService_withDuplicateVersionAndDomain(
+    function testFuzz_registerService_withDuplicateVersionAndDomain_longRunning(
         NftId nftId_1,
         address objectAddress_1, 
         address initialOwner_1,
@@ -907,7 +907,7 @@ contract RegisterServiceWithPresetFuzzTest is RegistryTestBaseWithPreset, Regist
         RegistryTestBaseWithPreset.setUp();
     }
 
-    function testFuzz_RegisterService_00P1000000(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_RegisterService_00P1000000_longRunning(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -922,7 +922,7 @@ contract RegisterServiceWithPresetFuzzTest is RegistryTestBaseWithPreset, Regist
         registerService_testFunction(sender, info, version, domain, salt);
     }
 
-    function testFuzz_registerService_withValidObjectType_00P000000(address sender, NftId nftId, uint parentIdx, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_withValidObjectType_00P000000_longRunning(address sender, NftId nftId, uint parentIdx, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -937,7 +937,7 @@ contract RegisterServiceWithPresetFuzzTest is RegistryTestBaseWithPreset, Regist
         registerService_testFunction(sender, info, version, domain, salt);
     }
 
-    function tetsFuzz_registerService_withValidSenderAndValidObjectType_0P000000(NftId nftId, uint parentIdx, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
+    function tetsFuzz_registerService_withValidSenderAndValidObjectType_0P000000_longRunning(NftId nftId, uint parentIdx, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -953,7 +953,7 @@ contract RegisterServiceWithPresetFuzzTest is RegistryTestBaseWithPreset, Regist
     }
 
 
-    function testFuzz_registerService_withRegisteredChainRegistryAddress(
+    function testFuzz_registerService_withRegisteredChainRegistryAddress_longRunning(
         NftId nftId_1,
         address initialOwner_1,
         bytes memory data_1,

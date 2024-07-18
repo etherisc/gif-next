@@ -20,7 +20,7 @@ contract RegisterRegistryFuzzTest is RegistryTestBase
     // nftId - random
     // chainId - random
     // registryAddress - random
-    function testFuzz_registryRegistry_0000(address sender, NftId nftId, uint64 chainId, address registryAddress) public
+    function testFuzz_registryRegistry_0000_longRunning(address sender, NftId nftId, uint64 chainId, address registryAddress) public
     {
         registerRegistry_testFunction(
             sender,
@@ -33,7 +33,7 @@ contract RegisterRegistryFuzzTest is RegistryTestBase
     // nftId - random
     // chainId - random
     // registryAddressIdx - set of addresses (actors + registered + initial owners)
-    function testFuzz_registerRegistry_0001(address sender, NftId nftId, uint64 chainId, uint256 registryAddressIdx) public
+    function testFuzz_registerRegistry_0001_longRunning(address sender, NftId nftId, uint64 chainId, uint256 registryAddressIdx) public
     {
         registerRegistry_testFunction(
             sender, 
@@ -43,7 +43,7 @@ contract RegisterRegistryFuzzTest is RegistryTestBase
         );
     }
 
-    function testFuzz_registerRegistry_0010(address sender, NftId nftId, uint256 chainIdIdx, address registryAddress) public
+    function testFuzz_registerRegistry_0010_longRunning(address sender, NftId nftId, uint256 chainIdIdx, address registryAddress) public
     {
         registerRegistry_testFunction(
             sender, 
@@ -53,7 +53,7 @@ contract RegisterRegistryFuzzTest is RegistryTestBase
         );
     }
 
-    function testFuzz_registerRegistry_0011(address sender, NftId nftId, uint256 chainIdIdx, uint256 registryAddressIdx) public
+    function testFuzz_registerRegistry_0011_longRunning(address sender, NftId nftId, uint256 chainIdIdx, uint256 registryAddressIdx) public
     {
         registerRegistry_testFunction(
             sender, 
@@ -63,7 +63,7 @@ contract RegisterRegistryFuzzTest is RegistryTestBase
         );
     }
 
-    function testFuzz_registerRegistry_0100(address sender, uint256 nftIdIdx, uint64 chainId, address registryAddress) public
+    function testFuzz_registerRegistry_0100_longRunning(address sender, uint256 nftIdIdx, uint64 chainId, address registryAddress) public
     {
         registerRegistry_testFunction(
             sender, 
@@ -73,7 +73,7 @@ contract RegisterRegistryFuzzTest is RegistryTestBase
         );
     }
 
-    function testFuzz_registerRegistry_0101(address sender, uint256 nftIdIdx, uint64 chainId, uint256 registryAddressIdx) public
+    function testFuzz_registerRegistry_0101_longRunning(address sender, uint256 nftIdIdx, uint64 chainId, uint256 registryAddressIdx) public
     {
         registerRegistry_testFunction(
             sender,
@@ -83,7 +83,7 @@ contract RegisterRegistryFuzzTest is RegistryTestBase
         );
     }
 
-    function testFuzz_registerRegistry_0110(address sender, uint256 nftIdIdx, uint256 chainIdIdx, address registryAddress) public
+    function testFuzz_registerRegistry_0110_longRunning(address sender, uint256 nftIdIdx, uint256 chainIdIdx, address registryAddress) public
     {
         registerRegistry_testFunction(
             sender,
@@ -93,7 +93,7 @@ contract RegisterRegistryFuzzTest is RegistryTestBase
         );
     }
 
-    function testFuzz_registerRegistry_0111(address sender, uint256 nftIdIdx, uint256 chainIdIdx, uint256 registryAddressIdx) public
+    function testFuzz_registerRegistry_0111_longRunning(address sender, uint256 nftIdIdx, uint256 chainIdIdx, uint256 registryAddressIdx) public
     {
         registerRegistry_testFunction(
             sender,
@@ -103,7 +103,7 @@ contract RegisterRegistryFuzzTest is RegistryTestBase
         );
     }
 
-    function testFuzz_registerRegistry_withValidSender_000(NftId nftId, uint64 chainId, address registryAddress) public
+    function testFuzz_registerRegistry_withValidSender_000_longRunning(NftId nftId, uint64 chainId, address registryAddress) public
     {
         registerRegistry_testFunction(
             gifAdmin,
@@ -113,7 +113,7 @@ contract RegisterRegistryFuzzTest is RegistryTestBase
         );
     }
 
-    function testFuzz_registerRegistry_withValidSender_001(NftId nftId, uint64 chainId, uint256 registryAddressIdx) public
+    function testFuzz_registerRegistry_withValidSender_001_longRunning(NftId nftId, uint64 chainId, uint256 registryAddressIdx) public
     {
         registerRegistry_testFunction(
             gifAdmin,
@@ -123,7 +123,7 @@ contract RegisterRegistryFuzzTest is RegistryTestBase
         );
     }
 
-    function testFuzz_registerRegistry_withValidSender_010(NftId nftId, uint256 chainIdIdx, address registryAddress) public
+    function testFuzz_registerRegistry_withValidSender_010_longRunning(NftId nftId, uint256 chainIdIdx, address registryAddress) public
     {
         registerRegistry_testFunction(
             gifAdmin,
@@ -133,7 +133,7 @@ contract RegisterRegistryFuzzTest is RegistryTestBase
         );
     }
 
-    function testFuzz_registerRegistry_withValidSender_011(NftId nftId, uint256 chainIdIdx, uint256 registryAddressIdx) public
+    function testFuzz_registerRegistry_withValidSender_011_longRunning(NftId nftId, uint256 chainIdIdx, uint256 registryAddressIdx) public
     {
         registerRegistry_testFunction(
             gifAdmin,
@@ -143,7 +143,7 @@ contract RegisterRegistryFuzzTest is RegistryTestBase
         );
     }
 
-    function testFuzz_registerRegistry_withValidSender_100(uint256 nftIdIdx, uint64 chainId, address registryAddress) public
+    function testFuzz_registerRegistry_withValidSender_100_longRunning(uint256 nftIdIdx, uint64 chainId, address registryAddress) public
     {
         registerRegistry_testFunction(
             gifAdmin,
@@ -153,7 +153,7 @@ contract RegisterRegistryFuzzTest is RegistryTestBase
         );
     }
 
-    function testFuzz_registerRegistry_withValidSender_101(uint256 nftIdIdx, uint64 chainId, uint256 registryAddressIdx) public
+    function testFuzz_registerRegistry_withValidSender_101_longRunning(uint256 nftIdIdx, uint64 chainId, uint256 registryAddressIdx) public
     {
         registerRegistry_testFunction(
             gifAdmin,
@@ -163,7 +163,7 @@ contract RegisterRegistryFuzzTest is RegistryTestBase
         );
     }
 
-    function testFuzz_registerRegistry_withValidSender_110(uint256 nftIdIdx, uint256 chainIdIdx, address registryAddress) public
+    function testFuzz_registerRegistry_withValidSender_110_longRunning(uint256 nftIdIdx, uint256 chainIdIdx, address registryAddress) public
     {
         registerRegistry_testFunction(
             gifAdmin,
@@ -173,7 +173,7 @@ contract RegisterRegistryFuzzTest is RegistryTestBase
         );
     }
 
-    function testFuzz_registerRegistry_withValidSender_111(uint256 nftIdIdx, uint256 chainIdIdx, uint256 registryAddressIdx) public
+    function testFuzz_registerRegistry_withValidSender_111_longRunning(uint256 nftIdIdx, uint256 chainIdIdx, uint256 registryAddressIdx) public
     {
         registerRegistry_testFunction(
             gifAdmin,
@@ -183,7 +183,7 @@ contract RegisterRegistryFuzzTest is RegistryTestBase
         );
     }
 
-    function testFuzz_registryRegistry_withValidSenderAndNftId_00(uint64 chainId, address registryAddress) public
+    function testFuzz_registryRegistry_withValidSenderAndNftId_00_longRunning(uint64 chainId, address registryAddress) public
     {
         registerRegistry_testFunction(
             gifAdmin,
@@ -193,7 +193,7 @@ contract RegisterRegistryFuzzTest is RegistryTestBase
         );
     }
 
-    function testFuzz_registryRegistry_withValidSenderAndNftId_01(uint64 chainId, uint256 registryAddressIdx) public
+    function testFuzz_registryRegistry_withValidSenderAndNftId_01_longRunning(uint64 chainId, uint256 registryAddressIdx) public
     {
         registerRegistry_testFunction(
             gifAdmin,
@@ -203,7 +203,7 @@ contract RegisterRegistryFuzzTest is RegistryTestBase
         );
     }
 
-    function testFuzz_registryRegistry_withValidSenderAndNftId_10(uint256 chainIdIdx, address registryAddress) public
+    function testFuzz_registryRegistry_withValidSenderAndNftId_10_longRunning(uint256 chainIdIdx, address registryAddress) public
     {
         registerRegistry_testFunction(
             gifAdmin,
@@ -213,7 +213,7 @@ contract RegisterRegistryFuzzTest is RegistryTestBase
         );
     }
 
-    function testFuzz_registryRegistry_withValidSenderAndNftId_11(uint256 chainIdIdx, uint256 registryAddressIdx) public
+    function testFuzz_registryRegistry_withValidSenderAndNftId_11_longRunning(uint256 chainIdIdx, uint256 registryAddressIdx) public
     {
         registerRegistry_testFunction(
             gifAdmin,
@@ -260,7 +260,7 @@ contract RegisterRegistryWithPresetFuzzTestL1 is RegisterRegistryWithPresetFuzzT
 
     // !!! TODO check that each itteration has unique chainRegistryChainId -> setUp() is executed for each itteration
     // Mainnet only tests
-    function testFuzz_registerRegistry_withDuplicateChainId(address registryAddress) public
+    function testFuzz_registerRegistry_withDuplicateChainId_longRunning(address registryAddress) public
     {
         vm.assume(block.chainid == 1);
         vm.assume(registryAddress != address(0));

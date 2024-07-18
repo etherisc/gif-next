@@ -154,41 +154,6 @@ contract RegisterConcreteTest is RegistryTestBase {
 
     }
 
-    function test_register_specificCase_3() public
-    {
-        // args=[0xa2D05a7E8Cce6BEBd53E90986223003EC13A9fd5, 37981013685 [3.798e10], 115792089237316195423570985008687907853269984665640564039457584007913129639933 [1.157e77], 13, true, 0x749fE300556DDb33334E1CBD1a0070aB933A2d96, 0xf9472e2c1691cd0f268bbc652cb91347ecd7917dc8a988ac15c2d9f4dbb203f9eacbbc0f3035c78e7e]
-        // testFuzz_register_withZeroObjectAddress_00110(address,uint96,uint256,uint8,bool,address,bytes)
-        // testFuzz_register_withZeroObjectAddress_00110(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, bool isInterceptor, address initialOwner, bytes memory data)
-        
-        RegisterFuzzTest test = new RegisterFuzzTest();
-        test.setUp();
-
-        test.testFuzz_register_withZeroObjectAddress_00110(
-            address(0xa2D05a7E8Cce6BEBd53E90986223003EC13A9fd5),
-            NftIdLib.toNftId(37981013685),
-            115792089237316195423570985008687907853269984665640564039457584007913129639933,
-            13,
-            true,
-            address(0x749fE300556DDb33334E1CBD1a0070aB933A2d96),
-            "0xf9472e2c1691cd0f268bbc652cb91347ecd7917dc8a988ac15c2d9f4dbb203f9eacbbc0f3035c78e7e"
-        );
-        /*
-        address sender = address(0xa2D05a7E8Cce6BEBd53E90986223003EC13A9fd5);
-
-        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
-            NftIdLib.toNftId(37981013685),
-            NftIdLib.toNftId(EnumerableSet.at(_nftIds, 115792089237316195423570985008687907853269984665640564039457584007913129639933 % EnumerableSet.length(_nftIds))),
-            _types[13 % _types.length],
-            true,
-            address(0x0000000000000000000000000000000000000000),
-            address(0x749fE300556DDb33334E1CBD1a0070aB933A2d96),
-            "0xf9472e2c1691cd0f268bbc652cb91347ecd7917dc8a988ac15c2d9f4dbb203f9eacbbc0f3035c78e7e"
-        );
-
-        register_testFunction(sender, info);
-        */
-    }
-
     function test_register_withGlobalRegistryAsParent() public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(

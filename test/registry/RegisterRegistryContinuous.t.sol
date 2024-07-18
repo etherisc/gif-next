@@ -17,7 +17,7 @@ contract RegisterRegistryContinuousTest is RegistryTestBase
 {
     uint constant ITTERATIONS = 150;
 
-    function test_continuous_registerRegistry_0000() public
+    function test_continuous_registerRegistry_0000_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -30,7 +30,7 @@ contract RegisterRegistryContinuousTest is RegistryTestBase
         }
     }
     // note: each itteration will fail because of 0 chainId, running this test in order to reach all possible reverts during continuous tests
-    function test_continuous_registerRegistry_withValidSenerAndZeroRegistryChainId_00() public
+    function test_continuous_registerRegistry_withValidSenerAndZeroRegistryChainId_00_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -43,7 +43,7 @@ contract RegisterRegistryContinuousTest is RegistryTestBase
         }
     }
 
-    function test_continuous_registerRegistry_withValidSender_000() public
+    function test_continuous_registerRegistry_withValidSender_000_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -56,7 +56,7 @@ contract RegisterRegistryContinuousTest is RegistryTestBase
         }
     }
 
-    function test_continuous_registerRegistry_withValidSender_001() public
+    function test_continuous_registerRegistry_withValidSender_001_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -69,7 +69,7 @@ contract RegisterRegistryContinuousTest is RegistryTestBase
         }
     }
 
-    function test_continuous_registerRegistry_withValidSender_010() public
+    function test_continuous_registerRegistry_withValidSender_010_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -82,7 +82,7 @@ contract RegisterRegistryContinuousTest is RegistryTestBase
         }
     }
 
-    function test_continuous_registerRegistry_withValidSender_011() public
+    function test_continuous_registerRegistry_withValidSender_011_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -95,7 +95,7 @@ contract RegisterRegistryContinuousTest is RegistryTestBase
         }
     }
 
-    function test_continuous_registerRegistry_withValidSender_100() public
+    function test_continuous_registerRegistry_withValidSender_100_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -108,7 +108,7 @@ contract RegisterRegistryContinuousTest is RegistryTestBase
         }
     }
 
-    function test_continuous_registerRegistry_withValidSender_101() public
+    function test_continuous_registerRegistry_withValidSender_101_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -121,7 +121,7 @@ contract RegisterRegistryContinuousTest is RegistryTestBase
         }
     }
 
-    function test_continuous_registerRegistry_withValidSender_110() public
+    function test_continuous_registerRegistry_withValidSender_110_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -134,7 +134,7 @@ contract RegisterRegistryContinuousTest is RegistryTestBase
         }
     }
 
-    function test_continuous_registerRegistry_withValidSender_111() public
+    function test_continuous_registerRegistry_withValidSender_111_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {

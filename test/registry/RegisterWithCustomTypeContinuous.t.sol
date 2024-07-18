@@ -49,7 +49,7 @@ contract RegisterWithCustomTypeContinuousTest is RegistryTestBase
     // isInterceptor - always random
     // initialOwner - random
     // salt - always random
-    function test_continuous_registerWithCustomType_withValidSender_000000() public
+    function test_continuous_registerWithCustomType_withValidSender_000000_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -74,7 +74,7 @@ contract RegisterWithCustomTypeContinuousTest is RegistryTestBase
     // isInterceptor - always random
     // initialOwner - from address set
     // salt - always random
-    function test_continuous_registerWithCustomType_withValidSender_000010() public
+    function test_continuous_registerWithCustomType_withValidSender_000010_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -99,7 +99,7 @@ contract RegisterWithCustomTypeContinuousTest is RegistryTestBase
     // objectType random
     // objectAddress - from address set
     // initialOwner - random
-    function test_continuous_registerWithCustomType_withValidSender_00010() public
+    function test_continuous_registerWithCustomType_withValidSender_00010_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -118,7 +118,7 @@ contract RegisterWithCustomTypeContinuousTest is RegistryTestBase
         }
     }
 
-    function test_continuous_registerWithCustomType_withValidSender_00011() public
+    function test_continuous_registerWithCustomType_withValidSender_00011_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -137,7 +137,7 @@ contract RegisterWithCustomTypeContinuousTest is RegistryTestBase
         }
     }
 
-    function test_continuous_registerWithCustomType_withValidSender_001000() public
+    function test_continuous_registerWithCustomType_withValidSender_001000_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -157,7 +157,7 @@ contract RegisterWithCustomTypeContinuousTest is RegistryTestBase
         }
     }
 
-    function test_continuous_registerWithCustomType_withValidSender_001010() public
+    function test_continuous_registerWithCustomType_withValidSender_001010_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -177,7 +177,7 @@ contract RegisterWithCustomTypeContinuousTest is RegistryTestBase
         }
     }
 
-    function test_continuous_registerWithCustomType_withValidSender_00110() public
+    function test_continuous_registerWithCustomType_withValidSender_00110_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -196,7 +196,7 @@ contract RegisterWithCustomTypeContinuousTest is RegistryTestBase
         }
     }
 
-    function test_continuous_registerWithCustomType_withValidSender_00111() public
+    function test_continuous_registerWithCustomType_withValidSender_00111_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -215,7 +215,7 @@ contract RegisterWithCustomTypeContinuousTest is RegistryTestBase
         }
     }
 
-    function test_continuous_registerWithCustomType_withValidSender_010000() public
+    function test_continuous_registerWithCustomType_withValidSender_010000_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -235,7 +235,7 @@ contract RegisterWithCustomTypeContinuousTest is RegistryTestBase
         }
     }
 
-    function test_continuous_registerWithCustomType_withValidSender_010010() public
+    function test_continuous_registerWithCustomType_withValidSender_010010_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -255,7 +255,7 @@ contract RegisterWithCustomTypeContinuousTest is RegistryTestBase
         }
     }
     
-    function test_continuous_registerWithCustomType_withValidSender_01010() public
+    function test_continuous_registerWithCustomType_withValidSender_01010_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -274,7 +274,7 @@ contract RegisterWithCustomTypeContinuousTest is RegistryTestBase
         }
     }
 
-    function test_continuous_registerWithCustomType_withValidSender_01011() public
+    function test_continuous_registerWithCustomType_withValidSender_01011_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -293,7 +293,7 @@ contract RegisterWithCustomTypeContinuousTest is RegistryTestBase
         }
     }
 
-    function test_continuous_registerWithCustomType_withValidSender_011000() public
+    function test_continuous_registerWithCustomType_withValidSender_011000_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -313,7 +313,7 @@ contract RegisterWithCustomTypeContinuousTest is RegistryTestBase
         }
     }
 
-    function test_continuous_registerWithCustomType_withValidSender_011010() public
+    function test_continuous_registerWithCustomType_withValidSender_011010_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -333,7 +333,7 @@ contract RegisterWithCustomTypeContinuousTest is RegistryTestBase
         }
     }
 
-    function test_continuous_registerWithCustomType_withValidSender_01110() public
+    function test_continuous_registerWithCustomType_withValidSender_01110_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -352,7 +352,7 @@ contract RegisterWithCustomTypeContinuousTest is RegistryTestBase
         }
     }
 
-    function test_continuous_registerWithCustomType_withValidSender_01111() public
+    function test_continuous_registerWithCustomType_withValidSender_01111_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -371,7 +371,7 @@ contract RegisterWithCustomTypeContinuousTest is RegistryTestBase
         }
     }
 
-    function test_continuous_registerWithCustomType_withValidSenderAndZeroObjectAddress_00000() public
+    function test_continuous_registerWithCustomType_withValidSenderAndZeroObjectAddress_00000_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -390,7 +390,7 @@ contract RegisterWithCustomTypeContinuousTest is RegistryTestBase
         }
     }
 
-    function test_continuous_registerWithCustomType_withValidSenderAndZeroObjectAddress_00001() public
+    function test_continuous_registerWithCustomType_withValidSenderAndZeroObjectAddress_00001_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -409,7 +409,7 @@ contract RegisterWithCustomTypeContinuousTest is RegistryTestBase
         }
     }
 
-    function test_continuous_registerWithCustomType_withValidSenderAndZeroObjectAddress_00100() public
+    function test_continuous_registerWithCustomType_withValidSenderAndZeroObjectAddress_00100_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -428,7 +428,7 @@ contract RegisterWithCustomTypeContinuousTest is RegistryTestBase
         }
     }
 
-    function test_continuous_registerWithCustomType_withValidSenderAndZeroObjectAddress_00101() public
+    function test_continuous_registerWithCustomType_withValidSenderAndZeroObjectAddress_00101_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -447,7 +447,7 @@ contract RegisterWithCustomTypeContinuousTest is RegistryTestBase
         }
     }
 
-    function test_continuous_registerWithCustomType_withValidSenderAndZeroObjectAddress_01000() public
+    function test_continuous_registerWithCustomType_withValidSenderAndZeroObjectAddress_01000_longRunning() public
     {
         for(uint idx = 0; idx < 100; idx++)
         {
@@ -466,7 +466,7 @@ contract RegisterWithCustomTypeContinuousTest is RegistryTestBase
         }
     }
 
-    function test_continuous_registerWithCustomType_withValidSenderAndZeroObjectAddress_01001() public
+    function test_continuous_registerWithCustomType_withValidSenderAndZeroObjectAddress_01001_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -485,7 +485,7 @@ contract RegisterWithCustomTypeContinuousTest is RegistryTestBase
         }
     }
 
-    function test_continuous_registerWithCustomType_withValidSenderAndZeroObjectAddress_01100() public
+    function test_continuous_registerWithCustomType_withValidSenderAndZeroObjectAddress_01100_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -504,7 +504,7 @@ contract RegisterWithCustomTypeContinuousTest is RegistryTestBase
         }
     }
 
-    function test_continuous_registerWithCustomType_withValidSenderAndZeroObjectAddress_01101() public
+    function test_continuous_registerWithCustomType_withValidSenderAndZeroObjectAddress_01101_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -555,7 +555,7 @@ contract RegisterWithCustomTypeWithPresetContinuousTest is RegistryTestBaseWithP
     // isInterceptor - always random
     // initialOwner - random
     // salt - always random
-    function test_continuous_registerWithCustomType_withValidSender_0P1000() public
+    function test_continuous_registerWithCustomType_withValidSender_0P1000_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -575,7 +575,7 @@ contract RegisterWithCustomTypeWithPresetContinuousTest is RegistryTestBaseWithP
         }
     }
 
-    function test_continuous_registerWithCustomType_withValidSender_0P111() public
+    function test_continuous_registerWithCustomType_withValidSender_0P111_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -594,7 +594,7 @@ contract RegisterWithCustomTypeWithPresetContinuousTest is RegistryTestBaseWithP
         }
     }
 
-    function test_continuous_registerWithCustomType_withValidSenderAndZeroObjectAddress_0P100() public
+    function test_continuous_registerWithCustomType_withValidSenderAndZeroObjectAddress_0P100_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {

@@ -52,7 +52,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
     // version - always random
     // domain - always random
     // salt - always random
-    function test_continuous_registerService_withValidSender_00000000() public
+    function test_continuous_registerService_withValidSender_00000000_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -82,7 +82,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
     // version - always random
     // domain - always random
     // salt - always random
-    function test_continuous_registerService_withValidSender_00001000() public
+    function test_continuous_registerService_withValidSender_00001000_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -104,7 +104,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
         }
     }
 
-    function test_continuous_registerService_withValidSender_0001000() public
+    function test_continuous_registerService_withValidSender_0001000_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -125,7 +125,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
         }
     }
 
-    function test_continuous_registerService_withValidSender_0001100() public
+    function test_continuous_registerService_withValidSender_0001100_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -146,7 +146,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
         }
     }
 
-    function test_continuous_registerService_withValidSender_00100000() public
+    function test_continuous_registerService_withValidSender_00100000_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -168,7 +168,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
         }
     }
 
-    function test_continuous_registerService_withValidSender_00101000() public
+    function test_continuous_registerService_withValidSender_00101000_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -190,7 +190,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
         }
     }
 
-    function test_continuous_registerService_withValidSender_0011000() public
+    function test_continuous_registerService_withValidSender_0011000_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -211,7 +211,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
         }
     }
 
-    function test_continuous_registerService_withValidSender_0011100() public
+    function test_continuous_registerService_withValidSender_0011100_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -232,7 +232,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
         }
     }
     
-    function test_continuous_registerService_withValidSender_01000000() public
+    function test_continuous_registerService_withValidSender_01000000_longRunning() public
     {
         for(uint idx = 0; idx < 100; idx++)
         {
@@ -254,7 +254,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
         }
     }
 
-    function test_continuous_registerService_withValidSender_01001000() public
+    function test_continuous_registerService_withValidSender_01001000_longRunning() public
     {
         for(uint idx = 0; idx < 100; idx++)
         {
@@ -276,7 +276,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
         }
     }
     
-    function test_continuous_registerService_withValidSender_0101000() public
+    function test_continuous_registerService_withValidSender_0101000_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -297,7 +297,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
         }
     }
 
-    function test_continuous_registerService_withValidSender_0101100() public
+    function test_continuous_registerService_withValidSender_0101100_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -318,7 +318,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
         }
     }
 
-    function test_continuous_registerService_withValidSender_01100000() public
+    function test_continuous_registerService_withValidSender_01100000_longRunning() public
     {
         for(uint idx = 0; idx < 100; idx++)
         {
@@ -340,7 +340,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
         }
     }
 
-    function test_continuous_registerService_withValidSender_01101000() public
+    function test_continuous_registerService_withValidSender_01101000_longRunning() public
     {
         for(uint idx = 0; idx < 100; idx++)
         {
@@ -362,7 +362,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
         }
     }
 
-    function test_continuous_registerService_withValidSender_0111000() public
+    function test_continuous_registerService_withValidSender_0111000_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -383,7 +383,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
         }
     }
 
-    function test_continuous_registerService_withValidSender_0111100() public
+    function test_continuous_registerService_withValidSender_0111100_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -404,7 +404,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
         }
     }
 
-    function test_continuous_registerService_withValidSenderAndValidObjectType_0000000() public
+    function test_continuous_registerService_withValidSenderAndValidObjectType_0000000_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -426,7 +426,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
         }
     }
 
-    function test_continuous_registerService_withValidSenderAndValidObjectType_0001000() public
+    function test_continuous_registerService_withValidSenderAndValidObjectType_0001000_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -448,7 +448,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
         }
     }
 
-    function test_continuous_registerService_withValidSenderAndValidObjectType_001000() public
+    function test_continuous_registerService_withValidSenderAndValidObjectType_001000_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -469,7 +469,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
         }
     }
 
-    function test_continuous_registerService_withValidSenderAndValidObjectType_001100() public
+    function test_continuous_registerService_withValidSenderAndValidObjectType_001100_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -490,7 +490,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
         }
     }
 
-    function test_continuous_registerService_withValidSenderAndValidObjectType_0100000() public
+    function test_continuous_registerService_withValidSenderAndValidObjectType_0100000_longRunning() public
     {
         for(uint idx = 0; idx < 100; idx++)
         {
@@ -512,7 +512,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
         }
     }
 
-    function test_continuous_registerService_withValidSenderAndValidObjectType_0101000() public
+    function test_continuous_registerService_withValidSenderAndValidObjectType_0101000_longRunning() public
     {
         for(uint idx = 0; idx < 100; idx++)
         {
@@ -534,7 +534,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
         }
     }
 
-    function test_continuous_registerService_withValidSenderAndValidObjectType_011000() public
+    function test_continuous_registerService_withValidSenderAndValidObjectType_011000_longRunning() public
     {
         for(uint idx = 0; idx < 100; idx++)
         {
@@ -555,7 +555,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
         }
     }
 
-    function test_continuous_registerService_withValidSenderAndValidObjectType_011100() public
+    function test_continuous_registerService_withValidSenderAndValidObjectType_011100_longRunning() public
     {
         for(uint idx = 0; idx < 100; idx++)
         {
@@ -692,7 +692,7 @@ contract RegisterServiceWithPresetContinuousTests is RegistryTestBaseWithPreset,
         RegistryTestBaseWithPreset.setUp();
     }
     // registerService accepts only one object - parent combinations
-    function test_continuous_registerService_withValidSender_0P100000() public
+    function test_continuous_registerService_withValidSender_0P100000_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -714,7 +714,7 @@ contract RegisterServiceWithPresetContinuousTests is RegistryTestBaseWithPreset,
         }
     }
 
-    function test_continuous_registerService_withValidSender_0P11100() public
+    function test_continuous_registerService_withValidSender_0P11100_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
