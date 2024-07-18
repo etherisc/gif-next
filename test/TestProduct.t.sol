@@ -5,13 +5,10 @@ import {console} from "../lib/forge-std/src/Test.sol";
 
 import {GifTest} from "./base/GifTest.sol";
 import {NftId, NftIdLib} from "../contracts/type/NftId.sol";
-import {PRODUCT_OWNER_ROLE} from "../contracts/type/RoleId.sol";
 import {SimpleProduct} from "./mock/SimpleProduct.sol";
-import {SimplePool} from "./mock/SimplePool.sol";
 import {IComponents} from "../contracts/instance/module/IComponents.sol";
-import {ILifecycle} from "../contracts/shared/ILifecycle.sol";
+import {IDistribution} from "../contracts/instance/module/IDistribution.sol";
 import {IPolicy} from "../contracts/instance/module/IPolicy.sol";
-import {IBundle} from "../contracts/instance/module/IBundle.sol";
 import {Amount, AmountLib} from "../contracts/type/Amount.sol";
 import {Fee, FeeLib} from "../contracts/type/Fee.sol";
 import {UFixedLib} from "../contracts/type/UFixed.sol";
@@ -24,7 +21,6 @@ import {ReferralId, ReferralLib} from "../contracts/type/Referral.sol";
 import {APPLIED, COLLATERALIZED, CLOSED, DECLINED} from "../contracts/type/StateId.sol";
 import {POLICY} from "../contracts/type/ObjectType.sol";
 import {DistributorType} from "../contracts/type/DistributorType.sol";
-import {SimpleDistribution} from "./mock/SimpleDistribution.sol";
 import {IPolicyService} from "../contracts/product/IPolicyService.sol";
 
 contract TestProduct is GifTest {
@@ -455,8 +451,10 @@ contract TestProduct is GifTest {
         console.log("bundle fee (after)", instanceReader.getFeeAmount(bundleNftId).toInt());
         // solhint-enable
 
-        IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
         assertEq(instanceReader.getFeeAmount(poolNftId).toInt(), 10, "pool fee amount not 10");
+
+        IDistribution.ReferralInfo memory referralInfo = instanceReader.getReferralInfo(referralId);
+        assertEq(1, referralInfo.usedReferrals, "unexpected referral count");
     }
 
     function test_productCollateralizeWithReferralExpired() public {
