@@ -13,7 +13,7 @@ import {VersionPart, VersionPartLib} from "../type/Version.sol";
 contract ServiceAuthorization
      is IServiceAuthorization
 {
-     uint256 public constant GIF_VERSION_3 = 3;
+     uint256 public immutable GIF_VERSION;
 
      string private _commitHash;
 
@@ -22,8 +22,9 @@ contract ServiceAuthorization
      mapping(ObjectType domain => ObjectType[] authorizedDomains) internal _authorizedDomains;
      mapping(ObjectType domain => mapping(ObjectType authorizedDomain => IAccess.FunctionInfo[] functions)) internal _authorizedFunctions;
 
-     constructor(string memory commitHash) {
+     constructor(string memory commitHash, uint256 version) {
           _commitHash = commitHash;
+          GIF_VERSION = version;
           _setupDomains();
           _setupDomainAuthorizations();
      }
@@ -33,7 +34,7 @@ contract ServiceAuthorization
      }
 
      function getRelease() external view returns(VersionPart release) {
-          return VersionPartLib.toVersionPart(GIF_VERSION_3);
+          return VersionPartLib.toVersionPart(GIF_VERSION);
      }
 
      function getServiceDomains() external view returns(ObjectType[] memory serviceDomains) {

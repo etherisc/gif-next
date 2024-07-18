@@ -160,7 +160,6 @@ contract ReleaseRegistry is
         releaseVersion = _next;
         StateId state = _releaseInfo[releaseVersion].state;
         StateId newState = DEPLOYING();
-        IServiceAuthorization auth = _releaseInfo[releaseVersion].auth;
 
         // ensures unique salt
         // TODO CreateX have clones capability also
@@ -176,7 +175,7 @@ contract ReleaseRegistry is
         }
 
         // verify authorizaion contract release matches with expected version
-        VersionPart authVersion = auth.getRelease();
+        VersionPart authVersion = serviceAuthorization.getRelease();
         if (releaseVersion != authVersion) {
             revert ErrorReleaseRegistryVersionMismatch(releaseVersion, authVersion);
         }
@@ -194,7 +193,7 @@ contract ReleaseRegistry is
 
         _servicesToRegister = serviceDomainsCount;
         // TODO allow for the same serviceAuthorization address to be used for multiple releases????
-        _releaseInfo[releaseVersion].auth = auth;
+        _releaseInfo[releaseVersion].auth = serviceAuthorization;
         _releaseInfo[releaseVersion].state = newState;
 
         emit LogReleaseCreation(releaseVersion, releaseSalt);
