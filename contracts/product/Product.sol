@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {ClaimId} from "../type/ClaimId.sol";
 import {InstanceLinkedComponent} from "../shared/InstanceLinkedComponent.sol";
@@ -16,7 +14,7 @@ import {IProductService} from "./IProductService.sol";
 import {IClaimService} from "./IClaimService.sol";
 import {IPricingService} from "./IPricingService.sol";
 import {IProductComponent} from "./IProductComponent.sol";
-import {NftId, NftIdLib} from "../type/NftId.sol";
+import {NftId} from "../type/NftId.sol";
 import {PayoutId} from "../type/PayoutId.sol";
 import {COMPONENT, PRODUCT, APPLICATION, POLICY, CLAIM, PRICE } from "../type/ObjectType.sol";
 import {ReferralId} from "../type/Referral.sol";
@@ -25,9 +23,6 @@ import {Seconds} from "../type/Seconds.sol";
 import {StateId} from "../type/StateId.sol";
 import {Timestamp} from "../type/Timestamp.sol";
 
-import {TokenHandler} from "../shared/TokenHandler.sol";
-
-import {InstanceReader} from "../instance/InstanceReader.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {Pool} from "../pool/Pool.sol";
@@ -82,9 +77,9 @@ abstract contract Product is
 
     function calculateNetPremium(
         Amount sumInsuredAmount,
-        RiskId riskId,
-        Seconds lifetime,
-        bytes memory applicationData
+        RiskId,
+        Seconds,
+        bytes memory
     )
         external
         view
@@ -256,14 +251,12 @@ abstract contract Product is
 
     function _createPolicy(
         NftId applicationNftId,
-        bool requirePremiumPayment,
         Timestamp activateAt
     )
         internal
     {
         _getProductStorage()._policyService.createPolicy(
             applicationNftId, 
-            requirePremiumPayment, 
             activateAt);
     }
 

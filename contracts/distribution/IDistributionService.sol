@@ -3,7 +3,6 @@ pragma solidity ^0.8.20;
 
 import {Amount} from "../type/Amount.sol";
 import {NftId} from "../type/NftId.sol";
-import {Fee} from "../type/Fee.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
 import {IService} from "../shared/IService.sol";
 import {UFixed} from "../type/UFixed.sol";
@@ -74,6 +73,13 @@ interface IDistributionService is IService {
     )
         external
         returns (ReferralId referralId);
+
+    /// @dev callback from product service when a referral is used. 
+    /// Calling this will increment the referral usage counter. 
+    function processReferral(
+        NftId distributionNftId, 
+        ReferralId referralId
+    ) external;
 
     /// @dev callback from product service when selling a policy for a specific referralId
     function processSale(

@@ -114,7 +114,6 @@ contract PolicyService is
     /// @inheritdoc IPolicyService
     function createPolicy(
         NftId applicationNftId, // = policyNftId
-        bool requirePremiumPayment, // TODO: remove this and never collect tokens (use collectPremium instead)
         Timestamp activateAt
     )
         external 
@@ -138,13 +137,8 @@ contract PolicyService is
                 productNftId);
         }
         
-        StateId newPolicyState = COLLATERALIZED();
-
         // actual collateralizaion
-        (
-            Amount localCollateralAmount,
-            Amount totalCollateralAmount
-        ) = _poolService.lockCollateral(
+        _poolService.lockCollateral(
             instance,
             address(instanceReader.getComponentInfo(productNftId).token),
             productNftId,
@@ -154,40 +148,43 @@ contract PolicyService is
 
         // optional activation of policy
         if(activateAt > zeroTimestamp()) {
-            applicationInfo.activatedAt = activateAt;
-            applicationInfo.expiredAt = activateAt.addSeconds(applicationInfo.lifetime);
+            applicationInfo = _activate(
+                applicationNftId, 
+                applicationInfo, 
+                activateAt);
         }
 
-        IPolicy.Premium memory premium;
-
-        // TODO: always calculate and then store premium object (in separate object)
-        // TODO: update referral counter during create policy
-        // TODO: no balances are updated during create policy
-
-        // optional: calculate the premium and update counters for collection at the end of this function
-        if(requirePremiumPayment) {
-            premium = _calculateAndProcessPremium(
-                instance,
-                applicationNftId,
-                applicationInfo);
-            // TODO: store premium in separate object 
-            applicationInfo.premiumPaidAmount = AmountLib.toAmount(premium.premiumAmount);
-        }
-
-        // store updated policy info
+        // update policy and set state to collateralized
         instance.getInstanceStore().updatePolicy(
             applicationNftId, 
             applicationInfo, 
-            newPolicyState);
+            COLLATERALIZED());
 
+        // calculate and store premium
+        IPolicy.Premium memory premium = _pricingService.calculatePremium(
+            productNftId,
+            applicationInfo.riskId,
+            applicationInfo.sumInsuredAmount,
+            applicationInfo.lifetime,
+            applicationInfo.applicationData,
+            applicationInfo.bundleNftId,
+            applicationInfo.referralId);
+
+        instance.getInstanceStore().createPremium(
+            applicationNftId,
+            premium);
+
+        // update referral counter 
+        {
+            IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
+            _distributionService.processReferral(
+                productInfo.distributionNftId, 
+                applicationInfo.referralId);
+        }
+        
         // TODO add calling pool contract if it needs to validate application
 
         // TODO: add logging
-
-        // optional: transfer funds for premium 
-        if(requirePremiumPayment) {
-            _transferFunds(instanceReader, applicationNftId, applicationInfo.productNftId, premium);
-        }
 
         // TODO: add callback IPolicyHolder.policyActivated() if applicable
     }
@@ -218,15 +215,14 @@ contract PolicyService is
             revert ErrorPolicyServicePremiumAlreadyPaid(policyNftId, policyInfo.premiumPaidAmount);
         }
 
-        // TODO: update all balances except referral counter as those are already updated
-
-        // calculate premium
-        IPolicy.Premium memory premium = _calculateAndProcessPremium(
-                instance,
-                policyNftId,
-                policyInfo);
-                
+        IPolicy.Premium memory premium = instanceReader.getPremiumInfo(policyNftId); 
         policyInfo.premiumPaidAmount = AmountLib.toAmount(premium.premiumAmount);
+
+        _processPremium(
+            instance,
+            policyNftId,
+            policyInfo,
+            premium);
 
         // optionally activate policy
         if(activateAt.gtz()) {
@@ -363,29 +359,17 @@ contract PolicyService is
 
 
     /// @dev calculates the premium and updates all counters in the other services
-    function _calculateAndProcessPremium(
+    function _processPremium(
         IInstance instance,
         NftId applicationNftId,
-        IPolicy.PolicyInfo memory applicationInfo
+        IPolicy.PolicyInfo memory applicationInfo,
+        IPolicy.Premium memory premium
     )
         internal
         virtual
-        returns (
-            IPolicy.Premium memory premium
-        )
     {
         NftId productNftId = applicationInfo.productNftId;
         InstanceReader instanceReader = instance.getInstanceReader();
-
-        // calculate premium details
-        premium = _pricingService.calculatePremium(
-            productNftId,
-            applicationInfo.riskId,
-            applicationInfo.sumInsuredAmount,
-            applicationInfo.lifetime,
-            applicationInfo.applicationData,
-            applicationInfo.bundleNftId,
-            applicationInfo.referralId);
 
         // check if premium balance and allowance of policy holder is sufficient
         {
@@ -409,7 +393,6 @@ contract PolicyService is
             premium);
     }
 
-
     function _activate(
         NftId policyNftId, 
         IPolicy.PolicyInfo memory policyInfo,
@@ -420,8 +403,14 @@ contract PolicyService is
         view 
         returns (IPolicy.PolicyInfo memory)
     {
-        if(! policyInfo.activatedAt.eqz()) {
+        // fail if policy has already been activated and activateAt is different
+        if(! policyInfo.activatedAt.eqz() && activateAt != policyInfo.activatedAt) {
             revert ErrorPolicyServicePolicyAlreadyActivated(policyNftId);
+        }
+
+        // ignore if policy has already been activated and activateAt is the same
+        if (policyInfo.activatedAt == activateAt) {
+            return policyInfo;
         }
 
         policyInfo.activatedAt = activateAt;
@@ -442,12 +431,7 @@ contract PolicyService is
         internal
         virtual
     {
-        (
-            NftId distributionNftId,
-            address distributionWallet,
-            address poolWallet,
-            address productWallet
-        ) = _getDistributionNftAndWallets(
+        (NftId distributionNftId, , , ) = _getDistributionNftAndWallets(
             instanceReader, 
             productNftId);
 

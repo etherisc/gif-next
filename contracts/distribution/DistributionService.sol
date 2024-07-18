@@ -12,7 +12,6 @@ import {IPolicy} from "../instance/module/IPolicy.sol";
 
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
-import {Fee, FeeLib} from "../type/Fee.sol";
 import {KEEP_STATE} from "../type/StateId.sol";
 import {ObjectType, COMPONENT, DISTRIBUTION, INSTANCE, DISTRIBUTION, DISTRIBUTOR, REGISTRY} from "../type/ObjectType.sol";
 import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
@@ -207,6 +206,23 @@ contract DistributionService is
         return referralId;
     }
 
+    /// @inheritdoc IDistributionService
+    function processReferral(
+        NftId distributionNftId, 
+        ReferralId referralId
+    ) 
+        external
+        virtual
+        restricted
+    {
+        if (referralIsValid(distributionNftId, referralId)) {
+            IInstance instance = _getInstanceForDistribution(distributionNftId);
+            // update book keeping for referral info
+            IDistribution.ReferralInfo memory referralInfo = instance.getInstanceReader().getReferralInfo(referralId);
+            referralInfo.usedReferrals += 1;
+            instance.getInstanceStore().updateReferral(referralId, referralInfo, KEEP_STATE());
+        }
+    }
 
     function processSale(
         NftId distributionNftId, // assume always of distribution type
@@ -233,8 +249,6 @@ contract DistributionService is
 
             // update book keeping for referral info
             IDistribution.ReferralInfo memory referralInfo = reader.getReferralInfo(referralId);
-            referralInfo.usedReferrals += 1;
-            store.updateReferral(referralId, referralInfo, KEEP_STATE());
 
             _componentService.increaseDistributorBalance(store, referralInfo.distributorNftId, AmountLib.zero(), commissionAmount);
 

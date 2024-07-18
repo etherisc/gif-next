@@ -7,7 +7,7 @@ import {Amount} from "../type/Amount.sol";
 import {Key32} from "../type/Key32.sol";
 import {NftId} from "../type/NftId.sol";
 import {ClaimId} from "../type/ClaimId.sol";
-import {ObjectType, BUNDLE, POLICY, POOL, PRODUCT, COMPONENT, DISTRIBUTOR} from "../type/ObjectType.sol";
+import {ObjectType, BUNDLE, POLICY, POOL, PREMIUM, PRODUCT, COMPONENT, DISTRIBUTOR} from "../type/ObjectType.sol";
 import {RequestId} from "../type/RequestId.sol";
 import {RiskId} from "../type/RiskId.sol";
 import {StateId} from "../type/StateId.sol";
@@ -193,6 +193,20 @@ contract InstanceStore is
 
     function updatePolicyState(NftId policyNftId, StateId newState) external restricted() {
         _updateState(_toNftKey32(policyNftId, POLICY()), newState);
+    }
+
+    
+    //--- Premium (Policy) ----------------------------------------------//
+    function createPremium(NftId policyNftId, IPolicy.Premium memory premium) external restricted() {
+        _create(_toNftKey32(policyNftId, PREMIUM()), abi.encode(premium));
+    }
+
+    function updatePremium(NftId policyNftId, IPolicy.Premium memory premium, StateId newState) external restricted() {
+        _update(_toNftKey32(policyNftId, PREMIUM()), abi.encode(premium), newState);
+    }
+
+    function updatePremiumState(NftId policyNftId, StateId newState) external restricted() {
+        _updateState(_toNftKey32(policyNftId, PREMIUM()), newState);
     }
 
     //--- Claim -------------------------------------------------------------//

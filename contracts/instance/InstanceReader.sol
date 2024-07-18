@@ -6,7 +6,7 @@ import {ClaimId} from "../type/ClaimId.sol";
 import {DistributorType} from "../type/DistributorType.sol";
 import {Key32} from "../type/Key32.sol";
 import {NftId} from "../type/NftId.sol";
-import {COMPONENT, DISTRIBUTOR, DISTRIBUTION, PRODUCT, POLICY, POOL, BUNDLE} from "../type/ObjectType.sol";
+import {COMPONENT, DISTRIBUTOR, DISTRIBUTION, PREMIUM, PRODUCT, POLICY, POOL, BUNDLE} from "../type/ObjectType.sol";
 import {PayoutId} from "../type/PayoutId.sol";
 import {ReferralId, ReferralStatus, ReferralLib, REFERRAL_OK, REFERRAL_ERROR_UNKNOWN, REFERRAL_ERROR_EXPIRED, REFERRAL_ERROR_EXHAUSTED} from "../type/Referral.sol";
 import {RequestId} from "../type/RequestId.sol";
@@ -78,6 +78,17 @@ contract InstanceReader {
         returns (StateId state)
     {
         return _store.getState(toPolicyKey(policyNftId));
+    }
+
+    function getPremiumInfo(NftId policyNftId) 
+        public
+        view
+        returns (IPolicy.Premium memory info)
+    {
+        bytes memory data = _store.getData(toPremiumKey(policyNftId));
+        if (data.length > 0) {
+            return abi.decode(data, (IPolicy.Premium));
+        }
     }
 
     function getBundleState(NftId bundleNftId)
@@ -364,6 +375,9 @@ contract InstanceReader {
         return policyNftId.toKey32(POLICY());
     }
 
+    function toPremiumKey(NftId policyNftId) public pure returns (Key32) { 
+        return policyNftId.toKey32(PREMIUM());
+    }
 
     function toDistributorKey(NftId distributorNftId) public pure returns (Key32) { 
         return distributorNftId.toKey32(DISTRIBUTOR());
