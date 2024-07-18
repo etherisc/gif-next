@@ -15,6 +15,8 @@ import {IServiceAuthorization} from "../authorization/IServiceAuthorization.sol"
 /// A chain registry holds all protocol relevant objects with basic metadata.
 /// Registered objects include services, instances, products, pools, policies, bundles, stakes and more.
 /// Registered objects are represented by NFTs.
+/// When on mainnet registry is global and keeps arbitrary number of chain registries residing on different chain ids.
+/// When not on mainnet registry keeps the only object residing on different chain id (on mainnet) - global registry.
 interface IRegistry is IERC165 {
 
     event LogRegistration(NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, address objectAddress, address initialOwner);
@@ -26,27 +28,27 @@ interface IRegistry is IERC165 {
 
     // registerRegistry()
     error ErrorRegistryNotOnMainnet(uint256 chainId);
-    error ErrorRegistryAlreadyRegistered(NftId nftId);
-    error ErrorRegistryNftIdInvalid(NftId nftId, uint256 chainId);
-    error ErrorRegistryAddressZero(NftId nftId);
+    error ErrorRegistryChainRegistryChainidZero(NftId nftId);
+    error ErrorRegistryChainRegistryAddressZero(NftId nftId, uint256 chainId);
+    error ErrorRegistryChainRegistryNftIdInvalid(NftId nftId, uint256 chainId);
+    error ErrorRegistryChainRegistryAlreadyRegistered(NftId nftId, uint256 chainId);
 
     // registerService()
-    error ErrorRegistryCallerNotReleaseRegistry(); //TODO consider using onlyReleaseRegistry() modifier -> if not -> delete this error
     error ErrorRegistryServiceAddressZero(); 
-    error ErrorRegistryServiceVersionZero(); 
+    error ErrorRegistryServiceVersionZero(address service);
+    //error ErrorRegistryServiceVersionMismatch(address service, VersionPart serviceVersion, VersionPart releaseVersion);
+    //error ErrorRegistryServiceVersionNotDeploying(address service, VersionPart version);
+    error ErrorRegistryServiceDomainZero(address service, VersionPart version);
     error ErrorRegistryNotService(address service, ObjectType objectType);
-    error ErrorRegistryServiceParentNotRegistry(NftId parentNftId);
-    error ErrorRegistryDomainZero(address service);
-    error ErrorRegistryDomainAlreadyRegistered(address service, VersionPart version, ObjectType domain);
+    error ErrorRegistryServiceParentNotRegistry(address service, VersionPart version, NftId parentNftId);
+    error ErrorRegistryServiceDomainAlreadyRegistered(address service, VersionPart version, ObjectType domain);
 
     // registerWithCustomTypes()
     error ErrorRegistryCoreTypeRegistration();
 
     // _register()
-    // TODO consider adding object address to errors
-    error ErrorRegistryParentAddressZero();
-    error ErrorRegistryGlobalRegistryAsParent(ObjectType objectType, NftId parentNftId);
-    error ErrorRegistryTypesCombinationInvalid(ObjectType objectType, ObjectType parentType);
+    error ErrorRegistryGlobalRegistryAsParent(address objectAddress, ObjectType objectType);
+    error ErrorRegistryTypesCombinationInvalid(address objectAddress, ObjectType objectType, ObjectType parentType);
     error ErrorRegistryContractAlreadyRegistered(address objectAddress);
 
     struct ObjectInfo {
@@ -126,6 +128,8 @@ interface IRegistry is IERC165 {
 
     function getObjectInfo(NftId nftId) external view returns (ObjectInfo memory info);
 
+    /// @dev Returns the object info for the specified object address.
+    //  MUST not be used with chain registry address (resides on different chan id)
     function getObjectInfo(address object) external view returns (ObjectInfo memory info);
 
     function isRegistered(NftId nftId) external view returns (bool);
