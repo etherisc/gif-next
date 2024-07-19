@@ -159,6 +159,34 @@ contract Staking is GifTest {
         instance.setStakingLockingPeriod(oneHour);
     }
 
+    function test_stakingUpdateInstanceLockingPeriod() public {
+        Seconds lockingPeriod = stakingReader.getTargetInfo(instanceNftId).lockingPeriod;
+        assertEq(lockingPeriod.toInt(), TargetManagerLib.getDefaultLockingPeriod().toInt(), "unexpected locking period");
+
+        Seconds hundredDays = SecondsLib.toSeconds(100 * 24 * 3600);
+        vm.startPrank(instanceOwner);
+        instance.setStakingLockingPeriod(hundredDays);
+        vm.stopPrank();
+
+        lockingPeriod = stakingReader.getTargetInfo(instanceNftId).lockingPeriod;
+        assertEq(lockingPeriod.toInt(), hundredDays.toInt(), "unexpected locking period");
+    }
+
+    function test_stakingUpdateInstanceLockingPeriod_tooShort() public {
+        Seconds lockingPeriod = stakingReader.getTargetInfo(instanceNftId).lockingPeriod;
+        assertEq(lockingPeriod.toInt(), TargetManagerLib.getDefaultLockingPeriod().toInt(), "unexpected locking period");
+
+        Seconds oneHour = SecondsLib.toSeconds(3600);
+        vm.startPrank(instanceOwner);
+
+        vm.expectRevert(abi.encodeWithSelector(
+            IStaking.ErrorStakingLockingPeriodTooShort.selector,
+            instanceNftId,
+            TargetManagerLib.getMinimumLockingPeriod(),
+            oneHour));
+        instance.setStakingLockingPeriod(oneHour);
+    }
+
 
     function test_stakingStakeUpdateRewardsAfterOneYear() public {
 
@@ -443,6 +471,35 @@ contract Staking is GifTest {
 
         // dip balance of staker after staking
         assertEq(core.dip.balanceOf(staker), 0, "unexpected staker balance after staking");
+
+        // wait 100 days
+        _wait(SecondsLib.toSeconds(100 * 24 * 3600));
+
+        // WHEN
+        vm.startPrank(staker);
+        vm.expectRevert(abi.encodeWithSelector(
+            IStaking.ErrorStakingStakeLocked.selector, 
+            stakeNftId,
+            lastUpdateAt + TargetManagerLib.getDefaultLockingPeriod().toInt()));
+        stakingService.unstake(stakeNftId);
+    }
+
+    function test_stakingStakeUnstake_stakeLocked() public {
+
+        // GIVEN
+        (
+            ,
+            Amount stakeAmount,
+            NftId stakeNftId
+        ) = _prepareStake(staker, instanceNftId, 1000);
+
+        uint256 lastUpdateAt = block.timestamp;
+
+        (, Amount reserveAmount,) = _addRewardReserves(instanceNftId, instanceOwner, 500);
+        assertEq(stakingReader.getReserveBalance(instanceNftId).toInt(), reserveAmount.toInt(), "unexpected reserve balance (initial)");
+
+        // dip balance of staker after staking
+        assertEq(dip.balanceOf(staker), 0, "unexpected staker balance after staking");
 
         // wait 100 days
         _wait(SecondsLib.toSeconds(100 * 24 * 3600));
