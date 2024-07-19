@@ -17,7 +17,7 @@ import {ObjectType, BUNDLE} from "../contracts/type/ObjectType.sol";
 import {Pool} from "../contracts/pool/Pool.sol";
 import {POOL_OWNER_ROLE, PUBLIC_ROLE} from "../contracts/type/RoleId.sol";
 import {Seconds, SecondsLib} from "../contracts/type/Seconds.sol";
-import {SimplePool} from "./mock/SimplePool.sol";
+import {SimplePool} from "../contracts/examples/unpermissioned/SimplePool.sol";
 import {StateId, ACTIVE, PAUSED, CLOSED} from "../contracts/type/StateId.sol";
 import {TimestampLib} from "../contracts/type/Timestamp.sol";
 import {GifTest} from "./base/GifTest.sol";

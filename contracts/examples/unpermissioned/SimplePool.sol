@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Amount, AmountLib} from "../../contracts/type/Amount.sol";
-import {BasicPool} from "../../contracts/pool/BasicPool.sol";
-import {BasicPoolAuthorization} from "../../contracts/pool/BasicPoolAuthorization.sol";
-import {Fee} from "../../contracts/type/Fee.sol";
-import {IAuthorization} from "../../contracts/authorization/IAuthorization.sol";
-import {NftId} from "../../contracts/type/NftId.sol";
-import {Seconds} from "../../contracts/type/Timestamp.sol";
-import {UFixed} from "../../contracts/type/UFixed.sol";
+import {Amount, AmountLib} from "../../type/Amount.sol";
+import {BasicPool} from "../../pool/BasicPool.sol";
+import {BasicPoolAuthorization} from "../../pool/BasicPoolAuthorization.sol";
+import {Fee} from "../../type/Fee.sol";
+import {IAuthorization} from "../../authorization/IAuthorization.sol";
+import {NftId} from "../../type/NftId.sol";
+import {Seconds} from "../../type/Timestamp.sol";
+import {UFixed} from "../../type/UFixed.sol";
 
 contract SimplePool is
     BasicPool

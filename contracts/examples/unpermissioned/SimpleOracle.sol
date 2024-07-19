@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IAuthorization} from "../../contracts/authorization/IAuthorization.sol";
-import {NftId} from "../../contracts/type/NftId.sol";
-import {BasicOracle} from "../../contracts/oracle/BasicOracle.sol";
-import {BasicOracleAuthorization} from "../../contracts/oracle/BasicOracleAuthorization.sol";
-import {RequestId} from "../../contracts/type/RequestId.sol";
-import {Timestamp} from "../../contracts/type/Timestamp.sol";
+import {IAuthorization} from "../../authorization/IAuthorization.sol";
+import {NftId} from "../../type/NftId.sol";
+import {BasicOracle} from "../../oracle/BasicOracle.sol";
+import {RequestId} from "../../type/RequestId.sol";
+import {Timestamp} from "../../type/Timestamp.sol";
 
 contract SimpleOracle is
     BasicOracle

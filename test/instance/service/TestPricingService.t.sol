@@ -16,9 +16,7 @@ import {DistributorType} from "../../../contracts/type/DistributorType.sol";
 import {ReferralId, ReferralLib} from "../../../contracts/type/Referral.sol";
 import {RiskId, RiskIdLib} from "../../../contracts/type/RiskId.sol";
 import {SecondsLib} from "../../../contracts/type/Seconds.sol";
-import {SimpleProduct} from "../../mock/SimpleProduct.sol";
-import {SimpleDistribution} from "../../mock/SimpleDistribution.sol";
-import {SimplePool} from "../../mock/SimplePool.sol";
+import {SimpleDistribution} from "../../../contracts/examples/unpermissioned/SimpleDistribution.sol";
 import {TimestampLib} from "../../../contracts/type/Timestamp.sol";
 
 contract TestPricingService is GifTest {

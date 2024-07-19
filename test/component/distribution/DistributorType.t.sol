@@ -9,7 +9,7 @@ import {NftId} from "../../../contracts/type/NftId.sol";
 import {DistributorType, DistributorTypeLib} from "../../../contracts/type/DistributorType.sol";
 import {IDistribution} from "../../../contracts/instance/module/IDistribution.sol";
 import {UFixed, UFixedLib} from "../../../contracts/type/UFixed.sol";
-import {SimpleDistribution} from "../../mock/SimpleDistribution.sol";
+import {SimpleDistribution} from "../../../contracts/examples/unpermissioned/SimpleDistribution.sol";
 import {Fee, FeeLib} from "../../../contracts/type/Fee.sol";
 import {DISTRIBUTION_OWNER_ROLE} from "../../../contracts/type/RoleId.sol";
 
