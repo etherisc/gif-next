@@ -59,7 +59,8 @@ contract ObjectLifecycle is
     }
 
     function _setupPremiumLifecycle() private {
-        setInitialState(PREMIUM(), ACTIVE());
+        setInitialState(PREMIUM(), EXPECTED());
+        setStateTransition(PREMIUM(), EXPECTED(), PAID());
     }
 
     function _setupClaimLifecycle() private {

@@ -91,6 +91,14 @@ contract InstanceReader {
         }
     }
 
+    function getPremiumInfoState(NftId policyNftId) 
+        public
+        view
+        returns (StateId state)
+    {
+        return _store.getState(toPremiumKey(policyNftId));
+    }
+
     function getBundleState(NftId bundleNftId)
         public
         view

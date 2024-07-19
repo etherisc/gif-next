@@ -14,7 +14,7 @@ import {TokenHandler} from "../shared/TokenHandler.sol";
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {Timestamp, TimestampLib, zeroTimestamp} from "../type/Timestamp.sol";
 import {ObjectType, APPLICATION, COMPONENT, DISTRIBUTION, PRODUCT, POOL, POLICY, BUNDLE, CLAIM, PRICE} from "../type/ObjectType.sol";
-import {APPLIED, COLLATERALIZED, KEEP_STATE, CLOSED, DECLINED} from "../type/StateId.sol";
+import {APPLIED, COLLATERALIZED, KEEP_STATE, CLOSED, DECLINED, PAID} from "../type/StateId.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
 import {ReferralId} from "../type/Referral.sol";
 import {StateId} from "../type/StateId.sol";
@@ -214,7 +214,6 @@ contract PolicyService is
         }
 
         IPolicy.PremiumInfo memory premium = instanceReader.getPremiumInfo(policyNftId); 
-        policyInfo.premiumPaidAmount = premium.premiumAmount;
 
         _processPremium(
             instance,
@@ -228,6 +227,7 @@ contract PolicyService is
         }
 
         instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, KEEP_STATE());
+        instance.getInstanceStore().updatePremiumState(policyNftId, PAID());
 
         // TODO: add logging
 
@@ -335,7 +335,7 @@ contract PolicyService is
 
         // TODO consider to allow for underpaid premiums (with the effects of reducing max payouts accordingly)
         // TODO consider to remove requirement for fully paid premiums altogether
-        if (!(policyInfo.premiumAmount == policyInfo.premiumPaidAmount)) {
+        if (! instanceReader.getPremiumInfoState(policyNftId).eq(PAID())) {
             revert ErrorPolicyServicePremiumNotFullyPaid(policyNftId, policyInfo.premiumAmount, policyInfo.premiumPaidAmount);
         }
 

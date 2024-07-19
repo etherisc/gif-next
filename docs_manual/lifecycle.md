@@ -52,6 +52,16 @@ stateDiagram-v2
     DECLINED --> [*]
 ```
 
+## Premium lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> EXPECTED
+    EXPECTED --> PAID
+    PAID --> [*]
+```
+
+
 # Claim lifecycle
 
 ```mermaid

@@ -9,6 +9,7 @@ using {
     eqStateId as ==, 
     neStateId as !=, 
     StateIdLib.eqz,
+    StateIdLib.eq,
     StateIdLib.gtz,
     StateIdLib.toInt
 } for StateId global;

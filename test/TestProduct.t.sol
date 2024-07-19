@@ -18,7 +18,7 @@ import {IRisk} from "../contracts/instance/module/IRisk.sol";
 import {RiskId, RiskIdLib, eqRiskId} from "../contracts/type/RiskId.sol";
 import {ReferralId, ReferralLib} from "../contracts/type/Referral.sol";
 import {ReferralId, ReferralLib} from "../contracts/type/Referral.sol";
-import {APPLIED, COLLATERALIZED, CLOSED, DECLINED} from "../contracts/type/StateId.sol";
+import {APPLIED, COLLATERALIZED, CLOSED, DECLINED, PAID, EXPECTED} from "../contracts/type/StateId.sol";
 import {POLICY} from "../contracts/type/ObjectType.sol";
 import {DistributorType} from "../contracts/type/DistributorType.sol";
 import {IPolicyService} from "../contracts/product/IPolicyService.sol";
@@ -216,6 +216,8 @@ contract TestProduct is GifTest {
         assertTrue(policyInfo.expiredAt.gtz(), "expiredAt not set");
         assertTrue(policyInfo.expiredAt.toInt() == policyInfo.activatedAt.addSeconds(sec30).toInt(), "expiredAt not activatedAt + 30");
 
+        assertEq(instanceReader.getPremiumInfoState(policyNftId).toInt(), EXPECTED().toInt(), "premium info state not CALCULATED");
+
         // solhint-disable-next-line
         console.log("checking bundle amounts after underwriting");
         (Amount amount, Amount lockedAmount, Amount feeAmount) = instanceStore.getAmounts(bundleNftId);
@@ -321,6 +323,8 @@ contract TestProduct is GifTest {
         assertTrue(policyInfo.activatedAt.gtz(), "activatedAt not set");
         assertTrue(policyInfo.expiredAt.gtz(), "expiredAt not set");
         assertTrue(policyInfo.expiredAt.toInt() == policyInfo.activatedAt.addSeconds(sec30).toInt(), "expiredAt not activatedAt + 30");
+
+        assertEq(instanceReader.getPremiumInfoState(policyNftId).toInt(), PAID().toInt(), "premium info state not CALCULATED");
 
         // solhint-disable-next-line 
         console.log("checking token balances after underwriting");
@@ -662,7 +666,7 @@ contract TestProduct is GifTest {
 
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
         assertEq(policyInfo.premiumAmount.toInt(), 137, "unexpected premium amount from application");
-        assertEq(policyInfo.premiumPaidAmount.toInt(), 140, "unexpected actual premium amount");
+        assertEq(instanceReader.getPremiumInfoState(policyNftId).toInt(), PAID().toInt(), "unexpected premium info state");
     }
 
 
