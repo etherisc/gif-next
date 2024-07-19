@@ -196,7 +196,6 @@ contract ReleaseRegistry is
         emit LogReleaseCreation(version, releaseSalt);
     }
 
-    // TODO this function can have 0 args -> use stored addresses from prepareNextRelease()
     function registerService(IService service) 
         external
         restricted // GIF_MANAGER_ROLE
@@ -232,19 +231,26 @@ contract ReleaseRegistry is
         }
 
         // register service with registry
+        // !!! TODO MUST call registry at the end of this function
         nftId = _registry.registerService(info, serviceVersion, serviceDomain);
         service.linkToRegisteredNftId();
         _registeredServices++;
 
         // setup service authorization
+        // !!! TODO service A can call service B while release is not active
         _admin.authorizeService(
             _serviceAuthorization[releaseVersion], 
-            service);
+            service,
+            serviceDomain,
+            serviceVersion);
 
-        // TODO consider to extend this to REGISTRY
         // special roles for registry/staking/pool service
-        if (serviceDomain == STAKING() || serviceDomain == POOL()) {
-            // TODO rename to grantServiceDomainRole()
+        // !!! TODO registry service allowed to call registry while release is not activated (same for staking/pool service and staking)
+        if (
+            serviceDomain == REGISTRY() ||
+            serviceDomain == STAKING() ||
+            serviceDomain == POOL()) 
+        {
             _admin.grantServiceRoleForAllVersions(service, serviceDomain);
         }
     }

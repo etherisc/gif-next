@@ -113,7 +113,6 @@ contract AccessAdmin is
 
         _setAuthority(address(_authority)); // set authority for oz access managed
         _createAdminAndPublicRoles();
-        _disableInitializers();
     }
 
     //--- view functions for roles ------------------------------------------//
