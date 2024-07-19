@@ -427,6 +427,35 @@ contract Staking is GifTest {
         assertEq(stakingReader.getBalanceUpdatedIn(instanceNftId).toInt(), block.number, "unexpected instance last updated in (after unstake)");
     }
 
+    function test_stakingStakeUnstake_stakeLocked() public {
+
+        // GIVEN
+        (
+            ,
+            Amount stakeAmount,
+            NftId stakeNftId
+        ) = _prepareStake(staker, instanceNftId, 1000);
+
+        uint256 lastUpdateAt = block.timestamp;
+
+        (, Amount reserveAmount,) = _addRewardReserves(instanceNftId, instanceOwner, 500);
+        assertEq(stakingReader.getReserveBalance(instanceNftId).toInt(), reserveAmount.toInt(), "unexpected reserve balance (initial)");
+
+        // dip balance of staker after staking
+        assertEq(dip.balanceOf(staker), 0, "unexpected staker balance after staking");
+
+        // wait 100 days
+        _wait(SecondsLib.toSeconds(100 * 24 * 3600));
+
+        // WHEN
+        vm.startPrank(staker);
+        vm.expectRevert(abi.encodeWithSelector(
+            IStaking.ErrorStakingStakeLocked.selector, 
+            stakeNftId,
+            lastUpdateAt + TargetManagerLib.getDefaultLockingPeriod().toInt()));
+        stakingService.unstake(stakeNftId);
+    }
+
 
     function test_stakingStakeClaimRewardsHappyCase() public {
 
