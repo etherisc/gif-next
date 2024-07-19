@@ -85,7 +85,7 @@ interface IDistributionService is IService {
     function processSale(
         NftId distributionNftId,
         ReferralId referralId,
-        IPolicy.Premium memory premium
+        IPolicy.PremiumInfo memory premium
     ) external;
 
     function referralIsValid(

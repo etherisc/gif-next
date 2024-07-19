@@ -111,8 +111,7 @@ contract ApplicationService is
         view
         returns (Amount premiumAmount)
     {
-        return AmountLib.toAmount(
-            _pricingService.calculatePremium(
+        return _pricingService.calculatePremium(
                 info.productNftId,
                 info.riskId,
                 info.sumInsuredAmount,
@@ -120,7 +119,7 @@ contract ApplicationService is
                 info.applicationData,
                 info.bundleNftId,
                 info.referralId
-            ).premiumAmount);
+            ).premiumAmount;
     }
 
 

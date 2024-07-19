@@ -227,7 +227,7 @@ contract DistributionService is
     function processSale(
         NftId distributionNftId, // assume always of distribution type
         ReferralId referralId,
-        IPolicy.Premium memory premium
+        IPolicy.PremiumInfo memory premium
     )
         external
         virtual
@@ -238,13 +238,13 @@ contract DistributionService is
         InstanceStore store = instance.getInstanceStore();
 
         // get distribution owner fee amount
-        Amount distributionOwnerFee = AmountLib.toAmount(premium.distributionOwnerFeeFixAmount + premium.distributionOwnerFeeVarAmount);
+        Amount distributionOwnerFee = premium.distributionOwnerFeeFixAmount + premium.distributionOwnerFeeVarAmount;
 
         // update referral/distributor info if applicable
         if (referralIsValid(distributionNftId, referralId)) {
 
             // increase distribution balance by commission amount and distribution owner fee
-            Amount commissionAmount = AmountLib.toAmount(premium.commissionAmount);
+            Amount commissionAmount = premium.commissionAmount;
             _componentService.increaseDistributionBalance(store, distributionNftId, commissionAmount, distributionOwnerFee);
 
             // update book keeping for referral info

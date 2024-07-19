@@ -323,7 +323,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
                 // ObjectTypeLib: libraries.objectTypeLibAddress, 
                 RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
-                UFixedLib: libraries.uFixedLibAddress,
                 VersionLib: libraries.versionLibAddress, 
                 VersionPartLib: libraries.versionPartLibAddress,
                 AmountLib: libraries.amountLibAddress

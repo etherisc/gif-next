@@ -107,7 +107,7 @@ contract TestProduct is GifTest {
 
         Amount sumInsured = AmountLib.toAmount(1000);
         Seconds  lifetime = SecondsLib.toSeconds(30);
-        IPolicy.Premium memory premiumExpected = pricingService.calculatePremium(
+        IPolicy.PremiumInfo memory premiumExpected = pricingService.calculatePremium(
             productNftId,
             riskId,
             sumInsured,
@@ -124,8 +124,8 @@ contract TestProduct is GifTest {
             bundleNftId, 
             ReferralLib.zero());
 
-        assertEq(premiumExpected.premiumAmount, 140, "premium not 140 (100 + 10 + 10 + 10 + 10)");
-        assertEq(premium.toInt(), premiumExpected.premiumAmount, "unexpected premium amount");
+        assertEq(premiumExpected.premiumAmount.toInt(), 140, "premium not 140 (100 + 10 + 10 + 10 + 10)");
+        assertEq(premium.toInt(), premiumExpected.premiumAmount.toInt(), "unexpected premium amount");
     }
 
     function test_productCreateApplication() public {
@@ -275,7 +275,7 @@ contract TestProduct is GifTest {
         assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
         
         // calculate expected premium/fee amounts
-        IPolicy.Premium memory ep = pricingService.calculatePremium(
+        IPolicy.PremiumInfo memory ep = pricingService.calculatePremium(
             productNftId, 
             riskId, 
             AmountLib.toAmount(sumInsuredAmount), 
@@ -305,12 +305,12 @@ contract TestProduct is GifTest {
         // solhint-disable-next-line 
         console.log("checking bundle amounts after underwriting");
         (Amount amount, Amount lockedAmount, Amount feeAmount) = instanceStore.getAmounts(bundleNftId);
-        uint bundleFee = ep.bundleFeeFixAmount + ep.bundleFeeVarAmount;
-        uint netPremium = ep.netPremiumAmount;
+        Amount bundleFee = ep.bundleFeeFixAmount + ep.bundleFeeVarAmount;
+        Amount netPremium = ep.netPremiumAmount;
 
-        assertEq(amount.toInt(), DEFAULT_BUNDLE_CAPITALIZATION + netPremium + bundleFee, "unexpected bundle amount (2)");
+        assertEq(amount.toInt(), DEFAULT_BUNDLE_CAPITALIZATION + netPremium.toInt() + bundleFee.toInt(), "unexpected bundle amount (2)");
         assertEq(lockedAmount.toInt(), sumInsuredAmount, "unexpected locked amount");
-        assertEq(feeAmount.toInt(), bundleFee, "unexpected bundle fee amount");
+        assertEq(feeAmount.toInt(), bundleFee.toInt(), "unexpected bundle fee amount");
 
         // solhint-disable-next-line 
         console.log("checking pool amounts after underwriting");
@@ -326,7 +326,7 @@ contract TestProduct is GifTest {
         console.log("checking token balances after underwriting");
         assertEq(token.balanceOf(product.getWallet()) - pb[product.getWallet()], 10, "unexpected product balance");
         assertEq(token.balanceOf(distribution.getWallet()) - pb[distribution.getWallet()], 10, "unexpected distibution balance");
-        assertEq(token.balanceOf(customer), pb[customer] - ep.premiumAmount, "unexpected customer balance");
+        assertEq(token.balanceOf(customer), pb[customer] - ep.premiumAmount.toInt(), "unexpected customer balance");
         assertEq(token.balanceOf(pool.getWallet()) - pb[pool.getWallet()], 120, "unexpected pool balance"); // 100 (net premium) + 10 (pool fee) + 10 (bundle fee)
 
         assertEq(instanceBundleSet.activePolicies(bundleNftId), 1, "expected one active policy");
@@ -420,7 +420,7 @@ contract TestProduct is GifTest {
         pb[customer] = token.balanceOf(customer);
 
         // calculate premium
-        IPolicy.Premium memory premiumExpected = pricingService.calculatePremium(
+        IPolicy.PremiumInfo memory premiumExpected = pricingService.calculatePremium(
             productNftId,
             riskId,
             AmountLib.toAmount(sumInsured),
@@ -429,7 +429,7 @@ contract TestProduct is GifTest {
             bundleNftId,
             referralId);
 
-        assertEq(premiumExpected.premiumAmount, 137, "unexpected premium amount");
+        assertEq(premiumExpected.premiumAmount.toInt(), 137, "unexpected premium amount");
     
         // WHEN
         vm.startPrank(productOwner);
@@ -442,7 +442,7 @@ contract TestProduct is GifTest {
 
         assertEq(token.balanceOf(product.getWallet()), 10, "product balance not 10");
         assertEq(token.balanceOf(distribution.getWallet()), 7, "distibution balance not 7");
-        assertEq(pb[customer] - token.balanceOf(customer), premiumExpected.premiumAmount, "customer balance not 863");
+        assertEq(pb[customer] - token.balanceOf(customer), premiumExpected.premiumAmount.toInt(), "customer balance not 863");
 
         // solhint-disable
         console.log("product fee (after)", instanceReader.getFeeAmount(productNftId).toInt());
@@ -530,7 +530,7 @@ contract TestProduct is GifTest {
         vm.stopPrank();
 
         // calculate premium
-        IPolicy.Premium memory premiumExpected = pricingService.calculatePremium(
+        IPolicy.PremiumInfo memory premiumExpected = pricingService.calculatePremium(
             productNftId,
             riskId,
             AmountLib.toAmount(sumInsured),
@@ -539,7 +539,7 @@ contract TestProduct is GifTest {
             bundleNftId,
             referralId);
 
-        assertEq(premiumExpected.premiumAmount, 137, "unexpected premium amount");
+        assertEq(premiumExpected.premiumAmount.toInt(), 137, "unexpected premium amount");
     
         // WHEN
         vm.startPrank(productOwner);
@@ -816,7 +816,7 @@ contract TestProduct is GifTest {
         vm.stopPrank();
 
         // calculate expected premium/fee amounts
-        IPolicy.Premium memory ep = pricingService.calculatePremium(
+        IPolicy.PremiumInfo memory ep = pricingService.calculatePremium(
             productNftId, 
             riskId, 
             AmountLib.toAmount(sumInsuredAmount), 
@@ -865,11 +865,11 @@ contract TestProduct is GifTest {
         // solhint-disable-next-line 
         console.log("checking bundle amounts after underwriting (after premium collection)");
         (amount, lockedAmount, feeAmount) = instanceStore.getAmounts(bundleNftId);
-        uint bundleFee = ep.bundleFeeFixAmount + ep.bundleFeeVarAmount;
-        uint netPremium = ep.netPremiumAmount;
-        assertEq(amount.toInt(), DEFAULT_BUNDLE_CAPITALIZATION + netPremium + bundleFee, "unexpected bundle amount (after)");
+        Amount bundleFee = ep.bundleFeeFixAmount + ep.bundleFeeVarAmount;
+        Amount netPremium = ep.netPremiumAmount;
+        assertEq(amount.toInt(), DEFAULT_BUNDLE_CAPITALIZATION + netPremium.toInt() + bundleFee.toInt(), "unexpected bundle amount (after)");
         assertEq(lockedAmount.toInt(), sumInsuredAmount, "unexpected locked amount (after)");
-        assertEq(feeAmount.toInt(), bundleFee, "unexpected bundle fee amount (after)");
+        assertEq(feeAmount.toInt(), bundleFee.toInt(), "unexpected bundle fee amount (after)");
 
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
         assertTrue(policyInfo.activatedAt.gtz(), "activatedAt not set");
@@ -878,7 +878,7 @@ contract TestProduct is GifTest {
 
         assertEq(token.balanceOf(product.getWallet()) - pb[product.getWallet()], ep.productFeeAmount.toInt(), "unexpected product balance (after)");
         assertEq(token.balanceOf(distribution.getWallet()) - pb[distribution.getWallet()], ep.distributionFeeAndCommissionAmount.toInt(), "unexpected distribution balance (after)");
-        assertEq(pb[customer] - token.balanceOf(customer), ep.premiumAmount, "unexpected customer balance (after)");
+        assertEq(pb[customer] - token.balanceOf(customer), ep.premiumAmount.toInt(), "unexpected customer balance (after)");
         assertEq(token.balanceOf(pool.getWallet()) - pb[pool.getWallet()], ep.poolPremiumAndFeeAmount.toInt(), "unexpecte pool balance (after)");
     }
 
@@ -926,7 +926,7 @@ contract TestProduct is GifTest {
         vm.stopPrank();
 
         // calculate expected premium/fee amounts
-        IPolicy.Premium memory ep = pricingService.calculatePremium(
+        IPolicy.PremiumInfo memory ep = pricingService.calculatePremium(
             productNftId, 
             riskId, 
             AmountLib.toAmount(sumInsuredAmount), 
@@ -964,12 +964,12 @@ contract TestProduct is GifTest {
         // solhint-disable-next-line
         console.log("checking bundle amounts after collateralizaion");
         (Amount amount, Amount lockedAmount, Amount feeAmount) = instanceStore.getAmounts(bundleNftId);
-        uint bundleFee = ep.bundleFeeFixAmount + ep.bundleFeeVarAmount;
-        uint netPremium = ep.netPremiumAmount;
+        Amount bundleFee = ep.bundleFeeFixAmount + ep.bundleFeeVarAmount;
+        Amount netPremium = ep.netPremiumAmount;
 
-        assertEq(amount.toInt(), DEFAULT_BUNDLE_CAPITALIZATION + netPremium + bundleFee, "unexpected bundle amount (4)");
+        assertEq(amount.toInt(), DEFAULT_BUNDLE_CAPITALIZATION + netPremium.toInt() + bundleFee.toInt(), "unexpected bundle amount (4)");
         assertEq(lockedAmount.toInt(), 0, "unexpected locked amount");
-        assertEq(feeAmount.toInt(), bundleFee, "unexpected bundle fee amount");
+        assertEq(feeAmount.toInt(), bundleFee.toInt(), "unexpected bundle fee amount");
 
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
         assertTrue(policyInfo.closedAt.gtz(), "expiredAt not set");

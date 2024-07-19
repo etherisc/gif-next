@@ -159,7 +159,7 @@ contract PolicyService is
             COLLATERALIZED());
 
         // calculate and store premium
-        IPolicy.Premium memory premium = _pricingService.calculatePremium(
+        IPolicy.PremiumInfo memory premium = _pricingService.calculatePremium(
             productNftId,
             applicationInfo.riskId,
             applicationInfo.sumInsuredAmount,
@@ -213,8 +213,8 @@ contract PolicyService is
             revert ErrorPolicyServicePremiumAlreadyPaid(policyNftId, policyInfo.premiumPaidAmount);
         }
 
-        IPolicy.Premium memory premium = instanceReader.getPremiumInfo(policyNftId); 
-        policyInfo.premiumPaidAmount = AmountLib.toAmount(premium.premiumAmount);
+        IPolicy.PremiumInfo memory premium = instanceReader.getPremiumInfo(policyNftId); 
+        policyInfo.premiumPaidAmount = premium.premiumAmount;
 
         _processPremium(
             instance,
@@ -361,7 +361,7 @@ contract PolicyService is
         IInstance instance,
         NftId applicationNftId,
         IPolicy.PolicyInfo memory applicationInfo,
-        IPolicy.Premium memory premium
+        IPolicy.PremiumInfo memory premium
     )
         internal
         virtual
@@ -378,7 +378,7 @@ contract PolicyService is
                 tokenHandler.getToken(), 
                 address(tokenHandler),
                 policyHolder, 
-                AmountLib.toAmount(premium.premiumAmount));
+                premium.premiumAmount);
         }
 
         // update the counters
@@ -424,7 +424,7 @@ contract PolicyService is
         NftId productNftId,
         NftId bundleNftId,
         ReferralId referralId,
-        IPolicy.Premium memory premium
+        IPolicy.PremiumInfo memory premium
     )
         internal
         virtual
@@ -437,7 +437,7 @@ contract PolicyService is
         _componentService.increaseProductFees(
             instanceStore, 
             productNftId, 
-            AmountLib.toAmount(premium.productFeeVarAmount + premium.productFeeFixAmount));
+            premium.productFeeVarAmount + premium.productFeeFixAmount);
 
         // update distribution fees and distributor commission and pool fees 
         _distributionService.processSale(
@@ -457,7 +457,7 @@ contract PolicyService is
         InstanceReader instanceReader,
         NftId policyNftId,
         NftId productNftId,
-        IPolicy.Premium memory premium
+        IPolicy.PremiumInfo memory premium
     )
         internal
         virtual

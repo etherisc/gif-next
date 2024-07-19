@@ -284,7 +284,7 @@ contract PoolService is
 
     function processSale(
         NftId bundleNftId, 
-        IPolicy.Premium memory premium 
+        IPolicy.PremiumInfo memory premium 
     ) 
         external
         virtual
@@ -296,9 +296,9 @@ contract PoolService is
         IRegistry.ObjectInfo memory instanceObjectInfo = registry.getObjectInfo(poolObjectInfo.parentNftId);
         IInstance instance = IInstance(instanceObjectInfo.objectAddress);
 
-        Amount poolFeeAmount = AmountLib.toAmount(premium.poolFeeFixAmount + premium.poolFeeVarAmount);
-        Amount bundleFeeAmount = AmountLib.toAmount(premium.bundleFeeFixAmount + premium.bundleFeeVarAmount);
-        Amount bundleNetAmount = AmountLib.toAmount(premium.netPremiumAmount);
+        Amount poolFeeAmount = premium.poolFeeFixAmount + premium.poolFeeVarAmount;
+        Amount bundleFeeAmount = premium.bundleFeeFixAmount + premium.bundleFeeVarAmount;
+        Amount bundleNetAmount = premium.netPremiumAmount;
 
         InstanceStore instanceStore = instance.getInstanceStore();
         _componentService.increasePoolBalance(

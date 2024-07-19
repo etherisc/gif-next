@@ -62,7 +62,7 @@ abstract contract Product is
         override 
         returns (Amount premiumAmount)
     {
-        IPolicy.Premium memory premium = _getProductStorage()._pricingService.calculatePremium(
+        IPolicy.PremiumInfo memory premium = _getProductStorage()._pricingService.calculatePremium(
             getNftId(),
             riskId,
             sumInsuredAmount,
@@ -72,7 +72,7 @@ abstract contract Product is
             referralId
         );
 
-        return AmountLib.toAmount(premium.premiumAmount);
+        return premium.premiumAmount;
     }
 
     function calculateNetPremium(
