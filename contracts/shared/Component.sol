@@ -206,7 +206,7 @@ abstract contract Component is
 
 
     function isRegistered() public virtual view returns (bool) {
-        return getRegistry().getNftId(address(this)).gtz();
+        return getRegistry().getNftIdForAddress(address(this)).gtz();
     }
 
 

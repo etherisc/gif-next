@@ -133,9 +133,9 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             stakingOwner);
         
         chainNft = ChainNft(registry.getChainNftAddress());
-        registryNftId = registry.getNftId(address(registry));
+        registryNftId = registry.getNftIdForAddress(address(registry));
         registryAddress = address(registry);
-        stakingNftId = registry.getNftId(address(staking));
+        stakingNftId = registry.getNftIdForAddress(address(staking));
 
         _startPrank(registryOwner);
         _deployRegistryServiceMock();
@@ -170,7 +170,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         registryServiceMock = RegistryServiceMock(address(registryServiceManagerMock.getRegistryService()));
         releaseRegistry.registerService(registryServiceMock);
         registryServiceManagerMock.linkToProxy();
-        registryServiceNftId = registry.getNftId(address(registryServiceMock));
+        registryServiceNftId = registry.getNftIdForAddress(address(registryServiceMock));
 
         releaseRegistry.activateNextRelease();
     }
@@ -465,7 +465,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
 
         // check for zero address
         //console.log("   checking with 0 address");        
-        assertEq(registry.getNftId( address(0) ).toInt(), zero.toInt(), "getNftId(0) returned unexpected value");        
+        assertEq(registry.getNftIdForAddress( address(0) ).toInt(), zero.toInt(), "getNftId(0) returned unexpected value");        
         eqObjectInfo(registry.getObjectInfo( address(0) ), zeroObjectInfo());
 
         assertFalse(registry.isRegistered( address(0) ), "isRegistered(0) returned unexpected value");
@@ -564,7 +564,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         //console.log("       checking by address getters");
         if(expectedInfo.objectAddress > address(0)) 
         {// expect contract
-            assertEq(registry.getNftId(expectedInfo.objectAddress).toInt(), nftId.toInt(), "getNftId(address) returned unexpected value");
+            assertEq(registry.getNftIdForAddress(expectedInfo.objectAddress).toInt(), nftId.toInt(), "getNftId(address) returned unexpected value");
             eqObjectInfo(registry.getObjectInfo(expectedInfo.objectAddress) , expectedInfo);//, "getObjectInfo(address) returned unexpected value");
             if(expectedOwner > address(0)) {  // expect registered
                 assertTrue(registry.isRegistered(expectedInfo.objectAddress), "isRegistered(address) returned unexpected value #1");

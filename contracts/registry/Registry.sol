@@ -247,7 +247,7 @@ contract Registry is
         return _protocolNftId;
     }
 
-    function getNftId(address object) external view returns (NftId id) {
+    function getNftIdForAddress(address object) external view returns (NftId id) {
         return _nftIdByAddress[object];
     }
 

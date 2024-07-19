@@ -39,7 +39,7 @@ contract NftOwnableTest is GifTest {
         // solhint-disable no-console
         console.log("registryOwner", registryOwner);
         console.log("registry address", address(registry));
-        console.log("registry nft id", registry.getNftId(address(registry)).toInt());
+        console.log("registry nft id", registry.getNftIdForAddress(address(registry)).toInt());
         console.log("registry owner", registry.ownerOf(address(registry)));
         console.log("mockOwner", mockOwner);
         console.log("mock address", address(mock));
@@ -149,7 +149,7 @@ contract NftOwnableTest is GifTest {
         vm.prank(mockOwner);
         mock.linkToNftOwnable(address(registry));
 
-        assertEq(mock.getNftId().toInt(), registry.getNftId(registryAddress).toInt(), "mock nft id not registry nft id");
+        assertEq(mock.getNftId().toInt(), registry.getNftIdForAddress(registryAddress).toInt(), "mock nft id not registry nft id");
         assertEq(mock.getOwner(), address(0x1), "mock owner not registry owner after linking");
     }
 

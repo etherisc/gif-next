@@ -60,7 +60,7 @@ contract InstanceService is
 
     modifier onlyInstance() {        
         address instanceAddress = msg.sender;
-        NftId instanceNftId = getRegistry().getNftId(msg.sender);
+        NftId instanceNftId = getRegistry().getNftIdForAddress(msg.sender);
         if (instanceNftId.eqz()) {
             revert ErrorInstanceServiceNotRegistered(instanceAddress);
         }
@@ -132,7 +132,7 @@ contract InstanceService is
         virtual
         onlyInstance()
     {
-        NftId instanceNftId = getRegistry().getNftId(msg.sender);
+        NftId instanceNftId = getRegistry().getNftIdForAddress(msg.sender);
         _stakingService.setInstanceLockingPeriod(
             instanceNftId,
             stakeLockingPeriod);
@@ -144,7 +144,7 @@ contract InstanceService is
         virtual
         onlyInstance()
     {
-        NftId instanceNftId = getRegistry().getNftId(msg.sender);
+        NftId instanceNftId = getRegistry().getNftIdForAddress(msg.sender);
         _stakingService.setInstanceRewardRate(
             instanceNftId,
             rewardRate);
@@ -156,7 +156,7 @@ contract InstanceService is
         virtual
         onlyInstance()
     {
-        NftId instanceNftId = getRegistry().getNftId(msg.sender);
+        NftId instanceNftId = getRegistry().getNftIdForAddress(msg.sender);
         _stakingService.refillInstanceRewardReserves(
             instanceNftId,
             rewardProvider,
@@ -170,7 +170,7 @@ contract InstanceService is
         onlyInstance()
         returns (Amount newBalance)
     {
-        NftId instanceNftId = getRegistry().getNftId(msg.sender);
+        NftId instanceNftId = getRegistry().getNftIdForAddress(msg.sender);
         _stakingService.withdrawInstanceRewardReserves(
             instanceNftId,
             dipAmount);

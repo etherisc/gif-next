@@ -58,7 +58,7 @@ contract RegistryServiceManagerTest is RegistryServiceTestBase {
         console.log("registry service owner", registryService.getOwner());
         console.log("registry service authority", registryService.authority());
         console.log("registry", address(registry));
-        console.log("registry nft", registry.getNftId(address(registry)).toInt());
+        console.log("registry nft", registry.getNftIdForAddress(address(registry)).toInt());
         console.log("registry owner (opt 1)", registry.ownerOf(address(registry)));
         console.log("registry owner (opt 2)", registry.getOwner());
         // solhint-enable
@@ -80,9 +80,9 @@ contract RegistryServiceManagerTest is RegistryServiceTestBase {
         assertEq(registry.getChainNftAddress(), address(chainNft), "unexpected chain nft address");
 
         // check nft ids
-        assertTrue(registry.getNftId(address(registryService)).gtz(), "registry service nft id (option 1) zero");
+        assertTrue(registry.getNftIdForAddress(address(registryService)).gtz(), "registry service nft id (option 1) zero");
         assertTrue(registryService.getNftId().gtz(), "registry service nft id (option 2) zero");
-        assertEq(registryService.getNftId().toInt(), registry.getNftId(address(registryService)).toInt(), "registry service nft id mismatch");
+        assertEq(registryService.getNftId().toInt(), registry.getNftIdForAddress(address(registryService)).toInt(), "registry service nft id mismatch");
         
         // check ownership
         assertEq(registryServiceManager.getOwner(), address(registryOwner), "service manager owner not registry owner");
@@ -169,7 +169,7 @@ contract RegistryServiceManagerTest is RegistryServiceTestBase {
         assertEq(registryServiceManager.getOwner(), registryOwner, "registry service manager owner not registry owner");
 
         // transfer ownership by transferring nft
-        NftId registryServiceNft = registry.getNftId(registryServiceAddress);
+        NftId registryServiceNft = registry.getNftIdForAddress(registryServiceAddress);
 
         vm.startPrank(registryOwner);
         chainNft.approve(registryOwnerNew, registryServiceNft.toInt());
@@ -208,7 +208,7 @@ contract RegistryServiceManagerTest is RegistryServiceTestBase {
 
 
     function _logObject(string memory prefix, address object) internal view {
-        NftId nftId = registry.getNftId(object);
+        NftId nftId = registry.getNftIdForAddress(object);
         _logObject(prefix, nftId);
     }
 

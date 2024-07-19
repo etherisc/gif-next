@@ -59,7 +59,7 @@ contract GifDeployerTest is GifDeployer {
         assertTrue(registryNftId.gtz(), "registry nft id zero");
 
         // nft id and ownership
-        assertEq(registry.getNftId(address(registry)).toInt(), registryNftId.toInt(), "unexpected registry nft id");
+        assertEq(registry.getNftIdForAddress(address(registry)).toInt(), registryNftId.toInt(), "unexpected registry nft id");
         assertEq(registry.ownerOf(registryNftId), registry.NFT_LOCK_ADDRESS(), "unexpected registry nft owner (via nft lock address)");
         assertEq(registry.ownerOf(registryNftId), registry.getOwner(), "unexpected registry nft owner (via owner)");
 
@@ -160,7 +160,7 @@ contract GifDeployerTest is GifDeployer {
         // check nft id
         NftId stakingNftId = staking.getNftId();
         assertTrue(stakingNftId.gtz(), "staking nft id zero");
-        assertEq(stakingNftId.toInt(), registry.getNftId(address(staking)).toInt(), "unexpected staking nft id");
+        assertEq(stakingNftId.toInt(), registry.getNftIdForAddress(address(staking)).toInt(), "unexpected staking nft id");
 
         // check ownership
         assertEq(stakingOwner, registryOwner, "unexpected staking owner");
