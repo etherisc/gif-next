@@ -8,11 +8,11 @@ contract MockInterceptor is ITransferInterceptor {
     event LogNftTransferIntercepted(address from, address to, uint256 tokenId);
     event LogNftMintIntercepted(address to, uint256 tokenId);
 
-    function nftMint(address to, uint256 tokenId) external {
+    function nftMint(address to, uint256 tokenId) public virtual {
         emit LogNftMintIntercepted(to, tokenId);
     }
 
-    function nftTransferFrom(address from, address to, uint256 tokenId) external {
+    function nftTransferFrom(address from, address to, uint256 tokenId) public virtual {
         emit LogNftTransferIntercepted(from, to, tokenId);
     }
 }
