@@ -9,6 +9,9 @@ using {
     SecondsAdd as +,
     SecondsLib.eqz,
     SecondsLib.gtz,
+    SecondsLib.eq,
+    SecondsLib.gt,
+    SecondsLib.lt,
     SecondsLib.toInt,
     SecondsLib.add
 } for Seconds global;
@@ -75,6 +78,11 @@ library SecondsLib {
     /// @dev return true if duration1 is larger than duration2
     function gt(Seconds duration1, Seconds duration2) public pure returns (bool) {
         return Seconds.unwrap(duration1) > Seconds.unwrap(duration2);
+    }
+
+    /// @dev return true if duration1 is smaller than duration2
+    function lt(Seconds duration1, Seconds duration2) public pure returns (bool) {
+        return Seconds.unwrap(duration1) < Seconds.unwrap(duration2);
     }
 
     /// @dev return add duration1 and duration2
