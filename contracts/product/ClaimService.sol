@@ -40,11 +40,11 @@ contract ClaimService is
             address authority
         ) = abi.decode(data, (address, address, address));
 
-        initializeService(registryAddress, authority, owner);
+        _initializeService(registryAddress, authority, owner);
 
         _poolService = IPoolService(getRegistry().getServiceAddress(POOL(), getVersion().toMajorPart()));
 
-        registerInterface(type(IClaimService).interfaceId);
+        _registerInterface(type(IClaimService).interfaceId);
     }
 
     function submit(

@@ -39,8 +39,8 @@ contract RegistryService is
             address initialAuthority
         ) = abi.decode(data, (address, address));
 
-        initializeService(registryAddress, initialAuthority, owner);
-        registerInterface(type(IRegistryService).interfaceId);
+        _initializeService(registryAddress, initialAuthority, owner);
+        _registerInterface(type(IRegistryService).interfaceId);
     }
 
 

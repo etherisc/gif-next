@@ -164,7 +164,7 @@ abstract contract Distribution is
         $._distributionService = IDistributionService(_getServiceAddress(DISTRIBUTION())); 
         $._componentService = IComponentService(_getServiceAddress(COMPONENT())); 
 
-        registerInterface(type(IDistributionComponent).interfaceId);
+        _registerInterface(type(IDistributionComponent).interfaceId);
     }
 
     /// @dev Sets the distribution fees to the provided values.

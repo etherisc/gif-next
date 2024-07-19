@@ -50,8 +50,8 @@ contract PricingService is
             address authority
         ) = abi.decode(data, (address, address, address));
 
-        initializeService(registryAddress, authority, owner);
-        registerInterface(type(IPricingService).interfaceId);
+        _initializeService(registryAddress, authority, owner);
+        _registerInterface(type(IPricingService).interfaceId);
 
         _distributionService = IDistributionService(_getServiceAddress(DISTRIBUTION()));
     }

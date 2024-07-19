@@ -174,7 +174,7 @@ abstract contract Product is
         $._poolNftId = getRegistry().getNftIdForAddress(pool);
         $._distributionNftId = getRegistry().getNftIdForAddress(distribution);
 
-        registerInterface(type(IProductComponent).interfaceId);  
+        _registerInterface(type(IProductComponent).interfaceId);  
     }
 
 

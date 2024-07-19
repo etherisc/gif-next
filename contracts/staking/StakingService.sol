@@ -331,7 +331,7 @@ contract StakingService is
             address stakingAddress
         ) = abi.decode(data, (address, address, address));
 
-        initializeService(registryAddress, authority, owner);
+        _initializeService(registryAddress, authority, owner);
 
         StakingServiceStorage storage $ = _getStakingServiceStorage();
         $._registryService = RegistryService(_getServiceAddress(REGISTRY()));
@@ -339,7 +339,7 @@ contract StakingService is
         $._dip = $._staking.getToken();
         $._tokenHandler = $._staking.getTokenHandler();
 
-        registerInterface(type(IStakingService).interfaceId);
+        _registerInterface(type(IStakingService).interfaceId);
     }
 
 

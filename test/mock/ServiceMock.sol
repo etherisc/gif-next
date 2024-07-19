@@ -23,7 +23,7 @@ contract ServiceMock is RegisterableMock, AccessManagedUpgradeable, IService {
             "")
     {
         _info.data = abi.encode(getDomain(), getVersion().toMajorPart());
-        registerInterface(type(IService).interfaceId);
+        _registerInterface(type(IService).interfaceId);
     }
 
     // from IService

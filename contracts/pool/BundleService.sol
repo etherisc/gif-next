@@ -40,20 +40,20 @@ contract BundleService is
         bytes memory data
     )
         internal
-        initializer
         virtual override
+        initializer()
     {
         address registryAddress;
         address initialOwner;
         (registryAddress, initialOwner) = abi.decode(data, (address, address));
         // TODO while PoolService is not deployed in PoolServiceManager constructor
         //      owner is PoolServiceManager deployer
-        initializeService(registryAddress, address(0), owner);
+        _initializeService(registryAddress, address(0), owner);
 
         _registryService = IRegistryService(_getServiceAddress(REGISTRY()));
         _componentService = IComponentService(_getServiceAddress(COMPONENT()));
 
-        registerInterface(type(IBundleService).interfaceId);
+        _registerInterface(type(IBundleService).interfaceId);
     }
 
 

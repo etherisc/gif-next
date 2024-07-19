@@ -27,19 +27,10 @@ interface IPolicyHolder is
     /// it is optional for products to notifiy policy holder of expired claims
     function policyExpired(NftId policyNftId) external;
 
-    /// @dev request for a payout by the requesting policy
-    /// the contract implements its use case specific handling for such requests.
-    /// eg. creation of a pending payout, a corresponding claim against one of the policies held by the IPolicyHolder
-    function requestPayout(NftId requestingPolicyNftId, Amount requestedPayoutAmount) external;
-
     /// @dev callback function to notify the confirmation of the specified claim
     /// active policies may open claims under the activated policy
     function claimConfirmed(NftId policyNftId, ClaimId claimId, Amount amount) external;
 
     /// @dev callback function that will be called after a successful payout
     function payoutExecuted(NftId policyNftId, PayoutId payoutId, address beneficiary, Amount amount) external;
-
-    /// @dev determines policy and claim specific beneficiary address
-    /// returned address will override GIF default where the policy nft holder is treated as beneficiary
-    function getBeneficiary(NftId policyNftId, PayoutId payoutId) external view returns (address beneficiary);
 }

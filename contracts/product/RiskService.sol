@@ -38,13 +38,13 @@ contract RiskService is
             address authority
         ) = abi.decode(data, (address, address, address));
 
-        initializeService(registryAddress, authority, owner);
+        _initializeService(registryAddress, authority, owner);
 
         _instanceService = IInstanceService(_getServiceAddress(INSTANCE()));
         _poolService = IPoolService(getRegistry().getServiceAddress(POOL(), getVersion().toMajorPart()));
         _registryService = IRegistryService(_getServiceAddress(REGISTRY()));
 
-        registerInterface(type(IRiskService).interfaceId);
+        _registerInterface(type(IRiskService).interfaceId);
     }
 
 

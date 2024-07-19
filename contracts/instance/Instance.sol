@@ -61,7 +61,7 @@ contract Instance is
         __AccessManaged_init(_instanceAdmin.authority());
 
         // setup instance object info
-        initializeRegisterable(
+        _initializeRegisterable(
             address(registry), 
             registry.getNftId(), 
             INSTANCE(), 
@@ -84,7 +84,7 @@ contract Instance is
                 INSTANCE(), 
                 getMajorVersion()));
 
-        registerInterface(type(IInstance).interfaceId);    
+        _registerInterface(type(IInstance).interfaceId);    
     }
 
     //--- Staking ----------------------------------------------------------//

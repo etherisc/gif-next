@@ -93,7 +93,7 @@ contract NftOwnableTest is GifTest {
         // initializeNftOwnable is not an initializer (and can only be called in the context of an initializer)
         vm.expectRevert(
             abi.encodeWithSelector(
-                Initializable.NotInitializing.selector));
+                Initializable.InvalidInitialization.selector));
 
         mock.initializeNftOwnable(fakeOwner, fakeRegistry);
     }
