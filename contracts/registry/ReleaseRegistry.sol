@@ -475,7 +475,7 @@ contract ReleaseRegistry is
         // TODO try catch and return false in case of revert
         // or just panic
         // check if contract returns a zero nft id for its own address
-        if (IRegistry(registryAddress).getNftId(registryAddress).eqz()) {
+        if (IRegistry(registryAddress).getNftIdForAddress(registryAddress).eqz()) {
             return false;
         }
 

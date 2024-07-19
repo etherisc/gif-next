@@ -123,11 +123,11 @@ abstract contract Product is
     }
 
     function getPoolNftId() external view override returns (NftId poolNftId) {
-        return getRegistry().getNftId(address(_getProductStorage()._pool));
+        return getRegistry().getNftIdForAddress(address(_getProductStorage()._pool));
     }
 
     function getDistributionNftId() external view override returns (NftId distributionNftId) {
-        return getRegistry().getNftId(address(_getProductStorage()._distribution));
+        return getRegistry().getNftIdForAddress(address(_getProductStorage()._distribution));
     }
 
     function _initializeProduct(
@@ -171,8 +171,8 @@ abstract contract Product is
         $._componentService = IComponentService(_getServiceAddress(COMPONENT()));
         $._pool = Pool(pool);
         $._distribution = Distribution(distribution);
-        $._poolNftId = getRegistry().getNftId(pool);
-        $._distributionNftId = getRegistry().getNftId(distribution);
+        $._poolNftId = getRegistry().getNftIdForAddress(pool);
+        $._distributionNftId = getRegistry().getNftIdForAddress(distribution);
 
         registerInterface(type(IProductComponent).interfaceId);  
     }
