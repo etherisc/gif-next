@@ -8,7 +8,7 @@ import {DistributorType} from "../../../contracts/type/DistributorType.sol";
 import {ReferralId} from "../../../contracts/type/Referral.sol";
 import {Timestamp, toTimestamp} from "../../../contracts/type/Timestamp.sol";
 import {UFixed, UFixedLib} from "../../../contracts/type/UFixed.sol";
-import {SimpleDistribution} from "../../../contracts/example_components/unpermissioned/SimpleDistribution.sol";
+import {SimpleDistribution} from "../../../contracts/examples/unpermissioned/SimpleDistribution.sol";
 import {FeeLib} from "../../../contracts/type/Fee.sol";
 import {DISTRIBUTION_OWNER_ROLE} from "../../../contracts/type/RoleId.sol";
 

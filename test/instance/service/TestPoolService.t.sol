@@ -8,7 +8,7 @@ import {POOL_OWNER_ROLE} from "../../../contracts/type/RoleId.sol";
 import {FeeLib} from "../../../contracts/type/Fee.sol";
 import {UFixedLib} from "../../../contracts/type/UFixed.sol";
 import {ComponentService} from "../../../contracts/shared/ComponentService.sol";
-import {SimplePool} from "../../../contracts/example_components/unpermissioned/SimplePool.sol";
+import {SimplePool} from "../../../contracts/examples/unpermissioned/SimplePool.sol";
 
 contract TestPoolService is GifTest {
     using NftIdLib for NftId;

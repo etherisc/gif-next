@@ -55,10 +55,10 @@ import {BundleSet} from "../../contracts/instance/BundleSet.sol";
 import {InstanceStore} from "../../contracts/instance/InstanceStore.sol";
 
 import {Usdc} from "../mock/Usdc.sol";
-import {SimpleDistribution} from "../../contracts/example_components/unpermissioned/SimpleDistribution.sol";
-import {SimpleOracle} from "../../contracts/example_components/unpermissioned/SimpleOracle.sol";
-import {SimplePool} from "../../contracts/example_components/unpermissioned/SimplePool.sol";
-import {SimpleProduct} from "../../contracts/example_components/unpermissioned/SimpleProduct.sol";
+import {SimpleDistribution} from "../../contracts/examples/unpermissioned/SimpleDistribution.sol";
+import {SimpleOracle} from "../../contracts/examples/unpermissioned/SimpleOracle.sol";
+import {SimplePool} from "../../contracts/examples/unpermissioned/SimplePool.sol";
+import {SimpleProduct} from "../../contracts/examples/unpermissioned/SimpleProduct.sol";
 
 import {GifDeployer} from "./GifDeployer.sol";
 

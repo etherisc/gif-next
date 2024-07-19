@@ -8,7 +8,7 @@ import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
 import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
 import {ClaimId} from "../../../contracts/type/ClaimId.sol";
 import {PRODUCT_OWNER_ROLE} from "../../../contracts/type/RoleId.sol";
-import {SimpleOracle} from "../../../contracts/example_components/unpermissioned/SimpleOracle.sol";
+import {SimpleOracle} from "../../../contracts/examples/unpermissioned/SimpleOracle.sol";
 import {IComponents} from "../../../contracts/instance/module/IComponents.sol";
 import {ILifecycle} from "../../../contracts/shared/ILifecycle.sol";
 import {IOracle} from "../../../contracts/oracle/IOracle.sol";

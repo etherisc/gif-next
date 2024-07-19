@@ -13,3 +13,5 @@
 * xref:staking.adoc[staking]
 * xref:type.adoc[type]
 * xref:upgradeability.adoc[upgradeability]
+
+* xref:examples/unpermissioned.adoc[examples/unpermissioned]

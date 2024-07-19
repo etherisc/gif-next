@@ -14,7 +14,7 @@ import {ReferralId, ReferralLib} from "../../../contracts/type/Referral.sol";
 import {ReferralTestBase} from "./ReferralTestBase.sol";
 import {RiskId, RiskIdLib} from "../../../contracts/type/RiskId.sol";
 import {SecondsLib} from "../../../contracts/type/Seconds.sol";
-import {SimpleDistribution} from "../../../contracts/example_components/unpermissioned/SimpleDistribution.sol";
+import {SimpleDistribution} from "../../../contracts/examples/unpermissioned/SimpleDistribution.sol";
 import {TimestampLib} from "../../../contracts/type/Timestamp.sol";
 import {UFixedLib} from "../../../contracts/type/UFixed.sol";
 
