@@ -1,5 +1,0 @@
-= Authorization
-
-NOTE: This document is under construction
-
-TODO: write something meaningful here

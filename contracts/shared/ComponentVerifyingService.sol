@@ -32,7 +32,7 @@ abstract contract ComponentVerifyingService is
             IInstance instance
         )
     {
-        componentNftId = getRegistry().getNftId(msg.sender);
+        componentNftId = getRegistry().getNftIdForAddress(msg.sender);
         (componentInfo, instance) = _getAndVerifyComponentInfo(
             componentNftId, 
             expectedType,

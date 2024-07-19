@@ -1,25 +1,20 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-
 import {Amount} from "../type/Amount.sol";
 import {ClaimId} from "../type/ClaimId.sol";
 import {DistributorType} from "../type/DistributorType.sol";
-import {Fee, FeeLib} from "../type/Fee.sol";
 import {Key32} from "../type/Key32.sol";
 import {NftId} from "../type/NftId.sol";
-import {ObjectType, COMPONENT, DISTRIBUTOR, DISTRIBUTION, INSTANCE, PRODUCT, POLICY, POOL, BUNDLE} from "../type/ObjectType.sol";
+import {COMPONENT, DISTRIBUTOR, DISTRIBUTION, PREMIUM, PRODUCT, POLICY, POOL, BUNDLE} from "../type/ObjectType.sol";
 import {PayoutId} from "../type/PayoutId.sol";
 import {ReferralId, ReferralStatus, ReferralLib, REFERRAL_OK, REFERRAL_ERROR_UNKNOWN, REFERRAL_ERROR_EXPIRED, REFERRAL_ERROR_EXHAUSTED} from "../type/Referral.sol";
 import {RequestId} from "../type/RequestId.sol";
 import {RiskId} from "../type/RiskId.sol";
 import {RoleId} from "../type/RoleId.sol";
 import {StateId} from "../type/StateId.sol";
-import {UFixed, MathLib, UFixedLib} from "../type/UFixed.sol";
-import {Version} from "../type/Version.sol";
+import {UFixed, UFixedLib} from "../type/UFixed.sol";
 
-import {IRegistry} from "../registry/IRegistry.sol";
 import {IBundle} from "../instance/module/IBundle.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {IDistribution} from "../instance/module/IDistribution.sol";
@@ -83,6 +78,33 @@ contract InstanceReader {
         returns (StateId state)
     {
         return _store.getState(toPolicyKey(policyNftId));
+    }
+
+    function getPremiumInfo(NftId policyNftId) 
+        public
+        view
+        returns (IPolicy.PremiumInfo memory info)
+    {
+        bytes memory data = _store.getData(toPremiumKey(policyNftId));
+        if (data.length > 0) {
+            return abi.decode(data, (IPolicy.PremiumInfo));
+        }
+    }
+
+    function getPremiumInfoState(NftId policyNftId) 
+        public
+        view
+        returns (StateId state)
+    {
+        return _store.getState(toPremiumKey(policyNftId));
+    }
+
+    function getBundleState(NftId bundleNftId)
+        public
+        view
+        returns (StateId state)
+    {
+        return _store.getState(toBundleKey(bundleNftId));
     }
 
     /// @dev returns true iff policy may be closed
@@ -361,6 +383,9 @@ contract InstanceReader {
         return policyNftId.toKey32(POLICY());
     }
 
+    function toPremiumKey(NftId policyNftId) public pure returns (Key32) { 
+        return policyNftId.toKey32(PREMIUM());
+    }
 
     function toDistributorKey(NftId distributorNftId) public pure returns (Key32) { 
         return distributorNftId.toKey32(DISTRIBUTOR());

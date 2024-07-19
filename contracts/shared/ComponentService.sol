@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
@@ -21,14 +19,12 @@ import {KEEP_STATE} from "../type/StateId.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType, REGISTRY, COMPONENT, DISTRIBUTION, INSTANCE, ORACLE, POOL, PRODUCT} from "../type/ObjectType.sol";
 import {RoleId, DISTRIBUTION_OWNER_ROLE, ORACLE_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE} from "../type/RoleId.sol";
-import {TokenHandler} from "./TokenHandler.sol";
+import {TokenHandlerDeployerLib} from "../shared/TokenHandlerDeployerLib.sol";
 
 contract ComponentService is
     ComponentVerifyingService,
     IComponentService
 {
-    using AmountLib for Amount;
-
     error ErrorComponentServiceAlreadyRegistered(address component);
     error ErrorComponentServiceNotComponent(address component);
     error ErrorComponentServiceInvalidType(address component, ObjectType requiredType, ObjectType componentType);
@@ -57,12 +53,12 @@ contract ComponentService is
         address initialOwner;
         (registryAddress, initialOwner) = abi.decode(data, (address, address));
 
-        initializeService(registryAddress, address(0), owner);
+        _initializeService(registryAddress, address(0), owner);
 
         _registryService = IRegistryService(_getServiceAddress(REGISTRY()));
         _instanceService = IInstanceService(_getServiceAddress(INSTANCE()));
 
-        registerInterface(type(IComponentService).interfaceId);
+        _registerInterface(type(IComponentService).interfaceId);
     }
 
     //-------- component ----------------------------------------------------//
@@ -106,7 +102,7 @@ contract ComponentService is
 
         // determine withdrawn amount
         withdrawnAmount = amount;
-        if (withdrawnAmount.eq(AmountLib.max())) {
+        if (withdrawnAmount.gte(AmountLib.max())) {
             withdrawnAmount = instance.getInstanceReader().getFeeAmount(componentNftId);
         } else if (withdrawnAmount.eqz()) {
             revert ErrorComponentServiceWithdrawAmountIsZero();
@@ -117,22 +113,13 @@ contract ComponentService is
             }
         }
 
-        // check allowance
-        TokenHandler tokenHandler = info.tokenHandler;
-        IERC20Metadata token = IERC20Metadata(info.token);
-        uint256 tokenAllowance = token.allowance(componentWallet, address(tokenHandler));
-        if (tokenAllowance < withdrawnAmount.toInt()) {
-            revert ErrorComponentServiceWalletAllowanceTooSmall(componentWallet, address(tokenHandler), tokenAllowance, withdrawnAmount.toInt());
-        }
-
         // decrease fee counters by withdrawnAmount
         _changeTargetBalance(DECREASE, instance.getInstanceStore(), componentNftId, AmountLib.zero(), withdrawnAmount);
         
         // transfer amount to component owner
         address componentOwner = getRegistry().ownerOf(componentNftId);
-        tokenHandler.transfer(componentWallet, componentOwner, withdrawnAmount);
-
-        emit LogComponentServiceComponentFeesWithdrawn(componentNftId, componentOwner, address(token), withdrawnAmount);
+        emit LogComponentServiceComponentFeesWithdrawn(componentNftId, componentOwner, address(info.token), withdrawnAmount);
+        info.tokenHandler.distributeTokens(componentWallet, componentOwner, withdrawnAmount);
     }
 
 
@@ -153,7 +140,7 @@ contract ComponentService is
             contractAddress,
             PRODUCT(),
             PRODUCT_OWNER_ROLE());
-
+        
         // create product info
         IComponents.ProductInfo memory productInfo = IProductComponent(contractAddress).getInitialProductInfo();
         instanceStore.createProduct(productNftId, productInfo);
@@ -294,6 +281,36 @@ contract ComponentService is
         // restricted()
     {
         _changeTargetBalance(DECREASE, instanceStore, distributionNftId, amount, feeAmount);
+    }
+
+    //-------- distributor -------------------------------------------------------//
+
+    function increaseDistributorBalance(
+        InstanceStore instanceStore, 
+        NftId distributorNftId, 
+        Amount amount, 
+        Amount feeAmount
+    )
+        external
+        virtual
+        // TODO re-enable once role granting is stable and fixed
+        // restricted()
+    {
+        _changeTargetBalance(INCREASE, instanceStore, distributorNftId, amount, feeAmount);
+    }
+
+    function decreaseDistributorBalance(
+        InstanceStore instanceStore, 
+        NftId distributorNftId, 
+        Amount amount, 
+        Amount feeAmount
+    )
+        external
+        virtual
+        // TODO re-enable once role granting is stable and fixed
+        // restricted()
+    {
+        _changeTargetBalance(DECREASE, instanceStore, distributorNftId, amount, feeAmount);
     }
 
     //-------- oracle -------------------------------------------------------//
@@ -494,21 +511,23 @@ contract ComponentService is
 
         component.linkToRegisteredNftId();
 
-        // setup initial component authorization
-        _instanceService.initializeAuthorization(
-            instance.getNftId(),
-            component);
-
         // save amended component info with instance
         instanceReader = instance.getInstanceReader();
         instanceStore = instance.getInstanceStore();
 
-        IComponents.ComponentInfo memory componentInfo = component.getComponentInfo();
-        componentInfo.tokenHandler = new TokenHandler(address(componentInfo.token));
+        IComponents.ComponentInfo memory componentInfo = component.getInitialComponentInfo();
+        componentInfo.tokenHandler = TokenHandlerDeployerLib.deployTokenHandler(
+            address(componentInfo.token), 
+            address(instance.getInstanceAdmin().authority()));
 
         instanceStore.createComponent(
             component.getNftId(), 
             componentInfo);
+
+        // setup initial component authorization
+        _instanceService.initializeAuthorization(
+            instance.getNftId(),
+            component);
 
         // TODO add logging
     }
@@ -603,7 +622,7 @@ contract ComponentService is
         }
 
         // check component has not already been registered
-        if (getRegistry().getNftId(componentAddress).gtz()) {
+        if (getRegistry().getNftIdForAddress(componentAddress).gtz()) {
             revert ErrorComponentServiceAlreadyRegistered(componentAddress);
         }
 

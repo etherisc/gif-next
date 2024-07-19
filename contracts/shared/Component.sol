@@ -6,7 +6,7 @@ import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessMana
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {Amount} from "../type/Amount.sol";
+import {Amount, AmountLib} from "../type/Amount.sol";
 import {IComponent} from "./IComponent.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
@@ -52,7 +52,7 @@ abstract contract Component is
         }
     }
 
-    function initializeComponent(
+    function _initializeComponent(
         address authority,
         address registry,
         NftId parentNftId,
@@ -64,11 +64,11 @@ abstract contract Component is
         bytes memory registryData, // writeonly data that will saved in the object info record of the registry
         bytes memory componentData // other component specific data
     )
-        public
+        internal
         virtual
         onlyInitializing()
     {
-        initializeRegisterable(registry, parentNftId, componentType, isInterceptor, initialOwner, registryData);
+        _initializeRegisterable(registry, parentNftId, componentType, isInterceptor, initialOwner, registryData);
         __AccessManaged_init(authority);
 
         if (token == address(0)) {
@@ -87,8 +87,8 @@ abstract contract Component is
         $._isInterceptor = isInterceptor;
         $._data = componentData;
 
-        registerInterface(type(IAccessManaged).interfaceId);
-        registerInterface(type(IComponent).interfaceId);
+        _registerInterface(type(IAccessManaged).interfaceId);
+        _registerInterface(type(IComponent).interfaceId);
     }
 
 
@@ -109,11 +109,11 @@ abstract contract Component is
             revert ErrorComponentWalletNotComponent();
         }
 
+        emit LogComponentTokenHandlerApproved(address(getTokenHandler()), spendingLimitAmount);
+
         IERC20Metadata(token).approve(
             address(getTokenHandler()),
             spendingLimitAmount.toInt());
-
-        emit LogComponentTokenHandlerApproved(address(getTokenHandler()), spendingLimitAmount);
     }
 
     function setWallet(address newWallet)
@@ -124,34 +124,22 @@ abstract contract Component is
     {
         // checks
         address currentWallet = getWallet();
-        IERC20Metadata token = getToken();
-        uint256 currentBalance = token.balanceOf(currentWallet);
-
-        if (currentBalance > 0) {
-            if (currentWallet == address(this)) {
-                // move tokens from component smart contract to external wallet
-            } else {
-                // move tokens from external wallet to component smart contract or another external wallet
-                uint256 allowance = token.allowance(currentWallet, address(this));
-                if (allowance < currentBalance) {
-                    revert ErrorComponentWalletAllowanceTooSmall(currentWallet, newWallet, allowance, currentBalance);
-                }
-            }
-        }
+        uint256 currentBalance = getToken().balanceOf(currentWallet);
 
         // effects
         _setWallet(newWallet);
 
         // interactions
         if (currentBalance > 0) {
-            // transfer tokens from current wallet to new wallet
-            if (currentWallet == address(this)) {
-                // transferFrom requires self allowance too
-                token.approve(address(this), currentBalance);
-            }
-            
-            SafeERC20.safeTransferFrom(token, currentWallet, newWallet, currentBalance);
+            // move tokens from old to new wallet 
             emit LogComponentWalletTokensTransferred(currentWallet, newWallet, currentBalance);
+
+            if (currentWallet == address(this)) {
+                // transfer from the component requires an allowance
+                getTokenHandler().distributeTokens(currentWallet, newWallet, AmountLib.toAmount(currentBalance));
+            } else {
+                getTokenHandler().collectTokens(currentWallet, newWallet, AmountLib.toAmount(currentBalance));
+            }
         }
     }
 
@@ -218,7 +206,7 @@ abstract contract Component is
 
 
     function isRegistered() public virtual view returns (bool) {
-        return getRegistry().getNftId(address(this)).gtz();
+        return getRegistry().getNftIdForAddress(address(this)).gtz();
     }
 
 

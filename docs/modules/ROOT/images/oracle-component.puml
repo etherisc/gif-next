@@ -1,0 +1,16 @@
+@startuml
+
+package "Oracle Module" as OracleModule {
+  [Oracle] as oracle
+  [TokenHandler] as th
+}
+
+[ComponentService] as componentS
+[OracleService] as oracleS
+
+componentS <- oracle
+
+oracle --> oracleS
+oracle *- th
+
+@enduml

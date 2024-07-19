@@ -1,0 +1,16 @@
+@startuml
+
+actor PolicyHolder
+participant Product
+
+participant PolicyService
+participant InstanceStore
+
+Product -> PolicyService : expire()
+
+PolicyService -> PolicyService : check preconditions
+PolicyService -> InstanceStore : updatePolicy()
+
+PolicyService -> PolicyHolder : policyExpired(), for contracts only
+
+@enduml

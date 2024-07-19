@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {ERC165} from "./ERC165.sol";
+import {InitializableERC165} from "./InitializableERC165.sol";
 import {INftOwnable} from "./INftOwnable.sol";
 import {NftId} from "../type/NftId.sol";
 import {RegistryLinked} from "./RegistryLinked.sol";
 
 contract NftOwnable is
-    ERC165,
+    InitializableERC165,
     RegistryLinked,
     INftOwnable
 {
@@ -30,16 +30,16 @@ contract NftOwnable is
 
     /// @dev initialization for upgradable contracts
     // used in _initializeRegisterable
-    function initializeNftOwnable(
+    function _initializeNftOwnable(
         address initialOwner,
         address registryAddress
     )
-        public
+        internal
         virtual
         onlyInitializing()
     {
-        initializeRegistryLinked(registryAddress);
-        initializeERC165();
+        _initializeRegistryLinked(registryAddress);
+        _initializeERC165();
 
         if(initialOwner == address(0)) {
             revert ErrorNftOwnableInitialOwnerZero();
@@ -93,7 +93,7 @@ contract NftOwnable is
             revert ErrorNftOwnableContractNotRegistered(nftOwnableAddress);
         }
 
-        $._nftId = getRegistry().getNftId(nftOwnableAddress);
+        $._nftId = getRegistry().getNftIdForAddress(nftOwnableAddress);
 
         return $._nftId;
     }

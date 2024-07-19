@@ -5,11 +5,9 @@ import {console} from "../../lib/forge-std/src/Test.sol";
 
 import {Amount, AmountLib} from "../../contracts/type/Amount.sol";
 import {GifTest} from "../base/GifTest.sol";
-import {NftId} from "../../contracts/type/NftId.sol";
 import {Seconds, SecondsLib} from "../../contracts/type/Seconds.sol";
 import {StakeManagerLib} from "../../contracts/staking/StakeManagerLib.sol";
-import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
-import {UFixed, UFixedLib} from "../../contracts/type/UFixed.sol";import {VersionPart} from "../../contracts/type/Version.sol";
+import {UFixed, UFixedLib} from "../../contracts/type/UFixed.sol";
 
 
 contract RewardCalculation is GifTest {
@@ -17,7 +15,7 @@ contract RewardCalculation is GifTest {
     function test_rewardCalculationConsoleLog() public {
         // solhint-disable
         console.log("getYearDuration()", SecondsLib.oneYear().toInt());
-        console.log("356 * 24 * 3600", 356 * 24 * 3600);
+        console.log("356 * 24 * 3600", uint(356 * 24 * 3600));
 
         Seconds halfYear = SecondsLib.toSeconds(SecondsLib.oneYear().toInt() / 2);
         console.log("halfYear", halfYear.toInt());

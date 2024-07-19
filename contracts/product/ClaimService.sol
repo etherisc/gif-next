@@ -7,7 +7,7 @@ import {IPolicy} from "../instance/module/IPolicy.sol";
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {TimestampLib} from "../type/Timestamp.sol";
 import {ObjectType, CLAIM, PRODUCT, POOL} from "../type/ObjectType.sol";
-import {SUBMITTED, KEEP_STATE, DECLINED, CONFIRMED, CLOSED, PAID} from "../type/StateId.sol";
+import {SUBMITTED, KEEP_STATE, DECLINED, REVOKED, CONFIRMED, CLOSED, PAID} from "../type/StateId.sol";
 import {NftId} from "../type/NftId.sol";
 import {FeeLib} from "../type/Fee.sol";
 import {StateId} from "../type/StateId.sol";
@@ -40,11 +40,11 @@ contract ClaimService is
             address authority
         ) = abi.decode(data, (address, address, address));
 
-        initializeService(registryAddress, authority, owner);
+        _initializeService(registryAddress, authority, owner);
 
         _poolService = IPoolService(getRegistry().getServiceAddress(POOL(), getVersion().toMajorPart()));
 
-        registerInterface(type(IClaimService).interfaceId);
+        _registerInterface(type(IClaimService).interfaceId);
     }
 
     function submit(
@@ -67,6 +67,7 @@ contract ClaimService is
             revert ErrorClaimServicePolicyNotOpen(policyNftId);
         }
 
+        // TODO check claim amount > 0
         // check policy including this claim is still within sum insured
         if(policyInfo.payoutAmount + claimAmount > policyInfo.sumInsuredAmount) {
             revert ErrorClaimServiceClaimExceedsSumInsured(
@@ -80,14 +81,14 @@ contract ClaimService is
         instance.getInstanceStore().createClaim(
             policyNftId, 
             claimId, 
-            IPolicy.ClaimInfo(
-                claimAmount,
-                AmountLib.zero(), // paidAmount
-                0, // payoutsCount
-                0, // openPayoutsCount
-                claimData, // claim submission data
-                "", // claim processing data
-                TimestampLib.zero())); // closedAt
+            IPolicy.ClaimInfo({
+                claimAmount: claimAmount,
+                paidAmount: AmountLib.zero(),
+                payoutsCount: 0,
+                openPayoutsCount: 0,
+                submissionData: claimData,
+                processData: "",
+                closedAt: TimestampLib.zero()}));
 
         // update and save policy info with instance
         policyInfo.claimsCount += 1;
@@ -114,11 +115,16 @@ contract ClaimService is
             IPolicy.PolicyInfo memory policyInfo
         ) = _verifyCallerWithPolicy(policyNftId);
 
+        // TODO add check for confirmedAmount > 0 and does not lead to exceeding sum insured
+
         // check/update claim info
         IPolicy.ClaimInfo memory claimInfo = _verifyClaim(instanceReader, policyNftId, claimId, SUBMITTED());
         claimInfo.claimAmount = confirmedAmount;
         claimInfo.processData = data;
         instance.getInstanceStore().updateClaim(policyNftId, claimId, claimInfo, CONFIRMED());
+
+        // TODO test if claim results in total claim amount == sum insured amount
+        // should policy still be active it needs to automatically become expired
 
         // update and save policy info with instance
         policyInfo.claimAmount = policyInfo.claimAmount + confirmedAmount;
@@ -153,6 +159,34 @@ contract ClaimService is
 
         emit LogClaimServiceClaimDeclined(policyNftId, claimId);
     }
+
+
+    // TODO add test case
+    function revoke(
+        NftId policyNftId, 
+        ClaimId claimId
+    )
+        external
+        virtual
+    {
+        (
+            IInstance instance,
+            InstanceReader instanceReader,
+            IPolicy.PolicyInfo memory policyInfo
+        ) = _verifyCallerWithPolicy(policyNftId);
+
+        // check/update claim info
+        IPolicy.ClaimInfo memory claimInfo = _verifyClaim(instanceReader, policyNftId, claimId, SUBMITTED());
+        claimInfo.closedAt = TimestampLib.blockTimestamp();
+        instance.getInstanceStore().updateClaim(policyNftId, claimId, claimInfo, REVOKED());
+
+        // update and save policy info with instance
+        policyInfo.openClaimsCount -= 1;
+        instance.getInstanceStore().updatePolicyClaims(policyNftId, policyInfo, KEEP_STATE());
+
+        emit LogClaimServiceClaimRevoked(policyNftId, claimId);
+    }
+
 
     function close(
         NftId policyNftId, 
@@ -191,6 +225,30 @@ contract ClaimService is
         instance.getInstanceStore().updateClaim(policyNftId, claimId, claimInfo, CLOSED());
     }
 
+    // TODO add test
+    function createPayoutForBeneficiary(
+        NftId policyNftId, 
+        ClaimId claimId,
+        Amount amount,
+        address beneficiary,
+        bytes memory data
+    )
+        external
+        virtual
+        returns (PayoutId payoutId)
+    {
+        if (beneficiary == address(0)) {
+            revert ErrorClaimServiceBeneficiaryIsZero(policyNftId, claimId);
+        }
+
+        return _createPayout(
+            policyNftId, 
+            claimId, 
+            amount, 
+            beneficiary,
+            data);
+    }
+
 
     function createPayout(
         NftId policyNftId, 
@@ -199,6 +257,26 @@ contract ClaimService is
         bytes memory data
     )
         external
+        virtual
+        returns (PayoutId payoutId)
+    {
+        return _createPayout(
+            policyNftId, 
+            claimId, 
+            amount, 
+            address(0), // defaults to owner of policy nft
+            data);
+    }
+
+    function _createPayout(
+        NftId policyNftId, 
+        ClaimId claimId,
+        Amount amount,
+        address beneficiary,
+        bytes memory data
+    )
+        internal
+        virtual
         returns (PayoutId payoutId)
     {
         (
@@ -221,11 +299,12 @@ contract ClaimService is
         instance.getInstanceStore().createPayout(
             policyNftId, 
             payoutId, 
-            IPolicy.PayoutInfo(
-                payoutId.toClaimId(),
-                amount,
-                data,
-                TimestampLib.zero()));
+            IPolicy.PayoutInfo({
+                claimId: payoutId.toClaimId(),
+                amount: amount,
+                beneficiary: beneficiary,
+                data: data,
+                paidAt: TimestampLib.zero()}));
 
         // update and save claim info with instance
         claimInfo.payoutsCount += 1;
@@ -293,20 +372,28 @@ contract ClaimService is
         // transfer payout token and fee
         (
             Amount netPayoutAmount,
+            Amount processingFeeAmount,
             address beneficiary
-        ) = _transferPayoutAmount(
+        ) = _calculatePayoutAmount(
             instanceReader,
             policyNftId,
             policyInfo,
             payoutInfo);
 
-        // TODO callback IPolicyHolder
+        emit LogClaimServicePayoutProcessed(policyNftId, payoutId, payoutAmount, beneficiary, netPayoutAmount, processingFeeAmount);
 
-        emit LogClaimServicePayoutProcessed(policyNftId, payoutId, payoutAmount, beneficiary, netPayoutAmount);
+        {
+            NftId poolNftId = getRegistry().getObjectInfo(policyInfo.bundleNftId).parentNftId;
+            IComponents.ComponentInfo memory poolInfo = instanceReader.getComponentInfo(poolNftId);
+            poolInfo.tokenHandler.distributeTokens(poolInfo.wallet, beneficiary, netPayoutAmount);
+
+            // TODO add 2nd token tx if processingFeeAmount > 0
+        }
+
+        // TODO callback IPolicyHolder
     }
 
-    // TODO create (I)TreasuryService that deals with all gif related token transfers
-    function _transferPayoutAmount(
+    function _calculatePayoutAmount(
         InstanceReader instanceReader,
         NftId policyNftId,
         IPolicy.PolicyInfo memory policyInfo,
@@ -315,6 +402,7 @@ contract ClaimService is
         internal
         returns (
             Amount netPayoutAmount,
+            Amount processingFeeAmount,
             address beneficiary
         )
     {
@@ -328,38 +416,21 @@ contract ClaimService is
             IComponents.ComponentInfo memory poolInfo = instanceReader.getComponentInfo(poolNftId);
 
             netPayoutAmount = payoutAmount;
-            beneficiary = _getBeneficiary(policyNftId, payoutInfo.claimId);
+
+            if (payoutInfo.beneficiary == address(0)) {
+                beneficiary = getRegistry().ownerOf(policyNftId);
+            } else { 
+                beneficiary = payoutInfo.beneficiary;
+            }
 
             IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
             if(FeeLib.gtz(productInfo.processingFee)) {
-                // TODO calculate net payout and processing fees
-                // TODO transfer processing fees to product wallet
-                // TODO inform product to update fee book keeping
+                // TODO calculate and set net payout and processing fees
             }
-
-            poolInfo.tokenHandler.transfer(
-                poolInfo.wallet,
-                beneficiary,
-                netPayoutAmount);
         }
     }
 
     // internal functions
-
-    function _getBeneficiary(
-        NftId policyNftId,
-        ClaimId claimId
-    )
-        internal
-        returns (address beneficiary)
-    {
-        // TODO check if owner is IPolicyHolder
-        // if so, obtain beneficiary from this contract
-
-        // default beneficiary is policy nft owner
-        beneficiary = getRegistry().ownerOf(policyNftId);
-    }
-
 
     function _verifyCallerWithPolicy(
         NftId policyNftId

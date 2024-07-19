@@ -50,8 +50,8 @@ contract PricingService is
             address authority
         ) = abi.decode(data, (address, address, address));
 
-        initializeService(registryAddress, authority, owner);
-        registerInterface(type(IPricingService).interfaceId);
+        _initializeService(registryAddress, authority, owner);
+        _registerInterface(type(IPricingService).interfaceId);
 
         _distributionService = IDistributionService(_getServiceAddress(DISTRIBUTION()));
     }
@@ -71,7 +71,7 @@ contract PricingService is
         view
         virtual override
         returns (
-            IPolicy.Premium memory premium
+            IPolicy.PremiumInfo memory premium
         )
     {
         InstanceReader reader;
@@ -84,6 +84,7 @@ contract PricingService is
                 IInstance instance
             ) = _getAndVerifyComponentInfo(productNftId, PRODUCT(), false);
 
+            // get instance reader from local instance variable
             reader = instance.getInstanceReader();
 
             // calculate net premium
@@ -104,19 +105,21 @@ contract PricingService is
                 revert ErrorIPricingServiceBundlePoolMismatch(bundleNftId, bundleInfo.poolNftId, productInfo.poolNftId);
             }
 
-            // calculate premium, order is important
+            // calculate fixed fees for product, pool, bundle
             premium = _getFixedFeeAmounts(
                 netPremiumAmount,
                 productInfo,
                 bundleInfo
             );
 
+            // calculate variable fees for product, pool, bundle
             premium = _calculateVariableFeeAmounts(
                 premium,
                 productInfo,
                 bundleInfo
             );
 
+            // calculate distribution fee and (if applicable) commission
             premium = _calculateDistributionOwnerFeeAmount(
                 premium,
                 productInfo,
@@ -124,18 +127,18 @@ contract PricingService is
                 reader
             );
 
+            // calculate resulting amounts for product, pool, and distribution wallets
             premium = _calculateTargetWalletAmounts(premium);
 
             // sanity check to validate the fee calculation
-            if(AmountLib.toAmount(premium.premiumAmount) != 
-                premium.productFeeAmount 
+            if(premium.premiumAmount != premium.productFeeAmount 
                 + premium.distributionFeeAndCommissionAmount 
                 + premium.poolPremiumAndFeeAmount)
             {
                 revert ErrorPricingServiceTargetWalletAmountsMismatch();
             }
 
-            if (premium.distributionOwnerFeeFixAmount < productInfo.minDistributionOwnerFee.fixedFee) {
+            if (premium.distributionOwnerFeeFixAmount.toInt() < productInfo.minDistributionOwnerFee.fixedFee) {
                 revert ErrorIPricingServiceFeeCalculationMismatch( 
                     premium.distributionFeeFixAmount,
                     premium.distributionFeeVarAmount,
@@ -168,64 +171,64 @@ contract PricingService is
         internal
         pure
         returns (
-            IPolicy.Premium memory premium
+            IPolicy.PremiumInfo memory premium
         )
     {
         // initial premium amount is the net premium
-        premium.netPremiumAmount = netPremiumAmount.toInt();
-        premium.fullPremiumAmount = netPremiumAmount.toInt();
+        premium.netPremiumAmount = netPremiumAmount;
+        premium.fullPremiumAmount = netPremiumAmount;
 
-        uint256 t = productInfo.productFee.fixedFee;
+        Amount t = AmountLib.toAmount(productInfo.productFee.fixedFee);
         premium.productFeeFixAmount = t;
-        premium.fullPremiumAmount += t;
+        premium.fullPremiumAmount = premium.fullPremiumAmount + t;
 
-        t = productInfo.poolFee.fixedFee;
+        t = AmountLib.toAmount(productInfo.poolFee.fixedFee);
         premium.poolFeeFixAmount = t;
-        premium.fullPremiumAmount += t;
+        premium.fullPremiumAmount = premium.fullPremiumAmount + t;
 
-        t = bundleInfo.fee.fixedFee;
+        t = AmountLib.toAmount(bundleInfo.fee.fixedFee);
         premium.bundleFeeFixAmount = t;
-        premium.fullPremiumAmount += t;
+        premium.fullPremiumAmount = premium.fullPremiumAmount + t;
 
-        t = productInfo.distributionFee.fixedFee;
+        t = AmountLib.toAmount(productInfo.distributionFee.fixedFee);
         premium.distributionFeeFixAmount = t;
-        premium.fullPremiumAmount += t;
+        premium.fullPremiumAmount = premium.fullPremiumAmount + t;
     }
 
     function _calculateVariableFeeAmounts(
-        IPolicy.Premium memory premium,
+        IPolicy.PremiumInfo memory premium,
         IComponents.ProductInfo memory productInfo,
         IBundle.BundleInfo memory bundleInfo
     )
         internal
         pure
         returns (
-            IPolicy.Premium memory intermadiatePremium
+            IPolicy.PremiumInfo memory intermadiatePremium
         )
     {
-        UFixed netPremiumAmount = UFixedLib.toUFixed(premium.netPremiumAmount);
+        Amount netPremiumAmount = premium.netPremiumAmount;
 
-        uint256 t = (netPremiumAmount * productInfo.productFee.fractionalFee).toInt();
+        Amount t = netPremiumAmount.multiplyWith(productInfo.productFee.fractionalFee);
         premium.productFeeVarAmount = t;
-        premium.fullPremiumAmount += t;
+        premium.fullPremiumAmount = premium.fullPremiumAmount + t;
 
-        t = (netPremiumAmount * productInfo.poolFee.fractionalFee).toInt();
+        t = netPremiumAmount.multiplyWith(productInfo.poolFee.fractionalFee);
         premium.poolFeeVarAmount = t;
-        premium.fullPremiumAmount += t;
+        premium.fullPremiumAmount = premium.fullPremiumAmount + t;
 
-        t = (netPremiumAmount * bundleInfo.fee.fractionalFee).toInt();
+        t = netPremiumAmount.multiplyWith(bundleInfo.fee.fractionalFee);
         premium.bundleFeeVarAmount = t;
-        premium.fullPremiumAmount += t;
+        premium.fullPremiumAmount = premium.fullPremiumAmount + t;
 
-        t = (netPremiumAmount * productInfo.distributionFee.fractionalFee).toInt();
+        t = netPremiumAmount.multiplyWith(productInfo.distributionFee.fractionalFee);
         premium.distributionFeeVarAmount = t;
-        premium.fullPremiumAmount += t;
+        premium.fullPremiumAmount = premium.fullPremiumAmount + t;
 
         return premium;
     }
 
     function _calculateDistributionOwnerFeeAmount(
-        IPolicy.Premium memory premium,
+        IPolicy.PremiumInfo memory premium,
         IComponents.ProductInfo memory productInfo,
         // ISetup.DistributionSetupInfo memory distInfo,
         ReferralId referralId,
@@ -233,7 +236,7 @@ contract PricingService is
     )
         internal
         view 
-        returns (IPolicy.Premium memory finalPremium)
+        returns (IPolicy.PremiumInfo memory finalPremium)
     {
 
         // if the referral is not valid, then the distribution owner gets everything
@@ -253,10 +256,10 @@ contract PricingService is
             IDistribution.DistributorInfo memory distributorInfo = reader.getDistributorInfo(referralInfo.distributorNftId);
             IDistribution.DistributorTypeInfo memory distributorTypeInfo = reader.getDistributorTypeInfo(distributorInfo.distributorType);
 
-            uint256 commissionAmount = UFixedLib.toUFixed(premium.netPremiumAmount).mul(distributorTypeInfo.commissionPercentage).toInt();
+            Amount commissionAmount = premium.netPremiumAmount.multiplyWith(distributorTypeInfo.commissionPercentage);
             premium.commissionAmount = commissionAmount;
-            premium.discountAmount = UFixedLib.toUFixed(premium.fullPremiumAmount).mul(referralInfo.discountPercentage).toInt();
-            premium.distributionOwnerFeeFixAmount = minDistributionOwnerFee.fixedFee;
+            premium.discountAmount = premium.fullPremiumAmount.multiplyWith(referralInfo.discountPercentage);
+            premium.distributionOwnerFeeFixAmount = AmountLib.toAmount(minDistributionOwnerFee.fixedFee);
             premium.distributionOwnerFeeVarAmount = premium.distributionFeeVarAmount - commissionAmount - premium.discountAmount;
             premium.premiumAmount = premium.fullPremiumAmount - premium.discountAmount;
         }
@@ -266,29 +269,27 @@ contract PricingService is
 
 
     function _calculateTargetWalletAmounts(
-        IPolicy.Premium memory premium
+        IPolicy.PremiumInfo memory premium
     )
         internal
         virtual
         view
         returns (
-            IPolicy.Premium memory premiumWithTargetWalletAmounts
+            IPolicy.PremiumInfo memory premiumWithTargetWalletAmounts
         )
     {
         // fees for product owner
-        premium.productFeeAmount = AmountLib.toAmount(
-            premium.productFeeFixAmount + premium.productFeeVarAmount);
+        premium.productFeeAmount = premium.productFeeFixAmount + premium.productFeeVarAmount;
 
         // fees for distribution owner + distributor commission
-        premium.distributionFeeAndCommissionAmount = AmountLib.toAmount(
+        premium.distributionFeeAndCommissionAmount = 
             premium.distributionFeeFixAmount + premium.distributionOwnerFeeVarAmount 
-            + premium.commissionAmount);
+            + premium.commissionAmount;
 
         // net premium + fees for pool owner + bundle owner
-        premium.poolPremiumAndFeeAmount = AmountLib.toAmount(
-            premium.netPremiumAmount 
+        premium.poolPremiumAndFeeAmount = premium.netPremiumAmount 
             + premium.poolFeeFixAmount + premium.poolFeeVarAmount 
-            + premium.bundleFeeFixAmount + premium.bundleFeeVarAmount);
+            + premium.bundleFeeFixAmount + premium.bundleFeeVarAmount;
 
         premiumWithTargetWalletAmounts = premium;
     }

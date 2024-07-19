@@ -336,7 +336,7 @@ contract Registry is
         return PROTOCOL_NFT_ID;
     }
 
-    function getNftId(address object) external view returns (NftId id) {
+    function getNftIdForAddress(address object) external view returns (NftId id) {
         return _nftIdByAddress[object];
     }
 

@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {ClaimId} from "../type/ClaimId.sol";
 import {InstanceLinkedComponent} from "../shared/InstanceLinkedComponent.sol";
@@ -12,11 +10,11 @@ import {IApplicationService} from "./IApplicationService.sol";
 import {IAuthorization} from "../authorization/IAuthorization.sol";
 import {IComponentService} from "../shared/IComponentService.sol";
 import {IPolicyService} from "./IPolicyService.sol";
-import {IProductService} from "./IProductService.sol";
+import {IRiskService} from "./IRiskService.sol";
 import {IClaimService} from "./IClaimService.sol";
 import {IPricingService} from "./IPricingService.sol";
 import {IProductComponent} from "./IProductComponent.sol";
-import {NftId, NftIdLib} from "../type/NftId.sol";
+import {NftId} from "../type/NftId.sol";
 import {PayoutId} from "../type/PayoutId.sol";
 import {COMPONENT, PRODUCT, APPLICATION, POLICY, CLAIM, PRICE } from "../type/ObjectType.sol";
 import {ReferralId} from "../type/Referral.sol";
@@ -25,9 +23,6 @@ import {Seconds} from "../type/Seconds.sol";
 import {StateId} from "../type/StateId.sol";
 import {Timestamp} from "../type/Timestamp.sol";
 
-import {TokenHandler} from "../shared/TokenHandler.sol";
-
-import {InstanceReader} from "../instance/InstanceReader.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {Pool} from "../pool/Pool.sol";
@@ -41,7 +36,7 @@ abstract contract Product is
     bytes32 public constant PRODUCT_STORAGE_LOCATION_V1 = 0x0bb7aafdb8e380f81267337bc5b5dfdf76e6d3a380ecadb51ec665246d9d6800;
 
     struct ProductStorage {
-        IProductService _productService;
+        IRiskService _riskService;
         IApplicationService _applicationService;
         IPolicyService _policyService;
         IClaimService _claimService;
@@ -62,12 +57,12 @@ abstract contract Product is
         NftId bundleNftId,
         ReferralId referralId
     )
-        external 
+        public 
         view 
         override 
         returns (Amount premiumAmount)
     {
-        IPolicy.Premium memory premium = _getProductStorage()._pricingService.calculatePremium(
+        IPolicy.PremiumInfo memory premium = _getProductStorage()._pricingService.calculatePremium(
             getNftId(),
             riskId,
             sumInsuredAmount,
@@ -77,14 +72,14 @@ abstract contract Product is
             referralId
         );
 
-        return AmountLib.toAmount(premium.premiumAmount);
+        return premium.premiumAmount;
     }
 
     function calculateNetPremium(
         Amount sumInsuredAmount,
-        RiskId riskId,
-        Seconds lifetime,
-        bytes memory applicationData
+        RiskId,
+        Seconds,
+        bytes memory
     )
         external
         view
@@ -128,11 +123,11 @@ abstract contract Product is
     }
 
     function getPoolNftId() external view override returns (NftId poolNftId) {
-        return getRegistry().getNftId(address(_getProductStorage()._pool));
+        return getRegistry().getNftIdForAddress(address(_getProductStorage()._pool));
     }
 
     function getDistributionNftId() external view override returns (NftId distributionNftId) {
-        return getRegistry().getNftId(address(_getProductStorage()._distribution));
+        return getRegistry().getNftIdForAddress(address(_getProductStorage()._distribution));
     }
 
     function _initializeProduct(
@@ -143,8 +138,9 @@ abstract contract Product is
         string memory name,
         address token,
         bool isInterceptor,
-        address pool,
-        address distribution,
+        address pool, // switch to pool nft id (#527)
+        address distribution, // switch to distribution nft id  (#527)
+        // add NftId [] oracleNftIds (#527)
         bytes memory registryData, // writeonly data that will saved in the object info record of the registry
         bytes memory componentData // writeonly data that will saved in the object info record of the registry
     )
@@ -166,8 +162,8 @@ abstract contract Product is
 
         ProductStorage storage $ = _getProductStorage();
         // TODO add validation
-        // TODO refactor to go via registry ?
-        $._productService = IProductService(_getServiceAddress(PRODUCT())); 
+        // TODO refactor to go via registry for all components linked to this product (#527)
+        $._riskService = IRiskService(_getServiceAddress(PRODUCT())); 
         $._applicationService = IApplicationService(_getServiceAddress(APPLICATION())); 
         $._policyService = IPolicyService(_getServiceAddress(POLICY())); 
         $._claimService = IClaimService(_getServiceAddress(CLAIM())); 
@@ -175,10 +171,10 @@ abstract contract Product is
         $._componentService = IComponentService(_getServiceAddress(COMPONENT()));
         $._pool = Pool(pool);
         $._distribution = Distribution(distribution);
-        $._poolNftId = getRegistry().getNftId(pool);
-        $._distributionNftId = getRegistry().getNftId(distribution);
+        $._poolNftId = getRegistry().getNftIdForAddress(pool);
+        $._distributionNftId = getRegistry().getNftIdForAddress(distribution);
 
-        registerInterface(type(IProductComponent).interfaceId);  
+        _registerInterface(type(IProductComponent).interfaceId);  
     }
 
 
@@ -197,7 +193,7 @@ abstract contract Product is
         RiskId id,
         bytes memory data
     ) internal {
-        _getProductService().createRisk(
+        _getRiskService().createRisk(
             id,
             data
         );
@@ -207,7 +203,7 @@ abstract contract Product is
         RiskId id,
         bytes memory data
     ) internal {
-        _getProductService().updateRisk(
+        _getRiskService().updateRisk(
             id,
             data
         );
@@ -217,7 +213,7 @@ abstract contract Product is
         RiskId id,
         StateId state
     ) internal {
-        _getProductService().updateRiskState(
+        _getRiskService().updateRiskState(
             id,
             state
         );
@@ -233,6 +229,7 @@ abstract contract Product is
         address applicationOwner,
         RiskId riskId,
         Amount sumInsuredAmount,
+        Amount premiumAmount,
         Seconds lifetime,
         NftId bundleNftId,
         ReferralId referralId,
@@ -245,6 +242,7 @@ abstract contract Product is
             applicationOwner,
             riskId,
             sumInsuredAmount,
+            premiumAmount,
             lifetime,
             bundleNftId,
             referralId,
@@ -252,17 +250,34 @@ abstract contract Product is
         );
     }
 
-    function _collateralize(
-        NftId policyNftId,
-        bool requirePremiumPayment,
+    function _createPolicy(
+        NftId applicationNftId,
         Timestamp activateAt
     )
         internal
     {
-        _getProductStorage()._policyService.collateralize(
-            policyNftId, 
-            requirePremiumPayment, 
+        _getProductStorage()._policyService.createPolicy(
+            applicationNftId, 
             activateAt);
+    }
+
+    function _decline(
+        NftId policyNftId
+    )
+        internal
+    {
+        _getProductStorage()._policyService.decline(
+            policyNftId);
+    }
+
+    function _expire(
+        NftId policyNftId,
+        Timestamp expireAt
+    )
+        internal
+        returns (Timestamp expiredAt)
+    {
+        expiredAt = _getProductStorage()._policyService.expire(policyNftId, expireAt);
     }
 
     function _collectPremium(
@@ -365,6 +380,24 @@ abstract contract Product is
             data);
     }
 
+    function _createPayoutForBeneficiary(
+        NftId policyNftId,
+        ClaimId claimId,
+        Amount amount,
+        address beneficiary,
+        bytes memory data
+    )
+        internal
+        returns (PayoutId)
+    {
+        return _getProductStorage()._claimService.createPayoutForBeneficiary(
+            policyNftId, 
+            claimId, 
+            amount, 
+            beneficiary,
+            data);
+    }
+
     function _processPayout(
         NftId policyNftId,
         PayoutId payoutId
@@ -386,7 +419,7 @@ abstract contract Product is
         }
     }
 
-    function _getProductService() internal view returns (IProductService) {
-        return _getProductStorage()._productService;
+    function _getRiskService() internal view returns (IRiskService) {
+        return _getProductStorage()._riskService;
     }
 }

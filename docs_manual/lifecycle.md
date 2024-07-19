@@ -46,13 +46,21 @@ stateDiagram-v2
     APPLIED --> REVOKED
     APPLIED --> DECLINED 
     APPLIED --> COLLATERALIZED
-    APPLIED --> ACTIVE
-    COLLATERALIZED --> ACTIVE
-    ACTIVE --> CLOSED
+    COLLATERALIZED --> CLOSED
     CLOSED --> [*]
     REVOKED --> [*]
     DECLINED --> [*]
 ```
+
+## Premium lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> EXPECTED
+    EXPECTED --> PAID
+    PAID --> [*]
+```
+
 
 # Claim lifecycle
 

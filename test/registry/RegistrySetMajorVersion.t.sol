@@ -26,7 +26,7 @@ contract RegistryMajorVersionTests is RegistryTestBase {
         assertEq(registry.getNftId().toInt(), registryNftId.toInt(), "unexpected registry nft id");
         assertEq(
             registry.getNftId().toInt(), 
-            registry.getNftId(address(registry)).toInt(), 
+            registry.getNftIdForAddress(address(registry)).toInt(), 
             "unexpected registry nft id (version 2)"
         );
     }

@@ -174,11 +174,28 @@ forge test --mt test_decimals --gas-report
 # provide code coverage report
 forge coverage
 forge coverage --report lcov 
-
-
 ```
 
-Chisel session
+### Aliases 
+
+
+| Alias | Command |
+| --- | --- |
+| fb | forge build |
+| fbw | forge build --watch |
+| fbc | forge build contracts/ |
+| fbcw | forge build --watch contracts/ |
+| ft | forge test |
+| ftf | forge test --nmt "testFuzz\|test_continuous" |
+| ftt | forge test -vvvv --mt |
+| fttw | forge test -vvvv --watch --mt |
+| ftc | forge test -vvvv --mc |
+| ftcw | forge test -vvvv --watch --mc |
+
+**Important**: All profiles are run using the foundry `ci` profile which disables the optimizer (for speed).
+
+### Chisel session
+
 ```typescript
 import "./contracts/components/Component.sol";
 import "./contracts/components/IPool.sol";

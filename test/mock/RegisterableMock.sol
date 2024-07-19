@@ -7,14 +7,14 @@ import { FoundryRandom } from "foundry-random/FoundryRandom.sol";
 
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {ObjectType} from "../../contracts/type/ObjectType.sol";
-import {ERC165} from "../../contracts/shared/ERC165.sol";
+import {InitializableERC165} from "../../contracts/shared/InitializableERC165.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 
 import {MockInterceptor} from "./MockInterceptor.sol";
 
 
-contract RegisterableMock is ERC165, IRegisterable, MockInterceptor {
+contract RegisterableMock is InitializableERC165, IRegisterable, MockInterceptor {
 
     error ErrorRegisterableMockIsNotInterceptor(address registerable);
 
@@ -45,8 +45,8 @@ contract RegisterableMock is ERC165, IRegisterable, MockInterceptor {
         public
         initializer()
     {
-        initializeERC165();
-        registerInterface(type(IRegisterable).interfaceId);       
+        _initializeERC165();
+        _registerInterface(type(IRegisterable).interfaceId);       
     }
 
     // from IRegisterable

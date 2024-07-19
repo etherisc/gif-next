@@ -16,9 +16,7 @@ import {DistributorType} from "../../../contracts/type/DistributorType.sol";
 import {ReferralId, ReferralLib} from "../../../contracts/type/Referral.sol";
 import {RiskId, RiskIdLib} from "../../../contracts/type/RiskId.sol";
 import {SecondsLib} from "../../../contracts/type/Seconds.sol";
-import {SimpleProduct} from "../../mock/SimpleProduct.sol";
-import {SimpleDistribution} from "../../mock/SimpleDistribution.sol";
-import {SimplePool} from "../../mock/SimplePool.sol";
+import {SimpleDistribution} from "../../../contracts/examples/unpermissioned/SimpleDistribution.sol";
 import {TimestampLib} from "../../../contracts/type/Timestamp.sol";
 
 contract TestPricingService is GifTest {
@@ -33,7 +31,7 @@ contract TestPricingService is GifTest {
         );
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
-        IPolicy.Premium memory premium = pricingService.calculatePremium(
+        IPolicy.PremiumInfo memory premium = pricingService.calculatePremium(
             productNftId, 
             riskId, 
             AmountLib.toAmount(1000), 
@@ -42,9 +40,9 @@ contract TestPricingService is GifTest {
             bundleNftId,
             ReferralLib.zero());
 
-        assertEq(premium.netPremiumAmount, 100);
-        assertEq(premium.fullPremiumAmount, 100);
-        assertEq(premium.premiumAmount, 100);
+        assertEq(premium.netPremiumAmount.toInt(), 100);
+        assertEq(premium.fullPremiumAmount.toInt(), 100);
+        assertEq(premium.premiumAmount.toInt(), 100);
     }
 
 
@@ -58,7 +56,7 @@ contract TestPricingService is GifTest {
         );
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
-        IPolicy.Premium memory premium = pricingService.calculatePremium(
+        IPolicy.PremiumInfo memory premium = pricingService.calculatePremium(
             productNftId, 
             riskId, 
             AmountLib.toAmount(1000), 
@@ -67,19 +65,19 @@ contract TestPricingService is GifTest {
             bundleNftId,
             ReferralLib.zero());
 
-        assertEq(premium.netPremiumAmount, 100, "netPremiumAmount invalid");
-        assertEq(premium.fullPremiumAmount, 140, "fullPremiumAmount invalid");
-        assertEq(premium.premiumAmount, 140, "premiumAmount invalid");
-        assertEq(premium.distributionFeeFixAmount, 10, "distributionFeeFixAmount invalid");
-        assertEq(premium.distributionFeeVarAmount, 0, "distributionFeeVarAmount invalid");
-        assertEq(premium.poolFeeFixAmount, 10, "poolFeeFixAmount invalid");
-        assertEq(premium.poolFeeVarAmount, 0, "poolFeeVarAmount invalid");
-        assertEq(premium.bundleFeeFixAmount, 10, "bundleFeeFixAmount invalid");
-        assertEq(premium.bundleFeeVarAmount, 0, "bundleFeeVarAmount invalid");
-        assertEq(premium.productFeeFixAmount, 10, "productFeeFixAmount invalid");
-        assertEq(premium.productFeeVarAmount, 0, "productFeeVarAmount invalid");
-        assertEq(premium.distributionOwnerFeeFixAmount, 10, "distributionOwnerFeeFixAmount invalid");
-        assertEq(premium.distributionOwnerFeeVarAmount, 0, "distributionOwnerFeeVarAmount invalid");
+        assertEq(premium.netPremiumAmount.toInt(), 100, "netPremiumAmount invalid");
+        assertEq(premium.fullPremiumAmount.toInt(), 140, "fullPremiumAmount invalid");
+        assertEq(premium.premiumAmount.toInt(), 140, "premiumAmount invalid");
+        assertEq(premium.distributionFeeFixAmount.toInt(), 10, "distributionFeeFixAmount invalid");
+        assertEq(premium.distributionFeeVarAmount.toInt(), 0, "distributionFeeVarAmount invalid");
+        assertEq(premium.poolFeeFixAmount.toInt(), 10, "poolFeeFixAmount invalid");
+        assertEq(premium.poolFeeVarAmount.toInt(), 0, "poolFeeVarAmount invalid");
+        assertEq(premium.bundleFeeFixAmount.toInt(), 10, "bundleFeeFixAmount invalid");
+        assertEq(premium.bundleFeeVarAmount.toInt(), 0, "bundleFeeVarAmount invalid");
+        assertEq(premium.productFeeFixAmount.toInt(), 10, "productFeeFixAmount invalid");
+        assertEq(premium.productFeeVarAmount.toInt(), 0, "productFeeVarAmount invalid");
+        assertEq(premium.distributionOwnerFeeFixAmount.toInt(), 10, "distributionOwnerFeeFixAmount invalid");
+        assertEq(premium.distributionOwnerFeeVarAmount.toInt(), 0, "distributionOwnerFeeVarAmount invalid");
     }
 
     function test_pricingServiceCalculatePremiumOnlyVariableFees() public {
@@ -92,7 +90,7 @@ contract TestPricingService is GifTest {
         );
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
-        IPolicy.Premium memory premium = pricingService.calculatePremium(
+        IPolicy.PremiumInfo memory premium = pricingService.calculatePremium(
             productNftId, 
             riskId, 
             AmountLib.toAmount(1000), 
@@ -101,19 +99,19 @@ contract TestPricingService is GifTest {
             bundleNftId,
             ReferralLib.zero());
 
-        assertEq(premium.netPremiumAmount, 100, "netPremiumAmount invalid");
-        assertEq(premium.fullPremiumAmount, 120, "fullPremiumAmount invalid");
-        assertEq(premium.premiumAmount, 120, "premiumAmount invalid");
-        assertEq(premium.distributionFeeFixAmount, 0, "distributionFeeFixAmount invalid");
-        assertEq(premium.distributionFeeVarAmount, 5, "distributionFeeVarAmount invalid");
-        assertEq(premium.poolFeeFixAmount, 0, "poolFeeFixAmount invalid");
-        assertEq(premium.poolFeeVarAmount, 5, "poolFeeVarAmount invalid");
-        assertEq(premium.bundleFeeFixAmount, 0, "bundleFeeFixAmount invalid");
-        assertEq(premium.bundleFeeVarAmount, 5, "bundleFeeVarAmount invalid");
-        assertEq(premium.productFeeFixAmount, 0, "productFeeFixAmount invalid");
-        assertEq(premium.productFeeVarAmount, 5, "productFeeVarAmount invalid");
-        assertEq(premium.distributionOwnerFeeFixAmount, 0, "distributionOwnerFeeFixAmount invalid");
-        assertEq(premium.distributionOwnerFeeVarAmount, 5, "distributionOwnerFeeVarAmount invalid");
+        assertEq(premium.netPremiumAmount.toInt(), 100, "netPremiumAmount invalid");
+        assertEq(premium.fullPremiumAmount.toInt(), 120, "fullPremiumAmount invalid");
+        assertEq(premium.premiumAmount.toInt(), 120, "premiumAmount invalid");
+        assertEq(premium.distributionFeeFixAmount.toInt(), 0, "distributionFeeFixAmount invalid");
+        assertEq(premium.distributionFeeVarAmount.toInt(), 5, "distributionFeeVarAmount invalid");
+        assertEq(premium.poolFeeFixAmount.toInt(), 0, "poolFeeFixAmount invalid");
+        assertEq(premium.poolFeeVarAmount.toInt(), 5, "poolFeeVarAmount invalid");
+        assertEq(premium.bundleFeeFixAmount.toInt(), 0, "bundleFeeFixAmount invalid");
+        assertEq(premium.bundleFeeVarAmount.toInt(), 5, "bundleFeeVarAmount invalid");
+        assertEq(premium.productFeeFixAmount.toInt(), 0, "productFeeFixAmount invalid");
+        assertEq(premium.productFeeVarAmount.toInt(), 5, "productFeeVarAmount invalid");
+        assertEq(premium.distributionOwnerFeeFixAmount.toInt(), 0, "distributionOwnerFeeFixAmount invalid");
+        assertEq(premium.distributionOwnerFeeVarAmount.toInt(), 5, "distributionOwnerFeeVarAmount invalid");
     }
 
     function test_pricingServiceCalculatePremiumFixedAndVariableFees() public {
@@ -126,7 +124,7 @@ contract TestPricingService is GifTest {
         );
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
-        IPolicy.Premium memory premium = pricingService.calculatePremium(
+        IPolicy.PremiumInfo memory premium = pricingService.calculatePremium(
             productNftId, 
             riskId, 
             AmountLib.toAmount(1000), 
@@ -135,19 +133,19 @@ contract TestPricingService is GifTest {
             bundleNftId,
             ReferralLib.zero());
 
-        assertEq(premium.netPremiumAmount, 100, "netPremiumAmount invalid");
-        assertEq(premium.fullPremiumAmount, 100 + 5 * 4 + 3 + 4 + 5 + 6, "fullPremiumAmount invalid");
-        assertEq(premium.premiumAmount, 100 + 5 * 4 + 3 + 4 + 5 + 6, "premiumAmount invalid");
-        assertEq(premium.distributionFeeFixAmount, 3, "distributionFeeFixAmount invalid");
-        assertEq(premium.distributionFeeVarAmount, 5, "distributionFeeVarAmount invalid");
-        assertEq(premium.poolFeeFixAmount, 4, "poolFeeFixAmount invalid");
-        assertEq(premium.poolFeeVarAmount, 5, "poolFeeVarAmount invalid");
-        assertEq(premium.bundleFeeFixAmount, 5, "bundleFeeFixAmount invalid");
-        assertEq(premium.bundleFeeVarAmount, 5, "bundleFeeVarAmount invalid");
-        assertEq(premium.productFeeFixAmount, 6, "productFeeFixAmount invalid");
-        assertEq(premium.productFeeVarAmount, 5, "productFeeVarAmount invalid");
-        assertEq(premium.distributionOwnerFeeFixAmount, 3, "distributionOwnerFeeFixAmount invalid");
-        assertEq(premium.distributionOwnerFeeVarAmount, 5, "distributionOwnerFeeVarAmount invalid");
+        assertEq(premium.netPremiumAmount.toInt(), 100, "netPremiumAmount invalid");
+        assertEq(premium.fullPremiumAmount.toInt(), 100 + 5 * 4 + 3 + 4 + 5 + 6, "fullPremiumAmount invalid");
+        assertEq(premium.premiumAmount.toInt(), 100 + 5 * 4 + 3 + 4 + 5 + 6, "premiumAmount invalid");
+        assertEq(premium.distributionFeeFixAmount.toInt(), 3, "distributionFeeFixAmount invalid");
+        assertEq(premium.distributionFeeVarAmount.toInt(), 5, "distributionFeeVarAmount invalid");
+        assertEq(premium.poolFeeFixAmount.toInt(), 4, "poolFeeFixAmount invalid");
+        assertEq(premium.poolFeeVarAmount.toInt(), 5, "poolFeeVarAmount invalid");
+        assertEq(premium.bundleFeeFixAmount.toInt(), 5, "bundleFeeFixAmount invalid");
+        assertEq(premium.bundleFeeVarAmount.toInt(), 5, "bundleFeeVarAmount invalid");
+        assertEq(premium.productFeeFixAmount.toInt(), 6, "productFeeFixAmount invalid");
+        assertEq(premium.productFeeVarAmount.toInt(), 5, "productFeeVarAmount invalid");
+        assertEq(premium.distributionOwnerFeeFixAmount.toInt(), 3, "distributionOwnerFeeFixAmount invalid");
+        assertEq(premium.distributionOwnerFeeVarAmount.toInt(), 5, "distributionOwnerFeeVarAmount invalid");
     }
 
     function test_pricingServiceCalculatePremiumOnlyVariableFeesWithReferral() public {
@@ -188,7 +186,7 @@ contract TestPricingService is GifTest {
         vm.stopPrank();
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
-        IPolicy.Premium memory premium = pricingService.calculatePremium(
+        IPolicy.PremiumInfo memory premium = pricingService.calculatePremium(
             productNftId, 
             riskId, 
             AmountLib.toAmount(1000), 
@@ -197,21 +195,21 @@ contract TestPricingService is GifTest {
             bundleNftId,
             referralId);
 
-        assertEq(premium.netPremiumAmount, 100, "netPremiumAmount invalid");
-        assertEq(premium.fullPremiumAmount, 160, "fullPremiumAmount invalid");
-        assertEq(premium.premiumAmount, 144, "premiumAmount invalid");
-        assertEq(premium.distributionFeeFixAmount, 0, "distributionFeeFixAmount invalid");
-        assertEq(premium.distributionFeeVarAmount, 30, "distributionFeeVarAmount invalid");
-        assertEq(premium.poolFeeFixAmount, 0, "poolFeeFixAmount invalid");
-        assertEq(premium.poolFeeVarAmount, 10, "poolFeeVarAmount invalid");
-        assertEq(premium.bundleFeeFixAmount, 0, "bundleFeeFixAmount invalid");
-        assertEq(premium.bundleFeeVarAmount, 10, "bundleFeeVarAmount invalid");
-        assertEq(premium.productFeeFixAmount, 0, "productFeeFixAmount invalid");
-        assertEq(premium.productFeeVarAmount, 10, "productFeeVarAmount invalid");
-        assertEq(premium.discountAmount, 16, "discountAmount invalid");
-        assertEq(premium.commissionAmount, 5, "commissionAmount invalid");
-        assertEq(premium.distributionOwnerFeeFixAmount, 0, "distributionOwnerFeeFixAmount invalid");
-        assertEq(premium.distributionOwnerFeeVarAmount, 9, "distributionOwnerFeeVarAmount invalid");
+        assertEq(premium.netPremiumAmount.toInt(), 100, "netPremiumAmount invalid");
+        assertEq(premium.fullPremiumAmount.toInt(), 160, "fullPremiumAmount invalid");
+        assertEq(premium.premiumAmount.toInt(), 144, "premiumAmount invalid");
+        assertEq(premium.distributionFeeFixAmount.toInt(), 0, "distributionFeeFixAmount invalid");
+        assertEq(premium.distributionFeeVarAmount.toInt(), 30, "distributionFeeVarAmount invalid");
+        assertEq(premium.poolFeeFixAmount.toInt(), 0, "poolFeeFixAmount invalid");
+        assertEq(premium.poolFeeVarAmount.toInt(), 10, "poolFeeVarAmount invalid");
+        assertEq(premium.bundleFeeFixAmount.toInt(), 0, "bundleFeeFixAmount invalid");
+        assertEq(premium.bundleFeeVarAmount.toInt(), 10, "bundleFeeVarAmount invalid");
+        assertEq(premium.productFeeFixAmount.toInt(), 0, "productFeeFixAmount invalid");
+        assertEq(premium.productFeeVarAmount.toInt(), 10, "productFeeVarAmount invalid");
+        assertEq(premium.discountAmount.toInt(), 16, "discountAmount invalid");
+        assertEq(premium.commissionAmount.toInt(), 5, "commissionAmount invalid");
+        assertEq(premium.distributionOwnerFeeFixAmount.toInt(), 0, "distributionOwnerFeeFixAmount invalid");
+        assertEq(premium.distributionOwnerFeeVarAmount.toInt(), 9, "distributionOwnerFeeVarAmount invalid");
     }
 
     function test_pricingServiceCalculatePremiumOnlyVariableFeesWithReferralNoDiscount() public {
@@ -252,7 +250,7 @@ contract TestPricingService is GifTest {
         vm.stopPrank();
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
-        IPolicy.Premium memory premium = pricingService.calculatePremium(
+        IPolicy.PremiumInfo memory premium = pricingService.calculatePremium(
             productNftId, 
             riskId, 
             AmountLib.toAmount(1000), 
@@ -261,21 +259,21 @@ contract TestPricingService is GifTest {
             bundleNftId,
             referralId);
 
-        assertEq(premium.netPremiumAmount, 100, "netPremiumAmount invalid");
-        assertEq(premium.fullPremiumAmount, 160, "fullPremiumAmount invalid");
-        assertEq(premium.premiumAmount, 160, "premiumAmount invalid");
-        assertEq(premium.distributionFeeFixAmount, 0, "distributionFeeFixAmount invalid");
-        assertEq(premium.distributionFeeVarAmount, 30, "distributionFeeVarAmount invalid");
-        assertEq(premium.poolFeeFixAmount, 0, "poolFeeFixAmount invalid");
-        assertEq(premium.poolFeeVarAmount, 10, "poolFeeVarAmount invalid");
-        assertEq(premium.bundleFeeFixAmount, 0, "bundleFeeFixAmount invalid");
-        assertEq(premium.bundleFeeVarAmount, 10, "bundleFeeVarAmount invalid");
-        assertEq(premium.productFeeFixAmount, 0, "productFeeFixAmount invalid");
-        assertEq(premium.productFeeVarAmount, 10, "productFeeVarAmount invalid");
-        assertEq(premium.discountAmount, 0, "discountAmount invalid");
-        assertEq(premium.commissionAmount, 5, "commissionAmount invalid");
-        assertEq(premium.distributionOwnerFeeFixAmount, 0, "distributionOwnerFeeFixAmount invalid");
-        assertEq(premium.distributionOwnerFeeVarAmount, 25, "distributionOwnerFeeVarAmount invalid");
+        assertEq(premium.netPremiumAmount.toInt(), 100, "netPremiumAmount invalid");
+        assertEq(premium.fullPremiumAmount.toInt(), 160, "fullPremiumAmount invalid");
+        assertEq(premium.premiumAmount.toInt(), 160, "premiumAmount invalid");
+        assertEq(premium.distributionFeeFixAmount.toInt(), 0, "distributionFeeFixAmount invalid");
+        assertEq(premium.distributionFeeVarAmount.toInt(), 30, "distributionFeeVarAmount invalid");
+        assertEq(premium.poolFeeFixAmount.toInt(), 0, "poolFeeFixAmount invalid");
+        assertEq(premium.poolFeeVarAmount.toInt(), 10, "poolFeeVarAmount invalid");
+        assertEq(premium.bundleFeeFixAmount.toInt(), 0, "bundleFeeFixAmount invalid");
+        assertEq(premium.bundleFeeVarAmount.toInt(), 10, "bundleFeeVarAmount invalid");
+        assertEq(premium.productFeeFixAmount.toInt(), 0, "productFeeFixAmount invalid");
+        assertEq(premium.productFeeVarAmount.toInt(), 10, "productFeeVarAmount invalid");
+        assertEq(premium.discountAmount.toInt(), 0, "discountAmount invalid");
+        assertEq(premium.commissionAmount.toInt(), 5, "commissionAmount invalid");
+        assertEq(premium.distributionOwnerFeeFixAmount.toInt(), 0, "distributionOwnerFeeFixAmount invalid");
+        assertEq(premium.distributionOwnerFeeVarAmount.toInt(), 25, "distributionOwnerFeeVarAmount invalid");
     }
 
     function test_pricingServiceCalculatePremiumVariableAndFixedFeesWithReferral() public {
@@ -316,7 +314,7 @@ contract TestPricingService is GifTest {
         vm.stopPrank();
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
-        IPolicy.Premium memory premium = pricingService.calculatePremium(
+        IPolicy.PremiumInfo memory premium = pricingService.calculatePremium(
             productNftId, 
             riskId, 
             AmountLib.toAmount(1000), 
@@ -325,21 +323,21 @@ contract TestPricingService is GifTest {
             bundleNftId,
             referralId);
 
-        assertEq(premium.netPremiumAmount, 100, "netPremiumAmount invalid");
-        assertEq(premium.fullPremiumAmount, 200, "fullPremiumAmount invalid");
-        assertEq(premium.premiumAmount, 180, "premiumAmount invalid");
-        assertEq(premium.distributionFeeFixAmount, 10, "distributionFeeFixAmount invalid");
-        assertEq(premium.distributionFeeVarAmount, 30, "distributionFeeVarAmount invalid");
-        assertEq(premium.poolFeeFixAmount, 10, "poolFeeFixAmount invalid");
-        assertEq(premium.poolFeeVarAmount, 10, "poolFeeVarAmount invalid");
-        assertEq(premium.bundleFeeFixAmount, 10, "bundleFeeFixAmount invalid");
-        assertEq(premium.bundleFeeVarAmount, 10, "bundleFeeVarAmount invalid");
-        assertEq(premium.productFeeFixAmount, 10, "productFeeFixAmount invalid");
-        assertEq(premium.productFeeVarAmount, 10, "productFeeVarAmount invalid");
-        assertEq(premium.discountAmount, 20, "discountAmount invalid");
-        assertEq(premium.commissionAmount, 5, "commissionAmount invalid");
-        assertEq(premium.distributionOwnerFeeFixAmount, 5, "distributionOwnerFeeFixAmount invalid");
-        assertEq(premium.distributionOwnerFeeVarAmount, 5, "distributionOwnerFeeVarAmount invalid");
+        assertEq(premium.netPremiumAmount.toInt(), 100, "netPremiumAmount invalid");
+        assertEq(premium.fullPremiumAmount.toInt(), 200, "fullPremiumAmount invalid");
+        assertEq(premium.premiumAmount.toInt(), 180, "premiumAmount invalid");
+        assertEq(premium.distributionFeeFixAmount.toInt(), 10, "distributionFeeFixAmount invalid");
+        assertEq(premium.distributionFeeVarAmount.toInt(), 30, "distributionFeeVarAmount invalid");
+        assertEq(premium.poolFeeFixAmount.toInt(), 10, "poolFeeFixAmount invalid");
+        assertEq(premium.poolFeeVarAmount.toInt(), 10, "poolFeeVarAmount invalid");
+        assertEq(premium.bundleFeeFixAmount.toInt(), 10, "bundleFeeFixAmount invalid");
+        assertEq(premium.bundleFeeVarAmount.toInt(), 10, "bundleFeeVarAmount invalid");
+        assertEq(premium.productFeeFixAmount.toInt(), 10, "productFeeFixAmount invalid");
+        assertEq(premium.productFeeVarAmount.toInt(), 10, "productFeeVarAmount invalid");
+        assertEq(premium.discountAmount.toInt(), 20, "discountAmount invalid");
+        assertEq(premium.commissionAmount.toInt(), 5, "commissionAmount invalid");
+        assertEq(premium.distributionOwnerFeeFixAmount.toInt(), 5, "distributionOwnerFeeFixAmount invalid");
+        assertEq(premium.distributionOwnerFeeVarAmount.toInt(), 5, "distributionOwnerFeeVarAmount invalid");
     }
 
     function _createAndRegisterDistributionPoolProductWithFees(
@@ -387,7 +385,7 @@ contract TestPricingService is GifTest {
             address(instanceReader.getComponentInfo(poolNftId).tokenHandler), 
             10000);
 
-        bundleNftId = pool.createBundle(
+        (bundleNftId, ) = pool.createBundle(
             bundleFee, 
             10000, 
             SecondsLib.toSeconds(604800), 

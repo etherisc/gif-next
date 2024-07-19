@@ -10,7 +10,11 @@ contract NftOwnableMock is NftOwnable {
     }
 
     function initialize(address registry) public initializer() {
-        initializeNftOwnable(msg.sender, registry);
+        _initializeNftOwnable(msg.sender, registry);
+    }
+
+    function initializeNftOwnable(address owner, address registry) public initializer() {
+        _initializeNftOwnable(owner, registry);
     }
 
     function linkToNftOwnable(address nftOwnableAddress) external {
@@ -29,7 +33,7 @@ contract NftOwnableMockUninitialized is NftOwnable {
         public
         initializer()
     {
-        initializeNftOwnable(initialOwner, registry);
+        _initializeNftOwnable(initialOwner, registry);
     }
 /*
     function linkToNftOwnable(address nftOwnableAddress) external {

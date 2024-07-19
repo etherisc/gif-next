@@ -14,6 +14,7 @@ import {NftId, NftIdLib} from "../type/NftId.sol";
 import {BUNDLE, COMPONENT, POOL} from "../type/ObjectType.sol";
 import {RoleId, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {Seconds} from "../type/Seconds.sol";
+import {Timestamp} from "../type/Timestamp.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {UFixed, UFixedLib} from "../type/UFixed.sol";
 
@@ -81,8 +82,9 @@ abstract contract BasicPool is
         virtual
         restricted()
         onlyBundleOwner(bundleNftId)
+        returns(Timestamp newExpiredAt)
     {
-        _extend(bundleNftId, lifetimeExtension);
+        return _extend(bundleNftId, lifetimeExtension);
     }
 
 
@@ -106,13 +108,13 @@ abstract contract BasicPool is
     }
 
 
-    function close(NftId bundleNftId)
+    function closeBundle(NftId bundleNftId)
         public
         virtual
         restricted()
         onlyBundleOwner(bundleNftId)
     {
-        _close(bundleNftId);
+        _closeBundle(bundleNftId);
     }
 
 
@@ -129,13 +131,13 @@ abstract contract BasicPool is
     }
 
 
-    function setMaxCapitalAmount(Amount maxCapitalAmount)
+    function setMaxBalanceAmount(Amount maxBalanceAmount)
         public
         virtual
         restricted()
         onlyOwner()
     {
-        _setMaxCapitalAmount(maxCapitalAmount);
+        _setMaxBalanceAmount(maxBalanceAmount);
     }
 
 

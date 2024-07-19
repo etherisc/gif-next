@@ -2,25 +2,22 @@
 pragma solidity ^0.8.20;
 
 import {console} from "../lib/forge-std/src/Test.sol";
-
-import {BasicDistributionAuthorization} from "../contracts/distribution/BasicDistributionAuthorization.sol";
+import {COLLATERALIZED} from "../contracts/type/StateId.sol";
 import {DistributorType} from "../contracts/type/DistributorType.sol";
 import {IDistributionService} from "../contracts/distribution/IDistributionService.sol";
 import {GifTest} from "./base/GifTest.sol";
 import {NftId, NftIdLib} from "../contracts/type/NftId.sol";
-import {DISTRIBUTION_OWNER_ROLE} from "../contracts/type/RoleId.sol";
-import {IComponent} from "../contracts/shared/IComponent.sol";
+import {IBundleService} from "../contracts/pool/IBundleService.sol";
 import {IComponentService} from "../contracts/shared/IComponentService.sol";
 import {IComponents} from "../contracts/instance/module/IComponents.sol";
-import {IAccess} from "../contracts/instance/module/IAccess.sol";
-import {Fee, FeeLib} from "../contracts/type/Fee.sol";
-import {UFixedLib} from "../contracts/type/UFixed.sol";
-import {SimpleDistribution} from "./mock/SimpleDistribution.sol";
+import {IPolicy} from "../contracts/instance/module/IPolicy.sol";
+import {IPoolComponent} from "../contracts/pool/IPoolComponent.sol";
+import {FeeLib} from "../contracts/type/Fee.sol";
 import {RiskId, RiskIdLib} from "../contracts/type/RiskId.sol";
 import {ReferralId, ReferralLib} from "../contracts/type/Referral.sol";
 import {Seconds, SecondsLib} from "../contracts/type/Seconds.sol";
-import {ACTIVE} from "../contracts/type/StateId.sol";
-import {TimestampLib, toTimestamp} from "../contracts/type/Timestamp.sol";
+import {Timestamp, TimestampLib} from "../contracts/type/Timestamp.sol";
+import {TokenHandler} from "../contracts/shared/TokenHandler.sol";
 import {Amount, AmountLib} from "../contracts/type/Amount.sol";
 import {INftOwnable} from "../contracts/shared/INftOwnable.sol";
 
@@ -39,9 +36,10 @@ contract TestFees is GifTest {
         // solhint-disable-next-line 
         Amount distributionFee = instanceReader.getFeeAmount(distributionNftId);
         assertEq(distributionFee.toInt(), 20, "distribution fee not 20"); // 20% of the 10% premium -> 20
+        Amount distributionBalance = instanceReader.getBalanceAmount(distributionNftId);
 
-        uint256 distributionOwnerBalanceBefore = token.balanceOf(distributionOwner);
-        uint256 distributionBalanceBefore = token.balanceOf(address(distribution));
+        uint256 distributionOwnerTokenBalanceBefore = token.balanceOf(distributionOwner);
+        uint256 distributionTokenBalanceBefore = token.balanceOf(address(distribution));
         vm.stopPrank();
 
         Amount withdrawAmount = AmountLib.toAmount(15);
@@ -60,13 +58,15 @@ contract TestFees is GifTest {
 
         // THEN
         assertEq(amountWithdrawn.toInt(), withdrawAmount.toInt(), "withdrawn amount not 15");
-        uint256 distributionOwnerBalanceAfter = token.balanceOf(distributionOwner);
-        assertEq(distributionOwnerBalanceAfter, distributionOwnerBalanceBefore + withdrawAmount.toInt(), "distribution owner balance not 15 higher");
-        uint256 distributionBalanceAfter = token.balanceOf(address(distribution));
-        assertEq(distributionBalanceAfter, distributionBalanceBefore - withdrawAmount.toInt(), "distribution balance not 15 lower");
+        uint256 distributionOwnerTokenBalanceAfter = token.balanceOf(distributionOwner);
+        assertEq(distributionOwnerTokenBalanceAfter, distributionOwnerTokenBalanceBefore + withdrawAmount.toInt(), "distribution owner balance not 15 higher");
+        uint256 distributionTokenBalanceAfter = token.balanceOf(address(distribution));
+        assertEq(distributionTokenBalanceAfter, distributionTokenBalanceBefore - withdrawAmount.toInt(), "distribution balance not 15 lower");
 
         Amount distributionFeeAfter = instanceReader.getFeeAmount(distributionNftId);
         assertEq(distributionFeeAfter.toInt(), 5, "distribution fee not 5");
+        Amount distributionBalanceAfter = instanceReader.getBalanceAmount(distributionNftId);
+        assertEq(distributionBalanceAfter.toInt(), distributionBalance.toInt() - withdrawAmount.toInt(), "distribution balance not 15 lower");
     }
 
     /// @dev test withdraw fees from distribution component as not the distribution owner
@@ -155,7 +155,8 @@ contract TestFees is GifTest {
         
         // THEN
         vm.expectRevert(abi.encodeWithSelector(
-            IComponentService.ErrorComponentServiceWalletAllowanceTooSmall.selector, 
+            TokenHandler.ErrorTokenHandlerAllowanceTooSmall.selector, 
+            address(token),
             externalWallet, 
             address(distribution.getTokenHandler()),
             0,
@@ -189,9 +190,10 @@ contract TestFees is GifTest {
         // solhint-disable-next-line 
         Amount poolFee = instanceReader.getFeeAmount(poolNftId);
         assertEq(poolFee.toInt(), 5, "pool fee not 5"); // 5% of the 10% premium -> 5
+        Amount poolBalance = instanceReader.getBalanceAmount(poolNftId);
 
-        uint256 poolOwnerBalanceBefore = token.balanceOf(poolOwner);
-        uint256 poolBalanceBefore = token.balanceOf(address(pool));
+        uint256 poolOwnerTokenBalanceBefore = token.balanceOf(poolOwner);
+        uint256 poolTokenBalanceBefore = token.balanceOf(address(pool));
         vm.stopPrank();
 
         // WHEN
@@ -200,13 +202,15 @@ contract TestFees is GifTest {
 
         // THEN
         assertEq(amountWithdrawn.toInt(), 3, "withdrawn amount not 3");
-        uint256 poolOwnerBalanceAfter = token.balanceOf(poolOwner);
-        assertEq(poolOwnerBalanceAfter, poolOwnerBalanceBefore + 3, "pool owner balance not 3 higher");
-        uint256 poolBalanceAfter = token.balanceOf(address(pool));
-        assertEq(poolBalanceAfter, poolBalanceBefore - 3, "pool balance not 3 lower");
+        uint256 poolOwnerTokenBalanceAfter = token.balanceOf(poolOwner);
+        assertEq(poolOwnerTokenBalanceAfter, poolOwnerTokenBalanceBefore + 3, "pool owner balance not 3 higher");
+        uint256 poolTokenBalanceAfter = token.balanceOf(address(pool));
+        assertEq(poolTokenBalanceAfter, poolTokenBalanceBefore - 3, "pool balance not 3 lower");
 
         Amount poolFeeAfter = instanceReader.getFeeAmount(poolNftId);
         assertEq(poolFeeAfter.toInt(), 2, "pool fee not 2");
+        Amount poolBalanceAfter = instanceReader.getBalanceAmount(poolNftId);
+        assertEq(poolBalanceAfter.toInt(), poolBalance.toInt() - 3, "pool balance not 3 lower");
     }
 
     /// @dev test withdraw fees from pool component as not the pool owner
@@ -234,9 +238,10 @@ contract TestFees is GifTest {
         // solhint-disable-next-line 
         Amount productFee = instanceReader.getFeeAmount(productNftId);
         assertEq(productFee.toInt(), 5, "product fee not 5"); // 5% of the 10% premium -> 5
+        Amount productBalance = instanceReader.getBalanceAmount(productNftId);
 
-        uint256 productOwnerBalanceBefore = token.balanceOf(productOwner);
-        uint256 productBalanceBefore = token.balanceOf(address(product));
+        uint256 productOwnerTokenBalanceBefore = token.balanceOf(productOwner);
+        uint256 productTokenBalanceBefore = token.balanceOf(address(product));
         vm.stopPrank();
 
         // WHEN
@@ -245,13 +250,15 @@ contract TestFees is GifTest {
 
         // THEN
         assertEq(amountWithdrawn.toInt(), 3, "withdrawn amount not 3");
-        uint256 productOwnerBalanceAfter = token.balanceOf(productOwner);
-        assertEq(productOwnerBalanceAfter, productOwnerBalanceBefore + 3, "product owner balance not 3 higher");
-        uint256 productBalanceAfter = token.balanceOf(address(product));
-        assertEq(productBalanceAfter, productBalanceBefore - 3, "product balance not 3 lower");
+        uint256 productOwnerTokenBalanceAfter = token.balanceOf(productOwner);
+        assertEq(productOwnerTokenBalanceAfter, productOwnerTokenBalanceBefore + 3, "product owner balance not 3 higher");
+        uint256 productTokenBalanceAfter = token.balanceOf(address(product));
+        assertEq(productTokenBalanceAfter, productTokenBalanceBefore - 3, "product balance not 3 lower");
 
         Amount productFeeAfter = instanceReader.getFeeAmount(productNftId);
         assertEq(productFeeAfter.toInt(), 2, "product fee not 2");
+        Amount productBalanceAfter = instanceReader.getBalanceAmount(productNftId);
+        assertEq(productBalanceAfter.toInt(), productBalance.toInt() - 3, "product balance not 3 lower");
     }
 
     /// @dev test withdraw fees from product component as not the product owner
@@ -271,6 +278,7 @@ contract TestFees is GifTest {
         product.withdrawFees(withdrawAmount);
     }
     
+    /// @dev test withdraw of distributor commission
     function test_Fees_withdrawCommission() public {
         // GIVEN
         _setupWithActivePolicy(true);
@@ -278,13 +286,14 @@ contract TestFees is GifTest {
         // solhint-disable-next-line 
         Amount distributionFeeBefore = instanceReader.getFeeAmount(distributionNftId);
         assertEq(distributionFeeBefore.toInt(), 8, "distribution fee not 8"); // 20% of the 10% premium -> 20 - 7 (discount) - 5 (referral) = 8
+        Amount distributionBalanceBefore = instanceReader.getBalanceAmount(distributionNftId);
 
-        Amount commission = instanceReader.getDistributorInfo(distributorNftId).commissionAmount;
+        Amount commission = instanceReader.getFeeAmount(distributorNftId);
         assertEq(commission.toInt(), 5, "commission not 5");
 
-        uint256 distributionOwnerBalanceBefore = token.balanceOf(distributionOwner);
-        uint256 distributorBalanceBefore = token.balanceOf(distributor);
-        uint256 distributionBalanceBefore = token.balanceOf(address(distribution));
+        uint256 distributionOwnerTokenBalanceBefore = token.balanceOf(distributionOwner);
+        uint256 distributorTokenBalanceBefore = token.balanceOf(distributor);
+        uint256 distributionTokenBalanceBefore = token.balanceOf(address(distribution));
         vm.stopPrank();
 
         Amount withdrawAmount = AmountLib.toAmount(3);
@@ -304,20 +313,23 @@ contract TestFees is GifTest {
 
         // THEN - make sure, the withdrawn amount is correct and all counters have been correctly updated or not
         assertEq(amountWithdrawn.toInt(), withdrawAmount.toInt(), "withdrawn amount not 3");
-        Amount commissionAfter = instanceReader.getDistributorInfo(distributorNftId).commissionAmount;
+        Amount commissionAfter = instanceReader.getFeeAmount(distributorNftId);
         assertEq(commissionAfter.toInt(), 2, "distribution fee not 2");
         Amount distributionFeeAfter = instanceReader.getFeeAmount(distributionNftId);
         assertEq(distributionFeeAfter.toInt(), distributionFeeBefore.toInt(), "distribution fee has changed"); 
+        Amount distributionBalanceAfter = instanceReader.getBalanceAmount(distributionNftId);
+        assertEq(distributionBalanceAfter.toInt(), distributionBalanceBefore.toInt() - withdrawAmount.toInt(), "distribution balance not 3 lower");
 
         // and the tokens have been transferred
-        uint256 distributionOwnerBalanceAfter = token.balanceOf(distributionOwner);
-        assertEq(distributionOwnerBalanceAfter, distributionOwnerBalanceBefore, "distribution owner balance changed");
-        uint256 distributorBalanceAfter = token.balanceOf(distributor);
-        assertEq(distributorBalanceAfter, distributorBalanceBefore + withdrawAmount.toInt(), "distribution owner balance not 3 higher");
-        uint256 distributionBalanceAfter = token.balanceOf(address(distribution));
-        assertEq(distributionBalanceAfter, distributionBalanceBefore - withdrawAmount.toInt(), "distribution balance not 3 lower");
+        uint256 distributionOwnerTokenBalanceAfter = token.balanceOf(distributionOwner);
+        assertEq(distributionOwnerTokenBalanceAfter, distributionOwnerTokenBalanceBefore, "distribution owner balance changed");
+        uint256 distributorTokenBalanceAfter = token.balanceOf(distributor);
+        assertEq(distributorTokenBalanceAfter, distributorTokenBalanceBefore + withdrawAmount.toInt(), "distribution owner balance not 3 higher");
+        uint256 distributionTokenBalanceAfter = token.balanceOf(address(distribution));
+        assertEq(distributionTokenBalanceAfter, distributionTokenBalanceBefore - withdrawAmount.toInt(), "distribution balance not 3 lower");
     }
 
+    /// @dev test withdraw of distributor commission as not the distributor
     function test_Fees_withdrawCommission_notDistributor() public {
         // GIVEN
         _setupWithActivePolicy(true);
@@ -332,6 +344,7 @@ contract TestFees is GifTest {
         distribution.withdrawCommission(distributorNftId, withdrawAmount);
     }
 
+    /// @dev test withdraw of distributor commission with max value
     function test_Fees_withdrawCommission_maxAmount() public {
         // GIVEN
         _setupWithActivePolicy(true);
@@ -340,7 +353,7 @@ contract TestFees is GifTest {
         Amount distributionFeeBefore = instanceReader.getFeeAmount(distributionNftId);
         assertEq(distributionFeeBefore.toInt(), 8, "distribution fee not 8"); // 20% of the 10% premium -> 20 - 7 (discount) - 5 (referral) = 8
 
-        Amount commission = instanceReader.getDistributorInfo(distributorNftId).commissionAmount;
+        Amount commission = instanceReader.getFeeAmount(distributorNftId);
         assertEq(commission.toInt(), 5, "commission not 5");
 
         uint256 distributionOwnerBalanceBefore = token.balanceOf(distributionOwner);
@@ -366,7 +379,7 @@ contract TestFees is GifTest {
 
         // THEN - make sure, the withdrawn amount is correct and all counters have been correctly updated or not
         assertEq(amountWithdrawn.toInt(), expectedWithdrawnAmount.toInt(), "withdrawn amount not 5");
-        Amount commissionAfter = instanceReader.getDistributorInfo(distributorNftId).commissionAmount;
+        Amount commissionAfter = instanceReader.getFeeAmount(distributorNftId);
         assertEq(commissionAfter.toInt(), 0, "distribution fee not 0");
         Amount distributionFeeAfter = instanceReader.getFeeAmount(distributionNftId);
         assertEq(distributionFeeAfter.toInt(), distributionFeeBefore.toInt(), "distribution fee has changed"); 
@@ -380,6 +393,7 @@ contract TestFees is GifTest {
         assertEq(distributionBalanceAfter, distributionBalanceBefore - expectedWithdrawnAmount.toInt(), "distribution balance not 5 lower");
     }
 
+    /// @dev test withdraw of distributor commission with a too large amount
     function test_Fees_withdrawCommission_amountTooLarge() public {
         // GIVEN
         _setupWithActivePolicy(true);
@@ -397,6 +411,7 @@ contract TestFees is GifTest {
         distribution.withdrawCommission(distributorNftId, withdrawAmount);
     }
 
+    /// @dev test withdraw of distributor commission with a zero amount
     function test_Fees_withdrawCommission_amountIsZero() public {
         // GIVEN
         _setupWithActivePolicy(true);
@@ -406,12 +421,13 @@ contract TestFees is GifTest {
 
         // THEN 
         vm.expectRevert(abi.encodeWithSelector(
-            IDistributionService.ErrorDistributionServiceCommissionWithdrawAmountIsZero.selector));
+            TokenHandler.ErrorTokenHandlerAmountIsZero.selector));
         
         // WHEN - the distributor withdraws part of his commission
         distribution.withdrawCommission(distributorNftId, withdrawAmount);
     }
 
+    /// @dev test withdraw of distributor commission when allowance is too small
     function test_Fees_withdrawCommission_allowanceTooSmall() public {
         // GIVEN
         _setupWithActivePolicy(true);
@@ -426,7 +442,8 @@ contract TestFees is GifTest {
 
         // THEN 
         vm.expectRevert(abi.encodeWithSelector(
-            IDistributionService.ErrorDistributionServiceWalletAllowanceTooSmall.selector,
+            TokenHandler.ErrorTokenHandlerAllowanceTooSmall.selector,
+            address(token),
             externalWallet,
             address(distribution.getTokenHandler()),
             0,
@@ -436,12 +453,235 @@ contract TestFees is GifTest {
         distribution.withdrawCommission(distributorNftId, withdrawAmount);
     }
 
+    function test_Fees_withdrawBundleFees() public {
+        // GIVEN
+        _setupWithActivePolicy(false);
+
+        // solhint-disable-next-line 
+        Amount bundleFeeBefore = instanceReader.getFeeAmount(bundleNftId);
+        assertEq(bundleFeeBefore.toInt(), 10, "bundle fee expected to be 10"); 
+        Amount bundleBalanceBefore = instanceReader.getBalanceAmount(bundleNftId);
+        Amount poolBalanceBefore = instanceReader.getBalanceAmount(poolNftId);
+        Amount poolFeeBefore = instanceReader.getFeeAmount(poolNftId);
+
+        uint256 investorTokenBalanceBefore = token.balanceOf(investor);
+        uint256 poolTokenBalanceBefore = token.balanceOf(address(pool));
+        vm.stopPrank();
+
+        Amount withdrawAmount = AmountLib.toAmount(5);
+        vm.startPrank(investor);
+
+        // THEN - expect a log entry for the fee withdrawal
+        vm.expectEmit();
+        emit IBundleService.LogBundleServiceFeesWithdrawn(
+            bundleNftId,
+            investor,
+            address(token),
+            withdrawAmount
+        );
+        
+        // WHEN - the investor withdraws part of the bundle fee
+        Amount amountWithdrawn = pool.withdrawBundleFees(bundleNftId, withdrawAmount);
+
+        // THEN - make sure, the withdrawn amount is correct and all counters have been correctly updated or not
+        assertEq(amountWithdrawn.toInt(), withdrawAmount.toInt(), "withdrawn amount not as expected");
+        Amount bundleFeeAfter = instanceReader.getFeeAmount(bundleNftId);
+        assertEq(bundleFeeAfter.toInt(), bundleFeeBefore.toInt() - withdrawAmount.toInt(), "bundle fee was not decreased by the withdraw amount"); 
+        Amount bundleBalanceAfter = instanceReader.getBalanceAmount(bundleNftId);
+        assertEq(bundleBalanceAfter.toInt(), bundleBalanceBefore.toInt() - withdrawAmount.toInt(), "bundle balance was not decreased by the withdraw amount");
+        Amount poolBalanceAfter = instanceReader.getBalanceAmount(poolNftId);
+        assertEq(poolBalanceAfter.toInt(), poolBalanceBefore.toInt() - withdrawAmount.toInt(), "pool balance was not decreased by the withdraw amount");
+        Amount poolFeeAfter = instanceReader.getFeeAmount(poolNftId);
+        assertEq(poolFeeAfter.toInt(), poolFeeBefore.toInt(), "pool fee has changed");
+
+        // and the tokens have been transferred
+        uint256 investorTokenBalanceAfter = token.balanceOf(investor);
+        assertEq(investorTokenBalanceAfter, investorTokenBalanceBefore + withdrawAmount.toInt(), "investor did not received the withdrawn tokens");
+        uint256 poolTokenBalanceAfter = token.balanceOf(address(pool));
+        assertEq(poolTokenBalanceAfter, poolTokenBalanceBefore - withdrawAmount.toInt(), "pool did not transfer the withdrawn tokens");
+    }
+
+    /// @dev test withdraw of bundle fees when the bundle is locked
+    function test_Fees_withdrawBundleFees_bundleLocked() public {
+        // GIVEN
+        _setupWithActivePolicy(false);
+
+        vm.stopPrank();
+
+        
+        Amount withdrawAmount = AmountLib.toAmount(5);
+        vm.startPrank(investor);
+        pool.lockBundle(bundleNftId);
+
+        // THEN - expect a log entry for the fee withdrawal
+        vm.expectEmit();
+        emit IBundleService.LogBundleServiceFeesWithdrawn(
+            bundleNftId,
+            investor,
+            address(token),
+            withdrawAmount
+        );
+        
+        // WHEN - the investor withdraws part of his bundle fee from the locked bundle
+        Amount amountWithdrawn = pool.withdrawBundleFees(bundleNftId, withdrawAmount);
+
+        // THEN - make sure, the withdrawn amount is correct and all counters have been correctly updated or not
+        assertEq(amountWithdrawn.toInt(), withdrawAmount.toInt(), "withdrawn amount not as expected");
+    }
+
+    /// @dev test withdraw of bundle fees when the requester is not the bundle owner
+    function test_Fees_withdrawBundleFees_notBundleOwner() public {
+        // GIVEN
+        _setupWithActivePolicy(false);
+
+        vm.stopPrank();
+        
+        Amount withdrawAmount = AmountLib.toAmount(5);
+        vm.startPrank(customer);
+        
+        // THEN - expect a revert
+        vm.expectRevert(abi.encodeWithSelector(
+            IPoolComponent.ErrorPoolNotBundleOwner.selector, 
+            bundleNftId,
+            customer));
+        
+        // WHEN - the customer tries to withdraw 
+        pool.withdrawBundleFees(bundleNftId, withdrawAmount);
+    }
+
+    /// @dev test withdraw of bundle fees when the max amount is requested
+    function test_Fees_withdrawBundleFees_maxAmount() public {
+        // GIVEN
+        _setupWithActivePolicy(false);
+
+        // solhint-disable-next-line 
+        Amount bundleFeeBefore = instanceReader.getFeeAmount(bundleNftId);
+        assertEq(bundleFeeBefore.toInt(), 10, "bundle fee expected to be 10"); 
+        Amount bundleBalanceBefore = instanceReader.getBalanceAmount(bundleNftId);
+        Amount poolBalanceBefore = instanceReader.getBalanceAmount(poolNftId);
+        Amount poolFeeBefore = instanceReader.getFeeAmount(poolNftId);
+
+        uint256 investorTokenBalanceBefore = token.balanceOf(investor);
+        uint256 poolTokenBalanceBefore = token.balanceOf(address(pool));
+        vm.stopPrank();
+
+        Amount withdrawAmount = AmountLib.max();
+        Amount expectedWithdrawAmount = AmountLib.toAmount(10);
+        vm.startPrank(investor);
+
+        // THEN - expect a log entry for the fee withdrawal
+        vm.expectEmit();
+        emit IBundleService.LogBundleServiceFeesWithdrawn(
+            bundleNftId,
+            investor,
+            address(token),
+            bundleFeeBefore
+        );
+        
+        // WHEN - the investor withdraws the maximum available bundle fee amount
+        Amount amountWithdrawn = pool.withdrawBundleFees(bundleNftId, withdrawAmount);
+
+        // THEN - make sure, the withdrawn amount is correct and all counters have been correctly updated or not
+        assertEq(amountWithdrawn.toInt(), expectedWithdrawAmount.toInt(), "withdrawn amount not as expected");
+        Amount bundleFeeAfter = instanceReader.getFeeAmount(bundleNftId);
+        assertEq(bundleFeeAfter.toInt(), bundleFeeBefore.toInt() - expectedWithdrawAmount.toInt(), "bundle fee was not decreased by the withdraw amount"); 
+        Amount bundleBalanceAfter = instanceReader.getBalanceAmount(bundleNftId);
+        assertEq(bundleBalanceAfter.toInt(), bundleBalanceBefore.toInt() - expectedWithdrawAmount.toInt(), "bundle balance was not decreased by the withdraw amount");
+        Amount poolBalanceAfter = instanceReader.getBalanceAmount(poolNftId);
+        assertEq(poolBalanceAfter.toInt(), poolBalanceBefore.toInt() - expectedWithdrawAmount.toInt(), "pool balance was not decreased by the withdraw amount");
+        Amount poolFeeAfter = instanceReader.getFeeAmount(poolNftId);
+        assertEq(poolFeeAfter.toInt(), poolFeeBefore.toInt(), "pool fee has changed");
+
+        // and the tokens have been transferred
+        uint256 investorTokenBalanceAfter = token.balanceOf(investor);
+        assertEq(investorTokenBalanceAfter, investorTokenBalanceBefore + expectedWithdrawAmount.toInt(), "investor did not received the withdrawn tokens");
+        uint256 poolTokenBalanceAfter = token.balanceOf(address(pool));
+        assertEq(poolTokenBalanceAfter, poolTokenBalanceBefore - expectedWithdrawAmount.toInt(), "pool did not transfer the withdrawn tokens");
+    }
+
+    /// @dev test withdraw of bundle fees when the withdraw amount is too large
+    function test_Fees_withdrawBundleFees_amountTooLarge() public {
+        // GIVEN
+        _setupWithActivePolicy(false);
+
+        vm.stopPrank();
+        
+        Amount withdrawAmount = AmountLib.toAmount(50);
+        vm.startPrank(investor);
+        
+        // THEN - expect a revert
+        vm.expectRevert(abi.encodeWithSelector(
+            IBundleService.ErrorBundleServiceFeesWithdrawAmountExceedsLimit.selector, 
+            withdrawAmount,
+            10));
+        
+        // WHEN - the investor tries to withdraw more tokens than available 
+        pool.withdrawBundleFees(bundleNftId, withdrawAmount);
+    }
+
+    /// @dev test withdraw of bundle fees when the allowance is too small
+    function test_Fees_withdrawBundleFees_allowanceTooSmall() public {
+        // GIVEN
+        _setupWithActivePolicy(false);
+
+        vm.stopPrank();
+
+        vm.startPrank(poolOwner);
+        address externalWallet = makeAddr("externalWallet");
+        pool.setWallet(externalWallet);
+        vm.stopPrank();
+        
+        Amount withdrawAmount = AmountLib.toAmount(7);
+        vm.startPrank(investor);
+        
+        // THEN - expect a revert
+        vm.expectRevert(abi.encodeWithSelector(
+            TokenHandler.ErrorTokenHandlerAllowanceTooSmall.selector, 
+            address(token),
+            externalWallet,
+            address(pool.getTokenHandler()),
+            0,
+            7));
+        
+        // WHEN - the investor tries to withdraw more tokens than available 
+        pool.withdrawBundleFees(bundleNftId, withdrawAmount);
+    }
+
+    /// @dev test withdraw of bundle fees when the amount is zero
+    function test_Fees_withdrawBundleFees_amountIsZero() public {
+        // GIVEN
+        _setupWithActivePolicy(false);
+
+        vm.stopPrank();
+
+        vm.startPrank(poolOwner);
+        address externalWallet = makeAddr("externalWallet");
+        pool.setWallet(externalWallet);
+        vm.stopPrank();
+        
+        Amount withdrawAmount = AmountLib.toAmount(0);
+        vm.startPrank(investor);
+        
+        // THEN - expect a revert
+        vm.expectRevert(abi.encodeWithSelector(
+            TokenHandler.ErrorTokenHandlerAmountIsZero.selector));
+        
+        // WHEN - the investor tries to withdraw more tokens than available 
+        pool.withdrawBundleFees(bundleNftId, withdrawAmount);
+    }
+
+
     function _setupWithActivePolicy(bool purchaseWithReferral) internal returns (NftId policyNftId) {
         vm.startPrank(registryOwner);
         token.transfer(customer, 1000);
         vm.stopPrank();
 
         _prepareProduct();  
+
+        // setup bundle fees
+        vm.startPrank(investor);
+        pool.setBundleFee(bundleNftId, FeeLib.percentageFee(10));
+        vm.stopPrank();
 
         // setup pool fees
         vm.startPrank(poolOwner);
@@ -483,7 +723,7 @@ contract TestFees is GifTest {
                 "DEAL", 
                 instanceReader.toUFixed(5, -2), 
                 10, 
-                toTimestamp(30 * 24 * 60 * 60), 
+                TimestampLib.toTimestamp(30 * 24 * 60 * 60), 
                 "");
             vm.stopPrank();
         } else {
@@ -521,9 +761,12 @@ contract TestFees is GifTest {
 
         // solhint-disable-next-line 
         console.log("before collateralization of", policyNftId.toInt());
-        product.collateralize(policyNftId, true, TimestampLib.blockTimestamp()); 
+        Timestamp activateAt = TimestampLib.blockTimestamp();
+        product.createPolicy(policyNftId, true, activateAt); 
 
-        assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not COLLATERALIZED");
+        assertTrue(instanceReader.getPolicyState(policyNftId) == COLLATERALIZED(), "policy state not COLLATERALIZED");
+        IPolicy.PolicyInfo memory productInfo = instanceReader.getPolicyInfo(policyNftId);
+        assertEq(productInfo.activatedAt.toInt(), activateAt.toInt(), "policy activation time not as expected");
     }
 
     

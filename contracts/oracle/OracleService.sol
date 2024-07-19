@@ -27,14 +27,14 @@ contract OracleService is
         bytes memory data
     )
         internal
-        initializer
         virtual override
+        initializer()
     {
         address initialOwner;
         address registryAddress;
         (registryAddress, initialOwner) = abi.decode(data, (address, address));
-        initializeService(registryAddress, address(0), owner);
-        registerInterface(type(IOracleService).interfaceId);
+        _initializeService(registryAddress, address(0), owner);
+        _registerInterface(type(IOracleService).interfaceId);
     }
 
     function request(
@@ -64,6 +64,7 @@ contract OracleService is
             ORACLE(), 
             true); // only active
 
+        // TODO move to stronger validation, requester and oracle need to belong to same product cluster
         // check that requester and oracle share same instance
         if (componentInfo.parentNftId != oracleInfo.parentNftId) {
             revert ErrorOracleServiceInstanceMismatch(componentInfo.parentNftId, oracleInfo.parentNftId);

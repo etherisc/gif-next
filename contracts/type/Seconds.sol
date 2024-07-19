@@ -6,9 +6,14 @@ type Seconds is uint40;
 using {
     SecondsEq as ==,
     SecondsGt as >,
+    SecondsAdd as +,
     SecondsLib.eqz,
     SecondsLib.gtz,
-    SecondsLib.toInt
+    SecondsLib.eq,
+    SecondsLib.gt,
+    SecondsLib.lt,
+    SecondsLib.toInt,
+    SecondsLib.add
 } for Seconds global;
 
 function SecondsEq(Seconds duration1, Seconds duration2) pure returns (bool) {
@@ -18,6 +23,11 @@ function SecondsEq(Seconds duration1, Seconds duration2) pure returns (bool) {
 function SecondsGt(Seconds duration1, Seconds duration2) pure returns (bool) {
     return SecondsLib.gt(duration1, duration2);
 }
+
+function SecondsAdd(Seconds duration1, Seconds duration2) pure returns (Seconds) {
+    return SecondsLib.add(duration1, duration2);
+}
+
 
 library SecondsLib {
 
@@ -68,6 +78,16 @@ library SecondsLib {
     /// @dev return true if duration1 is larger than duration2
     function gt(Seconds duration1, Seconds duration2) public pure returns (bool) {
         return Seconds.unwrap(duration1) > Seconds.unwrap(duration2);
+    }
+
+    /// @dev return true if duration1 is smaller than duration2
+    function lt(Seconds duration1, Seconds duration2) public pure returns (bool) {
+        return Seconds.unwrap(duration1) < Seconds.unwrap(duration2);
+    }
+
+    /// @dev return add duration1 and duration2
+    function add(Seconds duration1, Seconds duration2) public pure returns (Seconds) {
+        return Seconds.wrap(Seconds.unwrap(duration1) + Seconds.unwrap(duration2));
     }
 
     function toInt(Seconds duration) public pure returns (uint256) {

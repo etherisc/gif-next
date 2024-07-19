@@ -103,7 +103,7 @@ abstract contract InstanceLinkedComponent is
             revert ErrorComponentNotInstance(instanceNftId);
         }
 
-        initializeComponent(
+        _initializeComponent(
             $._instance.authority(), 
             registry, 
             instanceNftId, 
@@ -120,8 +120,8 @@ abstract contract InstanceLinkedComponent is
         $._initialAuthorization = authorization;
         $._componentService = IComponentService(_getServiceAddress(COMPONENT())); 
 
-        registerInterface(type(IAccessManaged).interfaceId);
-        registerInterface(type(IInstanceLinkedComponent).interfaceId);
+        _registerInterface(type(IAccessManaged).interfaceId);
+        _registerInterface(type(IInstanceLinkedComponent).interfaceId);
     }
 
     /// @dev for instance linked components the wallet address stored in the instance store.
@@ -132,7 +132,7 @@ abstract contract InstanceLinkedComponent is
 
 
     function _getComponentInfo() internal virtual override view returns (IComponents.ComponentInfo memory info) {
-        NftId componentNftId = getRegistry().getNftId(address(this));
+        NftId componentNftId = getRegistry().getNftIdForAddress(address(this));
 
         // if registered, attempt to return component info via instance reader
         if (componentNftId.gtz()) {

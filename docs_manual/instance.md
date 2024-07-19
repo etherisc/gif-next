@@ -6,34 +6,37 @@
 sequenceDiagram
     actor O as Owner
     participant IS as InstanceService
-    participant OAM as OzAccessManager
+    participant ACM as AccessManagerClonable
+    participant IADM as InstanceAdmin
     participant I as Instance
     participant IST as InstanceStore
+    participant BS as BundleSet
     participant IR as InstanceReader
-    participant BM as BundleManager
-    participant IAM as AccessManager
-    participant IAL as InstanceAuthorizationsLib
     participant RS as RegistryService
+    participant SS as StakingService
+    participant S as Stakingd
     
     O ->> IS: createInstance()
-    IS ->> OAM: deploy clone
-    IS ->> OAM: initialize(owner)
-    IS ->> I: deploy clone
-    IS ->> I: initialize(ozAccessManager, registry, owner) 
-    IS ->> IST: deploy clone 
-    IS ->> IST: initialize(instance)
-    IS ->> I: setInstanceStore(instanceStore)
-    IS ->> IR: deploy clone 
-    IS ->> IR: initialize(instance)
-    IS ->> I: setInstanceReader(instanceReader)
-    IS ->> BM: deploy clone 
-    IS ->> BM: initialize(instance)
-    IS ->> I: setBundleManager(bundelManager)
-    IS ->> IAM: deploy clone
-    IS ->> OAM: grantRole(ADMIN_ROLE, instanceAccessManager)
-    IS ->> IAM: initialize(instance)
-    IS ->> I: setInstanceAccessManager(instanceAccessManager)
-    IS ->> IAL: grantInitialAuthorizations(instanceAccessManager, instance, bundleManager, instanceStore, owner, [...])
-    IS ->> OAM: renounceRole(ADMIN_ROLE)
-    IS ->> RS: registerInstance(instance, owner)
+    IS ->> ACM: clone master AccessManagerCloneable
+    IS ->> IADM: clone master InstanceAdmin
+    IS ->> ACM: initialize
+    IS ->> IADM: initialize
+    IADM ->> IADM: create admin and public roles
+    IS ->> IST: clone master InstanceStore
+    IS ->> BS: clone master BundleSet
+    IS ->> IR: clone master InstanceReader
+    IS ->> I: clone instance
+    IS ->> I: initialize
+    I ->> IST: initialize
+    I ->> IR: initialize
+    I ->> BS: initialize
+    IS ->> RS: registerInstance()
+    RS ->> IS: instance nft id
+    IS ->> SS: create instance target
+    SS ->> S: register target
+    IS ->> IADM: initialize instance authorization
+    IADM ->> IADM: create roles
+    IADM ->> IADM: create target and grant roles
+    IADM ->> IADM: create target authorizations
+    IADM ->> IADM: grant component owner roles to initial admin
 ```

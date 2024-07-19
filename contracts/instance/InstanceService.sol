@@ -60,7 +60,7 @@ contract InstanceService is
 
     modifier onlyInstance() {        
         address instanceAddress = msg.sender;
-        NftId instanceNftId = getRegistry().getNftId(msg.sender);
+        NftId instanceNftId = getRegistry().getNftIdForAddress(msg.sender);
         if (instanceNftId.eqz()) {
             revert ErrorInstanceServiceNotRegistered(instanceAddress);
         }
@@ -104,32 +104,9 @@ contract InstanceService is
         // tx sender will become instance owner
         address instanceOwner = msg.sender;
 
-        // start with setting up a new OZ access manager
-        AccessManagerCloneable clonedAccessManager = AccessManagerCloneable(
-            Clones.clone(_masterAccessManager));
-        
-        // set up the instance admin
-        InstanceAdmin clonedInstanceAdmin = InstanceAdmin(Clones.clone(_masterInstanceAdmin));
-        clonedAccessManager.initialize(
-            address(clonedInstanceAdmin)); // grant ADMIN_ROLE to instance admin
-
-        clonedInstanceAdmin.initialize(
-            clonedAccessManager,
-            InstanceAdmin(_masterInstanceAdmin).getInstanceAuthorization());
-
-        InstanceStore clonedInstanceStore = InstanceStore(Clones.clone(address(_masterInstanceStore)));
-        BundleSet clonedBundleSet = BundleSet(Clones.clone(_masterInstanceBundleSet));
-        InstanceReader clonedInstanceReader = InstanceReader(Clones.clone(address(_masterInstanceReader)));
-
-        // clone instance
-        clonedInstance = Instance(Clones.clone(_masterInstance));
-        clonedInstance.initialize(
-            clonedInstanceAdmin,
-            clonedInstanceStore,
-            clonedBundleSet,
-            clonedInstanceReader,
-            getRegistry(),
-            instanceOwner);
+        // create instance admin and instance
+        InstanceAdmin instanceAdmin = _createInstanceAdmin();
+        clonedInstance = _createInstance(instanceAdmin, instanceOwner);
 
         // register cloned instance with registry
         clonedInstanceNftId = _registryService.registerInstance(
@@ -142,7 +119,7 @@ contract InstanceService is
             TargetManagerLib.getDefaultRewardRate());
 
         // MUST be set after instance is set up and registered
-        clonedInstanceAdmin.initializeInstanceAuthorization(address(clonedInstance));
+        instanceAdmin.initializeInstanceAuthorization(address(clonedInstance));
 
         emit LogInstanceCloned(
             clonedInstanceNftId,
@@ -155,7 +132,7 @@ contract InstanceService is
         virtual
         onlyInstance()
     {
-        NftId instanceNftId = getRegistry().getNftId(msg.sender);
+        NftId instanceNftId = getRegistry().getNftIdForAddress(msg.sender);
         _stakingService.setInstanceLockingPeriod(
             instanceNftId,
             stakeLockingPeriod);
@@ -167,7 +144,7 @@ contract InstanceService is
         virtual
         onlyInstance()
     {
-        NftId instanceNftId = getRegistry().getNftId(msg.sender);
+        NftId instanceNftId = getRegistry().getNftIdForAddress(msg.sender);
         _stakingService.setInstanceRewardRate(
             instanceNftId,
             rewardRate);
@@ -179,7 +156,7 @@ contract InstanceService is
         virtual
         onlyInstance()
     {
-        NftId instanceNftId = getRegistry().getNftId(msg.sender);
+        NftId instanceNftId = getRegistry().getNftIdForAddress(msg.sender);
         _stakingService.refillInstanceRewardReserves(
             instanceNftId,
             rewardProvider,
@@ -193,7 +170,7 @@ contract InstanceService is
         onlyInstance()
         returns (Amount newBalance)
     {
-        NftId instanceNftId = getRegistry().getNftId(msg.sender);
+        NftId instanceNftId = getRegistry().getNftIdForAddress(msg.sender);
         _stakingService.withdrawInstanceRewardReserves(
             instanceNftId,
             dipAmount);
@@ -337,7 +314,7 @@ contract InstanceService is
 
         InstanceAdmin instanceAdmin = instance.getInstanceAdmin();
         instanceAdmin.initializeComponentAuthorization(
-            address(component),
+            component,
             component.getAuthorization());
     }
 
@@ -360,6 +337,53 @@ contract InstanceService is
             roles,
             selectors
         );
+    }
+
+    /// @dev create new cloned instance admin
+    /// function used to setup a new instance
+    function _createInstanceAdmin()
+        internal
+        virtual
+        returns (InstanceAdmin clonedInstanceAdmin)
+    {
+        // start with setting up a new OZ access manager
+        AccessManagerCloneable clonedAccessManager = AccessManagerCloneable(
+            Clones.clone(_masterAccessManager));
+        
+        // set up the instance admin
+        clonedInstanceAdmin = InstanceAdmin(Clones.clone(_masterInstanceAdmin));
+        clonedAccessManager.initialize(
+            address(clonedInstanceAdmin)); // grant ADMIN_ROLE to instance admin
+
+        clonedInstanceAdmin.initialize(
+            clonedAccessManager,
+            InstanceAdmin(_masterInstanceAdmin).getInstanceAuthorization());
+    }
+
+
+    /// @dev create new cloned instance
+    /// function used to setup a new instance
+    function _createInstance(
+        InstanceAdmin instanceAdmin,
+        address instanceOwner
+    )
+        internal
+        virtual
+        returns (Instance clonedInstance)
+    {
+        InstanceStore clonedInstanceStore = InstanceStore(Clones.clone(address(_masterInstanceStore)));
+        BundleSet clonedBundleSet = BundleSet(Clones.clone(_masterInstanceBundleSet));
+        InstanceReader clonedInstanceReader = InstanceReader(Clones.clone(address(_masterInstanceReader)));
+
+        // clone instance
+        clonedInstance = Instance(Clones.clone(_masterInstance));
+        clonedInstance.initialize(
+            instanceAdmin,
+            clonedInstanceStore,
+            clonedBundleSet,
+            clonedInstanceReader,
+            getRegistry(),
+            instanceOwner);
     }
 
 
@@ -398,8 +422,8 @@ contract InstanceService is
         bytes memory data
     )
         internal
-        initializer
         virtual override
+        initializer()
     {
         (
             address registryAddress,, 
@@ -407,12 +431,12 @@ contract InstanceService is
             address authority
         ) = abi.decode(data, (address, address, address));
 
-        initializeService(registryAddress, authority, owner);
+        _initializeService(registryAddress, authority, owner);
 
         _registryService = IRegistryService(_getServiceAddress(REGISTRY()));
         _stakingService = IStakingService(_getServiceAddress(STAKING()));
 
-        registerInterface(type(IInstanceService).interfaceId);
+        _registerInterface(type(IInstanceService).interfaceId);
     }
 
 

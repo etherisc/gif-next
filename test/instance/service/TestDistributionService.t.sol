@@ -6,8 +6,7 @@ import {GifTest} from "../../base/GifTest.sol";
 import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
 import {DISTRIBUTION_OWNER_ROLE} from "../../../contracts/type/RoleId.sol";
 import {ComponentService} from "../../../contracts/shared/ComponentService.sol";
-import {FeeLib} from "../../../contracts/type/Fee.sol";
-import {SimpleDistribution} from "../../mock/SimpleDistribution.sol";
+import {SimpleDistribution} from "../../../contracts/examples/unpermissioned/SimpleDistribution.sol";
 
 contract TestDistributionService is GifTest {
     using NftIdLib for NftId;

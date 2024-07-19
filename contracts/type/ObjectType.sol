@@ -71,48 +71,52 @@ function POLICY() pure returns (ObjectType) {
     return ObjectType.wrap(21);
 }
 
-function CLAIM() pure returns (ObjectType) {
+function PREMIUM() pure returns (ObjectType) {
     return ObjectType.wrap(22);
 }
 
+function CLAIM() pure returns (ObjectType) {
+    return ObjectType.wrap(23);
+}
+
 function PAYOUT() pure returns (ObjectType) {
-    return ObjectType.wrap(23); 
+    return ObjectType.wrap(24); 
 }
 
 function RISK() pure returns (ObjectType) {
-    return ObjectType.wrap(24);
-}
-
-function PRICE() pure returns (ObjectType) {
     return ObjectType.wrap(25);
 }
 
-function REQUEST() pure returns (ObjectType) {
+function PRICE() pure returns (ObjectType) {
     return ObjectType.wrap(26);
 }
 
-function DISTRIBUTOR_TYPE() pure returns (ObjectType) {
+function REQUEST() pure returns (ObjectType) {
     return ObjectType.wrap(27);
 }
 
-function DISTRIBUTOR() pure returns (ObjectType) {
+function DISTRIBUTOR_TYPE() pure returns (ObjectType) {
     return ObjectType.wrap(28);
 }
 
-function REFERRAL() pure returns (ObjectType) {
+function DISTRIBUTOR() pure returns (ObjectType) {
     return ObjectType.wrap(29);
 }
 
-function BUNDLE() pure returns (ObjectType) {
+function REFERRAL() pure returns (ObjectType) {
     return ObjectType.wrap(30);
 }
 
-function TARGET() pure returns (ObjectType) {
+function BUNDLE() pure returns (ObjectType) {
     return ObjectType.wrap(31);
 }
 
-function STAKE() pure returns (ObjectType) {
+function TARGET() pure returns (ObjectType) {
     return ObjectType.wrap(32);
+}
+
+function STAKE() pure returns (ObjectType) {
+    return ObjectType.wrap(33);
 }
 
 /// @dev Object type that includes any other object type.

@@ -23,14 +23,17 @@ interface IClaimService is
     event LogClaimServiceClaimSubmitted(NftId policyNftId, ClaimId claimId, Amount claimAmount);
     event LogClaimServiceClaimConfirmed(NftId policyNftId, ClaimId claimId, Amount confirmedAmount);
     event LogClaimServiceClaimDeclined(NftId policyNftId, ClaimId claimId);
+    event LogClaimServiceClaimRevoked(NftId policyNftId, ClaimId claimId);
     event LogClaimServiceClaimClosed(NftId policyNftId, ClaimId claimId);
 
     event LogClaimServicePayoutCreated(NftId policyNftId, PayoutId payoutId, Amount amount);
-    event LogClaimServicePayoutProcessed(NftId policyNftId, PayoutId payoutId, Amount amount, address beneficiary, Amount netAmount);
+    event LogClaimServicePayoutProcessed(NftId policyNftId, PayoutId payoutId, Amount amount, address beneficiary, Amount netAmount, Amount processingFeeAmount);
 
     error ErrorClaimServicePolicyProductMismatch(NftId policyNftId, NftId expectedProduct, NftId actualProduct);
     error ErrorClaimServicePolicyNotOpen(NftId policyNftId);
     error ErrorClaimServiceClaimExceedsSumInsured(NftId policyNftId, Amount sumInsured, Amount payoutsIncludingClaimAmount);
+    error ErrorClaimServiceBeneficiaryIsZero(NftId policyNftId, ClaimId claimId);
+    error ErrorClaimsServicePayoutAmountIsZero(NftId policyNftId, PayoutId payoutId);
 
     error ErrorClaimServiceClaimWithOpenPayouts(NftId policyNftId, ClaimId claimId, uint8 openPayouts);
     error ErrorClaimServiceClaimWithMissingPayouts(NftId policyNftId, ClaimId claimId, Amount claimAmount, Amount paidAmount);
@@ -46,15 +49,20 @@ interface IClaimService is
     ) external returns (ClaimId claimId);
 
 
-    // TODO add claim revoke functionality
-
-
     /// @dev declines the specified claim
     /// function can only be called by product, policy needs to match with calling product
     function decline(
         NftId policyNftId, 
         ClaimId claimId,
         bytes memory data // claim processing data
+    ) external;
+
+
+    /// @dev revokes the specified claim
+    /// function can only be called by product, policy needs to match with calling product
+    function revoke(
+        NftId policyNftId, 
+        ClaimId claimId
     ) external;
 
 
@@ -76,13 +84,28 @@ interface IClaimService is
     ) external;
 
 
-    /// @dev creates a new payout for the specified claim
+    /// @dev Creates a new payout for the specified claim.
+    /// The beneficiary is the holder of the policy NFT
     /// returns the id of the newly created payout, this id is unique for the specified policy
     /// function can only be called by product, policy needs to match with calling product
     function createPayout(
         NftId policyNftId, 
         ClaimId claimId,
         Amount amount,
+        bytes memory data
+    )
+        external
+        returns (PayoutId payoutId);
+
+
+    /// @dev Creates a new payout for the specified claim and beneficiary.
+    /// returns the id of the newly created payout, this id is unique for the specified policy
+    /// function can only be called by product, policy needs to match with calling product
+    function createPayoutForBeneficiary(
+        NftId policyNftId, 
+        ClaimId claimId,
+        Amount amount,
+        address beneficiary,
         bytes memory data
     )
         external

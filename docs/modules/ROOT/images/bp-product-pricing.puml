@@ -1,0 +1,23 @@
+@startuml
+
+
+participant Product
+
+participant PricingService
+participant Instance
+participant InstanceReader
+
+Product -> PricingService : calculatePremium()
+
+PricingService -> Product : calculateNetPremium()
+
+PricingService -> Instance : getInstanceReader()
+PricingService -> InstanceReader : getProductInfo()
+PricingService -> InstanceReader : getBundleInfo()
+
+PricingService -> PricingService : _getFixedFeeAmounts()
+PricingService -> PricingService : _getVariableFeeAmounts()
+PricingService -> PricingService : _calculateDistributionOwnerFeeAmount()
+PricingService -> PricingService : _calculateTargetWalletAmounts()
+
+@enduml

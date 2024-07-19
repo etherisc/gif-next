@@ -1,0 +1,13 @@
+= Unpermissioned example components
+
+This directory contains a set of unpermissioned example compoents that are mainly used for testing purposes.
+The expose all the available functions of the component without requiring any permissions (and thereby setup) to use them. 
+
+Components that are built in such a way should never be used in production, as they expose functions that can move tokens or other assets without any authorization. 
+
+== Contracts
+
+{{SimpleDistribution}}
+{{SimpleOracle}}
+{{SimplePool}}
+{{SimpleProduct}}

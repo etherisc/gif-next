@@ -1,14 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {BasicDistribution} from "../../contracts/distribution/BasicDistribution.sol";
-import {BasicDistributionAuthorization} from "../../contracts/distribution/BasicDistributionAuthorization.sol";
-import {Fee} from "../../contracts/type/Fee.sol";
-import {IAuthorization} from "../../contracts/authorization/IAuthorization.sol";
-import {NftId} from "../../contracts/type/NftId.sol";
-import {ReferralId} from "../../contracts/type/Referral.sol";
-import {Timestamp} from "../../contracts/type/Timestamp.sol";
-import {UFixed} from "../../contracts/type/UFixed.sol";
+import {BasicDistribution} from "../../distribution/BasicDistribution.sol";
+import {IAuthorization} from "../../authorization/IAuthorization.sol";
+import {NftId} from "../../type/NftId.sol";
 
 
 contract SimpleDistribution is

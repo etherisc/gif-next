@@ -1,23 +1,21 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Amount, AmountLib} from "../../contracts/type/Amount.sol";
-import {BasicProduct} from "../../contracts/product/BasicProduct.sol";
-import {BasicProductAuthorization} from "../../contracts/product/BasicProductAuthorization.sol";
-import {ClaimId} from "../../contracts/type/ClaimId.sol";
-import {Fee, FeeLib} from "../../contracts/type/Fee.sol";
-import {IAuthorization} from "../../contracts/authorization/IAuthorization.sol";
-import {IOracleService} from "../../contracts/oracle/IOracleService.sol";
-import {ORACLE} from "../../contracts/type/ObjectType.sol";
-import {NftId} from "../../contracts/type/NftId.sol";
-import {PayoutId} from "../../contracts/type/PayoutId.sol";
-import {ReferralId} from "../../contracts/type/Referral.sol";
-import {RequestId} from "../../contracts/type/RequestId.sol";
-import {RiskId} from "../../contracts/type/RiskId.sol";
-import {Seconds} from "../../contracts/type/Seconds.sol";
+import {Amount, AmountLib} from "../../type/Amount.sol";
+import {BasicProduct} from "../../product/BasicProduct.sol";
+import {ClaimId} from "../../type/ClaimId.sol";
+import {IAuthorization} from "../../authorization/IAuthorization.sol";
+import {IOracleService} from "../../oracle/IOracleService.sol";
+import {ORACLE} from "../../type/ObjectType.sol";
+import {NftId} from "../../type/NftId.sol";
+import {PayoutId} from "../../type/PayoutId.sol";
+import {ReferralId} from "../../type/Referral.sol";
+import {RequestId} from "../../type/RequestId.sol";
+import {RiskId} from "../../type/RiskId.sol";
+import {Seconds} from "../../type/Seconds.sol";
 import {SimpleOracle} from "./SimpleOracle.sol";
-import {StateId} from "../../contracts/type/StateId.sol";
-import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
+import {StateId} from "../../type/StateId.sol";
+import {Timestamp, TimestampLib} from "../../type/Timestamp.sol";
 
 uint64 constant SPECIAL_ROLE_INT = 11111;
 
@@ -118,16 +116,29 @@ contract SimpleProduct is
     function createApplication(
         address applicationOwner,
         RiskId riskId,
-        uint256 sumInsuredAmount,
+        uint256 sumInsured,
         Seconds lifetime,
         bytes memory applicationData,
         NftId bundleNftId,
         ReferralId referralId
-    ) public returns (NftId nftId) {
+    )
+        public
+        returns (NftId nftId)
+    {
+        Amount sumInsuredAmount = AmountLib.toAmount(sumInsured);
+        Amount premiumAmount = calculatePremium(
+            sumInsuredAmount,
+            riskId,
+            lifetime,
+            applicationData,
+            bundleNftId,
+            referralId);
+
         return _createApplication(
             applicationOwner,
             riskId,
-            AmountLib.toAmount(sumInsuredAmount),
+            sumInsuredAmount,
+            premiumAmount,
             lifetime,
             bundleNftId,
             referralId,
@@ -135,12 +146,31 @@ contract SimpleProduct is
         );
     }
 
-    function collateralize(
-        NftId policyNftId,
+    function createPolicy(
+        NftId applicationNftId,
         bool requirePremiumPayment,
         Timestamp activateAt
     ) public {
-        _collateralize(policyNftId, requirePremiumPayment, activateAt);
+        _createPolicy(applicationNftId, activateAt);
+        if (requirePremiumPayment == true) {
+            _collectPremium(applicationNftId, activateAt);
+        }
+    }
+
+    function decline(
+        NftId policyNftId
+    ) public {
+        _decline(policyNftId);
+    }
+
+    function expire(
+        NftId policyNftId,
+        Timestamp expireAt
+    ) 
+        public 
+        returns (Timestamp)
+    {
+        return _expire(policyNftId, expireAt);
     }
 
     function collectPremium(
@@ -202,6 +232,17 @@ contract SimpleProduct is
         bytes memory data
     ) public returns (PayoutId) {
         return _createPayout(policyNftId, claimId, amount, data);
+    }
+
+    // TODO add test
+    function createPayoutForBeneficiary(
+        NftId policyNftId,
+        ClaimId claimId,
+        Amount amount,
+        address beneficiary,
+        bytes memory data
+    ) public returns (PayoutId) {
+        return _createPayoutForBeneficiary(policyNftId, claimId, amount, beneficiary, data);
     }
 
     function processPayout(

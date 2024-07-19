@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {IInstance} from "../instance/IInstance.sol";
 import {IInstanceService} from "../instance/IInstanceService.sol";
 import {IPoolService} from "../pool/PoolService.sol";
-import {IProductService} from "./IProductService.sol";
+import {IRiskService} from "./IRiskService.sol";
 import {IRegistryService} from "../registry/IRegistryService.sol";
 import {IRisk} from "../instance/module/IRisk.sol";
 
@@ -16,15 +16,13 @@ import {RiskId} from "../type/RiskId.sol";
 import {StateId} from "../type/StateId.sol";
 import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
 
-contract ProductService is
+contract RiskService is
     ComponentVerifyingService,
-    IProductService 
+    IRiskService 
 {
     IInstanceService private _instanceService;
     IPoolService internal _poolService;
     IRegistryService private _registryService;
-
-    event LogProductServiceSender(address sender);
 
     function _initialize(
         address owner, 
@@ -40,13 +38,13 @@ contract ProductService is
             address authority
         ) = abi.decode(data, (address, address, address));
 
-        initializeService(registryAddress, authority, owner);
+        _initializeService(registryAddress, authority, owner);
 
         _instanceService = IInstanceService(_getServiceAddress(INSTANCE()));
         _poolService = IPoolService(getRegistry().getServiceAddress(POOL(), getVersion().toMajorPart()));
         _registryService = IRegistryService(_getServiceAddress(REGISTRY()));
 
-        registerInterface(type(IProductService).interfaceId);
+        _registerInterface(type(IRiskService).interfaceId);
     }
 
 

@@ -170,11 +170,11 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         accessManager = AccessManager(registryAdmin.authority()); 
         
         chainNft = ChainNft(registry.getChainNftAddress());
-        registryNftId = registry.getNftId(address(registry));
+        registryNftId = registry.getNftIdForAddress(address(registry));
 
         stakingStore = staking.getStakingStore();
         stakingReader = staking.getStakingReader();
-        stakingNftId = registry.getNftId(address(staking));
+        stakingNftId = registry.getNftIdForAddress(address(staking));
 
         _startPrank(registryOwner);
         _deployRegistryServiceMock();
@@ -208,6 +208,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         registryServiceMock = RegistryServiceMock(address(registryServiceManagerMock.getRegistryService()));
         releaseRegistry.registerService(registryServiceMock);
         registryServiceManagerMock.linkToProxy();
+        registryServiceNftId = registry.getNftIdForAddress(address(registryServiceMock));
 
         releaseRegistry.activateNextRelease();
     }

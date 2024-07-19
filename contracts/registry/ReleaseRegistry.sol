@@ -32,8 +32,6 @@ import {Registry} from "./Registry.sol";
 import {TokenRegistry} from "./TokenRegistry.sol";
 import {ReleaseLifecycle} from "./ReleaseLifecycle.sol";
 
-// TODO rename to something that does not end with 'Manager' 
-// everywhere else *Manager points to an upgradeable contract
 contract ReleaseRegistry is 
     AccessManaged,
     ReleaseLifecycle, 
@@ -483,7 +481,7 @@ contract ReleaseRegistry is
         // TODO try catch and return false in case of revert
         // or just panic
         // check if contract returns a zero nft id for its own address
-        if (IRegistry(registryAddress).getNftId(registryAddress).eqz()) {
+        if (IRegistry(registryAddress).getNftIdForAddress(registryAddress).eqz()) {
             return false;
         }
 

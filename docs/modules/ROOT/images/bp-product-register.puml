@@ -1,0 +1,39 @@
+@startuml
+
+actor ProductOwner as po
+participant Product
+
+participant ComponentService
+participant RegistryService
+participant InstanceService
+
+participant Registry
+participant ChainNft
+
+participant InstanceAdmin
+participant InstanceStore
+
+po -> Product : register()
+Product -> ComponentService : registerProduct()
+
+ComponentService -> RegistryService : registerComponent()
+RegistryService -> Registry : register()
+Registry -> ChainNft : getNextToken()
+Registry -> ChainNft : mint()
+
+ComponentService -> Product : linkToRegisteredNftId()
+Product -> Registry : getNftId()
+
+ComponentService -> InstanceService : initializeAuthorization()
+InstanceService -> Product : getAuthorization()
+InstanceService -> InstanceAdmin : initializeComponentAuthorization()
+
+ComponentService -> Product : getInitialComponentInfo()
+ComponentService -> ComponentService : new TokenHandler()
+
+ComponentService -> InstanceStore : createComponent()
+
+ComponentService -> Product : getInitialProductInfo()
+ComponentService -> InstanceStore : createProduct()
+
+@enduml

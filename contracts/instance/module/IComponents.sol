@@ -35,17 +35,12 @@ interface IComponents {
 
 
     struct PoolInfo {
-        NftId productNftId; // the nft of the product this pool is linked to
+        Amount maxBalanceAmount; // max balance amount allowed for pool
         RoleId bundleOwnerRole; // the required role for bundle owners
-        // TODO maxCapitalAmount -> maxBalanceAmount
-        Amount maxCapitalAmount; // max capital amount allowed for pool
         bool isInterceptingBundleTransfers; // intercepts nft transfers for bundles
         bool isExternallyManaged; // funding bundles is restricted to book keeping, actual funds may be provided as needed to support payouts
         bool isVerifyingApplications; // underwriting requires the pool component checks/confirms the applications 
         UFixed collateralizationLevel; // factor to calculate collateral for sum insurance (default 100%)
         UFixed retentionLevel; // amount of collateral held in pool (default 100%)
-        Fee poolFee; // pool fee on net premium
-        Fee stakingFee; // pool fee on staked capital from investor
-        Fee performanceFee; // pool fee on profits from capital investors
     }
 }

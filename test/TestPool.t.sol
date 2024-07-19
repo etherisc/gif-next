@@ -3,19 +3,21 @@ pragma solidity ^0.8.20;
 
 import {console} from "../lib/forge-std/src/Test.sol";
 
+import {Amount, AmountLib} from "../contracts/type/Amount.sol";
 import {BasicPoolAuthorization} from "../contracts/pool/BasicPoolAuthorization.sol";
 import {Fee, FeeLib} from "../contracts/type/Fee.sol";
 import {IBundle} from "../contracts/instance/module/IBundle.sol";
 import {IComponents} from "../contracts/instance/module/IComponents.sol";
 import {IKeyValueStore} from "../contracts/shared/IKeyValueStore.sol";
 import {ILifecycle} from "../contracts/shared/ILifecycle.sol";
+import {IPoolService} from "../contracts/pool/IPoolService.sol";
 import {Key32} from "../contracts/type/Key32.sol";
 import {NftId, NftIdLib} from "../contracts/type/NftId.sol";
 import {ObjectType, BUNDLE} from "../contracts/type/ObjectType.sol";
 import {Pool} from "../contracts/pool/Pool.sol";
 import {POOL_OWNER_ROLE, PUBLIC_ROLE} from "../contracts/type/RoleId.sol";
-import {SecondsLib} from "../contracts/type/Seconds.sol";
-import {SimplePool} from "./mock/SimplePool.sol";
+import {Seconds, SecondsLib} from "../contracts/type/Seconds.sol";
+import {SimplePool} from "../contracts/examples/unpermissioned/SimplePool.sol";
 import {StateId, ACTIVE, PAUSED, CLOSED} from "../contracts/type/StateId.sol";
 import {TimestampLib} from "../contracts/type/Timestamp.sol";
 import {GifTest} from "./base/GifTest.sol";
@@ -102,19 +104,8 @@ contract TestPool is GifTest {
         IComponents.PoolInfo memory poolInfo = instanceReader.getPoolInfo(poolNftId);
 
         // check nftid
-        assertTrue(poolInfo.productNftId.eqz(), "product nft not zero (not yet linked to product)");
+        assertTrue(componentInfo.productNftId.eqz(), "product nft not zero (not yet linked to product)");
         assertEq(poolInfo.bundleOwnerRole.toInt(), PUBLIC_ROLE().toInt(), "unexpected bundle owner role");
-
-        // check fees
-        Fee memory poolFee = poolInfo.poolFee;
-        Fee memory stakingFee = poolInfo.stakingFee;
-        Fee memory performanceFee = poolInfo.performanceFee;
-        assertEq(poolFee.fractionalFee.toInt(), 0, "pool fee not 0");
-        assertEq(poolFee.fixedFee, 0, "pool fee not 0");
-        assertEq(stakingFee.fractionalFee.toInt(), 0, "staking fee not 0");
-        assertEq(stakingFee.fixedFee, 0, "staking fee not 0");
-        assertEq(performanceFee.fractionalFee.toInt(), 0, "performance fee not 0");
-        assertEq(performanceFee.fixedFee, 0, "performance fee not 0");
 
         // check pool balance
         assertTrue(instanceReader.getBalanceAmount(poolNftId).eqz(), "initial pool balance not zero");
@@ -173,19 +164,27 @@ contract TestPool is GifTest {
         vm.startPrank(investor);
         token.approve(address(pool.getTokenHandler()), 10000);
 
-        bundleNftId = pool.createBundle(
+        Seconds lifetime = SecondsLib.toSeconds(604800);
+        uint256 netStakedAmount;
+        (bundleNftId, netStakedAmount) = pool.createBundle(
             FeeLib.zero(), 
             10000, 
-            SecondsLib.toSeconds(604800), 
+            lifetime, 
             ""
         );
         vm.stopPrank();
 
         // THEN
         assertTrue(!bundleNftId.eqz(), "bundle nft id is zero");
+        assertEq(netStakedAmount, 10000, "net staked amount not 10000");
 
-        assertEq(token.balanceOf(poolOwner), 0, "pool owner balance not 0");
-        assertEq(token.balanceOf(componentInfo.wallet), 10000, "pool wallet balance not 10000");
+        assertEq(token.balanceOf(poolOwner), 0, "pool owner token balance not 0");
+        assertEq(token.balanceOf(componentInfo.wallet), 10000, "pool wallet token balance not 10000");
+
+        assertEq(instanceReader.getBalanceAmount(poolNftId).toInt(), 10000, "pool balance not 10000");
+        assertEq(instanceReader.getFeeAmount(poolNftId).toInt(), 0, "pool fee not 0");
+        assertEq(instanceReader.getBalanceAmount(bundleNftId).toInt(), 10000, "bundle balance not 10000");
+        assertEq(instanceReader.getFeeAmount(bundleNftId).toInt(), 0, "bundle fee not 0");
 
         assertEq(instanceBundleSet.bundles(poolNftId), 1, "expected only 1 bundle");
         assertEq(instanceBundleSet.getBundleNftId(poolNftId, 0).toInt(), bundleNftId.toInt(), "bundle nft id in bundle manager not equal to bundle nft id");
@@ -195,8 +194,110 @@ contract TestPool is GifTest {
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
         assertEq(
             bundleInfo.expiredAt.toInt(), 
-            TimestampLib.blockTimestamp().toInt() + bundleInfo.lifetime.toInt(),
+            TimestampLib.blockTimestamp().addSeconds(lifetime).toInt(),
             "unexpected expired at");
+        assertEq(
+            bundleInfo.activatedAt.toInt(),
+            vm.getBlockTimestamp(),
+            "unexpected activatedAt");
+    }
+
+    function test_PoolCreateBundle_twoBundlesMaxBalanceExceeded() public {
+        // GIVEN
+        _prepareProduct(false);
+
+        vm.startPrank(poolOwner);
+        pool.setMaxBalanceAmount(AmountLib.toAmount(5000));
+        vm.stopPrank();
+
+        // WHEN
+        vm.startPrank(investor);
+
+        Seconds lifetime = SecondsLib.toSeconds(604800);
+        Fee memory zeroFee = FeeLib.zero();
+        
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IPoolService.ErrorPoolServiceMaxBalanceAmountExceeded.selector, 
+            poolNftId,
+            AmountLib.toAmount(5000),
+            AmountLib.toAmount(0),
+            AmountLib.toAmount(10000)));
+
+        // WHEN
+        pool.createBundle(
+            zeroFee, 
+            10000, 
+            lifetime, 
+            ""
+        );
+    }
+
+    function test_PoolCreateBundle_maxBalanceExceeded() public {
+        // GIVEN
+        _prepareProduct(true);
+        
+        vm.startPrank(poolOwner);
+        pool.setMaxBalanceAmount(AmountLib.toAmount(15000));
+        vm.stopPrank();
+
+        // WHEN
+        vm.startPrank(investor);
+
+        Seconds lifetime = SecondsLib.toSeconds(604800);
+        Fee memory zeroFee = FeeLib.zero();
+        
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IPoolService.ErrorPoolServiceMaxBalanceAmountExceeded.selector, 
+            poolNftId,
+            AmountLib.toAmount(15000),
+            AmountLib.toAmount(100000000000),
+            AmountLib.toAmount(10000)));
+
+        // WHEN
+        pool.createBundle(
+            zeroFee, 
+            10000, 
+            lifetime, 
+            ""
+        );
+    }
+
+    function test_PoolCreateBundle_withStakingFee() public {
+        // GIVEN
+        initialStakingFee = FeeLib.percentageFee(10);
+        _prepareProduct(false);
+        _fundInvestor();
+
+        IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
+
+        // WHEN
+        // SimplePool spool = SimplePool(address(pool));
+        vm.startPrank(investor);
+        token.approve(address(pool.getTokenHandler()), 10000);
+
+        Seconds lifetime = SecondsLib.toSeconds(604800);
+        uint256 netStakedAmount;
+        (bundleNftId, netStakedAmount) = pool.createBundle(
+            FeeLib.zero(), 
+            10000, 
+            lifetime, 
+            ""
+        );
+        vm.stopPrank();
+
+        // THEN
+        assertTrue(!bundleNftId.eqz(), "bundle nft id is zero");
+        assertEq(netStakedAmount, 9000, "net staked amount not 9000");
+
+        assertEq(token.balanceOf(poolOwner), 0, "pool owner token balance not 0");
+        assertEq(token.balanceOf(componentInfo.wallet), 10000, "pool wallet token balance not 10000");
+
+        assertEq(instanceReader.getBalanceAmount(poolNftId).toInt(), 10000, "pool balance not 10000");
+        assertEq(instanceReader.getFeeAmount(poolNftId).toInt(), 1000, "pool fee not 0");
+        assertEq(instanceReader.getBalanceAmount(bundleNftId).toInt(), 9000, "bundle balance not 10000");
+        assertEq(instanceReader.getFeeAmount(bundleNftId).toInt(), 0, "bundle fee not 0");
     }
 
 
@@ -262,7 +363,7 @@ contract TestPool is GifTest {
 
         // WHEN close bundle
         vm.prank(investor);
-        pool.close(bundleNftId);
+        pool.closeBundle(bundleNftId);
 
         // THEN
         metadata = instanceReader.getMetadata(bundleKey);
@@ -325,7 +426,7 @@ contract TestPool is GifTest {
         IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
         token.approve(address(componentInfo.tokenHandler), 10000);
 
-        bundleNftId = pool.createBundle(
+        (bundleNftId,) = pool.createBundle(
             FeeLib.zero(), 
             10000, 
             SecondsLib.toSeconds(604800), 

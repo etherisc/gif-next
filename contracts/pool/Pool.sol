@@ -14,6 +14,7 @@ import {Fee, FeeLib} from "../type/Fee.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
 import {RoleId, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {Seconds} from "../type/Seconds.sol";
+import {Timestamp} from "../type/Timestamp.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {UFixed, UFixedLib} from "../type/UFixed.sol";
 
@@ -94,6 +95,17 @@ abstract contract Pool is
         _approveTokenHandler(type(uint256).max);
     }
 
+    /// @inheritdoc IPoolComponent
+    function withdrawBundleFees(NftId bundleNftId, Amount amount) 
+        external 
+        virtual
+        restricted()
+        onlyBundleOwner(bundleNftId)
+        returns (Amount withdrawnAmount) 
+    {
+        return _withdrawBundleFees(bundleNftId, amount);
+    }
+
 
     function getInitialPoolInfo()
         public 
@@ -101,19 +113,15 @@ abstract contract Pool is
         view 
         returns (IComponents.PoolInfo memory poolInfo)
     {
-        return IComponents.PoolInfo(
-            NftIdLib.zero(), // will be set when GIF registers the related product
-            PUBLIC_ROLE(), // bundleOwnerRole
-            AmountLib.max(), // maxCapitalAmount,
-            isNftInterceptor(), // isInterceptingBundleTransfers
-            false, // isExternallyManaged,
-            false, // isVerifyingApplications,
-            UFixedLib.toUFixed(1), // collateralizationLevel,
-            UFixedLib.toUFixed(1), // retentionLevel,
-            FeeLib.zero(), // initialPoolFee,
-            FeeLib.zero(), // initialStakingFee,
-            FeeLib.zero() // initialPerformanceFee,
-        );
+        return IComponents.PoolInfo({
+            maxBalanceAmount: AmountLib.max(),
+            bundleOwnerRole: PUBLIC_ROLE(), 
+            isInterceptingBundleTransfers: isNftInterceptor(),
+            isExternallyManaged: false,
+            isVerifyingApplications: false,
+            collateralizationLevel: UFixedLib.toUFixed(1),
+            retentionLevel: UFixedLib.toUFixed(1)
+        });
     }
 
     // Internals
@@ -150,7 +158,7 @@ abstract contract Pool is
         $._bundleService = IBundleService(_getServiceAddress(BUNDLE()));
         $._componentService = IComponentService(_getServiceAddress(COMPONENT())); 
 
-        registerInterface(type(IPoolComponent).interfaceId);
+        _registerInterface(type(IPoolComponent).interfaceId);
     }
 
     /// @dev increases the staked tokens by the specified amount
@@ -161,8 +169,9 @@ abstract contract Pool is
     )
         internal
         virtual
+        returns(Amount) 
     {
-        // TODO add implementation
+        return _getPoolStorage()._poolService.stake(bundleNftId, amount);
     }
 
 
@@ -174,8 +183,9 @@ abstract contract Pool is
     )
         internal
         virtual
+        returns(Amount netAmount) 
     {
-        // TODO add implementation
+        return _getPoolStorage()._poolService.unstake(bundleNftId, amount);
     }
 
 
@@ -187,8 +197,9 @@ abstract contract Pool is
     )
         internal
         virtual
+        returns (Timestamp extendedExpiredAt) 
     {
-        // TODO add implementation
+        return _getPoolStorage()._bundleService.extend(bundleNftId, lifetimeExtension);
     }
 
 
@@ -218,7 +229,7 @@ abstract contract Pool is
     /// To close a bundle all all linked policies MUST be in closed state as well.
     /// Closing a bundle finalizes the bundle bookkeeping including overall profit calculation.
     /// Once a bundle is closed this action cannot be reversed.
-    function _close(NftId bundleNftId)
+    function _closeBundle(NftId bundleNftId)
         internal
         virtual
     {
@@ -240,13 +251,13 @@ abstract contract Pool is
     }
 
 
-    /// @dev Sets the maximum overall capital amound held by this pool.
+    /// @dev Sets the maximum balance amound held by this pool.
     /// Function may only be called by pool owner.
-    function _setMaxCapitalAmount(Amount maxCapitalAmount)
+    function _setMaxBalanceAmount(Amount maxBalanceAmount)
         internal
         virtual
     {
-        _getPoolStorage()._poolService.setMaxCapitalAmount(maxCapitalAmount);
+        _getPoolStorage()._poolService.setMaxBalanceAmount(maxBalanceAmount);
     }
 
     /// @dev Sets the required role to create/own bundles.
@@ -276,11 +287,10 @@ abstract contract Pool is
         _getPoolStorage()._componentService.setPoolFees(poolFee, stakingFee, performanceFee);
     }
 
-    /// @dev Creates a new bundle using the provided parameter values.
+    /// @dev Creates a new empty bundle using the provided parameter values.
     function _createBundle(
         address bundleOwner,
         Fee memory fee,
-        Amount amount,
         Seconds lifetime, 
         bytes memory filter
     )
@@ -290,7 +300,6 @@ abstract contract Pool is
         bundleNftId = _getPoolStorage()._poolService.createBundle(
             bundleOwner,
             fee,
-            amount,
             lifetime,
             filter);
 
@@ -302,6 +311,12 @@ abstract contract Pool is
         return keccak256(abi.encode(uint256(keccak256(name)) - 1)) & ~bytes32(uint256(0xff));
     }
 
+    function _withdrawBundleFees(NftId bundleNftId, Amount amount) 
+        internal
+        returns (Amount withdrawnAmount) 
+    {
+        return _getPoolStorage()._bundleService.withdrawBundleFees(bundleNftId, amount);
+    }
 
     function _getPoolStorage() private pure returns (PoolStorage storage $) {
         assembly {

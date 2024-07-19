@@ -1,26 +1,22 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {ACTIVE, APPLIED} from "../../../contracts/type/StateId.sol";
+import {APPLIED, COLLATERALIZED} from "../../../contracts/type/StateId.sol";
 import {Amount} from "../../../contracts/type/Amount.sol";
 import {console} from "../../../lib/forge-std/src/Test.sol";
-import {Fee, FeeLib} from "../../../contracts/type/Fee.sol";
-import {IBundle} from "../../../contracts/instance/module/IBundle.sol";
+import {FeeLib} from "../../../contracts/type/Fee.sol";
 import {IComponents} from "../../../contracts/instance/module/IComponents.sol";
 import {IDistribution} from "../../../contracts/instance/module/IDistribution.sol";
 import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
 import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
 import {POLICY} from "../../../contracts/type/ObjectType.sol";
-import {POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE} from "../../../contracts/type/RoleId.sol";
 import {ReferralId, ReferralLib} from "../../../contracts/type/Referral.sol";
 import {ReferralTestBase} from "./ReferralTestBase.sol";
 import {RiskId, RiskIdLib} from "../../../contracts/type/RiskId.sol";
-import {Seconds, SecondsLib} from "../../../contracts/type/Seconds.sol";
-import {SimpleDistribution} from "../../mock/SimpleDistribution.sol";
-import {SimplePool} from "../../mock/SimplePool.sol";
-import {SimpleProduct} from "../../mock/SimpleProduct.sol";
+import {SecondsLib} from "../../../contracts/type/Seconds.sol";
+import {SimpleDistribution} from "../../../contracts/examples/unpermissioned/SimpleDistribution.sol";
 import {TimestampLib} from "../../../contracts/type/Timestamp.sol";
-import {UFixed, UFixedLib} from "../../../contracts/type/UFixed.sol";
+import {UFixedLib} from "../../../contracts/type/UFixed.sol";
 
 contract ReferralTest is ReferralTestBase {
     using NftIdLib for NftId;
@@ -123,15 +119,15 @@ contract ReferralTest is ReferralTestBase {
 
         // WHEN
         vm.startPrank(productOwner);
-        product.collateralize(policyNftId, true, TimestampLib.blockTimestamp()); 
+        product.createPolicy(policyNftId, true, TimestampLib.blockTimestamp()); 
         vm.stopPrank();
 
         // THEN - check 13 tokens in distribution wallet (120 premium ), 887 tokens in customer wallet, 10100 tokens in pool wallet
-        assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not ACTIVE");
+        assertTrue(instanceReader.getPolicyState(policyNftId) == COLLATERALIZED(), "policy state not COLLATERALIZED");
 
         uint256 netPremium = 100;
-        uint256 expectedPremium = netPremium + 14; // 100 (net premium) + 14 (distribution fee 3 + 11 distributor commission)
-        assertEq(token.balanceOf(address(customer)), initialCustomerBalance - expectedPremium, "customer balance not 886");
+        uint256 expectedPremium = netPremium + 17; // 100 (net premium) + 14 (distribution fee 3 + pool fee 3 + 11 distributor commission)
+        assertEq(token.balanceOf(address(customer)), initialCustomerBalance - expectedPremium, "customer balance not 883");
 
         {
             IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
@@ -145,22 +141,29 @@ contract ReferralTest is ReferralTestBase {
         assertEq(instanceReader.getBalanceAmount(distributionNftId).toInt(), 14, "distribution balance not 14 (2)");
         assertEq(instanceReader.getFeeAmount(distributionNftId).toInt(), 11, "distribution fee not 14");
 
-        IDistribution.DistributorInfo memory distributorInfo = instanceReader.getDistributorInfo(distributorNftId);
-        assertEq(distributorInfo.numPoliciesSold, 1, "numPoliciesSold not 1");
-        assertEq(distributorInfo.commissionAmount.toInt(), 3, "sumCommisions not 3");
+        {
+            IDistribution.DistributorInfo memory distributorInfo = instanceReader.getDistributorInfo(distributorNftId);
+            assertEq(distributorInfo.numPoliciesSold, 1, "numPoliciesSold not 1");
+            assertEq(instanceReader.getFeeAmount(distributorNftId).toInt(), 3, "sumCommisions not 3");
+        }
 
         // check pool financials and balance
-        assertEq(instanceReader.getBalanceAmount(poolNftId).toInt(), initialPoolBalance + netPremium, "unexpected pool balance (1)");
-        assertEq(token.balanceOf(pool.getWallet()), initialPoolBalance + netPremium, "unexpected pool balance (2)");
+        {
+            uint256 expectedPoolFee = 3;
+            assertEq(instanceReader.getBalanceAmount(poolNftId).toInt(), initialPoolBalance + netPremium + expectedPoolFee, "unexpected pool balance (1)");
+            assertEq(token.balanceOf(pool.getWallet()), initialPoolBalance + netPremium + expectedPoolFee, "unexpected pool balance (2)");
+        }
 
         assertEq(instanceBundleSet.activePolicies(bundleNftId), 1, "expected one active policy");
         assertTrue(instanceBundleSet.getActivePolicy(bundleNftId, 0).eq(policyNftId), "active policy nft id in bundle manager not equal to policy nft id");
 
         // check bundle financials
-        Amount lockedAmount = instanceReader.getLockedAmount(bundleNftId);
-        assertEq(lockedAmount.toInt(), 1000, "unexpected lockedAmount");
-        Amount capitalAmount = instanceReader.getBalanceAmount(bundleNftId) - instanceReader.getFeeAmount(bundleNftId);
-        assertEq(capitalAmount.toInt(), bundleBalanceInitial.toInt() + 100, "unexpected capitalAmount");
+        {
+            Amount lockedAmount = instanceReader.getLockedAmount(bundleNftId);
+            assertEq(lockedAmount.toInt(), 1000, "unexpected lockedAmount");
+            Amount capitalAmount = instanceReader.getBalanceAmount(bundleNftId) - instanceReader.getFeeAmount(bundleNftId);
+            assertEq(capitalAmount.toInt(), bundleBalanceInitial.toInt() + 100, "unexpected capitalAmount");
+        }
     }
 
     function test_referralCollateralizeMultipleWithReferral() public {
@@ -223,12 +226,12 @@ contract ReferralTest is ReferralTestBase {
 
         // WHEN
         vm.startPrank(productOwner);
-        product.collateralize(policyNftId, true, TimestampLib.blockTimestamp()); 
-        product.collateralize(policyNftId2, true, TimestampLib.blockTimestamp()); 
+        product.createPolicy(policyNftId, true, TimestampLib.blockTimestamp()); 
+        product.createPolicy(policyNftId2, true, TimestampLib.blockTimestamp()); 
 
         // THEN - check 13 tokens in distribution wallet (120 premium ), 887 tokens in customer wallet, 10100 tokens in pool wallet
-        assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not ACTIVE");
-        assertTrue(instanceReader.getPolicyState(policyNftId2) == ACTIVE(), "policy state not ACTIVE");
+        assertTrue(instanceReader.getPolicyState(policyNftId) == COLLATERALIZED(), "policy state not COLLATERALIZED");
+        assertTrue(instanceReader.getPolicyState(policyNftId2) == COLLATERALIZED(), "policy state not COLLATERALIZED");
 
         Amount lockedAmount = instanceReader.getLockedAmount(bundleNftId);
         assertEq(lockedAmount.toInt(), 2000, "unexpected lockedAmount (not 2000)");
@@ -241,7 +244,7 @@ contract ReferralTest is ReferralTestBase {
         
         IDistribution.DistributorInfo memory distributorInfo = instanceReader.getDistributorInfo(distributorNftId);
         assertEq(distributorInfo.numPoliciesSold, 2, "numPoliciesSold not 2");
-        assertEq(distributorInfo.commissionAmount.toInt(), 6, "commissionAmount not 6");
+        assertEq(instanceReader.getFeeAmount(distributorNftId).toInt(), 6, "commissionAmount not 6");
 
         assertEq(instanceReader.getFeeAmount(distributionNftId).toInt(), 22, "sumDistributionOwnerFees not 22");
         vm.stopPrank();
@@ -278,10 +281,10 @@ contract ReferralTest is ReferralTestBase {
         );
 
         // WHEN 
-        product.collateralize(policyNftId3, true, TimestampLib.blockTimestamp()); 
+        product.createPolicy(policyNftId3, true, TimestampLib.blockTimestamp()); 
 
         // THEN 
-        assertTrue(instanceReader.getPolicyState(policyNftId3) == ACTIVE(), "policy3 state not ACTIVE");
+        assertTrue(instanceReader.getPolicyState(policyNftId3) == COLLATERALIZED(), "policy3 state not COLLATERALIZED");
 
         lockedAmount = instanceReader.getLockedAmount(bundleNftId);
         assertEq(lockedAmount.toInt(), 3000, "unexpected lockedAmount (not 3000)");
@@ -309,7 +312,7 @@ contract ReferralTest is ReferralTestBase {
         token.approve(address(poolInfo.tokenHandler), bundleAmount);
 
         // SimplePool spool = SimplePool(address(pool));
-        bundleNftId = pool.createBundle(
+        (bundleNftId,) = pool.createBundle(
             FeeLib.zero(), 
             bundleAmount, 
             SecondsLib.toSeconds(604800), 

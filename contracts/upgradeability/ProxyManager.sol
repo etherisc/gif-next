@@ -50,7 +50,7 @@ contract ProxyManager is
         public
         initializer()
     {
-        initializeNftOwnable(msg.sender, registry);
+        _initializeNftOwnable(msg.sender, registry);
     }
 
     /// @dev deploy initial contract

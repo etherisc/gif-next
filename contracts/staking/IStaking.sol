@@ -42,8 +42,9 @@ interface IStaking is
     error ErrorStakingTargetNftIdZero();
     error ErrorStakingTargetTypeNotSupported(NftId targetNftId, ObjectType objectType);
     error ErrorStakingTargetUnexpectedObjectType(NftId targetNftId, ObjectType expectedObjectType, ObjectType actualObjectType);
-    error ErrorStakingLockingPeriodZero(NftId targetNftId);
+    error ErrorStakingLockingPeriodTooShort(NftId targetNftId, Seconds minLockingPeriod, Seconds lockingPeriod);
     error ErrorStakingLockingPeriodTooLong(NftId targetNftId, Seconds maxLockingPeriod, Seconds lockingPeriod);
+    error ErrorStakingStakeLocked(NftId stakeNftId, Timestamp lockedUntil);
     error ErrorStakingRewardRateTooHigh(NftId targetNftId, UFixed maxRewardRate, UFixed rewardRate);
     error ErrorStakingTargetNotFound(NftId targetNftId);
     error ErrorStakingTargetTokenNotFound(NftId targetNftId, uint256 chainId, address token);

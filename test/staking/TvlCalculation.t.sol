@@ -434,7 +434,7 @@ contract TvlCalculation is GifTest {
         internal
     {
         vm.startPrank(productOwner);
-        product.collateralize(nftId, collectPremium, activateAt); 
+        product.createPolicy(nftId, collectPremium, activateAt); 
         vm.stopPrank();
     }
 

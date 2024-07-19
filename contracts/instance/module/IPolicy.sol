@@ -11,7 +11,7 @@ import {Timestamp} from "../../type/Timestamp.sol";
 
 interface IPolicy {
 
-    struct Premium {
+    struct PremiumInfo {
         // premium splitting per target wallet
         Amount productFeeAmount;
         Amount distributionFeeAndCommissionAmount;
@@ -19,26 +19,26 @@ interface IPolicy {
 
         // detailed positions
         // this is the net premium calculated by the product 
-        uint256 netPremiumAmount;
+        Amount netPremiumAmount;
         // fullPremium = netPremium + all fixed amounts + all variable amounts (excl commission and minDistribtuionOwnerFee variable part)
-        uint256 fullPremiumAmount;
-        // premium = fullPremium - discount
-        uint256 premiumAmount;
-        uint256 productFeeFixAmount;
-        uint256 poolFeeFixAmount;
-        uint256 bundleFeeFixAmount;
-        uint256 distributionFeeFixAmount;
-        uint256 productFeeVarAmount;
-        uint256 poolFeeVarAmount;
-        uint256 bundleFeeVarAmount;
-        uint256 distributionFeeVarAmount;
-        uint256 distributionOwnerFeeFixAmount;
+        Amount fullPremiumAmount;
+        // effective premium = fullPremium - discount 
+        Amount premiumAmount;
+        Amount productFeeFixAmount;
+        Amount poolFeeFixAmount;
+        Amount bundleFeeFixAmount;
+        Amount distributionFeeFixAmount;
+        Amount productFeeVarAmount;
+        Amount poolFeeVarAmount;
+        Amount bundleFeeVarAmount;
+        Amount distributionFeeVarAmount;
+        Amount distributionOwnerFeeFixAmount;
         // this is the remaining amount when the commission and discount are subtracted from the distribution fee variable part (must be at least the minDistributionOwnerFee)
-        uint256 distributionOwnerFeeVarAmount;
+        Amount distributionOwnerFeeVarAmount;
         // this value is based on distributor type referenced in the referral 
-        uint256 commissionAmount;
+        Amount commissionAmount;
         // this is based on referral used
-        uint256 discountAmount;
+        Amount discountAmount;
     }
 
     /// @dev policy data for the full policy lifecycle
@@ -49,7 +49,6 @@ interface IPolicy {
         RiskId riskId;
         Amount sumInsuredAmount;
         Amount premiumAmount; // expected premium at application time
-        Amount premiumPaidAmount; // actual paid premium 
         Seconds lifetime;
         // policy application data, no changes after applying for a policy
         bytes applicationData;
@@ -69,8 +68,8 @@ interface IPolicy {
         Amount paidAmount;
         uint8 payoutsCount;
         uint8 openPayoutsCount;
-        bytes submissionData; // claim submission data, no changes after submitting the claim
-        bytes processData; // data that may include information supporting confirm or decline
+        bytes submissionData; // use case specific claim submission data, no changes after submitting the claim
+        bytes processData; // use case specific data that may include information supporting confirm or decline
         Timestamp closedAt; // payment of confirmed claim amount (or declinedAt)
     }
 
@@ -78,7 +77,8 @@ interface IPolicy {
     struct PayoutInfo {
         ClaimId claimId;
         Amount amount;
-        bytes data;
-        Timestamp paidAt; // payoment of confirmed claim amount (or declinedAt)
+        address beneficiary; // for address(0) beneficiary is policy nft owner
+        bytes data; // use case specific supporting data
+        Timestamp paidAt; // timestamp for actual payout
     }
 }
