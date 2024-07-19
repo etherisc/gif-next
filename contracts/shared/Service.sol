@@ -25,16 +25,16 @@ abstract contract Service is
     uint8 private constant GIF_MAJOR_VERSION = 3;
 
 
-    function initializeService(
+    function _initializeService(
         address registry, 
         address authority, // real authority for registry service adress(0) for other services
         address initialOwner
     )
-        public
+        internal
         virtual
         onlyInitializing()
     {
-        initializeRegisterable(
+        _initializeRegisterable(
             registry, 
             IRegistry(registry).getNftId(), 
             SERVICE(), 
@@ -52,8 +52,8 @@ abstract contract Service is
             __AccessManaged_init(IAccessManaged(registryServiceAddress).authority());
         }
 
-        registerInterface(type(IAccessManaged).interfaceId);
-        registerInterface(type(IService).interfaceId);
+        _registerInterface(type(IAccessManaged).interfaceId);
+        _registerInterface(type(IService).interfaceId);
     }
 
     function getDomain() external virtual pure returns(ObjectType serviceDomain) {

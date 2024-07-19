@@ -24,7 +24,7 @@ contract Registerable is
         bytes _data;
     }
 
-    function initializeRegisterable(
+    function _initializeRegisterable(
         address registryAddress,
         NftId parentNftId,
         ObjectType objectType,
@@ -32,11 +32,11 @@ contract Registerable is
         address initialOwner,
         bytes memory registryData // writeonly data that will saved in the object info record of the registry
     )
-        public
+        internal
         virtual
-        onlyInitializing
+        onlyInitializing()
     {
-        initializeNftOwnable(
+        _initializeNftOwnable(
             initialOwner,
             registryAddress);
 

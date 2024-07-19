@@ -61,7 +61,7 @@ contract PolicyService is
             address authority
         ) = abi.decode(data, (address, address, address));
 
-        initializeService(registryAddress, authority, owner);
+        _initializeService(registryAddress, authority, owner);
 
         VersionPart majorVersion = getVersion().toMajorPart();
         _applicationService = IApplicationService(getRegistry().getServiceAddress(APPLICATION(), majorVersion));
@@ -72,7 +72,7 @@ contract PolicyService is
         _distributionService = IDistributionService(getRegistry().getServiceAddress(DISTRIBUTION(), majorVersion));
         _pricingService = IPricingService(getRegistry().getServiceAddress(PRICE(), majorVersion));
 
-        registerInterface(type(IPolicyService).interfaceId);
+        _registerInterface(type(IPolicyService).interfaceId);
     }
 
 

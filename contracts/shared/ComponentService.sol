@@ -53,12 +53,12 @@ contract ComponentService is
         address initialOwner;
         (registryAddress, initialOwner) = abi.decode(data, (address, address));
 
-        initializeService(registryAddress, address(0), owner);
+        _initializeService(registryAddress, address(0), owner);
 
         _registryService = IRegistryService(_getServiceAddress(REGISTRY()));
         _instanceService = IInstanceService(_getServiceAddress(INSTANCE()));
 
-        registerInterface(type(IComponentService).interfaceId);
+        _registerInterface(type(IComponentService).interfaceId);
     }
 
     //-------- component ----------------------------------------------------//

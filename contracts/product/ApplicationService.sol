@@ -46,13 +46,13 @@ contract ApplicationService is
             address authority
         ) = abi.decode(data, (address, address, address));
 
-        initializeService(registryAddress, address(0), owner);
+        _initializeService(registryAddress, address(0), owner);
 
         _distributionService = IDistributionService(_getServiceAddress(DISTRIBUTION()));
         _pricingService = IPricingService(_getServiceAddress(PRICE()));
         _registryService = IRegistryService(_getServiceAddress(REGISTRY()));
 
-        registerInterface(type(IApplicationService).interfaceId);
+        _registerInterface(type(IApplicationService).interfaceId);
     }
 
 

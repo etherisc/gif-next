@@ -27,14 +27,14 @@ contract OracleService is
         bytes memory data
     )
         internal
-        initializer
         virtual override
+        initializer()
     {
         address initialOwner;
         address registryAddress;
         (registryAddress, initialOwner) = abi.decode(data, (address, address));
-        initializeService(registryAddress, address(0), owner);
-        registerInterface(type(IOracleService).interfaceId);
+        _initializeService(registryAddress, address(0), owner);
+        _registerInterface(type(IOracleService).interfaceId);
     }
 
     function request(

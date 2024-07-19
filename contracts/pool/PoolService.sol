@@ -44,8 +44,8 @@ contract PoolService is
         bytes memory data
     )
         internal
-        initializer
         virtual override
+        initializer()
     {
         (
             address registryAddress,, 
@@ -53,7 +53,7 @@ contract PoolService is
             address authority
         ) = abi.decode(data, (address, address, address));
 
-        initializeService(registryAddress, authority, owner);
+        _initializeService(registryAddress, authority, owner);
 
         _registryService = IRegistryService(_getServiceAddress(REGISTRY()));
         _bundleService = IBundleService(_getServiceAddress(BUNDLE()));
@@ -62,7 +62,7 @@ contract PoolService is
 
         _staking = IStaking(getRegistry().getStakingAddress());
 
-        registerInterface(type(IPoolService).interfaceId);
+        _registerInterface(type(IPoolService).interfaceId);
     }
 
     /// @inheritdoc IPoolService

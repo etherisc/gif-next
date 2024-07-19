@@ -52,7 +52,7 @@ abstract contract Component is
         }
     }
 
-    function initializeComponent(
+    function _initializeComponent(
         address authority,
         address registry,
         NftId parentNftId,
@@ -64,11 +64,11 @@ abstract contract Component is
         bytes memory registryData, // writeonly data that will saved in the object info record of the registry
         bytes memory componentData // other component specific data
     )
-        public
+        internal
         virtual
         onlyInitializing()
     {
-        initializeRegisterable(registry, parentNftId, componentType, isInterceptor, initialOwner, registryData);
+        _initializeRegisterable(registry, parentNftId, componentType, isInterceptor, initialOwner, registryData);
         __AccessManaged_init(authority);
 
         if (token == address(0)) {
@@ -87,8 +87,8 @@ abstract contract Component is
         $._isInterceptor = isInterceptor;
         $._data = componentData;
 
-        registerInterface(type(IAccessManaged).interfaceId);
-        registerInterface(type(IComponent).interfaceId);
+        _registerInterface(type(IAccessManaged).interfaceId);
+        _registerInterface(type(IComponent).interfaceId);
     }
 
 

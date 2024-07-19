@@ -422,8 +422,8 @@ contract InstanceService is
         bytes memory data
     )
         internal
-        initializer
         virtual override
+        initializer()
     {
         (
             address registryAddress,, 
@@ -431,12 +431,12 @@ contract InstanceService is
             address authority
         ) = abi.decode(data, (address, address, address));
 
-        initializeService(registryAddress, authority, owner);
+        _initializeService(registryAddress, authority, owner);
 
         _registryService = IRegistryService(_getServiceAddress(REGISTRY()));
         _stakingService = IStakingService(_getServiceAddress(STAKING()));
 
-        registerInterface(type(IInstanceService).interfaceId);
+        _registerInterface(type(IInstanceService).interfaceId);
     }
 
 

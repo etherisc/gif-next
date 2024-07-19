@@ -10,14 +10,15 @@ contract RegistryLinked is
     IRegistryLinked
 {
 
+    // priorize simplicity and size over using standard upgradeability structs
     IRegistry private _registry;
 
     /// @dev initialization for upgradable contracts
     // used in _initializeRegisterable
-    function initializeRegistryLinked(
+    function _initializeRegistryLinked(
         address registryAddress
     )
-        public
+        internal
         virtual
         onlyInitializing()
     {

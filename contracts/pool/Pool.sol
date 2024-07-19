@@ -158,7 +158,7 @@ abstract contract Pool is
         $._bundleService = IBundleService(_getServiceAddress(BUNDLE()));
         $._componentService = IComponentService(_getServiceAddress(COMPONENT())); 
 
-        registerInterface(type(IPoolComponent).interfaceId);
+        _registerInterface(type(IPoolComponent).interfaceId);
     }
 
     /// @dev increases the staked tokens by the specified amount

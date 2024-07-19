@@ -466,7 +466,7 @@ contract Staking is
         TokenRegistry tokenRegistry = TokenRegistry(tokenRegistryAddress);
         address dipTokenAddress = tokenRegistry.getDipTokenAddress();
 
-        initializeComponent(
+        _initializeComponent(
             authority,
             registryAddress, 
             registry.getNftId(), 
@@ -486,7 +486,7 @@ contract Staking is
         $._tokenRegistry = TokenRegistry(tokenRegistryAddress);
         $._tokenHandler = TokenHandlerDeployerLib.deployTokenHandler(dipTokenAddress, authority);
 
-        registerInterface(type(IStaking).interfaceId);
+        _registerInterface(type(IStaking).interfaceId);
     }
 
 

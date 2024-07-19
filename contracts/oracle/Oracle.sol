@@ -114,7 +114,7 @@ abstract contract Oracle is
         $._oracleService = IOracleService(_getServiceAddress(ORACLE())); 
         $._componentService = IComponentService(_getServiceAddress(COMPONENT())); 
 
-        registerInterface(type(IOracleComponent).interfaceId);
+        _registerInterface(type(IOracleComponent).interfaceId);
     }
 
 

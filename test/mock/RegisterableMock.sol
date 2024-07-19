@@ -42,8 +42,8 @@ contract RegisterableMock is InitializableERC165, IRegisterable, ITransferInterc
         public
         initializer()
     {
-        initializeERC165();
-        registerInterface(type(IRegisterable).interfaceId);       
+        _initializeERC165();
+        _registerInterface(type(IRegisterable).interfaceId);       
     }
 
     // from IRegisterable

@@ -37,21 +37,21 @@ contract DistributionService is
         bytes memory data
     )
         internal
-        initializer
         virtual override
+        initializer()
     {
         address initialOwner;
         address registryAddress;
         (registryAddress, initialOwner) = abi.decode(data, (address, address));
         // TODO while DistributionService is not deployed in DistributionServiceManager constructor
         //      owner is DistributionServiceManager deployer
-        initializeService(registryAddress, address(0), owner);
+        _initializeService(registryAddress, address(0), owner);
 
         _componentService = IComponentService(_getServiceAddress(COMPONENT()));
         _instanceService = IInstanceService(_getServiceAddress(INSTANCE()));
         _registryService = IRegistryService(_getServiceAddress(REGISTRY()));
 
-        registerInterface(type(IDistributionService).interfaceId);
+        _registerInterface(type(IDistributionService).interfaceId);
     }
 
 
