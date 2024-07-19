@@ -13,7 +13,7 @@ import {Registry} from "../../contracts/registry/Registry.sol";
 import {RegistryTestBase} from "./RegistryTestBase.sol";
 import {RegistryTestBaseWithPreset} from "./RegistryTestBaseWithPreset.sol";
 
-contract RegisterContinousTest is RegistryTestBase 
+contract RegisterContinuousTests is RegistryTestBase 
 {
     uint constant ITTERATIONS = 150;
 
@@ -27,16 +27,29 @@ contract RegisterContinousTest is RegistryTestBase
             info.initialOwner = address(uint160(uint160(info.initialOwner) + 1));
         }
 
-        _register_testFunction(sender, info);
+        register_testFunction(sender, info);
+    }
+
+    function test_continuous_register(address sender, IRegistry.ObjectInfo memory info, bytes32 salt) public
+    {
+        if(
+            info.initialOwner == 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D || // gives error (Invalid data) only during fuzzing when minting nft to foundry's cheatcodes contract
+            info.initialOwner == 0x4e59b44847b379578588920cA78FbF26c0B4956C // Deterministic Deployment Proxy, on nft transfer callback tries Create2Deployer::create2()
+        )
+        {
+            info.initialOwner = address(uint160(uint160(info.initialOwner) + 1));
+        }
+
+        register_testFunction(sender, info, salt);
     }
 
     // nftId - always random
     // parenNftId - random
     // objectType random
-    // objectAddress - random
-    // isInterseptor - always random
+    // isInterceptor - always random
     // initialOwner - random
-    function test_continuous_register_000000() public
+    // salt - always random
+    function test_continuous_register_withValidSender_000000_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -47,16 +60,22 @@ contract RegisterContinousTest is RegistryTestBase
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
                     ObjectTypeLib.toObjectType(randomNumber(type(uint8).max)),
                     toBool(randomNumber(1)),
-                    address(uint160(randomNumber(type(uint160).max))),
+                    address(0),
                     address(uint160(randomNumber(type(uint160).max))),
                     ""                  
-                )
+                ),
+                bytes32(randomNumber(type(uint256).max))
             );
         }
     }
 
+    // nftId - always random
+    // parenNftId - random
+    // objectType random
+    // isInterceptor - always random
     // initialOwner - from address set
-    function test_continuous_register_000001() public
+    // salt - always random
+    function test_continuous_register_withValidSender_000010_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -67,15 +86,21 @@ contract RegisterContinousTest is RegistryTestBase
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
                     ObjectTypeLib.toObjectType(randomNumber(type(uint8).max)),
                     toBool(randomNumber(1)),
-                    address(uint160(randomNumber(type(uint160).max))),
-                    EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
+                    address(0), // mock will be created
+                    _getAddressAtIndex(randomNumber(type(uint256).max)),
                     ""                  
-                )
+                ),
+                bytes32(randomNumber(type(uint256).max))
             );
         }
     }
 
-    function test_continuous_register_000010() public
+    // nftId - always random
+    // parenNftId - random
+    // objectType random
+    // objectAddress - from address set
+    // initialOwner - random
+    function test_continuous_register_withValidSender_00010_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -85,8 +110,8 @@ contract RegisterContinousTest is RegistryTestBase
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
                     ObjectTypeLib.toObjectType(randomNumber(type(uint8).max)),
-                    toBool(randomNumber(1)),
-                    EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
+                    false, // isInterceptor
+                    _getAddressAtIndex(randomNumber(type(uint256).max)),
                     address(uint160(randomNumber(type(uint160).max))),
                     ""                  
                 )
@@ -94,7 +119,7 @@ contract RegisterContinousTest is RegistryTestBase
         }
     }
 
-    function test_continuous_register_000011() public
+    function test_continuous_register_withValidSender_00011_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -104,16 +129,16 @@ contract RegisterContinousTest is RegistryTestBase
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
                     ObjectTypeLib.toObjectType(randomNumber(type(uint8).max)),
-                    toBool(randomNumber(1)),
-                    EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
-                    EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
+                    false, // isInterceptor
+                    _getAddressAtIndex(randomNumber(type(uint256).max)),
+                    _getAddressAtIndex(randomNumber(type(uint256).max)),
                     ""                  
                 )
             );
         }
     }
 
-    function test_continuous_register_001000() public
+    function test_continuous_register_withValidSender_001000_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -122,55 +147,18 @@ contract RegisterContinousTest is RegistryTestBase
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
-                    _types[randomNumber(type(uint8).max) % _types.length],
+                    _getObjectTypeAtIndex(randomNumber(type(uint8).max)),
                     toBool(randomNumber(1)),
-                    address(uint160(randomNumber(type(uint160).max))),
-                    address(uint160(randomNumber(type(uint160).max))),
-                    ""                  
-                )
-            );
-        }
-    }
-
-    function test_continuous_register_001001() public
-    {
-        for(uint idx = 0; idx < ITTERATIONS; idx++)
-        {
-            test_continuous_register(
-                address(registryServiceMock),
-                IRegistry.ObjectInfo(
-                    NftIdLib.toNftId(randomNumber(type(uint96).max)),
-                    NftIdLib.toNftId(randomNumber(type(uint96).max)),
-                    _types[randomNumber(type(uint8).max) % _types.length],
-                    toBool(randomNumber(1)),
-                    address(uint160(randomNumber(type(uint160).max))),
-                    EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
-                    ""                  
-                )
-            );
-        }
-    }
-
-    function test_continuous_register_001010() public
-    {
-        for(uint idx = 0; idx < ITTERATIONS; idx++)
-        {
-            test_continuous_register(
-                address(registryServiceMock),
-                IRegistry.ObjectInfo(
-                    NftIdLib.toNftId(randomNumber(type(uint96).max)),
-                    NftIdLib.toNftId(randomNumber(type(uint96).max)),
-                    _types[randomNumber(type(uint8).max) % _types.length],
-                    toBool(randomNumber(1)),
-                    EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
+                    address(0), // mock will be created
                     address(uint160(randomNumber(type(uint160).max))),
                     ""                  
-                )
+                ),
+                bytes32(randomNumber(type(uint256).max))
             );
         }
     }
 
-    function test_continuous_register_001011() public
+    function test_continuous_register_withValidSender_001010_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -179,17 +167,37 @@ contract RegisterContinousTest is RegistryTestBase
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
-                    _types[randomNumber(type(uint8).max) % _types.length],
+                    _getObjectTypeAtIndex(randomNumber(type(uint8).max)),
                     toBool(randomNumber(1)),
-                    EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
-                    EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
+                    address(0), // mock will be created
+                    _getAddressAtIndex(randomNumber(type(uint256).max)),
+                    ""                  
+                ),
+                bytes32(randomNumber(type(uint256).max))
+            );
+        }
+    }
+
+    function test_continuous_register_withValidSender_00110_longRunning() public
+    {
+        for(uint idx = 0; idx < ITTERATIONS; idx++)
+        {
+            test_continuous_register(
+                address(registryServiceMock),
+                IRegistry.ObjectInfo(
+                    NftIdLib.toNftId(randomNumber(type(uint96).max)),
+                    NftIdLib.toNftId(randomNumber(type(uint96).max)),
+                    _getObjectTypeAtIndex(randomNumber(type(uint8).max)),
+                    false, // isInterceptor
+                    _getAddressAtIndex(randomNumber(type(uint256).max)),
+                    address(uint160(randomNumber(type(uint160).max))),
                     ""                  
                 )
             );
         }
     }
 
-    function test_continuous_register_010000() public
+    function test_continuous_register_withValidSender_00111_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -197,18 +205,38 @@ contract RegisterContinousTest is RegistryTestBase
                 address(registryServiceMock),
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
-                    NftIdLib.toNftId(EnumerableSet.at(_nftIds, randomNumber(type(uint256).max) % EnumerableSet.length(_nftIds))),
+                    NftIdLib.toNftId(randomNumber(type(uint96).max)),
+                    _getObjectTypeAtIndex(randomNumber(type(uint8).max)),
+                    false, // isInterceptor
+                    _getAddressAtIndex(randomNumber(type(uint256).max)),
+                    _getAddressAtIndex(randomNumber(type(uint256).max)),
+                    ""                  
+                )
+            );
+        }
+    }
+
+    function test_continuous_register_withValidSender_010000_longRunning() public
+    {
+        for(uint idx = 0; idx < ITTERATIONS; idx++)
+        {
+            test_continuous_register(
+                address(registryServiceMock),
+                IRegistry.ObjectInfo(
+                    NftIdLib.toNftId(randomNumber(type(uint96).max)),
+                    _getNftIdAtIndex(randomNumber(type(uint256).max)),
                     ObjectTypeLib.toObjectType(randomNumber(type(uint8).max)),
                     toBool(randomNumber(1)),
-                    address(uint160(randomNumber(type(uint160).max))),
+                    address(0), // mock will be created
                     address(uint160(randomNumber(type(uint160).max))),
                     ""                  
-                )
+                ),
+                bytes32(randomNumber(type(uint256).max))
             );
         }
     }
 
-    function test_continuous_register_010001() public
+    function test_continuous_register_withValidSender_010010_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -216,18 +244,19 @@ contract RegisterContinousTest is RegistryTestBase
                 address(registryServiceMock),
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
-                    NftIdLib.toNftId(EnumerableSet.at(_nftIds, randomNumber(type(uint256).max) % EnumerableSet.length(_nftIds))),
+                    _getNftIdAtIndex(randomNumber(type(uint256).max)),
                     ObjectTypeLib.toObjectType(randomNumber(type(uint8).max)),
                     toBool(randomNumber(1)),
-                    address(uint160(randomNumber(type(uint160).max))),
-                    EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
+                    address(0),
+                    _getAddressAtIndex(randomNumber(type(uint256).max)),
                     ""                  
-                )
+                ),
+                bytes32(randomNumber(type(uint256).max))
             );
         }
     }
     
-    function test_continuous_register_010010() public
+    function test_continuous_register_withValidSender_01010_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -235,10 +264,10 @@ contract RegisterContinousTest is RegistryTestBase
                 address(registryServiceMock),
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
-                    NftIdLib.toNftId(EnumerableSet.at(_nftIds, randomNumber(type(uint256).max) % EnumerableSet.length(_nftIds))),
+                    _getNftIdAtIndex(randomNumber(type(uint256).max)),
                     ObjectTypeLib.toObjectType(randomNumber(type(uint8).max)),
-                    toBool(randomNumber(1)),
-                    EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
+                    false, // isInterceptor
+                    _getAddressAtIndex(randomNumber(type(uint256).max)),
                     address(uint160(randomNumber(type(uint160).max))),
                     ""                
                 )
@@ -246,7 +275,7 @@ contract RegisterContinousTest is RegistryTestBase
         }
     }
 
-    function test_continuous_register_010011() public
+    function test_continuous_register_withValidSender_01011_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -254,18 +283,18 @@ contract RegisterContinousTest is RegistryTestBase
                 address(registryServiceMock),
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
-                    NftIdLib.toNftId(EnumerableSet.at(_nftIds, randomNumber(type(uint256).max) % EnumerableSet.length(_nftIds))),
+                    _getNftIdAtIndex(randomNumber(type(uint256).max)),
                     ObjectTypeLib.toObjectType(randomNumber(type(uint8).max)),
-                    toBool(randomNumber(1)),
-                    EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
-                    EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
+                    false, // isInterceptor
+                    _getAddressAtIndex(randomNumber(type(uint256).max)),
+                    _getAddressAtIndex(randomNumber(type(uint256).max)),
                     ""                
                 )
             );
         }
     }
 
-    function test_continuous_register_011000() public
+    function test_continuous_register_withValidSender_011000_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -273,18 +302,19 @@ contract RegisterContinousTest is RegistryTestBase
                 address(registryServiceMock),
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
-                    NftIdLib.toNftId(EnumerableSet.at(_nftIds, randomNumber(type(uint256).max) % EnumerableSet.length(_nftIds))),
-                    _types[randomNumber(type(uint8).max) % _types.length],
+                    _getNftIdAtIndex(randomNumber(type(uint256).max)),
+                    _getObjectTypeAtIndex(randomNumber(type(uint8).max)),
                     toBool(randomNumber(1)),
-                    address(uint160(randomNumber(type(uint160).max))),
+                    address(0),
                     address(uint160(randomNumber(type(uint160).max))),
                     ""                  
-                )
+                ),
+                bytes32(randomNumber(type(uint256).max))
             );
         }
     }
 
-    function test_continuous_register_011001() public
+    function test_continuous_register_withValidSender_011010_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -292,18 +322,19 @@ contract RegisterContinousTest is RegistryTestBase
                 address(registryServiceMock),
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
-                    NftIdLib.toNftId(EnumerableSet.at(_nftIds, randomNumber(type(uint256).max) % EnumerableSet.length(_nftIds))),
-                    _types[randomNumber(type(uint8).max) % _types.length],
+                    _getNftIdAtIndex(randomNumber(type(uint256).max)),
+                    _getObjectTypeAtIndex(randomNumber(type(uint8).max)),
                     toBool(randomNumber(1)),
-                    address(uint160(randomNumber(type(uint160).max))),
-                    EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
+                    address(0),
+                    _getAddressAtIndex(randomNumber(type(uint256).max)),
                     ""                  
-                )
+                ),
+                bytes32(randomNumber(type(uint256).max))
             );
         }
     }
 
-    function test_continuous_register_011010() public
+    function test_continuous_register_withValidSender_01110_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -311,10 +342,10 @@ contract RegisterContinousTest is RegistryTestBase
                 address(registryServiceMock),
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
-                    NftIdLib.toNftId(EnumerableSet.at(_nftIds, randomNumber(type(uint256).max) % EnumerableSet.length(_nftIds))),
-                    _types[randomNumber(type(uint8).max) % _types.length],
-                    toBool(randomNumber(1)),
-                    EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
+                    _getNftIdAtIndex(randomNumber(type(uint256).max)),
+                    _getObjectTypeAtIndex(randomNumber(type(uint8).max)),
+                    false, // isInterceptor
+                    _getAddressAtIndex(randomNumber(type(uint256).max)),
                     address(uint160(randomNumber(type(uint160).max))),
                     ""           
                 )
@@ -322,7 +353,7 @@ contract RegisterContinousTest is RegistryTestBase
         }
     }
 
-    function test_continuous_register_011011() public
+    function test_continuous_register_withValidSender_01111_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -330,19 +361,195 @@ contract RegisterContinousTest is RegistryTestBase
                 address(registryServiceMock),
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
-                    NftIdLib.toNftId(EnumerableSet.at(_nftIds, randomNumber(type(uint256).max) % EnumerableSet.length(_nftIds))),
-                    _types[randomNumber(type(uint8).max) % _types.length],
+                    _getNftIdAtIndex(randomNumber(type(uint256).max)),
+                    _getObjectTypeAtIndex(randomNumber(type(uint8).max)),
+                    false, // isInterceptor
+                    _getAddressAtIndex(randomNumber(type(uint256).max)),
+                    _getAddressAtIndex(randomNumber(type(uint256).max)),
+                    ""                  
+                )
+            );
+        }
+    }
+
+    // nftId - always random
+    // parenNftId - random
+    // objectType random
+    // isInterceptor - always random
+    // initialOwner - random
+    function test_continuous_register_withValidSenderAndZeroObjectAddress_00000_longRunning() public
+    {
+        for(uint idx = 0; idx < ITTERATIONS; idx++)
+        {
+            test_continuous_register(
+                address(registryServiceMock),
+                IRegistry.ObjectInfo(
+                    NftIdLib.toNftId(randomNumber(type(uint96).max)),
+                    NftIdLib.toNftId(randomNumber(type(uint96).max)),
+                    ObjectTypeLib.toObjectType(randomNumber(type(uint8).max)),
                     toBool(randomNumber(1)),
-                    EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
-                    EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
+                    address(0),
+                    address(uint160(randomNumber(type(uint160).max))),
+                    ""                  
+                )
+            );
+        }
+    }
+
+    function test_continuous_register_withValidSenderAndZeroObjectAddress_00001_longRunning() public
+    {
+        for(uint idx = 0; idx < ITTERATIONS; idx++)
+        {
+            test_continuous_register(
+                address(registryServiceMock),
+                IRegistry.ObjectInfo(
+                    NftIdLib.toNftId(randomNumber(type(uint96).max)),
+                    NftIdLib.toNftId(randomNumber(type(uint96).max)),
+                    ObjectTypeLib.toObjectType(randomNumber(type(uint8).max)),
+                    toBool(randomNumber(1)),
+                    address(0),
+                    _getAddressAtIndex(randomNumber(type(uint256).max)),
+                    ""                  
+                )
+            );
+        }
+    }
+
+    function test_continuous_register_withValidSenderAndZeroObjectAddress_00100_longRunning() public
+    {
+        for(uint idx = 0; idx < ITTERATIONS; idx++)
+        {
+            test_continuous_register(
+                address(registryServiceMock),
+                IRegistry.ObjectInfo(
+                    NftIdLib.toNftId(randomNumber(type(uint96).max)),
+                    NftIdLib.toNftId(randomNumber(type(uint96).max)),
+                    _getObjectTypeAtIndex(randomNumber(type(uint256).max)),
+                    toBool(randomNumber(1)),
+                    address(0),
+                    address(uint160(randomNumber(type(uint160).max))),
+                    ""                  
+                )
+            );
+        }
+    }
+
+    function test_continuous_register_withValidSenderAndZeroObjectAddress_00101_longRunning() public
+    {
+        for(uint idx = 0; idx < ITTERATIONS; idx++)
+        {
+            test_continuous_register(
+                address(registryServiceMock),
+                IRegistry.ObjectInfo(
+                    NftIdLib.toNftId(randomNumber(type(uint96).max)),
+                    NftIdLib.toNftId(randomNumber(type(uint96).max)),
+                    _getObjectTypeAtIndex(randomNumber(type(uint256).max)),
+                    toBool(randomNumber(1)),
+                    address(0),
+                    _getAddressAtIndex(randomNumber(type(uint256).max)),
+                    ""                  
+                )
+            );
+        }
+    }
+
+    function test_continuous_register_withValidSenderAndZeroObjectAddress_01000_longRunning() public
+    {
+        for(uint idx = 0; idx < ITTERATIONS; idx++)
+        {
+            test_continuous_register(
+                address(registryServiceMock),
+                IRegistry.ObjectInfo(
+                    NftIdLib.toNftId(randomNumber(type(uint96).max)),
+                    _getNftIdAtIndex(randomNumber(type(uint256).max)),
+                    ObjectTypeLib.toObjectType(randomNumber(type(uint8).max)),
+                    toBool(randomNumber(1)),
+                    address(0),
+                    address(uint160(randomNumber(type(uint160).max))),
+                    ""                  
+                )
+            );
+        }
+    }
+
+    function test_continuous_register_withValidSenderAndZeroObjectAddress_01001_longRunning() public
+    {
+        for(uint idx = 0; idx < ITTERATIONS; idx++)
+        {
+            test_continuous_register(
+                address(registryServiceMock),
+                IRegistry.ObjectInfo(
+                    NftIdLib.toNftId(randomNumber(type(uint96).max)),
+                    _getNftIdAtIndex(randomNumber(type(uint256).max)),
+                    ObjectTypeLib.toObjectType(randomNumber(type(uint8).max)),
+                    toBool(randomNumber(1)),
+                    address(0),
+                    _getAddressAtIndex(randomNumber(type(uint256).max)),
+                    ""                  
+                )
+            );
+        }
+    }
+
+    function test_continuous_register_withValidSenderAndZeroObjectAddress_01100_longRunning() public
+    {
+        for(uint idx = 0; idx < ITTERATIONS; idx++)
+        {
+            test_continuous_register(
+                address(registryServiceMock),
+                IRegistry.ObjectInfo(
+                    NftIdLib.toNftId(randomNumber(type(uint96).max)),
+                    _getNftIdAtIndex(randomNumber(type(uint256).max)),
+                    _getObjectTypeAtIndex(randomNumber(type(uint8).max)),
+                    toBool(randomNumber(1)),
+                    address(0),
+                    address(uint160(randomNumber(type(uint160).max))),
+                    ""                  
+                )
+            );
+        }
+    }
+
+    function test_continuous_register_withValidSenderAndZeroObjectAddress_01101_longRunning() public
+    {
+        for(uint idx = 0; idx < ITTERATIONS; idx++)
+        {
+            test_continuous_register(
+                address(registryServiceMock),
+                IRegistry.ObjectInfo(
+                    NftIdLib.toNftId(randomNumber(type(uint96).max)),
+                    _getNftIdAtIndex(randomNumber(type(uint256).max)),
+                    _getObjectTypeAtIndex(randomNumber(type(uint8).max)),
+                    toBool(randomNumber(1)),
+                    address(0),
+                    _getAddressAtIndex(randomNumber(type(uint256).max)),
                     ""                  
                 )
             );
         }
     }
 }
+contract RegisterContinuousTestL1 is RegisterContinuousTests
+{
+    function setUp() public virtual override {
+        vm.chainId(1);
+        super.setUp();
+    }
+}
 
-contract RegisterWithPresetContinuousTest is RegistryTestBaseWithPreset, RegisterContinousTest
+contract RegisterContinuousTestL2 is RegisterContinuousTests
+{
+    function setUp() public virtual override {
+        vm.chainId(_getRandomChainId());
+        super.setUp();
+    }
+}
+
+
+
+
+
+contract RegisterWithPresetContinuousTests is RegistryTestBaseWithPreset, RegisterContinuousTests
 {
     function setUp() public virtual override(RegistryTestBaseWithPreset, RegistryTestBase)
     {
@@ -353,9 +560,9 @@ contract RegisterWithPresetContinuousTest is RegistryTestBaseWithPreset, Registe
     // parentNftId - from preset,
     // types - from types set
     // isInterceptor - always random
-    // objectAddress - random
     // initialOwner - random
-    function test_continuous_register_0P1000() public
+    // salt - always random
+    function test_continuous_register_withValidSender_0P1000_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -363,18 +570,38 @@ contract RegisterWithPresetContinuousTest is RegistryTestBaseWithPreset, Registe
                 address(registryServiceMock),
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
-                    _nftIdByType[_types[randomNumber(type(uint256).max) % _types.length]],
-                    _types[randomNumber(type(uint8).max) % _types.length],
+                    _nftIdByType[randomNumber(_nftIdByType.length - 1)],
+                    _getObjectTypeAtIndex(randomNumber(type(uint8).max)),
                     toBool(randomNumber(1)),
+                    address(0),
                     address(uint160(randomNumber(type(uint160).max))),
-                    address(uint160(randomNumber(type(uint160).max))),
+                    ""                  
+                ),
+                bytes32(randomNumber(type(uint256).max))
+            );
+        }
+    }
+
+    function test_continuous_register_withValidSender_0P1011_longRunning() public
+    {
+        for(uint idx = 0; idx < ITTERATIONS; idx++)
+        {
+            test_continuous_register(
+                address(registryServiceMock),
+                IRegistry.ObjectInfo(
+                    NftIdLib.toNftId(randomNumber(type(uint96).max)),
+                    _nftIdByType[randomNumber(_nftIdByType.length - 1)],
+                    _getObjectTypeAtIndex(randomNumber(type(uint8).max)),
+                    false,
+                    _getAddressAtIndex(randomNumber(type(uint256).max)),
+                    _getAddressAtIndex(randomNumber(type(uint256).max)),
                     ""                  
                 )
             );
         }
     }
 
-    function test_continuous_register_0P1011() public
+    function test_continuous_register_withValidSenderAndZeroObjectAddress_0P101_longRunning() public
     {
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
@@ -382,14 +609,30 @@ contract RegisterWithPresetContinuousTest is RegistryTestBaseWithPreset, Registe
                 address(registryServiceMock),
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
-                    _nftIdByType[_types[randomNumber(type(uint256).max) % _types.length]],
-                    _types[randomNumber(type(uint8).max) % _types.length],
+                    _nftIdByType[randomNumber(_nftIdByType.length - 1)],
+                    _getObjectTypeAtIndex(randomNumber(type(uint8).max)),
                     toBool(randomNumber(1)),
-                    EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
-                    EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
+                    address(0),
+                    _getAddressAtIndex(randomNumber(type(uint256).max)),
                     ""                  
                 )
             );
         }
+    }
+}
+
+contract RegisterWithPresetContinuousTestL1 is RegisterWithPresetContinuousTests
+{
+    function setUp() public virtual override {
+        vm.chainId(1);
+        super.setUp();
+    }
+}
+
+contract RegisterWithPresetContinuousTestL2 is RegisterWithPresetContinuousTests
+{
+    function setUp() public virtual override {
+        vm.chainId(_getRandomChainId());
+        super.setUp();
     }
 }
