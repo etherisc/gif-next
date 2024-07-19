@@ -250,8 +250,8 @@ contract GifTest is GifDeployer {
 
         // obtain some references
         registryAddress = address(core.registry);
-        registryNftId = core.registry.getNftId(registryAddress);
-        stakingNftId = core.registry.getNftId(address(core.staking));
+        registryNftId = core.registry.getNftIdForAddress(registryAddress);
+        stakingNftId = core.registry.getNftIdForAddress(address(core.staking));
 
         // solhint-disable
         console.log("registry deployed at", address(core.registry));
@@ -265,7 +265,7 @@ contract GifTest is GifDeployer {
 
         console.log("staking manager deployed at", address(core.stakingManager));
 
-        console.log("staking nft id", core.registry.getNftId(address(core.staking)).toInt());
+        console.log("staking nft id", core.registry.getNftIdForAddress(address(core.staking)).toInt());
         console.log("staking deployed at", address(core.staking));
         console.log("staking owner (opt 1)", core.registry.ownerOf(address(core.staking)));
         console.log("staking owner (opt 2)", core.staking.getOwner());

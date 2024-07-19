@@ -35,8 +35,8 @@ interface IComponents {
 
 
     struct PoolInfo {
-        RoleId bundleOwnerRole; // the required role for bundle owners
         Amount maxBalanceAmount; // max balance amount allowed for pool
+        RoleId bundleOwnerRole; // the required role for bundle owners
         bool isInterceptingBundleTransfers; // intercepts nft transfers for bundles
         bool isExternallyManaged; // funding bundles is restricted to book keeping, actual funds may be provided as needed to support payouts
         bool isVerifyingApplications; // underwriting requires the pool component checks/confirms the applications 

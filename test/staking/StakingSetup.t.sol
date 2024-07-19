@@ -61,9 +61,9 @@ contract StakingSetupTest is GifTest {
 
         // staking
         assertTrue(core.staking.supportsInterface(type(IStaking).interfaceId), "not supportint expected interface");
-        assertTrue(core.registry.getNftId(address(core.staking)).gtz(), "staking nft id zero");
+        assertTrue(core.registry.getNftIdForAddress(address(core.staking)).gtz(), "staking nft id zero");
         assertEq(core.staking.getNftId().toInt(), stakingNftId.toInt(), "unexpected staking nft id (1)");
-        assertEq(core.staking.getNftId().toInt(), core.registry.getNftId(address(core.staking)).toInt(), "unexpected staking nft id (2)");
+        assertEq(core.staking.getNftId().toInt(), core.registry.getNftIdForAddress(address(core.staking)).toInt(), "unexpected staking nft id (2)");
 
         // staking registry entry
         IRegistry.ObjectInfo memory stakingInfo = core.registry.getObjectInfo(core.staking.getNftId());
@@ -80,9 +80,9 @@ contract StakingSetupTest is GifTest {
 
         // staking service
         assertTrue(stakingService.supportsInterface(type(IStakingService).interfaceId), "not supportint expected interface");
-        assertTrue(core.registry.getNftId(address(stakingService)).gtz(), "staking service nft id zero");
+        assertTrue(core.registry.getNftIdForAddress(address(stakingService)).gtz(), "staking service nft id zero");
         assertEq(stakingService.getNftId().toInt(), stakingServiceNftId.toInt(), "unexpected staking service nft id (1)");
-        assertEq(stakingService.getNftId().toInt(), core.registry.getNftId(address(stakingService)).toInt(), "unexpected staking service nft id (2)");
+        assertEq(stakingService.getNftId().toInt(), core.registry.getNftIdForAddress(address(stakingService)).toInt(), "unexpected staking service nft id (2)");
 
         IRegistry.ObjectInfo memory serviceInfo = core.registry.getObjectInfo(stakingService.getNftId());
         assertEq(serviceInfo.nftId.toInt(), stakingServiceNftId.toInt(), "unexpected staking service nft id (3)");

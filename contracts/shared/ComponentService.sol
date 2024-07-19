@@ -622,7 +622,7 @@ contract ComponentService is
         }
 
         // check component has not already been registered
-        if (getRegistry().getNftId(componentAddress).gtz()) {
+        if (getRegistry().getNftIdForAddress(componentAddress).gtz()) {
             revert ErrorComponentServiceAlreadyRegistered(componentAddress);
         }
 

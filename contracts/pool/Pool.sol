@@ -113,15 +113,15 @@ abstract contract Pool is
         view 
         returns (IComponents.PoolInfo memory poolInfo)
     {
-        return IComponents.PoolInfo(
-            PUBLIC_ROLE(), // bundleOwnerRole
-            AmountLib.max(), // maxCapitalAmount,
-            isNftInterceptor(), // isInterceptingBundleTransfers
-            false, // isExternallyManaged,
-            false, // isVerifyingApplications,
-            UFixedLib.toUFixed(1), // collateralizationLevel,
-            UFixedLib.toUFixed(1) // retentionLevel,
-        );
+        return IComponents.PoolInfo({
+            maxBalanceAmount: AmountLib.max(),
+            bundleOwnerRole: PUBLIC_ROLE(), 
+            isInterceptingBundleTransfers: isNftInterceptor(),
+            isExternallyManaged: false,
+            isVerifyingApplications: false,
+            collateralizationLevel: UFixedLib.toUFixed(1),
+            retentionLevel: UFixedLib.toUFixed(1)
+        });
     }
 
     // Internals
@@ -169,9 +169,9 @@ abstract contract Pool is
     )
         internal
         virtual
-        returns(Amount netAmount) 
+        returns(Amount) 
     {
-        _getPoolStorage()._poolService.stake(bundleNftId, amount);
+        return _getPoolStorage()._poolService.stake(bundleNftId, amount);
     }
 
 
@@ -287,21 +287,19 @@ abstract contract Pool is
         _getPoolStorage()._componentService.setPoolFees(poolFee, stakingFee, performanceFee);
     }
 
-    /// @dev Creates a new bundle using the provided parameter values.
+    /// @dev Creates a new empty bundle using the provided parameter values.
     function _createBundle(
         address bundleOwner,
         Fee memory fee,
-        Amount amount,
         Seconds lifetime, 
         bytes memory filter
     )
         internal
-        returns(NftId bundleNftId, Amount netStakedAmount)
+        returns(NftId bundleNftId)
     {
-        (bundleNftId, netStakedAmount) = _getPoolStorage()._poolService.createBundle(
+        bundleNftId = _getPoolStorage()._poolService.createBundle(
             bundleOwner,
             fee,
-            amount,
             lifetime,
             filter);
 

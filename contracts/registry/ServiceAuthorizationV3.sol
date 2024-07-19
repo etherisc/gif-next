@@ -2,14 +2,12 @@
 pragma solidity ^0.8.20;
 
 import {
-     ALL, REGISTRY, SERVICE, PRODUCT, ORACLE, POOL, INSTANCE, COMPONENT, DISTRIBUTION, DISTRIBUTOR, APPLICATION, POLICY, CLAIM, BUNDLE, STAKE, STAKING, PRICE
+     ALL, REGISTRY, PRODUCT, ORACLE, POOL, INSTANCE, COMPONENT, DISTRIBUTION, DISTRIBUTOR, APPLICATION, POLICY, CLAIM, BUNDLE, STAKING, PRICE
 } from "../../contracts/type/ObjectType.sol";
 
-import {ComponentService} from "../shared/ComponentService.sol";
 import {IAccess} from "../authorization/IAccess.sol";
 import {IBundleService} from "../pool/IBundleService.sol";
 import {IDistributionService} from "../distribution/IDistributionService.sol";
-import {InstanceService} from "../instance/InstanceService.sol";
 import {IInstanceService} from "../instance/IInstanceService.sol";
 import {IPoolService} from "../pool/IPoolService.sol";
 import {IStakingService} from "../staking/IStakingService.sol";
@@ -163,6 +161,7 @@ contract ServiceAuthorizationV3
 
           functions = _authorizeForService(DISTRIBUTION(), POLICY());
           _authorize(functions, IDistributionService.processSale.selector, "processSale");
+          _authorize(functions, IDistributionService.processReferral.selector, "processReferral");
      }
 
 

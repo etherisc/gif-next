@@ -148,7 +148,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             gifAdmin,
             gifManager,
             stakingOwner);
-        
+
         _startPrank(registryOwner);
         _deployRegistryServiceMock();
         _stopPrank();
@@ -620,7 +620,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         // check for zero address
         //console.log("   checking with 0 address");
 
-        assertEq(core.registry.getNftId( address(0) ).toInt(), NftIdLib.zero().toInt(), "getNftId(0) returned unexpected value");
+        assertEq(core.registry.getNftIdForAddress( address(0) ).toInt(), NftIdLib.zero().toInt(), "getNftId(0) returned unexpected value");
         assertTrue(eqObjectInfo(core.registry.getObjectInfo( address(0) ), zeroObjectInfo()), "getObjectInfo(0) returned unexpected value");
         assertFalse(core.registry.isRegistered( address(0) ), "isRegistered(0) returned unexpected value");
         assertFalse(core.registry.isRegisteredService( address(0) ), "isRegisteredService(0) returned unexpected value");
@@ -628,7 +628,6 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
 
         vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, NftIdLib.zero().toInt()));
         core.registry.ownerOf(address(0));
-
 
         // check for zeroNftId    
         //console.log("   checking with 0 nftId");
@@ -770,7 +769,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             assertEq(_registryNftIdByChainId[expectedChainId].toInt(), 0, "Test error: protocol _registryNftIdByChainId[chainId] != 0");
 
             assertTrue(eqObjectInfo(core.registry.getObjectInfo(protocolInfo.objectAddress), zeroObjectInfo()), "getObjectInfo(address) returned unexpected value #1");
-            assertEq(core.registry.getNftId(protocolInfo.objectAddress).toInt(), 0, "getNftId(address) returned unexpected value #1");
+            assertEq(core.registry.getNftIdForAddress(protocolInfo.objectAddress).toInt(), 0, "getNftId(address) returned unexpected value #1");
             assertEq(core.registry.isRegistered(protocolInfo.objectAddress), false, "isRegistered(address) returned unexpected value #1");
             vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, 0));
             core.registry.ownerOf(protocolInfo.objectAddress);
@@ -795,7 +794,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
                 assertEq(_nftIdByAddress[globalRegistryInfo.objectAddress].toInt(), globalRegistryNftId.toInt(), "Test error: _nftIdByAddress[globalRegistry] != globalRegistryNftId");
                 // by address getters return global registry related
                 assertTrue(eqObjectInfo(core.registry.getObjectInfo(globalRegistryInfo.objectAddress), globalRegistryInfo), "getObjectInfo(address) returned unexpected value #2");
-                assertEq(core.registry.getNftId(globalRegistryInfo.objectAddress).toInt(), globalRegistryNftId.toInt(), "getNftId(address) returned unexpected value #2");
+                assertEq(core.registry.getNftIdForAddress(globalRegistryInfo.objectAddress).toInt(), globalRegistryNftId.toInt(), "getNftId(address) returned unexpected value #2");
                 assertEq(core.registry.isRegistered(globalRegistryInfo.objectAddress), true, "isRegistered(address) returned unexpected value #2");
                 assertEq(core.registry.ownerOf(globalRegistryInfo.objectAddress), globalRegistryInfo.initialOwner, "ownerOf(address) returned unexpected value #2");
 
@@ -831,7 +830,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
 
                     // by address getters return 0
                     assertTrue(eqObjectInfo(core.registry.getObjectInfo(globalRegistryInfo.objectAddress), zeroObjectInfo()), "getObjectInfo(address) returned unexpected value #2.2");
-                    assertEq(core.registry.getNftId(globalRegistryInfo.objectAddress).toInt(), 0, "getNftId(address) returned unexpected value #2.2");
+                    assertEq(core.registry.getNftIdForAddress(globalRegistryInfo.objectAddress).toInt(), 0, "getNftId(address) returned unexpected value #2.2");
                     assertEq(core.registry.isRegistered(globalRegistryInfo.objectAddress), false, "isRegistered(address) returned unexpected value #2.2");
                     vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, 0));
                     core.registry.ownerOf(globalRegistryInfo.objectAddress);
@@ -853,7 +852,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             assertEq(_registryNftIdByChainId[expectedChainId].toInt(), registryNftId.toInt(), "Test error: _registryNftIdByChainId[chainId] != registryNftId");
 
             assertTrue(eqObjectInfo(core.registry.getObjectInfo(registryInfo.objectAddress), registryInfo), "getObjectInfo(address) returned unexpected value #3");
-            assertEq(core.registry.getNftId(registryInfo.objectAddress).toInt(), registryNftId.toInt(), "getNftId(address) returned unexpected value #3");
+            assertEq(core.registry.getNftIdForAddress(registryInfo.objectAddress).toInt(), registryNftId.toInt(), "getNftId(address) returned unexpected value #3");
             assertEq(core.registry.isRegistered(registryInfo.objectAddress), true, "isRegistered(address) returned unexpected value #3");
             assertEq(core.registry.ownerOf(registryInfo.objectAddress), registryInfo.initialOwner, "ownerOf(address) returned unexpected value #3");
 
@@ -902,7 +901,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
                 assertEq(_nftIdByAddress[expectedInfo.objectAddress].toInt(), 0, "Test error: _nftIdByAddress[registry] != 0");
 
                 assertTrue(eqObjectInfo(core.registry.getObjectInfo(expectedInfo.objectAddress), zeroObjectInfo()), "getObjectInfo(address) returned unexpected value #4.2");
-                assertEq(core.registry.getNftId(expectedInfo.objectAddress).toInt(), 0, "getNftId(address) returned unexpected value #4.2");
+                assertEq(core.registry.getNftIdForAddress(expectedInfo.objectAddress).toInt(), 0, "getNftId(address) returned unexpected value #4.2");
                 assertEq(core.registry.isRegistered(expectedInfo.objectAddress), false, "isRegistered(address) returned unexpected value #4.2");
                 vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, 0));
                 core.registry.ownerOf(expectedInfo.objectAddress);
@@ -925,7 +924,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             assertEq(_registryNftIdByChainId[expectedChainId].toInt(), 0, "Test error: service _registryNftIdByChainId[chainId] != 0");
 
             assertTrue(eqObjectInfo(core.registry.getObjectInfo(expectedInfo.objectAddress), expectedInfo), "getObjectInfo(address) returned unexpected value #5");
-            assertEq(core.registry.getNftId(expectedInfo.objectAddress).toInt(), expectedInfo.nftId.toInt(), "getNftId(address) returned unexpected value #5");
+            assertEq(core.registry.getNftIdForAddress(expectedInfo.objectAddress).toInt(), expectedInfo.nftId.toInt(), "getNftId(address) returned unexpected value #5");
             assertEq(core.registry.isRegistered(expectedInfo.objectAddress), true, "isRegistered(address) returned unexpected value #5");
             assertEq(core.registry.ownerOf(expectedInfo.objectAddress), expectedOwner, "ownerOf(address) returned unexpected value #5");
 
@@ -946,7 +945,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
                 assertEq(_nftIdByAddress[expectedInfo.objectAddress].toInt(), expectedInfo.nftId.toInt(), "Test error: _nftIdByAddress[_info[nftId].objectAddress] != _info[nftId].nftId #1");
 
                 assertTrue(eqObjectInfo(core.registry.getObjectInfo(expectedInfo.objectAddress), expectedInfo), "getObjectInfo(address) returned unexpected value #6");
-                assertEq(core.registry.getNftId(expectedInfo.objectAddress).toInt(), expectedInfo.nftId.toInt(), "getNftId(address) returned unexpected value #6");
+                assertEq(core.registry.getNftIdForAddress(expectedInfo.objectAddress).toInt(), expectedInfo.nftId.toInt(), "getNftId(address) returned unexpected value #6");
                 assertEq(core.registry.isRegistered(expectedInfo.objectAddress), true, "isRegistered(address) returned unexpected value #6");
                 assertEq(core.registry.ownerOf(expectedInfo.objectAddress), expectedOwner, "ownerOf(address) returned unexpected value #6");
 
@@ -958,7 +957,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
                 assertEq(_nftIdByAddress[expectedInfo.objectAddress].toInt(), 0, "Test error: _nftIdByAddress[_info[nftId].objectAddress] != 0 #1");
     
                 assertTrue(eqObjectInfo(core.registry.getObjectInfo(expectedInfo.objectAddress), zeroObjectInfo()), "getObjectInfo(address) returned unexpected value #6.5");
-                assertEq(core.registry.getNftId(expectedInfo.objectAddress).toInt(), 0, "getNftId(address) returned unexpected value #6.5");
+                assertEq(core.registry.getNftIdForAddress(expectedInfo.objectAddress).toInt(), 0, "getNftId(address) returned unexpected value #6.5");
                 assertEq(core.registry.isRegistered(expectedInfo.objectAddress), false, "isRegistered(address) returned unexpected value #6.5");
                 vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, 0));
                 core.registry.ownerOf(expectedInfo.objectAddress);
@@ -978,7 +977,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             assertEq(_registryNftIdByChainId[expectedChainId].toInt(), 0, "Test error: _registryNftIdByChainId[chainId] != 0 #1");
 
             assertTrue(eqObjectInfo(core.registry.getObjectInfo(expectedInfo.objectAddress), expectedInfo), "getObjectInfo(address) returned unexpected value #7");
-            assertEq(core.registry.getNftId(expectedInfo.objectAddress).toInt(), expectedInfo.nftId.toInt(), "getNftId(address) returned unexpected value #7");
+            assertEq(core.registry.getNftIdForAddress(expectedInfo.objectAddress).toInt(), expectedInfo.nftId.toInt(), "getNftId(address) returned unexpected value #7");
             assertEq(core.registry.isRegistered(expectedInfo.objectAddress), true, "isRegistered(address) returned unexpected value #7");
             assertEq(core.registry.ownerOf(expectedInfo.objectAddress), expectedOwner, "ownerOf(address) returned unexpected value #7");
 
@@ -996,7 +995,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             assertEq(_registryNftIdByChainId[expectedChainId].toInt(), 0, "Test error: _registryNftIdByChainId[chainId] != 0 #2");
 
             assertTrue(eqObjectInfo(core.registry.getObjectInfo(expectedInfo.objectAddress), zeroObjectInfo()), "getObjectInfo(address) returned unexpected value #8");
-            assertEq(core.registry.getNftId(expectedInfo.objectAddress).toInt(), 0, "getNftId(address) returned unexpected value #8");
+            assertEq(core.registry.getNftIdForAddress(expectedInfo.objectAddress).toInt(), 0, "getNftId(address) returned unexpected value #8");
             assertEq(core.registry.isRegistered(expectedInfo.objectAddress), false, "isRegistered(address) returned unexpected value #8");
             vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, 0));
             core.registry.ownerOf(expectedInfo.objectAddress);

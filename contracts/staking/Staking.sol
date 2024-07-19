@@ -350,9 +350,10 @@ contract Staking is
             Amount rewardsClaimedAmount
         )
     {
-        // TODO add check that stake locking is in the past
         StakingStorage storage $ = _getStakingStorage();
-
+        
+        StakeManagerLib.checkUnstakeParameters($._reader, stakeNftId);
+        
         // update rewards since last update
         NftId targetNftId = _updateRewards($._reader, $._store, stakeNftId);
 

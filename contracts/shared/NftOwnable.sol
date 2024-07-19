@@ -93,7 +93,7 @@ contract NftOwnable is
             revert ErrorNftOwnableContractNotRegistered(nftOwnableAddress);
         }
 
-        $._nftId = getRegistry().getNftId(nftOwnableAddress);
+        $._nftId = getRegistry().getNftIdForAddress(nftOwnableAddress);
 
         return $._nftId;
     }

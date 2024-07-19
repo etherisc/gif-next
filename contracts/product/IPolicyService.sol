@@ -1,20 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IRisk} from "../instance/module/IRisk.sol";
 import {IService} from "../shared/IService.sol";
 
 import {Amount} from "../type/Amount.sol";
-import {ClaimId} from "../type/ClaimId.sol";
 import {NftId} from "../type/NftId.sol";
-import {PayoutId} from "../type/PayoutId.sol";
-import {ReferralId} from "../type/Referral.sol";
-import {RiskId} from "../type/RiskId.sol";
-import {Seconds} from "../type/Seconds.sol";
 import {StateId} from "../type/StateId.sol";
 import {Timestamp} from "../type/Timestamp.sol";
-import {UFixed} from "../type/UFixed.sol";
-import {Fee} from "../type/Fee.sol";
 
 interface IPolicyService is IService {
 
@@ -45,15 +37,12 @@ interface IPolicyService is IService {
 
     /// @dev creates the policy from {applicationNftId}. 
     /// After successful completion of the function the policy can be referenced using the application NftId.
-    /// Locks the sum insured amount in the pool.
-    /// sets the policy state to collateralized
-    /// optionally collects premiums and activates the policy.
-    /// - premium payment is only attempted if requirePremiumPayment is set to true
-    /// - activation is only done if activateAt is a non-zero timestamp
+    /// Locks the sum insured amount in the pool, but does not transfer tokens. Call collectPremium to transfer tokens. 
+    /// Sets the policy state to collateralized.
+    /// Optionally activates the policy if activateAt is a non-zero timestamp.
     /// only the related product may create a policy from an application
     function createPolicy(
         NftId applicationNftId,
-        bool requirePremiumPayment,
         Timestamp activateAt
     ) external;
 
@@ -62,7 +51,7 @@ interface IPolicyService is IService {
     /// only the related product may decline an application
     function decline(NftId policyNftId) external;
 
-    /// @dev collects the premium token for the specified policy (must be in COLLATERALIZED or ACTIVE state)
+    /// @dev collects the premium token for the specified policy (must be in COLLATERALIZED state)
     function collectPremium(NftId policyNftId, Timestamp activateAt) external;
 
     /// @dev activates the specified policy and sets the activation date in the policy metadata

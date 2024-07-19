@@ -114,7 +114,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         });
 
     const registry = registryBaseContract as Registry;
-    const registryNftId = await registry["getNftId(address)"](registryAddress);
+    const registryNftId = await registry.getNftIdForAddress(registryAddress);
 
     const chainNftAddress = await registry.getChainNftAddress();
     const chainNft = ChainNft__factory.connect(chainNftAddress, owner);
@@ -221,7 +221,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
 
     const stakingAddress = await stakingManager.getStaking();
     const staking = Staking__factory.connect(stakingAddress, owner);
-    const stakingNftId = await registry["getNftId(address)"](stakingAddress);
+    const stakingNftId = await registry.getNftIdForAddress(stakingAddress);
 
     // verify service implementation 
     prepareVerificationData(

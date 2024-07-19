@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {ClaimId} from "../type/ClaimId.sol";
 import {InstanceLinkedComponent} from "../shared/InstanceLinkedComponent.sol";
@@ -64,7 +62,7 @@ abstract contract Product is
         override 
         returns (Amount premiumAmount)
     {
-        IPolicy.Premium memory premium = _getProductStorage()._pricingService.calculatePremium(
+        IPolicy.PremiumInfo memory premium = _getProductStorage()._pricingService.calculatePremium(
             getNftId(),
             riskId,
             sumInsuredAmount,
@@ -74,14 +72,14 @@ abstract contract Product is
             referralId
         );
 
-        return AmountLib.toAmount(premium.premiumAmount);
+        return premium.premiumAmount;
     }
 
     function calculateNetPremium(
         Amount sumInsuredAmount,
-        RiskId riskId,
-        Seconds lifetime,
-        bytes memory applicationData
+        RiskId,
+        Seconds,
+        bytes memory
     )
         external
         view
@@ -125,11 +123,11 @@ abstract contract Product is
     }
 
     function getPoolNftId() external view override returns (NftId poolNftId) {
-        return getRegistry().getNftId(address(_getProductStorage()._pool));
+        return getRegistry().getNftIdForAddress(address(_getProductStorage()._pool));
     }
 
     function getDistributionNftId() external view override returns (NftId distributionNftId) {
-        return getRegistry().getNftId(address(_getProductStorage()._distribution));
+        return getRegistry().getNftIdForAddress(address(_getProductStorage()._distribution));
     }
 
     function _initializeProduct(
@@ -173,8 +171,8 @@ abstract contract Product is
         $._componentService = IComponentService(_getServiceAddress(COMPONENT()));
         $._pool = Pool(pool);
         $._distribution = Distribution(distribution);
-        $._poolNftId = getRegistry().getNftId(pool);
-        $._distributionNftId = getRegistry().getNftId(distribution);
+        $._poolNftId = getRegistry().getNftIdForAddress(pool);
+        $._distributionNftId = getRegistry().getNftIdForAddress(distribution);
 
         registerInterface(type(IProductComponent).interfaceId);  
     }
@@ -254,14 +252,12 @@ abstract contract Product is
 
     function _createPolicy(
         NftId applicationNftId,
-        bool requirePremiumPayment,
         Timestamp activateAt
     )
         internal
     {
         _getProductStorage()._policyService.createPolicy(
             applicationNftId, 
-            requirePremiumPayment, 
             activateAt);
     }
 
@@ -381,6 +377,24 @@ abstract contract Product is
             policyNftId, 
             claimId, 
             amount, 
+            data);
+    }
+
+    function _createPayoutForBeneficiary(
+        NftId policyNftId,
+        ClaimId claimId,
+        Amount amount,
+        address beneficiary,
+        bytes memory data
+    )
+        internal
+        returns (PayoutId)
+    {
+        return _getProductStorage()._claimService.createPayoutForBeneficiary(
+            policyNftId, 
+            claimId, 
+            amount, 
+            beneficiary,
             data);
     }
 

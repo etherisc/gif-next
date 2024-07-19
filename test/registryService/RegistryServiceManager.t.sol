@@ -58,7 +58,7 @@ contract RegistryServiceManagerTest is RegistryServiceTestBase {
         console.log("registry service owner", registryService.getOwner());
         console.log("registry service authority", registryService.authority());
         console.log("registry", address(core.registry));
-        console.log("registry nft", core.registry.getNftId(address(core.registry)).toInt());
+        console.log("registry nft", core.registry.getNftIdForAddress(address(core.registry)).toInt());
         console.log("registry owner (opt 1)", core.registry.ownerOf(address(core.registry)));
         console.log("registry owner (opt 2)", core.registry.getOwner());
         // solhint-enable
@@ -80,9 +80,9 @@ contract RegistryServiceManagerTest is RegistryServiceTestBase {
         assertEq(core.registry.getChainNftAddress(), address(core.chainNft), "unexpected chain nft address");
 
         // check nft ids
-        assertTrue(core.registry.getNftId(address(registryService)).gtz(), "registry service nft id (option 1) zero");
+        assertTrue(core.registry.getNftIdForAddress(address(registryService)).gtz(), "registry service nft id (option 1) zero");
         assertTrue(registryService.getNftId().gtz(), "registry service nft id (option 2) zero");
-        assertEq(registryService.getNftId().toInt(), core.registry.getNftId(address(registryService)).toInt(), "registry service nft id mismatch");
+        assertEq(registryService.getNftId().toInt(), core.registry.getNftIdForAddress(address(registryService)).toInt(), "registry service nft id mismatch");
         
         // check ownership
         assertEq(registryServiceManager.getOwner(), address(registryOwner), "service manager owner not registry owner");
@@ -208,7 +208,7 @@ contract RegistryServiceManagerTest is RegistryServiceTestBase {
 
 
     function _logObject(string memory prefix, address object) internal view {
-        NftId nftId = core.registry.getNftId(object);
+        NftId nftId = core.registry.getNftIdForAddress(object);
         _logObject(prefix, nftId);
     }
 
