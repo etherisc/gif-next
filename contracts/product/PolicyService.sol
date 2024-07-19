@@ -21,6 +21,7 @@ import {StateId} from "../type/StateId.sol";
 import {VersionPart} from "../type/Version.sol";
 
 import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
+import {ContractLib} from "../shared/ContractLib.sol";
 import {IApplicationService} from "./IApplicationService.sol";
 import {IBundleService} from "../pool/IBundleService.sol";
 import {IClaimService} from "./IClaimService.sol";
@@ -28,6 +29,7 @@ import {IComponentService} from "../shared/IComponentService.sol";
 import {IDistributionService} from "../distribution/IDistributionService.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
+import {IPolicyHolder} from "../shared/IPolicyHolder.sol";
 import {IPolicyService} from "./IPolicyService.sol";
 import {IPoolService} from "../pool/IPoolService.sol";
 import {IPricingService} from "./IPricingService.sol";
@@ -179,12 +181,14 @@ contract PolicyService is
                 productInfo.distributionNftId, 
                 applicationInfo.referralId);
         }
-        
+
+        // log policy creation before interactions with token and policy holder
+        emit LogPolicyServicePolicyCreated(applicationNftId, premium.premiumAmount, activateAt);
+
         // TODO add calling pool contract if it needs to validate application
 
-        // TODO: add logging
-
-        // TODO: add callback IPolicyHolder.policyActivated() if applicable
+        // callback to policy holder if applicable
+        _policyHolderPolicyActivated(applicationNftId, activateAt);
     }
 
 
@@ -231,8 +235,6 @@ contract PolicyService is
         // TODO: add logging
 
         _transferFunds(instanceReader, policyNftId, policyInfo.productNftId, premium);
-
-        // TODO: add callback IPolicyHolder.policyActivated() if applicable
     }
 
     /// @inheritdoc IPolicyService
@@ -246,9 +248,11 @@ contract PolicyService is
 
         instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, KEEP_STATE());
 
-        // TODO: add logging
+        // log policy activation before interactions with policy holder
+        emit LogPolicyServicePolicyActivated(policyNftId, activateAt);
 
-        // TODO: add callback IPolicyHolder.policyActivated() if applicable
+        // callback to policy holder if applicable
+        _policyHolderPolicyActivated(policyNftId, activateAt);
     }
 
 
@@ -297,12 +301,14 @@ contract PolicyService is
         }
 
         // update policyInfo with new expiredAt timestamp
+        Timestamp originalExpiredAt = policyInfo.expiredAt;
         policyInfo.expiredAt = expiredAt;
         instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, KEEP_STATE());
 
-        emit LogPolicyServicePolicyExpirationUpdated(policyNftId, expiredAt);
+        emit LogPolicyServicePolicyExpirationUpdated(policyNftId, originalExpiredAt, expiredAt);
 
-        // TODO: add callback IPolicyHolder.policyExpired() if applicable
+        // callback to policy holder if applicable
+        _policyHolderPolicyExpired(policyNftId, expiredAt);
     }
 
 
@@ -525,6 +531,63 @@ contract PolicyService is
     }
 
 
+    function _policyHolderPolicyActivated(
+        NftId policyNftId,
+        Timestamp activateAt
+    )
+        internal
+        virtual
+    {
+        // immediately return if policy is not activated
+        if (activateAt.eqz()) {
+            return;
+        }
+
+        // get policy holder address
+        IPolicyHolder policyHolder = _getPolicyHolder(policyNftId);
+
+        // execute callback if policy holder implements IPolicyHolder
+        if (address(policyHolder) != address(0)) {
+            policyHolder.policyActivated(policyNftId, activateAt);
+        }
+    }
+
+
+    function _policyHolderPolicyExpired(
+        NftId policyNftId,
+        Timestamp expiredAt
+    )
+        internal
+        virtual
+    {
+        // immediately return if policy is not activated
+        if (expiredAt.eqz()) {
+            return;
+        }
+
+        // get policy holder address
+        IPolicyHolder policyHolder = _getPolicyHolder(policyNftId);
+
+        // execute callback if policy holder implements IPolicyHolder
+        if (address(policyHolder) != address(0)) {
+            policyHolder.policyExpired(policyNftId, expiredAt);
+        }
+    }
+
+    function _getPolicyHolder(NftId policyNftId)
+        internal 
+        // view 
+        returns (IPolicyHolder policyHolder)
+    {
+        address policyHolderAddress = getRegistry().ownerOf(policyNftId);
+        policyHolder = IPolicyHolder(policyHolderAddress);
+
+        if (!ContractLib.isPolicyHolder(policyHolderAddress)) {
+            policyHolder = IPolicyHolder(address(0));
+        }
+    }
+
+
     function _getTokenHandler(
         InstanceReader instanceReader,
         NftId productNftId
@@ -538,6 +601,7 @@ contract PolicyService is
     {
         tokenHandler = instanceReader.getComponentInfo(productNftId).tokenHandler;
     }
+
 
     function _getDistributionNftAndWallets(
         InstanceReader instanceReader,

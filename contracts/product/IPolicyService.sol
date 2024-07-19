@@ -33,7 +33,9 @@ interface IPolicyService is IService {
     error ErrorPolicyServiceTransferredPremiumMismatch(NftId policyNftId, Amount expectedPremiumAmount, Amount transferredPremiumAmount);
 
     event LogPolicyServicePolicyDeclined(NftId policyNftId);
-    event LogPolicyServicePolicyExpirationUpdated(NftId policyNftId, Timestamp expiredAt);
+    event LogPolicyServicePolicyCreated(NftId policyNftId, Amount premiumAmount, Timestamp activatedAt);
+    event LogPolicyServicePolicyActivated(NftId policyNftId, Timestamp activatedAt);
+    event LogPolicyServicePolicyExpirationUpdated(NftId policyNftId, Timestamp originalExpiredAt, Timestamp expiredAt);
 
     /// @dev creates the policy from {applicationNftId}. 
     /// After successful completion of the function the policy can be referenced using the application NftId.

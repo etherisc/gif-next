@@ -131,6 +131,5 @@ interface IAccessAdmin is
 
     function toRole(RoleId adminRoleId, RoleType roleType, uint32 maxMemberCount, string memory name) external view returns (RoleInfo memory);
     function toFunction(bytes4 selector, string memory name) external view returns (FunctionInfo memory);
-    function isAccessManaged(address target) external view returns (bool);
     function deployer() external view returns (address);
 }
