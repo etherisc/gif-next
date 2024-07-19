@@ -306,7 +306,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             // global registry 2101 -> id 2
             // global staking 3xxx -> id 3
             // global registry service 4xxx -> id 4
-            require(registry.getObjectCount() == 4, "Test error: starting registry.objectCount() != 4 after deployment on mainnet");
+            assertEq(registry.getObjectCount(), 4, "Test error: starting registry.objectCount() != 4 after deployment on mainnet");
             _nextId = 5;
         } else {
             // protocol 1101 -> id 1
@@ -314,7 +314,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             // local registry 2xxxx -> id 2
             // local staking 3xxx -> id 3
             // local registry service 4xxx -> id 4
-            require(registry.getObjectCount() == 5, "Test error: starting registry.objectCount() != 5 after deployment not on mainnet");
+            assertEq(registry.getObjectCount(), 5, "Test error: starting registry.objectCount() != 5 after deployment not on mainnet");
             _nextId = 5;
         }
 
@@ -792,7 +792,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
 
         if(nftId == protocolNftId) 
         {// special case: expected objectAddress == 0 for protocolNftId
-            //require(false, "_assert_registry_getters reached point 1");
+            //assertTrue(false, "_assert_registry_getters reached point 1");
             assertTrue(eqObjectInfo(expectedInfo, protocolInfo), "Test error: _info[protocolNftId] != protocolInfo");
             assertEq(_nftIdByAddress[protocolInfo.objectAddress].toInt(), 0, "Test error: _nftIdByAddress[protocol] != 0");
             assertEq(_registryNftIdByChainId[expectedChainId].toInt(), 0, "Test error: protocol _registryNftIdByChainId[chainId] != 0");
@@ -817,7 +817,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
 
             if(block.chainid == 1) 
             { // mainnet: address look up is set ONLY for global registry, chain registries can have global address
-                //require(false, "_assert_registry_getters reached point 2");
+                //assertTrue(false, "_assert_registry_getters reached point 2");
                 assertTrue(EnumerableSet.contains(_withLookupAddresses, globalRegistryInfo.objectAddress), "Test error: _withLookupAddresses does not contain globalRegistry on mainnet");
 
                 assertEq(_nftIdByAddress[globalRegistryInfo.objectAddress].toInt(), globalRegistryNftId.toInt(), "Test error: _nftIdByAddress[globalRegistry] != globalRegistryNftId");
@@ -839,7 +839,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
 
                 if(EnumerableSet.contains(_withLookupAddresses, globalRegistryInfo.objectAddress)) 
                 {// contract with same address is registered -> check this contract is not REGISTRY
-                    //require(false, "_assert_registry_getters reached point 3");
+                    //assertTrue(false, "_assert_registry_getters reached point 3");
                     NftId nonRegistryContractNftId = _nftIdByAddress[globalRegistryInfo.objectAddress];
                     IRegistry.ObjectInfo memory nonRegistryContractInfo = _info[nonRegistryContractNftId];
                     address nonRegistryContractOwner = chainNft.ownerOf(nonRegistryContractNftId.toInt());
@@ -853,7 +853,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
                 }
                 else
                 {// no contract with same address is NOT registered
-                    //require(false, "_assert_registry_getters reached point 4");
+                    //assertTrue(false, "_assert_registry_getters reached point 4");
                     assertEq(_nftIdByAddress[globalRegistryInfo.objectAddress].toInt(), 0, "Test error: _nftIdByAddress[globalRegistry] != 0 #1");
                     assertEq(_nftIdByAddress[expectedInfo.objectAddress].toInt(), 0, "Test error: _nftIdByAddress[globalRegistry] != 0 #2");
 
@@ -875,7 +875,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         } 
         else if(nftId == registryNftId)
         {// not mainnet, registry have address lookup set
-            //require(false, "_assert_registry_getters reached point 5");
+            //assertTrue(false, "_assert_registry_getters reached point 5");
             assertTrue(eqObjectInfo(expectedInfo, registryInfo), "Test error: _info[registryNftId] != registryInfo");
             assertEq(_nftIdByAddress[expectedInfo.objectAddress].toInt(), registryNftId.toInt(), "Test error: _nftIdByAddress[address] != registryNftId");
             assertEq(_registryNftIdByChainId[expectedChainId].toInt(), registryNftId.toInt(), "Test error: _registryNftIdByChainId[chainId] != registryNftId");
@@ -917,7 +917,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
 
                 // exception: global registry is the only member of _withLookupAddresses and REGISTRY type
                 if(nonRegistryContractInfo.objectAddress != globalRegistryInfo.objectAddress) {
-                    //require(false, "_assert_registry_getters reached point 6");
+                    //assertTrue(false, "_assert_registry_getters reached point 6");
                     assertTrue(nonRegistryContractInfo.objectType != REGISTRY(), "Test error: _info[nonRegistryContractNftId].objectType == REGISTRY #2");
                 }
 
@@ -926,7 +926,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             } 
             else 
             {// no contract with same address is not registered
-                //require(false, "_assert_registry_getters reached point 7");
+                //assertTrue(false, "_assert_registry_getters reached point 7");
                 assertEq(_nftIdByAddress[expectedInfo.objectAddress].toInt(), 0, "Test error: _nftIdByAddress[registry] != 0");
 
                 assertTrue(eqObjectInfo(registry.getObjectInfo(expectedInfo.objectAddress), zeroObjectInfo()), "getObjectInfo(address) returned unexpected value #4.2");
@@ -945,7 +945,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         }
         else if(expectedInfo.objectType == SERVICE()) 
         {
-            //require(false, "_assert_registry_getters reached point 8");
+            //assertTrue(false, "_assert_registry_getters reached point 8");
             assertEq(expectedParentAddress, address(registry), "Test error: service parentAddress != registryAddress");
             assertEq(expectedParentType.toInt(), REGISTRY().toInt(), "Test error: service parentType != REGISTRY()");
             assertNotEq(expectedInfo.objectAddress, address(0), "Test error: service address == 0");
@@ -970,7 +970,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
 
             if(expectedInfo.objectAddress > address(0)) 
             { // contract for INSTANCE
-                //require(false, "_assert_registry_getters reached point 9");
+                //assertTrue(false, "_assert_registry_getters reached point 9");
                 assertEq(_nftIdByAddress[expectedInfo.objectAddress].toInt(), expectedInfo.nftId.toInt(), "Test error: _nftIdByAddress[_info[nftId].objectAddress] != _info[nftId].nftId #1");
 
                 assertTrue(eqObjectInfo(registry.getObjectInfo(expectedInfo.objectAddress), expectedInfo), "getObjectInfo(address) returned unexpected value #6");
@@ -982,7 +982,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             }
             else 
             { // object for INSTANCE
-                //require(false, "_assert_registry_getters reached point 10");
+                //assertTrue(false, "_assert_registry_getters reached point 10");
                 assertEq(_nftIdByAddress[expectedInfo.objectAddress].toInt(), 0, "Test error: _nftIdByAddress[_info[nftId].objectAddress] != 0 #1");
     
                 assertTrue(eqObjectInfo(registry.getObjectInfo(expectedInfo.objectAddress), zeroObjectInfo()), "getObjectInfo(address) returned unexpected value #6.5");
@@ -1001,7 +1001,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         }
         else if(expectedInfo.objectAddress > address(0)) 
         {// the rest contracts
-            //require(false, "_assert_registry_getters reached point 11");
+            //assertTrue(false, "_assert_registry_getters reached point 11");
             assertEq(_nftIdByAddress[expectedInfo.objectAddress].toInt(), expectedInfo.nftId.toInt(), "Test error: _nftIdByAddress[_info[nftId].objectAddress] != _info[nftId].nftId #2");
             assertEq(_registryNftIdByChainId[expectedChainId].toInt(), 0, "Test error: _registryNftIdByChainId[chainId] != 0 #1");
 
@@ -1019,7 +1019,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         }
         else 
         { // the rest objects, some checks are redundant?
-            //require(false, "_assert_registry_getters reached point 12");
+            //assertTrue(false, "_assert_registry_getters reached point 12");
             assertEq(_nftIdByAddress[expectedInfo.objectAddress].toInt(), 0, "Test error: _nftIdByAddress[_info[nftId].objectAddress] != 0 #2");
             assertEq(_registryNftIdByChainId[expectedChainId].toInt(), 0, "Test error: _registryNftIdByChainId[chainId] != 0 #2");
 
@@ -1051,11 +1051,11 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         } else*/ 
         if(block.chainid != 1 && parentNftId == globalRegistryNftId) {
             // note: RegisterServiceFuzz and RegisterServiceContinuous tests are not getting here because services allowed to have only registry as parent -> will catch ErrorRegistryServiceParentNotRegistry error in _registerServiceChecks()
-            //require(false, "_internalRegisterChecks() check 1 is reached"); // TODO RegisterServiceFuzz, RegisterServiceContinuous, not reaching this point
+            //assertTrue(false, "_internalRegisterChecks() check 1 is reached"); // TODO RegisterServiceFuzz, RegisterServiceContinuous, not reaching this point
             expectedRevertMsg = abi.encodeWithSelector(IRegistry.ErrorRegistryGlobalRegistryAsParent.selector, info.objectAddress, info.objectType);
             expectRevert = true;
         } else if(info.objectAddress > address(0) && _nftIdByAddress[info.objectAddress].gtz()) {
-            //require(false, "_internalRegisterChecks() check 2 is reached");
+            //assertTrue(false, "_internalRegisterChecks() check 2 is reached");
             expectedRevertMsg = abi.encodeWithSelector(IRegistry.ErrorRegistryContractAlreadyRegistered.selector, info.objectAddress);
             expectRevert = true;
         } else if(info.initialOwner == address(0) || info.initialOwner.code.length != 0) { // EnumerableSet.contains(_contractAddresses, info.initialOwner)) {
@@ -1065,7 +1065,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             //console.log("initialOwner is in addresses set: %s", EnumerableSet.contains(_addresses, info.initialOwner));
             //console.log("initialOwner codehash: %s", uint(info.initialOwner.codehash));
 
-            //require(false, "_internalRegisterChecks() check 3 is reached");
+            //assertTrue(false, "_internalRegisterChecks() check 3 is reached");
             expectedRevertMsg = abi.encodeWithSelector(IERC721Errors.ERC721InvalidReceiver.selector, info.initialOwner);
             expectRevert = true;
         } // else if() {
@@ -1138,31 +1138,31 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
     {
         if(_sender != gifAdmin) 
         {// auth check
-            //require(false, "_registerRegistryChecks() check 1 is reached");
+            //assertTrue(false, "_registerRegistryChecks() check 1 is reached");
             expectedRevertMsg = abi.encodeWithSelector(IAccessManaged.AccessManagedUnauthorized.selector, _sender);
             expectRevert = true;
         } else if(block.chainid != 1) {// registration of chain registries only allowed on mainnet
-            //require(false, "_registerRegistryChecks() check 2 is reached");
+            //assertTrue(false, "_registerRegistryChecks() check 2 is reached");
             expectedRevertMsg = abi.encodeWithSelector(IRegistry.ErrorRegistryNotOnMainnet.selector, block.chainid);
             expectRevert = true;
         } else if(chainId == 0) {
-            //require(false, "_registerRegistryChecks() check 3 is reached");
+            //assertTrue(false, "_registerRegistryChecks() check 3 is reached");
             expectedRevertMsg = abi.encodeWithSelector(IRegistry.ErrorRegistryChainRegistryChainidZero.selector, nftId);
             expectRevert = true;
         } else if(registryAddress == address(0)) {
-            //require(false, "_registerRegistryChecks() check 4 is reached");
+            //assertTrue(false, "_registerRegistryChecks() check 4 is reached");
             expectedRevertMsg = abi.encodeWithSelector(IRegistry.ErrorRegistryChainRegistryAddressZero.selector, nftId, chainId);
             expectRevert = true;
         } else if(nftId.toInt() != chainNft.calculateTokenId(registry.REGISTRY_TOKEN_SEQUENCE_ID(), chainId)) {
-            //require(false, "_registerRegistryChecks() check 5 is reached");
+            //assertTrue(false, "_registerRegistryChecks() check 5 is reached");
             expectedRevertMsg = abi.encodeWithSelector(IRegistry.ErrorRegistryChainRegistryNftIdInvalid.selector, nftId, chainId);
             expectRevert = true;
         } else if(_info[nftId].objectType.gtz()) {
-            //require(false, "_registerRegistryChecks() check 6 is reached");
+            //assertTrue(false, "_registerRegistryChecks() check 6 is reached");
             expectedRevertMsg = abi.encodeWithSelector(IRegistry.ErrorRegistryChainRegistryAlreadyRegistered.selector, nftId, chainId);
             expectRevert = true;
         } else if(_registryNftIdByChainId[chainId].gtz()) {
-            require(false, "_registerRegistryChecks check 7 is reached"); // MUST not get here       
+            assertTrue(false, "_registerRegistryChecks check 7 is reached"); // MUST not get here       
         }  
     }
 
@@ -1257,7 +1257,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             return;
         }
 
-        require(false, "Test error: release state invalid");
+        assertTrue(false, "Test error: release state invalid");
 
         vm.stopPrank();
     }
@@ -1381,15 +1381,15 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
 
         if(_sender != address(releaseRegistry)) 
         {// auth check
-            //require(false, "_registerServiceChecks() check 1 is reached");
+            //assertTrue(false, "_registerServiceChecks() check 1 is reached");
             expectedRevertMsg = abi.encodeWithSelector(IAccessManaged.AccessManagedUnauthorized.selector, _sender);
             expectRevert = true;
         } else if(info.objectAddress == address(0)) {
-            //require(false, "_registerServiceChecks() check 2 is reached");
+            //assertTrue(false, "_registerServiceChecks() check 2 is reached");
             expectedRevertMsg = abi.encodeWithSelector(IRegistry.ErrorRegistryServiceAddressZero.selector);
             expectRevert = true;
         } else if (version.eqz()) {
-            //require(false, "_registerServiceChecks() check 3 is reached");
+            //assertTrue(false, "_registerServiceChecks() check 3 is reached");
             expectedRevertMsg = abi.encodeWithSelector(IRegistry.ErrorRegistryServiceVersionZero.selector, info.objectAddress);
             expectRevert = true;
         } /*else if(version != releaseVersion) {
@@ -1407,18 +1407,18 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             );
             expectRevert = true;
         } */else if(domain.eqz()) {
-            //require(false, "_registerServiceChecks() check 4 is reached");
+            //assertTrue(false, "_registerServiceChecks() check 4 is reached");
             expectedRevertMsg = abi.encodeWithSelector(IRegistry.ErrorRegistryServiceDomainZero.selector, info.objectAddress, version);
             expectRevert = true;
         } else if(info.objectType != SERVICE()) {
-            //require(false, "_registerServiceChecks() check 5 is reached");
+            //assertTrue(false, "_registerServiceChecks() check 5 is reached");
             expectedRevertMsg = abi.encodeWithSelector(
                 IRegistry.ErrorRegistryNotService.selector,
                 info.objectAddress,
                 info.objectType);
             expectRevert = true;
         } else if(info.parentNftId != registryNftId) {
-            //require(false, "_registerServiceChecks() check 6 is reached");
+            //assertTrue(false, "_registerServiceChecks() check 6 is reached");
             expectedRevertMsg = abi.encodeWithSelector(
                 IRegistry.ErrorRegistryServiceParentNotRegistry.selector,
                 info.objectAddress,
@@ -1426,7 +1426,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
                 info.parentNftId);
             expectRevert = true;
         } else if(_service[version][domain] > address(0)) { // note: registerService() continuous tests will not reach this point, but fuzz tests will
-            //require(false, "_registerServiceChecks() check 7 is reached");
+            //assertTrue(false, "_registerServiceChecks() check 7 is reached");
             expectedRevertMsg = abi.encodeWithSelector(
                 IRegistry.ErrorRegistryServiceDomainAlreadyRegistered.selector,
                 info.objectAddress,
@@ -1571,7 +1571,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
 
         if(_sender != address(registryServiceMock)) 
         {// auth check
-            //require(false, "_registerChecks() check 1 is reached");
+            //assertTrue(false, "_registerChecks() check 1 is reached");
             expectedRevertMsg = abi.encodeWithSelector(IAccessManaged.AccessManagedUnauthorized.selector, _sender);
             expectRevert = true;
         } else if(info.objectAddress > address(0)) 
@@ -1579,7 +1579,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             //if(_coreContractTypesCombos.contains(ObjectTypePairLib.toObjectTypePair(info.objectType, parentType)) == false)
             if(_isCoreContractTypesCombo[info.objectType][parentType] == false)
             {// parent must be registered + object-parent types combo must be valid
-                //require(false, "_registerChecks() check 2 is reached");
+                //assertTrue(false, "_registerChecks() check 2 is reached");
                 expectedRevertMsg = abi.encodeWithSelector(
                     IRegistry.ErrorRegistryTypesCombinationInvalid.selector, 
                     info.objectAddress,
@@ -1592,7 +1592,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             //if(_coreObjectTypesCombos.contains(ObjectTypePairLib.toObjectTypePair(info.objectType, parentType)) == false)
             if(_isCoreObjectTypesCombo[info.objectType][parentType] == false)
             {// parent must be registered + object-parent types combo must be valid
-                //require(false, "_registerChecks() check 3 is reached");
+                //assertTrue(false, "_registerChecks() check 3 is reached");
                 expectedRevertMsg = abi.encodeWithSelector(
                     IRegistry.ErrorRegistryTypesCombinationInvalid.selector, 
                     info.objectAddress,
@@ -1737,11 +1737,11 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
 
         if(_sender != address(registryServiceMock)) 
         {// auth check
-            //require(false, "_registerWithCustomTypeChecks() check 1 is reached");
+            //assertTrue(false, "_registerWithCustomTypeChecks() check 1 is reached");
             expectedRevertMsg = abi.encodeWithSelector(IAccessManaged.AccessManagedUnauthorized.selector, _sender);
             expectRevert = true;
         } else if(EnumerableSet.contains(_types, info.objectType.toInt()) && info.objectType.toInt() != ObjectTypeLib.zero().toInt()) { // check for 0 because _types contains zero type
-            //require(false, "_registerWithCustomTypeChecks() check 2 is reached");
+            //assertTrue(false, "_registerWithCustomTypeChecks() check 2 is reached");
             expectedRevertMsg = abi.encodeWithSelector(IRegistry.ErrorRegistryCoreTypeRegistration.selector);
             expectRevert = true;
         } else if( // custom type can not be 0 AND its parent type can not be 0 / PROTOCOL / SERVICE
@@ -1750,7 +1750,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             parentType == PROTOCOL() || 
             parentType == SERVICE()
         ) {
-            //require(false, "_registerWithCustomTypeChecks() check 3 is reached"); 
+            //assertTrue(false, "_registerWithCustomTypeChecks() check 3 is reached"); 
             expectedRevertMsg = abi.encodeWithSelector(
                 IRegistry.ErrorRegistryTypesCombinationInvalid.selector, 
                 info.objectAddress,
