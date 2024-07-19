@@ -28,7 +28,7 @@ interface IRegistry is IERC165 {
 
     // registerRegistry()
     error ErrorRegistryNotOnMainnet(uint256 chainId);
-    error ErrorRegistryChainRegistryChainidZero(NftId nftId);
+    error ErrorRegistryChainRegistryChainIdZero(NftId nftId);
     error ErrorRegistryChainRegistryAddressZero(NftId nftId, uint256 chainId);
     error ErrorRegistryChainRegistryNftIdInvalid(NftId nftId, uint256 chainId);
     error ErrorRegistryChainRegistryAlreadyRegistered(NftId nftId, uint256 chainId);

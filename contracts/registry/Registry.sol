@@ -63,7 +63,7 @@ contract Registry is
     string public constant EMPTY_URI = "";
 
     /// @dev keep track of different registries on different chains
-    mapping(uint256 chanId => NftId registryNftId) private _registryNftIdByChainId;
+    mapping(uint256 chainId => NftId registryNftId) private _registryNftIdByChainId;
     uint256[] private _chainId;
 
     /// @dev keep track of object info and address reverse lookup
@@ -156,7 +156,7 @@ contract Registry is
 
         // registry chain id is not zero
         if(chainId == 0) {
-            revert ErrorRegistryChainRegistryChainidZero(nftId);
+            revert ErrorRegistryChainRegistryChainIdZero(nftId);
         }
 
         // registry address is not zero
@@ -168,11 +168,6 @@ contract Registry is
         uint256 expectedRegistryId = CHAIN_NFT.calculateTokenId(REGISTRY_TOKEN_SEQUENCE_ID, chainId);
         if (nftId != NftIdLib.toNftId(expectedRegistryId)) {
             revert ErrorRegistryChainRegistryNftIdInvalid(nftId, chainId);
-        }
-
-        // registry is not already registered
-        if (isRegistered(nftId)) {
-            revert ErrorRegistryChainRegistryAlreadyRegistered(nftId, chainId);
         }
 
         emit LogChainRegistryRegistration(nftId, chainId, registryAddress);
@@ -594,7 +589,9 @@ contract Registry is
     )
         private
     {
-        assert(_registryNftIdByChainId[chainId].eqz());
+        if (!_registryNftIdByChainId[chainId].eqz()) {
+            revert ErrorRegistryChainRegistryAlreadyRegistered(info.nftId, chainId);
+        }
 
         // update registry lookup variables
         _registryNftIdByChainId[chainId] = info.nftId;

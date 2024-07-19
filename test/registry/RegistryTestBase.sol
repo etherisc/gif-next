@@ -471,7 +471,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         _errorName[IAccessManaged.AccessManagedUnauthorized.selector] = "AccessManagedUnauthorized";
         _errorName[IRegistry.ErrorRegistryCallerNotDeployer.selector] = "ErrorRegistryCallerNotDeployer"; // TODO not used in tests!!!
         _errorName[IRegistry.ErrorRegistryNotOnMainnet.selector] = "ErrorRegistryNotOnMainnet";
-        _errorName[IRegistry.ErrorRegistryChainRegistryChainidZero.selector] = "ErrorRegistryChainRegistryChainidZero";
+        _errorName[IRegistry.ErrorRegistryChainRegistryChainIdZero.selector] = "ErrorRegistryChainRegistryChainidZero";
         _errorName[IRegistry.ErrorRegistryChainRegistryAddressZero.selector] = "ErrorRegistryChainRegistryAddressZero";
         _errorName[IRegistry.ErrorRegistryChainRegistryNftIdInvalid.selector] = "ErrorRegistryChainRegistryNftIdInvalid";
         _errorName[IRegistry.ErrorRegistryChainRegistryAlreadyRegistered.selector] = "ErrorRegistryChainRegistryAlreadyRegistered";
@@ -1147,7 +1147,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             expectRevert = true;
         } else if(chainId == 0) {
             //assertTrue(false, "_registerRegistryChecks() check 3 is reached");
-            expectedRevertMsg = abi.encodeWithSelector(IRegistry.ErrorRegistryChainRegistryChainidZero.selector, nftId);
+            expectedRevertMsg = abi.encodeWithSelector(IRegistry.ErrorRegistryChainRegistryChainIdZero.selector, nftId);
             expectRevert = true;
         } else if(registryAddress == address(0)) {
             //assertTrue(false, "_registerRegistryChecks() check 4 is reached");
