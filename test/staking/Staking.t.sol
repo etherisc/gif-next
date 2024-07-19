@@ -131,6 +131,34 @@ contract Staking is GifTest {
         assertEq(stakingReader.getBalanceUpdatedIn(instanceNftId).toInt(), block.number, "unexpected instance last updated in");
     }
 
+    function test_stakingUpdateInstanceLockingPeriod() public {
+        Seconds lockingPeriod = stakingReader.getTargetInfo(instanceNftId).lockingPeriod;
+        assertEq(lockingPeriod.toInt(), TargetManagerLib.getDefaultLockingPeriod().toInt(), "unexpected locking period");
+
+        Seconds hundredDays = SecondsLib.toSeconds(100 * 24 * 3600);
+        vm.startPrank(instanceOwner);
+        instance.setStakingLockingPeriod(hundredDays);
+        vm.stopPrank();
+
+        lockingPeriod = stakingReader.getTargetInfo(instanceNftId).lockingPeriod;
+        assertEq(lockingPeriod.toInt(), hundredDays.toInt(), "unexpected locking period");
+    }
+
+    function test_stakingUpdateInstanceLockingPeriod_tooShort() public {
+        Seconds lockingPeriod = stakingReader.getTargetInfo(instanceNftId).lockingPeriod;
+        assertEq(lockingPeriod.toInt(), TargetManagerLib.getDefaultLockingPeriod().toInt(), "unexpected locking period");
+
+        Seconds oneHour = SecondsLib.toSeconds(3600);
+        vm.startPrank(instanceOwner);
+
+        vm.expectRevert(abi.encodeWithSelector(
+            IStaking.ErrorStakingLockingPeriodTooShort.selector,
+            instanceNftId,
+            TargetManagerLib.getMinimumLockingPeriod(),
+            oneHour));
+        instance.setStakingLockingPeriod(oneHour);
+    }
+
 
     function test_stakingStakeUpdateRewardsAfterOneYear() public {
 
