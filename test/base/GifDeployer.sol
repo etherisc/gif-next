@@ -2,11 +2,11 @@
 pragma solidity ^0.8.20;
 
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
 // core contracts
 import {Dip} from "../../contracts/mock/Dip.sol";
-import {GIF_MANAGER_ROLE, GIF_ADMIN_ROLE} from "../../contracts/type/RoleId.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {IServiceAuthorization} from "../../contracts/authorization/IServiceAuthorization.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
@@ -20,10 +20,7 @@ import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
 
 // service and proxy contracts
 import {IService} from "../../contracts/shared/IService.sol";
-import {
-    ObjectType, ObjectTypeLib, 
-    APPLICATION, BUNDLE, CLAIM, COMPONENT, DISTRIBUTION, INSTANCE, ORACLE, POLICY, POOL, PRICE, PRODUCT, REGISTRY, STAKING
-} from "../../contracts/type/ObjectType.sol";
+import {ObjectType, ObjectTypeLib} from "../../contracts/type/ObjectType.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {ProxyManager} from "../../contracts/upgradeability/ProxyManager.sol";
 import {SCHEDULED, DEPLOYING} from "../../contracts/type/StateId.sol";
@@ -120,6 +117,7 @@ contract GifDeployer is Test {
 
 
     function deployCore(
+        address globalRegistry,
         address gifAdmin,
         address gifManager,
         address stakingOwner
@@ -144,7 +142,7 @@ contract GifDeployer is Test {
         registryAdmin = new RegistryAdmin();
 
         // 3) deploy registry
-        registry = new Registry(registryAdmin);
+        registry = new Registry(registryAdmin, globalRegistry);
 
         // 4) deploy release manager
         releaseRegistry = new ReleaseRegistry(registry);

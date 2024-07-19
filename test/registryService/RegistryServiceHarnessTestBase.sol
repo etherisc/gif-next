@@ -33,6 +33,7 @@ contract RegistryServiceHarnessTestBase is GifDeployer, FoundryRandom {
 
     IRegistry public registry;
     address public registryAddress;
+    address public globalRegistry = makeAddr("globalRegistry");
     address public registryOwner = makeAddr("registryOwner");
     address public outsider = makeAddr("outsider");
     ReleaseRegistry releaseRegistry;
@@ -59,6 +60,7 @@ contract RegistryServiceHarnessTestBase is GifDeployer, FoundryRandom {
             , // stakingManager,
             // staking
         ) = deployCore(
+            globalRegistry,
             gifAdmin,
             gifManager,
             stakingOwner);
