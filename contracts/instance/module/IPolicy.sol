@@ -49,7 +49,6 @@ interface IPolicy {
         RiskId riskId;
         Amount sumInsuredAmount;
         Amount premiumAmount; // expected premium at application time
-        Amount premiumPaidAmount; // actual paid premium 
         Seconds lifetime;
         // policy application data, no changes after applying for a policy
         bytes applicationData;

@@ -206,15 +206,14 @@ contract PolicyService is
             revert ErrorPolicyServicePolicyStateNotCollateralized(policyNftId);
         }
 
-        IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
-
         // check if premium is already collected
-        if (policyInfo.premiumPaidAmount.gtz()) {
-            revert ErrorPolicyServicePremiumAlreadyPaid(policyNftId, policyInfo.premiumPaidAmount);
+        if (instanceReader.getPremiumInfoState(policyNftId) == PAID()) {
+            revert ErrorPolicyServicePremiumAlreadyPaid(policyNftId);
         }
 
+        IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
         IPolicy.PremiumInfo memory premium = instanceReader.getPremiumInfo(policyNftId); 
-
+        
         _processPremium(
             instance,
             policyNftId,
@@ -336,7 +335,7 @@ contract PolicyService is
         // TODO consider to allow for underpaid premiums (with the effects of reducing max payouts accordingly)
         // TODO consider to remove requirement for fully paid premiums altogether
         if (! instanceReader.getPremiumInfoState(policyNftId).eq(PAID())) {
-            revert ErrorPolicyServicePremiumNotFullyPaid(policyNftId, policyInfo.premiumAmount, policyInfo.premiumPaidAmount);
+            revert ErrorPolicyServicePremiumNotPaid(policyNftId, policyInfo.premiumAmount);
         }
 
         // release (remaining) collateral that was blocked by policy

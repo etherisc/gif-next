@@ -191,7 +191,6 @@ contract ApplicationService is
             riskId:             riskId,
             sumInsuredAmount:   sumInsuredAmount,
             premiumAmount:      premiumAmount,
-            premiumPaidAmount:  AmountLib.zero(),
             lifetime:           lifetime,
             applicationData:    applicationData,
             processData:        "",
