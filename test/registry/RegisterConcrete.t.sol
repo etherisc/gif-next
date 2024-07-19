@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 import {Test, Vm, console} from "../../lib/forge-std/src/Test.sol";
@@ -11,7 +12,7 @@ import {ObjectType, ObjectTypeLib, PROTOCOL, REGISTRY, SERVICE, INSTANCE, PRODUC
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
 import {RegistryTestBase} from "./RegistryTestBase.sol";
-
+import {RegistryTestBaseWithPreset} from "./RegistryTestBaseWithPreset.sol";
 
 import {RegisterFuzzTest} from "./RegisterFuzz.t.sol";
 
@@ -106,8 +107,8 @@ contract RegisterConcreteTest is RegistryTestBase {
         _assert_register_withChecks(
             IRegistry.ObjectInfo(
                 NftIdLib.toNftId(22045),
-                NftIdLib.toNftId(EnumerableSet.at(_nftIds, 2620112370 % EnumerableSet.length(_nftIds))),
-                _types[199 % _types.length],
+                _getNftIdAtIndex(2620112370),
+                _getObjectTypeAtIndex(199),
                 false, // isInterceptor
                 address(0),
                 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D,
@@ -120,8 +121,8 @@ contract RegisterConcreteTest is RegistryTestBase {
         _assert_register_withChecks(
             IRegistry.ObjectInfo(
                 NftIdLib.toNftId(5764),
-                NftIdLib.toNftId(EnumerableSet.at(_nftIds, 1794 % EnumerableSet.length(_nftIds))),
-                _types[167 % _types.length],
+                _getNftIdAtIndex(1794),
+                _getObjectTypeAtIndex(167),
                 false,
                 address(0),
                 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D,
@@ -149,43 +150,34 @@ contract RegisterConcreteTest is RegistryTestBase {
             "0x000000000000000000000000000000000000000000000000000000000000285d"
         );
 
-        _register_testFunction(sender, info);
+        register_testFunction(sender, info);
 
     }
 
-    function test_register_specificCase_3() public
+    function test_register_withGlobalRegistryAsParent() public
     {
-        // args=[0xa2D05a7E8Cce6BEBd53E90986223003EC13A9fd5, 37981013685 [3.798e10], 115792089237316195423570985008687907853269984665640564039457584007913129639933 [1.157e77], 13, true, 0x749fE300556DDb33334E1CBD1a0070aB933A2d96, 0xf9472e2c1691cd0f268bbc652cb91347ecd7917dc8a988ac15c2d9f4dbb203f9eacbbc0f3035c78e7e]
-        // testFuzz_register_withZeroObjectAddress_00110(address,uint96,uint256,uint8,bool,address,bytes)
-        // testFuzz_register_withZeroObjectAddress_00110(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, bool isInterceptor, address initialOwner, bytes memory data)
-        
-        RegisterFuzzTest test = new RegisterFuzzTest();
-        test.setUp();
-
-        test.testFuzz_register_withZeroObjectAddress_00110(
-            address(0xa2D05a7E8Cce6BEBd53E90986223003EC13A9fd5),
-            NftIdLib.toNftId(37981013685),
-            115792089237316195423570985008687907853269984665640564039457584007913129639933,
-            13,
-            true,
-            address(0x749fE300556DDb33334E1CBD1a0070aB933A2d96),
-            "0xf9472e2c1691cd0f268bbc652cb91347ecd7917dc8a988ac15c2d9f4dbb203f9eacbbc0f3035c78e7e"
-        );
-        /*
-        address sender = address(0xa2D05a7E8Cce6BEBd53E90986223003EC13A9fd5);
-
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
-            NftIdLib.toNftId(37981013685),
-            NftIdLib.toNftId(EnumerableSet.at(_nftIds, 115792089237316195423570985008687907853269984665640564039457584007913129639933 % EnumerableSet.length(_nftIds))),
-            _types[13 % _types.length],
-            true,
-            address(0x0000000000000000000000000000000000000000),
-            address(0x749fE300556DDb33334E1CBD1a0070aB933A2d96),
-            "0xf9472e2c1691cd0f268bbc652cb91347ecd7917dc8a988ac15c2d9f4dbb203f9eacbbc0f3035c78e7e"
+            NftIdLib.zero(),
+            globalRegistryNftId,
+            INSTANCE(), // or SERVICE
+            false, // isInterceptor
+            _getRandomNotRegisteredAddress(),
+            registryOwner,
+            ""
         );
 
-        _register_testFunction(sender, info);
-        */
+        _startPrank(address(registryServiceMock));
+
+        if(block.chainid == 1) {
+            _assert_register(info, false, "");
+        } else {
+            _assert_register(
+                info, 
+                true, 
+                abi.encodeWithSelector(IRegistry.ErrorRegistryGlobalRegistryAsParent.selector, info.objectAddress, info.objectType));
+        }
+
+        _stopPrank();
     }
 
     // TODO move to RegistryService.t.sol
@@ -206,23 +198,30 @@ contract RegisterConcreteTest is RegistryTestBase {
             info.objectAddress = address(uint160(info.objectAddress) + 1);
         }
 
-        bytes memory reason_NotRegistryService = abi.encodeWithSelector(IRegistry.ErrorRegistryCallerNotRegistryService.selector);
-
         // outsider can not register
         _startPrank(outsider);
-        _assert_register(info, true, reason_NotRegistryService);
+        _assert_register(
+            info, 
+            true, 
+            abi.encodeWithSelector(IAccessManaged.AccessManagedUnauthorized.selector, _sender));
         _stopPrank();
 
         _startPrank(registryOwner);
         // registryOwner can not register
-        _assert_register(info, true, reason_NotRegistryService);
+        _assert_register(
+            info, 
+            true, 
+            abi.encodeWithSelector(IAccessManaged.AccessManagedUnauthorized.selector, _sender));
 
         // transfer to outsider
         chainNft.approve(outsider, registryServiceNftId.toInt());
         chainNft.safeTransferFrom(registryOwner, outsider, registryServiceNftId.toInt(), "");
 
         // registryOwner is not owner anymore, still can not register
-        _assert_register(info, true, reason_NotRegistryService);
+        _assert_register(
+            info, 
+            true, 
+            abi.encodeWithSelector(IAccessManaged.AccessManagedUnauthorized.selector, _sender));
 
         _stopPrank();
 
@@ -233,9 +232,129 @@ contract RegisterConcreteTest is RegistryTestBase {
 
         // outsider is new owner, still can not register
         _startPrank(outsider);
-        _assert_register(info, true, reason_NotRegistryService);
+        _assert_register(
+            info, 
+            true,
+            abi.encodeWithSelector(IAccessManaged.AccessManagedUnauthorized.selector, _sender));
         _stopPrank();
     }
 }
 
+contract RegisterConcreteTestL1 is RegisterConcreteTest
+{
+    function setUp() public virtual override {
+        vm.chainId(1);
+        super.setUp();
+    }
+}
 
+contract RegisterConcreteTestL2 is RegisterConcreteTest
+{
+    function setUp() public virtual override {
+        vm.chainId(_getRandomChainId());
+        super.setUp();
+    }
+}
+
+
+contract RegisterWithPresetConcreteTest is RegistryTestBaseWithPreset, RegisterConcreteTest
+{
+    function setUp() public virtual override(RegistryTestBaseWithPreset, RegistryTestBase)
+    {
+        RegistryTestBaseWithPreset.setUp();
+    }
+
+   function test_register_withRegisteredChainRegistryAddress() 
+        public
+    {
+        _startPrank(address(registryServiceMock));
+
+        if(block.chainid == 1) {
+            assert(_chainRegistryAddress != address(0));
+
+            // register product with registered chain registry address
+            IRegistry.ObjectInfo memory info_1 = IRegistry.ObjectInfo(
+                NftIdLib.zero(),
+                _instanceNftId,
+                PRODUCT(),
+                false, // isInterceptor
+                _chainRegistryAddress,
+                address(uint160(randomNumber(1, type(uint160).max))),
+                ""
+            );
+
+            _assert_register(info_1, false, "");
+
+            // register instance with global registry address (address lookup set)
+            IRegistry.ObjectInfo memory info_2 = IRegistry.ObjectInfo(
+                NftIdLib.zero(),
+                globalRegistryNftId,
+                INSTANCE(),
+                false, // isInterceptor
+                globalRegistryInfo.objectAddress,
+                address(uint160(randomNumber(1, type(uint160).max))),
+                ""
+            );
+
+            _assert_register(
+                info_2, true, 
+                abi.encodeWithSelector(
+                    IRegistry.ErrorRegistryContractAlreadyRegistered.selector,
+                    info_2.objectAddress
+                )
+            );
+        }
+        else 
+        {
+            // register instance with global registry address (address lookup not set)
+            IRegistry.ObjectInfo memory info_1 = IRegistry.ObjectInfo(
+                NftIdLib.zero(),
+                registryNftId,
+                INSTANCE(),
+                false, // isInterceptor
+                globalRegistryInfo.objectAddress,
+                address(uint160(randomNumber(1, type(uint160).max))),
+                ""
+            );
+
+            _assert_register(info_1, false, "");
+
+            // register pool with registry address 
+            IRegistry.ObjectInfo memory info_2 = IRegistry.ObjectInfo(
+                NftIdLib.zero(),
+                _instanceNftId,
+                POOL(),
+                false, // isInterceptor
+                address(registry),
+                address(uint160(randomNumber(1, type(uint160).max))),
+                ""
+            );
+
+            _assert_register(
+                info_2, true, 
+                abi.encodeWithSelector(
+                    IRegistry.ErrorRegistryContractAlreadyRegistered.selector,
+                    info_2.objectAddress
+                )
+            );
+        }
+
+        _stopPrank();
+    }
+}
+
+contract RegisterWithPresetConcreteTestL1 is RegisterWithPresetConcreteTest
+{
+    function setUp() public virtual override {
+        vm.chainId(1);
+        super.setUp();
+    }
+}
+
+contract RegisterWithPresetConcreteTestL2 is RegisterWithPresetConcreteTest
+{
+    function setUp() public virtual override {
+        vm.chainId(_getRandomChainId());
+        super.setUp();
+    }
+}

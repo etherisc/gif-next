@@ -5,6 +5,7 @@ src = 'contracts'
 out = 'artifacts_forge'
 libs = ['lib']
 cache_path  = 'cache_forge'
+gas_limit = "18446744073709551615" # u64::MAX
 ffi = true
 
 [profile.ci]

@@ -7,11 +7,10 @@ import {IRegistry} from "./IRegistry.sol";
 import {IService} from "../shared/IService.sol";
 import {IServiceAuthorization} from "../authorization/IServiceAuthorization.sol";
 import {IStaking} from "../staking/IStaking.sol";
-import {ObjectType, ObjectTypeLib, ALL, POOL, RELEASE} from "../type/ObjectType.sol";
+import {ObjectType, ObjectTypeLib, ALL, REGISTRY, STAKING, POOL, RELEASE} from "../type/ObjectType.sol";
 import {ReleaseRegistry} from "./ReleaseRegistry.sol";
 import {RoleId, RoleIdLib, ADMIN_ROLE, GIF_MANAGER_ROLE, GIF_ADMIN_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {StakingStore} from "../staking/StakingStore.sol";
-import {STAKING} from "../type/ObjectType.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {TokenRegistry} from "./TokenRegistry.sol";
 import {VersionPart} from "../type/Version.sol";
@@ -27,37 +26,33 @@ import {VersionPart} from "../type/Version.sol";
         - MUST have 1 member at any time
         - granted/revoked ONLY in transferAdminRole() -> consider lock out situations!!!
         - responsible for creation and activation of releases
-
-    createServiceTarget(type, release)
-    createServiceRole(type,release)
-    getServiceRole(type, release)
 */
 contract RegistryAdmin is
     AccessAdmin
 {
-    error ErrorRegistryAdminIsAlreadySetUp();
-
     string public constant GIF_ADMIN_ROLE_NAME = "GifAdminRole";
     string public constant GIF_MANAGER_ROLE_NAME = "GifManagerRole";
     string public constant POOL_SERVICE_ROLE_NAME = "PoolServiceRole";
     string public constant RELEASE_REGISTRY_ROLE_NAME = "ReleaseRegistryRole";
+    string public constant REGISTRY_SERVICE_ROLE_NAME = "RegistryServiceRole";
     string public constant STAKING_SERVICE_ROLE_NAME = "StakingServiceRole";
     string public constant STAKING_ROLE_NAME = "StakingRole";
 
+    string public constant REGISTRY_TARGET_NAME = "Registry";
     string public constant RELEASE_REGISTRY_TARGET_NAME = "ReleaseRegistry";
     string public constant TOKEN_REGISTRY_TARGET_NAME = "TokenRegistry";
     string public constant STAKING_TARGET_NAME = "Staking";
     string public constant STAKING_STORE_TARGET_NAME = "StakingStore";
 
     uint8 public constant MAX_NUM_RELEASES = 99;
-
+    // TODO consider deleting this
     mapping(address service => VersionPart majorVersion) private _ServiceRelease;
 
+    address internal _registry;
     address private _releaseRegistry;
     address private _tokenRegistry;
     address private _staking;
     address private _stakingStore;
-    bool private _setupCompleted;
 
     constructor() AccessAdmin() { }
 
@@ -67,11 +62,10 @@ contract RegistryAdmin is
         address gifManager
     )
         external
+        initializer
         onlyDeployer()
     {
-        if (_setupCompleted) { revert ErrorRegistryAdminIsAlreadySetUp(); } 
-        else { _setupCompleted = true; }
-
+        _registry = address(registry);
         _releaseRegistry = registry.getReleaseRegistryAddress();
         _tokenRegistry = registry.getTokenRegistryAddress();
         _staking = registry.getStakingAddress();
@@ -85,6 +79,7 @@ contract RegistryAdmin is
         _setupGifManagerRole(gifManager);
 
         _setupReleaseRegistry();
+        _setupRegistry();
         _setupStaking();
     }
 
@@ -94,15 +89,46 @@ contract RegistryAdmin is
     /// Permissioned function: Access is restricted to release manager.
     function authorizeService(
         IServiceAuthorization serviceAuthorization,
-        IService service
+        IService service,
+        ObjectType serviceDomain,
+        VersionPart releaseVersion
     )
         external
         restricted()
     {
-        _createServiceTargetAndRole(service);
-        _authorizeServiceFunctions(serviceAuthorization, service);
+        _createServiceTargetAndRole(service, serviceDomain, releaseVersion);
+        _authorizeServiceFunctions(serviceAuthorization, service, serviceDomain, releaseVersion);
     }
 
+    function grantServiceRole(
+        IService service,
+        ObjectType domain, 
+        VersionPart version
+    )
+        external
+        restricted()
+    {
+        _grantRoleToAccount( 
+            RoleIdLib.roleForTypeAndVersion(
+                domain, 
+                version),
+            address(service)); 
+    }
+
+    function revokeServiceRole(
+        IService service,
+        ObjectType domain, 
+        VersionPart version
+    )
+        external
+        restricted()
+    {
+        _revokeRoleFromAccount(
+            RoleIdLib.roleForTypeAndVersion(
+                domain, 
+                version), 
+            address(service));
+    }
 
     function grantServiceRoleForAllVersions(IService service, ObjectType domain)
         external
@@ -113,82 +139,13 @@ contract RegistryAdmin is
             address(service)); 
     }
 
-
-    function _createServiceTargetAndRole(IService service)
-        private
+    function revokeServiceRoleForAllVersions(IService service, ObjectType domain)
+        external
+        restricted()
     {
-        ObjectType serviceDomain = service.getDomain();
-        string memory baseName = ObjectTypeLib.toName(serviceDomain);
-        VersionPart version = service.getVersion().toMajorPart();
-        uint256 versionInt = version.toInt();
-
-        // create service target
-        string memory serviceTargetName = ObjectTypeLib.toVersionedName(
-            baseName, "Service", versionInt);
-
-        _createTarget(
-            address(service), 
-            serviceTargetName,
-            true,
-            false);
-
-        // create service role
-        RoleId serviceRoleId = RoleIdLib.roleForTypeAndVersion(
-            serviceDomain, 
-            version);
-
-        _createRole(
-            serviceRoleId, 
-            toRole({
-                adminRoleId: ADMIN_ROLE(),
-                roleType: RoleType.Contract,
-                maxMemberCount: 1,
-                name: ObjectTypeLib.toVersionedName(
-                    baseName, 
-                    "ServiceRole", 
-                    versionInt)}));
-
-        _grantRoleToAccount( 
-            serviceRoleId,
-            address(service)); 
-    }
-
-
-    function _authorizeServiceFunctions(
-        IServiceAuthorization serviceAuthorization,
-        IService service
-    )
-        private
-    {
-        ObjectType serviceDomain = service.getDomain();
-        ObjectType authorizedDomain;
-        RoleId authorizedRoleId;
-
-        VersionPart release = service.getVersion().toMajorPart();
-        ObjectType[] memory authorizedDomains = serviceAuthorization.getAuthorizedDomains(serviceDomain);
-
-        for (uint256 i = 0; i < authorizedDomains.length; i++) {
-            authorizedDomain = authorizedDomains[i];
-
-            // derive authorized role from authorized domain
-            if (authorizedDomain == ALL()) {
-                authorizedRoleId = PUBLIC_ROLE();
-            } else {
-                authorizedRoleId = RoleIdLib.roleForTypeAndVersion(
-                authorizedDomain, 
-                release);
-            }
-
-            // get authorized functions for authorized domain
-            IAccess.FunctionInfo[] memory authorizatedFunctions = serviceAuthorization.getAuthorizedFunctions(
-                serviceDomain, 
-                authorizedDomain);
-
-            _authorizeTargetFunctions(
-                    address(service), 
-                    authorizedRoleId, 
-                    authorizatedFunctions);
-        }
+        _revokeRoleFromAccount(
+            RoleIdLib.roleForTypeAndAllVersions(domain), 
+            address(service));
     }
 
     /*function transferAdmin(address to)
@@ -211,7 +168,91 @@ contract RegistryAdmin is
 
     //--- private functions -------------------------------------------------//
 
-    function _setupGifAdminRole(address gifAdmin) private {
+    function _createServiceTargetAndRole(
+        IService service, 
+        ObjectType serviceDomain, 
+        VersionPart releaseVersion
+    )
+        private
+    {
+        string memory baseName = ObjectTypeLib.toName(serviceDomain);
+        uint256 versionInt = releaseVersion.toInt();
+
+        // create service target
+        string memory serviceTargetName = ObjectTypeLib.toVersionedName(
+            baseName, "Service", versionInt);
+
+        _createTarget(
+            address(service), 
+            serviceTargetName,
+            true,
+            false);
+
+        // create service role
+        RoleId serviceRoleId = RoleIdLib.roleForTypeAndVersion(
+            serviceDomain, 
+            releaseVersion);
+
+        _createRole(
+            serviceRoleId, 
+            toRole({
+                adminRoleId: ADMIN_ROLE(),
+                roleType: RoleType.Contract,
+                maxMemberCount: 1,
+                name: ObjectTypeLib.toVersionedName(
+                    baseName, 
+                    "ServiceRole", 
+                    versionInt)}));
+
+        _grantRoleToAccount( 
+            serviceRoleId,
+            address(service)); 
+    }
+
+
+    function _authorizeServiceFunctions(
+        IServiceAuthorization serviceAuthorization,
+        IService service,
+        ObjectType serviceDomain, 
+        VersionPart releaseVersion
+    )
+        private
+    {
+        ObjectType authorizedDomain;
+        RoleId authorizedRoleId;
+
+        ObjectType[] memory authorizedDomains = serviceAuthorization.getAuthorizedDomains(serviceDomain);
+
+        for (uint256 i = 0; i < authorizedDomains.length; i++) {
+            authorizedDomain = authorizedDomains[i];
+
+            // derive authorized role from authorized domain
+            if (authorizedDomain == ALL()) {
+                authorizedRoleId = PUBLIC_ROLE();
+            } else {
+                authorizedRoleId = RoleIdLib.roleForTypeAndVersion(
+                authorizedDomain, 
+                releaseVersion);
+            }
+
+            // get authorized functions for authorized domain
+            IAccess.FunctionInfo[] memory authorizatedFunctions = serviceAuthorization.getAuthorizedFunctions(
+                serviceDomain, 
+                authorizedDomain);
+
+            _authorizeTargetFunctions(
+                    address(service), 
+                    authorizedRoleId, 
+                    authorizatedFunctions);
+        }
+    }
+
+    //--- private initialization functions -------------------------------------------//
+
+    function _setupGifAdminRole(address gifAdmin) 
+        private 
+        onlyInitializing()
+    {
         
         _createRole(
             GIF_ADMIN_ROLE(), 
@@ -221,8 +262,13 @@ contract RegistryAdmin is
                 maxMemberCount: 2, // TODO decide on max member count
                 name: GIF_ADMIN_ROLE_NAME}));
 
-        // for ReleaseRegistry
+        // for Registry
         FunctionInfo[] memory functions;
+        functions = new FunctionInfo[](1);
+        functions[0] = toFunction(IRegistry.registerRegistry.selector, "registerRegistry");
+        _authorizeTargetFunctions(_registry, GIF_ADMIN_ROLE(), functions);
+
+        // for ReleaseRegistry
         functions = new FunctionInfo[](4);
         functions[0] = toFunction(ReleaseRegistry.createNextRelease.selector, "createNextRelease");
         functions[1] = toFunction(ReleaseRegistry.activateNextRelease.selector, "activateNextRelease");
@@ -233,7 +279,10 @@ contract RegistryAdmin is
         _grantRoleToAccount(GIF_ADMIN_ROLE(), gifAdmin);
     }
     
-    function _setupGifManagerRole(address gifManager) private {
+    function _setupGifManagerRole(address gifManager)
+        private 
+        onlyInitializing()
+    {
 
         _createRole(
             GIF_MANAGER_ROLE(), 
@@ -264,7 +313,10 @@ contract RegistryAdmin is
     }
 
 
-    function _setupReleaseRegistry() private {
+    function _setupReleaseRegistry()
+        private 
+        onlyInitializing()
+    {
 
         _createTarget(_releaseRegistry, RELEASE_REGISTRY_TARGET_NAME, true, false);
 
@@ -278,16 +330,54 @@ contract RegistryAdmin is
                 name: RELEASE_REGISTRY_ROLE_NAME}));
 
         FunctionInfo[] memory functions;
-        functions = new FunctionInfo[](2);
+        functions = new FunctionInfo[](5);
         functions[0] = toFunction(RegistryAdmin.authorizeService.selector, "authorizeService");
         functions[1] = toFunction(RegistryAdmin.grantServiceRoleForAllVersions.selector, "grantServiceRoleForAllVersions");
+        functions[2] = toFunction(RegistryAdmin.revokeServiceRoleForAllVersions.selector, "revokeServiceRoleForAllVersions");
+        functions[3] = toFunction(RegistryAdmin.grantServiceRole.selector, "grantServiceRole");
+        functions[4] = toFunction(RegistryAdmin.revokeServiceRole.selector, "revokeServiceRole");
         _authorizeTargetFunctions(address(this), releaseRegistryRoleId, functions);
 
         _grantRoleToAccount(releaseRegistryRoleId, _releaseRegistry);
     }
 
 
-    function _setupStaking() private {
+    function _setupRegistry()
+        internal
+        virtual
+        onlyInitializing()
+    {
+        _createTarget(_registry, REGISTRY_TARGET_NAME, true, false);
+
+        // registry function authorization for registry service
+        RoleId registryServiceRoleId = RoleIdLib.roleForTypeAndAllVersions(REGISTRY());
+        _createRole(
+            registryServiceRoleId, 
+            toRole({
+                adminRoleId: ADMIN_ROLE(),
+                roleType: RoleType.Contract,
+                maxMemberCount: MAX_NUM_RELEASES,
+                name: REGISTRY_SERVICE_ROLE_NAME}));
+
+        // authorize registry service
+        FunctionInfo[] memory functions;
+        functions = new FunctionInfo[](2);
+        functions[0] = toFunction(IRegistry.register.selector, "register");
+        functions[1] = toFunction(IRegistry.registerWithCustomType.selector, "registerWithCustomType");
+        _authorizeTargetFunctions(_registry, registryServiceRoleId, functions);
+
+        // authorize release registry
+        RoleId releaseRegistryRoleId = RoleIdLib.roleForType(RELEASE());
+        functions = new FunctionInfo[](1);
+        functions[0] = toFunction(IRegistry.registerService.selector, "registerService");
+        _authorizeTargetFunctions(_registry, releaseRegistryRoleId, functions);
+    }
+
+
+    function _setupStaking()
+        private 
+        onlyInitializing()
+    {
         _createTarget(_staking, STAKING_TARGET_NAME, true, false);
         _createTarget(_stakingStore, STAKING_STORE_TARGET_NAME, true, false);
 

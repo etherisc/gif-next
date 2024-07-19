@@ -39,6 +39,7 @@ contract GifDeployerTest is GifDeployer {
     VersionPart public gifV3 = VersionPartLib.toVersionPart(3);
     IServiceAuthorization public serviceAuthorization = new ServiceAuthorizationV3("85b428cbb5185aee615d101c2554b0a58fb64810");
 
+    address public globalRegistry = makeAddr("globalRegistry");
     address public registryOwner = makeAddr("registryOwner");
     address public gifAdmin = registryOwner;
     address public gifManager = registryOwner;
@@ -210,6 +211,7 @@ contract GifDeployerTest is GifDeployer {
             stakingManager,
             staking
         ) = deployCore(
+            globalRegistry,
             gifAdmin,
             gifManager,
             stakingOwner);

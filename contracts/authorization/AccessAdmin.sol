@@ -10,7 +10,7 @@ import {IAccessAdmin} from "./IAccessAdmin.sol";
 import {RoleId, RoleIdLib, ADMIN_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {Selector, SelectorLib, SelectorSetLib} from "../type/Selector.sol";
 import {Str, StrLib} from "../type/String.sol";
-import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
+import {TimestampLib} from "../type/Timestamp.sol";
 
 
 /**
@@ -113,7 +113,6 @@ contract AccessAdmin is
 
         _setAuthority(address(_authority)); // set authority for oz access managed
         _createAdminAndPublicRoles();
-        _disableInitializers();
     }
 
     //--- view functions for roles ------------------------------------------//
@@ -349,7 +348,6 @@ contract AccessAdmin is
         internal
     {
         RoleId adminRoleId = RoleIdLib.toRoleId(_authority.ADMIN_ROLE());
-        FunctionInfo[] memory functions;
 
         // setup admin role
         _createRoleUnchecked(

@@ -92,7 +92,6 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
                 SelectorSetLib: libraries.selectorSetLibAddress,
                 StrLib: libraries.strLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
-                VersionLib: libraries.versionLibAddress,
                 VersionPartLib: libraries.versionPartLibAddress,
             }
         });
@@ -101,10 +100,11 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
 
     logger.info("-------- Starting deployment Registry ----------------");
 
+    const globalRegistry = "0xc719d010b63e5bbf2c0551872cd5316ed26acd83";
     const { address: registryAddress, contract: registryBaseContract } = await deployContract(
         "Registry",
         owner, // GIF_ADMIN_ROLE
-        [registryAdminAddress], 
+        [registryAdminAddress, globalRegistry], 
         {
             libraries: {
                 NftIdLib: libraries.nftIdLibAddress,

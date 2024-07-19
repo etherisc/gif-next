@@ -8,6 +8,8 @@ import {ITransferInterceptor} from "./ITransferInterceptor.sol";
 
 contract ChainNft is ERC721Enumerable {
 
+    event LogTokenInterceptorAddress(uint256 tokenId, address interceptor);
+
     // constants
     string public constant NAME = "Dezentralized Insurance Protocol NFT";
     string public constant SYMBOL = "DIPNFT";
@@ -15,12 +17,11 @@ contract ChainNft is ERC721Enumerable {
     uint256 public constant PROTOCOL_NFT_ID = 1101;
     uint256 public constant GLOBAL_REGISTRY_ID = 2101;
 
-    // TODO rename errors to error pattern: CallerNotRegistry -> ErrorCallerNotRegistry etc.
     // custom errors
-    error CallerNotRegistry(address caller);
-    error RegistryAddressZero();
-    error NftUriEmpty();
-    error NftUriAlreadySet();
+    error ErrorChainNftCallerNotRegistry(address caller);
+    error ErrorChainNftRegistryAddressZero();
+    error ErrorChainNftUriEmpty();
+    error ErrorChainNftUriAlreadySet();
 
     // contract state
 
@@ -34,31 +35,25 @@ contract ChainNft is ERC721Enumerable {
     address private _registry;
 
     // only used for _getNextTokenId
-    uint256 internal _chainIdInt;
     uint256 internal _chainIdDigits;
     uint256 internal _chainIdMultiplier;
     uint256 internal _idNext;
     uint256 internal _totalMinted;
 
     modifier onlyRegistry() {
-        if (msg.sender != _registry) { revert CallerNotRegistry(msg.sender); }
+        if (msg.sender != _registry) { revert ErrorChainNftCallerNotRegistry(msg.sender); }
         _;
     }
 
-    constructor(address registry) ERC721(NAME, SYMBOL) {
-        if (registry == address(0)) { revert RegistryAddressZero(); }
+    constructor(address registry)
+        ERC721(NAME, SYMBOL)
+    {
+        if (registry == address(0)) { revert ErrorChainNftRegistryAddressZero(); }
 
+        // NFT contract is deployed by the registry
         _registry = registry;
-        _chainIdInt = block.chainid;
-        _chainIdDigits = 0;
 
-        // count digis
-        uint256 num = _chainIdInt;
-        while (num != 0) {
-            _chainIdDigits++;
-            num /= 10;
-        }
-
+        _chainIdDigits = _calculateChainIdDigits(block.chainid);
         _chainIdMultiplier = 10 ** _chainIdDigits;
 
         // the first object registered through normal registration starts with id 4
@@ -74,11 +69,15 @@ contract ChainNft is ERC721Enumerable {
     * not part of the IRegistry interface only needed for
     * initial registry setup (protocol and global registry objects)
     */
-    function mint(address to, uint256 tokenId) external onlyRegistry {
-        _totalMinted++;
-        _safeMint(to, tokenId);
+    function mint(
+        address to, 
+        uint256 tokenId
+    )
+        external
+        onlyRegistry()
+    {
+        _safeMintWithInterceptorAddress(to, tokenId, address(0));
     }
-
 
     /**
     * @dev mints the next token to register new objects
@@ -89,7 +88,11 @@ contract ChainNft is ERC721Enumerable {
         address to,
         address interceptor,
         string memory uri
-    ) public onlyRegistry returns (uint256 tokenId) {
+    )
+        public
+        onlyRegistry()
+        returns (uint256 tokenId) 
+    {
         tokenId = _getNextTokenId();
 
         if (interceptor != address(0)) {
@@ -100,8 +103,7 @@ contract ChainNft is ERC721Enumerable {
             _uri[tokenId] = uri;
         }
 
-        _totalMinted++;
-        _safeMint(to, tokenId);
+        _safeMintWithInterceptorAddress(to, tokenId, interceptor);
 
         if(interceptor != address(0)) {
             ITransferInterceptor(interceptor).nftMint(to, tokenId);
@@ -132,8 +134,8 @@ contract ChainNft is ERC721Enumerable {
         uint256 tokenId,
         string memory uri
     ) external onlyRegistry {
-        if (bytes(uri).length == 0) { revert NftUriEmpty(); }
-        if (bytes(_uri[tokenId]).length > 0) { revert NftUriAlreadySet(); }
+        if (bytes(uri).length == 0) { revert ErrorChainNftUriEmpty(); }
+        if (bytes(_uri[tokenId]).length > 0) { revert ErrorChainNftUriAlreadySet(); }
 
         _requireOwned(tokenId);
         _uri[tokenId] = uri;
@@ -199,19 +201,50 @@ contract ChainNft is ERC721Enumerable {
     * (42 * 10 ** 10 + 9876543210) * 100 + 10
     * (index * 10 ** digits + chainid) * 100 + digits (1 < digits < 100)
     */
-    function calculateTokenId(uint256 idIndex) public view returns (uint256 id) {
-        id =
-            (idIndex * _chainIdMultiplier + _chainIdInt) *
-            100 +
-            _chainIdDigits;
+    function calculateTokenId(uint256 idIndex, uint256 chainId) public view returns (uint256 id) {
+        if(chainId == block.chainid) {
+            return 100 * (idIndex * _chainIdMultiplier + chainId) + _chainIdDigits;
+        } else {
+            uint256 chainIdDigits = _calculateChainIdDigits(chainId);
+            return 100 * (idIndex * (10 ** chainIdDigits) + chainId) + chainIdDigits;
+        }
+    }
+
+    function calculateTokenId(uint256 idIndex) public view returns (uint256) {
+        return 100 * (idIndex * _chainIdMultiplier + block.chainid) + _chainIdDigits;
     }
 
     function getNextTokenId() external view returns (uint256) {
         return calculateTokenId(_idNext);
     }
 
+    // ---------------- private functions ----------------- //
+
     function _getNextTokenId() private returns (uint256 id) {
         id = calculateTokenId(_idNext);
         _idNext++;
+    }
+
+    function _calculateChainIdDigits(uint256 chainId) private pure returns (uint256) {
+        uint256 num = chainId;
+        uint256 digits = 0;
+        while (num != 0) {
+            digits++;
+            num /= 10;
+        }
+        return digits;
+    }
+
+    function _safeMintWithInterceptorAddress(
+        address to,
+        uint256 tokenId,
+        address interceptor
+    )
+        private
+    {
+        emit LogTokenInterceptorAddress(tokenId, interceptor);
+        
+        _totalMinted++;
+        _safeMint(to, tokenId);
     }
 }

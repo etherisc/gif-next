@@ -10,10 +10,13 @@ import {ObjectType} from "../../contracts/type/ObjectType.sol";
 import {InitializableERC165} from "../../contracts/shared/InitializableERC165.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
-import {ITransferInterceptor} from "../../contracts/registry/ITransferInterceptor.sol";
+
+import {MockInterceptor} from "./MockInterceptor.sol";
 
 
-contract RegisterableMock is InitializableERC165, IRegisterable, ITransferInterceptor {
+contract RegisterableMock is InitializableERC165, IRegisterable, MockInterceptor {
+
+    error ErrorRegisterableMockIsNotInterceptor(address registerable);
 
     IRegistry.ObjectInfo internal _info;
 
@@ -57,11 +60,17 @@ contract RegisterableMock is InitializableERC165, IRegisterable, ITransferInterc
     }
 
     // from ITransferInterceptor
-    function nftMint(address to, uint256 tokenId) external {
-        // do nothing
+    function nftMint(address to, uint256 tokenId) public override {
+        if(!_info.isInterceptor) {
+            revert ErrorRegisterableMockIsNotInterceptor(address(this));
+        }
+        super.nftMint(to, tokenId);
     }
-    function nftTransferFrom(address from, address to, uint256 tokenId) external {
-        // do nothing
+    function nftTransferFrom(address from, address to, uint256 tokenId) public override {
+        if(!_info.isInterceptor) {
+            revert ErrorRegisterableMockIsNotInterceptor(address(this));
+        }
+        super.nftTransferFrom(from, to, tokenId);
     }
 
     // from INftOwnable
