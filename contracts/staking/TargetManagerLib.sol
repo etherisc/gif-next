@@ -132,9 +132,9 @@ library TargetManagerLib {
         public 
         pure
     {
-        // check locking period is > 0
-        if (lockingPeriod.eqz()) {
-            revert IStaking.ErrorStakingLockingPeriodZero(targetNftId);
+        // check locking period is >= min locking period
+        if (lockingPeriod.lt(getMinimumLockingPeriod())) {
+            revert IStaking.ErrorStakingLockingPeriodTooShort(targetNftId, getMinimumLockingPeriod(), lockingPeriod);
         }
 
         // check locking period <= max locking period
@@ -190,6 +190,10 @@ library TargetManagerLib {
         return SecondsLib.toSeconds(365 * 24 * 3600 / 2);
     }
 
+    /// @dev the minimum locking period is 24 hours
+    function getMinimumLockingPeriod() public pure returns (Seconds minLockingPeriod) {
+        return SecondsLib.toSeconds(24 * 3600);
+    }
 
     function getMaxRewardRate() public pure returns (UFixed maxRewardRate) {
         return UFixedLib.toUFixed(33, -2);
