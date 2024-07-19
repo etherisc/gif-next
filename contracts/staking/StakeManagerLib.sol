@@ -114,6 +114,24 @@ library StakeManagerLib {
         lockingPeriod = info.lockingPeriod;
     }
 
+    function checkUnstakeParameters(
+        StakingReader stakingReader,
+        NftId stakeNftId
+    )
+        public
+        view
+        returns (
+            UFixed rewardRate,
+            Seconds lockingPeriod
+        )
+    {
+        IStaking.StakeInfo memory stakeInfo = stakingReader.getStakeInfo(stakeNftId);
+
+        if (stakeInfo.lockedUntil > TimestampLib.blockTimestamp()) {
+            revert IStaking.ErrorStakingStakeLocked(stakeNftId, stakeInfo.lockedUntil);
+        }
+    }
+
 
     function checkTarget(
         StakingReader stakingReader,
