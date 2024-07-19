@@ -5,7 +5,7 @@ import {console} from "../lib/forge-std/src/Test.sol";
 
 import {GifTest} from "./base/GifTest.sol";
 import {NftId, NftIdLib} from "../contracts/type/NftId.sol";
-import {SimpleProduct} from "./mock/SimpleProduct.sol";
+import {SimpleProduct} from "../contracts/example_components/unpermissioned/SimpleProduct.sol";
 import {IComponents} from "../contracts/instance/module/IComponents.sol";
 import {IDistribution} from "../contracts/instance/module/IDistribution.sol";
 import {IPolicy} from "../contracts/instance/module/IPolicy.sol";

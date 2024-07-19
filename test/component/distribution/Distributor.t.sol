@@ -13,7 +13,7 @@ import {IDistributionComponent} from "../../../contracts/distribution/IDistribut
 import {NftId} from "../../../contracts/type/NftId.sol";
 import {ReferralId, ReferralStatus, ReferralLib, REFERRAL_OK, REFERRAL_ERROR_UNKNOWN} from "../../../contracts/type/Referral.sol";
 import {Seconds, SecondsLib} from "../../../contracts/type/Seconds.sol";
-import {SimpleDistribution} from "../../mock/SimpleDistribution.sol";
+import {SimpleDistribution} from "../../../contracts/example_components/unpermissioned/SimpleDistribution.sol";
 import {Timestamp, toTimestamp, TimestampLib} from "../../../contracts/type/Timestamp.sol";
 import {UFixed, UFixedLib} from "../../../contracts/type/UFixed.sol";
 

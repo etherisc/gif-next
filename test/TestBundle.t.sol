@@ -21,7 +21,7 @@ import {POOL_OWNER_ROLE, PUBLIC_ROLE} from "../contracts/type/RoleId.sol";
 import {ReferralLib} from "../contracts/type/Referral.sol";
 import {RiskId, RiskIdLib} from "../contracts/type/RiskId.sol";
 import {Seconds, SecondsLib} from "../contracts/type/Seconds.sol";
-import {SimplePool} from "./mock/SimplePool.sol";
+import {SimplePool} from "../contracts/example_components/unpermissioned/SimplePool.sol";
 import {StateId, ACTIVE, PAUSED, CLOSED} from "../contracts/type/StateId.sol";
 import {Timestamp, TimestampLib, toTimestamp} from "../contracts/type/Timestamp.sol";
 import {TokenHandler} from "../contracts/shared/TokenHandler.sol";

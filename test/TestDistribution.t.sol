@@ -12,7 +12,7 @@ import {IComponent} from "../contracts/shared/IComponent.sol";
 import {IComponents} from "../contracts/instance/module/IComponents.sol";
 import {IComponentService} from "../contracts/shared/IComponentService.sol";
 import {NftId, NftIdLib} from "../contracts/type/NftId.sol";
-import {SimpleDistribution} from "./mock/SimpleDistribution.sol";
+import {SimpleDistribution} from "../contracts/example_components/unpermissioned/SimpleDistribution.sol";
 import {TokenHandler} from "../contracts/shared/TokenHandler.sol";
 import {UFixedLib} from "../contracts/type/UFixed.sol";
 
