@@ -5,7 +5,6 @@ import {Amount, AmountLib} from "../../contracts/type/Amount.sol";
 import {BasicProduct} from "../../contracts/product/BasicProduct.sol";
 import {BasicProductAuthorization} from "../../contracts/product/BasicProductAuthorization.sol";
 import {ClaimId} from "../../contracts/type/ClaimId.sol";
-import {Fee, FeeLib} from "../../contracts/type/Fee.sol";
 import {IAuthorization} from "../../contracts/authorization/IAuthorization.sol";
 import {IOracleService} from "../../contracts/oracle/IOracleService.sol";
 import {ORACLE} from "../../contracts/type/ObjectType.sol";
@@ -153,7 +152,10 @@ contract SimpleProduct is
         bool requirePremiumPayment,
         Timestamp activateAt
     ) public {
-        _createPolicy(applicationNftId, requirePremiumPayment, activateAt);
+        _createPolicy(applicationNftId, activateAt);
+        if (requirePremiumPayment == true) {
+            _collectPremium(applicationNftId, activateAt);
+        }
     }
 
     function decline(

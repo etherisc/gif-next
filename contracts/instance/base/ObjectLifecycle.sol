@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol"; 
 
-import {COMPONENT, BUNDLE, POLICY, REQUEST, RISK, CLAIM, PAYOUT, POOL, PRODUCT, DISTRIBUTION, DISTRIBUTOR, DISTRIBUTOR_TYPE, REFERRAL} from "../../type/ObjectType.sol";
+import {COMPONENT, BUNDLE, POLICY, REQUEST, RISK, CLAIM, PAYOUT, POOL, PREMIUM, PRODUCT, DISTRIBUTION, DISTRIBUTOR, DISTRIBUTOR_TYPE, REFERRAL} from "../../type/ObjectType.sol";
 import {ACTIVE, PAUSED, ARCHIVED, CLOSED, APPLIED, COLLATERALIZED, REVOKED, SUBMITTED, CONFIRMED, DECLINED, EXPECTED, PAID, FULFILLED, FAILED, CANCELLED} from "../../type/StateId.sol";
 import {Lifecycle} from "../../shared/Lifecycle.sol";
 
@@ -23,6 +23,7 @@ contract ObjectLifecycle is
         _setupBundleLifecycle();
         _setupComponentLifecycle();
         _setupPolicyLifecycle();
+        _setupPremiumLifecycle();
         _setupClaimLifecycle();
         _setupPayoutLifecycle();
         _setupRiskLifecycle();
@@ -55,6 +56,10 @@ contract ObjectLifecycle is
         setStateTransition(POLICY(), APPLIED(), DECLINED());
         setStateTransition(POLICY(), APPLIED(), COLLATERALIZED());
         setStateTransition(POLICY(), COLLATERALIZED(), CLOSED());
+    }
+
+    function _setupPremiumLifecycle() private {
+        setInitialState(PREMIUM(), ACTIVE());
     }
 
     function _setupClaimLifecycle() private {

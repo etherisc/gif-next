@@ -63,13 +63,13 @@ contract SimplePool is
     {
         address owner = msg.sender;
         Amount netStakedAmount;
-        (bundleNftId, netStakedAmount) = _createBundle(
+        bundleNftId = _createBundle(
             owner,
             fee,
-            AmountLib.toAmount(initialAmount),
             lifetime,
             filter
         );
+        netStakedAmount = _stake(bundleNftId, AmountLib.toAmount(initialAmount));
         netStakedAmountInt = netStakedAmount.toInt();
     }
 

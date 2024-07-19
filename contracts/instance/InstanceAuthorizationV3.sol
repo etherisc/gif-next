@@ -6,7 +6,7 @@ import {
 } from "../../contracts/type/ObjectType.sol";
 
 import {
-     ADMIN_ROLE, DISTRIBUTION_OWNER_ROLE, ORACLE_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE
+     DISTRIBUTION_OWNER_ROLE, ORACLE_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE
 } from "../../contracts/type/RoleId.sol";
 
 import {BundleSet} from "../instance/BundleSet.sol"; 
@@ -15,8 +15,6 @@ import {Instance} from "../instance/Instance.sol";
 import {InstanceAdmin} from "../instance/InstanceAdmin.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
 import {ModuleAuthorization} from "../authorization/ModuleAuthorization.sol";
-import {RoleId} from "../type/RoleId.sol";
-import {VersionPart, VersionPartLib} from "../type/Version.sol";
 
 
 contract InstanceAuthorizationV3
@@ -191,6 +189,7 @@ contract InstanceAuthorizationV3
           functions = _authorizeForTarget(INSTANCE_STORE_TARGET_NAME, getServiceRole(POLICY()));
           _authorize(functions, InstanceStore.updatePolicy.selector, "updatePolicy");
           _authorize(functions, InstanceStore.updatePolicyState.selector, "updatePolicyState");
+          _authorize(functions, InstanceStore.createPremium.selector, "createPremium");
 
           // authorize claim service role
           functions = _authorizeForTarget(INSTANCE_STORE_TARGET_NAME, getServiceRole(CLAIM()));

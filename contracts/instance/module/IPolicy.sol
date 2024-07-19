@@ -11,12 +11,14 @@ import {Timestamp} from "../../type/Timestamp.sol";
 
 interface IPolicy {
 
+    // TODO: rename to PremiumInfo
     struct Premium {
         // premium splitting per target wallet
         Amount productFeeAmount;
         Amount distributionFeeAndCommissionAmount;
         Amount poolPremiumAndFeeAmount;
 
+        // TODO: change all to Amount
         // detailed positions
         // this is the net premium calculated by the product 
         uint256 netPremiumAmount;

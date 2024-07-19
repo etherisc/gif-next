@@ -21,7 +21,6 @@ import {RoleId, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
 import {KEEP_STATE} from "../type/StateId.sol";
 import {Seconds} from "../type/Seconds.sol";
-import {TokenHandler} from "../shared/TokenHandler.sol";
 import {UFixed} from "../type/UFixed.sol";
 import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
@@ -107,55 +106,24 @@ contract PoolService is
     function createBundle(
         address bundleOwner, // initial bundle owner
         Fee memory fee, // fees deducted from premium that go to bundle owner
-        Amount stakingAmount, // staking amount - staking fees result in initial bundle capital
         Seconds lifetime, // initial duration for which new policies are covered
         bytes calldata filter // optional use case specific criteria that define if a policy may be covered by this bundle
     )
         external 
         virtual
-        returns(NftId bundleNftId, Amount netStakedAmount)
+        returns(NftId bundleNftId)
     {
         (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
 
-        {
-            InstanceReader instanceReader = instance.getInstanceReader();
-            IComponents.PoolInfo memory poolInfo = instanceReader.getPoolInfo(poolNftId);
-            Amount currentPoolBalance = instanceReader.getBalanceAmount(poolNftId);
-            if (currentPoolBalance + stakingAmount > poolInfo.maxBalanceAmount) {
-                revert ErrorPoolServiceMaxBalanceAmountExceeded(poolNftId, poolInfo.maxBalanceAmount, currentPoolBalance, stakingAmount);
-            }
-        }
-
-
-        Amount stakingFeeAmount;
-        (stakingFeeAmount, netStakedAmount) = FeeLib.calculateFee(
-            _getStakingFee(instance.getInstanceReader(), poolNftId), 
-            stakingAmount);
-
-
+        // create the empty bundle
         bundleNftId = _bundleService.create(
             instance,
             poolNftId,
             bundleOwner,
             fee,
-            netStakedAmount,
+            AmountLib.zero(), 
             lifetime,
             filter);
-
-        // pool book keeping
-        _componentService.increasePoolBalance(
-            instance.getInstanceStore(), 
-            poolNftId, 
-            netStakedAmount, 
-            stakingFeeAmount);
-
-        // TODO only collect staking token when pool is not externally managed 
-        // pool bookkeeping and collect tokens from bundle owner
-        _collectStakingAmount(
-            instance.getInstanceReader(), 
-            poolNftId, 
-            bundleOwner, 
-            stakingAmount);
 
         emit LogPoolServiceBundleCreated(instance.getNftId(), poolNftId, bundleNftId);
     }

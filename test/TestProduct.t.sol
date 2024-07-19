@@ -5,13 +5,10 @@ import {console} from "../lib/forge-std/src/Test.sol";
 
 import {GifTest} from "./base/GifTest.sol";
 import {NftId, NftIdLib} from "../contracts/type/NftId.sol";
-import {PRODUCT_OWNER_ROLE} from "../contracts/type/RoleId.sol";
 import {SimpleProduct} from "./mock/SimpleProduct.sol";
-import {SimplePool} from "./mock/SimplePool.sol";
 import {IComponents} from "../contracts/instance/module/IComponents.sol";
-import {ILifecycle} from "../contracts/shared/ILifecycle.sol";
+import {IDistribution} from "../contracts/instance/module/IDistribution.sol";
 import {IPolicy} from "../contracts/instance/module/IPolicy.sol";
-import {IBundle} from "../contracts/instance/module/IBundle.sol";
 import {Amount, AmountLib} from "../contracts/type/Amount.sol";
 import {Fee, FeeLib} from "../contracts/type/Fee.sol";
 import {UFixedLib} from "../contracts/type/UFixed.sol";
@@ -24,7 +21,6 @@ import {ReferralId, ReferralLib} from "../contracts/type/Referral.sol";
 import {APPLIED, COLLATERALIZED, CLOSED, DECLINED} from "../contracts/type/StateId.sol";
 import {POLICY} from "../contracts/type/ObjectType.sol";
 import {DistributorType} from "../contracts/type/DistributorType.sol";
-import {SimpleDistribution} from "./mock/SimpleDistribution.sol";
 import {IPolicyService} from "../contracts/product/IPolicyService.sol";
 
 contract TestProduct is GifTest {
@@ -455,8 +451,117 @@ contract TestProduct is GifTest {
         console.log("bundle fee (after)", instanceReader.getFeeAmount(bundleNftId).toInt());
         // solhint-enable
 
-        IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
         assertEq(instanceReader.getFeeAmount(poolNftId).toInt(), 10, "pool fee amount not 10");
+
+        IDistribution.ReferralInfo memory referralInfo = instanceReader.getReferralInfo(referralId);
+        assertEq(1, referralInfo.usedReferrals, "unexpected referral count");
+    }
+
+    function test_productWithReferralCollateralizeWithSplitPayment() public {
+        // GIVEN
+        vm.startPrank(registryOwner);
+        token.transfer(customer, 1000);
+        vm.stopPrank();
+
+        _prepareProductLocal();  
+
+        // set product fees and create risk
+        Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
+        RiskId riskId = RiskIdLib.toRiskId("42x4711");
+        bytes memory data = "bla di blubb";
+
+        vm.startPrank(productOwner);
+        product.setFees(productFee, FeeLib.zero());
+        product.createRisk(riskId, data);
+        vm.stopPrank();
+
+        // configure distribution fee and referral
+        Fee memory distributionFee = FeeLib.toFee(UFixedLib.toUFixed(1, -1), 0);
+        Fee memory minDistributionOwnerFee = FeeLib.toFee(UFixedLib.toUFixed(1, -2), 0);
+
+        vm.startPrank(distributionOwner);
+        distribution.setFees(distributionFee, minDistributionOwnerFee);
+        DistributorType distributorType = distribution.createDistributorType(
+            "Gold",
+            UFixedLib.zero(),
+            UFixedLib.toUFixed(5, -2),
+            UFixedLib.toUFixed(3, -2),
+            10,
+            14 * 24 * 3600,
+            false,
+            false,
+            "");
+
+        NftId distributorNftId = distribution.createDistributor(
+            customer2,
+            distributorType,
+            "");
+        vm.stopPrank();
+
+        vm.startPrank(customer2);
+        ReferralId referralId = distribution.createReferral(
+            "GET_A_DISCOUNT",
+            UFixedLib.toUFixed(2, -2),
+            5,
+            TimestampLib.blockTimestamp().addSeconds(SecondsLib.toSeconds(604800)),
+            "");
+
+        vm.stopPrank();
+
+        vm.startPrank(customer);
+
+        IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(productNftId);
+        token.approve(address(componentInfo.tokenHandler), 1000);
+
+        uint sumInsured = 1000;
+        Seconds lifetime = SecondsLib.toSeconds(30);
+        NftId policyNftId = product.createApplication(
+            customer,
+            riskId,
+            sumInsured,
+            lifetime,
+            "",
+            bundleNftId,
+            referralId
+        );
+
+        assertTrue(policyNftId.gtz(), "policyNftId was zero");
+        
+        vm.stopPrank();
+
+        // calculate premium
+        IPolicy.Premium memory premiumExpected = pricingService.calculatePremium(
+            productNftId,
+            riskId,
+            AmountLib.toAmount(sumInsured),
+            lifetime,
+            "",
+            bundleNftId,
+            referralId);
+
+        assertEq(premiumExpected.premiumAmount, 137, "unexpected premium amount");
+    
+        // WHEN
+        vm.startPrank(productOwner);
+        Timestamp activateAt = TimestampLib.blockTimestamp();
+        product.createPolicy(policyNftId, false, activateAt);
+
+        // THEN
+        assertTrue(instanceReader.getPolicyState(policyNftId) == COLLATERALIZED(), "policy state not COLLATERALIZED");
+
+        IDistribution.ReferralInfo memory referralInfo = instanceReader.getReferralInfo(referralId);
+        assertEq(1, referralInfo.usedReferrals, "unexpected referral count (1)");
+
+        assertEq(0, instanceReader.getBalanceAmount(distributorNftId).toInt(), "unexpected distributor balance (1)");
+
+        // WHEN - collectTokens
+        product.collectPremium(policyNftId, activateAt);
+
+        // THEN - check balances incremented
+        referralInfo = instanceReader.getReferralInfo(referralId);
+        assertEq(1, referralInfo.usedReferrals, "unexpected referral count (2)");
+
+        assertEq(3, instanceReader.getBalanceAmount(distributorNftId).toInt(), "unexpected distributor balance (2)");
     }
 
     function test_productCollateralizeWithReferralExpired() public {

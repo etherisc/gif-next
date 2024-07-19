@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {ClaimId} from "../type/ClaimId.sol";
 import {InstanceLinkedComponent} from "../shared/InstanceLinkedComponent.sol";
@@ -79,9 +77,9 @@ abstract contract Product is
 
     function calculateNetPremium(
         Amount sumInsuredAmount,
-        RiskId riskId,
-        Seconds lifetime,
-        bytes memory applicationData
+        RiskId,
+        Seconds,
+        bytes memory
     )
         external
         view
@@ -254,14 +252,12 @@ abstract contract Product is
 
     function _createPolicy(
         NftId applicationNftId,
-        bool requirePremiumPayment,
         Timestamp activateAt
     )
         internal
     {
         _getProductStorage()._policyService.createPolicy(
             applicationNftId, 
-            requirePremiumPayment, 
             activateAt);
     }
 
