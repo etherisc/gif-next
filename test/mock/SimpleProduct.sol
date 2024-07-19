@@ -235,6 +235,17 @@ contract SimpleProduct is
         return _createPayout(policyNftId, claimId, amount, data);
     }
 
+    // TODO add test
+    function createPayoutForBeneficiary(
+        NftId policyNftId,
+        ClaimId claimId,
+        Amount amount,
+        address beneficiary,
+        bytes memory data
+    ) public returns (PayoutId) {
+        return _createPayoutForBeneficiary(policyNftId, claimId, amount, beneficiary, data);
+    }
+
     function processPayout(
         NftId policyNftId,
         PayoutId payoutId

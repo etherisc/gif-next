@@ -69,8 +69,8 @@ interface IPolicy {
         Amount paidAmount;
         uint8 payoutsCount;
         uint8 openPayoutsCount;
-        bytes submissionData; // claim submission data, no changes after submitting the claim
-        bytes processData; // data that may include information supporting confirm or decline
+        bytes submissionData; // use case specific claim submission data, no changes after submitting the claim
+        bytes processData; // use case specific data that may include information supporting confirm or decline
         Timestamp closedAt; // payment of confirmed claim amount (or declinedAt)
     }
 
@@ -78,7 +78,8 @@ interface IPolicy {
     struct PayoutInfo {
         ClaimId claimId;
         Amount amount;
-        bytes data;
-        Timestamp paidAt; // payoment of confirmed claim amount (or declinedAt)
+        address beneficiary; // for address(0) beneficiary is policy nft owner
+        bytes data; // use case specific supporting data
+        Timestamp paidAt; // timestamp for actual payout
     }
 }

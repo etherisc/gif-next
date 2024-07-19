@@ -380,6 +380,24 @@ abstract contract Product is
             data);
     }
 
+    function _createPayoutForBeneficiary(
+        NftId policyNftId,
+        ClaimId claimId,
+        Amount amount,
+        address beneficiary,
+        bytes memory data
+    )
+        internal
+        returns (PayoutId)
+    {
+        return _getProductStorage()._claimService.createPayoutForBeneficiary(
+            policyNftId, 
+            claimId, 
+            amount, 
+            beneficiary,
+            data);
+    }
+
     function _processPayout(
         NftId policyNftId,
         PayoutId payoutId
