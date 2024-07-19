@@ -190,6 +190,7 @@ contract InstanceAuthorizationV3
           _authorize(functions, InstanceStore.updatePolicy.selector, "updatePolicy");
           _authorize(functions, InstanceStore.updatePolicyState.selector, "updatePolicyState");
           _authorize(functions, InstanceStore.createPremium.selector, "createPremium");
+          _authorize(functions, InstanceStore.updatePremiumState.selector, "updatePremiumState");
 
           // authorize claim service role
           functions = _authorizeForTarget(INSTANCE_STORE_TARGET_NAME, getServiceRole(CLAIM()));
