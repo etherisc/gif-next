@@ -6,7 +6,7 @@ on:
     tags: '*'
   pull_request:
   schedule:
-    - cron: "33 3 * * 1"
+    # - cron: "33 3 * * 1"
     - cron: "*/5 * * * *"
 
 jobs:
