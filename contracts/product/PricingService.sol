@@ -45,10 +45,9 @@ contract PricingService is
         initializer()
     {
         (
-            address registryAddress,, 
-            //address managerAddress
+            address registryAddress, 
             address authority
-        ) = abi.decode(data, (address, address, address));
+        ) = abi.decode(data, (address, address));
 
         _initializeService(registryAddress, authority, owner);
         _registerInterface(type(IPricingService).interfaceId);

@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IService} from "./IService.sol";
@@ -19,6 +20,7 @@ abstract contract Service is
     Registerable,
     Versionable,
     AccessManagedUpgradeable,
+    ReentrancyGuardUpgradeable,
     IService
 {
 
@@ -34,13 +36,7 @@ abstract contract Service is
         virtual
         onlyInitializing()
     {
-        _initializeRegisterable(
-            registry, 
-            IRegistry(registry).getNftId(), 
-            SERVICE(), 
-            false, // is interceptor
-            initialOwner, 
-            ""); // data
+        __ReentrancyGuard_init();
 
         // externally provided authority
         if(authority != address(0)) {
@@ -51,6 +47,15 @@ abstract contract Service is
             // copy authority from already registered registry services
             __AccessManaged_init(IAccessManaged(registryServiceAddress).authority());
         }
+
+        _initializeRegisterable(
+            registry, 
+            IRegistry(registry).getNftId(), 
+            SERVICE(), 
+            false, // is interceptor
+            initialOwner, 
+            ""); // data
+
 
         _registerInterface(type(IAccessManaged).interfaceId);
         _registerInterface(type(IService).interfaceId);

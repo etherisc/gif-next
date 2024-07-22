@@ -233,7 +233,11 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const { address: componentServiceManagerAddress, contract: componentServiceManagerBaseContract, } = await deployContract(
         "ComponentServiceManager",
         owner,
-        [registry.registryAddress],
+        [
+            authority,
+            registry.registryAddress,
+            release.salt
+        ],
         { libraries: { 
             AmountLib: libraries.amountLibAddress,
             FeeLib: libraries.feeLibAddress,
@@ -531,6 +535,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         { libraries: {
                 AmountLib: libraries.amountLibAddress,
                 ClaimIdLib: libraries.claimIdLibAddress,
+                ContractLib: libraries.contractLibAddress,
                 FeeLib: libraries.feeLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
                 // ObjectTypeLib: libraries.objectTypeLibAddress, 
@@ -617,6 +622,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         ],
         { libraries: {
             AmountLib: libraries.amountLibAddress,
+            ContractLib: libraries.contractLibAddress,
             NftIdLib: libraries.nftIdLibAddress,
             // ObjectTypeLib: libraries.objectTypeLibAddress, 
             RoleIdLib: libraries.roleIdLibAddress,

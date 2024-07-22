@@ -50,6 +50,7 @@ export async function deployAndRegisterMasterInstance(
         [masterInstanceAuthorizationV3],
         {
             libraries: {
+                ContractLib: libraries.contractLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
                 SelectorLib: libraries.selectorLibAddress,
                 SelectorSetLib: libraries.selectorSetLibAddress,

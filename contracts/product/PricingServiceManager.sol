@@ -15,11 +15,11 @@ contract PricingServiceManager is ProxyManager {
         address registryAddress,
         bytes32 salt
     )
-        ProxyManager(registryAddress)
     {
         PricingService pricingSrv = new PricingService{salt: salt}();
-        bytes memory data = abi.encode(registryAddress, address(this), authority);
-        IVersionable versionable = deployDetermenistic(
+        bytes memory data = abi.encode(registryAddress, authority);
+        IVersionable versionable = initialize(
+            registryAddress,
             address(pricingSrv), 
             data,
             salt);

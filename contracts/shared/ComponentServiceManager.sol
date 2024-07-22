@@ -11,15 +11,18 @@ contract ComponentServiceManager is ProxyManager {
 
     /// @dev initializes proxy manager with service implementation 
     constructor(
-        address registryAddress
+        address authority, 
+        address registry,
+        bytes32 salt
     )
-        ProxyManager(registryAddress)
     {
         ComponentService svc = new ComponentService();
-        bytes memory data = abi.encode(registryAddress, address(this));
-        IVersionable versionable = deploy(
+        bytes memory data = abi.encode(registry, authority);
+        IVersionable versionable = initialize(
+            registry,
             address(svc), 
-            data);
+            data,
+            salt);
 
         _componentService = ComponentService(address(versionable));
     }

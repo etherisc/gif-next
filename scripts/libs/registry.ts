@@ -1,6 +1,7 @@
 import { AddressLike, Signer, resolveAddress } from "ethers";
 import {
     ChainNft, ChainNft__factory,
+    ContractLib,
     Dip,
     Registry,
     RegistryAdmin,
@@ -86,6 +87,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         [], 
         {
             libraries: {
+                ContractLib: libraries.contractLibAddress,
                 ObjectTypeLib: libraries.objectTypeLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
                 SelectorLib: libraries.selectorLibAddress,
@@ -203,7 +205,8 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
             registryAddress,
             tokenRegistryAddress,
             stakingStoreAddress,
-            await resolveAddress(owner)
+            await resolveAddress(owner),
+            hhEthers.ZeroHash,
         ],
         { 
             libraries: { 

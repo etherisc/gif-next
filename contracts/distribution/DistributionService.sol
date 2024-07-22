@@ -40,12 +40,12 @@ contract DistributionService is
         virtual override
         initializer()
     {
-        address initialOwner;
-        address registryAddress;
-        (registryAddress, initialOwner) = abi.decode(data, (address, address));
-        // TODO while DistributionService is not deployed in DistributionServiceManager constructor
-        //      owner is DistributionServiceManager deployer
-        _initializeService(registryAddress, address(0), owner);
+        (
+            address registryAddress,
+            address authority
+        ) = abi.decode(data, (address, address));
+
+        _initializeService(registryAddress, authority, owner);
 
         _componentService = IComponentService(_getServiceAddress(COMPONENT()));
         _instanceService = IInstanceService(_getServiceAddress(INSTANCE()));

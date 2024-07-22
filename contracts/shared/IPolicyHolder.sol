@@ -9,28 +9,27 @@ import {ClaimId} from "../type/ClaimId.sol";
 import {IRegistryLinked} from "../shared/IRegistryLinked.sol";
 import {NftId} from "../type/NftId.sol";
 import {PayoutId} from "../type/PayoutId.sol";
+import {Timestamp} from "../type/Timestamp.sol";
 
-/// @dev generic interface for contracts that need to hold policies and receive payouts
-/// GIF will notify policy holder contracts for policy creation and payout execution
+/// @dev Generic interface for contracts that need to hold policies and receive payouts.
+/// The framework notifies policy holder contracts for policy creation/expiry, claim confirmation and payout execution
 interface IPolicyHolder is
     IERC165,
     IERC721Receiver,
     IRegistryLinked
 {
 
-    /// @dev callback function that will be called after successful policy activation
-    /// active policies may open claims under the activated policy
-    function policyActivated(NftId policyNftId) external;
+    /// @dev Callback function that will be called after successful policy activation.
+    /// Active policies may open claims under the activated policy.
+    function policyActivated(NftId policyNftId, Timestamp activatedAt) external;
 
-    /// @dev callback function to indicate the specified policy has expired
-    /// expired policies may no longer open claims
-    /// it is optional for products to notifiy policy holder of expired claims
-    function policyExpired(NftId policyNftId) external;
+    /// @dev Callback function to indicate the specified policy has expired.
+    /// expired policies no longer accept new claims.
+    function policyExpired(NftId policyNftId, Timestamp expiredAt) external;
 
-    /// @dev callback function to notify the confirmation of the specified claim
-    /// active policies may open claims under the activated policy
+    /// @dev Callback function to notify the confirmation of the specified claim.
     function claimConfirmed(NftId policyNftId, ClaimId claimId, Amount amount) external;
 
-    /// @dev callback function that will be called after a successful payout
-    function payoutExecuted(NftId policyNftId, PayoutId payoutId, address beneficiary, Amount amount) external;
+    /// @dev Callback function to notify the successful payout.
+    function payoutExecuted(NftId policyNftId, PayoutId payoutId, Amount amount, address beneficiary) external;
 }

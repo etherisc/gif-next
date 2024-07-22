@@ -21,7 +21,6 @@ contract RegistryServiceManager is
         address registry, // used by implementation 
         bytes32 salt
     ) 
-        ProxyManager(registry)
     {
         if(authority == address(0)) {
             revert ErrorRegistryAccessManagerAuthorityZero();
@@ -33,7 +32,8 @@ contract RegistryServiceManager is
         
         RegistryService srv = new RegistryService{ salt: salt }();
         bytes memory data = abi.encode(registry, authority);
-        IVersionable versionable = deployDetermenistic(
+        IVersionable versionable = initialize(
+            registry,
             address(srv), 
             data,
             salt);
