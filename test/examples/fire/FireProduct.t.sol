@@ -28,16 +28,44 @@ contract TestFireProduct is GifTest {
     function setUp() public override {
         super.setUp();
         
+        _grantInitialRoles();
+        _deployFireUSDAndFundAccounts();
+        _deployFirePool();
+        _deployFireProduct();
+        _createInitialBundle();
+    }
+
+    function test_FireProduct_calculatePremium() public {
+        // GIVEN
+        // 100'000 FireUSD
+        Amount sumInsured = AmountLib.toAmount(100000 * 10**6);
+
+        // WHEN
+        Amount premium = fireProduct.calculatePremium(
+            "London", 
+            sumInsured, 
+            ONE_YEAR(),
+            bundleNftId);
+        
+        // THEN
+        assertEq((5000 + 100) * 10 ** 6, premium.toInt());
+    }
+
+    function _grantInitialRoles() internal {
         vm.startPrank(instanceOwner);
         instance.grantRole(POOL_OWNER_ROLE(), firePoolOwner);
         instance.grantRole(PRODUCT_OWNER_ROLE(), fireProductOwner);
         vm.stopPrank();
+    }
 
+    function _deployFireUSDAndFundAccounts() internal {
         vm.startPrank(fireProductOwner);
         fireUSD = new FireUSD();
         fireUSD.transfer(investor, 100000000);
         vm.stopPrank();
+    }
 
+    function _deployFirePool() internal {
         vm.startPrank(firePoolOwner);
         FirePoolAuthorization poolAuth = new FirePoolAuthorization("FirePool");
         firePool = new FirePool(
@@ -50,8 +78,10 @@ contract TestFireProduct is GifTest {
         firePool.register();
         firePoolNftId = firePool.getNftId();
         vm.stopPrank();
+    }
 
-        vm.startPrank(fireProductOwner);
+    function _deployFireProduct() internal {
+                vm.startPrank(fireProductOwner);
         FireProductAuthorization productAuth = new FireProductAuthorization("FireProduct");
         fireProduct = new FireProduct(
             address(registry),
@@ -64,7 +94,9 @@ contract TestFireProduct is GifTest {
         fireProduct.register();
         fireProductNftId = fireProduct.getNftId();
         vm.stopPrank();
+    }
 
+    function _createInitialBundle() internal {
         vm.startPrank(investor);
         Fee memory bundleFee = FeeLib.percentageFee(2);
         Amount investAmount = AmountLib.toAmount(10000000);
@@ -76,16 +108,5 @@ contract TestFireProduct is GifTest {
             investAmount, 
             SecondsLib.toSeconds(5 * 365 * 24 * 60 * 60)); // 5 years
         vm.stopPrank();
-    }
-
-    function test_calculatePremium() public {
-        // 100'000 FireUSD
-        Amount sumInsured = AmountLib.toAmount(100000 * 10**6);
-        Amount premium = fireProduct.calculatePremium(
-            "London", 
-            sumInsured, 
-            ONE_YEAR(),
-            bundleNftId);
-        assertEq((5000 + 100) * 10 ** 6, premium.toInt());
     }
 }
