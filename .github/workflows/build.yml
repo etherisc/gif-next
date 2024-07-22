@@ -86,18 +86,17 @@ jobs:
         uses: foundry-rs/foundry-toolchain@v1
 
       - name: Run fasts tests without fuzz and continuous tests (label 'fast_tests')
-        if: ${{ github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'fast_tests') }}
+        if: ${{ github.event_name != 'pull_request' || ! contains(github.event.pull_request.labels.*.name, 'run_all_tests') }}
         env:
           FOUNDRY_PROFILE: ci
-        run: forge test -vv --nmt "testFuzz|test_continuous"
+        run: forge test -vv --nmt "_longRunning"
       
       - name: Run all tests
-        if: ${{ github.event_name != 'pull_request' || ! contains(github.event.pull_request.labels.*.name, 'fast_tests') }}
+        if: ${{ github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'run_all_tests') }}
+        
         env:
           FOUNDRY_PROFILE: ci
         run: forge test -vv
-
-            
 
   publish:
     name: Publish npm package to npmjs
