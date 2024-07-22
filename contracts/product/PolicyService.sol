@@ -81,7 +81,8 @@ contract PolicyService is
         NftId applicationNftId // = policyNftId
     )
         external
-        virtual override
+        virtual
+        nonReentrant()
     {
         (NftId productNftId,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
         InstanceReader instanceReader = instance.getInstanceReader();
@@ -116,7 +117,8 @@ contract PolicyService is
         Timestamp activateAt
     )
         external 
-        virtual override
+        virtual
+        nonReentrant()
     {
         // check caller is registered product
         (NftId productNftId,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
@@ -198,6 +200,7 @@ contract PolicyService is
     )
         external 
         virtual
+        nonReentrant()
     {
         // check caller is registered product
         (,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
@@ -231,13 +234,18 @@ contract PolicyService is
         instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, KEEP_STATE());
         instance.getInstanceStore().updatePremiumState(policyNftId, PAID());
 
-        // TODO: add logging
+        // log premium collection before interactions with token
+        emit LogPolicyServicePolicyPremiumCollected(policyNftId, premium.premiumAmount);
 
         _transferFunds(instanceReader, policyNftId, policyInfo.productNftId, premium);
     }
 
     /// @inheritdoc IPolicyService
-    function activate(NftId policyNftId, Timestamp activateAt) public override {
+    function activate(NftId policyNftId, Timestamp activateAt)
+        external
+        virtual
+        nonReentrant()
+ {
         // check caller is registered product
         (,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
         InstanceReader instanceReader = instance.getInstanceReader();
@@ -261,8 +269,8 @@ contract PolicyService is
         Timestamp expireAt
     )
         external
-        override
         virtual
+        nonReentrant()
         returns (Timestamp expiredAt)
     {
         (NftId productNftId,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
@@ -315,7 +323,8 @@ contract PolicyService is
         NftId policyNftId
     )
         external 
-        override
+        virtual
+        nonReentrant()
     {
         (,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
         InstanceReader instanceReader = instance.getInstanceReader();
@@ -356,7 +365,7 @@ contract PolicyService is
         policyInfo.closedAt = TimestampLib.blockTimestamp();
         instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, CLOSED());
 
-        // TODO add logging
+        emit LogPolicyServicePolicyClosed(policyNftId);
     }
 
 

@@ -10,6 +10,13 @@ import {Timestamp} from "../type/Timestamp.sol";
 
 interface IPolicyService is IService {
 
+    event LogPolicyServicePolicyCreated(NftId policyNftId, Amount premiumAmount, Timestamp activatedAt);
+    event LogPolicyServicePolicyDeclined(NftId policyNftId);
+    event LogPolicyServicePolicyPremiumCollected(NftId policyNftId, Amount premiumAmount);
+    event LogPolicyServicePolicyActivated(NftId policyNftId, Timestamp activatedAt);
+    event LogPolicyServicePolicyExpirationUpdated(NftId policyNftId, Timestamp originalExpiredAt, Timestamp expiredAt);
+    event LogPolicyServicePolicyClosed(NftId policyNftId);
+
     error ErrorPolicyServicePolicyProductMismatch(NftId applicationNftId, NftId expectedProductNftId, NftId actualProductNftId);
     error ErrorPolicyServicePolicyStateNotApplied(NftId applicationNftId);
     error ErrorPolicyServicePolicyStateNotCollateralized(NftId applicationNftId);
@@ -31,11 +38,6 @@ interface IPolicyService is IService {
 
     error ErrorPolicyServicePremiumMismatch(NftId policyNftId, Amount expectedPremiumAmount, Amount recalculatedPremiumAmount);
     error ErrorPolicyServiceTransferredPremiumMismatch(NftId policyNftId, Amount expectedPremiumAmount, Amount transferredPremiumAmount);
-
-    event LogPolicyServicePolicyDeclined(NftId policyNftId);
-    event LogPolicyServicePolicyCreated(NftId policyNftId, Amount premiumAmount, Timestamp activatedAt);
-    event LogPolicyServicePolicyActivated(NftId policyNftId, Timestamp activatedAt);
-    event LogPolicyServicePolicyExpirationUpdated(NftId policyNftId, Timestamp originalExpiredAt, Timestamp expiredAt);
 
     /// @dev creates the policy from {applicationNftId}. 
     /// After successful completion of the function the policy can be referenced using the application NftId.
