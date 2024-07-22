@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {Vm, console} from "../../../lib/forge-std/src/Test.sol";
 
 import {GifTest} from "../../base/GifTest.sol";
@@ -103,6 +104,28 @@ contract TestProductLifecycle
         // check that expriy callback has not yet happened
         assertEq(policyInfo.expiredAt.toInt(), activateAt.addSeconds(policyInfo.lifetime).toInt(), "unexpected expired at (info, after)");
         assertEq(policyHolder.expiredAt(policyNftId).toInt(), 0, "unexpected expired at (holder, after)");
+    }
+
+
+    function test_policyHolderCreationAndActivationCallbackNonReentrant() public {
+        // GIVEN switch policy holder to reentrant
+        Timestamp activateAt = TimestampLib.blockTimestamp();
+
+        // WHEN setting policy holder to mode that tries to do reentrancy on services
+        policyHolder.setReentrant(product, true);
+        assertTrue(policyHolder.isReentrant(), "unexpected reentrant"); 
+    
+        _fundAccount(address(policyHolder));
+        _createAllowance(address(policyHolder));
+
+        // THEN
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ReentrancyGuardUpgradeable.ReentrancyGuardReentrantCall.selector));
+
+        vm.startPrank(productOwner);
+        product.createPolicy(policyNftId, false, activateAt); 
+        vm.stopPrank();
     }
 
 
@@ -218,6 +241,30 @@ contract TestProductLifecycle
         assertEq(policyHolder.expiredAt(policyNftId).toInt(), 0, "unexpected expired at (holder, after)");
         assertEq(policyHolder.claimAmount(policyNftId, claimId).toInt(), claimAmount.toInt(), "unexpected claim amount (holder, after)");
     }
+
+
+    function test_policyHolderClaimConfirmationCallbackNonReentrant() public {
+        // GIVEN switch policy holder to reentrant
+        Timestamp activateAt = TimestampLib.blockTimestamp();
+        _createAndActivate(policyNftId, activateAt);
+
+        policyHolder.setReentrant(product, true);
+        assertTrue(policyHolder.isReentrant(), "unexpected reentrant"); 
+
+        // WHEN
+        Amount claimAmount = AmountLib.toAmount(100);
+        ClaimId claimId = product.submitClaim(policyNftId, claimAmount, ""); 
+
+        // THEN
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ReentrancyGuardUpgradeable.ReentrancyGuardReentrantCall.selector));
+
+        vm.startPrank(productOwner);
+        product.confirmClaim(policyNftId, claimId, claimAmount, ""); 
+        vm.stopPrank();
+    }
+
 
     function test_policyHolderPayoutExecutedBeneficiaryCallback() public {
         // GIVEN 

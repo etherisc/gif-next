@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Amount} from "../../contracts/type/Amount.sol";
+import {Amount, AmountLib} from "../../contracts/type/Amount.sol";
 import {ClaimId} from "../../contracts/type/ClaimId.sol";
+import {IPolicy} from "../../contracts/instance/module/IPolicy.sol";
 import {NftId} from "../../contracts/type/NftId.sol";
 import {PolicyHolder} from "../../contracts/shared/PolicyHolder.sol";
 import {PayoutId} from "../../contracts/type/PayoutId.sol";
-import {Timestamp} from "../../contracts/type/Timestamp.sol";
+import {ReferralLib} from "../../contracts/type/Referral.sol";
+import {SimpleProduct} from "../../contracts/examples/unpermissioned/SimpleProduct.sol";
+import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
 
 contract MyPolicyHolder is PolicyHolder {
 
@@ -21,6 +24,9 @@ contract MyPolicyHolder is PolicyHolder {
     mapping(NftId => mapping(PayoutId payoutId => address beneficiary)) public beneficiary;
     mapping(NftId => mapping(PayoutId payoutId => Amount payoutAmount)) public payoutAmount;
 
+    SimpleProduct public product;
+    bool public isReentrant = false;
+
     constructor (address registryAddress){
         _initialize(registryAddress);
     }
@@ -29,6 +35,7 @@ contract MyPolicyHolder is PolicyHolder {
         _initializePolicyHolder(registryAddress);
     }
 
+    // callback when policy is activated
     function policyActivated(
         NftId policyNftId, 
         Timestamp activated
@@ -38,8 +45,30 @@ contract MyPolicyHolder is PolicyHolder {
     {
         activatedAt[policyNftId] = activated;
         emit LogMyPolicyHolderPolicyActivated(policyNftId, activated);
+
+        if (isReentrant) {
+            IPolicy.PolicyInfo memory policy = product.getInstance().getInstanceReader().getPolicyInfo(policyNftId);
+
+            // does hot trigger reentrancy (policy activation comes from policy service)
+            NftId applicationNftId = product.createApplication({
+                applicationOwner: address(this),
+                riskId: policy.riskId,
+                sumInsured: policy.sumInsuredAmount.toInt(),
+                lifetime: policy.lifetime,
+                applicationData: "",
+                bundleNftId: policy.bundleNftId,
+                referralId: ReferralLib.zero()
+            });
+
+            // this triggers reentrancy (policy activation comes from policy service)
+            product.createPolicy(
+                applicationNftId, 
+                false, 
+                TimestampLib.blockTimestamp());
+        }
     }
 
+    // callback when policy is expired
     function policyExpired(
         NftId policyNftId, 
         Timestamp expired
@@ -51,6 +80,7 @@ contract MyPolicyHolder is PolicyHolder {
         emit LogMyPolicyHolderPolicyExpired(policyNftId, expired);
     }
 
+    // callback function to notify the confirmed claim
     function claimConfirmed(
         NftId policyNftId, 
         ClaimId claimId,
@@ -61,6 +91,11 @@ contract MyPolicyHolder is PolicyHolder {
     {
         claimAmount[policyNftId][claimId] = amount;
         emit LogMyPolicyHolderClaimConfirmed(policyNftId, claimId, amount);
+
+        if (isReentrant) {
+            IPolicy.PolicyInfo memory policy = product.getInstance().getInstanceReader().getPolicyInfo(policyNftId);
+            product.submitClaim(policyNftId, amount, "");
+        }
     }
 
     // callback function to notify the successful payout
@@ -78,4 +113,8 @@ contract MyPolicyHolder is PolicyHolder {
         emit LogMyPolicyHolderPayoutExecuted(policyNftId, payoutId, amount, payoutRecipient);
     }
 
+    function setReentrant(SimpleProduct prd, bool reentrant) external {
+        product = prd;
+        isReentrant = reentrant;
+    }
 }

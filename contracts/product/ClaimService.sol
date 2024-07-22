@@ -55,6 +55,7 @@ contract ClaimService is
     )
         external
         virtual
+        nonReentrant()
         returns (ClaimId claimId)
     {
         (
@@ -109,6 +110,7 @@ contract ClaimService is
     )
         external
         virtual
+        nonReentrant()
     {
         (
             IInstance instance,
@@ -145,6 +147,7 @@ contract ClaimService is
     )
         external
         virtual
+        nonReentrant()
     {
         (
             IInstance instance,
@@ -173,6 +176,7 @@ contract ClaimService is
     )
         external
         virtual
+        nonReentrant()
     {
         (
             IInstance instance,
@@ -199,6 +203,7 @@ contract ClaimService is
     )
         external
         virtual
+        nonReentrant()
     {
         (
             IInstance instance,
@@ -230,7 +235,7 @@ contract ClaimService is
         instance.getInstanceStore().updateClaim(policyNftId, claimId, claimInfo, CLOSED());
     }
 
-    // TODO add test
+
     function createPayoutForBeneficiary(
         NftId policyNftId, 
         ClaimId claimId,
@@ -240,6 +245,7 @@ contract ClaimService is
     )
         external
         virtual
+        nonReentrant()
         returns (PayoutId payoutId)
     {
         if (beneficiary == address(0)) {
@@ -263,6 +269,7 @@ contract ClaimService is
     )
         external
         virtual
+        nonReentrant()
         returns (PayoutId payoutId)
     {
         return _createPayout(
@@ -273,56 +280,6 @@ contract ClaimService is
             data);
     }
 
-    function _createPayout(
-        NftId policyNftId, 
-        ClaimId claimId,
-        Amount amount,
-        address beneficiary,
-        bytes memory data
-    )
-        internal
-        virtual
-        returns (PayoutId payoutId)
-    {
-        (
-            IInstance instance,
-            InstanceReader instanceReader,
-            IPolicy.PolicyInfo memory policyInfo
-        ) = _verifyCallerWithPolicy(policyNftId);
-
-        IPolicy.ClaimInfo memory claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
-        StateId claimState = instanceReader.getClaimState(policyNftId, claimId);
-
-        // TODO add checks
-        // claim needs to be open
-        // claim.paidAmount + amount <= claim.claimAmount
-
-        // check/update claim info
-        // create payout info with instance
-        uint8 claimNo = claimInfo.payoutsCount + 1;
-        payoutId = PayoutIdLib.toPayoutId(claimId, claimNo);
-        instance.getInstanceStore().createPayout(
-            policyNftId, 
-            payoutId, 
-            IPolicy.PayoutInfo({
-                claimId: payoutId.toClaimId(),
-                amount: amount,
-                beneficiary: beneficiary,
-                data: data,
-                paidAt: TimestampLib.zero()}));
-
-        // update and save claim info with instance
-        claimInfo.payoutsCount += 1;
-        claimInfo.openPayoutsCount += 1;
-        instance.getInstanceStore().updateClaim(policyNftId, claimId, claimInfo, KEEP_STATE());
-
-        // update and save policy info with instance
-        policyInfo.payoutAmount.add(amount);
-        instance.getInstanceStore().updatePolicyClaims(policyNftId, policyInfo, KEEP_STATE());
-
-        emit LogClaimServicePayoutCreated(policyNftId, payoutId, amount);
-    }
-
 
     function processPayout(
         NftId policyNftId, 
@@ -330,6 +287,7 @@ contract ClaimService is
     )
         external
         virtual
+        nonReentrant()
     {
         (
             IInstance instance,
@@ -344,7 +302,6 @@ contract ClaimService is
         payoutInfo.paidAt = TimestampLib.blockTimestamp();
         instance.getInstanceStore().updatePayout(policyNftId, payoutId, payoutInfo, PAID());
 
-        // TODO update and save claim info with instance
         ClaimId claimId = payoutId.toClaimId();
         Amount payoutAmount = payoutInfo.amount;
         IPolicy.ClaimInfo memory claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
@@ -399,6 +356,60 @@ contract ClaimService is
         _policyHolderPayoutExecuted(policyNftId, payoutId, beneficiary, payoutAmount);
     }
 
+    // internal functions
+
+
+    function _createPayout(
+        NftId policyNftId, 
+        ClaimId claimId,
+        Amount amount,
+        address beneficiary,
+        bytes memory data
+    )
+        internal
+        virtual
+        returns (PayoutId payoutId)
+    {
+        (
+            IInstance instance,
+            InstanceReader instanceReader,
+            IPolicy.PolicyInfo memory policyInfo
+        ) = _verifyCallerWithPolicy(policyNftId);
+
+        IPolicy.ClaimInfo memory claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
+        StateId claimState = instanceReader.getClaimState(policyNftId, claimId);
+
+        // TODO add checks
+        // claim needs to be open
+        // claim.paidAmount + amount <= claim.claimAmount
+
+        // check/update claim info
+        // create payout info with instance
+        uint8 claimNo = claimInfo.payoutsCount + 1;
+        payoutId = PayoutIdLib.toPayoutId(claimId, claimNo);
+        instance.getInstanceStore().createPayout(
+            policyNftId, 
+            payoutId, 
+            IPolicy.PayoutInfo({
+                claimId: payoutId.toClaimId(),
+                amount: amount,
+                beneficiary: beneficiary,
+                data: data,
+                paidAt: TimestampLib.zero()}));
+
+        // update and save claim info with instance
+        claimInfo.payoutsCount += 1;
+        claimInfo.openPayoutsCount += 1;
+        instance.getInstanceStore().updateClaim(policyNftId, claimId, claimInfo, KEEP_STATE());
+
+        // update and save policy info with instance
+        policyInfo.payoutAmount.add(amount);
+        instance.getInstanceStore().updatePolicyClaims(policyNftId, policyInfo, KEEP_STATE());
+
+        emit LogClaimServicePayoutCreated(policyNftId, payoutId, amount);
+    }
+
+
     function _calculatePayoutAmount(
         InstanceReader instanceReader,
         NftId policyNftId,
@@ -436,7 +447,6 @@ contract ClaimService is
         }
     }
 
-    // internal functions
 
     function _verifyCallerWithPolicy(
         NftId policyNftId
