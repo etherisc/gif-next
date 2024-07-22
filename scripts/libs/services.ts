@@ -233,7 +233,11 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const { address: componentServiceManagerAddress, contract: componentServiceManagerBaseContract, } = await deployContract(
         "ComponentServiceManager",
         owner,
-        [registry.registryAddress],
+        [
+            authority,
+            registry.registryAddress,
+            release.salt
+        ],
         { libraries: { 
             AmountLib: libraries.amountLibAddress,
             FeeLib: libraries.feeLibAddress,

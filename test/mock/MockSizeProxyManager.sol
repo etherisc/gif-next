@@ -4,5 +4,5 @@ pragma solidity ^0.8.20;
 import {ProxyManager} from "../../contracts/upgradeability/ProxyManager.sol";
 
 contract MockSizeProxyManager is ProxyManager {
-    constructor(address registry) ProxyManager(registry) {}
+    constructor(address registry) {}
 }

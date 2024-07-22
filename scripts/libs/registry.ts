@@ -205,7 +205,8 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
             registryAddress,
             tokenRegistryAddress,
             stakingStoreAddress,
-            await resolveAddress(owner)
+            await resolveAddress(owner),
+            hhEthers.ZeroHash,
         ],
         { 
             libraries: { 

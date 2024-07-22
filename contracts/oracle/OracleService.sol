@@ -30,10 +30,12 @@ contract OracleService is
         virtual override
         initializer()
     {
-        address initialOwner;
-        address registryAddress;
-        (registryAddress, initialOwner) = abi.decode(data, (address, address));
-        _initializeService(registryAddress, address(0), owner);
+        (
+            address registryAddress,
+            address authority
+        ) = abi.decode(data, (address, address));
+
+        _initializeService(registryAddress, authority, owner);
         _registerInterface(type(IOracleService).interfaceId);
     }
 

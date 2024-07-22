@@ -12,15 +12,15 @@ contract BundleServiceManager is ProxyManager {
     /// @dev initializes proxy manager with pool service implementation 
     constructor(
         address authority, 
-        address registryAddress,
+        address registry,
         bytes32 salt
     ) 
-        ProxyManager(registryAddress)
     {
-        BundleService bundleSrv = new BundleService{salt: salt}();
-        bytes memory data = abi.encode(registryAddress, address(this), authority);
-        IVersionable versionable = deployDetermenistic(
-            address(bundleSrv), 
+        BundleService svc = new BundleService{salt: salt}();
+        bytes memory data = abi.encode(registry, authority);
+        IVersionable versionable = initialize(
+            registry,
+            address(svc), 
             data,
             salt);
 
