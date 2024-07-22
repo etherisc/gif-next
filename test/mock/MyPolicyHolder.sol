@@ -1,17 +1,25 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {Amount} from "../../contracts/type/Amount.sol";
+import {ClaimId} from "../../contracts/type/ClaimId.sol";
 import {NftId} from "../../contracts/type/NftId.sol";
 import {PolicyHolder} from "../../contracts/shared/PolicyHolder.sol";
+import {PayoutId} from "../../contracts/type/PayoutId.sol";
 import {Timestamp} from "../../contracts/type/Timestamp.sol";
 
 contract MyPolicyHolder is PolicyHolder {
 
     event LogMyPolicyHolderPolicyActivated(NftId policyNftId, Timestamp activatedAt);
     event LogMyPolicyHolderPolicyExpired(NftId policyNftId, Timestamp expiredAt);
+    event LogMyPolicyHolderClaimConfirmed(NftId policyNftId, ClaimId claimId, Amount claimAmount);
+    event LogMyPolicyHolderPayoutExecuted(NftId policyNftId, PayoutId payoutId, Amount amount, address beneficiary);
 
     mapping(NftId => Timestamp activatedAt) public activatedAt;
     mapping(NftId => Timestamp expiredAt) public expiredAt;
+    mapping(NftId => mapping(ClaimId claimId => Amount claimAmount)) public claimAmount;
+    mapping(NftId => mapping(PayoutId payoutId => address beneficiary)) public beneficiary;
+    mapping(NftId => mapping(PayoutId payoutId => Amount payoutAmount)) public payoutAmount;
 
     constructor (address registryAddress){
         _initialize(registryAddress);
@@ -41,6 +49,33 @@ contract MyPolicyHolder is PolicyHolder {
     {
         expiredAt[policyNftId] = expired;
         emit LogMyPolicyHolderPolicyExpired(policyNftId, expired);
+    }
+
+    function claimConfirmed(
+        NftId policyNftId, 
+        ClaimId claimId,
+        Amount amount
+    )
+        external
+        override
+    {
+        claimAmount[policyNftId][claimId] = amount;
+        emit LogMyPolicyHolderClaimConfirmed(policyNftId, claimId, amount);
+    }
+
+    // callback function to notify the successful payout
+    function payoutExecuted(
+        NftId policyNftId, 
+        PayoutId payoutId, 
+        Amount amount,
+        address payoutRecipient // beneficiary
+    )
+        external
+        override
+    {
+        payoutAmount[policyNftId][payoutId] = amount;
+        beneficiary[policyNftId][payoutId] = payoutRecipient;
+        emit LogMyPolicyHolderPayoutExecuted(policyNftId, payoutId, amount, payoutRecipient);
     }
 
 }

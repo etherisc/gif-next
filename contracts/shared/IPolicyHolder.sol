@@ -31,5 +31,5 @@ interface IPolicyHolder is
     function claimConfirmed(NftId policyNftId, ClaimId claimId, Amount amount) external;
 
     /// @dev Callback function to notify the successful payout.
-    function payoutExecuted(NftId policyNftId, PayoutId payoutId, address beneficiary, Amount amount) external;
+    function payoutExecuted(NftId policyNftId, PayoutId payoutId, Amount amount, address beneficiary) external;
 }

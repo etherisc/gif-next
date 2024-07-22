@@ -574,9 +574,10 @@ contract PolicyService is
         }
     }
 
+
     function _getPolicyHolder(NftId policyNftId)
         internal 
-        // view 
+        view 
         returns (IPolicyHolder policyHolder)
     {
         address policyHolderAddress = getRegistry().ownerOf(policyNftId);

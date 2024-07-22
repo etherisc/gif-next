@@ -8,7 +8,7 @@ import {GifTest} from "../../base/GifTest.sol";
 import {MyPolicyHolder} from "../../mock/MyPolicyHolder.sol";
 import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
 import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
-import {ClaimId} from "../../../contracts/type/ClaimId.sol";
+import {ClaimId, ClaimIdLib} from "../../../contracts/type/ClaimId.sol";
 import {ContractLib} from "../../../contracts/shared/ContractLib.sol";
 import {PRODUCT_OWNER_ROLE} from "../../../contracts/type/RoleId.sol";
 import {SimpleProduct} from "../../../contracts/examples/unpermissioned/SimpleProduct.sol";
@@ -28,7 +28,7 @@ import {PayoutId, PayoutIdLib} from "../../../contracts/type/PayoutId.sol";
 import {POLICY} from "../../../contracts/type/ObjectType.sol";
 import {RiskId, RiskIdLib, eqRiskId} from "../../../contracts/type/RiskId.sol";
 import {ReferralLib} from "../../../contracts/type/Referral.sol";
-import {SUBMITTED, ACTIVE, COLLATERALIZED, CONFIRMED, DECLINED, CLOSED} from "../../../contracts/type/StateId.sol";
+import {SUBMITTED, ACTIVE, COLLATERALIZED, CONFIRMED, PAID, DECLINED, CLOSED} from "../../../contracts/type/StateId.sol";
 import {StateId} from "../../../contracts/type/StateId.sol";
 
 contract TestProductLifecycle
@@ -155,7 +155,167 @@ contract TestProductLifecycle
     }
 
 
-    function _makeClaim(NftId nftId, Amount claimAmount)
+    function test_policyHolderClaimSubmitOnly() public {
+        // GIVEN create active policy
+        Timestamp activateAt = TimestampLib.blockTimestamp();
+        _createAndActivate(policyNftId, activateAt);
+
+        // check that no claim callback has yet happened
+        ClaimId claimIdExpected = ClaimIdLib.toClaimId(1);
+        assertEq(policyHolder.activatedAt(policyNftId).toInt(), activateAt.toInt(), "unexpected activated at (holder, before)");
+        assertEq(policyHolder.expiredAt(policyNftId).toInt(), 0, "unexpected expired at (holder, before)");
+        assertEq(policyHolder.claimAmount(policyNftId, claimIdExpected).toInt(), 0, "unexpected claim amount (holder, before)");
+
+        // WHEN
+        Amount claimAmount = AmountLib.toAmount(100);
+        (
+            IPolicy.PolicyInfo memory policyInfo, 
+            ClaimId claimId, 
+            IPolicy.ClaimInfo memory claimInfo, 
+            StateId claimState
+        ) = _makeClaim(policyNftId, claimAmount, false);
+
+        console.log("claimId", claimId.toInt());
+        assertEq(claimId.toInt(), claimIdExpected.toInt(), "unexpected claim id");
+
+        // THEN
+        assertEq(claimState.toInt(), SUBMITTED().toInt(), "unexpected claim state");
+
+        assertEq(policyHolder.activatedAt(policyNftId).toInt(), activateAt.toInt(), "unexpected activated at (holder, after)");
+        assertEq(policyHolder.expiredAt(policyNftId).toInt(), 0, "unexpected expired at (holder, after)");
+
+        // no callback as still only submitted, not confirmed
+        assertEq(policyHolder.claimAmount(policyNftId, claimId).toInt(), 0, "unexpected claim amount (holder, after)");
+    }
+
+    function test_policyHolderClaimConfirmationCallback() public {
+        // GIVEN create active policy
+        Timestamp activateAt = TimestampLib.blockTimestamp();
+        _createAndActivate(policyNftId, activateAt);
+
+        // check that no claim callback has yet happened
+        ClaimId claimIdExpected = ClaimIdLib.toClaimId(1);
+        assertEq(policyHolder.activatedAt(policyNftId).toInt(), activateAt.toInt(), "unexpected activated at (holder, before)");
+        assertEq(policyHolder.expiredAt(policyNftId).toInt(), 0, "unexpected expired at (holder, before)");
+        assertEq(policyHolder.claimAmount(policyNftId, claimIdExpected).toInt(), 0, "unexpected claim amount (holder, before)");
+
+        // WHEN
+        Amount claimAmount = AmountLib.toAmount(100);
+        (
+            IPolicy.PolicyInfo memory policyInfo, 
+            ClaimId claimId, 
+            IPolicy.ClaimInfo memory claimInfo, 
+            StateId claimState
+        ) = _makeClaim(policyNftId, claimAmount, true);
+
+        console.log("claimId", claimId.toInt());
+        assertEq(claimId.toInt(), claimIdExpected.toInt(), "unexpected claim id");
+
+        // THEN
+        assertEq(claimState.toInt(), CONFIRMED().toInt(), "unexpected claim state");
+
+        assertEq(policyHolder.activatedAt(policyNftId).toInt(), activateAt.toInt(), "unexpected activated at (holder, after)");
+        assertEq(policyHolder.expiredAt(policyNftId).toInt(), 0, "unexpected expired at (holder, after)");
+        assertEq(policyHolder.claimAmount(policyNftId, claimId).toInt(), claimAmount.toInt(), "unexpected claim amount (holder, after)");
+    }
+
+    function test_policyHolderPayoutExecutedBeneficiaryCallback() public {
+        // GIVEN 
+        // create active policy
+        Timestamp activateAt = TimestampLib.blockTimestamp();
+        _createAndActivate(policyNftId, activateAt);
+
+        // create confirmed claim
+        Amount claimAmount = AmountLib.toAmount(100);
+        (, ClaimId claimId,,) = _makeClaim(policyNftId, claimAmount, true);
+
+        // check that no payout callback has yet happened
+        PayoutId payoutIdExpected = PayoutIdLib.toPayoutId(claimId, 1);
+        Amount payoutAmount = claimAmount;
+        address beneficiary = makeAddr("beneficiary");
+
+        assertEq(policyHolder.activatedAt(policyNftId).toInt(), activateAt.toInt(), "unexpected activated at (holder, before)");
+        assertEq(policyHolder.expiredAt(policyNftId).toInt(), 0, "unexpected expired at (holder, before)");
+        assertEq(policyHolder.beneficiary(policyNftId, payoutIdExpected), address(0), "unexpected beneficiary (holder, before)");
+        assertEq(policyHolder.payoutAmount(policyNftId, payoutIdExpected).toInt(), 0, "unexpected amount (holder, before)");
+        assertEq(token.balanceOf(beneficiary), 0, "unexpected balance (beneficiary, before)");
+
+        // WHEN - create payout
+        PayoutId payoutId = product.createPayoutForBeneficiary(policyNftId, claimId, payoutAmount, beneficiary, "");
+
+        // THEN
+        IPolicy.PayoutInfo memory payoutInfo = instanceReader.getPayoutInfo(policyNftId, payoutId);
+        assertEq(payoutInfo.beneficiary, beneficiary, "unexpected beneficiary (info)");
+
+        // check still no callback (only create payout, no tokens moved so far)
+        assertEq(payoutId.toInt(), payoutIdExpected.toInt(), "unexpected payout id");
+        assertEq(policyHolder.activatedAt(policyNftId).toInt(), activateAt.toInt(), "unexpected activated at (holder, after)");
+        assertEq(policyHolder.expiredAt(policyNftId).toInt(), 0, "unexpected expired at (holder, after)");
+        assertEq(policyHolder.beneficiary(policyNftId, payoutIdExpected), address(0), "unexpected beneficiary (holder, after)");
+        assertEq(policyHolder.payoutAmount(policyNftId, payoutIdExpected).toInt(), 0, "unexpected amount (holder, after)");
+        assertEq(token.balanceOf(beneficiary), 0, "unexpected balance (beneficiary, after)");
+
+        // WHEN - process payout
+        product.processPayout(policyNftId, payoutIdExpected);
+
+        // THEN - check callback has now happened
+        assertEq(policyHolder.activatedAt(policyNftId).toInt(), activateAt.toInt(), "unexpected activated at (holder, after2)");
+        assertEq(policyHolder.expiredAt(policyNftId).toInt(), 0, "unexpected expired at (holder, after2)");
+        assertEq(policyHolder.beneficiary(policyNftId, payoutIdExpected), beneficiary, "unexpected beneficiary (holder, after2)");
+        assertEq(policyHolder.payoutAmount(policyNftId, payoutIdExpected).toInt(), payoutAmount.toInt(), "unexpected amount (holder, after2)");
+        assertEq(token.balanceOf(beneficiary), payoutAmount.toInt(), "unexpected balance (beneficiary, after2)");
+    }
+
+    function test_policyHolderPayoutExecutedDefaultCallback() public {
+        // GIVEN 
+        // create active policy
+        Timestamp activateAt = TimestampLib.blockTimestamp();
+        _createAndActivate(policyNftId, activateAt);
+
+        address beneficiary = registry.ownerOf(policyNftId);
+        uint256 balanceInitial = token.balanceOf(beneficiary);
+
+        // create confirmed claim
+        Amount claimAmount = AmountLib.toAmount(100);
+        (, ClaimId claimId,,) = _makeClaim(policyNftId, claimAmount, true);
+
+        // check that no payout callback has yet happened
+        PayoutId payoutIdExpected = PayoutIdLib.toPayoutId(claimId, 1);
+        Amount payoutAmount = claimAmount;
+
+        assertEq(policyHolder.activatedAt(policyNftId).toInt(), activateAt.toInt(), "unexpected activated at (holder, before)");
+        assertEq(policyHolder.expiredAt(policyNftId).toInt(), 0, "unexpected expired at (holder, before)");
+        assertEq(policyHolder.beneficiary(policyNftId, payoutIdExpected), address(0), "unexpected beneficiary (holder, before)");
+        assertEq(policyHolder.payoutAmount(policyNftId, payoutIdExpected).toInt(), 0, "unexpected amount (holder, before)");
+        assertEq(token.balanceOf(beneficiary), balanceInitial, "unexpected balance (beneficiary, before)");
+
+        // WHEN - create payout
+        PayoutId payoutId = product.createPayout(policyNftId, claimId, payoutAmount, "");
+
+        // THEN
+        IPolicy.PayoutInfo memory payoutInfo = instanceReader.getPayoutInfo(policyNftId, payoutId);
+        assertEq(payoutInfo.beneficiary, address(0), "unexpected beneficiary (info)");
+
+        // check still no callback (only create payout, no tokens moved so far)
+        assertEq(payoutId.toInt(), payoutIdExpected.toInt(), "unexpected payout id");
+        assertEq(policyHolder.activatedAt(policyNftId).toInt(), activateAt.toInt(), "unexpected activated at (holder, after)");
+        assertEq(policyHolder.expiredAt(policyNftId).toInt(), 0, "unexpected expired at (holder, after)");
+        assertEq(policyHolder.beneficiary(policyNftId, payoutIdExpected), address(0), "unexpected beneficiary (holder, after)");
+        assertEq(policyHolder.payoutAmount(policyNftId, payoutIdExpected).toInt(), 0, "unexpected amount (holder, after)");
+        assertEq(token.balanceOf(beneficiary), balanceInitial, "unexpected balance (beneficiary, after)");
+
+        // WHEN - process payout
+        product.processPayout(policyNftId, payoutIdExpected);
+
+        // THEN - check callback has now happened
+        assertEq(policyHolder.activatedAt(policyNftId).toInt(), activateAt.toInt(), "unexpected activated at (holder, after2)");
+        assertEq(policyHolder.expiredAt(policyNftId).toInt(), 0, "unexpected expired at (holder, after2)");
+        assertEq(policyHolder.beneficiary(policyNftId, payoutIdExpected), beneficiary, "unexpected beneficiary (holder, after2)");
+        assertEq(policyHolder.payoutAmount(policyNftId, payoutIdExpected).toInt(), payoutAmount.toInt(), "unexpected amount (holder, after2)");
+        assertEq(token.balanceOf(beneficiary), balanceInitial + payoutAmount.toInt(), "unexpected balance (beneficiary, after2)");
+    }
+
+    function _makeClaim(NftId nftId, Amount claimAmount, bool confirm)
         internal
         returns (
             IPolicy.PolicyInfo memory policyInfo,
@@ -165,7 +325,11 @@ contract TestProductLifecycle
     {
         bytes memory claimData = "please pay";
         claimId = product.submitClaim(nftId, claimAmount, claimData); 
-        product.confirmClaim(nftId, claimId, claimAmount, ""); 
+
+        if (confirm) {
+            product.confirmClaim(nftId, claimId, claimAmount, ""); 
+        }
+
         policyInfo = instanceReader.getPolicyInfo(policyNftId);
         claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
         claimState = instanceReader.getClaimState(policyNftId, claimId);

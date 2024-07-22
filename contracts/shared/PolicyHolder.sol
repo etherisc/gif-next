@@ -40,7 +40,7 @@ contract PolicyHolder is
     function claimConfirmed(NftId policyNftId, ClaimId claimId, Amount amount) external virtual {}
 
     /// @dev empty default implementation
-    function payoutExecuted(NftId policyNftId, PayoutId payoutId, address beneficiary, Amount amount) external virtual {}
+    function payoutExecuted(NftId policyNftId, PayoutId payoutId, Amount amount, address beneficiary) external virtual {}
 
     //--- IERC165 functions ---------------// 
     function onERC721Received(

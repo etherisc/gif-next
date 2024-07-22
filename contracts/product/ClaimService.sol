@@ -14,8 +14,10 @@ import {StateId} from "../type/StateId.sol";
 import {ClaimId, ClaimIdLib} from "../type/ClaimId.sol";
 import {PayoutId, PayoutIdLib} from "../type/PayoutId.sol";
 import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
+import {ContractLib} from "../shared/ContractLib.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {IClaimService} from "./IClaimService.sol";
+import {IPolicyHolder} from "../shared/IPolicyHolder.sol";
 import {IPoolService} from "../pool/IPoolService.sol";
 
 
@@ -131,7 +133,11 @@ contract ClaimService is
         instance.getInstanceStore().updatePolicyClaims(policyNftId, policyInfo, KEEP_STATE());
 
         emit LogClaimServiceClaimConfirmed(policyNftId, claimId, confirmedAmount);
+
+        // callback to policy holder if applicable
+        _policyHolderClaimConfirmed(policyNftId, claimId, confirmedAmount);
     }
+
 
     function decline(
         NftId policyNftId, 
@@ -390,7 +396,8 @@ contract ClaimService is
             // TODO add 2nd token tx if processingFeeAmount > 0
         }
 
-        // TODO callback IPolicyHolder
+        // callback to policy holder if applicable
+        _policyHolderPayoutExecuted(policyNftId, payoutId, beneficiary, payoutAmount);
     }
 
     function _calculatePayoutAmount(
@@ -478,6 +485,49 @@ contract ClaimService is
 
         // get claim info
         claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
+    }
+
+
+    function _policyHolderClaimConfirmed(
+        NftId policyNftId, 
+        ClaimId claimId,
+        Amount confirmedAmount
+    )
+        internal
+    {
+        IPolicyHolder policyHolder = _getPolicyHolder(policyNftId);
+        if(address(policyHolder) != address(0)) {
+            policyHolder.claimConfirmed(policyNftId, claimId, confirmedAmount);
+        }
+    }
+
+
+    function _policyHolderPayoutExecuted(
+        NftId policyNftId, 
+        PayoutId payoutId,
+        address beneficiary,
+        Amount payoutAmount
+    )
+        internal
+    {
+        IPolicyHolder policyHolder = _getPolicyHolder(policyNftId);
+        if(address(policyHolder) != address(0)) {
+            policyHolder.payoutExecuted(policyNftId, payoutId, payoutAmount, beneficiary);
+        }
+    }
+
+
+    function _getPolicyHolder(NftId policyNftId)
+        internal 
+        view 
+        returns (IPolicyHolder policyHolder)
+    {
+        address policyHolderAddress = getRegistry().ownerOf(policyNftId);
+        policyHolder = IPolicyHolder(policyHolderAddress);
+
+        if (!ContractLib.isPolicyHolder(policyHolderAddress)) {
+            policyHolder = IPolicyHolder(address(0));
+        }
     }
 
 
