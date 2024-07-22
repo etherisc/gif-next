@@ -86,7 +86,8 @@ jobs:
         uses: foundry-rs/foundry-toolchain@v1
 
       - name: Run fasts tests without long running tests
-        if: |
+        # trigger fast tests for regular pull requests
+        if: | 
           github.event_name != 'pull_request' || 
           ! contains(github.event.pull_request.labels.*.name, 'run_all_tests')
         env:
@@ -94,12 +95,14 @@ jobs:
         run: forge test -vv --nmt "_longRunning"
       
       - name: Run all tests (label 'run_all_tests')
+        # run all tests for pull requests with label 'run_all_tests' 
+        # or once a day when triggered thru schedule
         if: |
           (
             github.event_name == 'pull_request' 
             && contains(github.event.pull_request.labels.*.name, 'run_all_tests')
           ) || 
-          github.event.schedule == '*/5 * * * *'
+          github.event.schedule == '33 3 * * *'
         env:
           FOUNDRY_PROFILE: ci
         run: forge test -vv
@@ -112,7 +115,10 @@ jobs:
         id-token: write
     needs: [build_hardhat, build_foundry, test_foundry]
     # only run if not on main and hardhat **and** founddry are successful and not dependabot
-    if: ${{ github.ref != 'refs/heads/main' && contains(join(needs.*.result, ','), 'success') && github.actor != 'dependabot[bot]' }}
+    if: |
+      github.ref != 'refs/heads/main' && 
+      contains(join(needs.*.result, ','), 'success') && 
+      github.actor != 'dependabot[bot]'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
