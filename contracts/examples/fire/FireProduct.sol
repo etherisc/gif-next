@@ -10,18 +10,33 @@ import {IOracleService} from "../../oracle/IOracleService.sol";
 import {ORACLE} from "../../type/ObjectType.sol";
 import {NftId} from "../../type/NftId.sol";
 import {PayoutId} from "../../type/PayoutId.sol";
-import {ReferralId} from "../../type/Referral.sol";
+import {ReferralId, ReferralLib} from "../../type/Referral.sol";
 import {RequestId} from "../../type/RequestId.sol";
-import {RiskId} from "../../type/RiskId.sol";
+import {RiskId, RiskIdLib} from "../../type/RiskId.sol";
 import {Seconds} from "../../type/Seconds.sol";
 import {StateId} from "../../type/StateId.sol";
 import {Timestamp, TimestampLib} from "../../type/Timestamp.sol";
+import {UFixed, UFixedLib} from "../../type/UFixed.sol";
 
 uint64 constant SPECIAL_ROLE_INT = 11111;
 
+function HALF_YEAR() pure returns (Seconds) {
+    return Seconds.wrap(180 * 86400);
+}
+
+function ONE_YEAR() pure returns (Seconds) {
+    return Seconds.wrap(360 * 86400);
+}
+
+/// @dev This is the product component for the fire insurance example. 
+/// It show how to insure a house for a given suminsured in a city. 
+/// The risk is based on the city. 
+/// If a fire is reported in the city, the policy holder is able to submit a claim and get a payout. 
 contract FireProduct is 
     BasicProduct
 {
+    string[] _cities;
+    // map from city name to the RiskId
     mapping(string cityName => RiskId risk) private _riskMapping;
 
     constructor(
@@ -34,6 +49,29 @@ contract FireProduct is
     )
     {
         address initialOwner = msg.sender;
+        _initialize(
+            registry,
+            instanceNftid,
+            componentName,
+            token,
+            pool,
+            authorization,
+            initialOwner);
+        initializeCity("London");
+    }
+
+    function _initialize(
+        address registry,
+        NftId instanceNftid,
+        string memory componentName,
+        address token,
+        address pool,
+        IAuthorization authorization,
+        address initialOwner
+    )
+        internal
+        initializer
+    {
         _initializeBasicProduct(
             registry,
             instanceNftid,
@@ -45,24 +83,6 @@ contract FireProduct is
             pool,
             address(0));  // no distribution
     }
-
-    // TODO: do during application - probably no longer needed
-    // function initializeCity(
-    //     string memory cityName
-    // ) 
-    //     public 
-    //     restricted()
-    //     returns (RiskId riskId) 
-    // {
-    //     if (_riskMapping[cityName] != 0) {
-    //         return _riskMapping[cityName];
-    //     }
-    //     riskId = _createRisk(
-    //         id,
-    //         data
-    //     );
-    //     _riskMapping[cityName] = riskId;
-    // }
 
     function pauseCity(
         string memory cityName
@@ -96,40 +116,94 @@ contract FireProduct is
         );
     }
 
+    function calculatePremium(
+        string memory cityName,
+        Amount sumInsured,
+        Seconds lifetime,
+        NftId bundleNftId
+    ) 
+        public
+        view
+        returns (Amount premiumAmount)
+    {
+        RiskId riskId = _riskMapping[cityName];
+        if (riskId.eqz()) {
+            revert(); // TODO: custom error
+        }
+        premiumAmount = calculatePremium( 
+            sumInsured,
+            riskId,
+            lifetime,
+            "",
+            bundleNftId,
+            ReferralLib.zero());
+    }
+
+    function calculateNetPremium(
+        Amount sumInsured,
+        RiskId,
+        Seconds lifetime,
+        bytes memory
+    )
+        external
+        view
+        virtual override
+        returns (Amount netPremiumAmount)
+    {
+        UFixed numDays = UFixedLib.toUFixed(lifetime.toInt() / 86400);
+        // to simplify time calculation we assume 360 days per year
+        UFixed pctOfYear = numDays / UFixedLib.toUFixed(360);
+        Amount premiumPerYear = AmountLib.toAmount(sumInsured.toInt() / 20);
+        return  premiumPerYear.multiplyWith(pctOfYear);
+    }
+
     function createApplication(
         address applicationOwner,
-        RiskId riskId,
-        uint256 sumInsured,
+        string memory cityName,
+        Amount sumInsured,
         Seconds lifetime,
-        bytes memory applicationData,
-        NftId bundleNftId,
-        ReferralId referralId
+        NftId bundleNftId
     )
         public
-        returns (NftId nftId)
+        restricted()
+        returns (NftId policyNftId)
     {
-        // TODO: create risk if not exists
-        // TODO: imlement createApplication
+        address applicationOwner = msg.sender;
+        RiskId riskId = initializeCity(cityName);
 
-        // Amount sumInsuredAmount = AmountLib.toAmount(sumInsured);
-        // Amount premiumAmount = calculatePremium(
-        //     sumInsuredAmount,
-        //     riskId,
-        //     lifetime,
-        //     applicationData,
-        //     bundleNftId,
-        //     referralId);
+        Amount premiumAmount = calculatePremium(
+            sumInsured,
+            riskId,
+            lifetime,
+            "",
+            bundleNftId,
+            ReferralLib.zero());
 
-        // return _createApplication(
-        //     applicationOwner,
-        //     riskId,
-        //     sumInsuredAmount,
-        //     premiumAmount,
-        //     lifetime,
-        //     bundleNftId,
-        //     referralId,
-        //     applicationData
-        // );
+        return _createApplication(
+            applicationOwner,
+            riskId,
+            sumInsured,
+            premiumAmount,
+            lifetime,
+            bundleNftId,
+            ReferralLib.zero(),
+            ""
+        );
+    }
+
+    function initializeCity(
+        string memory cityName
+    ) 
+        public
+        returns (RiskId riskId) 
+    {
+        if (! _riskMapping[cityName].eqz()) {
+            return _riskMapping[cityName];
+        }
+        _cities.push(cityName);
+        riskId = RiskIdLib.toRiskId(cityName);
+        _createRisk(riskId, "");
+        _riskMapping[cityName] = riskId;
     }
 
     function createPolicy(
@@ -147,7 +221,10 @@ contract FireProduct is
 
     function decline(
         NftId policyNftId
-    ) public {
+    ) 
+        public 
+        restricted()
+    {
         // TODO: implement decline
         // _decline(policyNftId);
     }
@@ -157,6 +234,7 @@ contract FireProduct is
         Timestamp expireAt
     ) 
         public 
+        restricted()
         returns (Timestamp)
     {
         // TODO: implement expire
@@ -165,7 +243,10 @@ contract FireProduct is
 
     function close(
         NftId policyNftId
-    ) public {
+    ) 
+        public 
+        restricted()
+    {
         // TODO: implement close
         // _close(policyNftId);
     }
@@ -174,7 +255,11 @@ contract FireProduct is
         NftId policyNftId,
         Amount claimAmount,
         bytes memory submissionData
-    ) public returns (ClaimId) {
+    ) 
+        public 
+        restricted()
+        returns (ClaimId) 
+    {
         // TODO: implement submitClaim
         // return _submitClaim(policyNftId, claimAmount, submissionData);
 

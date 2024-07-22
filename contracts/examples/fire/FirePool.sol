@@ -23,6 +23,26 @@ contract FirePool is
     ) 
     {
         address initialOwner = msg.sender;
+        _intialize(
+            registry,
+            instanceNftId,
+            componentName,
+            token,
+            authorization,
+            initialOwner);
+    }
+
+    function _intialize(
+        address registry,
+        NftId instanceNftId,
+        string memory componentName,
+        address token,
+        IAuthorization authorization,
+        address initialOwner
+    )
+        internal
+        initializer
+    {
         _initializeBasicPool(
             registry,
             instanceNftId,
