@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IComponents} from "../instance/module/IComponents.sol";
-import {IInstance} from "../instance/IInstance.sol";
-import {IPolicy} from "../instance/module/IPolicy.sol";
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {TimestampLib} from "../type/Timestamp.sol";
 import {ObjectType, CLAIM, PRODUCT, POOL} from "../type/ObjectType.sol";
@@ -17,7 +14,11 @@ import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol
 import {ContractLib} from "../shared/ContractLib.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {IClaimService} from "./IClaimService.sol";
+import {IComponents} from "../instance/module/IComponents.sol";
+import {IInstance} from "../instance/IInstance.sol";
+import {IPolicy} from "../instance/module/IPolicy.sol";
 import {IPolicyHolder} from "../shared/IPolicyHolder.sol";
+import {IPoolComponent} from "../pool/IPoolComponent.sol";
 import {IPoolService} from "../pool/IPoolService.sol";
 
 
@@ -59,6 +60,7 @@ contract ClaimService is
         returns (ClaimId claimId)
     {
         (
+            ,
             IInstance instance,
             InstanceReader instanceReader,
             IPolicy.PolicyInfo memory policyInfo
@@ -113,6 +115,7 @@ contract ClaimService is
         nonReentrant()
     {
         (
+            NftId productNftId,
             IInstance instance,
             InstanceReader instanceReader,
             IPolicy.PolicyInfo memory policyInfo
@@ -135,6 +138,9 @@ contract ClaimService is
 
         emit LogClaimServiceClaimConfirmed(policyNftId, claimId, confirmedAmount);
 
+        // callback to pool if applicable
+        _processConfirmedClaimByPool(instanceReader, productNftId, policyNftId, claimId, confirmedAmount);
+
         // callback to policy holder if applicable
         _policyHolderClaimConfirmed(policyNftId, claimId, confirmedAmount);
     }
@@ -150,6 +156,7 @@ contract ClaimService is
         nonReentrant()
     {
         (
+            ,
             IInstance instance,
             InstanceReader instanceReader,
             IPolicy.PolicyInfo memory policyInfo
@@ -179,6 +186,7 @@ contract ClaimService is
         nonReentrant()
     {
         (
+            ,
             IInstance instance,
             InstanceReader instanceReader,
             IPolicy.PolicyInfo memory policyInfo
@@ -206,6 +214,7 @@ contract ClaimService is
         nonReentrant()
     {
         (
+            ,
             IInstance instance,
             InstanceReader instanceReader,
             IPolicy.PolicyInfo memory policyInfo
@@ -290,6 +299,7 @@ contract ClaimService is
         nonReentrant()
     {
         (
+            ,
             IInstance instance,
             InstanceReader instanceReader,
             IPolicy.PolicyInfo memory policyInfo
@@ -371,6 +381,7 @@ contract ClaimService is
         returns (PayoutId payoutId)
     {
         (
+            ,
             IInstance instance,
             InstanceReader instanceReader,
             IPolicy.PolicyInfo memory policyInfo
@@ -455,12 +466,12 @@ contract ClaimService is
         view
         virtual
         returns (
+            NftId productNftId,
             IInstance instance,
             InstanceReader instanceReader,
             IPolicy.PolicyInfo memory policyInfo
         )
     {
-        NftId productNftId;
         (productNftId,, instance) = _getAndVerifyActiveComponent(PRODUCT());
         instanceReader = instance.getInstanceReader();
 
@@ -494,6 +505,22 @@ contract ClaimService is
 
         // get claim info
         claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
+    }
+
+    function _processConfirmedClaimByPool(
+        InstanceReader instanceReader, 
+        NftId productNftId, 
+        NftId policyNftId, 
+        ClaimId claimId, 
+        Amount amount
+    )
+        internal
+    {
+        NftId poolNftId = instanceReader.getProductInfo(productNftId).poolNftId;
+        if (instanceReader.getPoolInfo(poolNftId).isProcessingConfirmedClaims) {
+            address poolAddress = getRegistry().getObjectInfo(poolNftId).objectAddress;
+            IPoolComponent(poolAddress).processConfirmedClaim(policyNftId, claimId, amount);
+        }
     }
 
 

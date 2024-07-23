@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {BUNDLE, COMPONENT, POOL} from "../type/ObjectType.sol";
+import {ClaimId} from "../type/ClaimId.sol";
 import {IBundleService} from "./IBundleService.sol";
 import {IAuthorization} from "../authorization/IAuthorization.sol";
 import {IPoolComponent} from "./IPoolComponent.sol";
@@ -40,6 +41,16 @@ abstract contract Pool is
     }
 
 
+    function register()
+        external
+        virtual
+        onlyOwner()
+    {
+        _getPoolStorage()._componentService.registerPool();
+        _approveTokenHandler(type(uint256).max);
+    }
+
+
     /// @dev see {IPoolComponent.verifyApplication}
     function verifyApplication(
         NftId applicationNftId, 
@@ -67,6 +78,20 @@ abstract contract Pool is
     }
 
 
+    /// @dev see {IPoolComponent.processConfirmedClaim}
+    function processConfirmedClaim(
+        NftId policyNftId, 
+        ClaimId claimId, 
+        Amount amount
+    )
+        public
+        virtual
+        restricted()
+    {
+        // default implementation is empty
+    }
+
+
     /// @dev see {IPoolComponent.applicationMatchesBundle}
     /// Override this function to implement any custom application verification 
     /// Default implementation always returns true
@@ -83,16 +108,6 @@ abstract contract Pool is
         returns (bool isMatching)
     {
         return true;
-    }
-
-
-    function register()
-        external
-        virtual
-        onlyOwner()
-    {
-        _getPoolStorage()._componentService.registerPool();
-        _approveTokenHandler(type(uint256).max);
     }
 
     /// @inheritdoc IPoolComponent
@@ -117,6 +132,7 @@ abstract contract Pool is
             maxBalanceAmount: AmountLib.max(),
             bundleOwnerRole: PUBLIC_ROLE(), 
             isInterceptingBundleTransfers: isNftInterceptor(),
+            isProcessingConfirmedClaims: false,
             isExternallyManaged: false,
             isVerifyingApplications: false,
             collateralizationLevel: UFixedLib.toUFixed(1),

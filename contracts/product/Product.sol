@@ -112,6 +112,7 @@ abstract contract Product is
         return IComponents.ProductInfo({
             distributionNftId: $._distributionNftId,
             poolNftId: $._poolNftId,
+            isProcessingFundedClaims: false,
             productFee: FeeLib.zero(),
             processingFee: FeeLib.zero(),
             distributionFee: FeeLib.zero(),
