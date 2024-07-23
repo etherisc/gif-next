@@ -321,7 +321,7 @@ contract ClaimService is
         // check if this payout is closing the linked claim
         // update claim and policy info accordingly
         if(claimInfo.openPayoutsCount == 0 && claimInfo.paidAmount == claimInfo.claimAmount) {
-            claimInfo.closedAt == TimestampLib.blockTimestamp();
+            claimInfo.closedAt = TimestampLib.blockTimestamp();
             instance.getInstanceStore().updateClaim(policyNftId, claimId, claimInfo, CLOSED());
 
             policyInfo.openClaimsCount -= 1;
@@ -398,6 +398,9 @@ contract ClaimService is
         // create payout info with instance
         uint24 payoutNo = claimInfo.payoutsCount + 1;
         payoutId = PayoutIdLib.toPayoutId(claimId, payoutNo);
+        if (beneficiary == address(0)) {
+            beneficiary = getRegistry().ownerOf(policyNftId);
+        }
         instance.getInstanceStore().createPayout(
             policyNftId, 
             payoutId, 
