@@ -325,13 +325,22 @@ contract FireProduct is
         
         Fire memory fire = _fires[fireId];
         _claimed[fireId][policyNftId] = true;
+
         Amount claimAmount = _getClaimAmount(policyInfo, fire);
+        Amount maxPayoutRemaining = policyInfo.sumInsuredAmount - policyInfo.payoutAmount;
+
+        // if payout is higher than the remaining maximum payout, then claim what is remaining
+        if (maxPayoutRemaining < claimAmount) {
+            claimAmount = maxPayoutRemaining;
+        }
         
         claimId = _submitClaim(policyNftId, claimAmount, "");
         _confirmClaim(policyNftId, claimId, claimAmount, "");
 
         payoutId = _createPayout(policyNftId, claimId, claimAmount, "");
         _processPayout(policyNftId, payoutId);
+
+        // TODO: close policy if sum insured is reached
     }
 
     function _checkClaimConditions(
