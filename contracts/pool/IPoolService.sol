@@ -72,10 +72,10 @@ interface IPoolService is IService {
     ) external;
 
 
-    /// @dev reduces the locked collateral in the bundle associated with the specified policy
+    /// @dev reduces the locked collateral in the bundle associated with the specified policy and updates pool/bundle counters
     /// every payout of a policy reduces the collateral by the payout amount
     /// may only be called by the claim service for unlocked pool components
-    function reduceCollateral(
+    function processPayout(
         IInstance instance, 
         address token,
         NftId policyNftId, 

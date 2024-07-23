@@ -174,11 +174,10 @@ contract ServiceAuthorizationV3
           functions = _authorizeForService(POOL(), POLICY());
           _authorize(functions, IPoolService.lockCollateral.selector, "lockCollateral");
           _authorize(functions, IPoolService.releaseCollateral.selector, "releaseCollateral");
-          _authorize(functions, IPoolService.reduceCollateral.selector, "reduceCollateral");
           _authorize(functions, IPoolService.processSale.selector, "processSale");
 
           functions = _authorizeForService(POOL(), CLAIM());
-          _authorize(functions, IPoolService.reduceCollateral.selector, "reduceCollateral");
+          _authorize(functions, IPoolService.processPayout.selector, "processPayout");
      }
 
 

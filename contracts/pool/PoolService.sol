@@ -399,8 +399,7 @@ contract PoolService is
         }
     }
 
-
-    function reduceCollateral(
+    function processPayout(
         IInstance instance, 
         address token,
         NftId policyNftId, 
@@ -411,6 +410,22 @@ contract PoolService is
         virtual
         restricted()
     {
+        NftId bundleNftId = policyInfo.bundleNftId;
+        NftId poolNftId = getRegistry().getObjectInfo(bundleNftId).parentNftId;
+        InstanceStore instanceStore = instance.getInstanceStore();
+        
+        _componentService.decreasePoolBalance(
+            instanceStore,
+            poolNftId,
+            payoutAmount, 
+            AmountLib.zero());
+
+        _componentService.decreaseBundleBalance(
+            instanceStore,
+            bundleNftId,
+            payoutAmount, 
+            AmountLib.zero());
+
         _bundleService.releaseCollateral(
             instance, 
             policyNftId, 
