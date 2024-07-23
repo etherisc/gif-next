@@ -24,6 +24,7 @@ contract FireProductTest is FireTestBase {
         
         _createInitialBundle();
         cityName = "London";
+        fireProduct.initializeCity(cityName);
     }
 
     function test_FireProduct_calculatePremium() public {

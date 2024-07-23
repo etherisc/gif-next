@@ -1,16 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {ACTIVE, PAUSED} from "../../type/StateId.sol";
+import {ACTIVE, COLLATERALIZED, PAUSED} from "../../type/StateId.sol";
 import {Amount, AmountLib} from "../../type/Amount.sol";
 import {BasicProduct} from "../../product/BasicProduct.sol";
 import {ClaimId} from "../../type/ClaimId.sol";
+import {DamageLevel, DamageLevelLib, DAMAGE_SMALL, DAMAGE_MEDIUM, DAMAGE_HIGH} from "./DamageLevel.sol";
 import {IAuthorization} from "../../authorization/IAuthorization.sol";
+import {IPolicy} from "../../instance/module/IPolicy.sol";
 import {NftId} from "../../type/NftId.sol";
 import {ReferralLib} from "../../type/Referral.sol";
 import {RiskId, RiskIdLib} from "../../type/RiskId.sol";
 import {Seconds} from "../../type/Seconds.sol";
-import {Timestamp} from "../../type/Timestamp.sol";
+import {StateId} from "../../type/StateId.sol";
+import {Timestamp, TimestampLib} from "../../type/Timestamp.sol";
 import {UFixed, UFixedLib} from "../../type/UFixed.sol";
 
 uint64 constant SPECIAL_ROLE_INT = 11111;
@@ -30,11 +33,30 @@ function ONE_YEAR() pure returns (Seconds) {
 contract FireProduct is 
     BasicProduct
 {
+    struct Fire {
+        string cityName;
+        DamageLevel damageLevel;
+        Timestamp reportedAt;
+    }
+
     error ErrorFireProductCityUnknown(string cityName);
+    error ErrorFireProductTimestampTooEarly();
+    error ErrorFireProductFireAlreadyReported();
+    error ErrorFireProductAlreadyClaimed();
+    error ErrorFireProductPolicyNotActive();
+    error ErrorFireProductPolicyNotYetActive(Timestamp activateAt);
+    error ErrorFireProductPolicyExpired(Timestamp expiredAt);
+    error ErrorFireProductUnknownDamageLevel(DamageLevel damageLevel);
+    error ErrorFireProductFireUnknown(uint256 fireId);
+    error ErrorFireProductNotPolicyOwner(NftId nftId, address owner);
 
     string[] private _cities;
     // map from city name to the RiskId
     mapping(string cityName => RiskId risk) private _riskMapping;
+
+    // // map from city name to the damage level and the time of the report
+    mapping(uint256 fireId => Fire) private _fires;
+    mapping(uint256 fireId => mapping (NftId policyId => bool claimed)) private _claimed;
 
     constructor(
         address registry,
@@ -54,7 +76,6 @@ contract FireProduct is
             pool,
             authorization,
             initialOwner);
-        initializeCity("London");
     }
 
     function _initialize(
@@ -257,22 +278,111 @@ contract FireProduct is
         _close(policyNftId);
     }
 
-    function submitClaim(
-        NftId policyNftId,
-        Amount claimAmount,
-        bytes memory submissionData
+    function reportFire(
+        uint256 fireId,
+        string memory cityName,
+        DamageLevel damageLevel,
+        Timestamp reportedAt
     ) 
         public 
         restricted()
-        returns (ClaimId) 
     {
-        // TODO: implement submitClaim
-        // return _submitClaim(policyNftId, claimAmount, submissionData);
+        if (_riskMapping[cityName].eqz()) {
+            revert ErrorFireProductCityUnknown(cityName);
+        }
 
-        // TODO: check if fire was reported in the city
-        // TODO: if yes, process payout and close claimn
+        if (reportedAt < TimestampLib.blockTimestamp()) {
+            revert ErrorFireProductTimestampTooEarly();
+        }
+
+        if (! _fires[fireId].reportedAt.eqz()) {
+            revert ErrorFireProductFireAlreadyReported();
+        }
+
+        _fires[fireId] = Fire({
+            cityName: cityName,
+            damageLevel: damageLevel,
+            reportedAt: reportedAt
+        });
+    }
+
+    function fire(uint256 fireId) public view returns (Fire memory) {
+        return _fires[fireId];
+    }
+
+    function submitClaim(
+        NftId policyNftId,
+        uint256 fireId
+    ) 
+        public 
+        restricted()
+        onlyNftOwner(policyNftId)
+        returns (ClaimId claimId) 
+    {
+        IPolicy.PolicyInfo memory policyInfo = _getInstanceReader().getPolicyInfo(policyNftId);
+        _checkClaimConditions(policyNftId, fireId, policyInfo);
+        
+        Fire memory fire = _fires[fireId];
+        _claimed[fireId][policyNftId] = true;
+        Amount claimAmount = _getClaimAmount(policyInfo, fire);
+        
+        claimId = _submitClaim(policyNftId, claimAmount, "");
+
+        // TODO: if yes, process payout and close claim
         // TODO: if no, decline claim
+    }
 
+    function _checkClaimConditions(
+        NftId policyNftId,
+        uint256 fireId,
+        IPolicy.PolicyInfo memory policyInfo
+    ) 
+        internal
+    {
+        // check fire exists
+        if (_fires[fireId].reportedAt.eqz()) {
+            revert ErrorFireProductFireUnknown(fireId);
+        }
+
+        // check policy has not been claimed yet for this fire
+        if (_claimed[fireId][policyNftId]) {
+            revert ErrorFireProductAlreadyClaimed();
+        }
+
+        StateId policyState = _getInstanceReader().getPolicyState(policyNftId);
+        
+        if (! policyState.eq(COLLATERALIZED())) {
+            revert ErrorFireProductPolicyNotActive();
+        }
+
+        Fire memory fire = _fires[fireId];
+
+        if (fire.reportedAt < policyInfo.activatedAt) {
+            revert ErrorFireProductPolicyNotYetActive(policyInfo.activatedAt);
+        }
+
+        if (fire.reportedAt > policyInfo.expiredAt) {
+            revert ErrorFireProductPolicyExpired(policyInfo.expiredAt);
+        }
+    }
+
+    function _getClaimAmount(
+        IPolicy.PolicyInfo memory policyInfo,
+        Fire memory fire
+    ) 
+        internal
+        view
+        returns (Amount)
+    {
+        if (fire.damageLevel.eq(DAMAGE_SMALL())) {
+            return policyInfo.sumInsuredAmount.multiplyWith(UFixedLib.toUFixed(2, -2));
+        } else if (fire.damageLevel.eq(DAMAGE_MEDIUM())) {
+            return policyInfo.sumInsuredAmount.multiplyWith(UFixedLib.toUFixed(5, -2));
+        } else if (fire.damageLevel.eq(DAMAGE_HIGH())) {
+            return policyInfo.sumInsuredAmount;
+        } else {
+            revert ErrorFireProductUnknownDamageLevel(fire.damageLevel);
+        }
     }
 
     // TODO: no longer needed? -> remove

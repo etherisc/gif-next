@@ -29,7 +29,7 @@ function neRiskId(RiskId a, RiskId b) pure returns (bool isDifferent) {
 
 library RiskIdLib {
     function zero() public pure returns (RiskId) {
-        return toRiskId("");
+        return RiskId.wrap(bytes8(0));
     }
 
     // @dev Converts a role string into a role id.
