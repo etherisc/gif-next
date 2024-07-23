@@ -23,7 +23,7 @@ import { logger } from "../logger";
 import { deployContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
 import { RegistryAddresses } from "./registry";
-import { createRelease, getReleaseConfig } from "./release";
+import { createRelease } from "./release";
 import { executeTx, getFieldFromTxRcptLogs, getTxOpts } from "./transaction";
 import { prepareVerificationData } from './verification';
 
@@ -100,8 +100,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     logger.info("======== Starting release creation ========");
     //const salt = zeroPadBytes("0x03", 32);
     const salt: BytesLike = id(`0x5678`);
-    const config = await getReleaseConfig(/*owner, registry, libraries, salt*/);
-    const release = await createRelease(owner, registry, config, salt);
+    const release = await createRelease(owner, registry, salt);
     logger.info(`Release created - version: ${release.version} salt: ${release.salt} access manager: ${release.accessManager}`);
 
     logger.info("======== Starting deployment of services ========");
