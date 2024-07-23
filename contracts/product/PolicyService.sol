@@ -178,9 +178,12 @@ contract PolicyService is
         // update referral counter 
         {
             IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
-            _distributionService.processReferral(
-                productInfo.distributionNftId, 
-                applicationInfo.referralId);
+
+            if (! productInfo.distributionNftId.eqz()) { // only call distribution service if a distribution component is connected to the product    
+                _distributionService.processReferral(
+                    productInfo.distributionNftId, 
+                    applicationInfo.referralId);
+            }
         }
 
         // log policy creation before interactions with token and policy holder
@@ -453,10 +456,12 @@ contract PolicyService is
             premium.productFeeVarAmount + premium.productFeeFixAmount);
 
         // update distribution fees and distributor commission and pool fees 
-        _distributionService.processSale(
-            distributionNftId, 
-            referralId, 
-            premium);
+        if (!distributionNftId.eqz()) { // only call distribution service if a distribution component is connected to the product
+            _distributionService.processSale(
+                distributionNftId, 
+                referralId, 
+                premium);
+        }
 
         // update pool and bundle fees 
         _poolService.processSale(

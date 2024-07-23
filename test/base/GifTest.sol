@@ -23,6 +23,7 @@ import {UFixed, UFixedLib} from "../../contracts/type/UFixed.sol";
 import {RoleId} from "../../contracts/type/RoleId.sol";
 // import {StateId, INITIAL, SCHEDULED, DEPLOYING, ACTIVE} from "../../contracts/type/StateId.sol";
 import {ACTIVE} from "../../contracts/type/StateId.sol";
+import {Timestamp} from "../../contracts/type/Timestamp.sol";
 
 import {IAccess} from "../../contracts/authorization/IAccess.sol";
 import {IAccessAdmin} from "../../contracts/authorization/IAccessAdmin.sol";
@@ -656,5 +657,9 @@ contract GifTest is GifDeployer {
 
     function assertEq(NftId nftId1, NftId nftId2, string memory message) internal {
         assertTrue(nftId1.eq(nftId2), message);
+    }
+
+    function assertEq(Timestamp ts1, Timestamp ts2, string memory message) internal {
+        assertEq(ts1.toInt(), ts2.toInt(), message);
     }
 }

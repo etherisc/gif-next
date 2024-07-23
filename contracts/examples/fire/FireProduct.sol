@@ -35,7 +35,9 @@ function ONE_YEAR() pure returns (Seconds) {
 contract FireProduct is 
     BasicProduct
 {
-    string[] _cities;
+    error ErrorFireProductCityUnknown(string cityName);
+
+    string[] private _cities;
     // map from city name to the RiskId
     mapping(string cityName => RiskId risk) private _riskMapping;
 
@@ -103,7 +105,7 @@ contract FireProduct is
         restricted()
     {
         if (_riskMapping[cityName].eqz()) {
-            revert(); // TODO: custom error
+            revert ErrorFireProductCityUnknown(cityName);
         }
 
         _updateRiskState(
@@ -119,7 +121,7 @@ contract FireProduct is
         restricted()
     {
         if (_riskMapping[cityName].eqz()) {
-            revert(); // TODO: custom error
+            revert ErrorFireProductCityUnknown(cityName);
         }
 
         _updateRiskState(
@@ -140,7 +142,7 @@ contract FireProduct is
     {
         RiskId riskId = _riskMapping[cityName];
         if (riskId.eqz()) {
-            revert(); // TODO: custom error
+            revert ErrorFireProductCityUnknown(cityName);
         }
         premiumAmount = calculatePremium( 
             sumInsured,
@@ -217,17 +219,14 @@ contract FireProduct is
         _riskMapping[cityName] = riskId;
     }
 
+    /// @dev Calling this method will lock the sum insured amount in the pool and activate the policy at the given time. 
+    /// It will also collect the tokens payment for the premium. An approval with the correct amount towards the TokenHandler of the product is therefor required. 
     function createPolicy(
-        NftId applicationNftId,
-        bool requirePremiumPayment,
+        NftId policyNftId,
         Timestamp activateAt
     ) public {
-        // TODO: implement createPolicy
-
-        // _createPolicy(applicationNftId, activateAt);
-        // if (requirePremiumPayment == true) {
-        //     _collectPremium(applicationNftId, activateAt);
-        // }
+        _createPolicy(policyNftId, activateAt);
+        _collectPremium(policyNftId, activateAt);
     }
 
     function decline(

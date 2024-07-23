@@ -2,13 +2,14 @@
 pragma solidity ^0.8.20;
 
 import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
-import {APPLIED, EXPECTED} from "../../../contracts/type/StateId.sol";
+import {APPLIED, COLLATERALIZED, PAID} from "../../../contracts/type/StateId.sol";
 import {Fee, FeeLib} from "../../../contracts/type/Fee.sol";
 import {ONE_YEAR} from "../../../contracts/examples/fire/FireProduct.sol";
 import {FireTestBase} from "./FireTestBase.t.sol";
 import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
 import {NftId} from "../../../contracts/type/NftId.sol";
 import {SecondsLib} from "../../../contracts/type/Seconds.sol";
+import {Timestamp, TimestampLib} from "../../../contracts/type/Timestamp.sol";
 
 // solhint-disable func-name-mixedcase
 contract FireProductTest is FireTestBase {
@@ -45,11 +46,6 @@ contract FireProductTest is FireTestBase {
         
         // 100'000 FireUSD
         Amount sumInsured = AmountLib.toAmount(100000 * 10**6);
-        Amount premium = fireProduct.calculatePremium(
-            cityName, 
-            sumInsured, 
-            ONE_YEAR(),
-            bundleNftId);
         
         // WHEN - apply for application is called
         policyNftId = fireProduct.createApplication(
@@ -75,15 +71,63 @@ contract FireProductTest is FireTestBase {
         assertEq(0, policy.closedAt.toInt());
     }
 
-    // TODO: implement this
-    // function test_FireProduct_createPolicy() public {
-        // assertTrue(EXPECTED().eq(instanceReader.getPremiumInfoState(policyNftId)));
-        // IPolicy.PremiumInfo memory premiumInfo = instanceReader.getPremiumInfo(policyNftId);
-        // assertEq((5000 + 100) * 10 ** 6, premiumInfo.fullPremiumAmount.toInt());
-        // assertEq((5000) * 10 ** 6, premiumInfo.netPremiumAmount.toInt());
-        // assertEq(0, premiumInfo.bundleFeeFixAmount.toInt());
-        // assertEq((5000) * 10 ** 6, premiumInfo.bundleFeeVarAmount.toInt());
-    // }
+    function test_FireProduct_createPolicy() public {
+        // GIVEN
+        vm.startPrank(customer);
+        
+        // 100'000 FireUSD
+        Amount sumInsured = AmountLib.toAmount(100000 * 10**6);
+        Amount premium = fireProduct.calculatePremium(
+            cityName, 
+            sumInsured, 
+            ONE_YEAR(),
+            bundleNftId);
+        
+        policyNftId = fireProduct.createApplication(
+            cityName, 
+            sumInsured, 
+            ONE_YEAR(), 
+            bundleNftId);
+
+        fireUSD.approve(address(fireProduct.getTokenHandler()), premium.toInt());
+        vm.stopPrank();
+
+        assertTrue(APPLIED().eq(instanceReader.getPolicyState(policyNftId)));
+        Timestamp now = TimestampLib.blockTimestamp();
+
+        uint256 tokenBalanceCustomerBefore = fireUSD.balanceOf(customer);
+        uint256 tokenBalancePoolBefore = fireUSD.balanceOf(firePool.getWallet());
+        Amount balancePoolBefore = instanceReader.getBalanceAmount(firePoolNftId);
+        Amount balanceBundleBefore = instanceReader.getBalanceAmount(bundleNftId);
+        Amount bundleFeeBefore = instanceReader.getFeeAmount(bundleNftId);
+        
+        // WHEN - policy is created
+        fireProduct.createPolicy(policyNftId, now);
+
+        // THEN - check created policy
+        assertTrue(COLLATERALIZED().eq(instanceReader.getPolicyState(policyNftId)));
+
+        IPolicy.PolicyInfo memory policy = instanceReader.getPolicyInfo(policyNftId);
+        assertEq(now, policy.activatedAt, "policy.activatedAt mismatch");
+        assertEq(now.addSeconds(ONE_YEAR()), policy.expiredAt, "policy.expiredAt mismatch");
+        assertEq(TimestampLib.zero(), policy.closedAt, "policy.closedAt mismatch");
+
+        // check premium state is PAID (product uses immediate payment) and then check the premium values
+        assertTrue(PAID().eq(instanceReader.getPremiumInfoState(policyNftId)));
+        IPolicy.PremiumInfo memory premiumInfo = instanceReader.getPremiumInfo(policyNftId);
+        assertEq((5000 + 100) * 10 ** 6, premiumInfo.fullPremiumAmount.toInt());
+        assertEq(premium, premiumInfo.fullPremiumAmount, "premiumInfo.fullPremiumAmount mismatch");
+        assertEq((5000) * 10 ** 6, premiumInfo.netPremiumAmount.toInt());
+        assertEq(0, premiumInfo.bundleFeeFixAmount.toInt());
+        assertEq((100) * 10 ** 6, premiumInfo.bundleFeeVarAmount.toInt());
+
+        // ensure tokens were transferred and balances updates
+        assertEq(tokenBalanceCustomerBefore - premium.toInt(), fireUSD.balanceOf(customer), "token balance of customer mismatch");
+        assertEq(tokenBalancePoolBefore + premium.toInt(), fireUSD.balanceOf(firePool.getWallet()), "token balance of pool mismatch");
+        assertEq(balancePoolBefore + premium, instanceReader.getBalanceAmount(firePoolNftId), "pool balance mismatch");
+        assertEq(balanceBundleBefore + premium, instanceReader.getBalanceAmount(bundleNftId), "bundle balance mismatch");
+        assertEq(bundleFeeBefore + AmountLib.toAmount(100 * 10 ** 6), instanceReader.getFeeAmount(bundleNftId), "bundle fee mismatch");
+    }
 
     function _createInitialBundle() internal {
         vm.startPrank(investor);
