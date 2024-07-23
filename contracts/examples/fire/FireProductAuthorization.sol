@@ -25,6 +25,7 @@ contract FireProductAuthorization
         // authorize public role (open access to any account, only allows to lock target)
         functions = _authorizeForTarget(getTargetName(), PUBLIC_ROLE());
         _authorize(functions, FireProduct.createApplication.selector, "createApplication");
+        _authorize(functions, FireProduct.submitClaim.selector, "submitClaim");
 
         functions = _authorizeForTarget(getTargetName(), PRODUCT_OWNER_ROLE());
         _authorize(functions, FireProduct.createPolicy.selector, "createPolicy");

@@ -9,6 +9,7 @@ import {DamageLevel, DamageLevelLib, DAMAGE_SMALL, DAMAGE_MEDIUM, DAMAGE_HIGH} f
 import {IAuthorization} from "../../authorization/IAuthorization.sol";
 import {IPolicy} from "../../instance/module/IPolicy.sol";
 import {NftId} from "../../type/NftId.sol";
+import {PayoutId} from "../../type/PayoutId.sol";
 import {ReferralLib} from "../../type/Referral.sol";
 import {RiskId, RiskIdLib} from "../../type/RiskId.sol";
 import {Seconds} from "../../type/Seconds.sol";
@@ -317,7 +318,7 @@ contract FireProduct is
         public 
         restricted()
         onlyNftOwner(policyNftId)
-        returns (ClaimId claimId) 
+        returns (ClaimId claimId, PayoutId payoutId) 
     {
         IPolicy.PolicyInfo memory policyInfo = _getInstanceReader().getPolicyInfo(policyNftId);
         _checkClaimConditions(policyNftId, fireId, policyInfo);
@@ -327,9 +328,10 @@ contract FireProduct is
         Amount claimAmount = _getClaimAmount(policyInfo, fire);
         
         claimId = _submitClaim(policyNftId, claimAmount, "");
+        _confirmClaim(policyNftId, claimId, claimAmount, "");
 
-        // TODO: if yes, process payout and close claim
-        // TODO: if no, decline claim
+        payoutId = _createPayout(policyNftId, claimId, claimAmount, "");
+        _processPayout(policyNftId, payoutId);
     }
 
     function _checkClaimConditions(
@@ -375,7 +377,7 @@ contract FireProduct is
         returns (Amount)
     {
         if (fire.damageLevel.eq(DAMAGE_SMALL())) {
-            return policyInfo.sumInsuredAmount.multiplyWith(UFixedLib.toUFixed(2, -2));
+            return policyInfo.sumInsuredAmount.multiplyWith(UFixedLib.toUFixed(25, -2));
         } else if (fire.damageLevel.eq(DAMAGE_MEDIUM())) {
             return policyInfo.sumInsuredAmount.multiplyWith(UFixedLib.toUFixed(5, -2));
         } else if (fire.damageLevel.eq(DAMAGE_HIGH())) {
@@ -384,49 +386,5 @@ contract FireProduct is
             revert ErrorFireProductUnknownDamageLevel(fire.damageLevel);
         }
     }
-
-    // TODO: no longer needed? -> remove
-    // function confirmClaim(
-    //     NftId policyNftId,
-    //     ClaimId claimId,
-    //     Amount confirmedAmount,
-    //     bytes memory processData
-    // ) public {
-    //     // TODO: implement confirmClaim
-    //     // _confirmClaim(policyNftId, claimId, confirmedAmount, processData);
-    // }
-
-    // TODO: no longer needed? -> remove
-    // function declineClaim(
-    //     NftId policyNftId,
-    //     ClaimId claimId,
-    //     bytes memory processData
-    // ) public {
-    //     // TODO: implement declineClaim
-    //     // _declineClaim(policyNftId, claimId, processData);
-    // }
-
-    // TODO: no longer needed? -> remove
-    // function createPayout(
-    //     NftId policyNftId,
-    //     ClaimId claimId,
-    //     Amount amount,
-    //     bytes memory data
-    // ) public returns (PayoutId) {
-    //     return _createPayout(policyNftId, claimId, amount, data);
-    // }
-
-    // TODO: add method to report fire per city with a percentage of payout
-
-    
-    // TODO: no longer needed? -> remove
-    // function processPayout(
-    //     NftId policyNftId,
-    //     PayoutId payoutId
-    // ) public {
-        // TODO: implement process all pending payouts for a risk - arguments cityname and payout percentage
-    //     _processPayout(policyNftId, payoutId);
-    // }
-
 
 }

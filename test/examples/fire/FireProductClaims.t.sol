@@ -30,14 +30,6 @@ contract FireProductClaimsTest is FireTestBase {
 
     function test_FireProductClaims_reportFire() public {
         // GIVEN
-        // TODO: for later
-        // Amount sumInsured = AmountLib.toAmount(100000 * 10 ** 6);
-        // policyNftId = _preparePolicy(
-        //     cityName, 
-        //     sumInsured, 
-        //     ONE_YEAR(), 
-        //     now,
-        //     bundleNftId);
         Timestamp now = TimestampLib.blockTimestamp();
         uint256 fireId = 42;
         vm.startPrank(fireProductOwner);
@@ -117,7 +109,47 @@ contract FireProductClaimsTest is FireTestBase {
         fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), now);
     }
 
+    function test_FireProductClaims_submitClaim() public {
+        // GIVEN
+        Amount sumInsured = AmountLib.toAmount(100000 * 10 ** 6);
+        Timestamp now = TimestampLib.blockTimestamp();
+        policyNftId = _preparePolicy(
+            customer,
+            cityName, 
+            sumInsured, 
+            ONE_YEAR(), 
+            now,
+            bundleNftId);
+        
+        vm.startPrank(fireProductOwner);
+        uint256 fireId = 42;
+        fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), now);
+        vm.stopPrank();
+        
+        vm.startPrank(customer);
+
+        // WHEN - submit claim
+        fireProduct.submitClaim(policyNftId, fireId);
+
+        // THEN
+        // TODO: validate claim and payout
+        // TODO: validate policy state and info
+        // TODO: validate token transfers and balances
+    }
+
+    // TODO: test submit claim with MEDIUM damage
+    // TODO: test submit claim with LARGE damage
+    // TODO: test submit with two fires
+    // TODO: test submit with two fires, first small, second large
+    // TODO: test submitClaim with not nft owner
+    // TODO: test submitClaim with invalid fire id
+    // TODO: test submitClaim but already claimed
+    // TODO: test submitClaim but policy closed
+    // TODO: test submitClaim but not active yet
+    // TODO: test submitClaim but already expired
+
     function _preparePolicy(
+        address account,
         string memory cityName,
         Amount sumInsured,
         Seconds duration,
@@ -128,7 +160,7 @@ contract FireProductClaimsTest is FireTestBase {
         returns (NftId policyNftId)
     {
         // apply for policy
-        vm.startPrank(customer);
+        vm.startPrank(account);
         Amount premium = fireProduct.calculatePremium(
             cityName, 
             sumInsured, 

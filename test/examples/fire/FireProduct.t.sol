@@ -164,11 +164,6 @@ contract FireProductTest is FireTestBase {
         
         // 100'000 FireUSD
         Amount sumInsured = AmountLib.toAmount(100000 * 10**6);
-        Amount premium = fireProduct.calculatePremium(
-            cityName, 
-            sumInsured, 
-            ONE_YEAR(),
-            bundleNftId);
         
         policyNftId = fireProduct.createApplication(
             cityName, 
@@ -192,11 +187,6 @@ contract FireProductTest is FireTestBase {
         
         // 100'000 FireUSD
         Amount sumInsured = AmountLib.toAmount(100000 * 10**6);
-        Amount premium = fireProduct.calculatePremium(
-            cityName, 
-            sumInsured, 
-            ONE_YEAR(),
-            bundleNftId);
         
         policyNftId = fireProduct.createApplication(
             cityName, 
@@ -393,7 +383,6 @@ contract FireProductTest is FireTestBase {
 
         // forward time by 361 days
         vm.warp(361 * 24 * 60 * 60); 
-        Timestamp threeHundertSixtyOneDaysLater = TimestampLib.blockTimestamp();
         
         vm.stopPrank();
 
@@ -407,10 +396,7 @@ contract FireProductTest is FireTestBase {
         // WHEN 
         fireProduct.close(policyNftId);
     }
-
-    // TODO: test with open claim 
     
-
     function _createInitialBundle() internal {
         vm.startPrank(investor);
         Fee memory bundleFee = FeeLib.percentageFee(2);
