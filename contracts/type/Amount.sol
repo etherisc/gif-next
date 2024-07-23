@@ -11,7 +11,9 @@ using {
     eqAmount as ==,
     nqAmount as !=,
     ltAmount as <,
+    ltAmount as <=,
     gtAmount as >,
+    gteAmount as >=,
     AmountLib.add,
     AmountLib.eq,
     AmountLib.eqz,
@@ -43,8 +45,16 @@ function ltAmount(Amount a, Amount b) pure returns (bool) {
     return AmountLib.lt(a, b);
 }
 
+function lteAmount(Amount a, Amount b) pure returns (bool) {
+    return AmountLib.lte(a, b);
+}
+
 function gtAmount(Amount a, Amount b) pure returns (bool) {
     return AmountLib.gt(a, b);
+}
+
+function gteAmount(Amount a, Amount b) pure returns (bool) {
+    return AmountLib.gte(a, b);
 }
 
 library AmountLib {
@@ -82,6 +92,11 @@ library AmountLib {
     /// @dev return true if amount a1 is less than a2
     function lt(Amount a1, Amount a2) public pure returns (bool) {
         return Amount.unwrap(a1) < Amount.unwrap(a2);
+    }
+
+    /// @dev return true if amount a1 is less or equal than a2
+    function lte(Amount a1, Amount a2) public pure returns (bool) {
+        return Amount.unwrap(a1) <= Amount.unwrap(a2);
     }
 
     /// @dev return true if amount a1 is greater than a2

@@ -5,14 +5,17 @@ import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessMana
 
 import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
 import {APPLIED, CLOSED, COLLATERALIZED, DECLINED, PAID} from "../../../contracts/type/StateId.sol";
+import {ClaimId} from "../../../contracts/type/ClaimId.sol";
 import {DAMAGE_SMALL} from "../../../contracts/examples/fire/DamageLevel.sol";
 import {Fee, FeeLib} from "../../../contracts/type/Fee.sol";
 import {FireProduct, ONE_YEAR} from "../../../contracts/examples/fire/FireProduct.sol";
 import {FireTestBase} from "./FireTestBase.t.sol";
 import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
 import {NftId} from "../../../contracts/type/NftId.sol";
+import {PayoutId} from "../../../contracts/type/PayoutId.sol";
 import {Seconds, SecondsLib} from "../../../contracts/type/Seconds.sol";
 import {Timestamp, TimestampLib} from "../../../contracts/type/Timestamp.sol";
+import {UFixedLib} from "../../../contracts/type/UFixed.sol";
 
 // solhint-disable func-name-mixedcase
 contract FireProductClaimsTest is FireTestBase {
@@ -128,13 +131,52 @@ contract FireProductClaimsTest is FireTestBase {
         
         vm.startPrank(customer);
 
+        uint256 customerTokenBalanceBefore = fireUSD.balanceOf(customer);
+        uint256 poolTokenBalanceBefore = fireUSD.balanceOf(firePool.getWallet());
+        Amount poolBalanceBefore = instanceReader.getBalanceAmount(firePoolNftId);
+        Amount bundleBalanceBefore = instanceReader.getBalanceAmount(bundleNftId);
+
         // WHEN - submit claim
-        fireProduct.submitClaim(policyNftId, fireId);
+        Timestamp claimSubmittedAt = TimestampLib.blockTimestamp();
+        (ClaimId claimId, PayoutId payoutId) = fireProduct.submitClaim(policyNftId, fireId);
 
         // THEN
-        // TODO: validate claim and payout
-        // TODO: validate policy state and info
+        Amount expectedClaimAmount = sumInsured.multiplyWith(UFixedLib.toUFixed(25, -2));
+
+        // validate policy state and info
+        assertTrue(COLLATERALIZED().eq(instanceReader.getPolicyState(policyNftId)));
+        IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
+        assertEq(1, policyInfo.claimsCount);
+        assertEq(0, policyInfo.openClaimsCount);
+        assertEq(expectedClaimAmount, policyInfo.claimAmount, "claimAmount mismatch");
+        assertEq(expectedClaimAmount, policyInfo.payoutAmount, "payoutAmount mismatch");
+        
+        // validate claim state and info
+        assertTrue(CLOSED().eq(instanceReader.getClaimState(policyNftId, claimId)));
+        IPolicy.ClaimInfo memory claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
+        assertEq(expectedClaimAmount, claimInfo.claimAmount, "claimAmount mismatch");
+        assertEq(expectedClaimAmount, claimInfo.paidAmount, "paidAmount mismatch");
+        assertEq(1, claimInfo.payoutsCount);
+        assertEq(0, claimInfo.openPayoutsCount);
+        // TODO: this is broken ????
+        // assertEq(claimSubmittedAt, claimInfo.closedAt, "closedAt mismatch");
+
+        // validate payout state and info
+        assertTrue(PAID().eq(instanceReader.getPayoutState(policyNftId, payoutId)));
+        IPolicy.PayoutInfo memory payoutInfo = instanceReader.getPayoutInfo(policyNftId, payoutId);
+        assertTrue(claimId == payoutInfo.claimId, "claimId mismatch");
+        assertEq(expectedClaimAmount, payoutInfo.amount, "amount mismatch");
+        // TODO: fix this
+        // assertEq(customer, payoutInfo.beneficiary, "beneficiary mismatch");
+        assertEq(claimSubmittedAt, payoutInfo.paidAt, "paidAt mismatch");
+
         // TODO: validate token transfers and balances
+        assertEq(customerTokenBalanceBefore + expectedClaimAmount.toInt(), fireUSD.balanceOf(customer), "customerTokenBalance mismatch");
+        assertEq(poolTokenBalanceBefore - expectedClaimAmount.toInt(), fireUSD.balanceOf(firePool.getWallet()), "poolTokenBalance mismatch");
+        // TODO: fix this
+        // assertEq(poolBalanceBefore - expectedClaimAmount, instanceReader.getBalanceAmount(firePoolNftId), "poolBalance mismatch");
+        // TODO: fix this
+        // assertEq(bundleBalanceBefore - expectedClaimAmount, instanceReader.getBalanceAmount(bundleNftId), "bundleBalance mismatch");
     }
 
     // TODO: test submit claim with MEDIUM damage

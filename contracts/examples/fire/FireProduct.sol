@@ -330,6 +330,7 @@ contract FireProduct is
         Amount maxPayoutRemaining = policyInfo.sumInsuredAmount - policyInfo.payoutAmount;
 
         // if payout is higher than the remaining maximum payout, then claim what is remaining
+        // TODO: leave claim amount as is and only confirm/payout reduced amount
         if (maxPayoutRemaining < claimAmount) {
             claimAmount = maxPayoutRemaining;
         }
@@ -340,7 +341,11 @@ contract FireProduct is
         payoutId = _createPayout(policyNftId, claimId, claimAmount, "");
         _processPayout(policyNftId, payoutId);
 
-        // TODO: close policy if sum insured is reached
+        policyInfo = _getInstanceReader().getPolicyInfo(policyNftId);
+
+        if (policyInfo.payoutAmount >= policyInfo.sumInsuredAmount) {
+            close(policyNftId);
+        }
     }
 
     function _checkClaimConditions(
