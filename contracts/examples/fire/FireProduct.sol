@@ -224,7 +224,10 @@ contract FireProduct is
     function createPolicy(
         NftId policyNftId,
         Timestamp activateAt
-    ) public {
+    ) 
+        public 
+        restricted()
+    {
         _createPolicy(policyNftId, activateAt);
         _collectPremium(policyNftId, activateAt);
     }

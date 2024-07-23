@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
+
 import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
 import {APPLIED, COLLATERALIZED, PAID} from "../../../contracts/type/StateId.sol";
 import {Fee, FeeLib} from "../../../contracts/type/Fee.sol";
@@ -101,6 +103,8 @@ contract FireProductTest is FireTestBase {
         Amount balanceBundleBefore = instanceReader.getBalanceAmount(bundleNftId);
         Amount bundleFeeBefore = instanceReader.getFeeAmount(bundleNftId);
         
+        vm.startPrank(fireProductOwner);
+
         // WHEN - policy is created
         fireProduct.createPolicy(policyNftId, now);
 
@@ -127,6 +131,29 @@ contract FireProductTest is FireTestBase {
         assertEq(balancePoolBefore + premium, instanceReader.getBalanceAmount(firePoolNftId), "pool balance mismatch");
         assertEq(balanceBundleBefore + premium, instanceReader.getBalanceAmount(bundleNftId), "bundle balance mismatch");
         assertEq(bundleFeeBefore + AmountLib.toAmount(100 * 10 ** 6), instanceReader.getFeeAmount(bundleNftId), "bundle fee mismatch");
+    }
+
+    function test_FireProduct_createPolicy_invalidRole() public {
+        // GIVEN
+        vm.startPrank(customer);
+        
+        // 100'000 FireUSD
+        Amount sumInsured = AmountLib.toAmount(100000 * 10**6);
+        policyNftId = fireProduct.createApplication(
+            cityName, 
+            sumInsured, 
+            ONE_YEAR(), 
+            bundleNftId);
+
+        Timestamp now = TimestampLib.blockTimestamp();
+
+        // THEN - expect revert for wrong role
+        vm.expectRevert(abi.encodeWithSelector(
+            IAccessManaged.AccessManagedUnauthorized.selector, 
+            customer));
+
+        // WHEN - policy is created
+        fireProduct.createPolicy(policyNftId, now);
     }
 
     function _createInitialBundle() internal {
