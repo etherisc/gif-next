@@ -518,7 +518,7 @@ contract ClaimService is
     {
         NftId poolNftId = instanceReader.getProductInfo(productNftId).poolNftId;
         if (instanceReader.getPoolInfo(poolNftId).isProcessingConfirmedClaims) {
-            address poolAddress = getRegistry().getObjectInfo(poolNftId).objectAddress;
+            address poolAddress = getRegistry().getObjectAddress(poolNftId);
             IPoolComponent(poolAddress).processConfirmedClaim(policyNftId, claimId, amount);
         }
     }

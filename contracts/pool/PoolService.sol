@@ -8,12 +8,14 @@ import {IComponentService} from "../shared/IComponentService.sol";
 import {IInstance} from "../instance/IInstance.sol";
 import {IInstanceService} from "../instance/IInstanceService.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
+import {IProductComponent} from "../product/IProductComponent.sol";
 import {IPoolService} from "./IPoolService.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegistryService} from "../registry/IRegistryService.sol";
 import {IStaking} from "../staking/IStaking.sol";
 
 import {Amount, AmountLib} from "../type/Amount.sol";
+import {ClaimId} from "../type/ClaimId.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType, POOL, BUNDLE, COMPONENT, INSTANCE, REGISTRY} from "../type/ObjectType.sol";
@@ -64,6 +66,7 @@ contract PoolService is
         _registerInterface(type(IPoolService).interfaceId);
     }
 
+
     /// @inheritdoc IPoolService
     function setMaxBalanceAmount(Amount maxBalanceAmount)
         external
@@ -79,6 +82,7 @@ contract PoolService is
 
         emit LogPoolServiceMaxBalanceAmountUpdated(poolNftId, previousMaxBalanceAmount, maxBalanceAmount);
     }
+
 
     function setBundleOwnerRole(RoleId bundleOwnerRole)
         external
@@ -100,6 +104,7 @@ contract PoolService is
 
         emit LogPoolServiceBundleOwnerRoleSet(poolNftId, bundleOwnerRole);
     }
+
 
     /// @inheritdoc IPoolService
     function createBundle(
@@ -127,6 +132,7 @@ contract PoolService is
         emit LogPoolServiceBundleCreated(instance.getNftId(), poolNftId, bundleNftId);
     }
 
+
     function _getStakingFee(InstanceReader instanceReader, NftId poolNftId)
         internal
         virtual
@@ -136,6 +142,7 @@ contract PoolService is
         NftId productNftId = instanceReader.getComponentInfo(poolNftId).productNftId;
         return instanceReader.getProductInfo(productNftId).stakingFee;
     }
+
 
     function closeBundle(NftId bundleNftId)
         external
@@ -165,6 +172,39 @@ contract PoolService is
         }
     }
 
+
+    /// @inheritdoc IPoolService
+    function processFundedClaim(
+        NftId policyNftId, 
+        ClaimId claimId, 
+        Amount availableAmount
+    ) 
+        external
+        virtual
+    {
+        (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
+        InstanceReader instanceReader = instance.getInstanceReader();
+        NftId productNftId = instanceReader.getComponentInfo(poolNftId).productNftId;
+
+        // check policy matches with calling pool
+        IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
+        if(policyInfo.productNftId != productNftId) {
+            revert ErrorPoolServicePolicyPoolMismatch(
+                policyNftId, 
+                policyInfo.productNftId, 
+                productNftId);
+        }
+
+        emit LogPoolServiceProcessFundedClaim(policyNftId, claimId, availableAmount);
+
+        // callback to product component if applicable
+        if (instanceReader.getProductInfo(productNftId).isProcessingFundedClaims) {
+            address productAddress = getRegistry().getObjectAddress(productNftId);
+            IProductComponent(productAddress).processFundedClaim(policyNftId, claimId, availableAmount);
+        }
+    }
+
+
     /// @inheritdoc IPoolService
     function stake(NftId bundleNftId, Amount amount) 
         external 
@@ -187,6 +227,7 @@ contract PoolService is
                 revert ErrorPoolServiceMaxBalanceAmountExceeded(poolNftId, poolInfo.maxBalanceAmount, currentPoolBalance, amount);
             }
         }
+
 
         // calculate fees
         Amount feeAmount;

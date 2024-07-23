@@ -128,6 +128,8 @@ interface IRegistry is IERC165 {
 
     function getObjectInfo(NftId nftId) external view returns (ObjectInfo memory info);
 
+    function getObjectAddress(NftId nftId) external view returns (address objectAddress);
+
     /// @dev Returns the object info for the specified object address.
     //  MUST not be used with chain registry address (resides on different chan id)
     function getObjectInfo(address object) external view returns (ObjectInfo memory info);

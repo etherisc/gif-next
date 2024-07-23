@@ -111,7 +111,6 @@ abstract contract ComponentVerifyingService is
     /// @dev returns an IInstance contract reference for the specified instance nft id
     function _getInstance(NftId instanceNftId) internal view returns (IInstance) {
         return IInstance(
-            getRegistry().getObjectInfo(
-                instanceNftId).objectAddress);
+            getRegistry().getObjectAddress(instanceNftId));
     }
 }

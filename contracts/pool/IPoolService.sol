@@ -2,14 +2,15 @@
 pragma solidity ^0.8.20;
 
 import {Amount} from "../type/Amount.sol";
+import {ClaimId} from "../type/ClaimId.sol";
 import {Fee} from "../type/Fee.sol";
-import {NftId} from "../type/NftId.sol";
-import {PayoutId} from "../type/PayoutId.sol";
 import {IBundle} from "../instance/module/IBundle.sol";
 import {IInstance} from "../instance/IInstance.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
 import {IService} from "../shared/IService.sol";
+import {NftId} from "../type/NftId.sol";
+import {PayoutId} from "../type/PayoutId.sol";
 import {RoleId} from "../type/RoleId.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {StateId} from "../type/StateId.sol";
@@ -26,6 +27,9 @@ interface IPoolService is IService {
     event LogPoolServiceBundleStaked(NftId instanceNftId, NftId poolNftId, NftId bundleNftId, Amount amount, Amount netAmount);
     event LogPoolServiceBundleUnstaked(NftId instanceNftId, NftId poolNftId, NftId bundleNftId, Amount amount);
 
+    event LogPoolServiceProcessFundedClaim(NftId policyNftId, ClaimId claimId, Amount availableAmount);
+
+    error ErrorPoolServicePolicyPoolMismatch(NftId policyNftId, NftId productNftId, NftId expectedProductNftId);
     error ErrorPoolServiceBundleOwnerRoleAlreadySet(NftId poolNftId);
     error ErrorPoolServiceInvalidTransferAmount(Amount expectedAmount, Amount actualAmount);
     error ErrorPoolServiceBundlePoolMismatch(NftId bundleNftId, NftId poolNftId);
@@ -110,6 +114,11 @@ interface IPoolService is IService {
     /// bundle fees and remaining capital (after deduction of the performance fee) will be transferred to the bundle owner
     /// may only be called by registered and unlocked pool components
     function closeBundle(NftId bundleNftId) external;
+
+
+    /// @dev Informs product about available funds to process a confirmed claim.
+    /// The function triggers a callback to the product component when the product's property isProcessingFundedClaims is set.
+    function processFundedClaim(NftId policyNftId, ClaimId claimId, Amount availableAmount) external;
 
 
     /// @dev Fund the specified pool wallet with the provided amount.

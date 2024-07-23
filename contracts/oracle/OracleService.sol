@@ -217,7 +217,7 @@ contract OracleService is
 
         // call oracle component
         // TODO add check that oracle is active?
-        address oracleAddress = getRegistry().getObjectInfo(request.oracleNftId).objectAddress;
+        address oracleAddress = getRegistry().getObjectAddress(request.oracleNftId);
         IOracleComponent(oracleAddress).cancel(requestId);
 
         emit LogOracleServiceRequestCancelled(requestId, requesterNftId);
@@ -270,7 +270,7 @@ contract OracleService is
         returns(IInstance instance)
     {
         NftId instanceNftId = getRegistry().getObjectInfo(componentNftId).parentNftId;
-        address instanceAddress = getRegistry().getObjectInfo(instanceNftId).objectAddress;
+        address instanceAddress = getRegistry().getObjectAddress(instanceNftId);
         return IInstance(instanceAddress);
     }
 

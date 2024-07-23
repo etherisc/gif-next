@@ -193,8 +193,7 @@ contract InstanceService is
         NftId instanceNftId = registry.getObjectInfo(componentAddress).parentNftId;
 
         IInstance instance = IInstance(
-            registry.getObjectInfo(
-                instanceNftId).objectAddress);
+            registry.getObjectAddress(instanceNftId));
 
         // no revert in case already locked
         // TODO refactor/implement
