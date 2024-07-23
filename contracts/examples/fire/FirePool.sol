@@ -63,7 +63,6 @@ contract FirePool is
         returns(NftId bundleNftId, Amount netStakedAmount)
     {
         address owner = msg.sender;
-        Amount netStakedAmount;
         bundleNftId = _createBundle(
             owner,
             fee,

@@ -5,7 +5,7 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
-import {AmountLib} from "../../contracts/type/Amount.sol";
+import {Amount, AmountLib} from "../../contracts/type/Amount.sol";
 import {NftId} from "../../contracts/type/NftId.sol";
 import {SecondsLib} from "../../contracts/type/Seconds.sol";
 import {Fee, FeeLib} from "../../contracts/type/Fee.sol";
@@ -648,5 +648,13 @@ contract GifTest is GifDeployer {
 
         console.log("");
         // solhint-enable
+    }
+
+    function assertEq(Amount amount1, Amount amount2, string memory message) internal {
+        assertEq(amount1.toInt(), amount2.toInt(), message);
+    }
+
+    function assertEq(NftId nftId1, NftId nftId2, string memory message) internal {
+        assertTrue(nftId1.eq(nftId2), message);
     }
 }
