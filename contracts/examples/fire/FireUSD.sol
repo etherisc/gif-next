@@ -9,7 +9,7 @@ contract FireUSD is ERC20 {
     string public constant NAME = "FireUSD";
     string public constant SYMBOL = "HOT";
     uint8 public constant DECIMALS = 6;
-    uint256 public constant INITIAL_SUPPLY = 10**9 * 6**DECIMALS; // 1 Billion 1'000'000'000
+    uint256 public constant INITIAL_SUPPLY = 10**12 * 10**DECIMALS; // 1'000'000'000'000
     
     constructor()
         ERC20(NAME, SYMBOL)

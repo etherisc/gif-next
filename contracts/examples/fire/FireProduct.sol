@@ -83,6 +83,18 @@ contract FireProduct is
             pool,
             address(0));  // no distribution
     }
+    
+    function cities() public view returns (uint256) {
+        return _cities.length;
+    }
+
+    function city(uint256 idx) public view returns (string memory) {
+        return _cities[idx];
+    }
+
+    function riskId(string memory cityName) public view returns (RiskId) {
+        return _riskMapping[cityName];
+    }
 
     function pauseCity(
         string memory cityName
@@ -158,7 +170,6 @@ contract FireProduct is
     }
 
     function createApplication(
-        address applicationOwner,
         string memory cityName,
         Amount sumInsured,
         Seconds lifetime,

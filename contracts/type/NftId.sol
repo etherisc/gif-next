@@ -14,6 +14,7 @@ using {
     NftIdLib.toInt,
     NftIdLib.gtz,
     NftIdLib.eqz,
+    NftIdLib.eq,
     NftIdLib.toKeyId,
     NftIdLib.toKey32
 } for NftId global;
