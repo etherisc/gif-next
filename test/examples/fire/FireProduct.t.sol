@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 
 import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
-import {APPLIED, COLLATERALIZED, DECLINED, PAID} from "../../../contracts/type/StateId.sol";
+import {APPLIED, CLOSED, COLLATERALIZED, DECLINED, PAID} from "../../../contracts/type/StateId.sol";
 import {Fee, FeeLib} from "../../../contracts/type/Fee.sol";
 import {ONE_YEAR} from "../../../contracts/examples/fire/FireProduct.sol";
 import {FireTestBase} from "./FireTestBase.t.sol";
@@ -308,6 +308,107 @@ contract FireProductTest is FireTestBase {
         vm.startPrank(customer);
         fireProduct.expire(policyNftId, hundertDaysLater);
     }
+
+    function test_FireProduct_close() public {
+        // GIVEN
+        vm.startPrank(customer);
+        
+        // 100'000 FireUSD
+        Amount sumInsured = AmountLib.toAmount(100000 * 10**6);
+        Amount premium = fireProduct.calculatePremium(
+            cityName, 
+            sumInsured, 
+            ONE_YEAR(),
+            bundleNftId);
+        
+        policyNftId = fireProduct.createApplication(
+            cityName, 
+            sumInsured, 
+            ONE_YEAR(), 
+            bundleNftId);
+
+        fireUSD.approve(address(fireProduct.getTokenHandler()), premium.toInt());
+        vm.stopPrank();
+
+        assertTrue(APPLIED().eq(instanceReader.getPolicyState(policyNftId)));
+        
+        Timestamp now = TimestampLib.blockTimestamp();
+
+        vm.startPrank(fireProductOwner);
+
+        fireProduct.createPolicy(policyNftId, now);
+
+        assertTrue(COLLATERALIZED().eq(instanceReader.getPolicyState(policyNftId)));
+
+        // forward time by 361 days
+        vm.warp(361 * 24 * 60 * 60); 
+        Timestamp threeHundertSixtyOneDaysLater = TimestampLib.blockTimestamp();
+        
+        // WHEN 
+        fireProduct.close(policyNftId);
+
+        // THEN - check closed policy
+        assertTrue(CLOSED().eq(instanceReader.getPolicyState(policyNftId)));
+
+        IPolicy.PolicyInfo memory policy = instanceReader.getPolicyInfo(policyNftId);
+        assertEq(now, policy.activatedAt, "policy.activatedAt mismatch");
+        assertEq(now.addSeconds(ONE_YEAR()), policy.expiredAt, "policy.expiredAt mismatch");
+        assertEq(threeHundertSixtyOneDaysLater, policy.closedAt, "policy.closedAt mismatch");
+
+        // ensure tokens were transferred and balances updates
+        assertEq(AmountLib.zero(), instanceReader.getLockedAmount(bundleNftId), "bundle locked amount mismatch");
+    }
+
+    function test_FireProduct_close_invalidRole() public {
+        // GIVEN
+        vm.startPrank(customer);
+        
+        // 100'000 FireUSD
+        Amount sumInsured = AmountLib.toAmount(100000 * 10**6);
+        Amount premium = fireProduct.calculatePremium(
+            cityName, 
+            sumInsured, 
+            ONE_YEAR(),
+            bundleNftId);
+        
+        policyNftId = fireProduct.createApplication(
+            cityName, 
+            sumInsured, 
+            ONE_YEAR(), 
+            bundleNftId);
+
+        fireUSD.approve(address(fireProduct.getTokenHandler()), premium.toInt());
+        vm.stopPrank();
+
+        assertTrue(APPLIED().eq(instanceReader.getPolicyState(policyNftId)));
+        
+        Timestamp now = TimestampLib.blockTimestamp();
+
+        vm.startPrank(fireProductOwner);
+
+        fireProduct.createPolicy(policyNftId, now);
+
+        assertTrue(COLLATERALIZED().eq(instanceReader.getPolicyState(policyNftId)));
+
+        // forward time by 361 days
+        vm.warp(361 * 24 * 60 * 60); 
+        Timestamp threeHundertSixtyOneDaysLater = TimestampLib.blockTimestamp();
+        
+        vm.stopPrank();
+
+        vm.startPrank(customer);
+
+        // THEN - expect revert for wrong role
+        vm.expectRevert(abi.encodeWithSelector(
+            IAccessManaged.AccessManagedUnauthorized.selector, 
+            customer));
+
+        // WHEN 
+        fireProduct.close(policyNftId);
+    }
+
+    // TODO: test with open claim 
+    
 
     function _createInitialBundle() internal {
         vm.startPrank(investor);

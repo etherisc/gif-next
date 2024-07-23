@@ -30,6 +30,7 @@ contract FireProductAuthorization
         _authorize(functions, FireProduct.createPolicy.selector, "createPolicy");
         _authorize(functions, FireProduct.decline.selector, "decline");
         _authorize(functions, FireProduct.expire.selector, "expire");
+        _authorize(functions, FireProduct.close.selector, "close");
     }
 
 }

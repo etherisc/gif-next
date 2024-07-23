@@ -254,8 +254,7 @@ contract FireProduct is
         public 
         restricted()
     {
-        // TODO: implement close
-        // _close(policyNftId);
+        _close(policyNftId);
     }
 
     function submitClaim(
