@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 
 import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
-import {APPLIED, COLLATERALIZED, PAID} from "../../../contracts/type/StateId.sol";
+import {APPLIED, COLLATERALIZED, DECLINED, PAID} from "../../../contracts/type/StateId.sol";
 import {Fee, FeeLib} from "../../../contracts/type/Fee.sol";
 import {ONE_YEAR} from "../../../contracts/examples/fire/FireProduct.sol";
 import {FireTestBase} from "./FireTestBase.t.sol";
@@ -154,6 +154,61 @@ contract FireProductTest is FireTestBase {
 
         // WHEN - policy is created
         fireProduct.createPolicy(policyNftId, now);
+    }
+
+    function test_FireProduct_decline() public {
+        // GIVEN
+        vm.startPrank(customer);
+        
+        // 100'000 FireUSD
+        Amount sumInsured = AmountLib.toAmount(100000 * 10**6);
+        Amount premium = fireProduct.calculatePremium(
+            cityName, 
+            sumInsured, 
+            ONE_YEAR(),
+            bundleNftId);
+        
+        policyNftId = fireProduct.createApplication(
+            cityName, 
+            sumInsured, 
+            ONE_YEAR(), 
+            bundleNftId);
+        vm.stopPrank();
+
+        // WHEN
+        vm.startPrank(fireProductOwner);
+        fireProduct.decline(policyNftId);
+        vm.stopPrank();
+
+        // THEN
+        assertTrue(DECLINED().eq(instanceReader.getPolicyState(policyNftId)));
+    }
+
+    function test_FireProduct_decline_invalidRole() public {
+        // GIVEN
+        vm.startPrank(customer);
+        
+        // 100'000 FireUSD
+        Amount sumInsured = AmountLib.toAmount(100000 * 10**6);
+        Amount premium = fireProduct.calculatePremium(
+            cityName, 
+            sumInsured, 
+            ONE_YEAR(),
+            bundleNftId);
+        
+        policyNftId = fireProduct.createApplication(
+            cityName, 
+            sumInsured, 
+            ONE_YEAR(), 
+            bundleNftId);
+
+        // THEN - expect revert for wrong role
+        vm.expectRevert(abi.encodeWithSelector(
+            IAccessManaged.AccessManagedUnauthorized.selector, 
+            customer));
+
+        // WHEN
+        fireProduct.decline(policyNftId);
     }
 
     function _createInitialBundle() internal {

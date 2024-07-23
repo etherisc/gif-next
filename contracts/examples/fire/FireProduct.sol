@@ -6,16 +6,11 @@ import {Amount, AmountLib} from "../../type/Amount.sol";
 import {BasicProduct} from "../../product/BasicProduct.sol";
 import {ClaimId} from "../../type/ClaimId.sol";
 import {IAuthorization} from "../../authorization/IAuthorization.sol";
-import {IOracleService} from "../../oracle/IOracleService.sol";
-import {ORACLE} from "../../type/ObjectType.sol";
 import {NftId} from "../../type/NftId.sol";
-import {PayoutId} from "../../type/PayoutId.sol";
-import {ReferralId, ReferralLib} from "../../type/Referral.sol";
-import {RequestId} from "../../type/RequestId.sol";
+import {ReferralLib} from "../../type/Referral.sol";
 import {RiskId, RiskIdLib} from "../../type/RiskId.sol";
 import {Seconds} from "../../type/Seconds.sol";
-import {StateId} from "../../type/StateId.sol";
-import {Timestamp, TimestampLib} from "../../type/Timestamp.sol";
+import {Timestamp} from "../../type/Timestamp.sol";
 import {UFixed, UFixedLib} from "../../type/UFixed.sol";
 
 uint64 constant SPECIAL_ROLE_INT = 11111;
@@ -232,14 +227,14 @@ contract FireProduct is
         _collectPremium(policyNftId, activateAt);
     }
 
+    /// @dev Decline the policy application
     function decline(
         NftId policyNftId
     ) 
         public 
         restricted()
     {
-        // TODO: implement decline
-        // _decline(policyNftId);
+        _decline(policyNftId);
     }
 
     function expire(
