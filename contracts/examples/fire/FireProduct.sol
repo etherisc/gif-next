@@ -245,8 +245,7 @@ contract FireProduct is
         restricted()
         returns (Timestamp)
     {
-        // TODO: implement expire
-        // return _expire(policyNftId, expireAt);
+        return _expire(policyNftId, expireAt);
     }
 
     function close(

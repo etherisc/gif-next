@@ -29,6 +29,7 @@ contract FireProductAuthorization
         functions = _authorizeForTarget(getTargetName(), PRODUCT_OWNER_ROLE());
         _authorize(functions, FireProduct.createPolicy.selector, "createPolicy");
         _authorize(functions, FireProduct.decline.selector, "decline");
+        _authorize(functions, FireProduct.expire.selector, "expire");
     }
 
 }

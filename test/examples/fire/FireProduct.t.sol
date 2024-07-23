@@ -130,6 +130,7 @@ contract FireProductTest is FireTestBase {
         assertEq(tokenBalancePoolBefore + premium.toInt(), fireUSD.balanceOf(firePool.getWallet()), "token balance of pool mismatch");
         assertEq(balancePoolBefore + premium, instanceReader.getBalanceAmount(firePoolNftId), "pool balance mismatch");
         assertEq(balanceBundleBefore + premium, instanceReader.getBalanceAmount(bundleNftId), "bundle balance mismatch");
+        assertEq(sumInsured, instanceReader.getLockedAmount(bundleNftId), "bundle locked amount mismatch");
         assertEq(bundleFeeBefore + AmountLib.toAmount(100 * 10 ** 6), instanceReader.getFeeAmount(bundleNftId), "bundle fee mismatch");
     }
 
@@ -209,6 +210,103 @@ contract FireProductTest is FireTestBase {
 
         // WHEN
         fireProduct.decline(policyNftId);
+    }
+
+    function test_FireProduct_expire() public {
+        // GIVEN
+        vm.startPrank(customer);
+        
+        // 100'000 FireUSD
+        Amount sumInsured = AmountLib.toAmount(100000 * 10**6);
+        Amount premium = fireProduct.calculatePremium(
+            cityName, 
+            sumInsured, 
+            ONE_YEAR(),
+            bundleNftId);
+        
+        policyNftId = fireProduct.createApplication(
+            cityName, 
+            sumInsured, 
+            ONE_YEAR(), 
+            bundleNftId);
+
+        fireUSD.approve(address(fireProduct.getTokenHandler()), premium.toInt());
+        vm.stopPrank();
+
+        assertTrue(APPLIED().eq(instanceReader.getPolicyState(policyNftId)));
+        
+        Timestamp now = TimestampLib.blockTimestamp();
+
+        vm.startPrank(fireProductOwner);
+
+        fireProduct.createPolicy(policyNftId, now);
+
+        assertTrue(COLLATERALIZED().eq(instanceReader.getPolicyState(policyNftId)));
+
+        // forward time by 100 days
+        vm.warp(100 * 24 * 60 * 60); 
+        Timestamp hundertDaysLater = TimestampLib.blockTimestamp();
+
+        // WHEN - policy is expired
+        fireProduct.expire(policyNftId, hundertDaysLater);
+
+        // THEN - check expired policy
+        assertTrue(COLLATERALIZED().eq(instanceReader.getPolicyState(policyNftId)));
+
+        IPolicy.PolicyInfo memory policy = instanceReader.getPolicyInfo(policyNftId);
+        assertEq(now, policy.activatedAt, "policy.activatedAt mismatch");
+        assertEq(hundertDaysLater, policy.expiredAt, "policy.expiredAt mismatch");
+        assertEq(TimestampLib.zero(), policy.closedAt, "policy.closedAt mismatch");
+
+        // ensure tokens were transferred and balances updates
+        assertEq(sumInsured, instanceReader.getLockedAmount(bundleNftId), "bundle locked amount mismatch");
+    }
+
+    function test_FireProduct_expire_invalidRole() public {
+        // GIVEN
+        vm.startPrank(customer);
+        
+        // 100'000 FireUSD
+        Amount sumInsured = AmountLib.toAmount(100000 * 10**6);
+        Amount premium = fireProduct.calculatePremium(
+            cityName, 
+            sumInsured, 
+            ONE_YEAR(),
+            bundleNftId);
+        
+        policyNftId = fireProduct.createApplication(
+            cityName, 
+            sumInsured, 
+            ONE_YEAR(), 
+            bundleNftId);
+
+        fireUSD.approve(address(fireProduct.getTokenHandler()), premium.toInt());
+        vm.stopPrank();
+
+        assertTrue(APPLIED().eq(instanceReader.getPolicyState(policyNftId)));
+        
+        Timestamp now = TimestampLib.blockTimestamp();
+
+        vm.startPrank(fireProductOwner);
+
+        fireProduct.createPolicy(policyNftId, now);
+
+        assertTrue(COLLATERALIZED().eq(instanceReader.getPolicyState(policyNftId)));
+
+        // forward time by 100 days
+        vm.warp(100 * 24 * 60 * 60); 
+        Timestamp hundertDaysLater = TimestampLib.blockTimestamp();
+
+        vm.stopPrank();
+
+        // THEN - expect revert for wrong role
+        vm.expectRevert(abi.encodeWithSelector(
+            IAccessManaged.AccessManagedUnauthorized.selector, 
+            customer));
+
+        // WHEN - policy is expired
+        vm.startPrank(customer);
+        fireProduct.expire(policyNftId, hundertDaysLater);
     }
 
     function _createInitialBundle() internal {
