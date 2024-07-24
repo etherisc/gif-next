@@ -420,7 +420,7 @@ abstract contract Product is
         return RiskIdLib.toRiskId(riskName);
     }
 
-    function _getProductStorage() private pure returns (ProductStorage storage $) {
+    function _getProductStorage() internal pure returns (ProductStorage storage $) {
         assembly {
             $.slot := PRODUCT_STORAGE_LOCATION_V1
         }

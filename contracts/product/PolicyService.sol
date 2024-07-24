@@ -245,7 +245,7 @@ contract PolicyService is
         external
         virtual
         nonReentrant()
- {
+    {
         // check caller is registered product
         (,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
         InstanceReader instanceReader = instance.getInstanceReader();

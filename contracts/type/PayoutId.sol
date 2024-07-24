@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-// uint24 allows for 65'535 claims with 255 payouts each per policy
-type PayoutId is uint24;
+// uint40 allows for 65'535 claims with 16'777'216 payouts each per policy
+type PayoutId is uint40;
 
 import {ClaimId} from "./ClaimId.sol";
 import {PAYOUT} from "./ObjectType.sol";
@@ -39,21 +39,21 @@ library PayoutIdLib {
     }
 
     /// @dev Converts an uint into a PayoutId.
-    function toPayoutId(ClaimId claimId, uint8 payoutNo) public pure returns (PayoutId) {
-        return PayoutId.wrap((ClaimId.unwrap(claimId) << 8) + payoutNo);
+    function toPayoutId(ClaimId claimId, uint24 payoutNo) public pure returns (PayoutId) {
+        return PayoutId.wrap((uint40(ClaimId.unwrap(claimId)) << 24) + payoutNo);
     }
 
     function toClaimId(PayoutId payoutId) public pure returns (ClaimId) {
-        return ClaimId.wrap(uint16(PayoutId.unwrap(payoutId) >> 8));
+        return ClaimId.wrap(uint16(PayoutId.unwrap(payoutId) >> 24));
     }
 
-    function toPayoutNo(PayoutId payoutId) public pure returns (uint8) {
-        return uint8(PayoutId.unwrap(payoutId) & 255);
+    function toPayoutNo(PayoutId payoutId) public pure returns (uint24) {
+        return uint24(PayoutId.unwrap(payoutId) & 16777215);
     }
 
     /// @dev Converts the PayoutId to a uint.
-    function toInt(PayoutId a) public pure returns (uint24) {
-        return uint24(PayoutId.unwrap(a));
+    function toInt(PayoutId a) public pure returns (uint40) {
+        return PayoutId.unwrap(a);
     }
 
     /// @dev Returns true if the value is non-zero (> 0).
@@ -77,6 +77,6 @@ library PayoutIdLib {
             bytes31(
                 bytes15(
                     uint120(
-                        (NftId.unwrap(policyNftId) << 24) + PayoutId.unwrap(payoutId)))));
+                        (NftId.unwrap(policyNftId) << 40) + PayoutId.unwrap(payoutId)))));
     }
 }

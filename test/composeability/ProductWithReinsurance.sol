@@ -4,9 +4,9 @@ pragma solidity ^0.8.20;
 import {Amount, AmountLib} from "../../contracts/type/Amount.sol";
 import {SimpleProduct} from "../../contracts/examples/unpermissioned/SimpleProduct.sol";
 import {ClaimId} from "../../contracts/type/ClaimId.sol";
+import {FeeLib} from "../../contracts/type/Fee.sol";
 import {IAuthorization} from "../../contracts/authorization/IAuthorization.sol";
-import {IOracleService} from "../../contracts/oracle/IOracleService.sol";
-import {ORACLE} from "../../contracts/type/ObjectType.sol";
+import {IComponents} from "../../contracts/instance/module/IComponents.sol";
 import {NftId} from "../../contracts/type/NftId.sol";
 import {PayoutId} from "../../contracts/type/PayoutId.sol";
 import {ReferralId} from "../../contracts/type/Referral.sol";
@@ -16,11 +16,12 @@ import {Seconds} from "../../contracts/type/Seconds.sol";
 import {StateId} from "../../contracts/type/StateId.sol";
 import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
 
-uint64 constant SPECIAL_ROLE_INT = 11111;
-
 contract ProductWithReinsurance is 
     SimpleProduct
 {
+
+    mapping(NftId policyNftId => mapping(ClaimId claimId => Amount funding)) public claimFundingAmount;
+    bool public isAutoPayout;
 
     constructor(
         address registry,
@@ -42,5 +43,63 @@ contract ProductWithReinsurance is
             distribution
         )
     {
+        isAutoPayout = false;
+    }
+
+    event LogProductWithReinsuranceFundedClaim(NftId policyNftId, ClaimId claimId, Amount availableAmount);
+
+    function setAutoPayout(bool autoPayout) external {
+        isAutoPayout = autoPayout;
+    }
+
+    // could trigger process payout but only records funding
+    // to check in testing
+    function processFundedClaim(
+        NftId policyNftId, 
+        ClaimId claimId, 
+        Amount availableAmount
+    )
+        external
+        virtual override
+        restricted() // pool service role
+    {
+        claimFundingAmount[policyNftId][claimId] = availableAmount;
+
+        emit LogProductWithReinsuranceFundedClaim(policyNftId, claimId, availableAmount);
+
+        if (isAutoPayout) {
+            PayoutId payoutId = createPayout(
+                policyNftId, 
+                claimId, 
+                _getInstanceReader().getClaimInfo(
+                    policyNftId, 
+                    claimId).claimAmount, // payout amount is the claim amount 
+                "");
+
+            processPayout(policyNftId, payoutId);
+        }
+    }
+
+
+    function getInitialProductInfo()
+        public 
+        virtual override
+        view 
+        returns (IComponents.ProductInfo memory poolInfo)
+    {
+        ProductStorage storage $ = _getProductStorage();
+
+        return IComponents.ProductInfo({
+            distributionNftId: $._distributionNftId,
+            poolNftId: $._poolNftId,
+            isProcessingFundedClaims: true, // force callback when claim is funded via pool
+            productFee: FeeLib.zero(),
+            processingFee: FeeLib.zero(),
+            distributionFee: FeeLib.zero(),
+            minDistributionOwnerFee: FeeLib.zero(),
+            poolFee: FeeLib.zero(),
+            stakingFee: FeeLib.zero(),
+            performanceFee: FeeLib.zero()
+        });
     }
 }

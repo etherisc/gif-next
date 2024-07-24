@@ -75,21 +75,21 @@ contract RegistryService is
         instance.linkToRegisteredNftId(); // asume safe
     }
 
-    function registerProduct(IComponent product, address owner)
-        external
-        restricted
-        returns(
-            IRegistry.ObjectInfo memory info
-        ) 
-    {
-        // CAN revert if no ERC165 support -> will revert with empty message 
-        if(!product.supportsInterface(type(IProductComponent).interfaceId)) {
-            revert ErrorRegistryServiceNotProduct(address(product));
-        }
+    // function registerProduct(IComponent product, address owner)
+    //     external
+    //     restricted
+    //     returns(
+    //         IRegistry.ObjectInfo memory info
+    //     ) 
+    // {
+    //     // CAN revert if no ERC165 support -> will revert with empty message 
+    //     if(!product.supportsInterface(type(IProductComponent).interfaceId)) {
+    //         revert ErrorRegistryServiceNotProduct(address(product));
+    //     }
 
-        info = _getAndVerifyContractInfo(product, PRODUCT(), owner);
-        info.nftId = getRegistry().register(info);
-    }
+    //     info = _getAndVerifyContractInfo(product, PRODUCT(), owner);
+    //     info.nftId = getRegistry().register(info);
+    // }
 
     function registerComponent(
         IComponent component, 
@@ -111,35 +111,35 @@ contract RegistryService is
         info.nftId = getRegistry().register(info);
     }
 
-    function registerPool(IComponent pool, address owner)
-        external
-        restricted
-        returns(
-            IRegistry.ObjectInfo memory info
-        ) 
-    {
-        if(!pool.supportsInterface(type(IPoolComponent).interfaceId)) {
-            revert ErrorRegistryServiceNotPool(address(pool));
-        }
+    // function registerPool(IComponent pool, address owner)
+    //     external
+    //     restricted
+    //     returns(
+    //         IRegistry.ObjectInfo memory info
+    //     ) 
+    // {
+    //     if(!pool.supportsInterface(type(IPoolComponent).interfaceId)) {
+    //         revert ErrorRegistryServiceNotPool(address(pool));
+    //     }
 
-        info = _getAndVerifyContractInfo(pool, POOL(), owner);
-        info.nftId = getRegistry().register(info);
-    }
+    //     info = _getAndVerifyContractInfo(pool, POOL(), owner);
+    //     info.nftId = getRegistry().register(info);
+    // }
 
-    function registerDistribution(IComponent distribution, address owner)
-        external
-        restricted
-        returns(
-            IRegistry.ObjectInfo memory info
-        ) 
-    {
-        if(!distribution.supportsInterface(type(IDistributionComponent).interfaceId)) {
-            revert ErrorRegistryServiceNotDistribution(address(distribution));
-        }
+    // function registerDistribution(IComponent distribution, address owner)
+    //     external
+    //     restricted
+    //     returns(
+    //         IRegistry.ObjectInfo memory info
+    //     ) 
+    // {
+    //     if(!distribution.supportsInterface(type(IDistributionComponent).interfaceId)) {
+    //         revert ErrorRegistryServiceNotDistribution(address(distribution));
+    //     }
 
-        info = _getAndVerifyContractInfo(distribution, DISTRIBUTION(), owner);
-        info.nftId = getRegistry().register(info);
-    }
+    //     info = _getAndVerifyContractInfo(distribution, DISTRIBUTION(), owner);
+    //     info.nftId = getRegistry().register(info);
+    // }
 
     function registerDistributor(IRegistry.ObjectInfo memory info)
         external
@@ -240,10 +240,13 @@ contract RegistryService is
             revert ErrorRegistryServiceObjectOwnerZero(info.objectType);
         }
 
-        if (info.objectAddress != address(0)) {
-            if(getRegistry().isRegistered(owner)) { 
-                // TODO allow registered owner for some cases: eg policies, distributors, bundles
-                // potential criteria: when object address is zero owner may be registerd, too loose?
+        if(owner == msg.sender) {
+            revert ErrorRegistryServiceInvalidInitialOwner(owner);
+        }
+
+        if(getRegistry().isRegistered(owner)) {
+            ObjectType ownerType = getRegistry().getObjectInfo(owner).objectType;
+            if(ownerType == REGISTRY() || ownerType == STAKING() || ownerType == SERVICE() || ownerType == INSTANCE()) {
                 revert ErrorRegistryServiceObjectOwnerRegistered(info.objectType, owner);
             }
         }

@@ -242,28 +242,29 @@ contract TestProductLifecycle
         assertEq(policyHolder.claimAmount(policyNftId, claimId).toInt(), claimAmount.toInt(), "unexpected claim amount (holder, after)");
     }
 
+    // disabled as claim service functions no longer have reentrancy guards
+    // such guards prevent various re insurane use cases
+    // function test_policyHolderClaimConfirmationCallbackNonReentrant() public {
+    //     // GIVEN switch policy holder to reentrant
+    //     Timestamp activateAt = TimestampLib.blockTimestamp();
+    //     _createAndActivate(policyNftId, activateAt);
 
-    function test_policyHolderClaimConfirmationCallbackNonReentrant() public {
-        // GIVEN switch policy holder to reentrant
-        Timestamp activateAt = TimestampLib.blockTimestamp();
-        _createAndActivate(policyNftId, activateAt);
+    //     policyHolder.setReentrant(product, true);
+    //     assertTrue(policyHolder.isReentrant(), "unexpected reentrant"); 
 
-        policyHolder.setReentrant(product, true);
-        assertTrue(policyHolder.isReentrant(), "unexpected reentrant"); 
+    //     // WHEN
+    //     Amount claimAmount = AmountLib.toAmount(100);
+    //     ClaimId claimId = product.submitClaim(policyNftId, claimAmount, ""); 
 
-        // WHEN
-        Amount claimAmount = AmountLib.toAmount(100);
-        ClaimId claimId = product.submitClaim(policyNftId, claimAmount, ""); 
+    //     // THEN
+    //     vm.expectRevert(
+    //         abi.encodeWithSelector(
+    //             ReentrancyGuardUpgradeable.ReentrancyGuardReentrantCall.selector));
 
-        // THEN
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                ReentrancyGuardUpgradeable.ReentrancyGuardReentrantCall.selector));
-
-        vm.startPrank(productOwner);
-        product.confirmClaim(policyNftId, claimId, claimAmount, ""); 
-        vm.stopPrank();
-    }
+    //     vm.startPrank(productOwner);
+    //     product.confirmClaim(policyNftId, claimId, claimAmount, ""); 
+    //     vm.stopPrank();
+    // }
 
 
     function test_policyHolderPayoutExecutedBeneficiaryCallback() public {

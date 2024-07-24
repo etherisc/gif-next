@@ -56,7 +56,7 @@ contract ClaimService is
     )
         external
         virtual
-        nonReentrant()
+        // nonReentrant() // prevents creating a reinsurance claim in a single tx
         returns (ClaimId claimId)
     {
         (
@@ -112,7 +112,7 @@ contract ClaimService is
     )
         external
         virtual
-        nonReentrant()
+        // nonReentrant() // prevents creating a reinsurance claim in a single tx
     {
         (
             NftId productNftId,
@@ -153,7 +153,7 @@ contract ClaimService is
     )
         external
         virtual
-        nonReentrant()
+        // nonReentrant() // prevents creating a reinsurance claim in a single tx
     {
         (
             ,
@@ -183,7 +183,7 @@ contract ClaimService is
     )
         external
         virtual
-        nonReentrant()
+        // nonReentrant() // prevents creating a reinsurance claim in a single tx
     {
         (
             ,
@@ -211,7 +211,7 @@ contract ClaimService is
     )
         external
         virtual
-        nonReentrant()
+        // nonReentrant() // prevents creating a reinsurance claim in a single tx
     {
         (
             ,
@@ -254,7 +254,7 @@ contract ClaimService is
     )
         external
         virtual
-        nonReentrant()
+        // nonReentrant() // prevents creating a reinsurance claim in a single tx
         returns (PayoutId payoutId)
     {
         if (beneficiary == address(0)) {
@@ -278,7 +278,7 @@ contract ClaimService is
     )
         external
         virtual
-        nonReentrant()
+        // nonReentrant() // prevents creating a reinsurance payout in a single tx
         returns (PayoutId payoutId)
     {
         return _createPayout(
@@ -296,7 +296,7 @@ contract ClaimService is
     )
         external
         virtual
-        nonReentrant()
+        // nonReentrant() // prevents creating a reinsurance payout in a single tx
     {
         (
             ,
@@ -396,8 +396,8 @@ contract ClaimService is
 
         // check/update claim info
         // create payout info with instance
-        uint8 claimNo = claimInfo.payoutsCount + 1;
-        payoutId = PayoutIdLib.toPayoutId(claimId, claimNo);
+        uint24 payoutNo = claimInfo.payoutsCount + 1;
+        payoutId = PayoutIdLib.toPayoutId(claimId, payoutNo);
         instance.getInstanceStore().createPayout(
             policyNftId, 
             payoutId, 

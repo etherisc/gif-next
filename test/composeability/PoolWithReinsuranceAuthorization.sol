@@ -4,9 +4,10 @@ pragma solidity ^0.8.20;
 import {Authorization} from "../../contracts/authorization/Authorization.sol";
 import {IAccess} from "../../contracts/authorization/IAccess.sol";
 import {IInstanceLinkedComponent} from "../../contracts/shared/IInstanceLinkedComponent.sol";
+import {IPolicyHolder} from "../../contracts/shared/IPolicyHolder.sol";
 import {BasicPool} from "../../contracts/pool/BasicPool.sol";
 import {IPoolComponent} from "../../contracts/pool/IPoolComponent.sol";
-import {POOL} from "../../contracts/type/ObjectType.sol";
+import {CLAIM, POOL, POLICY} from "../../contracts/type/ObjectType.sol";
 import {PUBLIC_ROLE} from "../../contracts/type/RoleId.sol";
 import {RoleId} from "../../contracts/type/RoleId.sol";
 
@@ -52,7 +53,10 @@ contract PoolWithReinsuranceAuthorization
           _authorize(functions, IInstanceLinkedComponent.withdrawFees.selector, "withdrawFees");
           _authorize(functions, IPoolComponent.withdrawBundleFees.selector, "withdrawBundleFees");
 
+          // authorize claim service for callback
+          functions = _authorizeForTarget(getTargetName(), getServiceRole(CLAIM()));
           _authorize(functions, IPoolComponent.processConfirmedClaim.selector, "processConfirmedClaim");
+          _authorize(functions, IPolicyHolder.payoutExecuted.selector, "payoutExecuted");
      }
 }
 

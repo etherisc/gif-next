@@ -334,6 +334,17 @@ abstract contract Pool is
         return _getPoolStorage()._bundleService.withdrawBundleFees(bundleNftId, amount);
     }
 
+    function _processFundedClaim(
+        NftId policyNftId, 
+        ClaimId claimId, 
+        Amount availableAmount
+    )
+        internal
+    {
+        _getPoolStorage()._poolService.processFundedClaim(
+            policyNftId, claimId, availableAmount);
+    }
+
     function _getPoolStorage() private pure returns (PoolStorage storage $) {
         assembly {
             $.slot := POOL_STORAGE_LOCATION_V1

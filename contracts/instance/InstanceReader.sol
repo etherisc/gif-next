@@ -2,12 +2,12 @@
 pragma solidity ^0.8.20;
 
 import {Amount} from "../type/Amount.sol";
-import {ClaimId} from "../type/ClaimId.sol";
+import {ClaimId, ClaimIdLib} from "../type/ClaimId.sol";
 import {DistributorType} from "../type/DistributorType.sol";
 import {Key32} from "../type/Key32.sol";
 import {NftId} from "../type/NftId.sol";
 import {COMPONENT, DISTRIBUTOR, DISTRIBUTION, PREMIUM, PRODUCT, POLICY, POOL, BUNDLE} from "../type/ObjectType.sol";
-import {PayoutId} from "../type/PayoutId.sol";
+import {PayoutId, PayoutIdLib} from "../type/PayoutId.sol";
 import {ReferralId, ReferralStatus, ReferralLib, REFERRAL_OK, REFERRAL_ERROR_UNKNOWN, REFERRAL_ERROR_EXPIRED, REFERRAL_ERROR_EXHAUSTED} from "../type/Referral.sol";
 import {RequestId} from "../type/RequestId.sol";
 import {RiskId} from "../type/RiskId.sol";
@@ -173,6 +173,25 @@ contract InstanceReader {
         return true; 
     }
 
+
+    function claims(NftId policyNftId)
+        public
+        view
+        returns (uint16 claims)
+    {
+        return getPolicyInfo(policyNftId).claimsCount;
+    }
+
+
+    function getClaimId(uint idx)
+        public
+        view
+        returns (ClaimId claimId)
+    {
+        return ClaimIdLib.toClaimId(idx + 1);
+    }
+
+
     function getClaimInfo(NftId policyNftId, ClaimId claimId)
         public
         view
@@ -184,6 +203,7 @@ contract InstanceReader {
         }
     }
 
+
     function getClaimState(NftId policyNftId, ClaimId claimId)
         public
         view
@@ -191,6 +211,25 @@ contract InstanceReader {
     {
         return _store.getState(claimId.toKey32(policyNftId));
     }
+
+
+    function payouts(NftId policyNftId, ClaimId claimId)
+        public
+        view
+        returns (uint24 payouts)
+    {
+        return getClaimInfo(policyNftId, claimId).payoutsCount;
+    }
+
+
+    function getPayoutId(ClaimId claimId, uint24 idx)
+        public
+        view
+        returns (PayoutId payoutId)
+    {
+        return PayoutIdLib.toPayoutId(claimId, idx + 1);
+    }
+
 
     function getPayoutInfo(NftId policyNftId, PayoutId payoutId)
         public
@@ -219,6 +258,19 @@ contract InstanceReader {
         bytes memory data = _store.getData(riskId.toKey32());
         if (data.length > 0) {
             return abi.decode(data, (IRisk.RiskInfo));
+        }
+    }
+
+    function getWallet(NftId componentNftId)
+        public
+        view
+        returns (address tokenHandler)
+    {
+        bytes memory data = _store.getData(toComponentKey(componentNftId));
+
+        if (data.length > 0) {
+            IComponents.ComponentInfo memory info = abi.decode(data, (IComponents.ComponentInfo));
+            return info.wallet;
         }
     }
 

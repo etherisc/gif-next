@@ -50,15 +50,6 @@ interface IRegistryService is
      function registerComponent(IComponent component, ObjectType objectType, address owner)
           external returns(IRegistry.ObjectInfo memory info);
 
-     // function registerProduct(IComponent product, address owner)
-     //      external returns(IRegistry.ObjectInfo memory info);
-
-     // function registerPool(IComponent pool, address owner)
-     //      external returns(IRegistry.ObjectInfo memory info);
-
-     // function registerDistribution(IComponent distribution, address owner)
-     //      external returns(IRegistry.ObjectInfo memory info);
-
      function registerDistributor(IRegistry.ObjectInfo memory info) external returns(NftId nftId);
 
      function registerPolicy(IRegistry.ObjectInfo memory info) external returns(NftId nftId);

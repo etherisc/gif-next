@@ -18,6 +18,8 @@ contract PolicyHolder is
     RegistryLinked,
     IPolicyHolder
 {
+    // TODO add modifier to protect callback functions from unauthorized access
+
     function _initializePolicyHolder(
         address registryAddress
     )
