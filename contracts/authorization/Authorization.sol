@@ -129,9 +129,13 @@ contract Authorization
      }
 
      function _addComponentTargetWithRole(ObjectType componentType) internal {
+          _addComponentTargetWithRole(componentType, 0);
+     }
+
+     function _addComponentTargetWithRole(ObjectType componentType, uint64 index) internal {
           _addTargetWithRole(
                getTargetName(), 
-               RoleIdLib.toComponentRoleId(componentType, 0),
+               RoleIdLib.toComponentRoleId(componentType, index),
                _toTargetRoleName(
                     getTargetName()));
      }

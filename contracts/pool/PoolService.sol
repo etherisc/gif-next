@@ -23,7 +23,7 @@ import {RoleId, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
 import {KEEP_STATE} from "../type/StateId.sol";
 import {Seconds} from "../type/Seconds.sol";
-import {UFixed} from "../type/UFixed.sol";
+import {UFixed, UFixedLib} from "../type/UFixed.sol";
 import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
@@ -367,13 +367,13 @@ contract PoolService is
         virtual
         restricted()
         returns (
-            Amount localCollateralAmount,
-            Amount totalCollateralAmount
+            Amount totalCollateralAmount,
+            Amount localCollateralAmount
         )
     {
         (
-            localCollateralAmount,
-            totalCollateralAmount
+            totalCollateralAmount,
+            localCollateralAmount
         ) = calculateRequiredCollateral(
             instance.getInstanceReader(),
             productNftId, 
@@ -465,16 +465,16 @@ contract PoolService is
         public
         view 
         returns(
-            Amount localCollateralAmount,
-            Amount totalCollateralAmount
+            Amount totalCollateralAmount,
+            Amount localCollateralAmount
         )
     {
         NftId poolNftId = instanceReader.getProductInfo(productNftId).poolNftId;
         IComponents.PoolInfo memory poolInfo = instanceReader.getPoolInfo(poolNftId);
 
         (
-            localCollateralAmount,
-            totalCollateralAmount
+            totalCollateralAmount,
+            localCollateralAmount
         ) = calculateRequiredCollateral(
             poolInfo.collateralizationLevel,
             poolInfo.retentionLevel,
@@ -490,18 +490,17 @@ contract PoolService is
         public
         pure 
         returns(
-            Amount localCollateralAmount,
-            Amount totalCollateralAmount
+            Amount totalCollateralAmount,
+            Amount localCollateralAmount
         )
     {
-        // TODO define if only applies to local collateral
-        // TODO add minimalistic implementation
+        // collateralization is applied to sum insured
+        UFixed totalUFixed = collateralizationLevel * sumInsuredAmount.toUFixed();
+        totalCollateralAmount = AmountLib.toAmount(totalUFixed.toInt());
 
-        // assumptions 
-        // - collateralizationLevel == 1.0
-        // - retentionLevel == 1.0
-        localCollateralAmount = sumInsuredAmount;
-        totalCollateralAmount = localCollateralAmount;
+        // retention level defines how much capital is required locally
+        localCollateralAmount = AmountLib.toAmount(
+            (retentionLevel * totalUFixed).toInt());
     }
 
 

@@ -243,6 +243,9 @@ contract Registry is
     {
         address objectAddress = info.objectAddress;
         ObjectType objectType = info.objectType;
+
+        // this indidirectly enforces that the parent is registered
+        // parentType would be zero for a non-registered parent which is never a valid type combination
         ObjectType parentType = _info[info.parentNftId].objectType;
 
         // check type combinations for core objects

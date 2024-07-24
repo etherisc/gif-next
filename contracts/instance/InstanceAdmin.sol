@@ -203,9 +203,12 @@ contract InstanceAdmin is
 
         for(uint256 i = 0; i < roles.length; i++) {
             roleId = roles[i];
-            _createRole(
-                roleId,
-                authorization.getRoleInfo(roleId));
+
+            if (!roleExists(roleId)) {
+                _createRole(
+                    roleId,
+                    authorization.getRoleInfo(roleId));
+            }
         }
     }
 

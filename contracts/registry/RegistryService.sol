@@ -240,8 +240,12 @@ contract RegistryService is
             revert ErrorRegistryServiceObjectOwnerZero(info.objectType);
         }
 
-        if(getRegistry().isRegistered(owner)) { 
-            revert ErrorRegistryServiceObjectOwnerRegistered(info.objectType, owner);
+        if (info.objectAddress != address(0)) {
+            if(getRegistry().isRegistered(owner)) { 
+                // TODO allow registered owner for some cases: eg policies, distributors, bundles
+                // potential criteria: when object address is zero owner may be registerd, too loose?
+                revert ErrorRegistryServiceObjectOwnerRegistered(info.objectType, owner);
+            }
         }
     }
 

@@ -26,6 +26,7 @@ import {IRisk} from "../instance/module/IRisk.sol";
 import {TimestampLib} from "../type/Timestamp.sol";
 
 import {InstanceStore} from "./InstanceStore.sol";
+import {BundleSet} from "./BundleSet.sol";
 
 
 contract InstanceReader {
@@ -37,6 +38,7 @@ contract InstanceReader {
 
     IInstance internal _instance;
     InstanceStore internal _store;
+    BundleSet internal _bundleSet;
 
     /// @dev This initializer needs to be called from the instance itself.
     function initialize() public {
@@ -56,6 +58,7 @@ contract InstanceReader {
         _initialized = true;
         _instance = IInstance(instanceAddress);
         _store = _instance.getInstanceStore();
+        _bundleSet = _instance.getBundleSet();
     }
 
 
@@ -99,6 +102,22 @@ contract InstanceReader {
         return _store.getState(toPremiumKey(policyNftId));
     }
 
+    function activeBundles(NftId poolNftId)
+        public
+        view
+        returns (uint256 bundles)
+    {
+        return _bundleSet.activeBundles(poolNftId);
+    }
+
+    function getActiveBundleNftId(NftId poolNftId, uint256 idx)
+        public
+        view
+        returns (NftId bundleNftId)
+    {
+        return _bundleSet.getActiveBundleNftId(poolNftId, idx);
+    }
+
     function getBundleState(NftId bundleNftId)
         public
         view
@@ -107,8 +126,26 @@ contract InstanceReader {
         return _store.getState(toBundleKey(bundleNftId));
     }
 
-    /// @dev returns true iff policy may be closed
-    /// a policy can be closed all conditions below are met
+
+    /// @dev Returns true iff policy is active.
+    function policyIsActive(NftId policyNftId)
+        public
+        view
+        returns (bool isCloseable)
+    {
+        IPolicy.PolicyInfo memory info = getPolicyInfo(policyNftId);
+
+        if (info.productNftId.eqz()) { return false; } // not closeable: policy does not exist (or does not belong to this instance)
+        if (info.activatedAt.eqz()) { return false; } // not closeable: not yet activated
+        if (info.activatedAt > TimestampLib.blockTimestamp()) { return false; } // not yet active
+        if (info.expiredAt <= TimestampLib.blockTimestamp()) { return false; } // already expired
+
+        return true;
+    }
+
+
+    /// @dev Returns true iff policy may be closed.
+    /// A policy can be closed all conditions below are met
     /// - policy exists
     /// - has been activated
     /// - is not yet closed

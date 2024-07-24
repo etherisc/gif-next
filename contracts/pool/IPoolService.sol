@@ -139,7 +139,7 @@ interface IPoolService is IService {
     function processSale(NftId bundleNftId, IPolicy.PremiumInfo memory premium) external;
 
 
-    /// @dev calulate required collateral for the provided parameters
+    /// @dev Calulate required collateral for the provided parameters.
     function calculateRequiredCollateral(
         InstanceReader instanceReader,
         NftId productNftId, 
@@ -148,12 +148,14 @@ interface IPoolService is IService {
         external
         view 
         returns(
-            Amount localCollateralAmount,
-            Amount totalCollateralAmount
+            Amount totalCollateralAmount,
+            Amount localCollateralAmount
         );
 
 
-    /// @dev calulate required collateral for the provided parameters
+    /// @dev calulate required collateral for the provided parameters.
+    /// Collateralization is applied to sum insured.
+    /// Retention level defines the fraction of the collateral that is required locally.
     function calculateRequiredCollateral(
         UFixed collateralizationLevel, 
         UFixed retentionLevel, 
@@ -162,8 +164,8 @@ interface IPoolService is IService {
         external
         pure 
         returns(
-            Amount localCollateralAmount,
-            Amount totalCollateralAmount
+            Amount totalCollateralAmount,
+            Amount localCollateralAmount
         );
 
 }
