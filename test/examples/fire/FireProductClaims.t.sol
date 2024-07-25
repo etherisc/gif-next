@@ -10,6 +10,7 @@ import {DAMAGE_LARGE, DAMAGE_MEDIUM, DAMAGE_SMALL} from "../../../contracts/exam
 import {Fee, FeeLib} from "../../../contracts/type/Fee.sol";
 import {FireProduct, ONE_YEAR} from "../../../contracts/examples/fire/FireProduct.sol";
 import {FireTestBase} from "./FireTestBase.t.sol";
+import {INftOwnable} from "../../../contracts/shared/INftOwnable.sol";
 import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
 import {NftId} from "../../../contracts/type/NftId.sol";
 import {PayoutId} from "../../../contracts/type/PayoutId.sol";
@@ -511,8 +512,72 @@ contract FireProductClaimsTest is FireTestBase {
         }
     }
 
-    // TODO: test submitClaim with not nft owner
-    // TODO: test submitClaim with not nft owner, two policies (one with customer2) and customer2 tried to claim for customer 1
+    /// @dev Test submitClaim with a user that it not the nft owner
+    function test_FireProductClaims_submitClaim_notNftOwner() public {
+        // GIVEN
+        Amount sumInsured = AmountLib.toAmount(100000 * 10 ** 6);
+        Timestamp now = TimestampLib.blockTimestamp();
+        policyNftId = _preparePolicy(
+            customer,
+            cityName, 
+            sumInsured, 
+            ONE_YEAR(), 
+            now,
+            bundleNftId);
+        
+        vm.startPrank(fireProductOwner);
+        uint256 fireId = 42;
+        fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), now);
+        vm.stopPrank();
+        
+        vm.startPrank(customer2);
+
+        // THEN - expect revert
+        vm.expectRevert(abi.encodeWithSelector(
+            INftOwnable.ErrorNftOwnableNotOwner.selector,
+            customer2));
+
+        // WHEN - submit claim
+        fireProduct.submitClaim(policyNftId, fireId);
+    }
+
+    /// @dev Test submitClaim with a user that it not the nft owner
+    function test_FireProductClaims_submitClaim_notNftOwner2() public {
+        // GIVEN
+        Amount sumInsured = AmountLib.toAmount(100000 * 10 ** 6);
+        Timestamp now = TimestampLib.blockTimestamp();
+        policyNftId = _preparePolicy(
+            customer,
+            cityName, 
+            sumInsured, 
+            ONE_YEAR(), 
+            now,
+            bundleNftId);
+        _fundAccount(customer2, 10000 * 10 ** 6);
+        _preparePolicy(
+            customer2,
+            cityName, 
+            sumInsured, 
+            ONE_YEAR(), 
+            now,
+            bundleNftId);
+        
+        vm.startPrank(fireProductOwner);
+        uint256 fireId = 42;
+        fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), now);
+        vm.stopPrank();
+        
+        vm.startPrank(customer2);
+
+        // THEN - expect revert
+        vm.expectRevert(abi.encodeWithSelector(
+            INftOwnable.ErrorNftOwnableNotOwner.selector,
+            customer2));
+
+        // WHEN - submit claim
+        fireProduct.submitClaim(policyNftId, fireId);
+    }
+
     // TODO: test submitClaim with invalid fire id
     // TODO: test submitClaim but already claimed
     // TODO: test submitClaim but policy closed
