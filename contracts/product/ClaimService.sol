@@ -425,7 +425,7 @@ contract ClaimService is
         policyInfo.payoutAmount.add(amount);
         instance.getInstanceStore().updatePolicyClaims(policyNftId, policyInfo, KEEP_STATE());
 
-        emit LogClaimServicePayoutCreated(policyNftId, payoutId, amount);
+        emit LogClaimServicePayoutCreated(policyNftId, payoutId, amount, beneficiary);
     }
 
 
