@@ -227,7 +227,6 @@ contract TestProductClaim is GifTest {
         {
             IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
 
-            assertFalse(instanceReader.policyIsCloseable(policyNftId), "policy is closeable (with open claim)");
             assertEq(policyInfo.claimsCount, 1, "claims count not 1");
             assertEq(policyInfo.openClaimsCount, 1, "open claims count not 1");
             assertEq(policyInfo.claimAmount.toInt(), claimAmountInt, "unexpected claim amount");

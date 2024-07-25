@@ -131,4 +131,13 @@ interface IBundleService is IService {
     /// @return withdrawnAmount the effective withdrawn amount
     function withdrawBundleFees(NftId bundleNftId, Amount amount) external returns (Amount withdrawnAmount);
 
+    /// @dev returns true iff policy may be closed
+    /// a policy can be closed all conditions below are met
+    /// - policy exists
+    /// - has been activated
+    /// - is not yet closed
+    /// - has no open claims
+    /// - claim amount matches sum insured amount or is expired
+    function policyIsCloseable(IInstance instance, NftId policyNftId) external view returns (bool isCloseable);
+
 }
