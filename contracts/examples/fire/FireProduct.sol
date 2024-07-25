@@ -10,6 +10,7 @@ import {IAuthorization} from "../../authorization/IAuthorization.sol";
 import {IPolicy} from "../../instance/module/IPolicy.sol";
 import {NftId} from "../../type/NftId.sol";
 import {PayoutId} from "../../type/PayoutId.sol";
+import {POLICY} from "../../type/ObjectType.sol";
 import {ReferralLib} from "../../type/Referral.sol";
 import {RiskId, RiskIdLib} from "../../type/RiskId.sol";
 import {Seconds} from "../../type/Seconds.sol";
@@ -324,6 +325,7 @@ contract FireProduct is
         public 
         restricted()
         onlyNftOwner(policyNftId)
+        onlyNftObjectType(policyNftId, POLICY())
         returns (ClaimId claimId, PayoutId payoutId) 
     {
         IPolicy.PolicyInfo memory policyInfo = _getInstanceReader().getPolicyInfo(policyNftId);

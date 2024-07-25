@@ -9,6 +9,7 @@ using {
     neObjectType as !=,
     ObjectTypeLib.toInt,
     ObjectTypeLib.eqz,
+    ObjectTypeLib.eq,
     ObjectTypeLib.gtz
 } for ObjectType global;
 

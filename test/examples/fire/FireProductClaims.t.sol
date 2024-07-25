@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
+import {IERC721Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 
 import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
 import {APPLIED, CLOSED, COLLATERALIZED, PAID} from "../../../contracts/type/StateId.sol";
@@ -11,13 +12,15 @@ import {Fee, FeeLib} from "../../../contracts/type/Fee.sol";
 import {FireProduct, ONE_YEAR} from "../../../contracts/examples/fire/FireProduct.sol";
 import {FireTestBase} from "./FireTestBase.t.sol";
 import {IClaimService} from "../../../contracts/product/IClaimService.sol";
+import {IComponent} from "../../../contracts/shared/IComponent.sol";
 import {INftOwnable} from "../../../contracts/shared/INftOwnable.sol";
 import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
-import {NftId} from "../../../contracts/type/NftId.sol";
+import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
 import {PayoutId} from "../../../contracts/type/PayoutId.sol";
 import {Seconds, SecondsLib} from "../../../contracts/type/Seconds.sol";
 import {Timestamp, TimestampLib} from "../../../contracts/type/Timestamp.sol";
 import {UFixedLib} from "../../../contracts/type/UFixed.sol";
+import {POLICY, POOL} from "../../../contracts/type/ObjectType.sol";
 
 // solhint-disable func-name-mixedcase
 contract FireProductClaimsTest is FireTestBase {
@@ -733,9 +736,72 @@ contract FireProductClaimsTest is FireTestBase {
         fireProduct.submitClaim(policyNftId, fireId);
     }
 
+    /// @dev Test submitClaim for a policy that does not exist
+    function test_FireProductClaims_submitClaim_invalidNftId() public {
+        // GIVEN
+        Amount sumInsured = AmountLib.toAmount(100000 * 10 ** 6);
+        Timestamp now = TimestampLib.blockTimestamp();
+        Timestamp inADay = now.addSeconds(SecondsLib.toSeconds(24 * 60 * 60));
+        policyNftId = _preparePolicy(
+            customer,
+            cityName, 
+            sumInsured, 
+            ONE_YEAR(), 
+            inADay,
+            bundleNftId);
+        
+        vm.startPrank(fireProductOwner);
+        uint256 fireId = 42;
+        fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), now);
+        vm.stopPrank();
+        
+        vm.warp(100);
+        vm.startPrank(customer);
+
+        NftId invalidNftId = NftIdLib.toNftId(243);
+        
+        // THEN - expect revert
+        vm.expectRevert(abi.encodeWithSelector(
+            IERC721Errors.ERC721NonexistentToken.selector,
+            invalidNftId));
+
+        // WHEN - submit claim for policy that does not exist (invalid nft id)
+        fireProduct.submitClaim(invalidNftId, fireId);
+    }
+
+    /// @dev Test submitClaim for a nft that is of wrong type (pool nft)
+    function test_FireProductClaims_submitClaim_invalidNftType() public {
+        // GIVEN
+        Amount sumInsured = AmountLib.toAmount(100000 * 10 ** 6);
+        Timestamp now = TimestampLib.blockTimestamp();
+        Timestamp inADay = now.addSeconds(SecondsLib.toSeconds(24 * 60 * 60));
+        policyNftId = _preparePolicy(
+            customer,
+            cityName, 
+            sumInsured, 
+            ONE_YEAR(), 
+            inADay,
+            bundleNftId);
+        
+        vm.startPrank(fireProductOwner);
+        uint256 fireId = 42;
+        fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), now);
+        vm.stopPrank();
+        
+        vm.startPrank(firePoolOwner);
+        
+        // THEN 
+        vm.expectRevert(abi.encodeWithSelector(
+            IComponent.ErrorNftNotObjectType.selector,
+            firePoolNftId,
+            POOL(),
+            POLICY()));
+
+        // WHEN - submit claim for policy that is wrong type
+        fireProduct.submitClaim(firePoolNftId, fireId);
+    }
+
     // TODO: test submitClaim wrong city
-    // TODO: test submitClaim but not active yet
-    // TODO: test submitClaim invalid policy nft 
     // TODO: test submitClaim fire time after policy expired
     // TODO: test submitClaim fire time before policy active
 

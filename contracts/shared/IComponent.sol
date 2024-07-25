@@ -8,6 +8,8 @@ import {Amount} from "../type/Amount.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
 import {ITransferInterceptor} from "../registry/ITransferInterceptor.sol";
+import {NftId} from "../type/NftId.sol";
+import {ObjectType} from "../type/ObjectType.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 
 /// @dev component base class
@@ -18,6 +20,7 @@ interface IComponent is
     ITransferInterceptor
 {
     error ErrorComponentNotChainNft(address caller);
+    error ErrorNftNotObjectType(NftId nftId, ObjectType objectType, ObjectType expectedObjectType);
 
     error ErrorComponentTokenAddressZero();
     error ErrorComponentNameLengthZero();
