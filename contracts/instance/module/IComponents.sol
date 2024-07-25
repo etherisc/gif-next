@@ -24,6 +24,7 @@ interface IComponents {
     struct ProductInfo {
         NftId distributionNftId;
         NftId poolNftId;
+        bool isProcessingFundedClaims; // custom logic to react to pool events for funded claims
         Fee productFee; // product fee on net premium
         Fee processingFee; // product fee on payout amounts        
         Fee distributionFee; // distribution fee for sales that do not include commissions
@@ -37,7 +38,8 @@ interface IComponents {
     struct PoolInfo {
         Amount maxBalanceAmount; // max balance amount allowed for pool
         RoleId bundleOwnerRole; // the required role for bundle owners
-        bool isInterceptingBundleTransfers; // intercepts nft transfers for bundles
+        bool isInterceptingBundleTransfers; // custom logic for bundle nft transfers
+        bool isProcessingConfirmedClaims; // custom logic for claims confirmation
         bool isExternallyManaged; // funding bundles is restricted to book keeping, actual funds may be provided as needed to support payouts
         bool isVerifyingApplications; // underwriting requires the pool component checks/confirms the applications 
         UFixed collateralizationLevel; // factor to calculate collateral for sum insurance (default 100%)

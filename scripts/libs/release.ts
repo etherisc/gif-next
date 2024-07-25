@@ -337,10 +337,7 @@ export async function getReleaseConfig(/*owner: Signer, registry: RegistryAddres
             [], // staking
             [
                 [RegistryService__factory.createInterface().getFunction("registerPolicy").selector],
-                [RegistryService__factory.createInterface().getFunction("registerProduct").selector],
-                [RegistryService__factory.createInterface().getFunction("registerPool").selector],
                 [RegistryService__factory.createInterface().getFunction("registerBundle").selector],
-                [RegistryService__factory.createInterface().getFunction("registerDistribution").selector],
                 [RegistryService__factory.createInterface().getFunction("registerComponent").selector],                
                 [RegistryService__factory.createInterface().getFunction("registerInstance").selector],
                 [RegistryService__factory.createInterface().getFunction("registerStaking").selector]

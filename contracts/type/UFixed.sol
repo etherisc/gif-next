@@ -344,6 +344,10 @@ library UFixedLib {
         return UFixed.wrap(0);
     }
 
+    function one() public pure returns (UFixed) {
+        return UFixed.wrap(MULTIPLIER);
+    }
+
     /// @dev return the absolute delta between two UFixed numbers
     function delta(UFixed a, UFixed b) public pure returns (UFixed) {
         return deltaUFixed(a, b);

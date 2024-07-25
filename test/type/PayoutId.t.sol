@@ -22,25 +22,25 @@ contract PayoutIdClaimIdTest is Test {
     }
 
     function test_PayoutIdToIntHappyCase() public {
-        uint claimNo = 42;
+        uint256 claimNo = 42;
         ClaimId claimId = ClaimIdLib.toClaimId(claimNo);
 
-        uint8 payoutNo = 17;
+        uint24 payoutNo = 17;
         PayoutId payoutId = PayoutIdLib.toPayoutId(claimId, payoutNo);
-        assertEq(payoutId.toInt(), (claimNo << 8) + payoutNo, "unexpected payout id");
+        assertEq(payoutId.toInt(), (claimNo << 24) + payoutNo, "unexpected payout id");
         assertEq(payoutId.toClaimId().toInt(), claimId.toInt(), "unexpected claim id for payout id");
         assertEq(payoutId.toPayoutNo(), payoutNo, "unexpected payout no for payout id");
     }
 
     function test_PayoutIdMaxPayoutNo() public {
-        uint claimNo = 42;
+        uint256 claimNo = 42;
         ClaimId claimId = ClaimIdLib.toClaimId(claimNo);
 
-        uint8 payoutNo = type(uint8).max;
-        assertEq(payoutNo, 255, "unexpected max payout no");
+        uint24 payoutNo = type(uint24).max;
+        assertEq(payoutNo, 2 ** 24 - 1, "unexpected max payout no");
 
         PayoutId payoutId = PayoutIdLib.toPayoutId(claimId, payoutNo);
-        assertEq(payoutId.toInt(), (claimNo << 8) + payoutNo, "unexpected payout id");
+        assertEq(payoutId.toInt(), (claimNo << 24) + payoutNo, "unexpected payout id");
         assertEq(payoutId.toClaimId().toInt(), claimId.toInt(), "unexpected claim id for payout id");
         assertEq(payoutId.toPayoutNo(), payoutNo, "unexpected payout no for payout id");
     }

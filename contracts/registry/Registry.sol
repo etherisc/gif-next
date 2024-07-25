@@ -243,6 +243,9 @@ contract Registry is
     {
         address objectAddress = info.objectAddress;
         ObjectType objectType = info.objectType;
+
+        // this indidirectly enforces that the parent is registered
+        // parentType would be zero for a non-registered parent which is never a valid type combination
         ObjectType parentType = _info[info.parentNftId].objectType;
 
         // check type combinations for core objects
@@ -347,6 +350,10 @@ contract Registry is
         return _info[nftId];
     }
 
+    function getObjectAddress(NftId nftId) external view returns (address) {
+        return _info[nftId].objectAddress;
+    }
+
     function getObjectInfo(address object) external view returns (ObjectInfo memory) {
         return _info[_nftIdByAddress[object]];
     }
@@ -374,8 +381,6 @@ contract Registry is
     }
 
     function getStakingAddress() external view returns (address staking) {
-        //return getObjectInfo(_stakingNftId).objectAddress;
-        //return _info[_stakingNftId].objectAddress;
         return _stakingAddress;
     }
 

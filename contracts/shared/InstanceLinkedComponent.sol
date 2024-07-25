@@ -96,8 +96,7 @@ abstract contract InstanceLinkedComponent is
         // set and check linked instance
         InstanceLinkedComponentStorage storage $ = _getInstanceLinkedComponentStorage();
         $._instance = IInstance(
-            IRegistry(registry).getObjectInfo(
-                instanceNftId).objectAddress);
+            IRegistry(registry).getObjectAddress(instanceNftId));
 
         if(!$._instance.supportsInterface(type(IInstance).interfaceId)) {
             revert ErrorComponentNotInstance(instanceNftId);

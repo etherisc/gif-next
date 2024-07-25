@@ -326,7 +326,7 @@ contract DistributionService is
         returns(IInstance instance)
     {
         NftId instanceNftId = getRegistry().getObjectInfo(distributionNftId).parentNftId;
-        address instanceAddress = getRegistry().getObjectInfo(instanceNftId).objectAddress;
+        address instanceAddress = getRegistry().getObjectAddress(instanceNftId);
         return IInstance(instanceAddress);
     }
 

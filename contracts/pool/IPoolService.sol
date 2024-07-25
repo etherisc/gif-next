@@ -2,14 +2,15 @@
 pragma solidity ^0.8.20;
 
 import {Amount} from "../type/Amount.sol";
+import {ClaimId} from "../type/ClaimId.sol";
 import {Fee} from "../type/Fee.sol";
-import {NftId} from "../type/NftId.sol";
-import {PayoutId} from "../type/PayoutId.sol";
 import {IBundle} from "../instance/module/IBundle.sol";
 import {IInstance} from "../instance/IInstance.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
 import {IService} from "../shared/IService.sol";
+import {NftId} from "../type/NftId.sol";
+import {PayoutId} from "../type/PayoutId.sol";
 import {RoleId} from "../type/RoleId.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {StateId} from "../type/StateId.sol";
@@ -26,6 +27,9 @@ interface IPoolService is IService {
     event LogPoolServiceBundleStaked(NftId instanceNftId, NftId poolNftId, NftId bundleNftId, Amount amount, Amount netAmount);
     event LogPoolServiceBundleUnstaked(NftId instanceNftId, NftId poolNftId, NftId bundleNftId, Amount amount);
 
+    event LogPoolServiceProcessFundedClaim(NftId policyNftId, ClaimId claimId, Amount availableAmount);
+
+    error ErrorPoolServicePolicyPoolMismatch(NftId policyNftId, NftId productNftId, NftId expectedProductNftId);
     error ErrorPoolServiceBundleOwnerRoleAlreadySet(NftId poolNftId);
     error ErrorPoolServiceInvalidTransferAmount(Amount expectedAmount, Amount actualAmount);
     error ErrorPoolServiceBundlePoolMismatch(NftId bundleNftId, NftId poolNftId);
@@ -112,6 +116,11 @@ interface IPoolService is IService {
     function closeBundle(NftId bundleNftId) external;
 
 
+    /// @dev Informs product about available funds to process a confirmed claim.
+    /// The function triggers a callback to the product component when the product's property isProcessingFundedClaims is set.
+    function processFundedClaim(NftId policyNftId, ClaimId claimId, Amount availableAmount) external;
+
+
     /// @dev Fund the specified pool wallet with the provided amount.
     /// This function will collect the amount from the sender address and transfers it to the pool wallet.
     /// The function will not update balance amounts managed by the framework.
@@ -130,7 +139,7 @@ interface IPoolService is IService {
     function processSale(NftId bundleNftId, IPolicy.PremiumInfo memory premium) external;
 
 
-    /// @dev calulate required collateral for the provided parameters
+    /// @dev Calulate required collateral for the provided parameters.
     function calculateRequiredCollateral(
         InstanceReader instanceReader,
         NftId productNftId, 
@@ -139,12 +148,14 @@ interface IPoolService is IService {
         external
         view 
         returns(
-            Amount localCollateralAmount,
-            Amount totalCollateralAmount
+            Amount totalCollateralAmount,
+            Amount localCollateralAmount
         );
 
 
-    /// @dev calulate required collateral for the provided parameters
+    /// @dev calulate required collateral for the provided parameters.
+    /// Collateralization is applied to sum insured.
+    /// Retention level defines the fraction of the collateral that is required locally.
     function calculateRequiredCollateral(
         UFixed collateralizationLevel, 
         UFixed retentionLevel, 
@@ -153,8 +164,8 @@ interface IPoolService is IService {
         external
         pure 
         returns(
-            Amount localCollateralAmount,
-            Amount totalCollateralAmount
+            Amount totalCollateralAmount,
+            Amount localCollateralAmount
         );
 
 }

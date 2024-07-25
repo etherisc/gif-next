@@ -35,7 +35,7 @@ interface IClaimService is
     error ErrorClaimServiceBeneficiaryIsZero(NftId policyNftId, ClaimId claimId);
     error ErrorClaimsServicePayoutAmountIsZero(NftId policyNftId, PayoutId payoutId);
 
-    error ErrorClaimServiceClaimWithOpenPayouts(NftId policyNftId, ClaimId claimId, uint8 openPayouts);
+    error ErrorClaimServiceClaimWithOpenPayouts(NftId policyNftId, ClaimId claimId, uint24 openPayouts);
     error ErrorClaimServiceClaimWithMissingPayouts(NftId policyNftId, ClaimId claimId, Amount claimAmount, Amount paidAmount);
     error ErrorClaimServiceClaimNotInExpectedState(NftId policyNftId, ClaimId claimId, StateId expectedState, StateId actualState);
 

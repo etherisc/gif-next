@@ -49,6 +49,29 @@ abstract contract Product is
     }
 
 
+    function register()
+        external
+        virtual
+        onlyOwner()
+    {
+        _getProductStorage()._componentService.registerProduct();
+        _approveTokenHandler(type(uint256).max);
+    }
+
+
+    function processFundedClaim(
+        NftId policyNftId, 
+        ClaimId claimId, 
+        Amount availableAmount
+    )
+        external
+        virtual
+        restricted() // pool service role
+    {
+        // default implementation does nothing
+    }
+
+
     function calculatePremium(
         Amount sumInsuredAmount,
         RiskId riskId,
@@ -91,16 +114,6 @@ abstract contract Product is
     }
 
 
-    function register()
-        external
-        virtual
-        onlyOwner()
-    {
-        _getProductStorage()._componentService.registerProduct();
-        _approveTokenHandler(type(uint256).max);
-    }
-
-
     function getInitialProductInfo()
         public 
         virtual 
@@ -112,6 +125,7 @@ abstract contract Product is
         return IComponents.ProductInfo({
             distributionNftId: $._distributionNftId,
             poolNftId: $._poolNftId,
+            isProcessingFundedClaims: false,
             productFee: FeeLib.zero(),
             processingFee: FeeLib.zero(),
             distributionFee: FeeLib.zero(),
@@ -122,13 +136,6 @@ abstract contract Product is
         });
     }
 
-    function getPoolNftId() external view override returns (NftId poolNftId) {
-        return getRegistry().getNftIdForAddress(address(_getProductStorage()._pool));
-    }
-
-    function getDistributionNftId() external view override returns (NftId distributionNftId) {
-        return getRegistry().getNftIdForAddress(address(_getProductStorage()._distribution));
-    }
 
     function _initializeProduct(
         address registry,
@@ -413,7 +420,7 @@ abstract contract Product is
         return RiskIdLib.toRiskId(riskName);
     }
 
-    function _getProductStorage() private pure returns (ProductStorage storage $) {
+    function _getProductStorage() internal pure returns (ProductStorage storage $) {
         assembly {
             $.slot := PRODUCT_STORAGE_LOCATION_V1
         }
