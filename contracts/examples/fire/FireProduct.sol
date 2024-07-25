@@ -53,6 +53,7 @@ contract FireProduct is
     error ErrorFireProductUnknownDamageLevel(DamageLevel damageLevel);
     error ErrorFireProductFireUnknown(uint256 fireId);
     error ErrorFireProductNotPolicyOwner(NftId nftId, address owner);
+    error ErrorFireProductFireNotInCoveredCity(uint256 fireId, string cityName);
 
     string[] private _cities;
     // map from city name to the RiskId
@@ -329,7 +330,7 @@ contract FireProduct is
         returns (ClaimId claimId, PayoutId payoutId) 
     {
         IPolicy.PolicyInfo memory policyInfo = _getInstanceReader().getPolicyInfo(policyNftId);
-        _checkClaimConditions(policyNftId, fireId, policyInfo);
+        _checkClaimConditions(policyNftId, policyInfo, fireId);
         
         Fire memory fire = _fires[fireId];
         _claimed[fireId][policyNftId] = true;
@@ -345,8 +346,8 @@ contract FireProduct is
 
     function _checkClaimConditions(
         NftId policyNftId,
-        uint256 fireId,
-        IPolicy.PolicyInfo memory policyInfo
+        IPolicy.PolicyInfo memory policyInfo,
+        uint256 fireId
     ) 
         internal
     {
@@ -355,19 +356,19 @@ contract FireProduct is
             revert ErrorFireProductFireUnknown(fireId);
         }
 
+        // check fire is in same city as policy coverage
+        if (_riskMapping[_fires[fireId].cityName] != policyInfo.riskId) {
+            revert ErrorFireProductFireNotInCoveredCity(fireId, _fires[fireId].cityName);
+        }
+
         // check policy has not been claimed yet for this fire
         if (_claimed[fireId][policyNftId]) {
             revert ErrorFireProductAlreadyClaimed();
         }
 
-        StateId policyState = _getInstanceReader().getPolicyState(policyNftId);
-        
-        if (! policyState.eq(COLLATERALIZED())) {
-            revert ErrorFireProductPolicyNotActive(policyNftId);
-        }
-
         Fire memory fire = _fires[fireId];
 
+        // check fire is during policy lifetime
         if (fire.reportedAt < policyInfo.activatedAt) {
             revert ErrorFireProductPolicyNotYetActive(policyNftId, policyInfo.activatedAt);
         }

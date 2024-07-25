@@ -697,7 +697,7 @@ contract FireProductClaimsTest is FireTestBase {
         
         // THEN - expect revert
         vm.expectRevert(abi.encodeWithSelector(
-            FireProduct.ErrorFireProductPolicyNotActive.selector,
+            IClaimService.ErrorClaimServicePolicyNotOpen.selector,
             policyNftId));
 
         // WHEN - submit claim for closed policy
@@ -801,7 +801,40 @@ contract FireProductClaimsTest is FireTestBase {
         fireProduct.submitClaim(firePoolNftId, fireId);
     }
 
-    // TODO: test submitClaim wrong city
+        /// @dev Test submitClaim for a fire that is in wrong city (wrong risk)
+    function test_FireProductClaims_submitClaim_wrongCity() public {
+        // GIVEN
+        Amount sumInsured = AmountLib.toAmount(100000 * 10 ** 6);
+        Timestamp now = TimestampLib.blockTimestamp();
+        policyNftId = _preparePolicy(
+            customer,
+            cityName, 
+            sumInsured, 
+            ONE_YEAR(), 
+            now,
+            bundleNftId);
+        
+        vm.startPrank(fireProductOwner);
+        string memory cityName2 = "Zurich";
+        fireProduct.initializeCity(cityName2);
+        uint256 fireId = 42;
+        fireProduct.reportFire(fireId, cityName2, DAMAGE_SMALL(), now);
+        vm.stopPrank();
+
+        vm.warp(100);
+        
+        vm.startPrank(customer);
+        
+        // THEN 
+        vm.expectRevert(abi.encodeWithSelector(
+            FireProduct.ErrorFireProductFireNotInCoveredCity.selector,
+            fireId,
+            "Zurich"));
+
+        // WHEN - submit claim for a fire in the wrong city
+        fireProduct.submitClaim(policyNftId, fireId);
+    }
+
     // TODO: test submitClaim fire time after policy expired
     // TODO: test submitClaim fire time before policy active
 
