@@ -19,6 +19,8 @@ contract PolicyHolder is
     IPolicyHolder
 {
     // TODO add modifier to protect callback functions from unauthorized access
+    // callbacks must only be allowed from the policy and claim services
+    // will need a release parameter to fetch the right service addresses for the modifiers
 
     function _initializePolicyHolder(
         address registryAddress

@@ -96,6 +96,9 @@ contract PoolWithReinsurance is
             ReferralLib.zero()); // referral id
 
         // step 2. create active policy
+        // THIS IS NOT REALISTICALLY done here (but is the simples possible setup to 
+        // test composition)
+        // in a real setup the policy would be created by the reinsurance product
         reinsuranceProduct.createPolicy(
             resinsurancePolicyNftId,
             false, // no premium collection required
