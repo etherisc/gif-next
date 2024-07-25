@@ -704,7 +704,7 @@ contract FireProductClaimsTest is FireTestBase {
         fireProduct.submitClaim(policyNftId, fireId);
     }
 
-    /// @dev Test submitClaim for a policy that is not yet active
+    /// @dev Test submitClaim for a policy that is not yet active when the fire occurs
     function test_FireProductClaims_submitClaim_policyNotActive() public {
         // GIVEN
         Amount sumInsured = AmountLib.toAmount(100000 * 10 ** 6);
@@ -801,7 +801,7 @@ contract FireProductClaimsTest is FireTestBase {
         fireProduct.submitClaim(firePoolNftId, fireId);
     }
 
-        /// @dev Test submitClaim for a fire that is in wrong city (wrong risk)
+    /// @dev Test submitClaim for a fire that is in wrong city (wrong risk)
     function test_FireProductClaims_submitClaim_wrongCity() public {
         // GIVEN
         Amount sumInsured = AmountLib.toAmount(100000 * 10 ** 6);
@@ -835,8 +835,38 @@ contract FireProductClaimsTest is FireTestBase {
         fireProduct.submitClaim(policyNftId, fireId);
     }
 
-    // TODO: test submitClaim fire time after policy expired
-    // TODO: test submitClaim fire time before policy active
+    /// @dev Test submitClaim for a fire that is in wrong city (wrong risk)
+    function test_FireProductClaims_submitClaim_fireAfterPolicyExpiration() public {
+        // GIVEN
+        Amount sumInsured = AmountLib.toAmount(100000 * 10 ** 6);
+        Timestamp now = TimestampLib.blockTimestamp();
+        policyNftId = _preparePolicy(
+            customer,
+            cityName, 
+            sumInsured, 
+            ONE_YEAR(), 
+            now,
+            bundleNftId);
+        
+        vm.startPrank(fireProductOwner);
+        
+        vm.warp(ONE_YEAR().toInt() + 100);
+        
+        uint256 fireId = 42;
+        fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(),  TimestampLib.blockTimestamp());
+        vm.stopPrank();
+
+        vm.startPrank(customer);
+        
+        // THEN 
+        vm.expectRevert(abi.encodeWithSelector(
+            FireProduct.ErrorFireProductPolicyExpired.selector,
+            policyNftId,
+            ONE_YEAR() + SecondsLib.toSeconds(1)));
+
+        // WHEN - submit claim for a fire that happened after policy expired
+        fireProduct.submitClaim(policyNftId, fireId);
+    }
 
     function _preparePolicy(
         address account,

@@ -373,7 +373,7 @@ contract FireProduct is
             revert ErrorFireProductPolicyNotYetActive(policyNftId, policyInfo.activatedAt);
         }
 
-        if (fire.reportedAt > policyInfo.expiredAt) {
+        if (fire.reportedAt >= policyInfo.expiredAt) {
             revert ErrorFireProductPolicyExpired(policyNftId, policyInfo.expiredAt);
         }
     }
