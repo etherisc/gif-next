@@ -332,27 +332,13 @@ contract FireProduct is
         Fire memory fire = _fires[fireId];
         _claimed[fireId][policyNftId] = true;
 
-        Amount claimAmount = _getClaimAmount(policyInfo, fire);
-        Amount maxPayoutRemaining = policyInfo.sumInsuredAmount - policyInfo.payoutAmount;
-
-        // if payout is higher than the remaining maximum payout, then claim what is remaining
-        // TODO: leave claim amount as is and only confirm/payout reduced amount
-        if (maxPayoutRemaining < claimAmount) {
-            claimAmount = maxPayoutRemaining;
-        }
+        Amount claimAmount = _getClaimAmount(policyNftId, policyInfo.sumInsuredAmount, fire.damageLevel);
         
         claimId = _submitClaim(policyNftId, claimAmount, abi.encodePacked(fireId));
         _confirmClaim(policyNftId, claimId, claimAmount, "");
 
         payoutId = _createPayout(policyNftId, claimId, claimAmount, "");
         _processPayout(policyNftId, payoutId);
-
-        policyInfo = _getInstanceReader().getPolicyInfo(policyNftId);
-
-        // if policy is fully claimed (and therefor closable), close it
-        if (_getInstanceReader().policyIsCloseable(policyNftId)) {
-            _close(policyNftId);
-        }
     }
 
     function _checkClaimConditions(
@@ -390,21 +376,34 @@ contract FireProduct is
     }
 
     function _getClaimAmount(
-        IPolicy.PolicyInfo memory policyInfo,
-        Fire memory fire
+        NftId policyNftId,
+        Amount sumInsured,
+        DamageLevel damageLevel
     ) 
         internal
         view
         returns (Amount)
     {
-        if (fire.damageLevel.eq(DAMAGE_SMALL())) {
-            return policyInfo.sumInsuredAmount.multiplyWith(UFixedLib.toUFixed(25, -2));
-        } else if (fire.damageLevel.eq(DAMAGE_MEDIUM())) {
-            return policyInfo.sumInsuredAmount.multiplyWith(UFixedLib.toUFixed(5, -1));
-        } else if (fire.damageLevel.eq(DAMAGE_LARGE())) {
-            return policyInfo.sumInsuredAmount;
+        Amount claimAmount = sumInsured.multiplyWith(_damageLevelToPayoutPercentage(damageLevel));
+        Amount maxPayoutRemaining = _getInstanceReader().getRemainingClaimableAmount(policyNftId);
+
+        // if payout is higher than the remaining maximum payout, then claim what is remaining
+        if (maxPayoutRemaining < claimAmount) {
+            return maxPayoutRemaining;
+        }
+
+        return claimAmount;
+    }
+
+    function _damageLevelToPayoutPercentage(DamageLevel damageLevel) internal pure returns (UFixed) {
+        if (damageLevel.eq(DAMAGE_SMALL())) {
+            return UFixedLib.toUFixed(25, -2);
+        } else if (damageLevel.eq(DAMAGE_MEDIUM())) {
+            return UFixedLib.toUFixed(5, -1);
+        } else if (damageLevel.eq(DAMAGE_LARGE())) {
+            return UFixedLib.toUFixed(1);
         } else {
-            revert ErrorFireProductUnknownDamageLevel(fire.damageLevel);
+            revert ErrorFireProductUnknownDamageLevel(damageLevel);
         }
     }
 

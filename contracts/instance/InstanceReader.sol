@@ -231,6 +231,15 @@ contract InstanceReader {
     }
 
 
+    function getRemainingClaimableAmount(NftId policyNftId)
+        public
+        view
+        returns (Amount remainingClaimableAmount)
+    {
+        IPolicy.PolicyInfo memory info = getPolicyInfo(policyNftId);
+        return info.sumInsuredAmount - info.claimAmount;
+    }
+
     function getPayoutInfo(NftId policyNftId, PayoutId payoutId)
         public
         view

@@ -277,10 +277,9 @@ contract PolicyService is
         returns (Timestamp expiredAt)
     {
         (NftId productNftId,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
-        InstanceReader instanceReader = instance.getInstanceReader();
-
+        
         // check policy matches with calling product
-        IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
+        IPolicy.PolicyInfo memory policyInfo = instance.getInstanceReader().getPolicyInfo(policyNftId);
         if(policyInfo.productNftId != productNftId) {
             revert ErrorPolicyServicePolicyProductMismatch(
                 policyNftId, 
@@ -288,8 +287,44 @@ contract PolicyService is
                 productNftId);
         }
 
+        return _expire(
+            instance,
+            policyNftId,
+            expireAt
+        );
+    }
+
+    /// @inheritdoc IPolicyService
+    function expirePolicy(
+        IInstance instance,
+        NftId policyNftId,
+        Timestamp expireAt
+    )
+        external
+        virtual
+        nonReentrant()
+        returns (Timestamp expiredAt)
+    {
+        return _expire(
+            instance,
+            policyNftId,
+            expireAt
+        );
+    }
+
+    function _expire(
+        IInstance instance,
+        NftId policyNftId,
+        Timestamp expireAt
+    )
+        internal
+        returns (Timestamp expiredAt)
+    {
+        InstanceReader instanceReader = instance.getInstanceReader();
+        
         // check policy is active
         StateId policyState = instanceReader.getPolicyState(policyNftId);
+        IPolicy.PolicyInfo memory policyInfo = instance.getInstanceReader().getPolicyInfo(policyNftId);
         if (!_policyHasBeenActivated(policyState, policyInfo)) {
             revert ErrorPolicyServicePolicyNotActive(policyNftId, policyState);
         }

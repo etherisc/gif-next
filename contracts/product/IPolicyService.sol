@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {IService} from "../shared/IService.sol";
 
 import {Amount} from "../type/Amount.sol";
+import {IInstance} from "../instance/IInstance.sol";
 import {NftId} from "../type/NftId.sol";
 import {StateId} from "../type/StateId.sol";
 import {Timestamp} from "../type/Timestamp.sol";
@@ -68,6 +69,8 @@ interface IPolicyService is IService {
     /// this function can only be called by a product. the policy needs to match with the calling product
     /// @return expiredAt the effective expiry date
     function expire(NftId policyNftId, Timestamp expireAt) external returns (Timestamp expiredAt);
+
+    function expirePolicy(IInstance instance, NftId policyNftId, Timestamp expireAt) external returns (Timestamp expiredAt);
 
     /// @dev closes the specified policy and sets the closed data in the policy metadata
     /// a policy can only be closed when it has been expired. in addition, it must not have any open claims

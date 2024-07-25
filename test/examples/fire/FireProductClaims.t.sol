@@ -276,16 +276,16 @@ contract FireProductClaimsTest is FireTestBase {
         
         // THEN
         Amount expectedClaimAmount = sumInsured;
-        Timestamp expectedClosed = TimestampLib.blockTimestamp();
-
+        
         // assert policy state and info
-        assertTrue(CLOSED().eq(instanceReader.getPolicyState(policyNftId)));
+        assertTrue(COLLATERALIZED().eq(instanceReader.getPolicyState(policyNftId)));
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
         assertEq(1, policyInfo.claimsCount);
         assertEq(0, policyInfo.openClaimsCount);
         assertEq(expectedClaimAmount, policyInfo.claimAmount, "claimAmount mismatch");
         assertEq(expectedClaimAmount, policyInfo.payoutAmount, "payoutAmount mismatch");
-        assertEq(expectedClosed, policyInfo.closedAt, "closedAt mismatch");
+        assertEq(claimSubmittedAt, policyInfo.expiredAt, "expiredAt mismatch");
+        assertEq(TimestampLib.zero(), policyInfo.closedAt, "closedAt mismatch");
         
         // assert claim state and info
         assertTrue(CLOSED().eq(instanceReader.getClaimState(policyNftId, claimId)));
@@ -454,10 +454,14 @@ contract FireProductClaimsTest is FireTestBase {
 
             // assert policy state and info
             {
-                assertTrue(CLOSED().eq(instanceReader.getPolicyState(policyNftId)));
+                assertTrue(COLLATERALIZED().eq(instanceReader.getPolicyState(policyNftId)));
                 IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
-                assertEq(sumInsured, policyInfo.claimAmount, "claimAmount mismatch");
-                assertEq(sumInsured, policyInfo.payoutAmount, "payoutAmount mismatch");
+                assertEq(sumInsured, policyInfo.claimAmount, "policyInfo.claimAmount mismatch");
+                assertEq(sumInsured, policyInfo.payoutAmount, "policyInfo.payoutAmount mismatch");
+                assertEq(2, policyInfo.claimsCount);
+                assertEq(0, policyInfo.openClaimsCount);
+                assertEq(claimSubmittedAt2, policyInfo.expiredAt, "policyInfo.expiredAt mismatch");
+                assertEq(TimestampLib.zero(), policyInfo.closedAt, "policyInfo.closedAt mismatch");
             }
             
             // assert claim state and info

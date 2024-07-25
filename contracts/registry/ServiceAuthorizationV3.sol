@@ -37,9 +37,9 @@ contract ServiceAuthorizationV3
           _authorizeDomain(POOL(), address(8));
           _authorizeDomain(ORACLE(), address(9));
           _authorizeDomain(PRODUCT(), address(10));
-          _authorizeDomain(CLAIM(), address(11));
-          _authorizeDomain(APPLICATION(), address(12));
-          _authorizeDomain(POLICY(), address(13));
+          _authorizeDomain(POLICY(), address(11));
+          _authorizeDomain(CLAIM(), address(12));
+          _authorizeDomain(APPLICATION(), address(13));
      }
 
 

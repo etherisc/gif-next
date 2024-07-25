@@ -337,6 +337,10 @@ contract GifDeployer is Test {
         riskService = riskServiceManager.getRiskService(); 
         riskServiceNftId = _registerService(releaseRegistry, riskServiceManager, riskService);
 
+        policyServiceManager = new PolicyServiceManager{salt: salt}(authority, registryAddress, salt);
+        policyService = policyServiceManager.getPolicyService();
+        policyServiceNftId = _registerService(releaseRegistry, policyServiceManager, policyService);
+
         claimServiceManager = new ClaimServiceManager{salt: salt}(authority, registryAddress, salt);
         claimService = claimServiceManager.getClaimService();
         claimServiceNftId = _registerService(releaseRegistry, claimServiceManager, claimService);
@@ -345,9 +349,6 @@ contract GifDeployer is Test {
         applicationService = applicationServiceManager.getApplicationService();
         applicationServiceNftId = _registerService(releaseRegistry, applicationServiceManager, applicationService);
 
-        policyServiceManager = new PolicyServiceManager{salt: salt}(authority, registryAddress, salt);
-        policyService = policyServiceManager.getPolicyService();
-        policyServiceNftId = _registerService(releaseRegistry, policyServiceManager, policyService);
     }
 
 

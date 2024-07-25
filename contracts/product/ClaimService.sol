@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {TimestampLib} from "../type/Timestamp.sol";
-import {ObjectType, CLAIM, PRODUCT, POOL} from "../type/ObjectType.sol";
+import {ObjectType, CLAIM, POLICY, POOL, PRODUCT} from "../type/ObjectType.sol";
 import {SUBMITTED, KEEP_STATE, DECLINED, REVOKED, CONFIRMED, CLOSED, PAID} from "../type/StateId.sol";
 import {NftId} from "../type/NftId.sol";
 import {FeeLib} from "../type/Fee.sol";
@@ -19,6 +19,7 @@ import {IInstance} from "../instance/IInstance.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
 import {IPolicyHolder} from "../shared/IPolicyHolder.sol";
 import {IPoolComponent} from "../pool/IPoolComponent.sol";
+import {IPolicyService} from "../product/IPolicyService.sol";
 import {IPoolService} from "../pool/IPoolService.sol";
 
 
@@ -27,6 +28,7 @@ contract ClaimService is
     IClaimService
 {
 
+    IPolicyService internal _policyService;
     IPoolService internal _poolService;
 
     function _initialize(
@@ -44,6 +46,7 @@ contract ClaimService is
 
         _initializeService(registryAddress, authority, owner);
 
+        _policyService = IPolicyService(getRegistry().getServiceAddress(POLICY(), getVersion().toMajorPart()));
         _poolService = IPoolService(getRegistry().getServiceAddress(POOL(), getVersion().toMajorPart()));
 
         _registerInterface(type(IClaimService).interfaceId);
@@ -129,12 +132,14 @@ contract ClaimService is
         claimInfo.processData = data;
         instance.getInstanceStore().updateClaim(policyNftId, claimId, claimInfo, CONFIRMED());
 
-        // TODO test if claim results in total claim amount == sum insured amount
-        // should policy still be active it needs to automatically become expired
-
         // update and save policy info with instance
         policyInfo.claimAmount = policyInfo.claimAmount + confirmedAmount;
         instance.getInstanceStore().updatePolicyClaims(policyNftId, policyInfo, KEEP_STATE());
+
+        // should policy still be active it needs to become expired
+        if (policyInfo.claimAmount >= policyInfo.sumInsuredAmount) {
+            _policyService.expirePolicy(instance, policyNftId, TimestampLib.blockTimestamp());
+        }
 
         emit LogClaimServiceClaimConfirmed(policyNftId, claimId, confirmedAmount);
 
@@ -340,7 +345,7 @@ contract ClaimService is
             policyNftId, 
             policyInfo, 
             payoutAmount);
-
+        
         // transfer payout token and fee
         (
             Amount netPayoutAmount,
