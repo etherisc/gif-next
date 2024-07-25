@@ -592,8 +592,7 @@ contract FireProductClaimsTest is FireTestBase {
             bundleNftId);
         
         vm.startPrank(fireProductOwner);
-        uint256 fireId = 42;
-        fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), now);
+        fireProduct.reportFire(42, cityName, DAMAGE_SMALL(), now);
         vm.stopPrank();
         
         vm.startPrank(customer);
@@ -605,6 +604,35 @@ contract FireProductClaimsTest is FireTestBase {
 
         // WHEN - submit claim for unknown fire id
         fireProduct.submitClaim(policyNftId, 43);
+    }
+
+        /// @dev Test submitClaim for an already claimed fireId
+    function test_FireProductClaims_submitClaim_alreadyClaimed() public {
+        // GIVEN
+        Amount sumInsured = AmountLib.toAmount(100000 * 10 ** 6);
+        Timestamp now = TimestampLib.blockTimestamp();
+        policyNftId = _preparePolicy(
+            customer,
+            cityName, 
+            sumInsured, 
+            ONE_YEAR(), 
+            now,
+            bundleNftId);
+        
+        vm.startPrank(fireProductOwner);
+        uint256 fireId = 42;
+        fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), now);
+        vm.stopPrank();
+        
+        vm.startPrank(customer);
+        fireProduct.submitClaim(policyNftId, fireId);
+
+        // THEN - expect revert
+        vm.expectRevert(abi.encodeWithSelector(
+            FireProduct.ErrorFireProductAlreadyClaimed.selector));
+
+        // WHEN - submit claim for already claimed fire
+        fireProduct.submitClaim(policyNftId, fireId);
     }
 
     // TODO: test submitClaim wrong city
