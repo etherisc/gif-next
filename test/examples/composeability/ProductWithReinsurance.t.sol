@@ -1,39 +1,39 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Vm, console} from "../../lib/forge-std/src/Test.sol";
+import {Vm, console} from "../../../lib/forge-std/src/Test.sol";
 
-import {GifTest} from "../base/GifTest.sol";
-import {Amount, AmountLib} from "../../contracts/type/Amount.sol";
+import {GifTest} from "../../base/GifTest.sol";
+import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
 import {DistributionWithReinsuranceAuthorization} from "./DistributionWithReinsuranceAuthorization.sol";
 import {PoolWithReinsuranceAuthorization} from "./PoolWithReinsuranceAuthorization.sol";
 import {ProductWithReinsuranceAuthorization} from "./ProductWithReinsuranceAuthorization.sol";
-import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
-import {ClaimId, ClaimIdLib} from "../../contracts/type/ClaimId.sol";
-import {ContractLib} from "../../contracts/shared/ContractLib.sol";
-import {PRODUCT_OWNER_ROLE} from "../../contracts/type/RoleId.sol";
+import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
+import {ClaimId, ClaimIdLib} from "../../../contracts/type/ClaimId.sol";
+import {ContractLib} from "../../../contracts/shared/ContractLib.sol";
+import {PRODUCT_OWNER_ROLE} from "../../../contracts/type/RoleId.sol";
 import {ProductWithReinsurance} from "./ProductWithReinsurance.sol";
 import {PoolWithReinsurance} from "./PoolWithReinsurance.sol";
-import {SimpleDistribution} from "../../contracts/examples/unpermissioned/SimpleDistribution.sol";
-import {SimpleProduct} from "../../contracts/examples/unpermissioned/SimpleProduct.sol";
-import {SimplePool} from "../../contracts/examples/unpermissioned/SimplePool.sol";
-import {IComponents} from "../../contracts/instance/module/IComponents.sol";
-import {ILifecycle} from "../../contracts/shared/ILifecycle.sol";
-import {IPolicy} from "../../contracts/instance/module/IPolicy.sol";
-import {IPolicyHolder} from "../../contracts/shared/IPolicyHolder.sol";
-import {IBundle} from "../../contracts/instance/module/IBundle.sol";
-import {Fee, FeeLib} from "../../contracts/type/Fee.sol";
-import {UFixedLib} from "../../contracts/type/UFixed.sol";
-import {Seconds, SecondsLib} from "../../contracts/type/Seconds.sol";
-import {Timestamp, TimestampLib, zeroTimestamp} from "../../contracts/type/Timestamp.sol";
-import {IPolicyService} from "../../contracts/product/IPolicyService.sol";
-import {IRisk} from "../../contracts/instance/module/IRisk.sol";
-import {PayoutId, PayoutIdLib} from "../../contracts/type/PayoutId.sol";
-import {POLICY} from "../../contracts/type/ObjectType.sol";
-import {RiskId, RiskIdLib, eqRiskId} from "../../contracts/type/RiskId.sol";
-import {ReferralLib} from "../../contracts/type/Referral.sol";
-import {SUBMITTED, ACTIVE, COLLATERALIZED, CONFIRMED, PAID, DECLINED, CLOSED} from "../../contracts/type/StateId.sol";
-import {StateId} from "../../contracts/type/StateId.sol";
+import {SimpleDistribution} from "../../../contracts/examples/unpermissioned/SimpleDistribution.sol";
+import {SimpleProduct} from "../../../contracts/examples/unpermissioned/SimpleProduct.sol";
+import {SimplePool} from "../../../contracts/examples/unpermissioned/SimplePool.sol";
+import {IComponents} from "../../../contracts/instance/module/IComponents.sol";
+import {ILifecycle} from "../../../contracts/shared/ILifecycle.sol";
+import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
+import {IPolicyHolder} from "../../../contracts/shared/IPolicyHolder.sol";
+import {IBundle} from "../../../contracts/instance/module/IBundle.sol";
+import {Fee, FeeLib} from "../../../contracts/type/Fee.sol";
+import {UFixedLib} from "../../../contracts/type/UFixed.sol";
+import {Seconds, SecondsLib} from "../../../contracts/type/Seconds.sol";
+import {Timestamp, TimestampLib, zeroTimestamp} from "../../../contracts/type/Timestamp.sol";
+import {IPolicyService} from "../../../contracts/product/IPolicyService.sol";
+import {IRisk} from "../../../contracts/instance/module/IRisk.sol";
+import {PayoutId, PayoutIdLib} from "../../../contracts/type/PayoutId.sol";
+import {POLICY} from "../../../contracts/type/ObjectType.sol";
+import {RiskId, RiskIdLib, eqRiskId} from "../../../contracts/type/RiskId.sol";
+import {ReferralLib} from "../../../contracts/type/Referral.sol";
+import {SUBMITTED, ACTIVE, COLLATERALIZED, CONFIRMED, PAID, DECLINED, CLOSED} from "../../../contracts/type/StateId.sol";
+import {StateId} from "../../../contracts/type/StateId.sol";
 
 
 contract ProductWithReinsuranceTest
