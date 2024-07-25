@@ -10,6 +10,7 @@ import {IAuthorization} from "../../authorization/IAuthorization.sol";
 import {IPolicy} from "../../instance/module/IPolicy.sol";
 import {NftId} from "../../type/NftId.sol";
 import {PayoutId} from "../../type/PayoutId.sol";
+import {POLICY} from "../../type/ObjectType.sol";
 import {ReferralLib} from "../../type/Referral.sol";
 import {RiskId, RiskIdLib} from "../../type/RiskId.sol";
 import {Seconds} from "../../type/Seconds.sol";
@@ -43,15 +44,16 @@ contract FireProduct is
     }
 
     error ErrorFireProductCityUnknown(string cityName);
-    error ErrorFireProductTimestampTooEarly();
+    error ErrorFireProductTimestampInFuture();
     error ErrorFireProductFireAlreadyReported();
     error ErrorFireProductAlreadyClaimed();
-    error ErrorFireProductPolicyNotActive();
-    error ErrorFireProductPolicyNotYetActive(Timestamp activateAt);
-    error ErrorFireProductPolicyExpired(Timestamp expiredAt);
+    error ErrorFireProductPolicyNotActive(NftId policyNftId);
+    error ErrorFireProductPolicyNotYetActive(NftId policyNftId, Timestamp activateAt);
+    error ErrorFireProductPolicyExpired(NftId policyNftId, Timestamp expiredAt);
     error ErrorFireProductUnknownDamageLevel(DamageLevel damageLevel);
     error ErrorFireProductFireUnknown(uint256 fireId);
     error ErrorFireProductNotPolicyOwner(NftId nftId, address owner);
+    error ErrorFireProductFireNotInCoveredCity(uint256 fireId, string cityName);
 
     string[] private _cities;
     // map from city name to the RiskId
@@ -298,8 +300,8 @@ contract FireProduct is
             revert ErrorFireProductCityUnknown(cityName);
         }
 
-        if (reportedAt < TimestampLib.blockTimestamp()) {
-            revert ErrorFireProductTimestampTooEarly();
+        if (reportedAt > TimestampLib.blockTimestamp()) {
+            revert ErrorFireProductTimestampInFuture();
         }
 
         if (! _fires[fireId].reportedAt.eqz()) {
@@ -324,10 +326,11 @@ contract FireProduct is
         public 
         restricted()
         onlyNftOwner(policyNftId)
+        onlyNftObjectType(policyNftId, POLICY())
         returns (ClaimId claimId, PayoutId payoutId) 
     {
         IPolicy.PolicyInfo memory policyInfo = _getInstanceReader().getPolicyInfo(policyNftId);
-        _checkClaimConditions(policyNftId, fireId, policyInfo);
+        _checkClaimConditions(policyNftId, policyInfo, fireId);
         
         Fire memory fire = _fires[fireId];
         _claimed[fireId][policyNftId] = true;
@@ -343,8 +346,8 @@ contract FireProduct is
 
     function _checkClaimConditions(
         NftId policyNftId,
-        uint256 fireId,
-        IPolicy.PolicyInfo memory policyInfo
+        IPolicy.PolicyInfo memory policyInfo,
+        uint256 fireId
     ) 
         internal
     {
@@ -353,25 +356,25 @@ contract FireProduct is
             revert ErrorFireProductFireUnknown(fireId);
         }
 
+        // check fire is in same city as policy coverage
+        if (_riskMapping[_fires[fireId].cityName] != policyInfo.riskId) {
+            revert ErrorFireProductFireNotInCoveredCity(fireId, _fires[fireId].cityName);
+        }
+
         // check policy has not been claimed yet for this fire
         if (_claimed[fireId][policyNftId]) {
             revert ErrorFireProductAlreadyClaimed();
         }
 
-        StateId policyState = _getInstanceReader().getPolicyState(policyNftId);
-        
-        if (! policyState.eq(COLLATERALIZED())) {
-            revert ErrorFireProductPolicyNotActive();
-        }
-
         Fire memory fire = _fires[fireId];
 
+        // check fire is during policy lifetime
         if (fire.reportedAt < policyInfo.activatedAt) {
-            revert ErrorFireProductPolicyNotYetActive(policyInfo.activatedAt);
+            revert ErrorFireProductPolicyNotYetActive(policyNftId, policyInfo.activatedAt);
         }
 
-        if (fire.reportedAt > policyInfo.expiredAt) {
-            revert ErrorFireProductPolicyExpired(policyInfo.expiredAt);
+        if (fire.reportedAt >= policyInfo.expiredAt) {
+            revert ErrorFireProductPolicyExpired(policyNftId, policyInfo.expiredAt);
         }
     }
 
