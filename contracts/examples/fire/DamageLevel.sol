@@ -10,14 +10,17 @@ using {
     DamageLevelLib.toInt
 } for DamageLevel global;
 
+// solhint-disable-next-line func-name-mixedcase
 function DAMAGE_SMALL() pure returns (DamageLevel) {
     return DamageLevel.wrap(1);
 }
 
+// solhint-disable-next-line func-name-mixedcase
 function DAMAGE_MEDIUM() pure returns (DamageLevel) {
     return DamageLevel.wrap(2);
 }
 
+// solhint-disable-next-line func-name-mixedcase
 function DAMAGE_LARGE() pure returns (DamageLevel) {
     return DamageLevel.wrap(3);
 }

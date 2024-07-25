@@ -5,7 +5,7 @@ import {ACTIVE, COLLATERALIZED, PAUSED} from "../../type/StateId.sol";
 import {Amount, AmountLib} from "../../type/Amount.sol";
 import {BasicProduct} from "../../product/BasicProduct.sol";
 import {ClaimId} from "../../type/ClaimId.sol";
-import {DamageLevel, DamageLevelLib, DAMAGE_SMALL, DAMAGE_MEDIUM, DAMAGE_LARGE} from "./DamageLevel.sol";
+import {DamageLevel, DAMAGE_SMALL, DAMAGE_MEDIUM, DAMAGE_LARGE} from "./DamageLevel.sol";
 import {IAuthorization} from "../../authorization/IAuthorization.sol";
 import {IPolicy} from "../../instance/module/IPolicy.sol";
 import {NftId} from "../../type/NftId.sol";
@@ -19,10 +19,12 @@ import {UFixed, UFixedLib} from "../../type/UFixed.sol";
 
 uint64 constant SPECIAL_ROLE_INT = 11111;
 
+// solhint-disable-next-line func-name-mixedcase
 function HALF_YEAR() pure returns (Seconds) {
     return Seconds.wrap(180 * 86400);
 }
 
+// solhint-disable-next-line func-name-mixedcase
 function ONE_YEAR() pure returns (Seconds) {
     return Seconds.wrap(360 * 86400);
 }
@@ -244,6 +246,7 @@ contract FireProduct is
     ) 
         public 
         restricted()
+        onlyOwner()
     {
         _createPolicy(policyNftId, activateAt);
         _collectPremium(policyNftId, activateAt);
@@ -255,6 +258,7 @@ contract FireProduct is
     ) 
         public 
         restricted()
+        onlyOwner()
     {
         _decline(policyNftId);
     }
@@ -265,6 +269,7 @@ contract FireProduct is
     ) 
         public 
         restricted()
+        onlyOwner()
         returns (Timestamp)
     {
         return _expire(policyNftId, expireAt);
@@ -275,6 +280,7 @@ contract FireProduct is
     ) 
         public 
         restricted()
+        onlyOwner()
     {
         _close(policyNftId);
     }
@@ -335,9 +341,7 @@ contract FireProduct is
             claimAmount = maxPayoutRemaining;
         }
         
-        // TODO: encode some data claim
-
-        claimId = _submitClaim(policyNftId, claimAmount, "");
+        claimId = _submitClaim(policyNftId, claimAmount, abi.encodePacked(fireId));
         _confirmClaim(policyNftId, claimId, claimAmount, "");
 
         payoutId = _createPayout(policyNftId, claimId, claimAmount, "");
@@ -345,9 +349,9 @@ contract FireProduct is
 
         policyInfo = _getInstanceReader().getPolicyInfo(policyNftId);
 
-        // TODO: switch to InstanceReader.policyIsCloseable 
-        if (policyInfo.payoutAmount >= policyInfo.sumInsuredAmount) {
-            close(policyNftId);
+        // if policy is fully claimed (and therefor closable), close it
+        if (_getInstanceReader().policyIsCloseable(policyNftId)) {
+            _close(policyNftId);
         }
     }
 

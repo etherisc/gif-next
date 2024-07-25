@@ -8,6 +8,7 @@ import {APPLIED, CLOSED, COLLATERALIZED, DECLINED, PAID} from "../../../contract
 import {Fee, FeeLib} from "../../../contracts/type/Fee.sol";
 import {ONE_YEAR} from "../../../contracts/examples/fire/FireProduct.sol";
 import {FireTestBase} from "./FireTestBase.t.sol";
+import {INftOwnable} from "../../../contracts/shared/INftOwnable.sol";
 import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
 import {NftId} from "../../../contracts/type/NftId.sol";
 import {SecondsLib} from "../../../contracts/type/Seconds.sol";
@@ -151,7 +152,7 @@ contract FireProductTest is FireTestBase {
 
         // THEN - expect revert for wrong role
         vm.expectRevert(abi.encodeWithSelector(
-            IAccessManaged.AccessManagedUnauthorized.selector, 
+            INftOwnable.ErrorNftOwnableNotOwner.selector, 
             customer));
 
         // WHEN - policy is created
@@ -196,7 +197,7 @@ contract FireProductTest is FireTestBase {
 
         // THEN - expect revert for wrong role
         vm.expectRevert(abi.encodeWithSelector(
-            IAccessManaged.AccessManagedUnauthorized.selector, 
+            INftOwnable.ErrorNftOwnableNotOwner.selector, 
             customer));
 
         // WHEN
@@ -292,7 +293,7 @@ contract FireProductTest is FireTestBase {
 
         // THEN - expect revert for wrong role
         vm.expectRevert(abi.encodeWithSelector(
-            IAccessManaged.AccessManagedUnauthorized.selector, 
+            INftOwnable.ErrorNftOwnableNotOwner.selector, 
             customer));
 
         // WHEN - policy is expired
@@ -390,7 +391,7 @@ contract FireProductTest is FireTestBase {
 
         // THEN - expect revert for wrong role
         vm.expectRevert(abi.encodeWithSelector(
-            IAccessManaged.AccessManagedUnauthorized.selector, 
+            INftOwnable.ErrorNftOwnableNotOwner.selector, 
             customer));
 
         // WHEN 

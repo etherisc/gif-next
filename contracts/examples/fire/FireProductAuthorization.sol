@@ -24,16 +24,19 @@ contract FireProductAuthorization
 
         // authorize public role (open access to any account, only allows to lock target)
         functions = _authorizeForTarget(getTargetName(), PUBLIC_ROLE());
+        // fully public functions
         _authorize(functions, FireProduct.createApplication.selector, "createApplication");
+        
+        // only owner
+        _authorize(functions, FireProduct.createPolicy.selector, "createPolicy"); 
+        _authorize(functions, FireProduct.decline.selector, "decline"); 
+        _authorize(functions, FireProduct.expire.selector, "expire"); 
+        _authorize(functions, FireProduct.close.selector, "close"); 
+
         // only policy nft owner
-        _authorize(functions, FireProduct.submitClaim.selector, "submitClaim");
+        _authorize(functions, FireProduct.submitClaim.selector, "submitClaim"); 
 
         functions = _authorizeForTarget(getTargetName(), PRODUCT_OWNER_ROLE());
-        // TODO: make those 4 public and restrict to nft owner
-        _authorize(functions, FireProduct.createPolicy.selector, "createPolicy");
-        _authorize(functions, FireProduct.decline.selector, "decline");
-        _authorize(functions, FireProduct.expire.selector, "expire");
-        _authorize(functions, FireProduct.close.selector, "close");
         // TODO: add custom role for fire reporter
         _authorize(functions, FireProduct.reportFire.selector, "reportFire");
     }
