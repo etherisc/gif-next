@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol"; 
+
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegistryLinked} from "../shared/IRegistryLinked.sol";
 import {IStaking} from "../staking/IStaking.sol";
 
 import {Amount} from "../type/Amount.sol";
 import {Blocknumber}  from "../type/Blocknumber.sol";
-import {InitializableCustom} from "../shared/InitializableCustom.sol";
 import {NftId} from "../type/NftId.sol";
 import {STAKE, TARGET} from "../type/ObjectType.sol";
 import {StakingStore} from "./StakingStore.sol";
@@ -16,16 +17,18 @@ import {UFixed} from "../type/UFixed.sol";
 
 contract StakingReader is
     IRegistryLinked,
-    InitializableCustom
+    Initializable
 {
 
-    error ErrorStakingReaderDependenciesAlreadySet();
+    error ErrorStakingReaderUnauthorizedCaler();
 
+    address private _initializeOwner;
     IRegistry private _registry;
     IStaking private _staking;
     StakingStore private _store;
 
-    constructor(IRegistry registry) InitializableCustom() {
+    constructor(IRegistry registry) {
+        _initializeOwner = msg.sender;
         _registry = registry;
     }
 
@@ -34,8 +37,12 @@ contract StakingReader is
         address stakingStoreAddress
     )
         external
-        initializer
+        initializer()
     {
+        if (msg.sender != _initializeOwner) {
+            revert ErrorStakingReaderUnauthorizedCaler();
+        }
+
         _staking = IStaking(stakingAddress);
         _store = StakingStore(stakingStoreAddress);
     }
