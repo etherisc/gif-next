@@ -367,7 +367,7 @@ contract BundleService is
         restricted
     {
         // ensure policy is closeable
-        if (!instance.getInstanceReader().policyIsCloseable(policyNftId)) {
+        if (!policyIsCloseable(instance, policyNftId)) {
             revert ErrorBundleServicePolicyNotCloseable(policyNftId);
         }
 
@@ -414,6 +414,29 @@ contract BundleService is
             emit LogBundleServiceFeesWithdrawn(bundleNftId, owner, address(poolInfo.token), withdrawnAmount);
             poolInfo.tokenHandler.distributeTokens(poolWallet, owner, withdrawnAmount);
         }
+    }
+
+    /// @inheritdoc IBundleService
+    function policyIsCloseable(IInstance instance, NftId policyNftId)
+        public
+        view
+        returns (bool isCloseable)
+    {
+        IPolicy.PolicyInfo memory info = instance.getInstanceReader().getPolicyInfo(policyNftId);
+        
+        if (info.productNftId.eqz()) { return false; } // not closeable: policy does not exist (or does not belong to this instance)
+        if (info.activatedAt.eqz()) { return false; } // not closeable: not yet activated
+        if (info.closedAt.gtz()) { return false; } // not closeable: already closed
+        if (info.openClaimsCount > 0) { return false; } // not closeable: has open claims
+
+        // closeable: if sum of claims matches sum insured a policy may be closed prior to the expiry date
+        if (info.claimAmount == info.sumInsuredAmount) { return true; }
+
+        // not closeable: not yet expired
+        if (TimestampLib.blockTimestamp() < info.expiredAt) { return false; }
+
+        // all conditionsl to close the policy are met
+        return true; 
     }
 
     /// @dev links policy to bundle

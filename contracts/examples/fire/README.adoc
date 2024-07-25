@@ -1,0 +1,15 @@
+= Fire insurance example components
+
+This directory contains the set of contracts required for the fire insurance. The fire insurance example is a minimal fully permissioned set of 
+example components that can be used to run a (very simple) fire insurance. 
+
+The product is built without a distribution and oracle component. 
+
+== Contracts
+
+{{FirePool}}
+{{FirePoolAuthorization}}
+{{FireProduct}}
+{{FireProductAuthorization}}
+{{FireUSD}}
+

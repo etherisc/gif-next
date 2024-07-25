@@ -342,7 +342,7 @@ contract TestProductLifecycle
 
         // THEN
         IPolicy.PayoutInfo memory payoutInfo = instanceReader.getPayoutInfo(policyNftId, payoutId);
-        assertEq(payoutInfo.beneficiary, address(0), "unexpected beneficiary (info)");
+        assertEq(payoutInfo.beneficiary, beneficiary, "unexpected beneficiary (info)");
 
         // check still no callback (only create payout, no tokens moved so far)
         assertEq(payoutId.toInt(), payoutIdExpected.toInt(), "unexpected payout id");
