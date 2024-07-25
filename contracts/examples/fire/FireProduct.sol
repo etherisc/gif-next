@@ -46,9 +46,9 @@ contract FireProduct is
     error ErrorFireProductTimestampTooEarly();
     error ErrorFireProductFireAlreadyReported();
     error ErrorFireProductAlreadyClaimed();
-    error ErrorFireProductPolicyNotActive();
-    error ErrorFireProductPolicyNotYetActive(Timestamp activateAt);
-    error ErrorFireProductPolicyExpired(Timestamp expiredAt);
+    error ErrorFireProductPolicyNotActive(NftId policyNftId);
+    error ErrorFireProductPolicyNotYetActive(NftId policyNftId, Timestamp activateAt);
+    error ErrorFireProductPolicyExpired(NftId policyNftId, Timestamp expiredAt);
     error ErrorFireProductUnknownDamageLevel(DamageLevel damageLevel);
     error ErrorFireProductFireUnknown(uint256 fireId);
     error ErrorFireProductNotPolicyOwner(NftId nftId, address owner);
@@ -361,17 +361,17 @@ contract FireProduct is
         StateId policyState = _getInstanceReader().getPolicyState(policyNftId);
         
         if (! policyState.eq(COLLATERALIZED())) {
-            revert ErrorFireProductPolicyNotActive();
+            revert ErrorFireProductPolicyNotActive(policyNftId);
         }
 
         Fire memory fire = _fires[fireId];
 
         if (fire.reportedAt < policyInfo.activatedAt) {
-            revert ErrorFireProductPolicyNotYetActive(policyInfo.activatedAt);
+            revert ErrorFireProductPolicyNotYetActive(policyNftId, policyInfo.activatedAt);
         }
 
         if (fire.reportedAt > policyInfo.expiredAt) {
-            revert ErrorFireProductPolicyExpired(policyInfo.expiredAt);
+            revert ErrorFireProductPolicyExpired(policyNftId, policyInfo.expiredAt);
         }
     }
 

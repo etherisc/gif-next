@@ -10,6 +10,7 @@ import {DAMAGE_LARGE, DAMAGE_MEDIUM, DAMAGE_SMALL} from "../../../contracts/exam
 import {Fee, FeeLib} from "../../../contracts/type/Fee.sol";
 import {FireProduct, ONE_YEAR} from "../../../contracts/examples/fire/FireProduct.sol";
 import {FireTestBase} from "./FireTestBase.t.sol";
+import {IClaimService} from "../../../contracts/product/IClaimService.sol";
 import {INftOwnable} from "../../../contracts/shared/INftOwnable.sol";
 import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
 import {NftId} from "../../../contracts/type/NftId.sol";
@@ -606,7 +607,7 @@ contract FireProductClaimsTest is FireTestBase {
         fireProduct.submitClaim(policyNftId, 43);
     }
 
-        /// @dev Test submitClaim for an already claimed fireId
+    /// @dev Test submitClaim for an already claimed fireId
     function test_FireProductClaims_submitClaim_alreadyClaimed() public {
         // GIVEN
         Amount sumInsured = AmountLib.toAmount(100000 * 10 ** 6);
@@ -635,12 +636,78 @@ contract FireProductClaimsTest is FireTestBase {
         fireProduct.submitClaim(policyNftId, fireId);
     }
 
+    /// @dev Test submitClaim for an expired policy
+    function test_FireProductClaims_submitClaim_expiredPolicy() public {
+        // GIVEN
+        Amount sumInsured = AmountLib.toAmount(100000 * 10 ** 6);
+        Timestamp now = TimestampLib.blockTimestamp();
+        policyNftId = _preparePolicy(
+            customer,
+            cityName, 
+            sumInsured, 
+            ONE_YEAR(), 
+            now,
+            bundleNftId);
+        
+        vm.startPrank(fireProductOwner);
+        uint256 fireId = 42;
+        fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), now);
+
+        vm.warp(100);
+        fireProduct.expire(policyNftId, TimestampLib.blockTimestamp());
+        vm.stopPrank();
+        
+        vm.startPrank(customer);
+        
+        // THEN - expect revert
+        vm.expectRevert(abi.encodeWithSelector(
+            IClaimService.ErrorClaimServicePolicyNotOpen.selector,
+            policyNftId));
+
+        // WHEN - submit claim for expired policy
+        fireProduct.submitClaim(policyNftId, fireId);
+    }
+
+    /// @dev Test submitClaim for a closed policy
+    function test_FireProductClaims_submitClaim_closedPolicy() public {
+        // GIVEN
+        Amount sumInsured = AmountLib.toAmount(100000 * 10 ** 6);
+        Timestamp now = TimestampLib.blockTimestamp();
+        policyNftId = _preparePolicy(
+            customer,
+            cityName, 
+            sumInsured, 
+            ONE_YEAR(), 
+            now,
+            bundleNftId);
+        
+        vm.startPrank(fireProductOwner);
+        uint256 fireId = 42;
+        fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), now);
+
+        vm.warp(100);
+        fireProduct.expire(policyNftId, TimestampLib.blockTimestamp());
+        fireProduct.close(policyNftId);
+        vm.stopPrank();
+        
+        vm.startPrank(customer);
+        
+        // THEN - expect revert
+        vm.expectRevert(abi.encodeWithSelector(
+            FireProduct.ErrorFireProductPolicyNotActive.selector,
+            policyNftId));
+
+        // WHEN - submit claim for closed policy
+        fireProduct.submitClaim(policyNftId, fireId);
+    }
+
     // TODO: test submitClaim wrong city
-    // TODO: test submitClaim but already claimed
     // TODO: test submitClaim but policy closed
     // TODO: test submitClaim but not active yet
     // TODO: test submitClaim but already expired
     // TODO: test submitClaim invalid policy nft 
+    // TODO: test submitClaim fire time after policy expired
+    // TODO: test submitClaim fire time before policy active
 
     function _preparePolicy(
         address account,
