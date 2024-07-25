@@ -55,7 +55,7 @@ contract FireProduct is
     // map from city name to the RiskId
     mapping(string cityName => RiskId risk) private _riskMapping;
 
-    // // map from city name to the damage level and the time of the report
+    // map from city name to the damage level and the time of the report
     mapping(uint256 fireId => Fire) private _fires;
     mapping(uint256 fireId => mapping (NftId policyId => bool claimed)) private _claimed;
 
@@ -335,6 +335,8 @@ contract FireProduct is
             claimAmount = maxPayoutRemaining;
         }
         
+        // TODO: encode some data claim
+
         claimId = _submitClaim(policyNftId, claimAmount, "");
         _confirmClaim(policyNftId, claimId, claimAmount, "");
 
@@ -343,6 +345,7 @@ contract FireProduct is
 
         policyInfo = _getInstanceReader().getPolicyInfo(policyNftId);
 
+        // TODO: switch to InstanceReader.policyIsCloseable 
         if (policyInfo.payoutAmount >= policyInfo.sumInsuredAmount) {
             close(policyNftId);
         }

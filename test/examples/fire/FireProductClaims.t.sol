@@ -312,14 +312,111 @@ contract FireProductClaimsTest is FireTestBase {
         assertEq(bundleLockedBefore - expectedClaimAmount, instanceReader.getLockedAmount(bundleNftId), "bundleLocked mismatch");
     }
 
-    // TODO: test submit with two fires
+    /// @dev Test submitClaim with small fire damage and test that all counters are updated correctly and tokens transferred
+    function test_FireProductClaims_submitClaim_twoSmallFires() public {
+        // GIVEN
+        Amount sumInsured = AmountLib.toAmount(100000 * 10 ** 6);
+        Timestamp now = TimestampLib.blockTimestamp();
+        policyNftId = _preparePolicy(
+            customer,
+            cityName, 
+            sumInsured, 
+            ONE_YEAR(), 
+            now,
+            bundleNftId);
+        
+        vm.startPrank(fireProductOwner);
+        uint256 fireId = 42;
+        uint256 fireId2 = 43;
+        fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), now);
+        fireProduct.reportFire(fireId2, cityName, DAMAGE_SMALL(), now);
+        vm.stopPrank();
+        
+        vm.startPrank(customer);
+
+        uint256 customerTokenBalanceBefore = fireUSD.balanceOf(customer);
+        uint256 poolTokenBalanceBefore = fireUSD.balanceOf(firePool.getWallet());
+        Amount poolBalanceBefore = instanceReader.getBalanceAmount(firePoolNftId);
+        Amount bundleBalanceBefore = instanceReader.getBalanceAmount(bundleNftId);
+        Amount bundleLockedBefore = instanceReader.getLockedAmount(bundleNftId);
+        
+        // WHEN - submit two claim
+        vm.warp(100);
+        (ClaimId claimId, PayoutId payoutId) = fireProduct.submitClaim(policyNftId, fireId);
+        Timestamp claimSubmittedAt = TimestampLib.blockTimestamp();
+        vm.warp(100);
+        (ClaimId claimId2, PayoutId payoutId2) = fireProduct.submitClaim(policyNftId, fireId2);
+        Timestamp claimSubmittedAt2 = TimestampLib.blockTimestamp();
+        
+        // THEN
+        Amount expectedClaimAmount = sumInsured.multiplyWith(UFixedLib.toUFixed(25, -2));
+        Amount expectedClaimAmountTotal = expectedClaimAmount + expectedClaimAmount;
+
+        // assert policy state and info
+        {
+            assertTrue(COLLATERALIZED().eq(instanceReader.getPolicyState(policyNftId)));
+            IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
+            assertEq(2, policyInfo.claimsCount);
+            assertEq(0, policyInfo.openClaimsCount);
+            assertEq(expectedClaimAmountTotal, policyInfo.claimAmount, "claimAmount mismatch");
+            assertEq(expectedClaimAmountTotal, policyInfo.payoutAmount, "payoutAmount mismatch");
+        }
+        
+        // assert claim state and info
+        {
+            assertTrue(CLOSED().eq(instanceReader.getClaimState(policyNftId, claimId)));
+            IPolicy.ClaimInfo memory claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
+            assertEq(expectedClaimAmount, claimInfo.claimAmount, "claimAmount mismatch");
+            assertEq(expectedClaimAmount, claimInfo.paidAmount, "paidAmount mismatch");
+            assertEq(1, claimInfo.payoutsCount);
+            assertEq(0, claimInfo.openPayoutsCount);
+            assertEq(claimSubmittedAt, claimInfo.closedAt, "closedAt mismatch");
+
+            assertTrue(CLOSED().eq(instanceReader.getClaimState(policyNftId, claimId2)));
+            claimInfo = instanceReader.getClaimInfo(policyNftId, claimId2);
+            assertEq(expectedClaimAmount, claimInfo.claimAmount, "claimAmount mismatch (2)");
+            assertEq(expectedClaimAmount, claimInfo.paidAmount, "paidAmount mismatch (2)");
+            assertEq(1, claimInfo.payoutsCount);
+            assertEq(0, claimInfo.openPayoutsCount);
+            assertEq(claimSubmittedAt2, claimInfo.closedAt, "closedAt mismatch (2)");
+        }
+
+        // assert payout state and info
+        {
+            assertTrue(PAID().eq(instanceReader.getPayoutState(policyNftId, payoutId)));
+            IPolicy.PayoutInfo memory payoutInfo = instanceReader.getPayoutInfo(policyNftId, payoutId);
+            assertTrue(claimId == payoutInfo.claimId, "claimId mismatch");
+            assertEq(expectedClaimAmount, payoutInfo.amount, "amount mismatch");
+            assertEq(customer, payoutInfo.beneficiary, "beneficiary mismatch");
+            assertEq(claimSubmittedAt, payoutInfo.paidAt, "paidAt mismatch");
+
+            assertTrue(PAID().eq(instanceReader.getPayoutState(policyNftId, payoutId2)));
+            payoutInfo = instanceReader.getPayoutInfo(policyNftId, payoutId2);
+            assertTrue(claimId2 == payoutInfo.claimId, "claimId mismatch (2)");
+            assertEq(expectedClaimAmount, payoutInfo.amount, "amount mismatch (2)");
+            assertEq(customer, payoutInfo.beneficiary, "beneficiary mismatch (2)");
+            assertEq(claimSubmittedAt2, payoutInfo.paidAt, "paidAt mismatch (2)");
+        }
+
+        // assert token balances
+        {
+            assertEq(customerTokenBalanceBefore + expectedClaimAmountTotal.toInt(), fireUSD.balanceOf(customer), "customerTokenBalance mismatch");
+            assertEq(poolTokenBalanceBefore - expectedClaimAmountTotal.toInt(), fireUSD.balanceOf(firePool.getWallet()), "poolTokenBalance mismatch");
+            assertEq(poolBalanceBefore - expectedClaimAmountTotal, instanceReader.getBalanceAmount(firePoolNftId), "poolBalance mismatch");
+            assertEq(bundleBalanceBefore - expectedClaimAmountTotal, instanceReader.getBalanceAmount(bundleNftId), "bundleBalance mismatch");
+            assertEq(bundleLockedBefore - expectedClaimAmountTotal, instanceReader.getLockedAmount(bundleNftId), "bundleLocked mismatch");
+        }
+    }
+
     // TODO: test submit with two fires, first small, second large
     // TODO: test submitClaim with not nft owner
+    // TODO: test submitClaim with not nft owner, two policies (one with customer2) and customer2 tried to claim for customer 1
     // TODO: test submitClaim with invalid fire id
     // TODO: test submitClaim but already claimed
     // TODO: test submitClaim but policy closed
     // TODO: test submitClaim but not active yet
     // TODO: test submitClaim but already expired
+    // TODO: test submitClaim invalid policy nft 
 
     function _preparePolicy(
         address account,
