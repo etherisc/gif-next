@@ -523,6 +523,50 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     );
     logger.info(`riskServiceManager deployed - riskServiceAddress: ${riskServiceAddress} riskServiceManagerAddress: ${riskServiceManagerAddress} nftId: ${riskServiceNftId}`);
 
+    logger.info("-------- policy service --------");
+    const { address: policyServiceManagerAddress, contract: policyServiceManagerBaseContract, } = await deployContract(
+        "PolicyServiceManager",
+        owner,
+        [
+            authority,
+            registry.registryAddress,
+            release.salt
+        ],
+        { libraries: {
+            AmountLib: libraries.amountLibAddress,
+            ContractLib: libraries.contractLibAddress,
+            NftIdLib: libraries.nftIdLibAddress,
+            // ObjectTypeLib: libraries.objectTypeLibAddress, 
+            RoleIdLib: libraries.roleIdLibAddress,
+            StateIdLib: libraries.stateIdLibAddress,
+            TimestampLib: libraries.timestampLibAddress,
+            VersionLib: libraries.versionLibAddress, 
+            VersionPartLib: libraries.versionPartLibAddress, 
+        }});
+
+    const policyServiceManager = policyServiceManagerBaseContract as PolicyServiceManager;
+    const policyServiceAddress = await policyServiceManager.getPolicyService();
+    const policyService = PolicyService__factory.connect(policyServiceAddress, owner);
+
+    // verify service implementation 
+    prepareVerificationData(
+        "PolicyService", 
+        await getImplementationAddress(hhEthers.provider, await policyServiceManager.getProxy()), 
+        [], 
+        undefined);
+
+    const rcptPol = await executeTx(
+        async () => await releaseRegistry.registerService(policyServiceAddress, getTxOpts()),
+        "registerService - policyService"
+    );
+    const logRegistrationInfoPol = getFieldFromTxRcptLogs(rcptPol!, registry.registry.interface, "LogRegistration", "nftId");
+    const policyServiceNftId = (logRegistrationInfoPol as unknown);
+    await executeTx(
+        async () => await policyServiceManager.linkToProxy(getTxOpts()),
+        "linkToProxy - policyService"
+    );
+    logger.info(`policyServiceManager deployed - policyServiceAddress: ${policyServiceAddress} policyServiceManagerAddress: ${policyServiceManagerAddress} nftId: ${policyServiceNftId}`);
+
     logger.info("-------- claim service --------");
     const { address: claimServiceManagerAddress, contract: claimServiceManagerBaseContract, } = await deployContract(
         "ClaimServiceManager",
@@ -610,50 +654,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         "linkToProxy - applicationService"
     );
     logger.info(`applicationServiceManager deployed - applicationServiceAddress: ${applicationServiceAddress} policyServiceManagerAddress: ${applicationServiceManagerAddress} nftId: ${applicationServiceNftId}`);
-
-    logger.info("-------- policy service --------");
-    const { address: policyServiceManagerAddress, contract: policyServiceManagerBaseContract, } = await deployContract(
-        "PolicyServiceManager",
-        owner,
-        [
-            authority,
-            registry.registryAddress,
-            release.salt
-        ],
-        { libraries: {
-            AmountLib: libraries.amountLibAddress,
-            ContractLib: libraries.contractLibAddress,
-            NftIdLib: libraries.nftIdLibAddress,
-            // ObjectTypeLib: libraries.objectTypeLibAddress, 
-            RoleIdLib: libraries.roleIdLibAddress,
-            StateIdLib: libraries.stateIdLibAddress,
-            TimestampLib: libraries.timestampLibAddress,
-            VersionLib: libraries.versionLibAddress, 
-            VersionPartLib: libraries.versionPartLibAddress, 
-        }});
-
-    const policyServiceManager = policyServiceManagerBaseContract as PolicyServiceManager;
-    const policyServiceAddress = await policyServiceManager.getPolicyService();
-    const policyService = PolicyService__factory.connect(policyServiceAddress, owner);
-
-    // verify service implementation 
-    prepareVerificationData(
-        "PolicyService", 
-        await getImplementationAddress(hhEthers.provider, await policyServiceManager.getProxy()), 
-        [], 
-        undefined);
-
-    const rcptPol = await executeTx(
-        async () => await releaseRegistry.registerService(policyServiceAddress, getTxOpts()),
-        "registerService - policyService"
-    );
-    const logRegistrationInfoPol = getFieldFromTxRcptLogs(rcptPol!, registry.registry.interface, "LogRegistration", "nftId");
-    const policyServiceNftId = (logRegistrationInfoPol as unknown);
-    await executeTx(
-        async () => await policyServiceManager.linkToProxy(getTxOpts()),
-        "linkToProxy - policyService"
-    );
-    logger.info(`policyServiceManager deployed - policyServiceAddress: ${policyServiceAddress} policyServiceManagerAddress: ${policyServiceManagerAddress} nftId: ${policyServiceNftId}`);
     
     logger.info("======== Finished deployment of services ========");
 
