@@ -18,7 +18,7 @@ function DAMAGE_MEDIUM() pure returns (DamageLevel) {
     return DamageLevel.wrap(2);
 }
 
-function DAMAGE_HIGH() pure returns (DamageLevel) {
+function DAMAGE_LARGE() pure returns (DamageLevel) {
     return DamageLevel.wrap(3);
 }
 
@@ -36,7 +36,7 @@ library DamageLevelLib {
         } else if (damage == 2) {
             return DAMAGE_MEDIUM();
         } else if (damage == 3) {
-            return DAMAGE_HIGH();
+            return DAMAGE_LARGE();
         } else {
             revert ErrorDamageLeveLibInvalidDamageLevel(damage);
         }

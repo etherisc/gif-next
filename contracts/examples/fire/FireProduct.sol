@@ -5,7 +5,7 @@ import {ACTIVE, COLLATERALIZED, PAUSED} from "../../type/StateId.sol";
 import {Amount, AmountLib} from "../../type/Amount.sol";
 import {BasicProduct} from "../../product/BasicProduct.sol";
 import {ClaimId} from "../../type/ClaimId.sol";
-import {DamageLevel, DamageLevelLib, DAMAGE_SMALL, DAMAGE_MEDIUM, DAMAGE_HIGH} from "./DamageLevel.sol";
+import {DamageLevel, DamageLevelLib, DAMAGE_SMALL, DAMAGE_MEDIUM, DAMAGE_LARGE} from "./DamageLevel.sol";
 import {IAuthorization} from "../../authorization/IAuthorization.sol";
 import {IPolicy} from "../../instance/module/IPolicy.sol";
 import {NftId} from "../../type/NftId.sol";
@@ -393,8 +393,8 @@ contract FireProduct is
         if (fire.damageLevel.eq(DAMAGE_SMALL())) {
             return policyInfo.sumInsuredAmount.multiplyWith(UFixedLib.toUFixed(25, -2));
         } else if (fire.damageLevel.eq(DAMAGE_MEDIUM())) {
-            return policyInfo.sumInsuredAmount.multiplyWith(UFixedLib.toUFixed(5, -2));
-        } else if (fire.damageLevel.eq(DAMAGE_HIGH())) {
+            return policyInfo.sumInsuredAmount.multiplyWith(UFixedLib.toUFixed(5, -1));
+        } else if (fire.damageLevel.eq(DAMAGE_LARGE())) {
             return policyInfo.sumInsuredAmount;
         } else {
             revert ErrorFireProductUnknownDamageLevel(fire.damageLevel);
