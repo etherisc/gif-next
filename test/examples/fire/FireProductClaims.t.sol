@@ -98,20 +98,20 @@ contract FireProductClaimsTest is FireTestBase {
         fireProduct.reportFire(fireId, "Zurich", DAMAGE_SMALL(), now);
     }
 
-    function test_FireProductClaims_reportFire_tooEarly() public {
+    function test_FireProductClaims_reportFire_inFuture() public {
         // GIVEN
-        Timestamp now = TimestampLib.blockTimestamp();
         uint256 fireId = 42;
 
         vm.startPrank(fireProductOwner);
-        vm.warp(100);
         
+        Timestamp reportTime = TimestampLib.blockTimestamp().addSeconds(SecondsLib.toSeconds(100));
+
         // THEN - too early
         vm.expectRevert(abi.encodeWithSelector(
-            FireProduct.ErrorFireProductTimestampTooEarly.selector));
+            FireProduct.ErrorFireProductTimestampInFuture.selector));
 
         // WHEN - reportFire called by customer
-        fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), now);
+        fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), reportTime);
     }
 
     /// @dev Test submitClaim with small fire damage and test that all counters are updated correctly and tokens transferred
@@ -701,10 +701,40 @@ contract FireProductClaimsTest is FireTestBase {
         fireProduct.submitClaim(policyNftId, fireId);
     }
 
+    /// @dev Test submitClaim for a policy that is not yet active
+    function test_FireProductClaims_submitClaim_policyNotActive() public {
+        // GIVEN
+        Amount sumInsured = AmountLib.toAmount(100000 * 10 ** 6);
+        Timestamp now = TimestampLib.blockTimestamp();
+        Timestamp inADay = now.addSeconds(SecondsLib.toSeconds(24 * 60 * 60));
+        policyNftId = _preparePolicy(
+            customer,
+            cityName, 
+            sumInsured, 
+            ONE_YEAR(), 
+            inADay,
+            bundleNftId);
+        
+        vm.startPrank(fireProductOwner);
+        uint256 fireId = 42;
+        fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), now);
+        vm.stopPrank();
+        
+        vm.warp(100);
+        vm.startPrank(customer);
+        
+        // THEN - expect revert
+        vm.expectRevert(abi.encodeWithSelector(
+            FireProduct.ErrorFireProductPolicyNotYetActive.selector,
+            policyNftId,
+            inADay));
+
+        // WHEN - submit claim for policy that is not yet active
+        fireProduct.submitClaim(policyNftId, fireId);
+    }
+
     // TODO: test submitClaim wrong city
-    // TODO: test submitClaim but policy closed
     // TODO: test submitClaim but not active yet
-    // TODO: test submitClaim but already expired
     // TODO: test submitClaim invalid policy nft 
     // TODO: test submitClaim fire time after policy expired
     // TODO: test submitClaim fire time before policy active

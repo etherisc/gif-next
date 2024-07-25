@@ -43,7 +43,7 @@ contract FireProduct is
     }
 
     error ErrorFireProductCityUnknown(string cityName);
-    error ErrorFireProductTimestampTooEarly();
+    error ErrorFireProductTimestampInFuture();
     error ErrorFireProductFireAlreadyReported();
     error ErrorFireProductAlreadyClaimed();
     error ErrorFireProductPolicyNotActive(NftId policyNftId);
@@ -298,8 +298,8 @@ contract FireProduct is
             revert ErrorFireProductCityUnknown(cityName);
         }
 
-        if (reportedAt < TimestampLib.blockTimestamp()) {
-            revert ErrorFireProductTimestampTooEarly();
+        if (reportedAt > TimestampLib.blockTimestamp()) {
+            revert ErrorFireProductTimestampInFuture();
         }
 
         if (! _fires[fireId].reportedAt.eqz()) {
