@@ -6,8 +6,10 @@ import {StateId} from "../type/StateId.sol";
 
 interface ILifecycle {
 
-    error ErrorNoLifecycle(ObjectType objectType);
+    error ErrorNoLifecycle(address contractAddress, ObjectType objectType);
+    error ErrorFromStateMissmatch(address contractAddress, ObjectType objectType, StateId actual, StateId required);
     error ErrorInvalidStateTransition(
+        address contractAddress,
         ObjectType objectType,
         StateId fromStateId,
         StateId toStateId

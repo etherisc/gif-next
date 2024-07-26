@@ -49,6 +49,7 @@ abstract contract Lifecycle is
     }
 
     function checkTransition(
+        StateId stateId,
         ObjectType objectType,
         StateId fromId,
         StateId toId
@@ -58,12 +59,22 @@ abstract contract Lifecycle is
     {
         // revert if no life cycle support
         if (_initialState[objectType].eqz()) {
-            revert ErrorNoLifecycle(objectType);
+            revert ErrorNoLifecycle(address(this), objectType);
         }
 
+        // revert if current state is not `from` state
+        if(stateId != fromId) {
+            revert ErrorFromStateMissmatch(address(this), objectType, stateId, fromId);
+        }
+        // TODO consider assert instead of error -> each child must check only for valid transitions
         // enforce valid state transition
         if (!_isValidTransition[objectType][fromId][toId]) {
-            revert ErrorInvalidStateTransition(objectType, fromId, toId);
+            revert ErrorInvalidStateTransition(
+                address(this),
+                objectType, 
+                fromId, 
+                toId
+            );
         }
     }
 
