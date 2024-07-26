@@ -9,6 +9,12 @@ import {VersionPart} from "../type/Version.sol";
 
 interface IServiceAuthorization is IERC165 {
 
+     /// @dev Returns the commit hash representing the deployed release
+     function getCommitHash()
+          external
+          view
+          returns(string memory commitHash);
+
      /// @dev Returns the release (VersionPart) for which the service authorizations are defined by this contract.
      function getRelease()
           external
