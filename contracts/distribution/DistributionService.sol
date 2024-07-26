@@ -163,6 +163,7 @@ contract DistributionService is
     )
         external
         virtual
+        onlyNftObjectType(distributorNftId, DISTRIBUTOR())
         returns (ReferralId referralId)
     {
         (NftId distributionNftId,, IInstance instance) = _getAndVerifyActiveComponent(DISTRIBUTION());
@@ -214,6 +215,7 @@ contract DistributionService is
         external
         virtual
         restricted
+        onlyNftObjectType(distributionNftId, DISTRIBUTION())
     {
         if (referralIsValid(distributionNftId, referralId)) {
             IInstance instance = _getInstanceForDistribution(distributionNftId);
@@ -232,6 +234,7 @@ contract DistributionService is
         external
         virtual
         restricted
+        onlyNftObjectType(distributionNftId, DISTRIBUTION())
     {
         IInstance instance = _getInstanceForDistribution(distributionNftId);
         InstanceReader reader = instance.getInstanceReader();
@@ -267,6 +270,7 @@ contract DistributionService is
         public 
         virtual
         // TODO: restricted() (once #462 is done)
+        onlyNftObjectType(distributorNftId, DISTRIBUTOR())
         returns (Amount withdrawnAmount) 
     {
         (NftId distributionNftId,, IInstance instance) = _getAndVerifyActiveComponent(DISTRIBUTION());
@@ -304,7 +308,12 @@ contract DistributionService is
         }
     }
 
-    function referralIsValid(NftId distributionNftId, ReferralId referralId) public view returns (bool isValid) {
+    function referralIsValid(NftId distributionNftId, ReferralId referralId) 
+        public 
+        view 
+        onlyNftObjectType(distributionNftId, DISTRIBUTION())
+        returns (bool isValid) 
+    {
         if (distributionNftId.eqz() || referralId.eqz()) {
             return false;
         }
