@@ -13,7 +13,7 @@ interface IServiceAuthorization is IERC165 {
      function getCommitHash()
           external
           view
-          returns(string memory commitHash);
+          returns(bytes memory commitHash);
 
      /// @dev Returns the release (VersionPart) for which the service authorizations are defined by this contract.
      function getRelease()

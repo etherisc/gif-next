@@ -92,6 +92,10 @@ contract ServiceAuthorizationMock is IServiceAuthorization
           return interfaceId == type(IServiceAuthorization).interfaceId || interfaceId == type(IERC165).interfaceId;
      }
 
+     function getCommitHash() external view returns(bytes memory commitHash) {
+          revert("Not supported");
+     }
+
      function getServiceDomain(uint idx) external pure returns(ObjectType serviceDomain) {
           revert("Not supported");
      }
