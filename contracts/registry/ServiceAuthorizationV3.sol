@@ -19,7 +19,7 @@ contract ServiceAuthorizationV3
      is ServiceAuthorization
 {
 
-     constructor(bytes memory commitHash)
+     constructor(string memory commitHash)
           ServiceAuthorization(commitHash, 3)
      {}
 

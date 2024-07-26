@@ -19,15 +19,15 @@ contract ServiceAuthorization is
      uint256 public constant GIF_INITIAL_VERSION = 3;
 
      uint256 public immutable VERSION;
-     bytes public COMMIT_HASH;
+     string public COMMIT_HASH;
 
      ObjectType[] internal _serviceDomains;
      mapping(ObjectType domain => address service) internal _serviceAddress;
      mapping(ObjectType domain => ObjectType[] authorizedDomains) internal _authorizedDomains;
      mapping(ObjectType domain => mapping(ObjectType authorizedDomain => IAccess.FunctionInfo[] functions)) internal _authorizedFunctions;
 
-     constructor(bytes memory commitHash, uint256 version) {
-          assert(commitHash.length == COMMIT_HASH_LENGTH);
+     constructor(string memory commitHash, uint256 version) {
+          assert(bytes(commitHash).length == COMMIT_HASH_LENGTH);
           assert(version >= GIF_INITIAL_VERSION);
 
           COMMIT_HASH = commitHash;
@@ -36,7 +36,7 @@ contract ServiceAuthorization is
           _setupDomainAuthorizations();
      }
 
-     function getCommitHash() external view returns(bytes memory commitHash) {
+     function getCommitHash() external view returns(string memory commitHash) {
           return COMMIT_HASH;
      }
 
