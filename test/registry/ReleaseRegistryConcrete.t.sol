@@ -73,7 +73,7 @@ contract ReleaseRegistryTest is GifDeployer, FoundryRandom {
 
         chainNft = ChainNft(registry.getChainNftAddress());
         registryNftId = registry.getNftId();
-       
+
         vm.startPrank(gifManager);
 
         serviceByVersion[VersionPartLib.toVersionPart(3)] = new ServiceMockWithRegistryDomainV3(
@@ -1511,7 +1511,6 @@ contract ReleaseRegistryTest is GifDeployer, FoundryRandom {
         releaseRegistry.activateNextRelease();
     }
 
-
     function test_activateRelease_whenInitialReleaseNotCreated() public
     {
         vm.expectRevert(abi.encodeWithSelector(
@@ -1576,17 +1575,88 @@ contract ReleaseRegistryTest is GifDeployer, FoundryRandom {
 
     function test_releaseRegistry_activateRelease_whenReleaseDeployedHappyCase() public
     {
-
+        // Equivalent to test_releaseRegistry_createRelease_whenReleaseActiveHappyCase()
+        // create
+        // prepare
+        // register service
+        // activate
+        // loop
     }
 
     function test_releaseRegistry_activateRelease_whenReleaseActive() public
     {
+        for(uint i = 0; i <= 2; i++) 
+        {
+            // create
+            vm.prank(gifAdmin);
+            VersionPart createdVersion = releaseRegistry.createNextRelease();
 
+            // prepare
+            ServiceAuthorizationMockWithRegistryService serviceAuth = new ServiceAuthorizationMockWithRegistryService(createdVersion);
+            bytes32 salt = bytes32(randomNumber(type(uint256).max)); 
+
+            vm.prank(gifManager);
+            releaseRegistry.prepareNextRelease(serviceAuth, salt);
+
+            // register
+            vm.prank(gifManager);
+            releaseRegistry.registerService(serviceByVersion[createdVersion]);
+
+            // activate
+            vm.prank(gifAdmin);
+            releaseRegistry.activateNextRelease();
+
+            // activate with revert
+            vm.expectRevert(abi.encodeWithSelector(
+                ILifecycle.ErrorFromStateMissmatch.selector,
+                address(releaseRegistry), 
+                RELEASE(), 
+                ACTIVE(), 
+                DEPLOYED()
+            ));
+            vm.prank(gifAdmin);
+            releaseRegistry.activateNextRelease();
+        }
     }
     
     function test_releaseRegistry_activateRelease_whenReleasePaused() public
     {
+        for(uint i = 0; i <= 2; i++) 
+        {
+            // create
+            vm.prank(gifAdmin);
+            VersionPart createdVersion = releaseRegistry.createNextRelease();
 
+            // prepare
+            ServiceAuthorizationMockWithRegistryService serviceAuth = new ServiceAuthorizationMockWithRegistryService(createdVersion);
+            bytes32 salt = bytes32(randomNumber(type(uint256).max)); 
+
+            vm.prank(gifManager);
+            releaseRegistry.prepareNextRelease(serviceAuth, salt);
+
+            // register
+            vm.prank(gifManager);
+            releaseRegistry.registerService(serviceByVersion[createdVersion]);
+
+            // activate
+            vm.prank(gifAdmin);
+            releaseRegistry.activateNextRelease();
+
+            // pause
+            vm.prank(gifAdmin);
+            releaseRegistry.pauseRelease(createdVersion);
+
+            // activate with revert
+            vm.expectRevert(abi.encodeWithSelector(
+                ILifecycle.ErrorFromStateMissmatch.selector,
+                address(releaseRegistry), 
+                RELEASE(), 
+                PAUSED(), 
+                DEPLOYED()
+            ));
+            vm.prank(gifAdmin);
+            releaseRegistry.activateNextRelease();
+        }
     }
 
     //------------------------ pauseRelease ------------------------//
