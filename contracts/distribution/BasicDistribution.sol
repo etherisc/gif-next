@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {Distribution} from "./Distribution.sol";
+import {DISTRIBUTOR} from "../type/ObjectType.sol";
 import {IAuthorization} from "../authorization/IAuthorization.sol";
 import {NftId} from "../type/NftId.sol";
 import {ReferralId} from "../type/Referral.sol";
@@ -81,6 +82,7 @@ contract BasicDistribution is
         external
         virtual
         onlyOwner()
+        onlyNftObjectType(distributorNftId, DISTRIBUTOR())
         restricted()
     {
         _updateDistributorType(distributorNftId, distributorType, data);

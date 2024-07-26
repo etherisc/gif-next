@@ -1,22 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Amount, AmountLib} from "../type/Amount.sol";
-import {InstanceLinkedComponent} from "../shared/InstanceLinkedComponent.sol";
-import {Fee, FeeLib} from "../type/Fee.sol";
+import {Amount} from "../type/Amount.sol";
+import {Fee} from "../type/Fee.sol";
 import {IAuthorization} from "../authorization/IAuthorization.sol";
-import {IBundleService} from "./IBundleService.sol";
-import {IPoolComponent} from "./IPoolComponent.sol";
-import {IPoolService} from "./IPoolService.sol";
-import {IComponents} from "../instance/module/IComponents.sol";
-import {IComponentService} from "../shared/IComponentService.sol";
-import {NftId, NftIdLib} from "../type/NftId.sol";
-import {BUNDLE, COMPONENT, POOL} from "../type/ObjectType.sol";
-import {RoleId, PUBLIC_ROLE} from "../type/RoleId.sol";
+import {NftId} from "../type/NftId.sol";
+import {BUNDLE} from "../type/ObjectType.sol";
+import {RoleId} from "../type/RoleId.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {Timestamp} from "../type/Timestamp.sol";
-import {TokenHandler} from "../shared/TokenHandler.sol";
-import {UFixed, UFixedLib} from "../type/UFixed.sol";
 
 import {Pool} from "./Pool.sol";
 
@@ -56,6 +48,7 @@ abstract contract BasicPool is
         virtual
         restricted()
         onlyBundleOwner(bundleNftId)
+        onlyNftObjectType(bundleNftId, BUNDLE())
     {
         _stake(bundleNftId, amount);
     }
@@ -69,6 +62,7 @@ abstract contract BasicPool is
         virtual
         restricted()
         onlyBundleOwner(bundleNftId)
+        onlyNftObjectType(bundleNftId, BUNDLE())
     {
         _unstake(bundleNftId, amount);
     }
@@ -82,6 +76,7 @@ abstract contract BasicPool is
         virtual
         restricted()
         onlyBundleOwner(bundleNftId)
+        onlyNftObjectType(bundleNftId, BUNDLE())
         returns(Timestamp newExpiredAt)
     {
         return _extend(bundleNftId, lifetimeExtension);
@@ -93,6 +88,7 @@ abstract contract BasicPool is
         virtual
         restricted()
         onlyBundleOwner(bundleNftId)
+        onlyNftObjectType(bundleNftId, BUNDLE())
     {
         _lockBundle(bundleNftId);
     }
@@ -103,6 +99,7 @@ abstract contract BasicPool is
         virtual
         restricted()
         onlyBundleOwner(bundleNftId)
+        onlyNftObjectType(bundleNftId, BUNDLE())
     {
         _unlockBundle(bundleNftId);
     }
@@ -113,6 +110,7 @@ abstract contract BasicPool is
         virtual
         restricted()
         onlyBundleOwner(bundleNftId)
+        onlyNftObjectType(bundleNftId, BUNDLE())
     {
         _closeBundle(bundleNftId);
     }
@@ -126,6 +124,7 @@ abstract contract BasicPool is
         virtual
         restricted()
         onlyBundleOwner(bundleNftId)
+        onlyNftObjectType(bundleNftId, BUNDLE())
     {
         _setBundleFee(bundleNftId, fee);
     }

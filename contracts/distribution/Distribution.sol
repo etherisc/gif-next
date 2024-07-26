@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {Amount} from "../type/Amount.sol";
-import {COMPONENT, DISTRIBUTION} from "../type/ObjectType.sol";
+import {COMPONENT, DISTRIBUTION, DISTRIBUTOR} from "../type/ObjectType.sol";
 import {IAuthorization} from "../authorization/IAuthorization.sol";
 import {IDistributionService} from "./IDistributionService.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
@@ -128,6 +128,7 @@ abstract contract Distribution is
         virtual
         restricted()
         onlyDistributor()
+        onlyNftObjectType(distributorNftId, DISTRIBUTOR())
         onlyNftOwner(distributorNftId)
         returns (Amount withdrawnAmount) 
     {
