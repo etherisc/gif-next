@@ -374,6 +374,7 @@ contract AccessAdmin is
     /// @dev check if target exists and reverts if it doesn't
     function _checkTarget(address target)
         internal
+        view
     {
         if (_targetInfo[target].createdAt.eqz()) {
             revert ErrorTargetUnknown(target);
@@ -408,10 +409,14 @@ contract AccessAdmin is
         }
 
         // check account is contract for contract role
-        // TODO implement
-        if (_roleInfo[roleId].roleType == RoleType.Contract) {
+        if (
+            _roleInfo[roleId].roleType == RoleType.Contract &&
+            account.code.length == 0 // will fail in account's constructor
+        ) {
+            revert ErrorRoleMemberNotContract(roleId, account);
         }
 
+        // TODO check account already have roleId
         _roleMembers[roleId].add(account);
         _authority.grantRole(
             RoleId.unwrap(roleId), 
@@ -429,9 +434,10 @@ contract AccessAdmin is
 
         // check role removal is permitted
         if (_roleInfo[roleId].roleType == RoleType.Contract) {
-            revert ErrorRoleRemovalDisabled(roleId);
+            revert ErrorRoleMemberRemovalDisabled(roleId, account);
         }
 
+        // TODO check account have roleId?
         _roleMembers[roleId].remove(account);
         _authority.revokeRole(
             RoleId.unwrap(roleId), 
@@ -443,6 +449,7 @@ contract AccessAdmin is
 
     function _checkRoleId(RoleId roleId)
         internal
+        view
     {
         if (_roleInfo[roleId].createdAt.eqz()) {
             revert ErrorRoleUnknown(roleId);
@@ -572,6 +579,19 @@ contract AccessAdmin is
         _targets.push(target);
 
         emit LogTargetCreated(target, targetName);
+    }
+
+    function _setTargetClosed(address target, bool locked)
+        internal
+    {
+        _checkTarget(target);
+
+        // target locked/unlocked already
+        if(_authority.isTargetClosed(target) == locked) {
+            revert ErrorTargetAlreadyLocked(target, locked);
+        }
+
+        _authority.setTargetClosed(target, locked);
     }
 
     function _isContract(address target)
