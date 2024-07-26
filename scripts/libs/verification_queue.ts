@@ -26,12 +26,16 @@ export function saveVerificationData(args: any) {
     logger.debug("Contract verification data saved");
 }
 
+function bigIntReplacer(_key: string, value: unknown): unknown {
+    return typeof value === 'bigint' ? value.toString() : value;
+}
+
 function persistState() {
     if (isTestChain()) {
         return;
     }
     mkdirDeploymentsBaseDirectory();
-    const json = JSON.stringify(VERIFICATION_DATA_STATE);
+    const json = JSON.stringify(VERIFICATION_DATA_STATE, bigIntReplacer);
     fs.writeFileSync(deploymentsBaseDirectory() + verificationQueueFilename(), json);
 }
 
