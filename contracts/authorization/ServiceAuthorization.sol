@@ -36,8 +36,8 @@ contract ServiceAuthorization is
           _setupDomainAuthorizations();
      }
 
-     function getCommitHash() external view returns(string memory commitHash) {
-          return _commitHash;
+     function getCommitHash() external view returns(bytes memory commitHash) {
+          return COMMIT_HASH;
      }
 
      function getRelease() external view returns(VersionPart release) {
