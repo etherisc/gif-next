@@ -65,9 +65,6 @@ interface IRegistry is IERC165 {
         StateId state;
         VersionPart version;
         bytes32 salt;
-        address[] addresses;
-        string[] names;
-        ObjectType[] domains;
         IServiceAuthorization auth;
         Timestamp activatedAt;
         Timestamp disabledAt;
