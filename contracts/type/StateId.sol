@@ -28,8 +28,16 @@ function DEPLOYING() pure returns (StateId) {
     return toStateId(3);
 }
 
-function ACTIVE() pure returns (StateId) {
+function DEPLOYED() pure returns (StateId) {
     return toStateId(4);
+}
+
+function ACTIVE() pure returns (StateId) {
+    return toStateId(5);
+}
+
+function SKIPPED() pure returns (StateId) {
+    return toStateId(6);
 }
 
 function APPLIED() pure returns (StateId) {
@@ -114,6 +122,11 @@ function neStateId(StateId a, StateId b) pure returns (bool isDifferent) {
 
 // library functions that operate on user defined type
 library StateIdLib {
+
+    function zero() public pure returns (StateId) {
+        return StateId.wrap(0);
+    }
+
     /// @dev Converts the NftId to a uint256.
     function toInt(StateId stateId) public pure returns (uint96) {
         return uint96(StateId.unwrap(stateId));
