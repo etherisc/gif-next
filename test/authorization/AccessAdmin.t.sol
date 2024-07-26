@@ -431,18 +431,15 @@ contract AccessAdminTest is Test {
         RoleId adminRoleId = accessAdmin.getManagerRole();
         string memory newRoleName = "NewRole";
 
-        vm.startPrank(accessAdminDeployer);
-
         // WHEN
         uint32 maxOneRoleMember = 1; // max 1 member allowed
+        vm.prank(accessAdminDeployer);
         accessAdmin.createRoleExtended(
             newRoleId, 
             adminRoleId, 
             IAccess.RoleType.Contract,
             newRoleName,
             maxOneRoleMember); 
-
-        vm.stopPrank();
 
         // THEN
         _checkRole(
@@ -457,9 +454,8 @@ contract AccessAdminTest is Test {
 
         // WHEN - assign role 1st time
         address thisContract = address(this);
-        vm.startPrank(accessAdminDeployer);
+        vm.prank(accessAdminDeployer);
         accessAdmin.grantRole(thisContract, newRoleId);
-        vm.stopPrank();
 
         // THEN
         assertEq(accessAdmin.roleMembers(newRoleId), 1, "unexpected role member count after granting");
@@ -472,29 +468,28 @@ contract AccessAdminTest is Test {
                 newRoleId,
                 maxOneRoleMember));
 
-        vm.startPrank(accessAdminDeployer);
+        vm.prank(accessAdminDeployer);
         accessAdmin.grantRole(outsider, newRoleId);
-        vm.stopPrank();
 
         // WHEN + THEN - attempt to revoke role
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessAdmin.ErrorRoleRemovalDisabled.selector, 
-                newRoleId));
+                IAccessAdmin.ErrorRoleMemberRemovalDisabled.selector, 
+                newRoleId,
+                thisContract));
 
-        vm.startPrank(accessAdminDeployer);
+        vm.prank(accessAdminDeployer);
         accessAdmin.revokeRole(thisContract, newRoleId);
-        vm.stopPrank();
 
         // WHEN + THEN - attempt to renounce role
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessAdmin.ErrorRoleRemovalDisabled.selector, 
-                newRoleId));
+                IAccessAdmin.ErrorRoleMemberRemovalDisabled.selector, 
+                newRoleId,
+                thisContract));
 
-        vm.startPrank(thisContract);
+        vm.prank(thisContract);
         accessAdmin.renounceRole(newRoleId);
-        vm.stopPrank();
     }
 
     function test_accessAdminCreateProtectedRoles() public {

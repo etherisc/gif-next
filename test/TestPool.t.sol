@@ -391,6 +391,7 @@ contract TestPool is GifTest {
         // WHEN attepting to lock a locked bundle
         vm.expectRevert(abi.encodeWithSelector(
             ILifecycle.ErrorInvalidStateTransition.selector,
+            address(instanceStore),
             BUNDLE(),
             PAUSED(),
             PAUSED()));
