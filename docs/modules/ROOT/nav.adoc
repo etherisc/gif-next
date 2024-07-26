@@ -2,4 +2,5 @@
 * xref:arch.adoc[Architecture]
 * xref:howto-documentation.adoc[Documentation Howto]
 * xref:setup.adoc[Development setup]
+* xref:example-fire.adoc[Fire insurance example]
 * https://github.com/etherisc/gif-next/issues/new[Report a bug]

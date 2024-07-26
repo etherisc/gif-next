@@ -41,7 +41,7 @@ async function main() {
     const strLibAddress = process.env.STRLIB_ADDRESS;
     const timestampLibAddress = process.env.TIMESTAMPLIB_ADDRESS;
     const ufixedLibAddress = process.env.UFIXEDLIB_ADDRESS;
-    const versionPartLibAddress = process.env.VERSIONPARTLIB_ADDRESS
+    const versionPartLibAddress = process.env.VERSIONPARTLIB_ADDRESS;
         
     const instanceServiceAddress = process.env.INSTANCE_SERVICE_ADDRESS;
 

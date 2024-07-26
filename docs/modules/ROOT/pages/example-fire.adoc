@@ -1,0 +1,94 @@
+= Fire insurance example
+
+:toc:
+
+== Overview
+
+The fire components is a minimal fully functional and permissioned example for a insurance product built on the GIF. It consists of the following components:
+
+- FirePoolAuthorization: A contract that authorizes the functions on the pool
+- FirePool: A pool that holds the funds for the insurance product
+- FireProductAuthorization: A contract that authorizes the functions on the product
+- FireProduct: The insurance product that is used to insure against fires
+- (optional) FireUSD: A ERC20 token that is used as the currency for the insurance product
+
+The product is build in such a way that a customer can buy a policy which insures against fires in a specific city. The product owner can report fires in the city (the report also contains the damage level and the time of the fire). Once a fire has been reported in a city, the customer can submit a claim for the policy and receive an immediate payout (if the policy is eligable for a payout). The payout amount is calculated from the damage level and the sum insured. 
+
+The payout is 25% for small fires, 50% for medium fires and 100% for large fires. If the payout exceeds the sum insured, only the remaining sum insured is paid out. If the payout amount is the same as the sum insured after the payout, the policy is automatically expired.
+
+
+== Deployment 
+
+=== With Remix
+
+1. Checkout repository `gif-next`` (https://github.com/etherisc/gif-next.git) in Remix IDE
+2. Call 'Update submodules' (Link at the bottom left of the page)
+3. Open the `InstanceService` contract in directory `contracts/instance/InstanceService.sol` and compile it
+4. Switch to the `Deploy & Run Transactions` tab and connect to the network of choice (must have a GIF deployment)
+5. Connect to the existing `InstanceService` contract 
+6. Call the `createInstance` function (no arguments) and find the log `LogInstanceCloned` that shows the address of the new instance in field `instance` and the instance nft id in field `instanceNftId`
+7. Now compile the contracts `FireUSD.sol`, `FirePoolAuthorization`, `FirePool`, `FireProductAuthorization` and `FireProduct` in the directory `contracts/examples/fire`
+8. Deploy the FireUSD contract and save the address. You can also use any pre-existing ERC20 Token. 
+9. Deploy the FirePoolAuthorization contract with an arbitrary unique name and save the address.
+10. Deploy tye FireProductAuthorization contract with an arbitrary unique name and save the address.
+11. Deploy the FirePool contract and save the address. The pool requires the registry address, the instance nft id, the name of the component (same as used in step 9) , the address of the token as well as the address of the pool authorization contract as arguments.
+12. Call `register` on the `FirePool` contract. 
+13. Get the nft if of the pool by calling `getNftId` function on the `FirePool` contract
+14. Deploy the FireProduct contract and save the address. The product requires the registry address, the instance nft id, the name of the component (same as used in step 10) , the address of the token as well as the address of the pool and the address of the product authorization contract as arguments.
+15. Call `register` on the `FireProduct` contract 
+16. Get the nft if of the product by calling `getNftId` function on the `FireProduct` contract
+17. Congratulations, the fire product is now deployed and ready to use
+
+
+=== Using the hardhat script
+
+Run the script `scripts/deploy_fire_components.ts` on an instance that has a gif deployment. The script will deploy the FireUSD, FirePoolAuthorization, FirePool, FireProductAuthorization and FireProduct contracts and register the pool and product in the instance.
+
+It requires the following environment variables to be set:
+
+```
+AMOUNTLIB_ADDRESS
+FEELIB_ADDRESS
+NFTIDLIB_ADDRESS
+REFERRALLIB_ADDRESS
+OBJECTTYPELIB_ADDRESS
+RISKIDLIB_ADDRESS
+ROLEIDLIB_ADDRESS
+SECONDSLIB_ADDRESS
+SELECTORLIB_ADDRESS
+STRLIB_ADDRESS
+TIMESTAMPLIB_ADDRESS
+UFIXEDLIB_ADDRESS
+VERSIONPARTLIB_ADDRESS
+INSTANCE_SERVICE_ADDRESS
+```
+
+== Usage
+
+=== Bundle creation
+
+1. The investor must call `createBundle` on the `FirePool` contract with the `fee`, the `initialAmount` of the bundle and the `lifetime` of the bundle as arguments. 
+2. The response contains the `bundleNftId` which is required when purchasing policies. 
+
+=== Registration of cities
+
+1. Registration of new cities is done via call to the method `initializeCity` on the `FireProduct` contract. Anybody can call this function. 
+
+=== Reporting of fires
+
+1. To report a fire make sure the city is registered first. 
+2. Then the `ProductOwner` must call `reportFire` with a unique `fireId` as well as the `cityName`,the damage level (Small - 25% payout, Medium - 50% payout, Large - 100% payout) and the time the fire occured. 
+
+=== Policy purchase
+
+1. Make sure the city is registered beforehand
+2. As customer, call `calculatePremium` on `FireProduct` with arguments `cityName`, `sumInsured`, `lifetime` and `bundleNftId` to get the premium amount for this parameter combination. 
+3. As customer, call `createApplication` with the `cityName`, `sumInsured`, `lifetime` and `bundleNftId` to create a new application. The response contains the `policyNftId` that is needed for the next step.
+4. Once the application is created, the `ProductOwner` must confirm the application by calling `createPolicy` with the `policyNftId` and time the policy is active (`activateAt`) as arguments.
+
+=== Claim & Payout
+
+1. After a fire was reported, the customer can now submit a claim and received a payout for this fire by calling `submitClaim` with the `policyNftId` and the `fireId` as arguments. The payout is calculated based on the damage level reported and the sum insured. 
+2. The payout amount is immediately transferred to the customer.
+3. If the payout amount exceeds the sum insured, only the remaining sum insured is paid out.
+4. If the payout amount is the same as the sum insured after the payout, the policy is automatically expired.
