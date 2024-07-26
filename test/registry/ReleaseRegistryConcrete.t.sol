@@ -8,10 +8,10 @@ import {console} from "../../lib/forge-std/src/Test.sol";
 
 import {VersionPart, VersionPartLib} from "../../contracts/type/Version.sol";
 import {StateIdLib, SCHEDULED, DEPLOYING, DEPLOYED, SKIPPED, ACTIVE, PAUSED} from "../../contracts/type/StateId.sol";
-import {TimestampLib, Timestamp, gteTimestamp} from "../../contracts/type/Timestamp.sol";
+import {TimestampLib, gteTimestamp} from "../../contracts/type/Timestamp.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {RoleId, RoleIdLib} from "../../contracts/type/RoleId.sol";
-import {ObjectType, RELEASE, REGISTRY, SERVICE, PRODUCT} from "../../contracts/type/ObjectType.sol";
+import {ObjectType, RELEASE, REGISTRY, PRODUCT} from "../../contracts/type/ObjectType.sol";
 
 import {ILifecycle} from "../../contracts/shared/Lifecycle.sol";
 import {IService} from "../../contracts/shared/IService.sol";
@@ -28,9 +28,6 @@ import {GifDeployer} from "../base/GifDeployer.sol";
 import {ServiceAuthorizationMock, ServiceAuthorizationMockWithRegistryService} from "../mock/ServiceAuthorizationMock.sol";
 import {NftOwnableMock} from "../mock/NftOwnableMock.sol";
 import {ServiceMock, ServiceMockWithRegistryDomainV3, ServiceMockWithRegistryDomainV4, ServiceMockWithRegistryDomainV5} from "../mock/ServiceMock.sol";
-import {FallbackMock} from "../mock/FallbackMock.sol";
-import {FallbackMockWithReturn} from "../mock/FallbackMock.sol";
-import {Usdc} from "../mock/Usdc.sol";
 
 contract ReleaseRegistryTest is GifDeployer, FoundryRandom {
 
