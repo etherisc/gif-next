@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+
 import {IAccess} from "../authorization/IAccess.sol";
 import {ObjectType} from "../type/ObjectType.sol";
 import {IServiceAuthorization} from "./IServiceAuthorization.sol";
@@ -10,30 +12,32 @@ import {TimestampLib} from "../type/Timestamp.sol";
 import {VersionPart, VersionPartLib} from "../type/Version.sol";
 
 /// @dev Base contract for release specific service authorization contracts.
-contract ServiceAuthorization
-     is IServiceAuthorization
+contract ServiceAuthorization is 
+     IServiceAuthorization
 {
-     uint256 public constant GIF_VERSION_3 = 3;
+     uint256 public constant COMMIT_HASH_LENGTH = 40;
+     uint256 public constant GIF_INITIAL_VERSION = 3;
 
-     string private _commitHash;
+     uint256 public immutable VERSION;
+     bytes public COMMIT_HASH;
 
      ObjectType[] internal _serviceDomains;
      mapping(ObjectType domain => address service) internal _serviceAddress;
      mapping(ObjectType domain => ObjectType[] authorizedDomains) internal _authorizedDomains;
      mapping(ObjectType domain => mapping(ObjectType authorizedDomain => IAccess.FunctionInfo[] functions)) internal _authorizedFunctions;
 
-     constructor(string memory commitHash) {
-          _commitHash = commitHash;
+     constructor(bytes memory commitHash, uint256 version) {
+          assert(commitHash.length == COMMIT_HASH_LENGTH);
+          assert(version >= GIF_INITIAL_VERSION);
+
+          COMMIT_HASH = commitHash;
+          VERSION = version;
           _setupDomains();
           _setupDomainAuthorizations();
      }
 
-     function getCommitHash() external view returns(string memory commitHash) {
-          return _commitHash;
-     }
-
      function getRelease() external view returns(VersionPart release) {
-          return VersionPartLib.toVersionPart(GIF_VERSION_3);
+          return VersionPartLib.toVersionPart(VERSION);
      }
 
      function getServiceDomains() external view returns(ObjectType[] memory serviceDomains) {
@@ -55,6 +59,15 @@ contract ServiceAuthorization
      function getAuthorizedFunctions(ObjectType serviceDomain, ObjectType authorizedDomain) external view returns(IAccess.FunctionInfo[] memory authorizatedFunctions) {
           return _authorizedFunctions[serviceDomain][authorizedDomain];
      }
+
+     // ERC165
+     function supportsInterface(bytes4 interfaceId) public pure returns (bool) {
+          return (
+               interfaceId == type(IServiceAuthorization).interfaceId || 
+               interfaceId == type(IERC165).interfaceId
+          );
+     }
+
 
      /// @dev Overwrite this function for a specific realease.
      function _setupDomains() internal virtual {}
@@ -87,4 +100,3 @@ contract ServiceAuthorization
                     createdAt: TimestampLib.blockTimestamp()}));
      }
 }
-

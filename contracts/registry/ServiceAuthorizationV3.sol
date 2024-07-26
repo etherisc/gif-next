@@ -19,8 +19,8 @@ contract ServiceAuthorizationV3
      is ServiceAuthorization
 {
 
-     constructor(string memory commitHash)
-          ServiceAuthorization(commitHash)
+     constructor(bytes memory commitHash)
+          ServiceAuthorization(commitHash, 3)
      {}
 
      function _setupDomains()
