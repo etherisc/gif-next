@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {Amount, AmountLib} from "../type/Amount.sol";
-import {BUNDLE, COMPONENT, POOL} from "../type/ObjectType.sol";
+import {BUNDLE, COMPONENT, POLICY, POOL} from "../type/ObjectType.sol";
 import {ClaimId} from "../type/ClaimId.sol";
 import {IBundleService} from "./IBundleService.sol";
 import {IAuthorization} from "../authorization/IAuthorization.sol";
@@ -11,13 +11,12 @@ import {IPoolService} from "./IPoolService.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {IComponentService} from "../shared/IComponentService.sol";
 import {InstanceLinkedComponent} from "../shared/InstanceLinkedComponent.sol";
-import {Fee, FeeLib} from "../type/Fee.sol";
-import {NftId, NftIdLib} from "../type/NftId.sol";
+import {Fee} from "../type/Fee.sol";
+import {NftId} from "../type/NftId.sol";
 import {RoleId, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {Timestamp} from "../type/Timestamp.sol";
-import {TokenHandler} from "../shared/TokenHandler.sol";
-import {UFixed, UFixedLib} from "../type/UFixed.sol";
+import {UFixedLib} from "../type/UFixed.sol";
 
 abstract contract Pool is
     InstanceLinkedComponent, 
@@ -62,6 +61,7 @@ abstract contract Pool is
         public
         virtual
         restricted()
+        onlyNftOfType(applicationNftId, POLICY())
     {
         if(!applicationMatchesBundle(
             applicationNftId,
@@ -87,6 +87,7 @@ abstract contract Pool is
         public
         virtual
         restricted()
+        onlyNftOfType(policyNftId, POLICY())
     {
         // default implementation is empty
     }
@@ -105,6 +106,8 @@ abstract contract Pool is
         public
         virtual
         view
+        onlyNftOfType(applicationNftId, POLICY())
+        onlyNftOfType(bundleNftId, BUNDLE())
         returns (bool isMatching)
     {
         return true;
@@ -116,6 +119,7 @@ abstract contract Pool is
         virtual
         restricted()
         onlyBundleOwner(bundleNftId)
+        onlyNftOfType(bundleNftId, BUNDLE())
         returns (Amount withdrawnAmount) 
     {
         return _withdrawBundleFees(bundleNftId, amount);

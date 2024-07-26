@@ -239,7 +239,7 @@ contract PricingService is
     {
 
         // if the referral is not valid, then the distribution owner gets everything
-        if (! _distributionService.referralIsValid(productInfo.distributionNftId, referralId)) {
+        if (productInfo.distributionNftId.eqz() || ! _distributionService.referralIsValid(productInfo.distributionNftId, referralId)) {
             premium.distributionOwnerFeeFixAmount = premium.distributionFeeFixAmount;
             premium.distributionOwnerFeeVarAmount = premium.distributionFeeVarAmount;
             premium.premiumAmount = premium.fullPremiumAmount;

@@ -16,7 +16,7 @@ import {IPricingService} from "./IPricingService.sol";
 import {IProductComponent} from "./IProductComponent.sol";
 import {NftId} from "../type/NftId.sol";
 import {PayoutId} from "../type/PayoutId.sol";
-import {COMPONENT, PRODUCT, APPLICATION, POLICY, CLAIM, PRICE } from "../type/ObjectType.sol";
+import {COMPONENT, PRODUCT, APPLICATION, POLICY, CLAIM, PRICE, BUNDLE } from "../type/ObjectType.sol";
 import {ReferralId} from "../type/Referral.sol";
 import {RiskId, RiskIdLib} from "../type/RiskId.sol";
 import {Seconds} from "../type/Seconds.sol";
@@ -67,6 +67,7 @@ abstract contract Product is
         external
         virtual
         restricted() // pool service role
+        onlyNftOfType(policyNftId, POLICY())
     {
         // default implementation does nothing
     }
@@ -83,6 +84,7 @@ abstract contract Product is
         public 
         view 
         override 
+        onlyNftOfType(bundleNftId, BUNDLE())
         returns (Amount premiumAmount)
     {
         IPolicy.PremiumInfo memory premium = _getProductStorage()._pricingService.calculatePremium(

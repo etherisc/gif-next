@@ -792,9 +792,8 @@ contract FireProductClaimsTest is FireTestBase {
         
         // THEN 
         vm.expectRevert(abi.encodeWithSelector(
-            IComponent.ErrorNftNotObjectType.selector,
+            INftOwnable.ErrorNftOwnableInvalidType.selector,
             firePoolNftId,
-            POOL(),
             POLICY()));
 
         // WHEN - submit claim for policy that is wrong type

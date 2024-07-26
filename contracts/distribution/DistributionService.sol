@@ -163,6 +163,7 @@ contract DistributionService is
     )
         external
         virtual
+        onlyNftOfType(distributorNftId, DISTRIBUTOR())
         returns (ReferralId referralId)
     {
         (NftId distributionNftId,, IInstance instance) = _getAndVerifyActiveComponent(DISTRIBUTION());
@@ -174,36 +175,39 @@ contract DistributionService is
             revert ErrorIDistributionServiceExpirationInvalid(expiryAt);
         }
 
-        InstanceReader instanceReader = instance.getInstanceReader();
-        DistributorType distributorType = instanceReader.getDistributorInfo(distributorNftId).distributorType;
-        IDistribution.DistributorTypeInfo memory distributorTypeData = instanceReader.getDistributorTypeInfo(distributorType);
+        {
+            InstanceReader instanceReader = instance.getInstanceReader();
+            DistributorType distributorType = instanceReader.getDistributorInfo(distributorNftId).distributorType;
+            IDistribution.DistributorTypeInfo memory distributorTypeData = instanceReader.getDistributorTypeInfo(distributorType);
 
-        if (distributorTypeData.maxReferralCount < maxReferrals) {
-            revert ErrorIDistributionServiceMaxReferralsExceeded(distributorTypeData.maxReferralCount);
-        }
-        if (distributorTypeData.minDiscountPercentage > discountPercentage) {
-            revert ErrorIDistributionServiceDiscountTooLow(distributorTypeData.minDiscountPercentage.toInt(), discountPercentage.toInt());
-        }
-        if (distributorTypeData.maxDiscountPercentage < discountPercentage) {
-            revert ErrorIDistributionServiceDiscountTooHigh(distributorTypeData.maxDiscountPercentage.toInt(), discountPercentage.toInt());
-        }
-        if (expiryAt.toInt() - TimestampLib.blockTimestamp().toInt() > distributorTypeData.maxReferralLifetime) {
-            revert ErrorIDistributionServiceExpiryTooLong(distributorTypeData.maxReferralLifetime, expiryAt.toInt());
+            if (distributorTypeData.maxReferralCount < maxReferrals) {
+                revert ErrorIDistributionServiceMaxReferralsExceeded(distributorTypeData.maxReferralCount);
+            }
+            if (distributorTypeData.minDiscountPercentage > discountPercentage) {
+                revert ErrorIDistributionServiceDiscountTooLow(distributorTypeData.minDiscountPercentage.toInt(), discountPercentage.toInt());
+            }
+            if (distributorTypeData.maxDiscountPercentage < discountPercentage) {
+                revert ErrorIDistributionServiceDiscountTooHigh(distributorTypeData.maxDiscountPercentage.toInt(), discountPercentage.toInt());
+            }
+            if (expiryAt.toInt() - TimestampLib.blockTimestamp().toInt() > distributorTypeData.maxReferralLifetime) {
+                revert ErrorIDistributionServiceExpiryTooLong(distributorTypeData.maxReferralLifetime, expiryAt.toInt());
+            }
         }
 
-        referralId = ReferralLib.toReferralId(distributionNftId, code);
-        IDistribution.ReferralInfo memory info = IDistribution.ReferralInfo(
-            distributorNftId,
-            code,
-            discountPercentage,
-            maxReferrals,
-            0, // used referrals
-            expiryAt,
-            data
-        );
+        {
+            referralId = ReferralLib.toReferralId(distributionNftId, code);
+            IDistribution.ReferralInfo memory info = IDistribution.ReferralInfo(
+                distributorNftId,
+                code,
+                discountPercentage,
+                maxReferrals,
+                0, // used referrals
+                expiryAt,
+                data
+            );
 
-        instance.getInstanceStore().createReferral(referralId, info);
-        return referralId;
+            instance.getInstanceStore().createReferral(referralId, info);
+        }
     }
 
     /// @inheritdoc IDistributionService
@@ -214,6 +218,7 @@ contract DistributionService is
         external
         virtual
         restricted
+        onlyNftOfType(distributionNftId, DISTRIBUTION())
     {
         if (referralIsValid(distributionNftId, referralId)) {
             IInstance instance = _getInstanceForDistribution(distributionNftId);
@@ -232,6 +237,7 @@ contract DistributionService is
         external
         virtual
         restricted
+        onlyNftOfType(distributionNftId, DISTRIBUTION())
     {
         IInstance instance = _getInstanceForDistribution(distributionNftId);
         InstanceReader reader = instance.getInstanceReader();
@@ -267,6 +273,7 @@ contract DistributionService is
         public 
         virtual
         // TODO: restricted() (once #462 is done)
+        onlyNftOfType(distributorNftId, DISTRIBUTOR())
         returns (Amount withdrawnAmount) 
     {
         (NftId distributionNftId,, IInstance instance) = _getAndVerifyActiveComponent(DISTRIBUTION());
@@ -304,7 +311,12 @@ contract DistributionService is
         }
     }
 
-    function referralIsValid(NftId distributionNftId, ReferralId referralId) public view returns (bool isValid) {
+    function referralIsValid(NftId distributionNftId, ReferralId referralId) 
+        public 
+        view 
+        onlyNftOfType(distributionNftId, DISTRIBUTION())
+        returns (bool isValid) 
+    {
         if (distributionNftId.eqz() || referralId.eqz()) {
             return false;
         }

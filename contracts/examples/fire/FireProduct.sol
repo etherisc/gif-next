@@ -323,7 +323,7 @@ contract FireProduct is
         public 
         restricted()
         onlyNftOwner(policyNftId)
-        onlyNftObjectType(policyNftId, POLICY())
+        onlyNftOfType(policyNftId, POLICY())
         returns (ClaimId claimId, PayoutId payoutId) 
     {
         IPolicy.PolicyInfo memory policyInfo = _getInstanceReader().getPolicyInfo(policyNftId);

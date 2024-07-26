@@ -342,12 +342,20 @@ contract Registry is
         return CHAIN_NFT.ownerOf(nftId.toInt());
     }
 
+    function isOwnerOf(NftId nftId, address expectedOwner) public view returns (bool) {
+        return CHAIN_NFT.ownerOf(nftId.toInt()) == expectedOwner;
+    }
+
     function ownerOf(address contractAddress) public view returns (address) {
         return CHAIN_NFT.ownerOf(_nftIdByAddress[contractAddress].toInt());
     }
 
     function getObjectInfo(NftId nftId) external view returns (ObjectInfo memory) {
         return _info[nftId];
+    }
+
+    function isObjectType(NftId nftId, ObjectType expectedObjectType) external view returns (bool) {
+        return _info[nftId].objectType == expectedObjectType;
     }
 
     function getObjectAddress(NftId nftId) external view returns (address) {

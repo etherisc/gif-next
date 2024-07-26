@@ -124,9 +124,13 @@ interface IRegistry is IERC165 {
 
     function ownerOf(NftId nftId) external view returns (address);
 
+    function isOwnerOf(NftId nftId, address expectedOwner) external view returns (bool);
+
     function ownerOf(address contractAddress) external view returns (address);
 
     function getObjectInfo(NftId nftId) external view returns (ObjectInfo memory info);
+
+    function isObjectType(NftId nftId, ObjectType expectedObjectType) external view returns (bool);
 
     function getObjectAddress(NftId nftId) external view returns (address objectAddress);
 
