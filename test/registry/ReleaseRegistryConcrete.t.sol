@@ -29,7 +29,7 @@ import {ServiceAuthorizationMock, ServiceAuthorizationMockWithRegistryService} f
 import {NftOwnableMock} from "../mock/NftOwnableMock.sol";
 import {ServiceMock, ServiceMockWithRegistryDomainV3, ServiceMockWithRegistryDomainV4, ServiceMockWithRegistryDomainV5} from "../mock/ServiceMock.sol";
 
-contract ReleaseRegistryTest is GifDeployer, FoundryRandom {
+contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
 
     // keep identical to ReleaseRegistry events
     event LogReleaseCreation(VersionPart version, bytes32 salt); 
@@ -232,50 +232,6 @@ contract ReleaseRegistryTest is GifDeployer, FoundryRandom {
         assertEq(releaseRegistry.getNextVersion().toInt(), newReleaseVersion.toInt(), "getNextVersion() return unexpected value #2");
         assertEq(releaseRegistry.getLatestVersion().toInt(), 0, "getLatestVersion() return unexpected value #2");
     }
-    /*
-    function test_releaseRegistry_createRelease_skipInitialReleaseHappyCase() public {
-
-        VersionPart newReleaseVersion = VersionPartLib.toVersionPart(releaseRegistry.INITIAL_GIF_VERSION() + 1);
-        VersionPart previousReleaseVersion = VersionPartLib.toVersionPart(releaseRegistry.INITIAL_GIF_VERSION());
-
-        vm.startPrank(gifAdmin);
-
-        releaseRegistry.createNextRelease();
-        // create a second release (skip initial)
-        VersionPart version = releaseRegistry.createNextRelease();
-
-        vm.stopPrank();
-
-        // post checks
-        assertEq(version.toInt(), newReleaseVersion.toInt(), "createNextRelease() return unexpected value");
-
-        _assert_releaseRegistry_getters(
-            newReleaseVersion,
-            IRegistry.ReleaseInfo(
-                    SCHEDULED(),
-                    newReleaseVersion,
-                    bytes32(0),
-                    IServiceAuthorization(address(0)),
-                    TimestampLib.zero(),
-                    TimestampLib.zero()
-                ));
-        _assert_releaseRegistry_getters(
-            previousReleaseVersion, 
-            IRegistry.ReleaseInfo(
-                    SKIPPED(),
-                    previousReleaseVersion,
-                    bytes32(0),
-                    IServiceAuthorization(address(0)),
-                    TimestampLib.zero(),
-                    TimestampLib.zero()
-                ));
-
-        assertEq(releaseRegistry.releases(), 0, "releases() return unexpected value");
-        assertEq(releaseRegistry.getNextVersion().toInt(), newReleaseVersion.toInt(), "getNextVersion() return unexpected value");
-        assertEq(releaseRegistry.getLatestVersion().toInt(), 0, "getLatestVersion() return unexpected value");
-    }
-    */
-
 
     function test_releaseRegistry_createRelease_whenReleaseScheduledHappyCase() public 
     {
@@ -905,7 +861,9 @@ contract ReleaseRegistryTest is GifDeployer, FoundryRandom {
             nextReleaseInfo = zeroReleaseInfo();
         }       
     }
+
     //------------------------ prepare release ------------------------//
+
     function test_releaseRegistry_prepareRelease_byNotAuthorizedCaller() public 
     {
         VersionPart releaseVersion = VersionPartLib.toVersionPart(releaseRegistry.INITIAL_GIF_VERSION());
@@ -1227,7 +1185,7 @@ contract ReleaseRegistryTest is GifDeployer, FoundryRandom {
         // check prepareRelease() works for the releaseVersion
     }
 
-    function test_releaseRegistry_prepareRelease_whenReleaseScheduled_whithServiceAuthVersionTooBig() public
+    function test_releaseRegistry_prepareRelease_whenReleaseScheduled_withServiceAuthVersionTooBig() public
     {
         uint256 createdReleases = randomNumber(1, 10);
         uint256 releaseVersion = releaseRegistry.INITIAL_GIF_VERSION() + createdReleases;
@@ -1258,7 +1216,7 @@ contract ReleaseRegistryTest is GifDeployer, FoundryRandom {
         vm.stopPrank();        
     }
 
-    function test_releaseRegistry_prepareRelease_whenReleaseScheduled_whithServiceAuthDomainCountZero() public 
+    function test_releaseRegistry_prepareRelease_whenReleaseScheduled_withServiceAuthDomainCountZero() public 
     {
         VersionPart version = VersionPartLib.toVersionPart(releaseRegistry.INITIAL_GIF_VERSION());
         ObjectType[] memory domains = new ObjectType[](0);
@@ -1346,7 +1304,7 @@ contract ReleaseRegistryTest is GifDeployer, FoundryRandom {
 
     function test_releaseRegistry_registerService_whenReleaseDeployingHappyCase() public
     {
-        // Equivalent to test_releaseRegistry_createRelease_whenReleaseDeployingHappyCase()
+        // Equivalent to test_releaseRegistry_createRelease_whenReleaseDeployedHappyCase()
         // create release
         // prepare release
         // register service
@@ -1355,14 +1313,115 @@ contract ReleaseRegistryTest is GifDeployer, FoundryRandom {
 
     function test_releaseRegistry_registerService_whenReleaseDeploying_registerLastServiceHappyCase() public
     {
+        // the first registration
+
+        // check DEPLOYING after the first registration
+
         // check second registration is ok
+
+        // check DEPLOYING after second registration
 
         // check the last registration is ok
 
         // check DEPLOYED after the last registration
     }
- 
-    // whenAllServicesRegistered 
+
+    function test_releaserRegistry_registerService_whenReleaseDeploying_withServiceVersionTooSmall() public
+    {
+        uint initialVersionInt = releaseRegistry.INITIAL_GIF_VERSION();
+
+        VersionPart releaseVersion;
+        for(uint i = 0; i <= 2; i++) 
+        {
+            // create - skip
+            vm.prank(gifAdmin);
+            releaseVersion = releaseRegistry.createNextRelease();
+        }
+
+        // prepare the last created
+        IServiceAuthorization nextAuthMock = new ServiceAuthorizationMockWithRegistryService(releaseVersion);
+        bytes32 nextSalt = bytes32(randomNumber(type(uint256).max)); 
+
+        vm.prank(gifManager);
+        releaseRegistry.prepareNextRelease(nextAuthMock, nextSalt);
+
+        for(uint i = 0; i < 2; i++)
+        {
+            // register with revert
+            VersionPart serviceVersion = VersionPartLib.toVersionPart(initialVersionInt + i);
+            vm.expectRevert(abi.encodeWithSelector(
+                ReleaseRegistry.ErrorReleaseRegistryServiceVersionMismatch.selector, 
+                serviceByVersion[serviceVersion], 
+                serviceVersion,
+                releaseVersion
+            ));
+            vm.prank(gifManager);
+            releaseRegistry.registerService(serviceByVersion[serviceVersion]);
+        }
+    }
+
+    function test_releaseRegistry_registerService_whenReleaseDeploying_withServiceVersionTooBig() public
+    {
+        uint initialVersionInt = releaseRegistry.INITIAL_GIF_VERSION();
+
+        // create initial
+        vm.prank(gifAdmin);
+        VersionPart releaseVersion = releaseRegistry.createNextRelease();
+
+        // prepare initial
+        IServiceAuthorization nextAuthMock = new ServiceAuthorizationMockWithRegistryService(releaseVersion);
+        bytes32 nextSalt = bytes32(randomNumber(type(uint256).max)); 
+
+        vm.prank(gifManager);
+        releaseRegistry.prepareNextRelease(nextAuthMock, nextSalt);
+
+        for(uint i = 1; i <= 2; i++)
+        {
+            // register with revert
+            VersionPart serviceVersion = VersionPartLib.toVersionPart(initialVersionInt + i);
+            vm.expectRevert(abi.encodeWithSelector(
+                ReleaseRegistry.ErrorReleaseRegistryServiceVersionMismatch.selector, 
+                serviceByVersion[serviceVersion], 
+                serviceVersion,
+                releaseVersion
+            ));
+            vm.prank(gifManager);
+            releaseRegistry.registerService(serviceByVersion[serviceVersion]);
+        }
+    }
+
+    function test_releaseRegistry_registerService_whenReleaseDeploying_withServiceDomainMismatch() public
+    {
+        // create initial
+        vm.prank(gifAdmin);
+        VersionPart releaseVersion = releaseRegistry.createNextRelease();
+
+        // prepare initial
+        IServiceAuthorization nextAuthMock = new ServiceAuthorizationMockWithRegistryService(releaseVersion);
+        bytes32 nextSalt = bytes32(randomNumber(type(uint256).max)); 
+
+        vm.prank(gifManager);
+        releaseRegistry.prepareNextRelease(nextAuthMock, nextSalt);
+
+        // register with revert
+        // service mock have PRODUCT domain
+        IService service = new ServiceMock(
+            NftIdLib.zero(), 
+            registryNftId, 
+            false, // isInterceptor
+            gifManager,
+            registryAdmin.authority());
+
+        vm.expectRevert(abi.encodeWithSelector(
+            ReleaseRegistry.ErrorReleaseRegistryServiceDomainMismatch.selector, 
+            service,
+            REGISTRY(),
+            PRODUCT()
+        ));
+        vm.prank(gifManager);
+        releaseRegistry.registerService(service);
+    }
+
     function test_releaseRegistry_registerService_whenReleaseDeployed() public
     {
         for(uint i = 0; i <= 2; i++) 

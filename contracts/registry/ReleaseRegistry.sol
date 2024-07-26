@@ -21,8 +21,7 @@ import {RegistryAdmin} from "./RegistryAdmin.sol";
 import {Registry} from "./Registry.sol";
 import {ReleaseLifecycle} from "./ReleaseLifecycle.sol";
 
-// TODO rename to something that does not end with 'Manager' 
-// everywhere else *Manager points to an upgradeable contract
+
 contract ReleaseRegistry is 
     AccessManaged,
     ReleaseLifecycle, 
@@ -64,8 +63,6 @@ contract ReleaseRegistry is
     error ErrorReleaseRegistryServiceInfoOwnerInvalid(IService service, address expected, address found);
     error ErrorReleaseRegistryServiceSelfRegistration(IService service);
     error ErrorReleaseRegistryServiceOwnerRegistered(IService service, address owner);
-
-    Seconds public constant MIN_DISABLE_DELAY = Seconds.wrap(60 * 24 * 365); // 1 year
 
     RegistryAdmin public immutable _admin;
     Registry public immutable _registry;
