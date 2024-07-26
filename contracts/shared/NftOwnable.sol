@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {InitializableERC165} from "./InitializableERC165.sol";
 import {INftOwnable} from "./INftOwnable.sol";
 import {NftId} from "../type/NftId.sol";
+import {ObjectType} from "../type/ObjectType.sol";
 import {RegistryLinked} from "./RegistryLinked.sol";
 
 contract NftOwnable is
@@ -23,6 +24,21 @@ contract NftOwnable is
     modifier onlyOwner() {
         if (msg.sender != getOwner()) {
             revert ErrorNftOwnableNotOwner(msg.sender);
+        }
+        _;
+    }
+
+    modifier onlyNftOwner(NftId nftId) {
+        if(!getRegistry().isOwnerOf(nftId, msg.sender)) {
+            revert ErrorNftOwnableNotOwner(msg.sender);
+        }
+        _;
+    }
+
+    // TODO: rename onlyNftOfType
+    modifier onlyNftObjectType(NftId nftId, ObjectType expectedObjectType) {
+        if(!getRegistry().isObjectType(nftId, expectedObjectType)) {
+            revert ErrorNftOwnableInvalidType(nftId, expectedObjectType);
         }
         _;
     }
@@ -100,6 +116,7 @@ contract NftOwnable is
 
 
     function _getNftOwnableStorage() private pure returns (NftOwnableStorage storage $) {
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             $.slot := NFT_OWNABLE_STORAGE_LOCATION_V1
         }

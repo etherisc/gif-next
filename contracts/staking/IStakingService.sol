@@ -7,9 +7,7 @@ import {Amount} from "../type/Amount.sol";
 import {IService} from "../shared/IService.sol";
 import {IStaking} from "./IStaking.sol";
 import {NftId} from "../type/NftId.sol";
-import {ObjectType} from "../type/ObjectType.sol";
 import {Seconds} from "../type/Seconds.sol";
-import {Timestamp} from "../type/Timestamp.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {UFixed} from "../type/UFixed.sol";
 
@@ -33,7 +31,6 @@ interface IStakingService is IService
     event LogStakingServiceRewardsClaimed(NftId stakeNftId, address stakeOwner, Amount rewardsClaimedAmount);
 
     // modifiers
-    error ErrorStakingServiceNotNftOwner(NftId nftId, address expectedOwner, address owner);
     error ErrorStakingServiceNotStaking(address stakingAddress);
     error ErrorStakingServiceNotSupportingIStaking(address stakingAddress);
 

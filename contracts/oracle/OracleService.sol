@@ -48,6 +48,7 @@ contract OracleService is
         external 
         virtual 
         // restricted() // add authz
+        onlyNftObjectType(oracleNftId, ORACLE())
         returns (
             RequestId requestId
         ) 
@@ -66,36 +67,40 @@ contract OracleService is
             ORACLE(), 
             true); // only active
 
-        // TODO move to stronger validation, requester and oracle need to belong to same product cluster
-        // check that requester and oracle share same instance
-        if (componentInfo.parentNftId != oracleInfo.parentNftId) {
-            revert ErrorOracleServiceInstanceMismatch(componentInfo.parentNftId, oracleInfo.parentNftId);
+        {
+            // TODO move to stronger validation, requester and oracle need to belong to same product cluster
+            // check that requester and oracle share same instance
+            if (componentInfo.parentNftId != oracleInfo.parentNftId) {
+                revert ErrorOracleServiceInstanceMismatch(componentInfo.parentNftId, oracleInfo.parentNftId);
+            }
+
+            // check expiriyAt >= now
+            if (expiryAt < TimestampLib.blockTimestamp()) {
+                revert ErrorOracleServiceExpiryInThePast(TimestampLib.blockTimestamp(), expiryAt);
+            }
+
+            // check callbackMethodName.length > 0
+            if (bytes(callbackMethodName).length == 0) {
+                revert ErrorOracleServiceCallbackMethodNameEmpty();
+            }
         }
 
-        // check expiriyAt >= now
-        if (expiryAt < TimestampLib.blockTimestamp()) {
-            revert ErrorOracleServiceExpiryInThePast(TimestampLib.blockTimestamp(), expiryAt);
+        {
+            // create request info
+            IOracle.RequestInfo memory request = IOracle.RequestInfo({
+                requesterNftId: componentNftId,
+                callbackMethodName: callbackMethodName,
+                oracleNftId: oracleNftId,
+                requestData: requestData,
+                responseData: "",
+                respondedAt: TimestampLib.zero(),
+                expiredAt: expiryAt,
+                isCancelled: false
+            });
+
+            // store request with instance
+            requestId = instance.getInstanceStore().createRequest(request);
         }
-
-        // check callbackMethodName.length > 0
-        if (bytes(callbackMethodName).length == 0) {
-            revert ErrorOracleServiceCallbackMethodNameEmpty();
-        }
-
-        // create request info
-        IOracle.RequestInfo memory request = IOracle.RequestInfo({
-            requesterNftId: componentNftId,
-            callbackMethodName: callbackMethodName,
-            oracleNftId: oracleNftId,
-            requestData: requestData,
-            responseData: "",
-            respondedAt: TimestampLib.zero(),
-            expiredAt: expiryAt,
-            isCancelled: false
-        });
-
-        // store request with instance
-        requestId = instance.getInstanceStore().createRequest(request);
 
         // call oracle component
         IOracleComponent(oracleInfo.objectAddress).request(

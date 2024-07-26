@@ -15,15 +15,6 @@ abstract contract ComponentVerifyingService is
 
     error ErrorComponentVerifyingServiceComponentTypeInvalid(NftId componentNftId, ObjectType expectedType, ObjectType actualType);
     error ErrorComponentVerifyingServiceComponentIsLocked(NftId componentNftId);
-    error ErrorNftNotObjectType(NftId nftId, ObjectType objectType, ObjectType expectedObjectType);
-
-    modifier onlyNftObjectType(NftId nftId, ObjectType expectedObjectType) {
-        ObjectType objectType = getRegistry().getObjectInfo(nftId).objectType;
-        if(!objectType.eq(expectedObjectType)) {
-            revert ErrorNftNotObjectType(nftId, objectType, expectedObjectType);
-        }
-        _;
-    }
 
     /// @dev based on the sender address returns the corresponding components nft id, info and instance.
     /// the function reverts iff:

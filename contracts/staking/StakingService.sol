@@ -4,21 +4,15 @@ pragma solidity ^0.8.20;
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {Amount} from "../type/Amount.sol";
-import {ChainNft} from "../registry/ChainNft.sol";
-import {IPoolService} from "../pool/IPoolService.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {RegistryService} from "../registry/RegistryService.sol";
 import {IStaking} from "./IStaking.sol";
 import {IStakingService} from "./IStakingService.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
-import {ObjectType, INSTANCE, PROTOCOL, REGISTRY, STAKE, STAKING} from "../type/ObjectType.sol";
+import {ObjectType, INSTANCE, REGISTRY, STAKE, STAKING} from "../type/ObjectType.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {Service} from "../shared/Service.sol";
-import {StakeManagerLib} from "./StakeManagerLib.sol";
-import {StakingReader} from "./StakingReader.sol";
-import {TargetManagerLib} from "./TargetManagerLib.sol";
-import {Timestamp} from "../type/Timestamp.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {UFixed} from "../type/UFixed.sol";
 
@@ -37,14 +31,6 @@ contract StakingService is
         IERC20Metadata _dip;
         TokenHandler _tokenHandler;
     }
-
-    modifier onlyNftOwner(NftId nftId) {
-        if(msg.sender != getRegistry().ownerOf(nftId)) {
-            revert ErrorStakingServiceNotNftOwner(nftId, getRegistry().ownerOf(nftId), msg.sender);
-        }
-        _;
-    }
-
 
     function createInstanceTarget(
         NftId targetNftId,

@@ -5,6 +5,7 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 import {IRegistryLinked} from "./IRegistryLinked.sol";
 import {NftId} from "../type/NftId.sol";
+import {ObjectType} from "../type/ObjectType.sol";
 
 interface INftOwnable is
     IERC165,
@@ -12,6 +13,7 @@ interface INftOwnable is
 {
     error ErrorNftOwnableInitialOwnerZero();
     error ErrorNftOwnableNotOwner(address account);
+    error ErrorNftOwnableInvalidType(NftId nftId, ObjectType expectedObjectType);
 
     error ErrorNftOwnableAlreadyLinked(NftId nftId);
     error ErrorNftOwnableContractNotRegistered(address contractAddress);

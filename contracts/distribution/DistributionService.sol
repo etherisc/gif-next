@@ -175,36 +175,39 @@ contract DistributionService is
             revert ErrorIDistributionServiceExpirationInvalid(expiryAt);
         }
 
-        InstanceReader instanceReader = instance.getInstanceReader();
-        DistributorType distributorType = instanceReader.getDistributorInfo(distributorNftId).distributorType;
-        IDistribution.DistributorTypeInfo memory distributorTypeData = instanceReader.getDistributorTypeInfo(distributorType);
+        {
+            InstanceReader instanceReader = instance.getInstanceReader();
+            DistributorType distributorType = instanceReader.getDistributorInfo(distributorNftId).distributorType;
+            IDistribution.DistributorTypeInfo memory distributorTypeData = instanceReader.getDistributorTypeInfo(distributorType);
 
-        if (distributorTypeData.maxReferralCount < maxReferrals) {
-            revert ErrorIDistributionServiceMaxReferralsExceeded(distributorTypeData.maxReferralCount);
-        }
-        if (distributorTypeData.minDiscountPercentage > discountPercentage) {
-            revert ErrorIDistributionServiceDiscountTooLow(distributorTypeData.minDiscountPercentage.toInt(), discountPercentage.toInt());
-        }
-        if (distributorTypeData.maxDiscountPercentage < discountPercentage) {
-            revert ErrorIDistributionServiceDiscountTooHigh(distributorTypeData.maxDiscountPercentage.toInt(), discountPercentage.toInt());
-        }
-        if (expiryAt.toInt() - TimestampLib.blockTimestamp().toInt() > distributorTypeData.maxReferralLifetime) {
-            revert ErrorIDistributionServiceExpiryTooLong(distributorTypeData.maxReferralLifetime, expiryAt.toInt());
+            if (distributorTypeData.maxReferralCount < maxReferrals) {
+                revert ErrorIDistributionServiceMaxReferralsExceeded(distributorTypeData.maxReferralCount);
+            }
+            if (distributorTypeData.minDiscountPercentage > discountPercentage) {
+                revert ErrorIDistributionServiceDiscountTooLow(distributorTypeData.minDiscountPercentage.toInt(), discountPercentage.toInt());
+            }
+            if (distributorTypeData.maxDiscountPercentage < discountPercentage) {
+                revert ErrorIDistributionServiceDiscountTooHigh(distributorTypeData.maxDiscountPercentage.toInt(), discountPercentage.toInt());
+            }
+            if (expiryAt.toInt() - TimestampLib.blockTimestamp().toInt() > distributorTypeData.maxReferralLifetime) {
+                revert ErrorIDistributionServiceExpiryTooLong(distributorTypeData.maxReferralLifetime, expiryAt.toInt());
+            }
         }
 
-        referralId = ReferralLib.toReferralId(distributionNftId, code);
-        IDistribution.ReferralInfo memory info = IDistribution.ReferralInfo(
-            distributorNftId,
-            code,
-            discountPercentage,
-            maxReferrals,
-            0, // used referrals
-            expiryAt,
-            data
-        );
+        {
+            referralId = ReferralLib.toReferralId(distributionNftId, code);
+            IDistribution.ReferralInfo memory info = IDistribution.ReferralInfo(
+                distributorNftId,
+                code,
+                discountPercentage,
+                maxReferrals,
+                0, // used referrals
+                expiryAt,
+                data
+            );
 
-        instance.getInstanceStore().createReferral(referralId, info);
-        return referralId;
+            instance.getInstanceStore().createReferral(referralId, info);
+        }
     }
 
     /// @inheritdoc IDistributionService
