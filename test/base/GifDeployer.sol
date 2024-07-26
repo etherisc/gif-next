@@ -5,6 +5,14 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
+import {ObjectType, ObjectTypeLib} from "../../contracts/type/ObjectType.sol";
+import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
+import {ProxyManager} from "../../contracts/upgradeability/ProxyManager.sol";
+import {SCHEDULED, DEPLOYING} from "../../contracts/type/StateId.sol";
+import {VersionPart, VersionPartLib} from "../../contracts/type/Version.sol";
+import {StateIdLib} from "../../contracts/type/StateId.sol";
+import {TimestampLib} from "../../contracts/type/Timestamp.sol";
+
 // core contracts
 import {Dip} from "../../contracts/mock/Dip.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
@@ -20,12 +28,6 @@ import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
 
 // service and proxy contracts
 import {IService} from "../../contracts/shared/IService.sol";
-import {ObjectType, ObjectTypeLib} from "../../contracts/type/ObjectType.sol";
-import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
-import {ProxyManager} from "../../contracts/upgradeability/ProxyManager.sol";
-import {SCHEDULED, DEPLOYING} from "../../contracts/type/StateId.sol";
-import {VersionPart} from "../../contracts/type/Version.sol";
-
 import {ApplicationService} from "../../contracts/product/ApplicationService.sol";
 import {ApplicationServiceManager} from "../../contracts/product/ApplicationServiceManager.sol";
 import {BundleService} from "../../contracts/pool/BundleService.sol";
@@ -384,7 +386,7 @@ contract GifDeployer is Test {
         console.log("release services remaining", _releaseRegistry.getRemainingServicesToRegister());
     }
 
-    function eqObjectInfo(IRegistry.ObjectInfo memory a, IRegistry.ObjectInfo memory b) public returns (bool isSame) {
+    function eqObjectInfo(IRegistry.ObjectInfo memory a, IRegistry.ObjectInfo memory b) public pure returns (bool isSame) {
 
         assertEq(a.nftId.toInt(), b.nftId.toInt(), "getObjectInfo(address).nftId returned unexpected value");
         assertEq(a.parentNftId.toInt(), b.parentNftId.toInt(), "getObjectInfo(address).parentNftId returned unexpected value");
@@ -424,5 +426,40 @@ contract GifDeployer is Test {
         assembly {
             boolVal := uintVal
         }
+    }
+
+    function eqReleaseInfo(IRegistry.ReleaseInfo memory release_1, IRegistry.ReleaseInfo memory release_2) public pure returns (bool isSame) {
+
+        assertEq(release_1.state.toInt(), release_2.state.toInt(), "getReleaseInfo(version).state returned unexpected value");
+        assertEq(release_1.version.toInt(), release_2.version.toInt(), "getReleaseInfo(version).version returned unexpected value");
+        assertEq(release_1.salt, release_2.salt, "getReleaseInfo(version).salt returned unexpected value");
+        assertEq(address(release_1.auth), address(release_2.auth), "getReleaseInfo(version).auth returned unexpected value");
+        assertEq(release_1.activatedAt.toInt(), release_2.activatedAt.toInt(), "getReleaseInfo(version).activatedAt returned unexpected value");
+        assertEq(release_1.disabledAt.toInt(), release_2.disabledAt.toInt(), "getReleaseInfo(version).disabledAt returned unexpected value");
+
+        return (
+            (release_1.state == release_2.state) &&
+            (release_1.version == release_2.version) &&
+            (release_1.salt == release_2.salt) &&
+            (release_1.auth == release_2.auth) &&
+            (release_1.activatedAt == release_2.activatedAt) &&
+            (release_1.disabledAt == release_2.disabledAt)
+        );
+    }
+
+    function zeroReleaseInfo() public pure returns (IRegistry.ReleaseInfo memory) {
+        return (
+            IRegistry.ReleaseInfo(
+                StateIdLib.zero(),
+                VersionPartLib.toVersionPart(0),
+                bytes32(0),
+                //new address[](0),
+                //new string[](0),
+                //new ObjectType[](0),
+                IServiceAuthorization(address(0)),
+                TimestampLib.zero(),
+                TimestampLib.zero()
+            )
+        );
     }
 }
