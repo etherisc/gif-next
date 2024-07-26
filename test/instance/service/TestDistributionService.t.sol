@@ -8,13 +8,12 @@ import {ComponentService} from "../../../contracts/shared/ComponentService.sol";
 import {SimpleDistribution} from "../../../contracts/examples/unpermissioned/SimpleDistribution.sol";
 
 contract TestDistributionService is GifTest {
-    using NftIdLib for NftId;
 
     function test_distributionServiceRegisterHappyCase() public {
         vm.startPrank(distributionOwner);
         distribution = new SimpleDistribution(
             address(registry),
-            instanceNftId,
+            testProdNftId,
             new BasicDistributionAuthorization("SimpleDistribution"),
             distributionOwner,
             address(token)

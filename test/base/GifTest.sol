@@ -390,8 +390,8 @@ contract GifTest is GifDeployer {
         _printAuthz(instanceAdmin, "instanceWithProduct");
     }
 
-    function _prepareProduct(bool createBundle) internal {
 
+    function _prepareProduct(bool createBundle) internal {
         // solhint-disable-next-line
         console.log("--- deploy and register simple product");
 

@@ -15,7 +15,7 @@ contract TestPoolService is GifTest {
         vm.startPrank(outsider);
         pool = new SimplePool(
             address(registry),
-            instanceNftId,
+            testProdNftId,
             address(token),
             new BasicPoolAuthorization("SimplePool"),
             outsider
