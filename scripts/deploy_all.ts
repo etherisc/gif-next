@@ -133,7 +133,7 @@ function printAddresses(
         addresses += `${libName}=${libraries[lib]}\n`;
     }
 
-    addresses += `--------\n`;
+    addresses += `# --------\n`;
     addresses += `REGISTRY_ADMIN_ADDRESS=${registry.registryAdminAddress}\n`;
     addresses += `RELEASE_REGISTRY_ADDRESS=${registry.releaseRegistryAddress}\n`;
     addresses += `REGISTRY_ADDRESS=${registry.registryAddress}\n`;
@@ -143,7 +143,7 @@ function printAddresses(
     addresses += `STAKING_NFT_ID=${registry.stakingNftId}\n`;
     addresses += `STAKING_ADDRESS=${registry.stakingAddress}\n`;
     addresses += `DIP_ADDRESS=${registry.dipAddress}\n`;
-    addresses += `--------\n`;
+    addresses += `# --------\n`;
     addresses += `REGISTRY_SERVICE_MANAGER_ADDRESS=${services.registryServiceManagerAddress}\n`;
     addresses += `REGISTRY_SERVICE_ADDRESS=${services.registryServiceAddress}\n`;
     addresses += `REGISTRY_SERVICE_NFT_ID=${services.registryServiceNftId}\n`;
@@ -168,9 +168,9 @@ function printAddresses(
     addresses += `POOL_SERVICE_ADDRESS=${services.poolServiceAddress}\n`;
     addresses += `POOL_SERVICE_NFT_ID=${services.poolServiceNftId}\n`;
 
-    addresses += `PRODUCT_SERVICE_MANAGER_ADDRESS=${services.productServiceManagerAddress}\n`;
-    addresses += `PRODUCT_SERVICE_ADDRESS=${services.productServiceAddress}\n`;
-    addresses += `PRODUCT_SERVICE_NFT_ID=${services.productServiceNftId}\n`;
+    addresses += `PRODUCT_SERVICE_MANAGER_ADDRESS=${services.riskServiceManagerAddress}\n`;
+    addresses += `PRODUCT_SERVICE_ADDRESS=${services.riskServiceAddress}\n`;
+    addresses += `PRODUCT_SERVICE_NFT_ID=${services.riskServiceNftId}\n`;
 
     addresses += `APPLICATION_SERVICE_MANAGER_ADDRESS=${services.applicationServiceManagerAddress}\n`;
     addresses += `APPLICATION_SERVICE_ADDRESS=${services.applicationServiceAddress}\n`;
@@ -187,7 +187,7 @@ function printAddresses(
     addresses += `BUNDLE_SERVICE_MANAGER_ADDRESS=${services.bundleServiceManagerAddress}\n`;
     addresses += `BUNDLE_SERVICE_ADDRESS=${services.bundleServiceAddress}\n`;
     addresses += `BUNDLE_SERVICE_NFT_ID=${services.bundleServiceNftId}\n`;
-    addresses += `--------\n`;
+    addresses += `# --------\n`;
     addresses += `MASTER_INSTANCE_ADDRESS=${masterInstance.instanceAddress}\n`;
     addresses += `MASTER_INSTANCE_NFT_ID=${masterInstance.instanceNftId}\n`;
     addresses += `MASTER_INSTANCE_AUTHORIZATION_V3_ADDRESS=${masterInstance.instanceAuthorizationV3Address}\n`;
@@ -195,14 +195,14 @@ function printAddresses(
     addresses += `MASTER_BUNDLE_SET_ADDRESS=${masterInstance.instanceBundleSetAddress}\n`;
     addresses += `MASTER_INSTANCE_READER_ADDRESS=${masterInstance.instanceReaderAddress}\n`;
     addresses += `MASTER_INSTANCE_STORE_ADDRESS=${masterInstance.instanceStoreAddress}\n`;
-    addresses += `--------\n`;
+    addresses += `# --------\n`;
     addresses += `CLONED_INSTANCE_ADDRESS=${clonedInstance.instanceAddress}\n`;
     addresses += `CLONED_INSTANCE_NFT_ID=${clonedInstance.instanceNftId}\n`;
     addresses += `CLONED_INSTANCE_ADMIN_ADDRESS=${clonedInstance.instanceAdminAddress}\n`;
     addresses += `CLONED_BUNDLE_SET_ADDRESS=${clonedInstance.instanceBundleSetAddress}\n`;
     addresses += `CLONED_INSTANCE_READER_ADDRESS=${clonedInstance.instanceReaderAddress}\n`;
     addresses += `CLONED_INSTANCE_STORE_ADDRESS=${clonedInstance.instanceStoreAddress}\n`;
-    addresses += `--------\n`;
+    addresses += `# --------\n`;
     // addresses += `tokenAddress: ${tokenAddress}\n`;
     // addresses += `poolAddress: ${poolAddress}\n`;
     // addresses += `poolNftId: ${poolNftId}\n`;

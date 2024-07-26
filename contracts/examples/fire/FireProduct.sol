@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {ACTIVE, COLLATERALIZED, PAUSED} from "../../type/StateId.sol";
+import {ACTIVE, PAUSED} from "../../type/StateId.sol";
 import {Amount, AmountLib} from "../../type/Amount.sol";
 import {BasicProduct} from "../../product/BasicProduct.sol";
 import {ClaimId} from "../../type/ClaimId.sol";
@@ -14,11 +14,8 @@ import {POLICY} from "../../type/ObjectType.sol";
 import {ReferralLib} from "../../type/Referral.sol";
 import {RiskId, RiskIdLib} from "../../type/RiskId.sol";
 import {Seconds} from "../../type/Seconds.sol";
-import {StateId} from "../../type/StateId.sol";
 import {Timestamp, TimestampLib} from "../../type/Timestamp.sol";
 import {UFixed, UFixedLib} from "../../type/UFixed.sol";
-
-uint64 constant SPECIAL_ROLE_INT = 11111;
 
 // solhint-disable-next-line func-name-mixedcase
 function HALF_YEAR() pure returns (Seconds) {
@@ -161,13 +158,13 @@ contract FireProduct is
         view
         returns (Amount premiumAmount)
     {
-        RiskId riskId = _riskMapping[cityName];
-        if (riskId.eqz()) {
+        RiskId risk = _riskMapping[cityName];
+        if (risk.eqz()) {
             revert ErrorFireProductCityUnknown(cityName);
         }
         premiumAmount = calculatePremium( 
             sumInsured,
-            riskId,
+            risk,
             lifetime,
             "",
             bundleNftId,
@@ -203,11 +200,11 @@ contract FireProduct is
         returns (NftId policyNftId)
     {
         address applicationOwner = msg.sender;
-        RiskId riskId = initializeCity(cityName);
+        RiskId risk = initializeCity(cityName);
 
         Amount premiumAmount = calculatePremium(
             sumInsured,
-            riskId,
+            risk,
             lifetime,
             "",
             bundleNftId,
@@ -215,7 +212,7 @@ contract FireProduct is
 
         return _createApplication(
             applicationOwner,
-            riskId,
+            risk,
             sumInsured,
             premiumAmount,
             lifetime,
@@ -229,15 +226,15 @@ contract FireProduct is
         string memory cityName
     ) 
         public
-        returns (RiskId riskId) 
+        returns (RiskId risk) 
     {
         if (! _riskMapping[cityName].eqz()) {
             return _riskMapping[cityName];
         }
         _cities.push(cityName);
-        riskId = RiskIdLib.toRiskId(cityName);
-        _createRisk(riskId, "");
-        _riskMapping[cityName] = riskId;
+        risk = RiskIdLib.toRiskId(cityName);
+        _createRisk(risk, "");
+        _riskMapping[cityName] = risk;
     }
 
     /// @dev Calling this method will lock the sum insured amount in the pool and activate the policy at the given time. 
@@ -332,10 +329,10 @@ contract FireProduct is
         IPolicy.PolicyInfo memory policyInfo = _getInstanceReader().getPolicyInfo(policyNftId);
         _checkClaimConditions(policyNftId, policyInfo, fireId);
         
-        Fire memory fire = _fires[fireId];
+        Fire memory theFire = _fires[fireId];
         _claimed[fireId][policyNftId] = true;
 
-        Amount claimAmount = _getClaimAmount(policyNftId, policyInfo.sumInsuredAmount, fire.damageLevel);
+        Amount claimAmount = _getClaimAmount(policyNftId, policyInfo.sumInsuredAmount, theFire.damageLevel);
         
         claimId = _submitClaim(policyNftId, claimAmount, abi.encodePacked(fireId));
         _confirmClaim(policyNftId, claimId, claimAmount, "");
@@ -350,6 +347,7 @@ contract FireProduct is
         uint256 fireId
     ) 
         internal
+        view
     {
         // check fire exists
         if (_fires[fireId].reportedAt.eqz()) {
@@ -366,14 +364,14 @@ contract FireProduct is
             revert ErrorFireProductAlreadyClaimed();
         }
 
-        Fire memory fire = _fires[fireId];
+        Fire memory theFire = _fires[fireId];
 
         // check fire is during policy lifetime
-        if (fire.reportedAt < policyInfo.activatedAt) {
+        if (theFire.reportedAt < policyInfo.activatedAt) {
             revert ErrorFireProductPolicyNotYetActive(policyNftId, policyInfo.activatedAt);
         }
 
-        if (fire.reportedAt >= policyInfo.expiredAt) {
+        if (theFire.reportedAt >= policyInfo.expiredAt) {
             revert ErrorFireProductPolicyExpired(policyNftId, policyInfo.expiredAt);
         }
     }
