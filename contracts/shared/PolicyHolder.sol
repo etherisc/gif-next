@@ -10,13 +10,18 @@ import {IPolicyHolder} from "./IPolicyHolder.sol";
 import {NftId} from "../type/NftId.sol";
 import {PayoutId, PayoutIdLib} from "../type/PayoutId.sol";
 import {RegistryLinked} from "./RegistryLinked.sol";
+import {Timestamp} from "../type/Timestamp.sol";
 
 /// @dev template implementation for IPolicyHolder
 contract PolicyHolder is
     InitializableERC165,
-    RegistryLinked, // TODO need upgradeable version
+    RegistryLinked,
     IPolicyHolder
 {
+    // TODO add modifier to protect callback functions from unauthorized access
+    // callbacks must only be allowed from the policy and claim services
+    // will need a release parameter to fetch the right service addresses for the modifiers
+
     function _initializePolicyHolder(
         address registryAddress
     )
@@ -25,20 +30,21 @@ contract PolicyHolder is
         onlyInitializing()
     {
         _initializeRegistryLinked(registryAddress);
+        _initializeERC165();
         _registerInterface(type(IPolicyHolder).interfaceId);
     }
 
     /// @dev empty default implementation
-    function policyActivated(NftId policyNftId) external {}
+    function policyActivated(NftId policyNftId, Timestamp activatedAt) external virtual {}
 
     /// @dev empty default implementation
-    function policyExpired(NftId policyNftId) external {}
+    function policyExpired(NftId policyNftId, Timestamp expiredAt) external virtual {}
 
     /// @dev empty default implementation
-    function claimConfirmed(NftId policyNftId, ClaimId claimId, Amount amount) external {}
+    function claimConfirmed(NftId policyNftId, ClaimId claimId, Amount amount) external virtual {}
 
     /// @dev empty default implementation
-    function payoutExecuted(NftId policyNftId, PayoutId payoutId, address beneficiary, Amount amount) external {}
+    function payoutExecuted(NftId policyNftId, PayoutId payoutId, Amount amount, address beneficiary) external virtual {}
 
     //--- IERC165 functions ---------------// 
     function onERC721Received(

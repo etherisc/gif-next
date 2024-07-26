@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol"; 
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
-import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {IVersionable} from "../../contracts/upgradeability/IVersionable.sol";
 
@@ -95,7 +96,7 @@ contract RegistryServiceManagerTest is RegistryServiceTestBase {
         assertTrue(registry.isRegistered(address(registryService)), "registry service not registered");
     }
 
-    function test_attemptsToRedeployedRegistryService() public {
+    function test_attemptsToRedeployedRegistryServiceNotOwner() public {
         address mockImplementation = address(new RegistryServiceMock());
         bytes memory emptyInitializationData;
 
@@ -105,21 +106,34 @@ contract RegistryServiceManagerTest is RegistryServiceTestBase {
         // attempt to redeploy with non-owner account
         vm.expectRevert(
             abi.encodeWithSelector(
-                INftOwnable.ErrorNftOwnableNotOwner.selector,
-                registryOwnerNew));
+                Initializable.InvalidInitialization.selector));
+
         vm.prank(registryOwnerNew);
-        registryServiceManager.deploy(
+        registryServiceManager.initialize(
+            address(registry),
             mockImplementation,
-            emptyInitializationData);
+            emptyInitializationData,
+            bytes32(""));
+    }
+
+    function test_attemptsToRedeployedRegistryServiceOwner() public {
+        address mockImplementation = address(new RegistryServiceMock());
+        bytes memory emptyInitializationData;
+
+        // check ownership
+        assertEq(registryServiceManager.getOwner(), address(registryOwner), "service manager owner not registry owner");
 
         // attempt to redeploy with owner account
         vm.expectRevert(
             abi.encodeWithSelector(
-                ProxyManager.ErrorProxyManagerAlreadyDeployed.selector));
+                Initializable.InvalidInitialization.selector));
+
         vm.prank(registryOwner);
-        registryServiceManager.deploy(
+        registryServiceManager.initialize(
+            address(registry),
             mockImplementation,
-            emptyInitializationData);
+            emptyInitializationData,
+            bytes32(""));
     }
 
     function test_attemptsToUpgradeRegistryService() public {

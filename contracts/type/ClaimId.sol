@@ -12,6 +12,7 @@ import {NftId} from "./NftId.sol";
 using {
     eqClaimId as ==, 
     neClaimId as !=, 
+    ClaimIdLib.eq,
     ClaimIdLib.eqz,
     ClaimIdLib.gtz,
     ClaimIdLib.toInt,
@@ -21,7 +22,7 @@ using {
 
 // pure free functions for operators
 function eqClaimId(ClaimId a, ClaimId b) pure returns (bool isSame) {
-    return ClaimId.unwrap(a) == ClaimId.unwrap(b);
+    return ClaimIdLib.eq(a, b);
 }
 
 function neClaimId(ClaimId a, ClaimId b) pure returns (bool isDifferent) {
@@ -66,6 +67,10 @@ library ClaimIdLib {
     /// @dev Returns true if the value is non-zero (> 0).
     function gtz(ClaimId a) public pure returns (bool) {
         return ClaimId.unwrap(a) > 0;
+    }
+
+    function eq(ClaimId a, ClaimId b) public pure returns (bool) {
+        return ClaimId.unwrap(a) == ClaimId.unwrap(b);
     }
 
     /// @dev Returns true if the value is zero (== 0).

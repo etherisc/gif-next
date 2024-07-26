@@ -18,9 +18,9 @@ contract StakingManager is
         address registry,
         address tokenRegistry,
         address stakingStore,
-        address initialOwner
+        address initialOwner,
+        bytes32 salt
     )
-        ProxyManager(registry)
     {
         Staking stakingImplementation = new Staking();
 
@@ -30,10 +30,12 @@ contract StakingManager is
             tokenRegistry,
             stakingStore,
             initialOwner);
-
-        IVersionable versionable = deploy(
-            _initialImplementation, 
-            _initializationData);
+        
+        IVersionable versionable = initialize(
+            registry,
+            _initialImplementation,
+            _initializationData,
+            salt);
 
         _staking = Staking(address(versionable));
     }

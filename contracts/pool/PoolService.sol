@@ -8,12 +8,14 @@ import {IComponentService} from "../shared/IComponentService.sol";
 import {IInstance} from "../instance/IInstance.sol";
 import {IInstanceService} from "../instance/IInstanceService.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
+import {IProductComponent} from "../product/IProductComponent.sol";
 import {IPoolService} from "./IPoolService.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegistryService} from "../registry/IRegistryService.sol";
 import {IStaking} from "../staking/IStaking.sol";
 
 import {Amount, AmountLib} from "../type/Amount.sol";
+import {ClaimId} from "../type/ClaimId.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType, POOL, BUNDLE, COMPONENT, INSTANCE, REGISTRY} from "../type/ObjectType.sol";
@@ -21,7 +23,7 @@ import {RoleId, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
 import {KEEP_STATE} from "../type/StateId.sol";
 import {Seconds} from "../type/Seconds.sol";
-import {UFixed} from "../type/UFixed.sol";
+import {UFixed, UFixedLib} from "../type/UFixed.sol";
 import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
@@ -48,10 +50,9 @@ contract PoolService is
         initializer()
     {
         (
-            address registryAddress,, 
-            //address managerAddress
+            address registryAddress,
             address authority
-        ) = abi.decode(data, (address, address, address));
+        ) = abi.decode(data, (address, address));
 
         _initializeService(registryAddress, authority, owner);
 
@@ -64,6 +65,7 @@ contract PoolService is
 
         _registerInterface(type(IPoolService).interfaceId);
     }
+
 
     /// @inheritdoc IPoolService
     function setMaxBalanceAmount(Amount maxBalanceAmount)
@@ -80,6 +82,7 @@ contract PoolService is
 
         emit LogPoolServiceMaxBalanceAmountUpdated(poolNftId, previousMaxBalanceAmount, maxBalanceAmount);
     }
+
 
     function setBundleOwnerRole(RoleId bundleOwnerRole)
         external
@@ -101,6 +104,7 @@ contract PoolService is
 
         emit LogPoolServiceBundleOwnerRoleSet(poolNftId, bundleOwnerRole);
     }
+
 
     /// @inheritdoc IPoolService
     function createBundle(
@@ -128,6 +132,7 @@ contract PoolService is
         emit LogPoolServiceBundleCreated(instance.getNftId(), poolNftId, bundleNftId);
     }
 
+
     function _getStakingFee(InstanceReader instanceReader, NftId poolNftId)
         internal
         virtual
@@ -137,6 +142,7 @@ contract PoolService is
         NftId productNftId = instanceReader.getComponentInfo(poolNftId).productNftId;
         return instanceReader.getProductInfo(productNftId).stakingFee;
     }
+
 
     function closeBundle(NftId bundleNftId)
         external
@@ -166,6 +172,39 @@ contract PoolService is
         }
     }
 
+
+    /// @inheritdoc IPoolService
+    function processFundedClaim(
+        NftId policyNftId, 
+        ClaimId claimId, 
+        Amount availableAmount
+    ) 
+        external
+        virtual
+    {
+        (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
+        InstanceReader instanceReader = instance.getInstanceReader();
+        NftId productNftId = instanceReader.getComponentInfo(poolNftId).productNftId;
+
+        // check policy matches with calling pool
+        IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
+        if(policyInfo.productNftId != productNftId) {
+            revert ErrorPoolServicePolicyPoolMismatch(
+                policyNftId, 
+                policyInfo.productNftId, 
+                productNftId);
+        }
+
+        emit LogPoolServiceProcessFundedClaim(policyNftId, claimId, availableAmount);
+
+        // callback to product component if applicable
+        if (instanceReader.getProductInfo(productNftId).isProcessingFundedClaims) {
+            address productAddress = getRegistry().getObjectAddress(productNftId);
+            IProductComponent(productAddress).processFundedClaim(policyNftId, claimId, availableAmount);
+        }
+    }
+
+
     /// @inheritdoc IPoolService
     function stake(NftId bundleNftId, Amount amount) 
         external 
@@ -188,6 +227,7 @@ contract PoolService is
                 revert ErrorPoolServiceMaxBalanceAmountExceeded(poolNftId, poolInfo.maxBalanceAmount, currentPoolBalance, amount);
             }
         }
+
 
         // calculate fees
         Amount feeAmount;
@@ -327,13 +367,13 @@ contract PoolService is
         virtual
         restricted()
         returns (
-            Amount localCollateralAmount,
-            Amount totalCollateralAmount
+            Amount totalCollateralAmount,
+            Amount localCollateralAmount
         )
     {
         (
-            localCollateralAmount,
-            totalCollateralAmount
+            totalCollateralAmount,
+            localCollateralAmount
         ) = calculateRequiredCollateral(
             instance.getInstanceReader(),
             productNftId, 
@@ -359,8 +399,7 @@ contract PoolService is
         }
     }
 
-
-    function reduceCollateral(
+    function processPayout(
         IInstance instance, 
         address token,
         NftId policyNftId, 
@@ -371,6 +410,22 @@ contract PoolService is
         virtual
         restricted()
     {
+        NftId bundleNftId = policyInfo.bundleNftId;
+        NftId poolNftId = getRegistry().getObjectInfo(bundleNftId).parentNftId;
+        InstanceStore instanceStore = instance.getInstanceStore();
+        
+        _componentService.decreasePoolBalance(
+            instanceStore,
+            poolNftId,
+            payoutAmount, 
+            AmountLib.zero());
+
+        _componentService.decreaseBundleBalance(
+            instanceStore,
+            bundleNftId,
+            payoutAmount, 
+            AmountLib.zero());
+
         _bundleService.releaseCollateral(
             instance, 
             policyNftId, 
@@ -425,16 +480,16 @@ contract PoolService is
         public
         view 
         returns(
-            Amount localCollateralAmount,
-            Amount totalCollateralAmount
+            Amount totalCollateralAmount,
+            Amount localCollateralAmount
         )
     {
         NftId poolNftId = instanceReader.getProductInfo(productNftId).poolNftId;
         IComponents.PoolInfo memory poolInfo = instanceReader.getPoolInfo(poolNftId);
 
         (
-            localCollateralAmount,
-            totalCollateralAmount
+            totalCollateralAmount,
+            localCollateralAmount
         ) = calculateRequiredCollateral(
             poolInfo.collateralizationLevel,
             poolInfo.retentionLevel,
@@ -450,18 +505,17 @@ contract PoolService is
         public
         pure 
         returns(
-            Amount localCollateralAmount,
-            Amount totalCollateralAmount
+            Amount totalCollateralAmount,
+            Amount localCollateralAmount
         )
     {
-        // TODO define if only applies to local collateral
-        // TODO add minimalistic implementation
+        // collateralization is applied to sum insured
+        UFixed totalUFixed = collateralizationLevel * sumInsuredAmount.toUFixed();
+        totalCollateralAmount = AmountLib.toAmount(totalUFixed.toInt());
 
-        // assumptions 
-        // - collateralizationLevel == 1.0
-        // - retentionLevel == 1.0
-        localCollateralAmount = sumInsuredAmount;
-        totalCollateralAmount = localCollateralAmount;
+        // retention level defines how much capital is required locally
+        localCollateralAmount = AmountLib.toAmount(
+            (retentionLevel * totalUFixed).toInt());
     }
 
 

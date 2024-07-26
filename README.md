@@ -186,7 +186,7 @@ forge coverage --report lcov
 | fbc | forge build contracts/ |
 | fbcw | forge build --watch contracts/ |
 | ft | forge test |
-| ftf | forge test --nmt "testFuzz\|test_continuous" |
+| ftf | forge test --nmt "_longRunning" |
 | ftt | forge test -vvvv --mt |
 | fttw | forge test -vvvv --watch --mt |
 | ftc | forge test -vvvv --mc |

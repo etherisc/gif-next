@@ -146,7 +146,6 @@ export type Release = {
     version: BigNumberish,
     salt: BytesLike,
     accessManager: AddressLike
-    config: ReleaseConfig
 };
 
 // TODO implement release addresses computation
@@ -313,7 +312,7 @@ export async function getReleaseConfig(/*owner: Signer, registry: RegistryAddres
                     PoolService__factory.createInterface().getFunction("releaseCollateral").selector,
                     PoolService__factory.createInterface().getFunction("processSale").selector
                 ],
-                [PoolService__factory.createInterface().getFunction("reduceCollateral").selector]
+                [PoolService__factory.createInterface().getFunction("processSale").selector]
             ],
             [
                 [],//[BundleService__factory.createInterface().getFunction("increaseBalance").selector],
@@ -337,10 +336,7 @@ export async function getReleaseConfig(/*owner: Signer, registry: RegistryAddres
             [], // staking
             [
                 [RegistryService__factory.createInterface().getFunction("registerPolicy").selector],
-                [RegistryService__factory.createInterface().getFunction("registerProduct").selector],
-                [RegistryService__factory.createInterface().getFunction("registerPool").selector],
                 [RegistryService__factory.createInterface().getFunction("registerBundle").selector],
-                [RegistryService__factory.createInterface().getFunction("registerDistribution").selector],
                 [RegistryService__factory.createInterface().getFunction("registerComponent").selector],                
                 [RegistryService__factory.createInterface().getFunction("registerInstance").selector],
                 [RegistryService__factory.createInterface().getFunction("registerStaking").selector]
@@ -351,7 +347,7 @@ export async function getReleaseConfig(/*owner: Signer, registry: RegistryAddres
     return config;
 }
 
-export async function createRelease(owner: Signer, registry: RegistryAddresses, config: ReleaseConfig, salt: BytesLike): Promise<Release>
+export async function createRelease(owner: Signer, registry: RegistryAddresses, salt: BytesLike): Promise<Release>
 {
     const releaseRegistry = registry.releaseRegistry.connect(owner);
     
@@ -380,7 +376,6 @@ export async function createRelease(owner: Signer, registry: RegistryAddresses, 
         version: releaseVersion,
         salt: releaseSalt,
         accessManager: releaseAccessManager,
-        config: config
     };
     
     return release;

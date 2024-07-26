@@ -6,7 +6,7 @@ on:
     tags: '*'
   pull_request:
   schedule:
-    - cron: "33 3 * * 1"
+    - cron: "33 3 * * *"
 
 jobs:
   build_hardhat:
@@ -85,19 +85,27 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
 
-      - name: Run fasts tests without fuzz and continuous tests (label 'fast_tests')
-        if: ${{ github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'fast_tests') }}
+      - name: Run fasts tests without long running tests
+        # trigger fast tests for regular pull requests
+        if: | 
+          github.event_name != 'pull_request' || 
+          ! contains(github.event.pull_request.labels.*.name, 'run_all_tests')
         env:
           FOUNDRY_PROFILE: ci
-        run: forge test -vv --nmt "testFuzz|test_continuous"
+        run: forge test -vv --nmt "_longRunning"
       
-      - name: Run all tests
-        if: ${{ github.event_name != 'pull_request' || ! contains(github.event.pull_request.labels.*.name, 'fast_tests') }}
+      - name: Run all tests (label 'run_all_tests')
+        # run all tests for pull requests with label 'run_all_tests' 
+        # or once a day when triggered thru schedule
+        if: |
+          (
+            github.event_name == 'pull_request' 
+            && contains(github.event.pull_request.labels.*.name, 'run_all_tests')
+          ) || 
+          github.event.schedule == '33 3 * * *'
         env:
           FOUNDRY_PROFILE: ci
         run: forge test -vv
-
-            
 
   publish:
     name: Publish npm package to npmjs
@@ -107,7 +115,10 @@ jobs:
         id-token: write
     needs: [build_hardhat, build_foundry, test_foundry]
     # only run if not on main and hardhat **and** founddry are successful and not dependabot
-    if: ${{ github.ref != 'refs/heads/main' && contains(join(needs.*.result, ','), 'success') && github.actor != 'dependabot[bot]' }}
+    if: |
+      github.ref != 'refs/heads/main' && 
+      contains(join(needs.*.result, ','), 'success') && 
+      github.actor != 'dependabot[bot]'
     steps:
       - name: Checkout
         uses: actions/checkout@v4

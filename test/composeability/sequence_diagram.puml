@@ -1,0 +1,22 @@
+@startuml
+actor customer
+participant Product
+participant ClaimService
+participant PoolService
+participant "Pool/PolicyHolder" as Pool
+
+participant ReinsuranceProduct
+participant ReinsurancePool
+
+Product -> ClaimService : confirmClaim
+ClaimService -> Pool : processConfirmedClaim [callback]
+Pool -> Pool : calculateReinsuranceClaim
+Pool -> ReinsuranceProduct : make claim
+ReinsuranceProduct -> ClaimService : submit/confirmClaim, create/processPayout
+ReinsurancePool --> Pool : transfer of reinsurance payout token
+ClaimService -> Pool : payoutExecuted [callback]
+Pool -> PoolService : processFundedClaim
+PoolService -> Product : processFundedClaim [callback]
+Product -> ClaimService : create/processPayout
+Pool --> customer : transfer of payout token
+@enduml

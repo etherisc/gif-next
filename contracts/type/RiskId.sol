@@ -10,7 +10,9 @@ type RiskId is bytes8;
 using {
     eqRiskId as ==, 
     neRiskId as !=,
-    RiskIdLib.toKey32
+    RiskIdLib.toKey32,
+    RiskIdLib.eq,
+    RiskIdLib.eqz
 } for RiskId global;
 
 // general pure free functions
@@ -26,6 +28,10 @@ function neRiskId(RiskId a, RiskId b) pure returns (bool isDifferent) {
 }
 
 library RiskIdLib {
+    function zero() public pure returns (RiskId) {
+        return RiskId.wrap(bytes8(0));
+    }
+
     // @dev Converts a role string into a role id.
     function toRiskId(string memory risk) public pure returns (RiskId) {
         return RiskId.wrap(bytes8(keccak256(abi.encode(risk))));
@@ -39,5 +45,13 @@ library RiskIdLib {
     /// @dev Returns the key id value for the specified nft id
     function toKeyId(RiskId id) public pure returns (KeyId keyId) {
         return KeyId.wrap(bytes31(RiskId.unwrap(id)));
+    }
+
+    function eq(RiskId a, RiskId b) public pure returns (bool isSame) {
+        return eqRiskId(a, b);
+    }
+
+    function eqz(RiskId a) public pure returns (bool isZero) {
+        return eqRiskId(a, zero());
     }
 }

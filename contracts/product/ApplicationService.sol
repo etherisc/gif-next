@@ -41,12 +41,11 @@ contract ApplicationService is
         initializer()
     {
         (
-            address registryAddress,, 
-            //address managerAddress
+            address registryAddress,
             address authority
-        ) = abi.decode(data, (address, address, address));
+        ) = abi.decode(data, (address, address));
 
-        _initializeService(registryAddress, address(0), owner);
+        _initializeService(registryAddress, authority, owner);
 
         _distributionService = IDistributionService(_getServiceAddress(DISTRIBUTION()));
         _pricingService = IPricingService(_getServiceAddress(PRICE()));
@@ -135,6 +134,7 @@ contract ApplicationService is
     )
         external
         virtual
+        nonReentrant()
         returns (NftId applicationNftId)
     {
         (NftId productNftId,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
@@ -209,7 +209,8 @@ contract ApplicationService is
         NftId bundleNftId // will likely need a newer bundle for underwriting
     )
         external
-        virtual override
+        virtual
+        nonReentrant()
         returns (NftId applicationNftId)
     {
         // TODO implement
@@ -226,14 +227,16 @@ contract ApplicationService is
         bytes memory applicationData
     )
         external
-        virtual override
+        virtual
+        nonReentrant()
     {
         // TODO implement
     }
 
     function revoke(NftId applicationNftId)
         external
-        virtual override
+        virtual
+        nonReentrant()
     {
         (,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
         instance.getInstanceStore().updateApplicationState(applicationNftId, REVOKED());

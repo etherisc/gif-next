@@ -40,57 +40,68 @@ contract ProxyManager is
     mapping(Version version => VersionInfo info) _versionHistory;
     Version [] _versions;
 
-    /// @dev only used to capture proxy owner
-    constructor(address registry)
-    { 
-        initializeProxyManager(registry);
-    }
-
-    function initializeProxyManager(address registry)
+    /// @dev convencience initializer
+    function initialize(
+        address registry,
+        address implementation,
+        bytes memory data,
+        bytes32 salt
+    )
         public
         initializer()
+        returns (IVersionable versionable)
     {
-        _initializeNftOwnable(msg.sender, registry);
+        versionable = deployDetermenistic(
+            registry,
+            implementation, 
+            data,
+            salt);
     }
 
     /// @dev deploy initial contract
-    function deploy(address initialImplementation, bytes memory initializationData)
+    function deploy(
+        address registry, 
+        address initialImplementation, 
+        bytes memory initializationData
+    )
         public
         virtual
-        onlyOwner()
+        onlyInitializing()
         returns (IVersionable versionable)
     {
-        if (_versions.length > 0) {
-            revert ErrorProxyManagerAlreadyDeployed();
-        }
+        (
+            address currentProxyOwner, 
+            address initialProxyAdminOwner
+        ) = _preDeployChecksAndSetup(registry);
 
-        address currentProxyOwner = getOwner(); // used by implementation
-        address initialProxyAdminOwner = address(this); // used by proxy
-        
         _proxy = new UpgradableProxyWithAdmin(
             initialImplementation,
             initialProxyAdminOwner,
             getDeployData(currentProxyOwner, initializationData)
         );
 
-        versionable = IVersionable(address(_proxy));
-        _updateVersionHistory(versionable.getVersion(), initialImplementation, currentProxyOwner);
+        versionable = _updateVersionHistory(
+            initialImplementation, 
+            currentProxyOwner);
 
-        emit LogProxyManagerVersionableDeployed(address(_proxy), initialImplementation);
+        emit LogProxyManagerVersionableDeployed(address(versionable), initialImplementation);
     }
 
-    function deployDetermenistic(address initialImplementation, bytes memory initializationData, bytes32 salt)
+    function deployDetermenistic(
+        address registry, 
+        address initialImplementation, 
+        bytes memory initializationData, 
+        bytes32 salt
+    )
         public
         virtual
-        onlyOwner()
+        onlyInitializing()
         returns (IVersionable versionable)
     {
-        if (_versions.length > 0) {
-            revert ErrorProxyManagerAlreadyDeployed();
-        }
-
-        address currentProxyOwner = getOwner();
-        address initialProxyAdminOwner = address(this);
+        (
+            address currentProxyOwner, 
+            address initialProxyAdminOwner
+        ) = _preDeployChecksAndSetup(registry);
 
         _proxy = new UpgradableProxyWithAdmin{salt: salt}(
             initialImplementation,
@@ -98,10 +109,11 @@ contract ProxyManager is
             getDeployData(currentProxyOwner, initializationData)
         );
 
-        versionable = IVersionable(address(_proxy));
-        _updateVersionHistory(versionable.getVersion(), initialImplementation, currentProxyOwner);
+        versionable = _updateVersionHistory(
+            initialImplementation, 
+            currentProxyOwner);
 
-        emit LogProxyManagerVersionableDeployed(address(_proxy), initialImplementation);
+        emit LogProxyManagerVersionableDeployed(address(versionable), initialImplementation);
     }
 
     /// @dev upgrade existing contract
@@ -124,10 +136,11 @@ contract ProxyManager is
             newImplementation, 
             getUpgradeData(upgradeData));
 
-        versionable = IVersionable(address(_proxy));
-        _updateVersionHistory(versionable.getVersion(), newImplementation, currentProxyOwner);
+        versionable = _updateVersionHistory(
+            newImplementation, 
+            currentProxyOwner);
 
-        emit LogProxyManagerVersionableUpgraded(address(_proxy), newImplementation);
+        emit LogProxyManagerVersionableUpgraded(address(versionable), newImplementation);
 
     }
 
@@ -168,13 +181,33 @@ contract ProxyManager is
         return _versionHistory[_version];
     }
 
+    function _preDeployChecksAndSetup(address registry)
+        private
+        returns (
+            address currentProxyOwner,
+            address initialProxyAdminOwner
+        )
+    {
+        if (_versions.length > 0) {
+            revert ErrorProxyManagerAlreadyDeployed();
+        }
+
+        _initializeNftOwnable(msg.sender, registry);
+
+        currentProxyOwner = getOwner(); // used by implementation
+        initialProxyAdminOwner = address(this); // used by proxy
+    }
+
     function _updateVersionHistory(
-        Version newVersion,
         address implementation,
         address activatedBy
     )
         private
+        returns (IVersionable versionable)
     {
+        versionable = IVersionable(address(_proxy));
+        Version newVersion = versionable.getVersion();
+
         if(newVersion == VersionLib.zeroVersion()) {
             revert ErrorProxyManagerZeroVersion();
         }

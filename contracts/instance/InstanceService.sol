@@ -193,8 +193,7 @@ contract InstanceService is
         NftId instanceNftId = registry.getObjectInfo(componentAddress).parentNftId;
 
         IInstance instance = IInstance(
-            registry.getObjectInfo(
-                instanceNftId).objectAddress);
+            registry.getObjectAddress(instanceNftId));
 
         // no revert in case already locked
         // TODO refactor/implement
@@ -426,10 +425,9 @@ contract InstanceService is
         initializer()
     {
         (
-            address registryAddress,, 
-            //address managerAddress
+            address registryAddress,
             address authority
-        ) = abi.decode(data, (address, address, address));
+        ) = abi.decode(data, (address, address));
 
         _initializeService(registryAddress, authority, owner);
 

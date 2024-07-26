@@ -48,12 +48,12 @@ contract ComponentService is
         virtual override
         initializer()
     {
-        // TODO check this, might no longer be the way, refactor if necessary
-        address registryAddress;
-        address initialOwner;
-        (registryAddress, initialOwner) = abi.decode(data, (address, address));
+        (
+            address registryAddress,
+            address authority
+        ) = abi.decode(data, (address, address));
 
-        _initializeService(registryAddress, address(0), owner);
+        _initializeService(registryAddress, authority, owner);
 
         _registryService = IRegistryService(_getServiceAddress(REGISTRY()));
         _instanceService = IInstanceService(_getServiceAddress(INSTANCE()));

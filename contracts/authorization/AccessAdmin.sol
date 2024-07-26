@@ -6,6 +6,7 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
 import {AccessManagerCloneable} from "./AccessManagerCloneable.sol";
+import {ContractLib} from "../shared/ContractLib.sol";
 import {IAccessAdmin} from "./IAccessAdmin.sol";
 import {RoleId, RoleIdLib, ADMIN_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {Selector, SelectorLib, SelectorSetLib} from "../type/Selector.sol";
@@ -218,17 +219,18 @@ contract AccessAdmin is
                 selector.toBytes4()));
     }
 
-    function isAccessManaged(address target) public view returns (bool) {
-        if (!_isContract(target)) {
-            return false;
-        }
+    // TODO cleanup
+    // function isAccessManaged(address target) public view returns (bool) {
+    //     if (!_isContract(target)) {
+    //         return false;
+    //     }
 
-        (bool success, ) = target.staticcall(
-            abi.encodeWithSelector(
-                AccessManagedUpgradeable.authority.selector));
+    //     (bool success, ) = target.staticcall(
+    //         abi.encodeWithSelector(
+    //             AccessManagedUpgradeable.authority.selector));
 
-        return success;
-    }
+    //     return success;
+    // }
 
     function canCall(address caller, address target, Selector selector) external virtual view returns (bool can) {
         (can, ) = _authority.canCall(caller, target, selector.toBytes4());
@@ -553,7 +555,7 @@ contract AccessAdmin is
         }
 
         // check target is an access managed contract
-        if (!isAccessManaged(target)) {
+        if (!ContractLib.isAccessManaged(target)) {
             revert ErrorTargetNotAccessManaged(target);
         }
 
@@ -593,17 +595,4 @@ contract AccessAdmin is
 
         _authority.setTargetClosed(target, locked);
     }
-
-    function _isContract(address target)
-        internal
-        view 
-        returns (bool)
-    {
-        uint256 size;
-        assembly {
-            size := extcodesize(target)
-        }
-        return size > 0;
-    }
-    
 }

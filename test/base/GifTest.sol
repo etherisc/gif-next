@@ -5,7 +5,7 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
-import {AmountLib} from "../../contracts/type/Amount.sol";
+import {Amount, AmountLib} from "../../contracts/type/Amount.sol";
 import {NftId} from "../../contracts/type/NftId.sol";
 import {SecondsLib} from "../../contracts/type/Seconds.sol";
 import {Fee, FeeLib} from "../../contracts/type/Fee.sol";
@@ -23,6 +23,7 @@ import {UFixed, UFixedLib} from "../../contracts/type/UFixed.sol";
 import {RoleId} from "../../contracts/type/RoleId.sol";
 // import {StateId, INITIAL, SCHEDULED, DEPLOYING, ACTIVE} from "../../contracts/type/StateId.sol";
 import {ACTIVE} from "../../contracts/type/StateId.sol";
+import {Timestamp} from "../../contracts/type/Timestamp.sol";
 
 import {IAccess} from "../../contracts/authorization/IAccess.sol";
 import {IAccessAdmin} from "../../contracts/authorization/IAccessAdmin.sol";
@@ -648,5 +649,17 @@ contract GifTest is GifDeployer {
 
         console.log("");
         // solhint-enable
+    }
+
+    function assertEq(Amount amount1, Amount amount2, string memory message) internal {
+        assertEq(amount1.toInt(), amount2.toInt(), message);
+    }
+
+    function assertEq(NftId nftId1, NftId nftId2, string memory message) internal {
+        assertTrue(nftId1.eq(nftId2), message);
+    }
+
+    function assertEq(Timestamp ts1, Timestamp ts2, string memory message) internal {
+        assertEq(ts1.toInt(), ts2.toInt(), message);
     }
 }

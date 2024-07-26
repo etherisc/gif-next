@@ -26,8 +26,9 @@ interface IClaimService is
     event LogClaimServiceClaimRevoked(NftId policyNftId, ClaimId claimId);
     event LogClaimServiceClaimClosed(NftId policyNftId, ClaimId claimId);
 
-    event LogClaimServicePayoutCreated(NftId policyNftId, PayoutId payoutId, Amount amount);
+    event LogClaimServicePayoutCreated(NftId policyNftId, PayoutId payoutId, Amount amount, address beneficiary);
     event LogClaimServicePayoutProcessed(NftId policyNftId, PayoutId payoutId, Amount amount, address beneficiary, Amount netAmount, Amount processingFeeAmount);
+    error ErrorClaimServiceBeneficiarySet(NftId policyNftId, PayoutId payoutId, address beneficiary);
 
     error ErrorClaimServicePolicyProductMismatch(NftId policyNftId, NftId expectedProduct, NftId actualProduct);
     error ErrorClaimServicePolicyNotOpen(NftId policyNftId);
@@ -35,7 +36,7 @@ interface IClaimService is
     error ErrorClaimServiceBeneficiaryIsZero(NftId policyNftId, ClaimId claimId);
     error ErrorClaimsServicePayoutAmountIsZero(NftId policyNftId, PayoutId payoutId);
 
-    error ErrorClaimServiceClaimWithOpenPayouts(NftId policyNftId, ClaimId claimId, uint8 openPayouts);
+    error ErrorClaimServiceClaimWithOpenPayouts(NftId policyNftId, ClaimId claimId, uint24 openPayouts);
     error ErrorClaimServiceClaimWithMissingPayouts(NftId policyNftId, ClaimId claimId, Amount claimAmount, Amount paidAmount);
     error ErrorClaimServiceClaimNotInExpectedState(NftId policyNftId, ClaimId claimId, StateId expectedState, StateId actualState);
 

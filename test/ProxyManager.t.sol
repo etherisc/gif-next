@@ -14,13 +14,17 @@ import {ContractV02} from "./mock/ContractV02.sol";
 contract ProxyManagerTest is GifTest {
 
     function testProductV01Deploy() public {
-        ProxyManager proxyManager = new ProxyManager(address(registry));
+        ProxyManager proxyManager = new ProxyManager();
         // solhint-disable-next-line
         console.log("proxyManager[address]", address(proxyManager));
         assertTrue(address(proxyManager) != address(0), "proxyManager address zero");
 
         bytes memory initializationData = abi.encode(uint(42));
-        IVersionable versionable = proxyManager.deploy(address(new ContractV01()), initializationData);
+        IVersionable versionable = proxyManager.initialize(
+            address(registry),
+            address(new ContractV01()), 
+            initializationData,
+            bytes32(""));
         // solhint-disable-next-line
         console.log("versionable[address]", address(versionable));
         assertTrue(address(versionable) != address(0), "versionable address zero");
@@ -39,10 +43,14 @@ contract ProxyManagerTest is GifTest {
 
     function testProductV01DeployAndUpgrade() public {
 
-        ProxyManager proxyManager = new ProxyManager(address(registry));
+        ProxyManager proxyManager = new ProxyManager();
         bytes memory initializationData = abi.encode(uint(0));
         bytes memory upgradeData = abi.encode(uint(0));
-        IVersionable versionable = proxyManager.deploy(address(new ContractV01()), initializationData);
+        IVersionable versionable = proxyManager.initialize(
+            address(registry),
+            address(new ContractV01()), 
+            initializationData,
+            bytes32(""));
         proxyManager.upgrade(address(new ContractV02()), upgradeData);
 
         assertTrue(versionable.getVersion() == VersionLib.toVersion(1,0,1), "version not (1,0,1)");
@@ -55,11 +63,15 @@ contract ProxyManagerTest is GifTest {
     // getting the proxy admin address via logs
     // https://forum.openzeppelin.com/t/version-5-how-can-should-the-proxyadmin-of-the-transparentupgradableproxy-be-used/38127
     function testProductV01DeployCheckProxyAdminAddress() public {
-        ProxyManager proxyManager = new ProxyManager(address(registry));
+        ProxyManager proxyManager = new ProxyManager();
 
         vm.recordLogs();
         bytes memory initializationData = abi.encode(uint(0));
-        proxyManager.deploy(address(new ContractV01()), initializationData);
+        proxyManager.initialize(
+            address(registry),
+            address(new ContractV01()), 
+            initializationData,
+            bytes32(""));
 
         Vm.Log[] memory entries = vm.getRecordedLogs();
         // solhint-disable-next-line

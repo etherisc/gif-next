@@ -18,14 +18,14 @@ contract StakingServiceManager is
         address registryAddress,
         bytes32 salt
     )
-        ProxyManager(registryAddress)
     {
         StakingService svc = new StakingService();
         bytes memory data = abi.encode(
             authority, 
             registryAddress, 
             IRegistry(registryAddress).getStakingAddress());
-        IVersionable versionable = deployDetermenistic(
+        IVersionable versionable = initialize(
+            registryAddress,
             address(svc), 
             data,
             salt);

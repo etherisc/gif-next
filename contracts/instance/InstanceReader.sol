@@ -2,12 +2,12 @@
 pragma solidity ^0.8.20;
 
 import {Amount} from "../type/Amount.sol";
-import {ClaimId} from "../type/ClaimId.sol";
+import {ClaimId, ClaimIdLib} from "../type/ClaimId.sol";
 import {DistributorType} from "../type/DistributorType.sol";
 import {Key32} from "../type/Key32.sol";
 import {NftId} from "../type/NftId.sol";
 import {COMPONENT, DISTRIBUTOR, DISTRIBUTION, PREMIUM, PRODUCT, POLICY, POOL, BUNDLE} from "../type/ObjectType.sol";
-import {PayoutId} from "../type/PayoutId.sol";
+import {PayoutId, PayoutIdLib} from "../type/PayoutId.sol";
 import {ReferralId, ReferralStatus, ReferralLib, REFERRAL_OK, REFERRAL_ERROR_UNKNOWN, REFERRAL_ERROR_EXPIRED, REFERRAL_ERROR_EXHAUSTED} from "../type/Referral.sol";
 import {RequestId} from "../type/RequestId.sol";
 import {RiskId} from "../type/RiskId.sol";
@@ -26,6 +26,7 @@ import {IRisk} from "../instance/module/IRisk.sol";
 import {TimestampLib} from "../type/Timestamp.sol";
 
 import {InstanceStore} from "./InstanceStore.sol";
+import {BundleSet} from "./BundleSet.sol";
 
 
 contract InstanceReader {
@@ -37,6 +38,7 @@ contract InstanceReader {
 
     IInstance internal _instance;
     InstanceStore internal _store;
+    BundleSet internal _bundleSet;
 
     /// @dev This initializer needs to be called from the instance itself.
     function initialize() public {
@@ -56,6 +58,7 @@ contract InstanceReader {
         _initialized = true;
         _instance = IInstance(instanceAddress);
         _store = _instance.getInstanceStore();
+        _bundleSet = _instance.getBundleSet();
     }
 
 
@@ -99,6 +102,22 @@ contract InstanceReader {
         return _store.getState(toPremiumKey(policyNftId));
     }
 
+    function activeBundles(NftId poolNftId)
+        public
+        view
+        returns (uint256 bundles)
+    {
+        return _bundleSet.activeBundles(poolNftId);
+    }
+
+    function getActiveBundleNftId(NftId poolNftId, uint256 idx)
+        public
+        view
+        returns (NftId bundleNftId)
+    {
+        return _bundleSet.getActiveBundleNftId(poolNftId, idx);
+    }
+
     function getBundleState(NftId bundleNftId)
         public
         view
@@ -107,14 +126,8 @@ contract InstanceReader {
         return _store.getState(toBundleKey(bundleNftId));
     }
 
-    /// @dev returns true iff policy may be closed
-    /// a policy can be closed all conditions below are met
-    /// - policy exists
-    /// - has been activated
-    /// - is not yet closed
-    /// - has no open claims
-    /// - claim amount matches sum insured amount or is expired
-    function policyIsCloseable(NftId policyNftId)
+    /// @dev Returns true iff policy is active.
+    function policyIsActive(NftId policyNftId)
         public
         view
         returns (bool isCloseable)
@@ -123,17 +136,27 @@ contract InstanceReader {
 
         if (info.productNftId.eqz()) { return false; } // not closeable: policy does not exist (or does not belong to this instance)
         if (info.activatedAt.eqz()) { return false; } // not closeable: not yet activated
-        if (info.closedAt.gtz()) { return false; } // not closeable: already closed
-        if (info.openClaimsCount > 0) { return false; } // not closeable: has open claims
+        if (info.activatedAt > TimestampLib.blockTimestamp()) { return false; } // not yet active
+        if (info.expiredAt <= TimestampLib.blockTimestamp()) { return false; } // already expired
 
-        // closeable: if sum of claims matches sum insured a policy may be closed prior to the expiry date
-        if (info.claimAmount == info.sumInsuredAmount) { return true; }
+        return true;
+    }
 
-        // not closeable: not yet expired
-        if (TimestampLib.blockTimestamp() < info.expiredAt) { return false; }
+    function claims(NftId policyNftId)
+        public
+        view
+        returns (uint16 claims)
+    {
+        return getPolicyInfo(policyNftId).claimsCount;
+    }
 
-        // all conditionsl to close the policy are met
-        return true; 
+
+    function getClaimId(uint idx)
+        public
+        view
+        returns (ClaimId claimId)
+    {
+        return ClaimIdLib.toClaimId(idx + 1);
     }
 
     function getClaimInfo(NftId policyNftId, ClaimId claimId)
@@ -147,12 +170,41 @@ contract InstanceReader {
         }
     }
 
+
     function getClaimState(NftId policyNftId, ClaimId claimId)
         public
         view
         returns (StateId state)
     {
         return _store.getState(claimId.toKey32(policyNftId));
+    }
+
+
+    function payouts(NftId policyNftId, ClaimId claimId)
+        public
+        view
+        returns (uint24 payouts)
+    {
+        return getClaimInfo(policyNftId, claimId).payoutsCount;
+    }
+
+
+    function getPayoutId(ClaimId claimId, uint24 idx)
+        public
+        view
+        returns (PayoutId payoutId)
+    {
+        return PayoutIdLib.toPayoutId(claimId, idx + 1);
+    }
+
+
+    function getRemainingClaimableAmount(NftId policyNftId)
+        public
+        view
+        returns (Amount remainingClaimableAmount)
+    {
+        IPolicy.PolicyInfo memory info = getPolicyInfo(policyNftId);
+        return info.sumInsuredAmount - info.claimAmount;
     }
 
     function getPayoutInfo(NftId policyNftId, PayoutId payoutId)
@@ -182,6 +234,19 @@ contract InstanceReader {
         bytes memory data = _store.getData(riskId.toKey32());
         if (data.length > 0) {
             return abi.decode(data, (IRisk.RiskInfo));
+        }
+    }
+
+    function getWallet(NftId componentNftId)
+        public
+        view
+        returns (address tokenHandler)
+    {
+        bytes memory data = _store.getData(toComponentKey(componentNftId));
+
+        if (data.length > 0) {
+            IComponents.ComponentInfo memory info = abi.decode(data, (IComponents.ComponentInfo));
+            return info.wallet;
         }
     }
 

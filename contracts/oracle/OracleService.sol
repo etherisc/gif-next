@@ -30,10 +30,12 @@ contract OracleService is
         virtual override
         initializer()
     {
-        address initialOwner;
-        address registryAddress;
-        (registryAddress, initialOwner) = abi.decode(data, (address, address));
-        _initializeService(registryAddress, address(0), owner);
+        (
+            address registryAddress,
+            address authority
+        ) = abi.decode(data, (address, address));
+
+        _initializeService(registryAddress, authority, owner);
         _registerInterface(type(IOracleService).interfaceId);
     }
 
@@ -215,7 +217,7 @@ contract OracleService is
 
         // call oracle component
         // TODO add check that oracle is active?
-        address oracleAddress = getRegistry().getObjectInfo(request.oracleNftId).objectAddress;
+        address oracleAddress = getRegistry().getObjectAddress(request.oracleNftId);
         IOracleComponent(oracleAddress).cancel(requestId);
 
         emit LogOracleServiceRequestCancelled(requestId, requesterNftId);
@@ -268,7 +270,7 @@ contract OracleService is
         returns(IInstance instance)
     {
         NftId instanceNftId = getRegistry().getObjectInfo(componentNftId).parentNftId;
-        address instanceAddress = getRegistry().getObjectInfo(instanceNftId).objectAddress;
+        address instanceAddress = getRegistry().getObjectAddress(instanceNftId);
         return IInstance(instanceAddress);
     }
 

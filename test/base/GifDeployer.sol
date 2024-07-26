@@ -117,7 +117,6 @@ contract GifDeployer is Test {
 
     mapping(ObjectType domain => DeployedServiceInfo info) public serviceForDomain;
 
-
     function deployCore(
         address globalRegistry,
         address gifAdmin,
@@ -159,11 +158,13 @@ contract GifDeployer is Test {
         StakingStore stakingStore = new StakingStore(registry, stakingReader);
 
         // 8) deploy staking manager and staking component
+        bytes32 salt = bytes32("");
         stakingManager = new StakingManager(
             address(registry),
             address(tokenRegistry),
             address(stakingStore),
-            stakingOwner);
+            stakingOwner,
+            salt);
         staking = stakingManager.getStaking();
 
         // 9) initialize instance reader
@@ -310,8 +311,7 @@ contract GifDeployer is Test {
         instanceService = instanceServiceManager.getInstanceService();
         instanceServiceNftId = _registerService(releaseRegistry, instanceServiceManager, instanceService);
 
-        // TODO figure out why this service manager deployment is different from the others
-        componentServiceManager = new ComponentServiceManager(registryAddress);
+        componentServiceManager = new ComponentServiceManager{salt: salt}(authority, registryAddress, salt);
         componentService = componentServiceManager.getComponentService();
         componentServiceNftId = _registerService(releaseRegistry, componentServiceManager, componentService);
 
@@ -339,6 +339,10 @@ contract GifDeployer is Test {
         riskService = riskServiceManager.getRiskService(); 
         riskServiceNftId = _registerService(releaseRegistry, riskServiceManager, riskService);
 
+        policyServiceManager = new PolicyServiceManager{salt: salt}(authority, registryAddress, salt);
+        policyService = policyServiceManager.getPolicyService();
+        policyServiceNftId = _registerService(releaseRegistry, policyServiceManager, policyService);
+
         claimServiceManager = new ClaimServiceManager{salt: salt}(authority, registryAddress, salt);
         claimService = claimServiceManager.getClaimService();
         claimServiceNftId = _registerService(releaseRegistry, claimServiceManager, claimService);
@@ -347,9 +351,6 @@ contract GifDeployer is Test {
         applicationService = applicationServiceManager.getApplicationService();
         applicationServiceNftId = _registerService(releaseRegistry, applicationServiceManager, applicationService);
 
-        policyServiceManager = new PolicyServiceManager{salt: salt}(authority, registryAddress, salt);
-        policyService = policyServiceManager.getPolicyService();
-        policyServiceNftId = _registerService(releaseRegistry, policyServiceManager, policyService);
     }
 
 
