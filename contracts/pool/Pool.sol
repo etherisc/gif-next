@@ -61,7 +61,7 @@ abstract contract Pool is
         public
         virtual
         restricted()
-        onlyNftObjectType(applicationNftId, POLICY())
+        onlyNftOfType(applicationNftId, POLICY())
     {
         if(!applicationMatchesBundle(
             applicationNftId,
@@ -87,7 +87,7 @@ abstract contract Pool is
         public
         virtual
         restricted()
-        onlyNftObjectType(policyNftId, POLICY())
+        onlyNftOfType(policyNftId, POLICY())
     {
         // default implementation is empty
     }
@@ -106,8 +106,8 @@ abstract contract Pool is
         public
         virtual
         view
-        onlyNftObjectType(applicationNftId, POLICY())
-        onlyNftObjectType(bundleNftId, BUNDLE())
+        onlyNftOfType(applicationNftId, POLICY())
+        onlyNftOfType(bundleNftId, BUNDLE())
         returns (bool isMatching)
     {
         return true;
@@ -119,7 +119,7 @@ abstract contract Pool is
         virtual
         restricted()
         onlyBundleOwner(bundleNftId)
-        onlyNftObjectType(bundleNftId, BUNDLE())
+        onlyNftOfType(bundleNftId, BUNDLE())
         returns (Amount withdrawnAmount) 
     {
         return _withdrawBundleFees(bundleNftId, amount);

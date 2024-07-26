@@ -67,7 +67,7 @@ abstract contract Product is
         external
         virtual
         restricted() // pool service role
-        onlyNftObjectType(policyNftId, POLICY())
+        onlyNftOfType(policyNftId, POLICY())
     {
         // default implementation does nothing
     }
@@ -84,7 +84,7 @@ abstract contract Product is
         public 
         view 
         override 
-        onlyNftObjectType(bundleNftId, BUNDLE())
+        onlyNftOfType(bundleNftId, BUNDLE())
         returns (Amount premiumAmount)
     {
         IPolicy.PremiumInfo memory premium = _getProductStorage()._pricingService.calculatePremium(

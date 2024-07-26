@@ -35,8 +35,7 @@ contract NftOwnable is
         _;
     }
 
-    // TODO: rename onlyNftOfType
-    modifier onlyNftObjectType(NftId nftId, ObjectType expectedObjectType) {
+    modifier onlyNftOfType(NftId nftId, ObjectType expectedObjectType) {
         if(!getRegistry().isObjectType(nftId, expectedObjectType)) {
             revert ErrorNftOwnableInvalidType(nftId, expectedObjectType);
         }

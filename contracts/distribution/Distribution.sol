@@ -128,7 +128,7 @@ abstract contract Distribution is
         virtual
         restricted()
         onlyDistributor()
-        onlyNftObjectType(distributorNftId, DISTRIBUTOR())
+        onlyNftOfType(distributorNftId, DISTRIBUTOR())
         onlyNftOwner(distributorNftId)
         returns (Amount withdrawnAmount) 
     {

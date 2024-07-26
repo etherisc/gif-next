@@ -48,7 +48,7 @@ abstract contract BasicPool is
         virtual
         restricted()
         onlyBundleOwner(bundleNftId)
-        onlyNftObjectType(bundleNftId, BUNDLE())
+        onlyNftOfType(bundleNftId, BUNDLE())
     {
         _stake(bundleNftId, amount);
     }
@@ -62,7 +62,7 @@ abstract contract BasicPool is
         virtual
         restricted()
         onlyBundleOwner(bundleNftId)
-        onlyNftObjectType(bundleNftId, BUNDLE())
+        onlyNftOfType(bundleNftId, BUNDLE())
     {
         _unstake(bundleNftId, amount);
     }
@@ -76,7 +76,7 @@ abstract contract BasicPool is
         virtual
         restricted()
         onlyBundleOwner(bundleNftId)
-        onlyNftObjectType(bundleNftId, BUNDLE())
+        onlyNftOfType(bundleNftId, BUNDLE())
         returns(Timestamp newExpiredAt)
     {
         return _extend(bundleNftId, lifetimeExtension);
@@ -88,7 +88,7 @@ abstract contract BasicPool is
         virtual
         restricted()
         onlyBundleOwner(bundleNftId)
-        onlyNftObjectType(bundleNftId, BUNDLE())
+        onlyNftOfType(bundleNftId, BUNDLE())
     {
         _lockBundle(bundleNftId);
     }
@@ -99,7 +99,7 @@ abstract contract BasicPool is
         virtual
         restricted()
         onlyBundleOwner(bundleNftId)
-        onlyNftObjectType(bundleNftId, BUNDLE())
+        onlyNftOfType(bundleNftId, BUNDLE())
     {
         _unlockBundle(bundleNftId);
     }
@@ -110,7 +110,7 @@ abstract contract BasicPool is
         virtual
         restricted()
         onlyBundleOwner(bundleNftId)
-        onlyNftObjectType(bundleNftId, BUNDLE())
+        onlyNftOfType(bundleNftId, BUNDLE())
     {
         _closeBundle(bundleNftId);
     }
@@ -124,7 +124,7 @@ abstract contract BasicPool is
         virtual
         restricted()
         onlyBundleOwner(bundleNftId)
-        onlyNftObjectType(bundleNftId, BUNDLE())
+        onlyNftOfType(bundleNftId, BUNDLE())
     {
         _setBundleFee(bundleNftId, fee);
     }

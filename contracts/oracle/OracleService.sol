@@ -48,7 +48,7 @@ contract OracleService is
         external 
         virtual 
         // restricted() // add authz
-        onlyNftObjectType(oracleNftId, ORACLE())
+        onlyNftOfType(oracleNftId, ORACLE())
         returns (
             RequestId requestId
         ) 

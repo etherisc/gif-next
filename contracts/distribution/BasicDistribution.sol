@@ -82,7 +82,7 @@ contract BasicDistribution is
         external
         virtual
         onlyOwner()
-        onlyNftObjectType(distributorNftId, DISTRIBUTOR())
+        onlyNftOfType(distributorNftId, DISTRIBUTOR())
         restricted()
     {
         _updateDistributorType(distributorNftId, distributorType, data);
