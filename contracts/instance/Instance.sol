@@ -5,13 +5,15 @@ import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/acce
 
 import {Amount} from "../type/Amount.sol";
 import {BundleSet} from "./BundleSet.sol";
+import {COMPONENT, INSTANCE} from "../type/ObjectType.sol";
 import {IInstance} from "./IInstance.sol";
+import {IComponentService} from "../shared/IComponentService.sol";
 import {IInstanceService} from "./IInstanceService.sol";
 import {InstanceReader} from "./InstanceReader.sol";
 import {InstanceAdmin} from "./InstanceAdmin.sol";
 import {InstanceStore} from "./InstanceStore.sol";
-import {INSTANCE} from "../type/ObjectType.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
+import {NftId} from "../type/NftId.sol";
 import {Registerable} from "../shared/Registerable.sol";
 import {RoleId} from "../type/RoleId.sol";
 import {Seconds} from "../type/Seconds.sol";
@@ -27,6 +29,7 @@ contract Instance is
 
     bool private _initialized;
 
+    IComponentService internal _componentService;
     IInstanceService internal _instanceService;
     InstanceAdmin internal _instanceAdmin;
     InstanceReader internal _instanceReader;
@@ -53,7 +56,6 @@ contract Instance is
     {
         _instanceAdmin = instanceAdmin;
         if(_instanceAdmin.authority() == address(0)) {
-            // TODO rename error
             revert ErrorInstanceInstanceAdminZero();
         }
 
@@ -79,6 +81,11 @@ contract Instance is
         _bundleManager.initialize();
         _instanceReader.initialize();
 
+        _componentService = IComponentService(
+            getRegistry().getServiceAddress(
+                COMPONENT(), 
+                getMajorVersion()));
+
         _instanceService = IInstanceService(
             getRegistry().getServiceAddress(
                 INSTANCE(), 
@@ -87,11 +94,19 @@ contract Instance is
         _registerInterface(type(IInstance).interfaceId);    
     }
 
+    //--- ProductRegistration ----------------------------------------------//
+    function registerProduct(address product)
+        external
+        onlyOwner()
+        returns (NftId productNftId)
+    {
+        return _componentService.registerProduct(product);
+    }
+
     //--- Staking ----------------------------------------------------------//
 
     function setStakingLockingPeriod(Seconds stakeLockingPeriod)
         external
-        // TODO decide if onlyOwner or restricted to instance owner role is better
         onlyOwner()
     {
         _instanceService.setStakingLockingPeriod(stakeLockingPeriod);

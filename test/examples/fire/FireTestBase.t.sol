@@ -8,7 +8,6 @@ import {FireProduct} from "../../../contracts/examples/fire/FireProduct.sol";
 import {FireProductAuthorization} from "../../../contracts/examples/fire/FireProductAuthorization.sol";
 import {GifTest} from "../../base/GifTest.sol";
 import {NftId} from "../../../contracts/type/NftId.sol";
-import {POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE} from "../../../contracts/type/RoleId.sol";
 
 contract FireTestBase is GifTest {
 
@@ -24,38 +23,15 @@ contract FireTestBase is GifTest {
     function setUp() public virtual override {
         super.setUp();
         
-        _grantInitialRoles();
         _deployFireUSD();
-        _deployFirePool();
         _deployFireProduct();
+        _deployFirePool();
         _initialFundAccounts();
-    }
-
-    function _grantInitialRoles() internal {
-        vm.startPrank(instanceOwner);
-        instance.grantRole(POOL_OWNER_ROLE(), firePoolOwner);
-        instance.grantRole(PRODUCT_OWNER_ROLE(), fireProductOwner);
-        vm.stopPrank();
     }
 
     function _deployFireUSD() internal {
         vm.startPrank(fireProductOwner);
         fireUSD = new FireUSD();
-        vm.stopPrank();
-    }
-
-    function _deployFirePool() internal {
-        vm.startPrank(firePoolOwner);
-        FirePoolAuthorization poolAuth = new FirePoolAuthorization("FirePool");
-        firePool = new FirePool(
-            address(registry),
-            instanceNftId,
-            "FirePool",
-            address(fireUSD),
-            poolAuth
-        );
-        firePool.register();
-        firePoolNftId = firePool.getNftId();
         vm.stopPrank();
     }
 
@@ -70,9 +46,27 @@ contract FireTestBase is GifTest {
             address(firePool),
             productAuth
         );
-        fireProduct.register();
-        fireProductNftId = fireProduct.getNftId();
         vm.stopPrank();
+
+        // instance owner registeres fire product with instance (and registry)
+        vm.startPrank(instanceOwner);
+        fireProductNftId = instance.registerProduct(address(fireProduct));
+        vm.stopPrank();
+    }
+
+    function _deployFirePool() internal {
+        vm.startPrank(firePoolOwner);
+        FirePoolAuthorization poolAuth = new FirePoolAuthorization("FirePool");
+        firePool = new FirePool(
+            address(registry),
+            instanceNftId,
+            "FirePool",
+            address(fireUSD),
+            poolAuth
+        );
+        vm.stopPrank();
+
+        firePoolNftId = _registerComponent(fireProduct, address(firePool), "firePool");
     }
 
     function _initialFundAccounts() internal {

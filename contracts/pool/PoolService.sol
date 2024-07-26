@@ -139,7 +139,7 @@ contract PoolService is
         view
         returns (Fee memory stakingFee)
     {
-        NftId productNftId = instanceReader.getComponentInfo(poolNftId).productNftId;
+        NftId productNftId = _getProductNftId(poolNftId);
         return instanceReader.getProductInfo(productNftId).stakingFee;
     }
 
@@ -184,7 +184,7 @@ contract PoolService is
     {
         (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
         InstanceReader instanceReader = instance.getInstanceReader();
-        NftId productNftId = instanceReader.getComponentInfo(poolNftId).productNftId;
+        NftId productNftId = _getProductNftId(poolNftId);
 
         // check policy matches with calling pool
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);

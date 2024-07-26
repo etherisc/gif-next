@@ -32,7 +32,7 @@ contract SimpleOracle is
 
     constructor(
         address registry,
-        NftId instanceNftId,
+        NftId productNftId,
         IAuthorization authorization,
         address initialOwner,
         address token
@@ -40,7 +40,7 @@ contract SimpleOracle is
     {
         initialize(
             registry,
-            instanceNftId,
+            productNftId,
             authorization,
             initialOwner,
             "SimpleOracle",
@@ -50,7 +50,7 @@ contract SimpleOracle is
 
     function initialize(
         address registry,
-        NftId instanceNftId,
+        NftId productNftId,
         IAuthorization authorization,
         address initialOwner,
         string memory name,
@@ -62,7 +62,7 @@ contract SimpleOracle is
     {
         _initializeBasicOracle(
             registry,
-            instanceNftId,
+            productNftId,
             authorization,
             initialOwner,
             name,

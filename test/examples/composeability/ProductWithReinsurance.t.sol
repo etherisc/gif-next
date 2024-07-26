@@ -11,7 +11,6 @@ import {ProductWithReinsuranceAuthorization} from "./ProductWithReinsuranceAutho
 import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
 import {ClaimId, ClaimIdLib} from "../../../contracts/type/ClaimId.sol";
 import {ContractLib} from "../../../contracts/shared/ContractLib.sol";
-import {PRODUCT_OWNER_ROLE} from "../../../contracts/type/RoleId.sol";
 import {ProductWithReinsurance} from "./ProductWithReinsurance.sol";
 import {PoolWithReinsurance} from "./PoolWithReinsurance.sol";
 import {SimpleDistribution} from "../../../contracts/examples/unpermissioned/SimpleDistribution.sol";
@@ -355,49 +354,6 @@ contract ProductWithReinsuranceTest
         // solhint-enable
 
         // solhint-disable-next-line
-        console.log("--- deploy and register distribution with reinsurance");
-
-        vm.startPrank(distributionOwner);
-        distributionRe = new SimpleDistribution(
-            address(registry),
-            instanceNftId,
-            new DistributionWithReinsuranceAuthorization(),
-            distributionOwner,
-            address(token));
-
-        distributionRe.register();
-        distributionReNftId = distributionRe.getNftId();
-        vm.stopPrank();
-
-        // solhint-disable
-        console.log("distribution nft id", distributionReNftId.toInt());
-        console.log("distribution component at", address(distributionRe));
-        // solhint-enable
-
-        // deploy and register pool
-        // solhint-disable-next-line
-        console.log("--- deploy and register pool with reinsurace");
-
-        vm.startPrank(poolOwner);
-        poolRe = new PoolWithReinsurance(
-            address(registry),
-            instanceNftId,
-            address(token),
-            new PoolWithReinsuranceAuthorization(),
-            poolOwner
-        );
-
-        poolRe.register();
-        poolReNftId = poolRe.getNftId();
-        pool.approveTokenHandler(AmountLib.max());
-        vm.stopPrank();
-
-        // solhint-disable
-        console.log("pool nft id", poolReNftId.toInt());
-        console.log("pool component at", address(poolRe));
-        // solhint-enable
-
-        // solhint-disable-next-line
         console.log("--- deploy and register product with reinsurace");
 
         vm.startPrank(productOwner);
@@ -406,19 +362,48 @@ contract ProductWithReinsuranceTest
             instanceNftId,
             new ProductWithReinsuranceAuthorization(),
             productOwner,
-            address(token),
-            address(poolRe), 
-            address(distributionRe)
+            address(token)
         );
-        
-        productRe.register();
-        productReNftId = productRe.getNftId();
+
+        // instance owner registeres product with instance (and registry)
+        vm.startPrank(instanceOwner);
+        productReNftId = instance.registerProduct(address(productRe));
         vm.stopPrank();
         
         // solhint-disable
         console.log("product nft id", productReNftId.toInt());
         console.log("product component at", address(productRe));
         // solhint-enable
+
+        // solhint-disable-next-line
+        console.log("--- deploy and register distribution with reinsurance");
+
+        vm.startPrank(distributionOwner);
+        distributionRe = new SimpleDistribution(
+            address(registry),
+            productReNftId,
+            new DistributionWithReinsuranceAuthorization(),
+            distributionOwner,
+            address(token));
+        vm.stopPrank();
+
+        distributionReNftId = _registerComponent(productRe, address(distributionRe), "distribution re");
+
+        // deploy and register pool
+        // solhint-disable-next-line
+        console.log("--- deploy and register pool with reinsurace");
+
+        vm.startPrank(poolOwner);
+        poolRe = new PoolWithReinsurance(
+            address(registry),
+            productReNftId,
+            address(token),
+            new PoolWithReinsuranceAuthorization(),
+            poolOwner
+        );
+        vm.stopPrank();
+
+        poolReNftId = _registerComponent(productRe, address(poolRe), "pool re");
 
         // solhint-disable-next-line
         console.log("--- fund investor and customer");

@@ -10,6 +10,7 @@ import {InstanceReader} from "./InstanceReader.sol";
 import {InstanceStore} from "./InstanceStore.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
 import {ITransferInterceptor} from "../registry/ITransferInterceptor.sol";
+import {NftId} from "../type/NftId.sol";
 import {RoleId} from "../type/RoleId.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {UFixed} from "../type/UFixed.sol";
@@ -37,6 +38,9 @@ interface IInstance is
     struct InstanceInfo {
         uint64 requestsCount;
     }
+
+    /// @dev Register a product with the instance.
+    function registerProduct(address product) external returns (NftId productNftId);
 
     function createRole(string memory roleName, string memory adminName) external returns (RoleId roleId, RoleId admin);
     function grantRole(RoleId roleId, address account) external;

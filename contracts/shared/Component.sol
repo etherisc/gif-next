@@ -10,7 +10,7 @@ import {Amount, AmountLib} from "../type/Amount.sol";
 import {IComponent} from "./IComponent.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
-import {ObjectType} from "../type/ObjectType.sol";
+import {ObjectType, PRODUCT} from "../type/ObjectType.sol";
 import {Registerable} from "../shared/Registerable.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {VersionPartLib} from "../type/Version.sol";
@@ -61,9 +61,6 @@ abstract contract Component is
         virtual
         onlyInitializing()
     {
-        _initializeRegisterable(registry, parentNftId, componentType, isInterceptor, initialOwner, registryData);
-        __AccessManaged_init(authority);
-
         if (token == address(0)) {
             revert ErrorComponentTokenAddressZero();
         }
@@ -71,6 +68,16 @@ abstract contract Component is
         if (bytes(name).length == 0) {
             revert ErrorComponentNameLengthZero();
         }
+
+        _initializeRegisterable(
+            registry, 
+            parentNftId, 
+            componentType, 
+            isInterceptor, 
+            initialOwner, 
+            registryData);
+
+        __AccessManaged_init(authority);
 
         // set component state
         ComponentStorage storage $ = _getComponentStorage();
@@ -245,7 +252,6 @@ abstract contract Component is
         
         return IComponents.ComponentInfo({
             name: $._name,
-            productNftId: NftIdLib.zero(),
             token: $._token,
             tokenHandler: TokenHandler(address(0)),
             wallet: $._wallet, // initial wallet address

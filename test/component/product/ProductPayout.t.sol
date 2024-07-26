@@ -4,11 +4,11 @@ pragma solidity ^0.8.20;
 import {Vm, console} from "../../../lib/forge-std/src/Test.sol";
 
 import {BasicProductAuthorization} from "../../../contracts/product/BasicProductAuthorization.sol";
+import {BasicPoolAuthorization} from "../../../contracts/pool/BasicPoolAuthorization.sol";
 import {GifTest} from "../../base/GifTest.sol";
 import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
 import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
 import {ClaimId} from "../../../contracts/type/ClaimId.sol";
-import {PRODUCT_OWNER_ROLE} from "../../../contracts/type/RoleId.sol";
 import {SimpleProduct} from "../../../contracts/examples/unpermissioned/SimpleProduct.sol";
 import {SimplePool} from "../../../contracts/examples/unpermissioned/SimplePool.sol";
 import {IComponents} from "../../../contracts/instance/module/IComponents.sol";
@@ -37,7 +37,11 @@ contract TestProductClaim is GifTest {
     uint256 public constant CUSTOMER_FUNDS = 400;
     
     SimpleProduct public prdct;
+    SimplePool public pl;
     RiskId public riskId;
+
+    NftId public prdctNftId;
+    NftId public plNftId;
     NftId public policyNftId;
 
     function setUp() public override {
@@ -874,29 +878,41 @@ contract TestProductClaim is GifTest {
 
     function _prepareProductLocal() internal {
 
-        _prepareDistributionAndPool();
-
-        vm.startPrank(instanceOwner);
-        instance.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
-        vm.stopPrank();
-
+        // create product
         vm.startPrank(productOwner);
         prdct = new SimpleProduct(
             address(registry),
-            instanceNftId,
+            instanceNftId, // parent of product is instance
             new BasicProductAuthorization("SimpleProduct"),
             productOwner,
             address(token),
-            false,
-            address(pool), 
-            address(distribution)
+            false, // isInterceptor
+            false, // has distribution
+            0 // number of oracles
         );
-        
-        prdct.register();
-        productNftId = prdct.getNftId();
         vm.stopPrank();
 
+        // instance owner registes product with instance (and registry)
+        vm.startPrank(instanceOwner);
+        prdctNftId = instance.registerProduct(address(prdct));
+        vm.stopPrank();
 
+        // create pool
+        vm.startPrank(poolOwner);
+        pool = new SimplePool(
+            address(registry),
+            prdctNftId, // parent of pool is product
+            address(token),
+            new BasicPoolAuthorization("SimplePool"),
+            poolOwner);
+        vm.stopPrank();
+
+        // product owner registes product with instance (and registry)
+        vm.startPrank(productOwner);
+        plNftId = prdct.registerComponent(address(prdct));
+        vm.stopPrank();
+
+        // fund investor and customer
         vm.startPrank(registryOwner);
         token.transfer(investor, BUNDLE_CAPITAL);
         token.transfer(customer, CUSTOMER_FUNDS);

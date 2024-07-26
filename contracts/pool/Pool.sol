@@ -40,16 +40,6 @@ abstract contract Pool is
     }
 
 
-    function register()
-        external
-        virtual
-        onlyOwner()
-    {
-        _getPoolStorage()._componentService.registerPool();
-        _approveTokenHandler(type(uint256).max);
-    }
-
-
     /// @dev see {IPoolComponent.verifyApplication}
     function verifyApplication(
         NftId applicationNftId, 
@@ -148,13 +138,12 @@ abstract contract Pool is
 
     function _initializePool(
         address registry,
-        NftId instanceNftId,
+        NftId productNftId,
         string memory name,
         address token,
         IAuthorization authorization,
         bool isInterceptingNftTransfers,
         address initialOwner,
-        bytes memory registryData, // writeonly data that will saved in the object info record of the registry
         bytes memory componentData // component specifidc data 
     )
         internal
@@ -163,14 +152,13 @@ abstract contract Pool is
     {
         _initializeInstanceLinkedComponent(
             registry, 
-            instanceNftId, 
+            productNftId,  
             name, 
             token, 
             POOL(), 
             authorization, 
             isInterceptingNftTransfers, 
             initialOwner, 
-            registryData, 
             componentData);
 
         PoolStorage storage $ = _getPoolStorage();

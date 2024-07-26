@@ -17,10 +17,14 @@ interface IComponent is
     IRegisterable,
     ITransferInterceptor
 {
+    error ErrorComponentProductNftIdZero();
+    error ErrorComponentProductNftIdNonzero();
+    error ErrorComponentNameLengthZero();
+
     error ErrorComponentNotChainNft(address caller);
 
+    error ErrorComponentTokenAddressNonzero();
     error ErrorComponentTokenAddressZero();
-    error ErrorComponentNameLengthZero();
     error ErrorComponentWalletAddressZero();
     error ErrorComponentWalletAddressIsSameAsCurrent();
     error ErrorComponentWalletNotComponent();

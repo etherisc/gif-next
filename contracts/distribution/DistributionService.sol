@@ -73,7 +73,7 @@ contract DistributionService is
         InstanceReader instanceReader = instance.getInstanceReader();
 
         {
-            NftId productNftId = _getProductNftId(instanceReader, distributionNftId);
+            NftId productNftId = _getProductNftId(distributionNftId);
             IComponents.ProductInfo memory productInfo = instance.getInstanceReader().getProductInfo(productNftId);
 
             UFixed variableDistributionFees = productInfo.distributionFee.fractionalFee;

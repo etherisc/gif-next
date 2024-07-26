@@ -7,6 +7,7 @@ import {Fee} from "../type/Fee.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
 import {IService} from "../shared/IService.sol";
 import {NftId} from "../type/NftId.sol";
+import {ObjectType} from "../type/ObjectType.sol";
 import {UFixed} from "../type/UFixed.sol";
 
 /// @dev component base class
@@ -14,6 +15,9 @@ import {UFixed} from "../type/UFixed.sol";
 interface IComponentService is 
     IService
 {
+    error ErrorComponentServiceSenderNotRegistered(address sender);
+    error ErrorComponentServiceSenderNotComponentParent(NftId senderNftId, NftId compnentParentNftId);    error ErrorComponentServiceParentNotInstance(NftId nftId, ObjectType objectType);
+    error ErrorComponentServiceParentNotProduct(NftId nftId, ObjectType objectType);
     error ErrorComponentServiceNewWalletAddressZero();
     error ErrorComponentServiceWalletAddressZero();
     error ErrorComponentServiceWalletAddressIsSameAsCurrent();
@@ -22,6 +26,7 @@ interface IComponentService is
     error ErrorComponentServiceWithdrawAmountExceedsLimit(Amount withdrawnAmount, Amount withdrawLimit);
     error ErrorComponentServiceWalletAllowanceTooSmall(address wallet, address spender, uint256 allowance, uint256 amount);
 
+    event LogComponentServiceRegistered(NftId instanceNftId, NftId componentNftId, ObjectType componentType, address component, address token, address initialOwner); 
     event LogComponentServiceWalletAddressChanged(NftId componentNftId, address currentWallet, address newWallet);
     event LogComponentServiceComponentFeesWithdrawn(NftId componentNftId, address recipient, address token, Amount withdrawnAmount);
     event LogComponentServiceProductFeesUpdated(NftId productNftId);
@@ -54,8 +59,8 @@ interface IComponentService is
 
     //-------- product ------------------------------------------------------//
 
-    /// @dev registers the sending component as a product component
-    function registerProduct() external;
+    /// @dev Registers the specified product component for the instance (sender)
+    function registerProduct(address product) external returns (NftId productNftId);
 
     function setProductFees(
         Fee memory productFee, // product fee on net premium
@@ -68,7 +73,7 @@ interface IComponentService is
     //-------- distribution -------------------------------------------------//
 
     /// @dev registers the sending component as a distribution component
-    function registerDistribution() external;
+    function registerDistribution(address distribution) external returns (NftId distributionNftId);
 
     function setDistributionFees(
         Fee memory distributionFee, // distribution fee for sales that do not include commissions
@@ -85,12 +90,12 @@ interface IComponentService is
     //-------- oracle -------------------------------------------------------//
 
     /// @dev registers the sending component as an oracle component
-    function registerOracle() external;
+    function registerOracle(address oracle) external returns (NftId oracleNftId);
 
     //-------- pool ---------------------------------------------------------//
 
     /// @dev registers the sending component as a pool component
-    function registerPool() external;
+    function registerPool(address pool) external returns (NftId poolNftId);
 
     function setPoolFees(
         Fee memory poolFee, // pool fee on net premium

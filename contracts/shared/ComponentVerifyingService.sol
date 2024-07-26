@@ -83,7 +83,15 @@ abstract contract ComponentVerifyingService is
             }
         }
 
-        instance = _getInstance(info.parentNftId);
+        // parent of product is instance
+        if (info.objectType == PRODUCT()) {
+            instance = _getInstance(info.parentNftId);
+        // parent of other types is product
+        } else {
+            instance = _getInstance(
+                registry.getObjectInfo(
+                    info.parentNftId).parentNftId);
+        }
 
         // ensure component is not locked
         if (onlyActive) {
@@ -94,17 +102,10 @@ abstract contract ComponentVerifyingService is
     }
 
 
-    /// @dev returns the linked product nft id for the specified component
-    function _getProductNftId(
-        InstanceReader instanceReader,
-        NftId componentNftId
-    )
-        internal
-        virtual
-        view
-        returns (NftId productNftId)
-    {
-        return instanceReader.getComponentInfo(componentNftId).productNftId;
+    /// @dev returns the product nft id from the registry.
+    /// assumes the component nft id is valid and represents a product linked component.
+    function _getProductNftId(NftId componentNftId) internal view returns (NftId productNftId) {
+        productNftId = getRegistry().getObjectInfo(componentNftId).parentNftId;
     }
 
 

@@ -11,7 +11,6 @@ import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
 import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
 import {ClaimId, ClaimIdLib} from "../../../contracts/type/ClaimId.sol";
 import {ContractLib} from "../../../contracts/shared/ContractLib.sol";
-import {PRODUCT_OWNER_ROLE} from "../../../contracts/type/RoleId.sol";
 import {SimpleProduct} from "../../../contracts/examples/unpermissioned/SimpleProduct.sol";
 import {SimplePool} from "../../../contracts/examples/unpermissioned/SimplePool.sol";
 import {IComponents} from "../../../contracts/instance/module/IComponents.sol";

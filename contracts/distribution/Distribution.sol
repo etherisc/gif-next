@@ -36,15 +36,6 @@ abstract contract Distribution is
         _;
     }
 
-    function register()
-        external
-        virtual
-        onlyOwner()
-    {
-        _getDistributionStorage()._componentService.registerDistribution();
-        _approveTokenHandler(type(uint256).max);
-    }
-
 
     function isDistributor(address candidate)
         public
@@ -137,12 +128,11 @@ abstract contract Distribution is
         
     function _initializeDistribution(
         address registry,
-        NftId instanceNftId,
+        NftId productNftId,
         IAuthorization authorization, 
         address initialOwner,
         string memory name,
         address token,
-        bytes memory registryData, // writeonly data that will saved in the object info record of the registry
         bytes memory componentData // component specifidc data 
     )
         internal
@@ -151,14 +141,13 @@ abstract contract Distribution is
     {
         _initializeInstanceLinkedComponent(
             registry, 
-            instanceNftId, 
+            productNftId, 
             name, 
             token, 
             DISTRIBUTION(), 
             authorization,
             true, 
             initialOwner, 
-            registryData, 
             componentData);
 
         DistributionStorage storage $ = _getDistributionStorage();

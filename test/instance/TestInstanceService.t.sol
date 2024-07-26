@@ -7,7 +7,6 @@ import {IInstanceService} from "../../contracts/instance/IInstanceService.sol";
 import {InstanceAdmin} from "../../contracts/instance/InstanceAdmin.sol";
 import {InstanceReader} from "../../contracts/instance/InstanceReader.sol";
 import {NftId} from "../../contracts/type/NftId.sol";
-import {PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE, ORACLE_OWNER_ROLE} from "../../contracts/type/RoleId.sol";
 
 contract TestInstanceService is GifTest {
 
@@ -89,25 +88,6 @@ contract TestInstanceService is GifTest {
 
         // WHEN
         instanceService.upgradeInstanceReader(instanceNftId);
-    }
-
-    function test_createInstance_checkPermissions() public {
-        // GIVEN
-        address user = makeAddr("user");
-        vm.startPrank(user);
-
-        // WHEN
-        (
-            IInstance newInstance,
-            NftId newInstanceNftId
-        ) = instanceService.createInstance();
-
-        // THEN - check permissions
-        InstanceAdmin newInstanceAdmin = newInstance.getInstanceAdmin();
-        assertTrue(newInstanceAdmin.hasRole(user, PRODUCT_OWNER_ROLE()));
-        assertTrue(newInstanceAdmin.hasRole(user, POOL_OWNER_ROLE()));
-        assertTrue(newInstanceAdmin.hasRole(user, DISTRIBUTION_OWNER_ROLE()));
-        assertTrue(newInstanceAdmin.hasRole(user, ORACLE_OWNER_ROLE()));
     }
 
 

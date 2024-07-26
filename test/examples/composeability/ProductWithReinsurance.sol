@@ -28,9 +28,7 @@ contract ProductWithReinsurance is
         NftId instanceNftid,
         IAuthorization authorization,
         address initialOwner,
-        address token,
-        address pool,
-        address distribution
+        address token
     )
         SimpleProduct(
             registry,
@@ -39,8 +37,8 @@ contract ProductWithReinsurance is
             initialOwner,
             token,
             false, // isInterceptor
-            pool,
-            distribution
+            false, // has distribution
+            0 // number of oracles
         )
     {
         isAutoPayout = false;
@@ -85,21 +83,11 @@ contract ProductWithReinsurance is
         public 
         virtual override
         view 
-        returns (IComponents.ProductInfo memory poolInfo)
+        returns (IComponents.ProductInfo memory productInfo)
     {
-        ProductStorage storage $ = _getProductStorage();
-
-        return IComponents.ProductInfo({
-            distributionNftId: $._distributionNftId,
-            poolNftId: $._poolNftId,
-            isProcessingFundedClaims: true, // force callback when claim is funded via pool
-            productFee: FeeLib.zero(),
-            processingFee: FeeLib.zero(),
-            distributionFee: FeeLib.zero(),
-            minDistributionOwnerFee: FeeLib.zero(),
-            poolFee: FeeLib.zero(),
-            stakingFee: FeeLib.zero(),
-            performanceFee: FeeLib.zero()
-        });
+        productInfo = super.getInitialProductInfo();
+        productInfo.isProcessingFundedClaims = true;
+        productInfo.hasDistribution = false;
+        productInfo.numberOfOracles = 0;
     }
 }

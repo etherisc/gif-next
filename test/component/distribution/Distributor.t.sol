@@ -4,7 +4,6 @@ pragma solidity ^0.8.20;
 import {console} from "../../../lib/forge-std/src/Test.sol";
 import {GifTest} from "../../base/GifTest.sol";
 
-import {DISTRIBUTION_OWNER_ROLE} from "../../../contracts/type/RoleId.sol";
 import {DistributorType} from "../../../contracts/type/DistributorType.sol";
 import {Distribution} from "../../../contracts/distribution/Distribution.sol";
 import {FeeLib} from "../../../contracts/type/Fee.sol";
@@ -40,9 +39,21 @@ contract DistributorTest is GifTest {
     Timestamp public expiryAt;
     bytes public referralData;
 
+    function setUp() public virtual override {
+        super.setUp();
+
+        _prepareProduct();
+
+        vm.startPrank(distributionOwner);
+        distribution.setFees(
+            FeeLib.toFee(UFixedLib.toUFixed(2,-1), 0), 
+            FeeLib.toFee(UFixedLib.toUFixed(5,-2), 0));
+        vm.stopPrank();
+    }
 
     function test_distributionReferralUnknown() public {
-        _prepareDistribution();
+        // TODO cleanup
+        // _prepareDistribution();
 
         string memory invalidCode = "some_invalid_referral_code";
         // solhint-disable-next-line 
@@ -121,7 +132,8 @@ contract DistributorTest is GifTest {
 
 
     function test_distributionDistributorCreateTwice() public {
-        _prepareDistribution();
+        // TODO cleanup
+        // _prepareDistribution();
         assertTrue(!distribution.isDistributor(customer), "customer is already distributor");
         _setupTestData(true);
         assertTrue(distribution.isDistributor(customer), "customer not yet distributor");
@@ -142,7 +154,8 @@ contract DistributorTest is GifTest {
 
 
     function test_distributionDistributorCreateTransfer() public {
-        _prepareDistribution();
+        // TODO cleanup
+        // _prepareDistribution();
 
         assertTrue(!distribution.isDistributor(customer), "customer is already distributor");
         _setupTestData(true);
@@ -184,22 +197,24 @@ contract DistributorTest is GifTest {
             "unexpected distributor data");
     }
 
-    function _prepareDistribution() internal {
-        _prepareProduct();
+    // TODO cleanup
+    // function _prepareDistribution() internal {
+    //     _prepareProduct();
 
-        vm.startPrank(distributionOwner);
-        distribution.setFees(
-            FeeLib.toFee(UFixedLib.toUFixed(2,-1), 0), 
-            FeeLib.toFee(UFixedLib.toUFixed(5,-2), 0));
-        vm.stopPrank();
+    //     vm.startPrank(distributionOwner);
+    //     distribution.setFees(
+    //         FeeLib.toFee(UFixedLib.toUFixed(2,-1), 0), 
+    //         FeeLib.toFee(UFixedLib.toUFixed(5,-2), 0));
+    //     vm.stopPrank();
 
-        distributionNftId = distribution.getNftId();
-        assertTrue(distributionNftId.gtz(), "distribution nft id unexpectedly zero");
-        assertEq(registry.ownerOf(distributionNftId), distributionOwner, "distribution owner unexpectly not owner of distribution nft id");
-    }
+    //     distributionNftId = distribution.getNftId();
+    //     assertTrue(distributionNftId.gtz(), "distribution nft id unexpectedly zero");
+    //     assertEq(registry.ownerOf(distributionNftId), distributionOwner, "distribution owner unexpectly not owner of distribution nft id");
+    // }
 
     function test_DistributorTypeCreateHappyCase() public {
-        _prepareDistribution();
+        // TODO cleanup
+        // _prepareDistribution();
         _createDistributorType();
 
         IDistribution.DistributorTypeInfo memory distributorTypeInfo = instanceReader.getDistributorTypeInfo(distributorType);
@@ -215,7 +230,8 @@ contract DistributorTest is GifTest {
     }
 
     function test_DistributorCreateHappyCase() public {
-        _prepareDistribution();
+        // TODO cleanup
+        // _prepareDistribution();
         _createDistributorType();
         _createDistributor();
 
@@ -228,7 +244,8 @@ contract DistributorTest is GifTest {
 
     function test_ReferralCreateHappyCase() public {
         // GIVEN
-        _prepareDistribution();
+        // TODO cleanup
+        // _prepareDistribution();
         _createDistributorType();
         _createDistributor();
 
@@ -306,9 +323,10 @@ contract DistributorTest is GifTest {
     }
 
     function _setupTestData(bool createDistributor) internal {
-        if (address(distribution) == address(0)) {
-            _prepareDistribution();
-        }
+        // TODO cleanup
+        // if (address(distribution) == address(0)) {
+        //     _prepareDistribution();
+        // }
 
         _createDistributorType();
 

@@ -14,7 +14,7 @@ import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {ObjectType} from "../../contracts/type/ObjectType.sol";
 import {BUNDLE, COMPONENT, DISTRIBUTION, ORACLE, POOL, PRODUCT, POLICY, RISK, REQUEST, SERVICE, STAKING} from "../../contracts/type/ObjectType.sol";
-import {RoleId, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, ORACLE_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE} from "../../contracts/type/RoleId.sol";
+import {RoleId} from "../../contracts/type/RoleId.sol";
 
 contract TestInstanceAdmin is
     GifTest

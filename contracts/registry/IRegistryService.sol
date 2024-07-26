@@ -22,9 +22,7 @@ interface IRegistryService is
      error ErrorRegistryServiceNotService(address notService);
      error ErrorRegistryServiceNotInstance(address notInstance);
      error ErrorRegistryServiceNotComponent(address notComponent);
-     error ErrorRegistryServiceNotProduct(address notProduct);
-     error ErrorRegistryServiceNotPool(address notPool);
-     error ErrorRegistryServiceNotDistribution(address notDistribution);
+     error ErrorRegistryServiceNotProductLinkedComponent(address notProductLinkedComponent);
 
      error ErrorRegistryServiceRegisterableAddressInvalid(IRegisterable registerable, address found);
      error ErrorRegistryServiceRegisterableTypeInvalid(IRegisterable registerable, ObjectType expected, ObjectType found);
@@ -47,7 +45,10 @@ interface IRegistryService is
      function registerInstance(IRegisterable instance, address owner)
           external returns(IRegistry.ObjectInfo memory info); 
 
-     function registerComponent(IComponent component, ObjectType objectType, address owner)
+     function registerProduct(IComponent product, address owner)
+          external returns(IRegistry.ObjectInfo memory info);
+
+     function registerProductLinkedComponent(IComponent component, ObjectType objectType, address owner)
           external returns(IRegistry.ObjectInfo memory info);
 
      function registerDistributor(IRegistry.ObjectInfo memory info) external returns(NftId nftId);

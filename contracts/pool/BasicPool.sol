@@ -36,7 +36,6 @@ abstract contract BasicPool is
             authorization,
             false, // isInterceptingNftTransfers, 
             initialOwner, 
-            "", // registryData
             ""); // componentData
     }
 

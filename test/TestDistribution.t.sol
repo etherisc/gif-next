@@ -4,7 +4,6 @@ pragma solidity ^0.8.20;
 import {console} from "../lib/forge-std/src/Test.sol";
 
 import {BasicDistributionAuthorization} from "../contracts/distribution/BasicDistributionAuthorization.sol";
-import {DISTRIBUTION_OWNER_ROLE} from "../contracts/type/RoleId.sol";
 import {Fee, FeeLib} from "../contracts/type/Fee.sol";
 import {GifTest} from "./base/GifTest.sol";
 import {IAccess} from "../contracts/instance/module/IAccess.sol";
@@ -26,9 +25,6 @@ contract TestDistribution is GifTest {
         // GIVEN
         _prepareDistribution();
         IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(distributionNftId);
-
-        // check nft id
-        assertTrue(componentInfo.productNftId.eqz(), "product nft not zero");
 
         // check wallet
         assertEq(componentInfo.wallet, address(distribution), "unexpected wallet address");
@@ -281,31 +277,6 @@ contract TestDistribution is GifTest {
         Fee memory newDistributionFee = FeeLib.toFee(UFixedLib.toUFixed(123,0), 456);
         Fee memory newMinDistributionOwnerFee = FeeLib.toFee(UFixedLib.toUFixed(124,0), 457);
         distribution.setFees(newMinDistributionOwnerFee, newDistributionFee);
-    }
-
-    function _prepareDistribution() internal {
-        vm.startPrank(instanceOwner);
-        instance.grantRole(DISTRIBUTION_OWNER_ROLE(), distributionOwner);
-        vm.stopPrank();
-
-        vm.startPrank(distributionOwner);
-        distribution = new SimpleDistribution(
-            address(registry),
-            instanceNftId,
-            new BasicDistributionAuthorization("SimpleDistribution"),
-            distributionOwner,
-            address(token));
-
-        // solhint-disable
-        console.log("distribution deployed at: ", address(distribution));
-        // solhint-disable
-        
-        distribution.register();
-        distributionNftId = distribution.getNftId();
-
-        // solhint-disable
-        console.log("distribution nft id: ", distribution.getNftId().toInt());
-        // solhint-disable
     }
 
 }

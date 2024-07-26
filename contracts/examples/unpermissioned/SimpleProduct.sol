@@ -37,8 +37,8 @@ contract SimpleProduct is
         address initialOwner,
         address token,
         bool isInterceptor,
-        address pool,
-        address distribution
+        bool hasDistribution,
+        uint8 numberOfOracles
     )
     {
         initialize(
@@ -49,8 +49,8 @@ contract SimpleProduct is
             "SimpleProduct",
             token,
             isInterceptor,
-            pool,
-            distribution); 
+            hasDistribution,
+            numberOfOracles); 
     }
 
 
@@ -62,8 +62,8 @@ contract SimpleProduct is
         string memory name,
         address token,
         bool isInterceptor,
-        address pool,
-        address distribution
+        bool hasDistribution,
+        uint8 numberOfOracles
     )
         public
         virtual
@@ -77,8 +77,8 @@ contract SimpleProduct is
             name,
             token,
             isInterceptor,
-            pool,
-            distribution); 
+            hasDistribution,
+            numberOfOracles); 
 
         _oracleService = IOracleService(_getServiceAddress(ORACLE()));
     }

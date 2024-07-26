@@ -14,7 +14,6 @@ interface IComponents {
 
     struct ComponentInfo {
         string name; // component name (needs to be unique per instance)
-        NftId productNftId;
         IERC20Metadata token;
         TokenHandler tokenHandler;
         address wallet;
@@ -22,9 +21,12 @@ interface IComponents {
     }
 
     struct ProductInfo {
-        NftId distributionNftId;
-        NftId poolNftId;
         bool isProcessingFundedClaims; // custom logic to react to pool events for funded claims
+        bool hasDistribution; // flag to indicate if distribution is enabled
+        uint8 numberOfOracles; // number of oracles
+        NftId poolNftId; // mandatory
+        NftId distributionNftId; // 0..1 (optional)
+        NftId [] oracleNftId; // 0..n (optional)
         Fee productFee; // product fee on net premium
         Fee processingFee; // product fee on payout amounts        
         Fee distributionFee; // distribution fee for sales that do not include commissions

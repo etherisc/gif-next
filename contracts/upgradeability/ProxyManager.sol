@@ -192,7 +192,8 @@ contract ProxyManager is
             revert ErrorProxyManagerAlreadyDeployed();
         }
 
-        _initializeNftOwnable(msg.sender, registry);
+        address initialOwner = msg.sender;
+        _initializeNftOwnable(registry, initialOwner);
 
         currentProxyOwner = getOwner(); // used by implementation
         initialProxyAdminOwner = address(this); // used by proxy

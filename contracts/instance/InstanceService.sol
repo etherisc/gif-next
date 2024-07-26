@@ -12,7 +12,7 @@ import {NftId} from "../type/NftId.sol";
 import {RoleId} from "../type/RoleId.sol";
 import {SecondsLib} from "../type/Seconds.sol";
 import {UFixed, UFixedLib} from "../type/UFixed.sol";
-import {ADMIN_ROLE, DISTRIBUTION_OWNER_ROLE, ORACLE_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE} from "../type/RoleId.sol";
+import {ADMIN_ROLE} from "../type/RoleId.sol";
 import {ObjectType, INSTANCE, BUNDLE, APPLICATION, CLAIM, DISTRIBUTION, INSTANCE, POLICY, POOL, PRODUCT, REGISTRY, STAKING} from "../type/ObjectType.sol";
 
 import {Service} from "../shared/Service.sol";
@@ -278,65 +278,63 @@ contract InstanceService is
     }
 
 
-    function createGifTarget(
-        NftId instanceNftId,
-        address targetAddress,
-        string memory targetName,
-        bytes4[][] memory selectors,
-        RoleId[] memory roles
-    )
-        external
-        virtual
-        restricted()
-    {
-        _createGifTarget(
-            instanceNftId,
-            targetAddress,
-            targetName,
-            roles,
-            selectors
-        );
-    }
+    // TODO cleanup
+    // function createGifTarget(
+    //     NftId instanceNftId,
+    //     address targetAddress,
+    //     string memory targetName,
+    //     bytes4[][] memory selectors,
+    //     RoleId[] memory roles
+    // )
+    //     external
+    //     virtual
+    //     restricted()
+    // {
+    //     _createGifTarget(
+    //         instanceNftId,
+    //         targetAddress,
+    //         targetName,
+    //         roles,
+    //         selectors
+    //     );
+    // }
 
+    // TODO cleanup
+    // function initializeAuthorization(
+    //     NftId instanceNftId, 
+    //     IInstanceLinkedComponent component
+    // )
+    //     external
+    //     virtual
+    //     restricted()
+    // {
+    //     (IInstance instance, ) = _validateInstanceAndComponent(
+    //         instanceNftId, 
+    //         address(component));
 
-    function initializeAuthorization(
-        NftId instanceNftId, 
-        IInstanceLinkedComponent component
-    )
-        external
-        virtual
-        restricted()
-    {
-        (IInstance instance, ) = _validateInstanceAndComponent(
-            instanceNftId, 
-            address(component));
+    //     InstanceAdmin instanceAdmin = instance.getInstanceAdmin();
+    //     instanceAdmin.initializeComponentAuthorization(component);
+    // }
 
-        InstanceAdmin instanceAdmin = instance.getInstanceAdmin();
-        instanceAdmin.initializeComponentAuthorization(
-            component,
-            component.getAuthorization());
-    }
-
-
-    function createComponentTarget(
-        NftId instanceNftId,
-        address targetAddress,
-        string memory targetName,
-        bytes4[][] memory selectors,
-        RoleId[] memory roles
-    )
-        external
-        virtual
-        restricted()
-    {
-        _createGifTarget(
-            instanceNftId,
-            targetAddress,
-            targetName,
-            roles,
-            selectors
-        );
-    }
+    // function createComponentTarget(
+    //     NftId instanceNftId,
+    //     address targetAddress,
+    //     string memory targetName,
+    //     bytes4[][] memory selectors,
+    //     RoleId[] memory roles
+    // )
+    //     external
+    //     virtual
+    //     restricted()
+    // {
+    //     _createGifTarget(
+    //         instanceNftId,
+    //         targetAddress,
+    //         targetName,
+    //         roles,
+    //         selectors
+    //     );
+    // }
 
     /// @dev create new cloned instance admin
     /// function used to setup a new instance
@@ -449,13 +447,20 @@ contract InstanceService is
             revert ErrorInstanceServiceNotInstanceNftId(instanceNftId);
         }
 
-        IRegistry.ObjectInfo memory componentInfo = registry.getObjectInfo(componentAddress);
-        if(componentInfo.parentNftId != instanceNftId) {
-            revert ErrorInstanceServiceInstanceComponentMismatch(instanceNftId, componentInfo.nftId);
+        if (registry.getNftIdForAddress(componentAddress).gtz()) {
+            IRegistry.ObjectInfo memory componentInfo = registry.getObjectInfo(componentAddress);
+
+            if(componentInfo.parentNftId != instanceNftId) {
+                revert ErrorInstanceServiceInstanceComponentMismatch(instanceNftId, componentInfo.nftId);
+            }
+
+            componentNftId = componentInfo.nftId;
+        } else {
+
         }
 
         instance = Instance(instanceInfo.objectAddress);
-        componentNftId = componentInfo.nftId;
+        
     }
 
     // From IService

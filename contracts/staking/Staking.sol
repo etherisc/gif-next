@@ -469,7 +469,7 @@ contract Staking is
         _initializeComponent(
             authority,
             registryAddress, 
-            registry.getNftId(), 
+            registry.getNftId(), // parent nft id
             CONTRACT_NAME,
             dipTokenAddress,
             STAKING(), 

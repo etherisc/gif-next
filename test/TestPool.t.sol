@@ -15,7 +15,7 @@ import {Key32} from "../contracts/type/Key32.sol";
 import {NftId, NftIdLib} from "../contracts/type/NftId.sol";
 import {ObjectType, BUNDLE} from "../contracts/type/ObjectType.sol";
 import {Pool} from "../contracts/pool/Pool.sol";
-import {POOL_OWNER_ROLE, PUBLIC_ROLE} from "../contracts/type/RoleId.sol";
+import {PUBLIC_ROLE} from "../contracts/type/RoleId.sol";
 import {Seconds, SecondsLib} from "../contracts/type/Seconds.sol";
 import {SimplePool} from "../contracts/examples/unpermissioned/SimplePool.sol";
 import {StateId, ACTIVE, PAUSED, CLOSED} from "../contracts/type/StateId.sol";
@@ -55,10 +55,6 @@ contract TestPool is GifTest {
     }
 
     function test_PoolComponentAndPoolInfo() public {
-        vm.startPrank(instanceOwner);
-        instance.grantRole(POOL_OWNER_ROLE(), poolOwner);
-        vm.stopPrank();
-
         vm.startPrank(poolOwner);
 
         pool = new SimplePool(
@@ -69,13 +65,7 @@ contract TestPool is GifTest {
             poolOwner
         );
 
-        pool.register();
-        NftId poolNftId = pool.getNftId();
-
-        // solhint-disable
-        console.log("pool nft id: ", poolNftId.toInt());
-        console.log("pool deployed at: ", address(pool));
-        // solhint-enable
+        poolNftId = _registerComponent(product, address(pool), "pool");
 
         IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
         // solhint-disable
@@ -104,7 +94,6 @@ contract TestPool is GifTest {
         IComponents.PoolInfo memory poolInfo = instanceReader.getPoolInfo(poolNftId);
 
         // check nftid
-        assertTrue(componentInfo.productNftId.eqz(), "product nft not zero (not yet linked to product)");
         assertEq(poolInfo.bundleOwnerRole.toInt(), PUBLIC_ROLE().toInt(), "unexpected bundle owner role");
 
         // check pool balance

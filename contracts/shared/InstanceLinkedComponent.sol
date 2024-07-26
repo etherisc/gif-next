@@ -17,7 +17,7 @@ import {IInstance} from "../instance/IInstance.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {NftId} from "../type/NftId.sol";
-import {ObjectType, COMPONENT, INSTANCE} from "../type/ObjectType.sol";
+import {ObjectType, COMPONENT, INSTANCE, PRODUCT} from "../type/ObjectType.sol";
 import {VersionPart} from "../type/Version.sol";
 import {RoleId, RoleIdLib} from "../type/RoleId.sol";
 import {IAccess} from "../instance/module/IAccess.sol";
@@ -52,10 +52,6 @@ abstract contract InstanceLinkedComponent is
         return _getInstanceLinkedComponentStorage()._instance;
     }
 
-    function getProductNftId() public view override returns (NftId productNftId) {
-        return getComponentInfo().productNftId;
-    }
-
     function getAuthorization() external view returns (IAuthorization authorization) {
         return _getInstanceLinkedComponentStorage()._initialAuthorization;
     }
@@ -79,49 +75,93 @@ abstract contract InstanceLinkedComponent is
 
     function _initializeInstanceLinkedComponent(
         address registry,
-        NftId instanceNftId,
+        NftId parentNftId,
         string memory name,
         address token,
         ObjectType componentType,
         IAuthorization authorization,
         bool isInterceptor,
         address initialOwner,
-        bytes memory registryData, // writeonly data that will saved in the object info record of the registry
         bytes memory componentData // data that will saved with the component info in the instance store
     )
         internal
         virtual
         onlyInitializing()
     {
+        // validate registry, nft ids and get parent nft id
+        NftId instanceNftId = _checkAndGetInstanceNftId(
+            registry, 
+            parentNftId, 
+            componentType);
+
         // set and check linked instance
         InstanceLinkedComponentStorage storage $ = _getInstanceLinkedComponentStorage();
         $._instance = IInstance(
             IRegistry(registry).getObjectAddress(instanceNftId));
 
-        if(!$._instance.supportsInterface(type(IInstance).interfaceId)) {
-            revert ErrorComponentNotInstance(instanceNftId);
-        }
-
+        // set component specific parameters
         _initializeComponent(
-            $._instance.authority(), 
+            $._instance.authority(), // instance linked components need to point to instance admin
             registry, 
-            instanceNftId, 
+            parentNftId, 
             name, 
             token,
             componentType, 
             isInterceptor, 
             initialOwner, 
-            registryData,
+            "", // registry data
             componentData);
 
-        // set component state
+        // set instance linked specific parameters
         $._instanceReader = $._instance.getInstanceReader();
         $._initialAuthorization = authorization;
         $._componentService = IComponentService(_getServiceAddress(COMPONENT())); 
 
+        // register interfaces
         _registerInterface(type(IAccessManaged).interfaceId);
         _registerInterface(type(IInstanceLinkedComponent).interfaceId);
     }
+
+
+    function _checkAndGetInstanceNftId(
+        address registryAddress,
+        NftId parentNftId,
+        ObjectType componentType
+    )
+        internal
+        view
+        returns (NftId instanceNftId)
+    {
+        // if product, then parent is already instance
+        if (componentType == PRODUCT()) {
+            _checkAndGetRegistry(registryAddress, parentNftId, INSTANCE());
+            return parentNftId;
+        }
+
+        // if not product parent is product, and parent of product is instance
+        IRegistry registry = _checkAndGetRegistry(registryAddress, parentNftId, PRODUCT());
+        return registry.getObjectInfo(parentNftId).parentNftId;
+    }
+
+    /// @dev checks the and gets registry.
+    /// validates registry using a provided nft id and expected object type.
+    function _checkAndGetRegistry(
+        address registryAddress,
+        NftId objectNftId,
+        ObjectType requiredType
+    )
+        internal
+        view
+        returns (IRegistry registry)
+    {
+        registry = IRegistry(registryAddress);
+        IRegistry.ObjectInfo memory info = registry.getObjectInfo(objectNftId);
+
+        if (info.objectType != requiredType) {
+            revert ErrorInstanceLinkedComponentTypeMismatch(requiredType, info.objectType);
+        }
+    }
+
 
     /// @dev for instance linked components the wallet address stored in the instance store.
     /// updating needs to go throug component service

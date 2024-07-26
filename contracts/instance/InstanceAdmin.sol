@@ -7,13 +7,13 @@ import {AccessAdmin} from "../authorization/AccessAdmin.sol";
 import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
 import {IAccessAdmin} from "../authorization/IAccessAdmin.sol";
 import {IAuthorization} from "../authorization/IAuthorization.sol";
-import {IComponent} from "../shared/IComponent.sol";
+import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
 import {IModuleAuthorization} from "../authorization/IModuleAuthorization.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IInstance} from "./IInstance.sol";
 import {IService} from "../shared/IService.sol";
 import {ObjectType, ObjectTypeLib, ALL, POOL, RELEASE} from "../type/ObjectType.sol";
-import {RoleId, RoleIdLib, ADMIN_ROLE, PUBLIC_ROLE, DISTRIBUTION_OWNER_ROLE, ORACLE_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE} from "../type/RoleId.sol";
+import {RoleId, RoleIdLib, ADMIN_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {Str, StrLib} from "../type/String.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {VersionPart} from "../type/Version.sol";
@@ -104,22 +104,22 @@ contract InstanceAdmin is
         _createRoles(_instanceAuthorization);
         _createModuleTargetsWithRoles();
         _createTargetAuthorizations(_instanceAuthorization);
-
-        // grant component owner roles to instance owner
-        _grantComponentOwnerRoles();
     }
 
 
     /// @dev Initializes the authorization for the specified component.
     /// Important: The component MUST be registered.
     function initializeComponentAuthorization(
-        IComponent component,
-        IAuthorization authorization
+        IInstanceLinkedComponent component
     )
         external
     {
         _checkTargetIsReadyForAuthorization(address(component));
 
+        // get authorization specification
+        IAuthorization authorization = component.getAuthorization();
+
+        // create roles
         _createRoles(authorization);
 
         // create component target
@@ -152,17 +152,6 @@ contract InstanceAdmin is
             address(component));
         
         _createTargetAuthorizations(authorization);
-    }
-
-
-    function _grantComponentOwnerRoles()
-        internal
-    {
-        address instanceOwner = _registry.ownerOf(_instance.getNftId());
-        _grantRoleToAccount(DISTRIBUTION_OWNER_ROLE(), instanceOwner);
-        _grantRoleToAccount(ORACLE_OWNER_ROLE(), instanceOwner);
-        _grantRoleToAccount(POOL_OWNER_ROLE(), instanceOwner);
-        _grantRoleToAccount(PRODUCT_OWNER_ROLE(), instanceOwner);
     }
 
     /// @dev Creates a custom role

@@ -5,10 +5,6 @@ import {
      PRODUCT, ORACLE, POOL, INSTANCE, COMPONENT, DISTRIBUTION, APPLICATION, POLICY, CLAIM, BUNDLE
 } from "../../contracts/type/ObjectType.sol";
 
-import {
-     DISTRIBUTION_OWNER_ROLE, ORACLE_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE
-} from "../../contracts/type/RoleId.sol";
-
 import {BundleSet} from "../instance/BundleSet.sol"; 
 import {IAccess} from "../authorization/IAccess.sol";
 import {Instance} from "../instance/Instance.sol";
@@ -21,16 +17,12 @@ contract InstanceAuthorizationV3
      is ModuleAuthorization
 {
 
+     string public constant INSTANCE_ROLE_NAME = "InstanceRole";
+
      string public constant INSTANCE_TARGET_NAME = "Instance";
      string public constant INSTANCE_STORE_TARGET_NAME = "InstanceStore";
      string public constant INSTANCE_ADMIN_TARGET_NAME = "InstanceAdmin";
      string public constant BUNDLE_SET_TARGET_NAME = "BundleSet";
-
-     string public constant INSTANCE_ROLE_NAME = "InstanceRole";
-     string public constant DISTRIBUTION_OWNER_ROLE_NAME = "DistributionOwnerRole";
-     string public constant ORACLE_OWNER_ROLE_NAME = "OracleOwnerRole";
-     string public constant POOL_OWNER_ROLE_NAME = "PoolOwnerRole";
-     string public constant PRODUCT_OWNER_ROLE_NAME = "ProductOwnerRole";
 
      constructor() ModuleAuthorization(INSTANCE_TARGET_NAME) {}
 
@@ -39,10 +31,7 @@ contract InstanceAuthorizationV3
           internal
           override
      {
-          _addGifRole(DISTRIBUTION_OWNER_ROLE(), DISTRIBUTION_OWNER_ROLE_NAME);
-          _addGifRole(ORACLE_OWNER_ROLE(), ORACLE_OWNER_ROLE_NAME);
-          _addGifRole(POOL_OWNER_ROLE(), POOL_OWNER_ROLE_NAME);
-          _addGifRole(PRODUCT_OWNER_ROLE(), PRODUCT_OWNER_ROLE_NAME);
+          // empty implementation
      }
 
 

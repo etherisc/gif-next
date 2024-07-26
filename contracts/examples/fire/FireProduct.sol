@@ -70,6 +70,7 @@ contract FireProduct is
     )
     {
         address initialOwner = msg.sender;
+
         _initialize(
             registry,
             instanceNftid,
@@ -99,9 +100,9 @@ contract FireProduct is
             initialOwner,
             componentName,
             token,
-            false,
-            pool,
-            address(0));  // no distribution
+            false, // is interceptor
+            false, // has distribution
+            0);  // number of oracles
     }
     
     function cities() public view returns (uint256) {

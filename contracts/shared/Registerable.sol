@@ -25,20 +25,20 @@ contract Registerable is
     }
 
     function _initializeRegisterable(
-        address registryAddress,
+        address registry,
         NftId parentNftId,
         ObjectType objectType,
         bool isInterceptor,
         address initialOwner,
-        bytes memory registryData // writeonly data that will saved in the object info record of the registry
+        bytes memory data // writeonly data that will saved in the object info record of the registry
     )
         internal
         virtual
         onlyInitializing()
     {
         _initializeNftOwnable(
-            initialOwner,
-            registryAddress);
+            registry,
+            initialOwner);
 
         RegisterableStorage storage $;
         assembly {
@@ -48,7 +48,7 @@ contract Registerable is
         $._parentNftId = parentNftId;
         $._objectType = objectType;
         $._isInterceptor = isInterceptor;
-        $._data = registryData;
+        $._data = data;
     }
 
 

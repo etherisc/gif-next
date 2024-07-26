@@ -11,7 +11,6 @@ import {IDistribution} from "../../../contracts/instance/module/IDistribution.so
 import {UFixed, UFixedLib} from "../../../contracts/type/UFixed.sol";
 import {SimpleDistribution} from "../../../contracts/examples/unpermissioned/SimpleDistribution.sol";
 import {Fee, FeeLib} from "../../../contracts/type/Fee.sol";
-import {DISTRIBUTION_OWNER_ROLE} from "../../../contracts/type/RoleId.sol";
 
 contract DistributorTypeTest is GifTest {
 
@@ -80,36 +79,42 @@ contract DistributorTypeTest is GifTest {
         assertTrue(equalBytes(info.data, data), "unexpected data for referral type");
     }
 
+    // TODO cleanup
+    // function _prepareDistribution() internal {
+    //     vm.startPrank(distributionOwner);
+    //     distribution = new SimpleDistribution(
+    //         address(registry),
+    //         instanceNftId,
+    //         new BasicDistributionAuthorization("SimpleDistribution"),
+    //         distributionOwner,
+    //         address(token));
+    //     vm.stopPrank();
 
-    function _prepareDistribution() internal {
-        vm.startPrank(instanceOwner);
-        instance.grantRole(DISTRIBUTION_OWNER_ROLE(), distributionOwner);
-        vm.stopPrank();
+    //     distributionNftId = _registerComponent(product, address(distribution), "distribution");
 
-        vm.startPrank(distributionOwner);
-        distribution = new SimpleDistribution(
-            address(registry),
-            instanceNftId,
-            new BasicDistributionAuthorization("SimpleDistribution"),
-            distributionOwner,
-            address(token));
+    //     distributionFee = FeeLib.toFee(UFixedLib.toUFixed(2, -1), 0); // 20%
+    //     minDistributionOwnerFee = FeeLib.toFee(UFixedLib.toUFixed(2, -2), 0); // 2%
 
-        distribution.register();
+    //     vm.startPrank(distributionOwner);
+    //     distribution.setFees(
+    //         distributionFee, 
+    //         minDistributionOwnerFee);
+    //     vm.stopPrank();
 
-        distributionFee = FeeLib.toFee(UFixedLib.toUFixed(2, -1), 0); // 20%
-        minDistributionOwnerFee = FeeLib.toFee(UFixedLib.toUFixed(2, -2), 0); // 2%
-
-        distribution.setFees(
-            distributionFee, 
-            minDistributionOwnerFee);
-
-        vm.stopPrank();
-
-        distributionNftId = distribution.getNftId();
-    }
+    //     distributionNftId = distribution.getNftId();
+    // }
 
 
     function _setupTestData(bool createDistributorType) internal {
+        distributionFee = FeeLib.toFee(UFixedLib.toUFixed(2, -1), 0); // 20%
+        minDistributionOwnerFee = FeeLib.toFee(UFixedLib.toUFixed(2, -2), 0); // 2%
+
+        vm.startPrank(distributionOwner);
+        distribution.setFees(
+            distributionFee, 
+            minDistributionOwnerFee);
+        vm.stopPrank();
+
         name = "Basic";
         minDiscountPercentage = instanceReader.toUFixed(5, -2);
         maxDiscountPercentage = instanceReader.toUFixed(75, -3);

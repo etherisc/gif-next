@@ -58,7 +58,7 @@ contract RegistryService is
     function registerInstance(IRegisterable instance, address owner)
         external
         virtual
-        restricted
+        restricted()
         returns(
             IRegistry.ObjectInfo memory info
         ) 
@@ -89,13 +89,34 @@ contract RegistryService is
     //     info.nftId = getRegistry().register(info);
     // }
 
-    function registerComponent(
+    function registerProduct(
+        IComponent product, 
+        address initialOwner
+    )
+        external
+        virtual
+        restricted()
+        returns(
+            IRegistry.ObjectInfo memory info
+        ) 
+    {
+        // CAN revert if no ERC165 support -> will revert with empty message 
+        if(!product.supportsInterface(type(IComponent).interfaceId)) {
+            revert ErrorRegistryServiceNotComponent(address(product));
+        }
+
+        info = _getAndVerifyContractInfo(product, PRODUCT(), initialOwner);
+        info.nftId = getRegistry().register(info);
+    }
+
+    function registerProductLinkedComponent(
         IComponent component, 
         ObjectType objectType,
         address initialOwner
     )
         external
-        restricted
+        virtual
+        restricted()
         returns(
             IRegistry.ObjectInfo memory info
         ) 
@@ -105,43 +126,18 @@ contract RegistryService is
             revert ErrorRegistryServiceNotComponent(address(component));
         }
 
+        if (!(objectType == DISTRIBUTION() || objectType == ORACLE() || objectType == POOL())) {
+            revert ErrorRegistryServiceNotProductLinkedComponent(address(component));
+        }
+
         info = _getAndVerifyContractInfo(component, objectType, initialOwner);
         info.nftId = getRegistry().register(info);
     }
 
-    // function registerPool(IComponent pool, address owner)
-    //     external
-    //     restricted
-    //     returns(
-    //         IRegistry.ObjectInfo memory info
-    //     ) 
-    // {
-    //     if(!pool.supportsInterface(type(IPoolComponent).interfaceId)) {
-    //         revert ErrorRegistryServiceNotPool(address(pool));
-    //     }
-
-    //     info = _getAndVerifyContractInfo(pool, POOL(), owner);
-    //     info.nftId = getRegistry().register(info);
-    // }
-
-    // function registerDistribution(IComponent distribution, address owner)
-    //     external
-    //     restricted
-    //     returns(
-    //         IRegistry.ObjectInfo memory info
-    //     ) 
-    // {
-    //     if(!distribution.supportsInterface(type(IDistributionComponent).interfaceId)) {
-    //         revert ErrorRegistryServiceNotDistribution(address(distribution));
-    //     }
-
-    //     info = _getAndVerifyContractInfo(distribution, DISTRIBUTION(), owner);
-    //     info.nftId = getRegistry().register(info);
-    // }
-
     function registerDistributor(IRegistry.ObjectInfo memory info)
         external
-        restricted 
+        virtual
+        restricted()
         returns(NftId nftId) 
     {
         _verifyObjectInfo(info, DISTRIBUTOR());
@@ -150,7 +146,8 @@ contract RegistryService is
 
     function registerPolicy(IRegistry.ObjectInfo memory info)
         external
-        restricted 
+        virtual
+        restricted()
         returns(NftId nftId) 
     {
         _verifyObjectInfo(info, POLICY());
@@ -159,7 +156,8 @@ contract RegistryService is
 
     function registerBundle(IRegistry.ObjectInfo memory info)
         external
-        restricted 
+        virtual
+        restricted()
         returns(NftId nftId) 
     {
         _verifyObjectInfo(info, BUNDLE());
@@ -168,7 +166,8 @@ contract RegistryService is
 
     function registerStake(IRegistry.ObjectInfo memory info)
         external
-        restricted 
+        virtual
+        restricted()
         returns(NftId nftId) 
     {
         _verifyObjectInfo(info, STAKE());
@@ -183,6 +182,7 @@ contract RegistryService is
         address expectedOwner // assume can be 0 when given by other service
     )
         internal
+        virtual
         view
         returns(
             IRegistry.ObjectInfo memory info 
@@ -222,6 +222,7 @@ contract RegistryService is
         ObjectType expectedType
     )
         internal
+        virtual
         view
     {
         if(info.objectAddress > address(0)) {

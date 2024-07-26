@@ -32,17 +32,19 @@ contract TestProduct is GifTest {
 
     function setUp() public override {
         super.setUp();
+
+        _prepareProduct();
         sec30 = SecondsLib.toSeconds(30);
     }
 
     function test_productSetupInfo() public {
-        _prepareProductLocal();
+        // _prepareProductLocal();
 
         // check nft id (components -> product)
         uint256 productNftIdInt = product.getNftId().toInt();
         assertTrue(productNftIdInt > 0, "product nft zero");
-        assertEq(distribution.getProductNftId().toInt(), productNftIdInt, "unexpected product nft (distribution)");
-        assertEq(pool.getProductNftId().toInt(), productNftIdInt, "unexpected product nft (pool)");
+        assertEq(registry.getObjectInfo(address(distribution)).parentNftId.toInt(), productNftIdInt, "unexpected product nft (distribution)");
+        assertEq(registry.getObjectInfo(address(pool)).parentNftId.toInt(), productNftIdInt, "unexpected product nft (pool)");
 
         // check token handler
         IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(productNftId);
@@ -65,7 +67,7 @@ contract TestProduct is GifTest {
 
 
     function test_productSetFees() public {
-        _prepareProductLocal();
+        // _prepareProductLocal();
         vm.startPrank(productOwner);
 
         IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
@@ -93,7 +95,7 @@ contract TestProduct is GifTest {
     }
 
     function test_productCalculatePremium() public {
-        _prepareProductLocal();  
+        // _prepareProductLocal();  
 
         vm.startPrank(productOwner);
 
@@ -129,7 +131,7 @@ contract TestProduct is GifTest {
     }
 
     function test_productCreateApplication() public {
-        _prepareProductLocal();
+        // _prepareProductLocal();
 
         vm.startPrank(productOwner);
 
@@ -164,7 +166,7 @@ contract TestProduct is GifTest {
 
     function test_productCollateralizeWithoutPayment() public {
         // GIVEN
-        _prepareProductLocal();  
+        // _prepareProductLocal();  
 
         vm.startPrank(productOwner);
 
@@ -235,7 +237,7 @@ contract TestProduct is GifTest {
         token.transfer(customer, 1000);
         vm.stopPrank();
 
-        _prepareProductLocal();  
+        // _prepareProductLocal();  
 
         vm.startPrank(productOwner);
         Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
@@ -343,7 +345,7 @@ contract TestProduct is GifTest {
         token.transfer(customer, 1000);
         vm.stopPrank();
 
-        _prepareProductLocal();  
+        // _prepareProductLocal();  
 
         // set product fees and create risk
         Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
@@ -467,7 +469,7 @@ contract TestProduct is GifTest {
         token.transfer(customer, 1000);
         vm.stopPrank();
 
-        _prepareProductLocal();  
+        // _prepareProductLocal();  
 
         // set product fees and create risk
         Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
