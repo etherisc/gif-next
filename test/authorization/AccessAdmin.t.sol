@@ -8,6 +8,7 @@ import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.s
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
 import {AccessAdmin} from "../../contracts/authorization/AccessAdmin.sol";
+import {AccessManagerCloneable} from "../../contracts/authorization/AccessManagerCloneable.sol";
 import {AccessManagedMock} from "../mock/AccessManagedMock.sol";
 import {IAccess} from "../../contracts/authorization/IAccess.sol";
 import {IAccessAdmin} from "../../contracts/authorization/IAccessAdmin.sol";
@@ -26,6 +27,7 @@ contract AccessAdminForTesting is AccessAdmin {
 
 
     constructor() AccessAdmin() {
+        _createAdminAndPublicRoles();
         _initializeAccessAdminForTesting();
     }
 
@@ -202,21 +204,20 @@ contract AccessAdminCloneable is AccessAdminForTesting {
 
     error ErrorAccessAdminCloneableAdminRoleMissing();
 
-    function initialize(address accessManagerAddress) public initializer() {
-        _checkAccessManager(accessManagerAddress);
-        _initialize(accessManagerAddress);
+    function initialize(AccessManagerCloneable accessManager) public initializer() {
+        _checkAccessManager(accessManager);
+        _initialize(accessManager);
     }
 
     /// @dev shared code for both initializer methods.
-    function _initialize(address accessManager) internal {
-        _initializeAuthority(address(accessManager));
+    function _initialize(AccessManagerCloneable accessManager) internal {
+        _initializeAuthority(accessManager);
         _createAdminAndPublicRoles();
         _initializeAccessAdminForTesting();
     }
 
-    function _checkAccessManager(address accessManagerAddress) internal view {
-        AccessManager am = AccessManager(accessManagerAddress);
-        (bool hasAdminRole, ) = am.hasRole(am.ADMIN_ROLE(), address(this));
+    function _checkAccessManager(AccessManagerCloneable accessManager) internal view {
+        (bool hasAdminRole, ) = accessManager.hasRole(accessManager.ADMIN_ROLE(), address(this));
         if (!hasAdminRole) {
             revert ErrorAccessAdminCloneableAdminRoleMissing();
         }
@@ -1127,8 +1128,8 @@ contract AccessAdminTest is Test {
                 address(aaMaster)));
 
         // initialize aa with newly created access manager
-        AccessManager am = new AccessManager(address(aa));
-        aa.initialize(address(am));
+        AccessManagerCloneable am = new AccessManagerCloneable();
+        aa.initialize(am);
         vm.stopPrank();
 
         // THEN
@@ -1147,13 +1148,13 @@ contract AccessAdminTest is Test {
                 address(aaMaster)));
         
         // initialize aa with newly created access manager
-        AccessManager am = new AccessManager(address(aa));
-        aa.initialize(address(am));
+        AccessManagerCloneable am = new AccessManagerCloneable();
+        aa.initialize(am);
 
         // WHEN + THEN
         // attempt to initialize 2nd time
         vm.expectRevert(Initializable.InvalidInitialization.selector);
-        aa.initialize(address(am));
+        aa.initialize(am);
 
         vm.stopPrank();
     }

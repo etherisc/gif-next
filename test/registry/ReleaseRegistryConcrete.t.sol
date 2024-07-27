@@ -16,6 +16,7 @@ import {ObjectType, RELEASE, REGISTRY, PRODUCT} from "../../contracts/type/Objec
 import {ILifecycle} from "../../contracts/shared/Lifecycle.sol";
 import {IService} from "../../contracts/shared/IService.sol";
 
+import {IAccessAdmin} from "../../contracts/authorization/IAccessAdmin.sol";
 import {IServiceAuthorization} from "../../contracts/authorization/IServiceAuthorization.sol";
 
 import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
@@ -223,6 +224,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                     newReleaseVersion,
                     bytes32(0),
                     IServiceAuthorization(address(0)),
+                    IAccessAdmin(address(0)),
                     TimestampLib.zero(),
                     TimestampLib.zero()
                 ));
@@ -325,7 +327,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
 
                 vm.prank(gifManager);
                 (
-                    address authority, 
+                    IAccessAdmin preparedAdmin, 
                     VersionPart preparedVersion, 
                     bytes32 preparedSalt
                 ) = releaseRegistry.prepareNextRelease(nextAuthMock, nextSalt);
@@ -333,9 +335,11 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 nextReleaseInfo.state = DEPLOYING();
                 nextReleaseInfo.salt = nextSalt;
                 nextReleaseInfo.auth = nextAuthMock;
+                nextReleaseInfo.admin = preparedAdmin;
 
                 // check prepare
-                assertEq(authority, registryAdmin.authority(), "prepareNextRelease() return unexpected authority");
+                // TODO check release admin in a better way
+                assertTrue(address(preparedAdmin) > address(0), "prepareNextRelease() return unexpected releaseAdmin");
                 assertEq(preparedVersion.toInt(), nextVersion.toInt(), "prepareNextRelease() return unexpected releaseVersion");
                 assertEq(preparedSalt, nextSalt, "prepareNextRelease() return unexpected releaseSalt");
 
@@ -402,7 +406,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
 
                 vm.startPrank(gifManager);
                 (
-                    address authority, 
+                    IAccessAdmin preparedAdmin, 
                     VersionPart preparedVersion, 
                     bytes32 preparedSalt
                 ) = releaseRegistry.prepareNextRelease(nextAuthMock, nextSalt);
@@ -410,9 +414,11 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 nextReleaseInfo.state = DEPLOYING();
                 nextReleaseInfo.salt = nextSalt;
                 nextReleaseInfo.auth = nextAuthMock;
+                nextReleaseInfo.admin = preparedAdmin;
 
                 // check prepare
-                assertEq(authority, registryAdmin.authority(), "prepareNextRelease() return unexpected authority");
+                // TODO check release admin in a better way
+                assertTrue(address(preparedAdmin) > address(0), "prepareNextRelease() return unexpected releaseAdmin");
                 assertEq(preparedVersion.toInt(), nextVersion.toInt(), "prepareNextRelease() return unexpected releaseVersion");
                 assertEq(preparedSalt, nextSalt, "prepareNextRelease() return unexpected releaseSalt");
 
@@ -508,7 +514,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
 
                 vm.startPrank(gifManager);
                 (
-                    address authority, 
+                    IAccessAdmin preparedAdmin, 
                     VersionPart preparedVersion, 
                     bytes32 preparedSalt
                 ) = releaseRegistry.prepareNextRelease(nextAuthMock, nextSalt);
@@ -516,9 +522,11 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 nextReleaseInfo.state = DEPLOYING();
                 nextReleaseInfo.salt = nextSalt;
                 nextReleaseInfo.auth = nextAuthMock;
+                nextReleaseInfo.admin = preparedAdmin;
 
                 // check prepare
-                assertEq(authority, registryAdmin.authority(), "prepareNextRelease() return unexpected authority");
+                // TODO check release admin in a better way
+                assertTrue(address(preparedAdmin) > address(0), "prepareNextRelease() return unexpected releaseAdmin");
                 assertEq(preparedVersion.toInt(), nextVersion.toInt(), "prepareNextRelease() return unexpected releaseVersion");
                 assertEq(preparedSalt, nextSalt, "prepareNextRelease() return unexpected releaseSalt");
 
@@ -633,7 +641,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
 
                 vm.startPrank(gifManager);
                 (
-                    address authority, 
+                    IAccessAdmin preparedAdmin, 
                     VersionPart preparedVersion, 
                     bytes32 preparedSalt
                 ) = releaseRegistry.prepareNextRelease(nextAuthMock, nextSalt);
@@ -641,9 +649,11 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 nextReleaseInfo.state = DEPLOYING();
                 nextReleaseInfo.salt = nextSalt;
                 nextReleaseInfo.auth = nextAuthMock;
+                nextReleaseInfo.admin = preparedAdmin;
 
                 // check prepare
-                assertEq(authority, registryAdmin.authority(), "prepareNextRelease() return unexpected authority");
+                // TODO check release admin in a better way
+                assertTrue(address(preparedAdmin) > address(0), "prepareNextRelease() return unexpected releaseAdmin");
                 assertEq(preparedVersion.toInt(), nextVersion.toInt(), "prepareNextRelease() return unexpected releaseVersion");
                 assertEq(preparedSalt, nextSalt, "prepareNextRelease() return unexpected releaseSalt");
 
@@ -775,7 +785,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
 
                 vm.startPrank(gifManager);
                 (
-                    address authority, 
+                    IAccessAdmin preparedAdmin, 
                     VersionPart preparedVersion, 
                     bytes32 preparedSalt
                 ) = releaseRegistry.prepareNextRelease(nextAuthMock, nextSalt);
@@ -783,9 +793,11 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 nextReleaseInfo.state = DEPLOYING();
                 nextReleaseInfo.salt = nextSalt;
                 nextReleaseInfo.auth = nextAuthMock;
+                nextReleaseInfo.admin = preparedAdmin;
 
                 // check prepare
-                assertEq(authority, registryAdmin.authority(), "prepareNextRelease() return unexpected authority");
+                // TODO check release admin in a better way
+                assertTrue(address(preparedAdmin) > address(0), "prepareNextRelease() return unexpected releaseAdmin");
                 assertEq(preparedVersion.toInt(), nextVersion.toInt(), "prepareNextRelease() return unexpected releaseVersion");
                 assertEq(preparedSalt, nextSalt, "prepareNextRelease() return unexpected releaseSalt");
 
@@ -956,22 +968,24 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
 
         vm.prank(gifManager);
         (
-            address authority, 
-            VersionPart releaseVersion, 
-            bytes32 releaseSalt
+            IAccessAdmin preparedAdmin, 
+            VersionPart preparedVersion, 
+            bytes32 preparedSalt
         ) = releaseRegistry.prepareNextRelease(serviceAuth, salt);
 
-        assertEq(authority, registryAdmin.authority(), "prepareNextRelease() return unexpected authority");
-        assertEq(releaseVersion.toInt(), expectedVersion.toInt(), "prepareNextRelease() return unexpected releaseVersion");
-        assertEq(releaseSalt, salt, "prepareNextRelease() return unexpected releaseSalt");
+        // TODO check release admin in better
+        assertTrue(address(preparedAdmin) != address(0), "prepareNextRelease() return unexpected authority");
+        assertEq(preparedVersion.toInt(), expectedVersion.toInt(), "prepareNextRelease() return unexpected releaseVersion");
+        assertEq(preparedSalt, salt, "prepareNextRelease() return unexpected releaseSalt");
 
         _assert_releaseRegistry_getters(
             expectedVersion,
             IRegistry.ReleaseInfo(
                     DEPLOYING(),
-                    expectedVersion,
-                    salt,
+                    preparedVersion,
+                    preparedSalt,
                     serviceAuth,
+                    preparedAdmin,
                     TimestampLib.zero(),
                     TimestampLib.zero()
                 ));

@@ -118,7 +118,7 @@ contract InstanceService is
             TargetManagerLib.getDefaultRewardRate());
 
         // MUST be set after instance is set up and registered
-        instanceAdmin.initializeInstanceAuthorization(address(clonedInstance));
+        instanceAdmin.completeSetup(address(clonedInstance));
 
         emit LogInstanceCloned(
             clonedInstanceNftId,
@@ -284,13 +284,15 @@ contract InstanceService is
         returns (InstanceAdmin clonedInstanceAdmin)
     {
         // start with setting up a new OZ access manager
+        // TODO consider _masterInstanceAdmin.authority() instead of _masterAccessManager
         AccessManagerCloneable clonedAccessManager = AccessManagerCloneable(
             Clones.clone(_masterAccessManager));
         
         // set up the instance admin
         clonedInstanceAdmin = InstanceAdmin(Clones.clone(_masterInstanceAdmin));
-        clonedAccessManager.initialize(
-            address(clonedInstanceAdmin)); // grant ADMIN_ROLE to instance admin
+        // TODO initialization is done in instance admin
+        //clonedAccessManager.initialize(
+        //    address(clonedInstanceAdmin)); // grant ADMIN_ROLE to instance admin
 
         clonedInstanceAdmin.initialize(
             clonedAccessManager,

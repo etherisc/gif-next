@@ -30,14 +30,17 @@ import {VersionPart} from "../type/Version.sol";
 contract RegistryAdmin is
     AccessAdmin
 {
+    /// @dev gif core roles
     string public constant GIF_ADMIN_ROLE_NAME = "GifAdminRole";
     string public constant GIF_MANAGER_ROLE_NAME = "GifManagerRole";
-    string public constant POOL_SERVICE_ROLE_NAME = "PoolServiceRole";
     string public constant RELEASE_REGISTRY_ROLE_NAME = "ReleaseRegistryRole";
+    /// @dev gif roles for external contracts
     string public constant REGISTRY_SERVICE_ROLE_NAME = "RegistryServiceRole";
+    string public constant POOL_SERVICE_ROLE_NAME = "PoolServiceRole";
     string public constant STAKING_SERVICE_ROLE_NAME = "StakingServiceRole";
     string public constant STAKING_ROLE_NAME = "StakingRole";
 
+    /// @dev gif core targets
     string public constant REGISTRY_TARGET_NAME = "Registry";
     string public constant RELEASE_REGISTRY_TARGET_NAME = "ReleaseRegistry";
     string public constant TOKEN_REGISTRY_TARGET_NAME = "TokenRegistry";
@@ -75,60 +78,14 @@ contract RegistryAdmin is
         // at this moment all registry contracts are deployed and fully intialized
         _createTarget(_tokenRegistry, TOKEN_REGISTRY_TARGET_NAME, true, false);
 
+        _initializeAdminAndPublicRoles();
+
         _setupGifAdminRole(gifAdmin);
         _setupGifManagerRole(gifManager);
 
         _setupReleaseRegistry();
         _setupRegistry();
         _setupStaking();
-    }
-
-
-    /// @dev Sets up authorizaion for specified service.
-    /// For all authorized services its authorized functions are enabled.
-    /// Permissioned function: Access is restricted to release manager.
-    function authorizeService(
-        IServiceAuthorization serviceAuthorization,
-        IService service,
-        ObjectType serviceDomain,
-        VersionPart releaseVersion
-    )
-        external
-        restricted()
-    {
-        _createServiceTargetAndRole(service, serviceDomain, releaseVersion);
-        _authorizeServiceFunctions(serviceAuthorization, service, serviceDomain, releaseVersion);
-    }
-
-    function grantServiceRole(
-        IService service,
-        ObjectType domain, 
-        VersionPart version
-    )
-        external
-        restricted()
-    {
-        _grantRoleToAccount( 
-            RoleIdLib.roleForTypeAndVersion(
-                domain, 
-                version),
-            address(service)); 
-    }
-
-    function grantServiceRoleForAllVersions(IService service, ObjectType domain)
-        external
-        restricted()
-    {
-        _grantRoleToAccount( 
-            RoleIdLib.roleForTypeAndAllVersions(domain),
-            address(service)); 
-    }
-
-    function setServiceLocked(IService service, bool locked)
-        external
-        restricted()
-    {
-        _setTargetClosed(address(service), locked);
     }
 
     /*function transferAdmin(address to)
@@ -139,6 +96,15 @@ contract RegistryAdmin is
         _accesssManager.grant(GIF_ADMIN_ROLE, to, 0);
     }*/
 
+    function grantServiceRoleForAllVersions(IService service, ObjectType domain)
+        external
+        restricted()
+    {
+        _grantRoleToAccount( 
+            RoleIdLib.roleForTypeAndAllVersions(domain),
+            address(service)); 
+    }
+
     //--- view functions ----------------------------------------------------//
 
     function getGifAdminRole() external view returns (RoleId) {
@@ -147,89 +113,6 @@ contract RegistryAdmin is
 
     function getGifManagerRole() external view returns (RoleId) {
         return GIF_MANAGER_ROLE();
-    }
-
-    //--- private functions -------------------------------------------------//
-
-    function _createServiceTargetAndRole(
-        IService service, 
-        ObjectType serviceDomain, 
-        VersionPart releaseVersion
-    )
-        private
-    {
-        string memory baseName = ObjectTypeLib.toName(serviceDomain);
-        uint256 versionInt = releaseVersion.toInt();
-
-        // create service target
-        string memory serviceTargetName = ObjectTypeLib.toVersionedName(
-            baseName, "Service", versionInt);
-
-        _createTarget(
-            address(service), 
-            serviceTargetName,
-            true,
-            false);
-
-        _setTargetClosed(address(service), true);
-
-        // create service role
-        RoleId serviceRoleId = RoleIdLib.roleForTypeAndVersion(
-            serviceDomain, 
-            releaseVersion);
-
-        _createRole(
-            serviceRoleId, 
-            toRole({
-                adminRoleId: ADMIN_ROLE(),
-                roleType: RoleType.Contract,
-                maxMemberCount: 1,
-                name: ObjectTypeLib.toVersionedName(
-                    baseName, 
-                    "ServiceRole", 
-                    versionInt)}));
-
-        _grantRoleToAccount( 
-            serviceRoleId,
-            address(service)); 
-    }
-
-
-    function _authorizeServiceFunctions(
-        IServiceAuthorization serviceAuthorization,
-        IService service,
-        ObjectType serviceDomain, 
-        VersionPart releaseVersion
-    )
-        private
-    {
-        ObjectType authorizedDomain;
-        RoleId authorizedRoleId;
-
-        ObjectType[] memory authorizedDomains = serviceAuthorization.getAuthorizedDomains(serviceDomain);
-
-        for (uint256 i = 0; i < authorizedDomains.length; i++) {
-            authorizedDomain = authorizedDomains[i];
-
-            // derive authorized role from authorized domain
-            if (authorizedDomain == ALL()) {
-                authorizedRoleId = PUBLIC_ROLE();
-            } else {
-                authorizedRoleId = RoleIdLib.roleForTypeAndVersion(
-                authorizedDomain, 
-                releaseVersion);
-            }
-
-            // get authorized functions for authorized domain
-            IAccess.FunctionInfo[] memory authorizatedFunctions = serviceAuthorization.getAuthorizedFunctions(
-                serviceDomain, 
-                authorizedDomain);
-
-            _authorizeTargetFunctions(
-                    address(service), 
-                    authorizedRoleId, 
-                    authorizatedFunctions);
-        }
     }
 
     //--- private initialization functions -------------------------------------------//
@@ -297,12 +180,10 @@ contract RegistryAdmin is
         _grantRoleToAccount(GIF_MANAGER_ROLE(), gifManager);
     }
 
-
     function _setupReleaseRegistry()
         private 
         onlyInitializing()
     {
-
         _createTarget(_releaseRegistry, RELEASE_REGISTRY_TARGET_NAME, true, false);
 
         RoleId releaseRegistryRoleId = RoleIdLib.roleForType(RELEASE());
@@ -315,11 +196,8 @@ contract RegistryAdmin is
                 name: RELEASE_REGISTRY_ROLE_NAME}));
 
         FunctionInfo[] memory functions;
-        functions = new FunctionInfo[](4);
-        functions[0] = toFunction(RegistryAdmin.authorizeService.selector, "authorizeService");
-        functions[1] = toFunction(RegistryAdmin.grantServiceRoleForAllVersions.selector, "grantServiceRoleForAllVersions");
-        functions[2] = toFunction(RegistryAdmin.grantServiceRole.selector, "grantServiceRole");
-        functions[3] = toFunction(RegistryAdmin.setServiceLocked.selector, "setServiceLocked");
+        functions = new FunctionInfo[](1);
+        functions[0] = toFunction(RegistryAdmin.grantServiceRoleForAllVersions.selector, "grantServiceRoleForAllVersions");
         _authorizeTargetFunctions(address(this), releaseRegistryRoleId, functions);
 
         _grantRoleToAccount(releaseRegistryRoleId, _releaseRegistry);

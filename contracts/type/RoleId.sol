@@ -54,6 +54,9 @@ function GIF_MANAGER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2)
 /// @dev role for registering remote staking targets and reporting remote total value locked amounts.
 function GIF_REMOTE_MANAGER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(3); } 
 
+/// @dev role for locking releases
+function RELEASE_ADMIN_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(4); }
+
 //--- GIF core contract roles (range: 200 - 9'900) --------------------------//
 // created and assigned during initial deployment for registry and staking
 // granting for instances and components in instance service

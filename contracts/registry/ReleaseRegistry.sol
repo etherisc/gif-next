@@ -12,7 +12,9 @@ import {StateId, SCHEDULED, DEPLOYING, DEPLOYED, SKIPPED, ACTIVE, PAUSED} from "
 import {VersionPart, VersionPartLib} from "../type/Version.sol";
 
 import {IService} from "../shared/IService.sol";
-import {IRegisterable} from "../shared/IRegisterable.sol";
+
+import {IAccessAdmin} from "../authorization/IAccessAdmin.sol";
+import {ReleaseAccessManagerCloneable} from "../authorization/ReleaseAccessManagerCloneable.sol";
 
 import {IRegistry} from "./IRegistry.sol";
 import {IRegistryLinked} from "../shared/IRegistryLinked.sol";
@@ -20,6 +22,7 @@ import {IServiceAuthorization} from "../authorization/IServiceAuthorization.sol"
 import {RegistryAdmin} from "./RegistryAdmin.sol";
 import {Registry} from "./Registry.sol";
 import {ReleaseLifecycle} from "./ReleaseLifecycle.sol";
+import {ReleaseAdmin} from "./ReleaseAdmin.sol";
 
 
 contract ReleaseRegistry is 
@@ -66,7 +69,9 @@ contract ReleaseRegistry is
     Registry public immutable _registry;
 
     mapping(VersionPart version => IRegistry.ReleaseInfo info) internal _releaseInfo;
-    VersionPart [] internal _release; // array of all created releases
+    VersionPart [] internal _release; // array of all created releases    
+    ReleaseAdmin _masterReleaseAdmin;
+
     VersionPart internal _latest; // latest active version
     VersionPart internal _next; // version to create and activate 
 
@@ -85,6 +90,8 @@ contract ReleaseRegistry is
 
         _registry = registry;
         _admin = RegistryAdmin(_registry.getRegistryAdminAddress());
+
+        _masterReleaseAdmin = new ReleaseAdmin();
 
         _next = VersionPartLib.toVersionPart(INITIAL_GIF_VERSION - 1);
     }
@@ -121,7 +128,7 @@ contract ReleaseRegistry is
         external
         restricted() // GIF_MANAGER_ROLE
         returns(
-            address releaseAuthority, 
+            IAccessAdmin releaseAdmin, 
             VersionPart releaseVersion, 
             bytes32 releaseSalt
         )
@@ -131,9 +138,24 @@ contract ReleaseRegistry is
         // release can transition into DEPLOYING state
         checkTransition(_releaseInfo[releaseVersion].state, RELEASE(), SCHEDULED(), DEPLOYING());
 
+        // verify authorizations
         uint256 serviceDomainsCount = _verifyServiceAuthorization(serviceAuthorization, releaseVersion, salt);
 
-        releaseAuthority = _admin.authority();
+        // create and initialize release admin
+        ReleaseAccessManagerCloneable releaseAccessManager = ReleaseAccessManagerCloneable(
+            Clones.clone(
+                _masterReleaseAdmin.authority()
+            )
+        );
+        ReleaseAdmin clonedAdmin = ReleaseAdmin(
+            Clones.clone(
+                address(_masterReleaseAdmin)
+            )
+        );
+        clonedAdmin.initialize(releaseAccessManager, address(this));
+        clonedAdmin.setReleaseLocked(true);
+
+        releaseAdmin = clonedAdmin;
         releaseSalt = salt;
         // ensures unique salt
         // TODO CreateX have clones capability also
@@ -148,7 +170,7 @@ contract ReleaseRegistry is
         _releaseInfo[releaseVersion].salt = releaseSalt;
         // TODO allow for the same serviceAuthorization address to be used for multiple releases?
         _releaseInfo[releaseVersion].auth = serviceAuthorization;
-        //_releaseInfo[releaseVersion].authority = releaseAuthority;
+        _releaseInfo[releaseVersion].admin = releaseAdmin;
 
         emit LogReleaseCreation(releaseVersion, releaseSalt);
     }
@@ -163,9 +185,9 @@ contract ReleaseRegistry is
         // release can transition to DEPLOYED state
         checkTransition(_releaseInfo[releaseVersion].state, RELEASE(), DEPLOYING(), DEPLOYED());
 
-        address releaseAuthority = _admin.authority();
-        IServiceAuthorization serviceAuth = _releaseInfo[releaseVersion].auth;
-        ObjectType expectedDomain = serviceAuth.getServiceDomain(_registeredServices);
+        address releaseAuthority = _releaseInfo[releaseVersion].admin.authority();
+        IServiceAuthorization releaseAuth = _releaseInfo[releaseVersion].auth;
+        ObjectType expectedDomain = releaseAuth.getServiceDomain(_registeredServices);
 
         // service can work with release registry and release version
         (
@@ -195,11 +217,14 @@ contract ReleaseRegistry is
         // revert ErrorReleaseRegistryServiceAddressMismatch()
 
         // setup service authorization
-        _admin.authorizeService(
-            serviceAuth, 
+        ReleaseAdmin releaseAdmin = ReleaseAdmin(address(_releaseInfo[releaseVersion].admin));
+        releaseAdmin.setReleaseLocked(false);
+        releaseAdmin.authorizeService(
+            releaseAuth, 
             service,
             serviceDomain,
             releaseVersion);
+        releaseAdmin.setReleaseLocked(true); 
 
         // register service with registry
         nftId = _registry.registerService(info, serviceVersion, serviceDomain);
@@ -353,20 +378,8 @@ contract ReleaseRegistry is
     function _setReleaseLocked(VersionPart version, bool locked)
         private
     {
-        address service;
-        ObjectType domain;
-        IServiceAuthorization auth = _releaseInfo[version].auth;
-
-        ObjectType[] memory domains = auth.getServiceDomains();
-        for(uint idx = 0; idx < domains.length; idx++)
-        {
-            domain = domains[idx];
-            service = _registry.getServiceAddress(domain, version);
-            assert(service != address(0));
-
-            _admin.setServiceLocked(IService(service), locked);
-        }
-
+        ReleaseAdmin releaseAdmin = ReleaseAdmin(address(_releaseInfo[version].admin));
+        releaseAdmin.setReleaseLocked(locked);
         // TODO add check for active/disabled release to core contracts functions interacting with releases
     }
 

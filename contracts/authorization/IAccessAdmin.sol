@@ -29,7 +29,6 @@ interface IAccessAdmin is
     error ErrorNotRoleOwner(RoleId roleId);
 
     // initialize authority
-    error ErrorAuthorityAlreadySet();
     error ErrorAdminRoleMissing();
 
     // create role

@@ -11,6 +11,8 @@ import {ObjectType} from "../../contracts/type/ObjectType.sol";
 import {VersionPartLib, VersionPart} from "../../contracts/type/Version.sol";
 import {RoleId} from "../../contracts/type/RoleId.sol";
 
+import {IAccessAdmin} from "../../contracts/authorization/IAccessAdmin.sol";
+
 import {Dip} from "../../contracts/mock/Dip.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
@@ -79,7 +81,7 @@ contract RegistryServiceHarnessTestBase is GifDeployer, FoundryRandom {
         releaseRegistry.createNextRelease();
 
         (
-            address releaseAccessManager,
+            IAccessAdmin releaseAdmin,
             VersionPart releaseVersion,
             bytes32 releaseSalt
         ) = releaseRegistry.prepareNextRelease(
@@ -87,7 +89,7 @@ contract RegistryServiceHarnessTestBase is GifDeployer, FoundryRandom {
             salt);
 
         registryServiceManagerWithHarness = new RegistryServiceManagerMockWithHarness{salt: releaseSalt}(
-            releaseAccessManager,
+            releaseAdmin.authority(),
             registryAddress,
             releaseSalt);
 

@@ -10,6 +10,7 @@ import {Timestamp} from "../type/Timestamp.sol";
 import {StateId} from "../type/StateId.sol";
 
 import {IServiceAuthorization} from "../authorization/IServiceAuthorization.sol";
+import {IAccessAdmin} from "../authorization/IAccessAdmin.sol";
 
 /// @title Chain Registry interface.
 /// A chain registry holds all protocol relevant objects with basic metadata.
@@ -66,6 +67,7 @@ interface IRegistry is IERC165 {
         VersionPart version;
         bytes32 salt;
         IServiceAuthorization auth;
+        IAccessAdmin admin;
         Timestamp activatedAt;
         Timestamp disabledAt;
     }

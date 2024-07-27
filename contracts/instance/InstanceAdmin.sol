@@ -48,6 +48,7 @@ contract InstanceAdmin is
         AccessAdmin()
     {
         _instanceAuthorization = instanceAuthorization;
+        _disableInitializers();
     }
 
     /// @dev Initializes this instance admin with the provided instances authorization specification.
@@ -61,11 +62,11 @@ contract InstanceAdmin is
         external
         initializer() 
     {
-        // create new access manager for this instance admin
-        _initializeAuthority(address(accessManager));
+        // set and initialize access manager for this instance admin
+        _initializeAuthority(accessManager);
 
         // create basic instance independent setup
-        _createAdminAndPublicRoles();
+        _initializeAdminAndPublicRoles();
 
         // store instance authorization specification
         _instanceAuthorization = IAuthorization(instanceAuthorization);
@@ -86,9 +87,12 @@ contract InstanceAdmin is
 
     /// @dev Completes the initialization of this instance admin using the provided instance.
     /// Important: The instance MUST be registered and all instance supporting contracts must be wired to this instance.
-    function initializeInstanceAuthorization(address instanceAddress)
+    /// Important: MUST be called in the same tx as initialize()
+    function completeSetup(address instanceAddress)
         external
     {
+        // !!! TODO add caller restrictions?
+
         _checkTargetIsReadyForAuthorization(instanceAddress);
 
         _idNext = CUSTOM_ROLE_ID_MIN;
@@ -114,6 +118,8 @@ contract InstanceAdmin is
     )
         external
     {
+        // !!! TODO add caller restrictions?
+
         _checkTargetIsReadyForAuthorization(address(component));
 
         // get authorization specification

@@ -47,13 +47,14 @@ contract TestInstanceAdmin is
 
         // create OZ AccessManager and assign admin role to clonedInstanceAdmin
         AccessManagerCloneable ozAccessManager = new AccessManagerCloneable();
-        ozAccessManager.initialize(address(clonedInstanceAdmin));
+        // TODO initialization is done in instance admin
+        //ozAccessManager.initialize(address(clonedInstanceAdmin));
 
         clonedInstanceAdmin.initialize(
             ozAccessManager,
             someInstanceAuthz);
 
-        clonedInstanceAdmin.initializeInstanceAuthorization(
+        clonedInstanceAdmin.completeSetup(
             address(instance));
     }
 }

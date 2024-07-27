@@ -15,18 +15,18 @@ import {ObjectType, ObjectTypeLib} from "../../contracts/type/ObjectType.sol";
 import {RoleId} from "../../contracts/type/RoleId.sol";
 
 import {InitializableERC165} from "../../contracts/shared/InitializableERC165.sol";
+import {IService} from "../../contracts/shared/IService.sol";
+import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 
+import {IAccessAdmin} from "../../contracts/authorization/IAccessAdmin.sol";
+
+import {IRegistry} from "../../contracts/registry/IRegistry.sol";
+import {IRegistryService} from "../../contracts/registry/IRegistryService.sol";
 import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
 import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
-import {IRegistryService} from "../../contracts/registry/IRegistryService.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
-import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
 import {ServiceAuthorizationV3} from "../../contracts/registry/ServiceAuthorizationV3.sol";
-
-import {IService} from "../../contracts/shared/IService.sol";
-
-import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 
 import {Dip} from "../../contracts/mock/Dip.sol";
 import {ServiceMock} from "../mock/ServiceMock.sol";
@@ -53,7 +53,7 @@ contract RegistryServiceTestBase is GifTest, FoundryRandom {
         releaseRegistry.createNextRelease();
 
         (
-            address releaseAccessManager,
+            IAccessAdmin releaseAdmin,
             VersionPart releaseVersion,
             bytes32 releaseSalt
         ) = releaseRegistry.prepareNextRelease(
@@ -61,7 +61,7 @@ contract RegistryServiceTestBase is GifTest, FoundryRandom {
             salt);
 
         registryServiceManager = new RegistryServiceManager{salt: releaseSalt}(
-            releaseAccessManager,
+            releaseAdmin.authority(),
             registryAddress,
             releaseSalt);
         registryService = registryServiceManager.getRegistryService();

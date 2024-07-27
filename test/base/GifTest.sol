@@ -325,7 +325,8 @@ contract GifTest is GifDeployer {
         masterInstanceNftId = instanceService.setAndRegisterMasterInstance(address(masterInstance));
 
         // MUST be set after instance is set up and registered
-        masterInstanceAdmin.initializeInstanceAuthorization(address(masterInstance));
+        // TODO consider deleting this -> master instance just provides impl code, it own state must pe mot initialized
+        //masterInstanceAdmin.initializeInstanceAuthorization(address(masterInstance));
 
         // lock master instance nft
         chainNft.transferFrom(registryOwner, NFT_LOCK_ADDRESS, masterInstanceNftId.toInt());
