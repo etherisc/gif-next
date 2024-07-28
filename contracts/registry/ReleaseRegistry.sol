@@ -258,7 +258,9 @@ contract ReleaseRegistry is
     }
 
     /// @dev stop/resume operations with restricted functions
-    function setActive(VersionPart version, bool active) public
+    function setActive(VersionPart version, bool active) 
+        public
+        restricted
     {
         StateId state = _releaseInfo[version].state;
 
