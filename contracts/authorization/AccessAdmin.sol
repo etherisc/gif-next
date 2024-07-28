@@ -111,6 +111,8 @@ contract AccessAdmin is
     constructor() {
         _deployer = msg.sender;
         _authority = _createAuthority();
+
+        // admin role is granted before it is created
         _authority.initialize(address(this));
 
         _setAuthority(address(_authority));

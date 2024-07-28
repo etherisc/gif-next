@@ -6,7 +6,7 @@ import {IAccess} from "../authorization/IAccess.sol";
 import {IService} from "../shared/IService.sol";
 import {IServiceAuthorization} from "../authorization/IServiceAuthorization.sol";
 import {ObjectType, ObjectTypeLib, ALL, RELEASE} from "../type/ObjectType.sol";
-import {RoleId, RoleIdLib, ADMIN_ROLE, RELEASE_ADMIN_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
+import {RoleId, RoleIdLib, ADMIN_ROLE, RELEASE_REGISTRY_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {VersionPart} from "../type/Version.sol";
 import {ReleaseAccessManagerCloneable} from "../authorization/ReleaseAccessManagerCloneable.sol";
 import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
@@ -15,33 +15,21 @@ import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.so
 contract ReleaseAdmin is
     AccessAdmin
 {
-    error ErrorReleaseAdminCallerNotReleaseAdmin(address caller);
+    error ErrorReleaseAdminCallerNotReleaseRegistry(address caller);
 
     /// @dev release core roles
-    string public constant RELEASE_ADMIN_ROLE_NAME = "ReleaseAdminRole"; 
-
-    /// @dev external to release roles
     string public constant RELEASE_REGISTRY_ROLE_NAME = "ReleaseRegistryRole";
 
-    /// @dev external to release targets
-    string public constant RELEASE_REGISTRY_TARGET_NAME = "ReleaseRegistry";
 
-    //address internal _registry;
-    address private _releaseRegistry;
-
-    modifier onlyReleaseAdminRole() {
-        //(bool isMember_1, ) = _authority.hasRole(GIF_MANAGER_ROLE().toInt(), msg.sender);
-        //(bool isMember_2, ) = _authority.hasRole(GIF_ADMIN_ROLE().toInt(), msg.sender);
-        //if(!(isMember_1 & isMember_2)) {
-        //    revert ErrorReleaseAdminCallerNotReleaseAdmin(msg.sender);
-        //}
-        (bool isMember, ) = _authority.hasRole(RELEASE_ADMIN_ROLE().toInt(), msg.sender);
+    modifier onlyReleaseRegistry() {
+        (bool isMember, ) = _authority.hasRole(RELEASE_REGISTRY_ROLE().toInt(), msg.sender);
         if(!isMember) {
-            revert ErrorReleaseAdminCallerNotReleaseAdmin(msg.sender);
+            revert ErrorReleaseAdminCallerNotReleaseRegistry(msg.sender);
         }
         _;
     }
-
+    /// @dev Only used for master release admin.
+    /// Contracts created via constructor come with disabled initializers.
     constructor()
         AccessAdmin()
     {
@@ -57,21 +45,20 @@ contract ReleaseAdmin is
     }
 
     // TODO can store IServiceAuthorization like InstanceAdmin does
+    /// @dev Initializes this releae admin with the provided access manager and release registry address.
+    /// Used for cloned release admin.
     function initialize(ReleaseAccessManagerCloneable accessManager, address releaseRegistry)
         external
         initializer
     {
-        _releaseRegistry = releaseRegistry;
-
         // set and initialize access manager for this release admin
+        // admin role is granted before it is created
         _initializeAuthority(accessManager);
 
         // create basic release independent setup
         _initializeAdminAndPublicRoles();
 
-        // assume caller is ReleaseRegistry
-        _setupReleaseAdminRole(msg.sender);
-        _setupReleaseRegistry();
+        _setupReleaseRegistry(releaseRegistry);
     }
 
 
@@ -91,24 +78,9 @@ contract ReleaseAdmin is
         _authorizeServiceFunctions(serviceAuthorization, service, serviceDomain, releaseVersion);
     }
 
-    function grantServiceRole(
-        IService service,
-        ObjectType domain, 
-        VersionPart version
-    )
-        external
-        restricted()
-    {
-        _grantRoleToAccount( 
-            RoleIdLib.roleForTypeAndVersion(
-                domain, 
-                version),
-            address(service)); 
-    }
-
     function setReleaseLocked(bool locked)
         external
-        onlyReleaseAdminRole()
+        onlyReleaseRegistry()
     {
         _setReleaseLocked(locked);
     }
@@ -216,39 +188,20 @@ contract ReleaseAdmin is
     }
 
     function _setReleaseLocked(bool locked)
-        internal
+        private
     {
         ReleaseAccessManagerCloneable(authority()).setReleaseLocked(locked);
     }
 
     //--- private initialization functions -------------------------------------------//
 
-    function _setupReleaseAdminRole(address releaseAdmin) 
+    function _setupReleaseRegistry(address releaseRegistry)
         private 
         onlyInitializing()
     {
-        _createRole(
-            RELEASE_ADMIN_ROLE(), 
-            toRole({
-                adminRoleId: ADMIN_ROLE(),
-                roleType: RoleType.Gif,
-                maxMemberCount: 1,
-                name: RELEASE_ADMIN_ROLE_NAME}));
-
-        // for ReleaseAdmin
-        FunctionInfo[] memory functions;
-        functions = new FunctionInfo[](1);
-        functions[0] = toFunction(ReleaseAdmin.setReleaseLocked.selector, "setReleaseLocked");
-        _authorizeTargetFunctions(address(this), RELEASE_ADMIN_ROLE(), functions);
-
-        _grantRoleToAccount(RELEASE_ADMIN_ROLE(), releaseAdmin);
-    }
-
-    function _setupReleaseRegistry()
-        private 
-        onlyInitializing()
-    {
-        RoleId releaseRegistryRoleId = RoleIdLib.roleForType(RELEASE());
+        // TODO why release registry role is calculated?
+        //RoleId releaseRegistryRoleId = RoleIdLib.roleForType(RELEASE());
+        RoleId releaseRegistryRoleId = RELEASE_REGISTRY_ROLE();
         _createRole(
             releaseRegistryRoleId, 
             toRole({
@@ -258,13 +211,11 @@ contract ReleaseAdmin is
                 name: RELEASE_REGISTRY_ROLE_NAME}));
 
         FunctionInfo[] memory functions;
-        functions = new FunctionInfo[](4);
+        functions = new FunctionInfo[](2);
         functions[0] = toFunction(ReleaseAdmin.authorizeService.selector, "authorizeService");
-        functions[1] = toFunction(ReleaseAdmin.grantServiceRole.selector, "grantServiceRole");
-        functions[2] = toFunction(ReleaseAdmin.setReleaseLocked.selector, "setReleaseLocked");
-        functions[3] = toFunction(ReleaseAdmin.setServiceLocked.selector, "setServiceLocked");
+        functions[1] = toFunction(ReleaseAdmin.setServiceLocked.selector, "setServiceLocked");
         _authorizeTargetFunctions(address(this), releaseRegistryRoleId, functions);
 
-        _grantRoleToAccount(releaseRegistryRoleId, _releaseRegistry);
+        _grantRoleToAccount(releaseRegistryRoleId, releaseRegistry);
     }
 }
