@@ -340,6 +340,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 // check prepare
                 // TODO check release admin in a better way
                 assertTrue(address(preparedAdmin) > address(0), "prepareNextRelease() return unexpected releaseAdmin");
+                //assertTrue(preparedAdmin.isReleaseLocked(), "isReleaseLocked() return unexpected value");
                 assertEq(preparedVersion.toInt(), nextVersion.toInt(), "prepareNextRelease() return unexpected releaseVersion");
                 assertEq(preparedSalt, nextSalt, "prepareNextRelease() return unexpected releaseSalt");
 
@@ -727,7 +728,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 emit LogReleaseDisabled(nextVersion);
 
                 vm.prank(gifAdmin);
-                releaseRegistry.pauseRelease(nextVersion);
+                releaseRegistry.setActive(nextVersion, false);
 
                 nextReleaseInfo.state = PAUSED();
                 nextReleaseInfo.disabledAt = TimestampLib.blockTimestamp();
@@ -871,7 +872,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 emit LogReleaseDisabled(nextVersion);
 
                 vm.prank(gifAdmin);
-                releaseRegistry.pauseRelease(nextVersion);
+                releaseRegistry.setActive(nextVersion, false);
 
                 nextReleaseInfo.state = PAUSED();
                 nextReleaseInfo.disabledAt = TimestampLib.blockTimestamp();
@@ -893,7 +894,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 emit LogReleaseEnabled(nextVersion);
 
                 vm.prank(gifAdmin);
-                releaseRegistry.unpauseRelease(nextVersion);
+                releaseRegistry.setActive(nextVersion, true);
 
                 nextReleaseInfo.state = ACTIVE();
                 nextReleaseInfo.disabledAt = TimestampLib.zero();
@@ -1135,7 +1136,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
 
             // pause
             vm.prank(gifAdmin);
-            releaseRegistry.pauseRelease(createdVersion);
+            releaseRegistry.setActive(createdVersion, false);
 
             // prepare with revert
             authMock = new ServiceAuthorizationMockWithRegistryService(createdVersion);
@@ -1585,7 +1586,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
 
             // pause
             vm.prank(gifAdmin);
-            releaseRegistry.pauseRelease(createdVersion);
+            releaseRegistry.setActive(createdVersion, false);
 
             // register with revert
             ServiceMock serviceMock = new ServiceMock(
@@ -1758,7 +1759,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
 
             // pause
             vm.prank(gifAdmin);
-            releaseRegistry.pauseRelease(createdVersion);
+            releaseRegistry.setActive(createdVersion, false);
 
             // activate with revert
             vm.expectRevert(abi.encodeWithSelector(
@@ -1780,15 +1781,15 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
 
         vm.expectRevert(abi.encodeWithSelector(IAccessManaged.AccessManagedUnauthorized.selector, gifManager));
         vm.prank(gifManager);
-        releaseRegistry.pauseRelease(version);
+        releaseRegistry.setActive(version, false);
 
         vm.expectRevert(abi.encodeWithSelector(IAccessManaged.AccessManagedUnauthorized.selector, stakingOwner));
         vm.prank(stakingOwner);
-        releaseRegistry.pauseRelease(version);
+        releaseRegistry.setActive(version, false);
 
         vm.expectRevert(abi.encodeWithSelector(IAccessManaged.AccessManagedUnauthorized.selector, outsider));
         vm.prank(outsider);
-        releaseRegistry.pauseRelease(version);
+        releaseRegistry.setActive(version, false);
     }
 
     function test_pauseRelease_whenInitialReleaseNotCreated() public
@@ -1805,7 +1806,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 ACTIVE()
             ));
             vm.prank(gifAdmin);
-            releaseRegistry.pauseRelease(version);
+            releaseRegistry.setActive(version, false);
         }
     }
 
@@ -1826,7 +1827,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 ACTIVE()
             ));
             vm.prank(gifAdmin);
-            releaseRegistry.pauseRelease(createdVersion);
+            releaseRegistry.setActive(createdVersion, false);
         }
     }
 
@@ -1854,7 +1855,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 ACTIVE()
             ));
             vm.prank(gifAdmin);
-            releaseRegistry.pauseRelease(createdVersion);
+            releaseRegistry.setActive(createdVersion, false);
         }
     }
 
@@ -1886,7 +1887,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 ACTIVE()
             ));
             vm.prank(gifAdmin);
-            releaseRegistry.pauseRelease(createdVersion);
+            releaseRegistry.setActive(createdVersion, false);
         }
     }
 
@@ -1926,7 +1927,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
 
             // pause
             vm.prank(gifAdmin);
-            releaseRegistry.pauseRelease(createdVersion);
+            releaseRegistry.setActive(createdVersion, false);
 
             // pause with revert
             vm.expectRevert(abi.encodeWithSelector(
@@ -1937,7 +1938,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 ACTIVE()
             ));
             vm.prank(gifAdmin);
-            releaseRegistry.pauseRelease(createdVersion);
+            releaseRegistry.setActive(createdVersion, false);
         }
     }
 
@@ -1949,15 +1950,15 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
 
         vm.expectRevert(abi.encodeWithSelector(IAccessManaged.AccessManagedUnauthorized.selector, gifManager));
         vm.prank(gifManager);
-        releaseRegistry.unpauseRelease(version);
+        releaseRegistry.setActive(version, true);
 
         vm.expectRevert(abi.encodeWithSelector(IAccessManaged.AccessManagedUnauthorized.selector, stakingOwner));
         vm.prank(stakingOwner);
-        releaseRegistry.unpauseRelease(version);
+        releaseRegistry.setActive(version, true);
 
         vm.expectRevert(abi.encodeWithSelector(IAccessManaged.AccessManagedUnauthorized.selector, outsider));
         vm.prank(outsider);
-        releaseRegistry.unpauseRelease(version);
+        releaseRegistry.setActive(version, true);
     }
 
     function test_unpauseRelease_whenInitialReleaseNotCreated() public
@@ -1974,7 +1975,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 PAUSED()
             ));
             vm.prank(gifAdmin);
-            releaseRegistry.unpauseRelease(version);
+            releaseRegistry.setActive(version, true);
         }
     }
 
@@ -1995,7 +1996,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 PAUSED()
             ));
             vm.prank(gifAdmin);
-            releaseRegistry.unpauseRelease(createdVersion);
+            releaseRegistry.setActive(createdVersion, true);
         }
     }
 
@@ -2023,7 +2024,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 PAUSED()
             ));
             vm.prank(gifAdmin);
-            releaseRegistry.unpauseRelease(createdVersion);
+            releaseRegistry.setActive(createdVersion, true);
         }
     }
 
@@ -2055,7 +2056,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 PAUSED()
             ));
             vm.prank(gifAdmin);
-            releaseRegistry.unpauseRelease(createdVersion);
+            releaseRegistry.setActive(createdVersion, true);
         }
     }
 
@@ -2091,7 +2092,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 PAUSED()
             ));
             vm.prank(gifAdmin);
-            releaseRegistry.unpauseRelease(createdVersion);
+            releaseRegistry.setActive(createdVersion, true);
         }
     }
 

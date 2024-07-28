@@ -34,11 +34,12 @@ contract RegistryAdmin is
     string public constant GIF_ADMIN_ROLE_NAME = "GifAdminRole";
     string public constant GIF_MANAGER_ROLE_NAME = "GifManagerRole";
     string public constant RELEASE_REGISTRY_ROLE_NAME = "ReleaseRegistryRole";
+    string public constant STAKING_ROLE_NAME = "StakingRole";
+
     /// @dev gif roles for external contracts
     string public constant REGISTRY_SERVICE_ROLE_NAME = "RegistryServiceRole";
     string public constant POOL_SERVICE_ROLE_NAME = "PoolServiceRole";
     string public constant STAKING_SERVICE_ROLE_NAME = "StakingServiceRole";
-    string public constant STAKING_ROLE_NAME = "StakingRole";
 
     /// @dev gif core targets
     string public constant REGISTRY_TARGET_NAME = "Registry";
@@ -48,8 +49,6 @@ contract RegistryAdmin is
     string public constant STAKING_STORE_TARGET_NAME = "StakingStore";
 
     uint8 public constant MAX_NUM_RELEASES = 99;
-    // TODO consider deleting this
-    mapping(address service => VersionPart majorVersion) private _ServiceRelease;
 
     address internal _registry;
     address private _releaseRegistry;
@@ -75,10 +74,10 @@ contract RegistryAdmin is
         _stakingStore = address(
             IStaking(_staking).getStakingStore());
 
+        _initializeAdminAndPublicRoles();
+
         // at this moment all registry contracts are deployed and fully intialized
         _createTarget(_tokenRegistry, TOKEN_REGISTRY_TARGET_NAME, true, false);
-
-        _initializeAdminAndPublicRoles();
 
         _setupGifAdminRole(gifAdmin);
         _setupGifManagerRole(gifManager);
@@ -137,11 +136,10 @@ contract RegistryAdmin is
         _authorizeTargetFunctions(_registry, GIF_ADMIN_ROLE(), functions);
 
         // for ReleaseRegistry
-        functions = new FunctionInfo[](4);
+        functions = new FunctionInfo[](3);
         functions[0] = toFunction(ReleaseRegistry.createNextRelease.selector, "createNextRelease");
         functions[1] = toFunction(ReleaseRegistry.activateNextRelease.selector, "activateNextRelease");
-        functions[2] = toFunction(ReleaseRegistry.pauseRelease.selector, "pauseRelease");
-        functions[3] = toFunction(ReleaseRegistry.unpauseRelease.selector, "unpauseRelease");
+        functions[2] = toFunction(ReleaseRegistry.setActive.selector, "pauseRelease");
         _authorizeTargetFunctions(_releaseRegistry, GIF_ADMIN_ROLE(), functions);
 
         _grantRoleToAccount(GIF_ADMIN_ROLE(), gifAdmin);

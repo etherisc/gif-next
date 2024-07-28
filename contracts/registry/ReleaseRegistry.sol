@@ -142,20 +142,7 @@ contract ReleaseRegistry is
         uint256 serviceDomainsCount = _verifyServiceAuthorization(serviceAuthorization, releaseVersion, salt);
 
         // create and initialize release admin
-        ReleaseAccessManagerCloneable releaseAccessManager = ReleaseAccessManagerCloneable(
-            Clones.clone(
-                _masterReleaseAdmin.authority()
-            )
-        );
-        ReleaseAdmin clonedAdmin = ReleaseAdmin(
-            Clones.clone(
-                address(_masterReleaseAdmin)
-            )
-        );
-        clonedAdmin.initialize(releaseAccessManager, address(this));
-        clonedAdmin.setReleaseLocked(true);
-
-        releaseAdmin = clonedAdmin;
+        releaseAdmin = _createReleaseAdmin();
         releaseSalt = salt;
         // ensures unique salt
         // TODO CreateX have clones capability also
@@ -265,44 +252,29 @@ contract ReleaseRegistry is
             _admin.grantServiceRoleForAllVersions(IService(service), POOL());
         }
 
-        // TODO may run out of gas
-        // TODO test how many service can be locked in one transaction
-        // -> add to docs + each release must test for this -> add to release version tests (in test call with some gas limit?)
         _setReleaseLocked(version, false);
 
         emit LogReleaseActivation(version);
     }
 
-    /// @dev stop all operations with release services
-    function pauseRelease(VersionPart version)
-        external 
-        restricted // GIF_ADMIN_ROLE
+    /// @dev stop/resume operations with restricted functions
+    function setActive(VersionPart version, bool active) public
     {
-        // release can transition to PAUSED state
-        checkTransition(_releaseInfo[version].state, RELEASE(), ACTIVE(), PAUSED());
+        StateId state = _releaseInfo[version].state;
 
-        _releaseInfo[version].state = PAUSED();
-        _releaseInfo[version].disabledAt = TimestampLib.blockTimestamp();
+        if(active) {
+            checkTransition(state, RELEASE(), PAUSED(), ACTIVE());
+            _releaseInfo[version].state = ACTIVE();
+            _releaseInfo[version].disabledAt = zeroTimestamp();
+            emit LogReleaseEnabled(version);
+        } else {
+            checkTransition(state, RELEASE(), ACTIVE(), PAUSED());
+            _releaseInfo[version].state = PAUSED();
+            _releaseInfo[version].disabledAt = TimestampLib.blockTimestamp();
+            emit LogReleaseDisabled(version);
+        }
 
-        _setReleaseLocked(version, true);
-
-        emit LogReleaseDisabled(version);
-    }
-
-    /// @dev resume operations with release services
-    function unpauseRelease(VersionPart version)
-        external
-        restricted // GIF_ADMIN_ROLE
-    {
-        // release can transition to ACTIVE state
-        checkTransition(_releaseInfo[version].state, RELEASE(), PAUSED(), ACTIVE());
-        
-        _releaseInfo[version].state = ACTIVE();
-        _releaseInfo[version].disabledAt = zeroTimestamp();
-
-        _setReleaseLocked(version, false);
-
-        emit LogReleaseEnabled(version);
+        _setReleaseLocked(version, !active);
     }
 
     //--- view functions ----------------------------------------------------//
@@ -380,7 +352,25 @@ contract ReleaseRegistry is
     {
         ReleaseAdmin releaseAdmin = ReleaseAdmin(address(_releaseInfo[version].admin));
         releaseAdmin.setReleaseLocked(locked);
-        // TODO add check for active/disabled release to core contracts functions interacting with releases
+        // TODO add check for active/disabled release in core contracts functions callable by release contracts
+    }
+
+    function _createReleaseAdmin()
+        private
+        returns (ReleaseAdmin clonedAdmin)
+    {
+        ReleaseAccessManagerCloneable releaseAccessManager = ReleaseAccessManagerCloneable(
+            Clones.clone(
+                _masterReleaseAdmin.authority()
+            )
+        );
+        clonedAdmin = ReleaseAdmin(
+            Clones.clone(
+                address(_masterReleaseAdmin)
+            )
+        );
+        clonedAdmin.initialize(releaseAccessManager, address(this));
+        clonedAdmin.setReleaseLocked(true);
     }
 
     function _verifyServiceAuthorization(
