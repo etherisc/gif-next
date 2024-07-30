@@ -551,6 +551,7 @@ contract ComponentService is
             component, 
             initialOwner
         ) = _getAndVerifyRegisterableComponent(
+            getRegistry(),
             componentAddress,
             requiredType);
 
@@ -634,6 +635,7 @@ contract ComponentService is
     /// - the component type does not match with the required type
     /// - the component has already been registered
     function _getAndVerifyRegisterableComponent(
+        IRegistry registry,
         address componentAddress,
         ObjectType requiredType
     )
@@ -648,7 +650,7 @@ contract ComponentService is
         )
     {
         // check sender (instance or product) is registered
-        IRegistry.ObjectInfo memory senderInfo = getRegistry().getObjectInfo(msg.sender);
+        IRegistry.ObjectInfo memory senderInfo = registry.getObjectInfo(msg.sender);
         if (senderInfo.nftId.eqz()) {
             revert ErrorComponentServiceSenderNotRegistered(msg.sender);
         }
@@ -697,7 +699,7 @@ contract ComponentService is
 
         // get initial owner and instance
         initialOwner = info.initialOwner;
-        instance = _getInstance(instanceNftId);
+        instance = _getInstance(registry, instanceNftId);
     }
 
 

@@ -264,8 +264,6 @@ contract ChainNftTest is Test {
     event LogTokenInterceptorAddress(uint256 tokenId, address interceptor);
     // keep identical to IERC721 events
     event Transfer(address indexed from, address indexed to, uint256 indexed value);    
-    // IMPORTANT needs to exactly match with event defined in MockInterceptor
-    event LogNftMintIntercepted(address to, uint256 tokenId);
 
     function test_chainNftMintWithInterceptorHappyCase() public {
 

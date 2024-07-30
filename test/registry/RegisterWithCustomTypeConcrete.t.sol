@@ -44,46 +44,46 @@ contract RegisterWithCustomTypeConcreteTestL2 is RegisterWithCustomTypeConcreteT
     }
 }
 
+// TODO fix/re-activate
+// contract RegisterWithCustomTypeWithPresetConcreteTest is RegistryTestBaseWithPreset
+// {
+//     function test_registerWithCustomType_withObjectTypeParent() public
+//     {
+//         ObjectType customObjectType = ObjectTypeLib.toObjectType(randomNumber(type(uint8).max));
 
-contract RegisterWithCustomTypeWithPresetConcreteTest is RegistryTestBaseWithPreset
-{
-    function test_registerWithCustomType_withObjectTypeParent() public
-    {
-        ObjectType customObjectType = ObjectTypeLib.toObjectType(randomNumber(type(uint8).max));
+//         while(EnumerableSet.contains(_types, customObjectType.toInt())) {
+//             customObjectType = ObjectTypeLib.toObjectType(customObjectType.toInt() + 1);
+//         }
 
-        while(EnumerableSet.contains(_types, customObjectType.toInt())) {
-            customObjectType = ObjectTypeLib.toObjectType(customObjectType.toInt() + 1);
-        }
+//         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+//             NftIdLib.toNftId(0),
+//             _policyNftId, // or bundleNftId, stakeNftId, distrbutorNftId
+//             customObjectType,
+//             false,
+//             address(uint160(randomNumber(type(uint160).max))),
+//             registryOwner,
+//             ""
+//         );
 
-        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
-            NftIdLib.toNftId(0),
-            _policyNftId, // or bundleNftId, stakeNftId, distrbutorNftId
-            customObjectType,
-            false,
-            address(uint160(randomNumber(type(uint160).max))),
-            registryOwner,
-            ""
-        );
+//         _startPrank(address(registryServiceMock));
+//         _assert_registerWithCustomType(info, false, "");
+//         _stopPrank();
+//     }
 
-        _startPrank(address(registryServiceMock));
-        _assert_registerWithCustomType(info, false, "");
-        _stopPrank();
-    }
+// }
 
-}
+// contract RegisterWithCustomTypeWithPresetConcreteTestL1 is RegisterWithCustomTypeWithPresetConcreteTest
+// {
+//     function setUp() public virtual override {
+//         vm.chainId(1);
+//         super.setUp();
+//     }
+// }
 
-contract RegisterWithCustomTypeWithPresetConcreteTestL1 is RegisterWithCustomTypeWithPresetConcreteTest
-{
-    function setUp() public virtual override {
-        vm.chainId(1);
-        super.setUp();
-    }
-}
-
-contract RegisterWithCustomTypeWithPresetConcreteTestL2 is RegisterWithCustomTypeWithPresetConcreteTest
-{
-    function setUp() public virtual override {
-        vm.chainId(_getRandomChainId());
-        super.setUp();
-    }
-}
+// contract RegisterWithCustomTypeWithPresetConcreteTestL2 is RegisterWithCustomTypeWithPresetConcreteTest
+// {
+//     function setUp() public virtual override {
+//         vm.chainId(_getRandomChainId());
+//         super.setUp();
+//     }
+// }

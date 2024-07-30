@@ -139,16 +139,6 @@ abstract contract BasicPool is
     }
 
 
-    function setBundleOwnerRole(RoleId bundleOwnerRole)
-        public
-        virtual
-        restricted()
-        onlyOwner()
-    {
-        _setBundleOwnerRole(bundleOwnerRole);
-    }
-
-
     function setFees(
         Fee memory poolFee,
         Fee memory stakingFee,

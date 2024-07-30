@@ -268,16 +268,6 @@ abstract contract Pool is
         _getPoolStorage()._poolService.setMaxBalanceAmount(maxBalanceAmount);
     }
 
-    /// @dev Sets the required role to create/own bundles.
-    /// May only be called once after setting up a pool.
-    /// May only be called by pool owner.
-    function _setBundleOwnerRole(RoleId bundleOwnerRole)
-        internal
-        virtual
-    {
-        _getPoolStorage()._poolService.setBundleOwnerRole(bundleOwnerRole);
-    }
-
 
     /// @dev Update pool fees to the specified values.
     /// Pool fee: are deducted from the premium amount and goes to the pool owner.

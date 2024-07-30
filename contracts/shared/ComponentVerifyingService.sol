@@ -12,7 +12,6 @@ import {Service} from "../shared/Service.sol";
 abstract contract ComponentVerifyingService is 
     Service
 {
-
     error ErrorComponentVerifyingServiceComponentTypeInvalid(NftId componentNftId, ObjectType expectedType, ObjectType actualType);
     error ErrorComponentVerifyingServiceComponentIsLocked(NftId componentNftId);
 
@@ -101,10 +100,11 @@ abstract contract ComponentVerifyingService is
     {
         // parent of product is instance
         if (componentInfo.objectType == PRODUCT()) {
-            instance = _getInstance(componentInfo.parentNftId);
+            instance = _getInstance(registry, componentInfo.parentNftId);
         // parent of other types is product
         } else {
             instance = _getInstance(
+                registry,
                 registry.getObjectInfo(
                     componentInfo.parentNftId).parentNftId);
         }
@@ -119,8 +119,8 @@ abstract contract ComponentVerifyingService is
 
 
     /// @dev returns an IInstance contract reference for the specified instance nft id
-    function _getInstance(NftId instanceNftId) internal view returns (IInstance) {
+    function _getInstance(IRegistry registry, NftId instanceNftId) internal view returns (IInstance) {
         return IInstance(
-            getRegistry().getObjectAddress(instanceNftId));
+            registry.getObjectAddress(instanceNftId));
     }
 }

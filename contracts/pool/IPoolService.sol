@@ -34,10 +34,6 @@ interface IPoolService is IService {
     error ErrorPoolServiceInvalidTransferAmount(Amount expectedAmount, Amount actualAmount);
     error ErrorPoolServiceBundlePoolMismatch(NftId bundleNftId, NftId poolNftId);
     error ErrorPoolServiceMaxBalanceAmountExceeded(NftId poolNftId, Amount maxBalanceAmount, Amount currentBalanceAmount, Amount transferAmount);
-    
-    /// @dev defines the required role for bundle owners for the calling pool
-    /// default implementation returns PUBLIC ROLE
-    function setBundleOwnerRole(RoleId bundleOwnerRole) external;
 
     /// @dev sets the max balance amount for the calling pool
     function setMaxBalanceAmount(Amount maxBalanceAmount) external;
