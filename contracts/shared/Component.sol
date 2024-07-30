@@ -100,6 +100,8 @@ abstract contract Component is
         approveTokenHandler(address(getToken()), spendingLimitAmount);
     }
 
+    /// @dev Approves the component's token hander to spend tokens up to the specified limit.
+    /// When the spending limit amount equals AmountLib.max it is set to type(uint256).max.
     function approveTokenHandler(address token, Amount spendingLimitAmount)
         public
         virtual
@@ -109,11 +111,18 @@ abstract contract Component is
             revert ErrorComponentWalletNotComponent();
         }
 
-        emit LogComponentTokenHandlerApproved(address(getTokenHandler()), spendingLimitAmount);
+        uint256 spendingLimit = spendingLimitAmount.toInt();
+        bool isMaxAmount = false;
+        if (spendingLimitAmount == AmountLib.max()) {
+            spendingLimit = type(uint256).max;
+            isMaxAmount = true;
+        }
+
+        emit LogComponentTokenHandlerApproved(address(getTokenHandler()), spendingLimitAmount, isMaxAmount);
 
         IERC20Metadata(token).approve(
             address(getTokenHandler()),
-            spendingLimitAmount.toInt());
+            spendingLimit);
     }
 
     function setWallet(address newWallet)

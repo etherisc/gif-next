@@ -133,7 +133,10 @@ contract PoolService is
     }
 
 
-    function _getStakingFee(InstanceReader instanceReader, NftId poolNftId)
+    function _getStakingFee(
+        InstanceReader instanceReader, 
+        NftId poolNftId
+    )
         internal
         virtual
         view
@@ -210,6 +213,7 @@ contract PoolService is
         external 
         virtual
         // TODO: restricted() (once #462 is done)
+        onlyNftOfType(bundleNftId, BUNDLE())
         returns(Amount netAmount) 
     {
         (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
@@ -227,7 +231,6 @@ contract PoolService is
                 revert ErrorPoolServiceMaxBalanceAmountExceeded(poolNftId, poolInfo.maxBalanceAmount, currentPoolBalance, amount);
             }
         }
-
 
         // calculate fees
         Amount feeAmount;
@@ -329,12 +332,12 @@ contract PoolService is
         external
         virtual
         restricted()
+        onlyNftOfType(bundleNftId, BUNDLE())
     {
         IRegistry registry = getRegistry();
-        IRegistry.ObjectInfo memory bundleObjectInfo = registry.getObjectInfo(bundleNftId);
-        IRegistry.ObjectInfo memory poolObjectInfo = registry.getObjectInfo(bundleObjectInfo.parentNftId);
-        IRegistry.ObjectInfo memory instanceObjectInfo = registry.getObjectInfo(poolObjectInfo.parentNftId);
-        IInstance instance = IInstance(instanceObjectInfo.objectAddress);
+        IRegistry.ObjectInfo memory bundleInfo = registry.getObjectInfo(bundleNftId);
+        IRegistry.ObjectInfo memory poolInfo = registry.getObjectInfo(bundleInfo.parentNftId);
+        IInstance instance = _getInstanceForComponent(registry, poolInfo);
 
         Amount poolFeeAmount = premium.poolFeeFixAmount + premium.poolFeeVarAmount;
         Amount bundleFeeAmount = premium.bundleFeeFixAmount + premium.bundleFeeVarAmount;
@@ -343,13 +346,13 @@ contract PoolService is
         InstanceStore instanceStore = instance.getInstanceStore();
         _componentService.increasePoolBalance(
             instanceStore,
-            poolObjectInfo.nftId,
+            poolInfo.nftId,
             bundleNetAmount + bundleFeeAmount, 
             poolFeeAmount);
 
         _componentService.increaseBundleBalance(
             instanceStore,
-            bundleObjectInfo.nftId,
+            bundleInfo.nftId,
             bundleNetAmount, 
             bundleFeeAmount);
     }

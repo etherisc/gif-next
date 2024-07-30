@@ -26,7 +26,7 @@ contract FireProductTest is FireTestBase {
         fireProduct.initializeCity(cityName);
     }
 
-    function test_FireProduct_calculatePremium() public {
+    function test_fireProductCalculatePremium() public {
         // GIVEN
         // 100'000 FireUSD
         Amount sumInsured = AmountLib.toAmount(100000 * 10**6);
@@ -42,7 +42,7 @@ contract FireProductTest is FireTestBase {
         assertEq((5000 + 100) * 10 ** 6, premium.toInt());
     }
 
-    function test_FireProduct_createApplication() public {
+    function test_fireProductCreateApplication() public {
         // GIVEN
         vm.startPrank(customer);
         
@@ -73,7 +73,7 @@ contract FireProductTest is FireTestBase {
         assertEq(0, policy.closedAt.toInt());
     }
 
-    function test_FireProduct_createPolicy() public {
+    function test_fireProductCreatePolicy() public {
         // GIVEN
         vm.startPrank(customer);
         
@@ -134,7 +134,7 @@ contract FireProductTest is FireTestBase {
         assertEq(bundleFeeBefore + AmountLib.toAmount(100 * 10 ** 6), instanceReader.getFeeAmount(bundleNftId), "bundle fee mismatch");
     }
 
-    function test_FireProduct_createPolicy_invalidRole() public {
+    function test_fireProductCreatePolicyInvalidRole() public {
         // GIVEN
         vm.startPrank(customer);
         
@@ -157,7 +157,7 @@ contract FireProductTest is FireTestBase {
         fireProduct.createPolicy(policyNftId, now);
     }
 
-    function test_FireProduct_decline() public {
+    function test_fireProductDecline() public {
         // GIVEN
         vm.startPrank(customer);
         
@@ -180,7 +180,7 @@ contract FireProductTest is FireTestBase {
         assertTrue(DECLINED().eq(instanceReader.getPolicyState(policyNftId)));
     }
 
-    function test_FireProduct_decline_invalidRole() public {
+    function test_fireProductDecline_invalidRole() public {
         // GIVEN
         vm.startPrank(customer);
         
@@ -202,7 +202,7 @@ contract FireProductTest is FireTestBase {
         fireProduct.decline(policyNftId);
     }
 
-    function test_FireProduct_expire() public {
+    function test_fireProductExpire() public {
         // GIVEN
         vm.startPrank(customer);
         
@@ -252,7 +252,7 @@ contract FireProductTest is FireTestBase {
         assertEq(sumInsured, instanceReader.getLockedAmount(bundleNftId), "bundle locked amount mismatch");
     }
 
-    function test_FireProduct_expire_invalidRole() public {
+    function test_fireProductExpireInvalidRole() public {
         // GIVEN
         vm.startPrank(customer);
         
@@ -299,7 +299,7 @@ contract FireProductTest is FireTestBase {
         fireProduct.expire(policyNftId, hundertDaysLater);
     }
 
-    function test_FireProduct_close() public {
+    function test_fireProductClose() public {
         // GIVEN
         vm.startPrank(customer);
         
@@ -349,7 +349,7 @@ contract FireProductTest is FireTestBase {
         assertEq(AmountLib.zero(), instanceReader.getLockedAmount(bundleNftId), "bundle locked amount mismatch");
     }
 
-    function test_FireProduct_close_invalidRole() public {
+    function test_fireProductCloseInvalidRole() public {
         // GIVEN
         vm.startPrank(customer);
         

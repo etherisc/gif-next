@@ -18,6 +18,11 @@ interface IComponentService is
     error ErrorComponentServiceSenderNotRegistered(address sender);
     error ErrorComponentServiceSenderNotComponentParent(NftId senderNftId, NftId compnentParentNftId);    error ErrorComponentServiceParentNotInstance(NftId nftId, ObjectType objectType);
     error ErrorComponentServiceParentNotProduct(NftId nftId, ObjectType objectType);
+
+    error ErrorProductServiceDistributionAlreadyRegistered(NftId productNftId, NftId distributionNftId);
+    error ErrorProductServiceOraclesAlreadyRegistered(NftId productNftId, uint8 expectedOracles);
+    error ErrorProductServicePoolAlreadyRegistered(NftId productNftId, NftId poolNftId);
+
     error ErrorComponentServiceNewWalletAddressZero();
     error ErrorComponentServiceWalletAddressZero();
     error ErrorComponentServiceWalletAddressIsSameAsCurrent();

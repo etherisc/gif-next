@@ -17,7 +17,7 @@ import {IClaimService} from "./IClaimService.sol";
 import {IPricingService} from "./IPricingService.sol";
 import {IProductComponent} from "./IProductComponent.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
-import {ObjectType, COMPONENT, DISTRIBUTION, ORACLE, POOL, PRODUCT, APPLICATION, POLICY, CLAIM, PRICE } from "../type/ObjectType.sol";
+import {ObjectType, COMPONENT, DISTRIBUTION, ORACLE, POOL, PRODUCT, BUNDLE, APPLICATION, POLICY, CLAIM, PRICE } from "../type/ObjectType.sol";
 import {PayoutId} from "../type/PayoutId.sol";
 import {COMPONENT, PRODUCT, APPLICATION, POLICY, CLAIM, PRICE, BUNDLE } from "../type/ObjectType.sol";
 import {ReferralId} from "../type/Referral.sol";
@@ -168,10 +168,11 @@ abstract contract Product is
         return IComponents.ProductInfo({
             isProcessingFundedClaims: false,
             hasDistribution: $._hasDistribution,
-            numberOfOracles: $._numberOfOracles,
+            expectedNumberOfOracles: $._numberOfOracles,
+            numberOfOracles: 0,
             poolNftId: NftIdLib.zero(),
             distributionNftId: NftIdLib.zero(),
-            oracleNftId: new NftId[](0),
+            oracleNftId: new NftId[]($._numberOfOracles),
             productFee: FeeLib.zero(),
             processingFee: FeeLib.zero(),
             distributionFee: FeeLib.zero(),

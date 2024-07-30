@@ -35,8 +35,8 @@ import {SUBMITTED, ACTIVE, COLLATERALIZED, CONFIRMED, PAID, DECLINED, CLOSED} fr
 import {StateId} from "../../../contracts/type/StateId.sol";
 
 
-contract ProductWithReinsuranceTest
-    is GifTest
+contract ProductWithReinsuranceTest is
+    GifTest
 {
 
     uint256 public constant BUNDLE_CAPITAL = 5000;
@@ -64,7 +64,19 @@ contract ProductWithReinsuranceTest
     event LogClaimServicePayoutProcessed(NftId policyNftId, PayoutId payoutId, Amount amount);
 
 
+    function setUp() public override {
+        super.setUp();
+
+        // reinsurance product
+        _prepareProduct();  
+
+        // setup product with reinsurance
+        _prepareProductWithReinsurance();
+    }
+
+
     function test_reinsuranceSetUp() public {
+
         assertTrue(productNftId.gtz(), "product zero (reinsurance)");
         assertTrue(poolNftId.gtz(), "pool zero (reinsurance)");
 
@@ -263,17 +275,6 @@ contract ProductWithReinsuranceTest
     }
 
 
-    function setUp() public override {
-        super.setUp();
-
-        // reinsurance product
-        _prepareProduct();  
-
-        // setup product with reinsurance
-        _prepareProductWithReinsurance();
-    }
-
-
     function _createClaim(
         NftId policyNftId,
         uint256 claim
@@ -364,6 +365,7 @@ contract ProductWithReinsuranceTest
             productOwner,
             address(token)
         );
+        vm.stopPrank();
 
         // instance owner registeres product with instance (and registry)
         vm.startPrank(instanceOwner);
@@ -404,6 +406,11 @@ contract ProductWithReinsuranceTest
         vm.stopPrank();
 
         poolReNftId = _registerComponent(productRe, address(poolRe), "pool re");
+
+        // token handler only becomes available after registration
+        vm.startPrank(poolOwner);
+        poolRe.approveTokenHandler(AmountLib.max());
+        vm.stopPrank();
 
         // solhint-disable-next-line
         console.log("--- fund investor and customer");

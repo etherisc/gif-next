@@ -392,33 +392,11 @@ contract GifTest is GifDeployer {
 
 
     function _prepareProduct(bool createBundle) internal {
-        // solhint-disable-next-line
-        console.log("--- deploy and register simple product");
 
-        // product owner deploys product
-        vm.startPrank(productOwner);
-        product = new SimpleProduct(
-            address(registry),
-            instanceNftId,
-            new BasicProductAuthorization("SimpleProduct"),
-            productOwner, // initial owner
-            address(token),
-            false, // is interceptor
-            true, // has distribution
-            0 // number of oracles in product cluster
-        );
-        vm.stopPrank();
-
-        // solhint-disable-next-line
-        console.log("product address", address(product));
-
-        // instance owner registeres product with instance (and registry)
-        vm.startPrank(instanceOwner);
-        productNftId = instance.registerProduct(address(product));
-        vm.stopPrank();
-
-        // solhint-disable-next-line
-        console.log("product nft id", productNftId.toInt());
+        (
+            product, 
+            productNftId
+        ) = _deployAndRegisterNewSimpleProduct("SimpleProduct");
 
         _preparePool();
         _prepareDistribution();
@@ -459,6 +437,47 @@ contract GifTest is GifDeployer {
     }
 
 
+    function _deployAndRegisterNewSimpleProduct(string memory name)
+        internal
+        returns (
+            SimpleProduct newProduct,
+            NftId newNftId
+        )
+    {
+        // solhint-disable-next-line
+        console.log("--- deploy and register simple product");
+
+        // product owner deploys product
+        vm.startPrank(productOwner);
+        newProduct = new SimpleProduct(
+            address(registry),
+            instanceNftId,
+            new BasicProductAuthorization(name),
+            productOwner, // initial owner
+            address(token),
+            false, // is interceptor
+            true, // has distribution
+            1 // number of oracles in product cluster
+        );
+        vm.stopPrank();
+
+        // solhint-disable-next-line
+        console.log("product address", address(newProduct));
+
+        // instance owner registeres product with instance (and registry)
+        vm.startPrank(instanceOwner);
+        newNftId = instance.registerProduct(address(newProduct));
+        vm.stopPrank();
+
+        // token handler only becomes available after registration
+        vm.startPrank(productOwner);
+        newProduct.approveTokenHandler(AmountLib.max());
+        vm.stopPrank();
+
+        // solhint-disable-next-line
+        console.log("product nft id", newNftId.toInt());
+    }
+
     function _preparePool() internal {
 
         // solhint-disable-next-line
@@ -475,6 +494,11 @@ contract GifTest is GifDeployer {
         vm.stopPrank();
 
         poolNftId = _registerComponent(product, address(pool), "pool");
+
+        // token handler only becomes available after registration
+        vm.startPrank(poolOwner);
+        pool.approveTokenHandler(AmountLib.max());
+        vm.stopPrank();
     }
 
 
@@ -493,6 +517,11 @@ contract GifTest is GifDeployer {
         vm.stopPrank();
 
         distributionNftId = _registerComponent(product, address(distribution), "distribution");
+
+        // token handler only becomes available after registration
+        vm.startPrank(distributionOwner);
+        distribution.approveTokenHandler(AmountLib.max());
+        vm.stopPrank();
     }
 
 
@@ -514,13 +543,16 @@ contract GifTest is GifDeployer {
         oracleNftId = _registerComponent(product, address(oracle), "oracle");
     }
 
-
     function _registerComponent(IProductComponent prd, address component, string memory componentName) internal returns (NftId componentNftId) {
+        return _registerComponent(productOwner, prd, component, componentName);
+    }
+
+    function _registerComponent(address owner, IProductComponent prd, address component, string memory componentName) internal returns (NftId componentNftId) {
         // solhint-disable-next-line
         console.log(componentName, "component at", address(component));
 
         // product owner registeres oracle with instance (and registry)
-        vm.startPrank(productOwner);
+        vm.startPrank(owner);
         componentNftId = prd.registerComponent(component);
         vm.stopPrank();
 

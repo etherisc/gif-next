@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {AmountLib} from "../../../contracts/type/Amount.sol";
 import {FireUSD} from "../../../contracts/examples/fire/FireUSD.sol";
 import {FirePool} from "../../../contracts/examples/fire/FirePool.sol";
 import {FirePoolAuthorization} from "../../../contracts/examples/fire/FirePoolAuthorization.sol";
@@ -59,14 +60,19 @@ contract FireTestBase is GifTest {
         FirePoolAuthorization poolAuth = new FirePoolAuthorization("FirePool");
         firePool = new FirePool(
             address(registry),
-            instanceNftId,
+            fireProductNftId,
             "FirePool",
             address(fireUSD),
             poolAuth
         );
         vm.stopPrank();
 
-        firePoolNftId = _registerComponent(fireProduct, address(firePool), "firePool");
+        firePoolNftId = _registerComponent(fireProductOwner, fireProduct, address(firePool), "firePool");
+
+        // token handler only becomes available after registration
+        vm.startPrank(firePoolOwner);
+        firePool.approveTokenHandler(AmountLib.max());
+        vm.stopPrank();
     }
 
     function _initialFundAccounts() internal {

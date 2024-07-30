@@ -35,9 +35,6 @@ contract ReferralTestBase is GifTest {
     bytes public referralData;
 
     function _setupTestData(bool createDistributor) internal {
-        if (address(distribution) == address(0)) {
-            _prepareDistribution();           
-        }
 
         vm.startPrank(distributionOwner);
         distribution.setFees(

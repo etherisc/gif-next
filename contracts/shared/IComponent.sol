@@ -31,7 +31,7 @@ interface IComponent is
 
     event LogComponentWalletAddressChanged(address oldWallet, address newWallet);
     event LogComponentWalletTokensTransferred(address from, address to, uint256 amount);
-    event LogComponentTokenHandlerApproved(address token, Amount limit);
+    event LogComponentTokenHandlerApproved(address token, Amount limit, bool isMaxAmount);
 
     /// @dev approves token hanlder to spend up to the specified amount of tokens
     /// reverts if component wallet is not component itself

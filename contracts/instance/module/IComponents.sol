@@ -23,7 +23,8 @@ interface IComponents {
     struct ProductInfo {
         bool isProcessingFundedClaims; // custom logic to react to pool events for funded claims
         bool hasDistribution; // flag to indicate if distribution is enabled
-        uint8 numberOfOracles; // number of oracles
+        uint8 expectedNumberOfOracles; // expected number of oracles
+        uint8 numberOfOracles; // actual number of oracles
         NftId poolNftId; // mandatory
         NftId distributionNftId; // 0..1 (optional)
         NftId [] oracleNftId; // 0..n (optional)

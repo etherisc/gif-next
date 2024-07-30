@@ -217,11 +217,14 @@ contract DistributionService is
     ) 
         external
         virtual
-        restricted
+        restricted()
         onlyNftOfType(distributionNftId, DISTRIBUTION())
     {
         if (referralIsValid(distributionNftId, referralId)) {
-            IInstance instance = _getInstanceForDistribution(distributionNftId);
+            IRegistry registry = getRegistry();
+            IRegistry.ObjectInfo memory distributionInfo = registry.getObjectInfo(distributionNftId);
+            IInstance instance = _getInstanceForComponent(registry, distributionInfo);
+
             // update book keeping for referral info
             IDistribution.ReferralInfo memory referralInfo = instance.getInstanceReader().getReferralInfo(referralId);
             referralInfo.usedReferrals += 1;
@@ -236,10 +239,12 @@ contract DistributionService is
     )
         external
         virtual
-        restricted
+        restricted()
         onlyNftOfType(distributionNftId, DISTRIBUTION())
     {
-        IInstance instance = _getInstanceForDistribution(distributionNftId);
+        IRegistry registry = getRegistry();
+        IRegistry.ObjectInfo memory distributionInfo = registry.getObjectInfo(distributionNftId);
+        IInstance instance = _getInstanceForComponent(registry, distributionInfo);
         InstanceReader reader = instance.getInstanceReader();
         InstanceStore store = instance.getInstanceStore();
 
@@ -314,14 +319,15 @@ contract DistributionService is
     function referralIsValid(NftId distributionNftId, ReferralId referralId) 
         public 
         view 
-        onlyNftOfType(distributionNftId, DISTRIBUTION())
         returns (bool isValid) 
     {
         if (distributionNftId.eqz() || referralId.eqz()) {
             return false;
         }
 
-        IInstance instance = _getInstanceForDistribution(distributionNftId);
+        IRegistry registry = getRegistry();
+        IRegistry.ObjectInfo memory distributionInfo = registry.getObjectInfo(distributionNftId);
+        IInstance instance = _getInstanceForComponent(registry, distributionInfo);
         IDistribution.ReferralInfo memory info = instance.getInstanceReader().getReferralInfo(referralId);
 
         if (info.distributorNftId.eqz()) {

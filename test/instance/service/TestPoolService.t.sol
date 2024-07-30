@@ -8,12 +8,24 @@ import {FeeLib} from "../../../contracts/type/Fee.sol";
 import {UFixedLib} from "../../../contracts/type/UFixed.sol";
 import {ComponentService} from "../../../contracts/shared/ComponentService.sol";
 import {SimplePool} from "../../../contracts/examples/unpermissioned/SimplePool.sol";
+import {SimpleProduct} from "../../../contracts/examples/unpermissioned/SimpleProduct.sol";
 
 contract TestPoolService is GifTest {
 
-    function test_PoolServiceRegisterHappyCase() public {
+    SimplePool public testPool;
+    SimpleProduct public testProd;
+    NftId public testProdNftId;
+
+    function setUp() public override {
+        super.setUp();
+
+        (testProd, testProdNftId) = _deployAndRegisterNewSimpleProduct("NewSimpleProduct");
+    }
+
+
+    function test_poolServiceRegisterHappyCase() public {
         vm.startPrank(outsider);
-        pool = new SimplePool(
+        testPool = new SimplePool(
             address(registry),
             testProdNftId,
             address(token),
@@ -22,7 +34,7 @@ contract TestPoolService is GifTest {
         );
         vm.stopPrank();
 
-        NftId nftId = _registerComponent(product, address(pool), "pool");
+        NftId nftId = _registerComponent(testProd, address(testPool), "pool");
         assertTrue(nftId.gtz(), "nftId is zero");
     }
 }

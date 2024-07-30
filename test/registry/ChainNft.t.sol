@@ -166,10 +166,10 @@ contract ChainNftTest is Test {
         assertEq(chainNft.balanceOf(outsider), 0, "unexpected nft balance for outsider");
 
         vm.expectEmit(address(chainNft));
-        emit LogTokenInterceptorAddress(expectedTokenId, address(0));
+        emit Transfer(address(0), outsider, expectedTokenId);
 
         vm.expectEmit(address(chainNft));
-        emit Transfer(address(0), outsider, expectedTokenId);
+        emit LogTokenInterceptorAddress(expectedTokenId, address(0));
 
         vm.recordLogs();
 
@@ -276,13 +276,10 @@ contract ChainNftTest is Test {
         uint expectedTokenId = 43133705;
 
         vm.expectEmit(address(chainNft));
-        emit LogTokenInterceptorAddress(expectedTokenId, address(interceptor));
-
-        vm.expectEmit(address(chainNft));
         emit Transfer(address(0), outsider, expectedTokenId);
 
-        vm.expectEmit(address(interceptor));
-        emit LogNftMintIntercepted(outsider, expectedTokenId);
+        vm.expectEmit(address(chainNft));
+        emit LogTokenInterceptorAddress(expectedTokenId, address(interceptor));
 
         vm.recordLogs();
 
@@ -292,7 +289,7 @@ contract ChainNftTest is Test {
         Vm.Log[] memory entries = vm.getRecordedLogs();
 
         // check exact number of logs
-        assertEq(entries.length, 3, "unexpected number of logs");
+        assertEq(entries.length, 2, "unexpected number of logs");
 
         assertEq(tokenId, expectedTokenId, "unexpected token id minted");
         assertEq(chainNft.totalMinted(), 1, "minted != 1 after mint");

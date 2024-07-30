@@ -11,7 +11,6 @@ import {BUNDLE, COMPONENT, DISTRIBUTION, ORACLE, POOL, PRODUCT, POLICY, RISK, RE
 import {RoleId} from "../contracts/type/RoleId.sol";
 
 contract TestDeployAll is GifTest {
-    using NftIdLib for NftId;
 
     function setUp() public override {
         super.setUp();

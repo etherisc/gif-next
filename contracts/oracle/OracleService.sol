@@ -11,7 +11,7 @@ import {IOracleComponent} from "./IOracleComponent.sol";
 import {IOracleService} from "./IOracleService.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {NftId} from "../type/NftId.sol";
-import {ObjectType, COMPONENT, ORACLE, INSTANCE} from "../type/ObjectType.sol";
+import {ObjectType, COMPONENT, ORACLE, PRODUCT} from "../type/ObjectType.sol";
 import {RequestId} from "../type/RequestId.sol";
 import {StateId, ACTIVE, KEEP_STATE, FULFILLED, FAILED, CANCELLED} from "../type/StateId.sol";
 import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
@@ -68,10 +68,15 @@ contract OracleService is
             true); // only active
 
         {
-            // TODO move to stronger validation, requester and oracle need to belong to same product cluster
-            // check that requester and oracle share same instance
-            if (componentInfo.parentNftId != oracleInfo.parentNftId) {
-                revert ErrorOracleServiceInstanceMismatch(componentInfo.parentNftId, oracleInfo.parentNftId);
+            // check that requester and oracle share same product cluster
+            if (componentInfo.objectType == PRODUCT()) {
+                if (oracleInfo.parentNftId != componentInfo.nftId) {
+                    revert ErrorOracleServiceProductMismatch(componentInfo.objectType, componentInfo.nftId, oracleInfo.parentNftId);
+                }
+            } else {
+                if (oracleInfo.parentNftId != componentInfo.parentNftId) {
+                    revert ErrorOracleServiceProductMismatch(componentInfo.objectType, componentInfo.parentNftId, oracleInfo.parentNftId);
+                }
             }
 
             // check expiriyAt >= now

@@ -83,21 +83,30 @@ abstract contract ComponentVerifyingService is
             }
         }
 
-        // parent of product is instance
-        if (info.objectType == PRODUCT()) {
-            instance = _getInstance(info.parentNftId);
-        // parent of other types is product
-        } else {
-            instance = _getInstance(
-                registry.getObjectInfo(
-                    info.parentNftId).parentNftId);
-        }
+        instance = _getInstanceForComponent(registry, info);
 
         // ensure component is not locked
         if (onlyActive) {
             if (instance.getInstanceAdmin().isTargetLocked(info.objectAddress)) {
                 revert ErrorComponentVerifyingServiceComponentIsLocked(componentNftId);
             }
+        }
+    }
+
+
+    function _getInstanceForComponent(IRegistry registry, IRegistry.ObjectInfo memory componentInfo)
+        internal
+        view
+        returns (IInstance instance)
+    {
+        // parent of product is instance
+        if (componentInfo.objectType == PRODUCT()) {
+            instance = _getInstance(componentInfo.parentNftId);
+        // parent of other types is product
+        } else {
+            instance = _getInstance(
+                registry.getObjectInfo(
+                    componentInfo.parentNftId).parentNftId);
         }
     }
 
