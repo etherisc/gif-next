@@ -27,8 +27,6 @@ contract ReleaseRegistry is
     ReleaseLifecycle, 
     IRegistryLinked
 {
-    using ObjectTypeLib for ObjectType;
-
     uint256 public constant INITIAL_GIF_VERSION = 3;// first active version  
 
     event LogReleaseCreation(VersionPart version, bytes32 salt); 
@@ -68,8 +66,7 @@ contract ReleaseRegistry is
     Registry public immutable _registry;
 
     mapping(VersionPart version => IRegistry.ReleaseInfo info) internal _releaseInfo;
-    uint256 _releases;
-
+    VersionPart [] internal _release; // array of all created releases
     VersionPart internal _latest; // latest active version
     VersionPart internal _next; // version to create and activate 
 
@@ -106,6 +103,7 @@ contract ReleaseRegistry is
         }
 
         version = VersionPartLib.toVersionPart(version.toInt() + 1);
+        _release.push(version);
 
         _next = version;
         _releaseInfo[version].version = version;
@@ -218,7 +216,6 @@ contract ReleaseRegistry is
         checkTransition(_releaseInfo[version].state, RELEASE(), DEPLOYED(), ACTIVE());
 
         _latest = version;
-        _releases++;
         _releaseInfo[version].state = ACTIVE();
         _releaseInfo[version].activatedAt = TimestampLib.blockTimestamp();
 
@@ -301,14 +298,25 @@ contract ReleaseRegistry is
         return _releaseInfo[version];
     }
 
+    /// @dev Returns the number of created releases.
+    /// Releases might be in another state than ACTIVE.
     function releases() external view returns (uint) {
-        return _releases;
+        return _release.length;
+    }
+
+    /// @dev Returns the n-th release version.
+    /// Valid values for idx [0 .. releases() - 1]
+    function getVersion(uint256 idx) external view returns (VersionPart version) {
+        // return _releases;
+        return _release[idx];
     }
 
     function getNextVersion() public view returns(VersionPart) {
         return _next;
     }
 
+    /// @dev Returns the latest activated relase version.
+    /// There is no guarantee that the release is not currently paused.
     function getLatestVersion() external view returns(VersionPart) {
         return _latest;
     }

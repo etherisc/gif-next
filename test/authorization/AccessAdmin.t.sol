@@ -159,8 +159,8 @@ contract AccessAdminForTesting is AccessAdmin {
     )
         external
         virtual
+        onlyExistingRole(roleId, false)
         onlyExistingTarget(target)
-        onlyExistingRole(roleId)
         restricted()
     {
         _authorizeTargetFunctions(target, roleId, functions);

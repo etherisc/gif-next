@@ -51,7 +51,7 @@ abstract contract Lifecycle is
     function checkTransition(
         StateId stateId,
         ObjectType objectType,
-        StateId fromId,
+        StateId expectedFromId,
         StateId toId
     )
         public
@@ -62,17 +62,17 @@ abstract contract Lifecycle is
             revert ErrorNoLifecycle(address(this), objectType);
         }
 
-        // revert if current state is not `from` state
-        if(stateId != fromId) {
-            revert ErrorFromStateMissmatch(address(this), objectType, stateId, fromId);
+        // revert if current state is not expected `from` state
+        if(stateId != expectedFromId) {
+            revert ErrorFromStateMissmatch(address(this), objectType, stateId, expectedFromId);
         }
-        // TODO consider assert instead of error -> each child must check only for valid transitions
+
         // enforce valid state transition
-        if (!_isValidTransition[objectType][fromId][toId]) {
+        if (!_isValidTransition[objectType][stateId][toId]) {
             revert ErrorInvalidStateTransition(
                 address(this),
                 objectType, 
-                fromId, 
+                stateId, 
                 toId
             );
         }

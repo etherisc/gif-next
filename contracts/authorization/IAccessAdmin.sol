@@ -41,7 +41,7 @@ interface IAccessAdmin is
     // grant/revoke/renounce role
     error ErrorRoleUnknown(RoleId roleId);
     error ErrorRoleIsLocked(RoleId roleId);
-    error ErrorRoleIsDisabled(RoleId roleId);
+    error ErrorRoleIsPaused(RoleId roleId);
     error ErrorRoleMembersLimitReached(RoleId roleId, uint256 memberCountLimit);
     error ErrorRoleMemberNotContract(RoleId roleId, address notContract);
     error ErrorRoleMemberRemovalDisabled(RoleId roleId, address expectedMember);

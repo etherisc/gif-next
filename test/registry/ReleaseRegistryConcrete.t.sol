@@ -228,9 +228,14 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 ));
         _assert_releaseRegistry_getters(previousReleaseVersion, zeroReleaseInfo());
         
-        assertEq(releaseRegistry.releases(), 0, "releases() return unexpected value #2");
+        assertEq(releaseRegistry.releases(), 1, "releases() return unexpected value #2");
         assertEq(releaseRegistry.getNextVersion().toInt(), newReleaseVersion.toInt(), "getNextVersion() return unexpected value #2");
         assertEq(releaseRegistry.getLatestVersion().toInt(), 0, "getLatestVersion() return unexpected value #2");
+
+        // check latest version
+        assertEq(version.toInt(), releaseRegistry.getVersion(0).toInt(), "getReleaseVersion() return unexpected value");
+        assertEq(releaseRegistry.getReleaseInfo(version).state.toInt(), SCHEDULED().toInt(), "getReleaseInfo() not SCHEDULED");
+        assertEq(releaseRegistry.isActiveRelease(version), false, "isActiveRelease() returned unexpected value");
     }
 
     function test_releaseRegistry_createRelease_whenReleaseScheduledHappyCase() public 
@@ -258,10 +263,15 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
             _assert_releaseRegistry_getters(nextVersion, nextReleaseInfo);
             _assert_releaseRegistry_getters(prevVersion, prevReleaseInfo);
 
-            assertEq(releaseRegistry.releases(), 0, "releases() return unexpected value #1");
+            assertEq(releaseRegistry.releases(), i + 1, "releases() return unexpected value #1");
             assertEq(releaseRegistry.getNextVersion().toInt(), nextReleaseInfo.version.toInt(), "getNextVersion() return unexpected value #1");
             assertEq(releaseRegistry.getLatestVersion().toInt(), 0, "getLatestVersion() return unexpected value #1");
 
+            // check latest version
+            assertEq(createdVersion.toInt(), releaseRegistry.getVersion(i).toInt(), "getReleaseVersion() return unexpected value");
+            assertEq(releaseRegistry.getReleaseInfo(createdVersion).state.toInt(), SCHEDULED().toInt(), "getReleaseInfo() not SCHEDULED");
+            assertEq(releaseRegistry.isActiveRelease(createdVersion), false, "isActiveRelease() returned unexpected value");
+            
             prevVersion = nextVersion;
             nextVersion = VersionPartLib.toVersionPart(nextVersion.toInt() + 1);
             prevReleaseInfo = nextReleaseInfo;
@@ -278,11 +288,11 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
 
         for(uint i = 0; i <= 10; i++) 
         {
+            vm.prank(gifAdmin);
+            VersionPart createdVersion = releaseRegistry.createNextRelease();
+
             {
                 // create - skip
-                vm.prank(gifAdmin);
-                VersionPart createdVersion = releaseRegistry.createNextRelease();
-
                 nextReleaseInfo.state = SCHEDULED();
                 nextReleaseInfo.version = nextVersion;
                 if(i > 0) {
@@ -295,9 +305,14 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 _assert_releaseRegistry_getters(nextVersion, nextReleaseInfo);
                 _assert_releaseRegistry_getters(prevVersion, prevReleaseInfo);
 
-                assertEq(releaseRegistry.releases(), 0, "releases() return unexpected value #1");
+                assertEq(releaseRegistry.releases(), i + 1, "releases() return unexpected value #1");
                 assertEq(releaseRegistry.getNextVersion().toInt(), nextReleaseInfo.version.toInt(), "getNextVersion() return unexpected value #1");
                 assertEq(releaseRegistry.getLatestVersion().toInt(), 0, "getLatestVersion() return unexpected value #1");
+
+                // check latest version
+                assertEq(createdVersion.toInt(), releaseRegistry.getVersion(i).toInt(), "getReleaseVersion() return unexpected value");
+                assertEq(releaseRegistry.getReleaseInfo(createdVersion).state.toInt(), SCHEDULED().toInt(), "getReleaseInfo() not SCHEDULED");
+                assertEq(releaseRegistry.isActiveRelease(createdVersion), false, "isActiveRelease() returned unexpected value");
             }
 
             {
@@ -327,9 +342,14 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 _assert_releaseRegistry_getters(nextVersion, nextReleaseInfo);
                 _assert_releaseRegistry_getters(prevVersion, prevReleaseInfo);
 
-                assertEq(releaseRegistry.releases(), 0, "releases() return unexpected value #2");
+                assertEq(releaseRegistry.releases(), i + 1, "releases() return unexpected value #2");
                 assertEq(releaseRegistry.getNextVersion().toInt(), nextReleaseInfo.version.toInt(), "getNextVersion() return unexpected value #2");
                 assertEq(releaseRegistry.getLatestVersion().toInt(), 0, "getLatestVersion() return unexpected value #2");
+
+                // check latest version
+                assertEq(createdVersion.toInt(), releaseRegistry.getVersion(i).toInt(), "getReleaseVersion() return unexpected value");
+                assertEq(releaseRegistry.getReleaseInfo(createdVersion).state.toInt(), DEPLOYING().toInt(), "getReleaseInfo() not DEPLOYING");
+                assertEq(releaseRegistry.isActiveRelease(createdVersion), false, "isActiveRelease() returned unexpected value");
             }
 
             prevVersion = nextVersion;
@@ -348,11 +368,11 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
 
         for(uint i = 0; i <= 2; i++) 
         {
+            vm.prank(gifAdmin);
+            VersionPart createdVersion = releaseRegistry.createNextRelease();
+
             {
                 // create - skip
-                vm.prank(gifAdmin);
-                VersionPart createdVersion = releaseRegistry.createNextRelease();
-
                 nextReleaseInfo.state = SCHEDULED();
                 nextReleaseInfo.version = nextVersion;
                 if(i > 0) {
@@ -365,9 +385,14 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 _assert_releaseRegistry_getters(nextVersion, nextReleaseInfo);
                 _assert_releaseRegistry_getters(prevVersion, prevReleaseInfo);
 
-                assertEq(releaseRegistry.releases(), 0, "releases() return unexpected value #1");
+                assertEq(releaseRegistry.releases(), i + 1, "releases() return unexpected value #1");
                 assertEq(releaseRegistry.getNextVersion().toInt(), nextReleaseInfo.version.toInt(), "getNextVersion() return unexpected value #1");
                 assertEq(releaseRegistry.getLatestVersion().toInt(), 0, "getLatestVersion() return unexpected value #1");
+
+                // check latest version
+                assertEq(createdVersion.toInt(), releaseRegistry.getVersion(i).toInt(), "getReleaseVersion() return unexpected value");
+                assertEq(releaseRegistry.getReleaseInfo(createdVersion).state.toInt(), SCHEDULED().toInt(), "getReleaseInfo() not DEPLOYING");
+                assertEq(releaseRegistry.isActiveRelease(createdVersion), false, "isActiveRelease() returned unexpected value");
             }
 
             {
@@ -394,9 +419,14 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 _assert_releaseRegistry_getters(nextVersion, nextReleaseInfo);
                 _assert_releaseRegistry_getters(prevVersion, prevReleaseInfo);
 
-                assertEq(releaseRegistry.releases(), 0, "releases() return unexpected value #2");
+                assertEq(releaseRegistry.releases(), i + 1, "releases() return unexpected value #2");
                 assertEq(releaseRegistry.getNextVersion().toInt(), nextReleaseInfo.version.toInt(), "getNextVersion() return unexpected value #2");
                 assertEq(releaseRegistry.getLatestVersion().toInt(), 0, "getLatestVersion() return unexpected value #2");
+
+                // check latest version
+                assertEq(createdVersion.toInt(), releaseRegistry.getVersion(i).toInt(), "getReleaseVersion() return unexpected value");
+                assertEq(releaseRegistry.getReleaseInfo(createdVersion).state.toInt(), DEPLOYING().toInt(), "getReleaseInfo() not DEPLOYING");
+                assertEq(releaseRegistry.isActiveRelease(createdVersion), false, "isActiveRelease() returned unexpected value");
             }
 
             {
@@ -426,9 +456,14 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 // check service authorizations are set (when target is created)
                 assertTrue(registryAdmin.targetExists(address(serviceByVersion[nextVersion])), "targetExists() return unexpected value");
 
-                assertEq(releaseRegistry.releases(), 0, "releases() return unexpected value #3");
+                assertEq(releaseRegistry.releases(), i + 1, "releases() return unexpected value #3");
                 assertEq(releaseRegistry.getNextVersion().toInt(), nextReleaseInfo.version.toInt(), "getNextVersion() return unexpected value #3");
                 assertEq(releaseRegistry.getLatestVersion().toInt(), 0, "getLatestVersion() return unexpected value #3");
+
+                // check latest version
+                assertEq(createdVersion.toInt(), releaseRegistry.getVersion(i).toInt(), "getReleaseVersion() return unexpected value");
+                assertEq(releaseRegistry.getReleaseInfo(createdVersion).state.toInt(), DEPLOYED().toInt(), "getReleaseInfo() not DEPLOYED");
+                assertEq(releaseRegistry.isActiveRelease(createdVersion), false, "isActiveRelease() returned unexpected value");
             }
 
             prevVersion = nextVersion;
@@ -447,11 +482,11 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
 
         for(uint i = 0; i <= 2; i++) 
         {
+            vm.prank(gifAdmin);
+            VersionPart createdVersion = releaseRegistry.createNextRelease();
+
             {
                  // create - skip
-                vm.prank(gifAdmin);
-                VersionPart createdVersion = releaseRegistry.createNextRelease();
-
                 nextReleaseInfo.state = SCHEDULED();
                 nextReleaseInfo.version = nextVersion;
 
@@ -461,7 +496,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 _assert_releaseRegistry_getters(nextVersion, nextReleaseInfo);
                 _assert_releaseRegistry_getters(prevVersion, prevReleaseInfo);
 
-                assertEq(releaseRegistry.releases(), i, "releases() return unexpected value #1");
+                assertEq(releaseRegistry.releases(), i + 1, "releases() return unexpected value #1");
                 assertEq(releaseRegistry.getNextVersion().toInt(), nextReleaseInfo.version.toInt(), "getNextVersion() return unexpected value #1");
                 assertEq(releaseRegistry.getLatestVersion().toInt(), prevReleaseInfo.version.toInt(), "getLatestVersion() return unexpected value #1");
             }
@@ -490,7 +525,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 _assert_releaseRegistry_getters(nextVersion, nextReleaseInfo);
                 _assert_releaseRegistry_getters(prevVersion, prevReleaseInfo);
 
-                assertEq(releaseRegistry.releases(), i, "releases() return unexpected value #2");
+                assertEq(releaseRegistry.releases(), i + 1, "releases() return unexpected value #2");
                 assertEq(releaseRegistry.getNextVersion().toInt(), nextReleaseInfo.version.toInt(), "getNextVersion() return unexpected value #2");
                 assertEq(releaseRegistry.getLatestVersion().toInt(), prevReleaseInfo.version.toInt(), "getLatestVersion() return unexpected value #2");
             }
@@ -521,7 +556,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 _assert_releaseRegistry_getters(nextVersion, nextReleaseInfo);
                 _assert_releaseRegistry_getters(prevVersion, prevReleaseInfo);
 
-                assertEq(releaseRegistry.releases(), i, "releases() return unexpected value #3");
+                assertEq(releaseRegistry.releases(), i + 1, "releases() return unexpected value #3");
                 assertEq(releaseRegistry.getNextVersion().toInt(), nextReleaseInfo.version.toInt(), "getNextVersion() return unexpected value #3");
                 assertEq(releaseRegistry.getLatestVersion().toInt(), prevReleaseInfo.version.toInt(), "getLatestVersion() return unexpected value #3");
             }
@@ -549,6 +584,11 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 assertEq(releaseRegistry.releases(), i + 1, "releases() return unexpected value #4");
                 assertEq(releaseRegistry.getNextVersion().toInt(), nextReleaseInfo.version.toInt(), "getNextVersion() return unexpected value #4");
                 assertEq(releaseRegistry.getLatestVersion().toInt(), nextReleaseInfo.version.toInt(), "getLatestVersion() return unexpected value #4");
+
+                // check latest version
+                assertEq(createdVersion.toInt(), releaseRegistry.getVersion(i).toInt(), "getReleaseVersion() return unexpected value");
+                assertEq(releaseRegistry.getReleaseInfo(createdVersion).state.toInt(), ACTIVE().toInt(), "getReleaseInfo() not ACTIVE");
+                assertEq(releaseRegistry.isActiveRelease(createdVersion), true, "isActiveRelease() returned unexpected value");
             }
 
             prevVersion = nextVersion;
@@ -581,7 +621,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 _assert_releaseRegistry_getters(nextVersion, nextReleaseInfo);
                 _assert_releaseRegistry_getters(prevVersion, prevReleaseInfo);
 
-                assertEq(releaseRegistry.releases(), i, "releases() return unexpected value #1");
+                assertEq(releaseRegistry.releases(), i + 1, "releases() return unexpected value #1");
                 assertEq(releaseRegistry.getNextVersion().toInt(), nextReleaseInfo.version.toInt(), "getNextVersion() return unexpected value #1");
                 assertEq(releaseRegistry.getLatestVersion().toInt(), prevReleaseInfo.version.toInt(), "getLatestVersion() return unexpected value #1");
             }
@@ -610,7 +650,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 _assert_releaseRegistry_getters(nextVersion, nextReleaseInfo);
                 _assert_releaseRegistry_getters(prevVersion, prevReleaseInfo);
 
-                assertEq(releaseRegistry.releases(), i, "releases() return unexpected value #2");
+                assertEq(releaseRegistry.releases(), i + 1, "releases() return unexpected value #2");
                 assertEq(releaseRegistry.getNextVersion().toInt(), nextReleaseInfo.version.toInt(), "getNextVersion() return unexpected value #2");
                 assertEq(releaseRegistry.getLatestVersion().toInt(), prevReleaseInfo.version.toInt(), "getLatestVersion() return unexpected value #2");
             }
@@ -641,7 +681,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 _assert_releaseRegistry_getters(nextVersion, nextReleaseInfo);
                 _assert_releaseRegistry_getters(prevVersion, prevReleaseInfo);
 
-                assertEq(releaseRegistry.releases(), i, "releases() return unexpected value #3");
+                assertEq(releaseRegistry.releases(), i + 1, "releases() return unexpected value #3");
                 assertEq(releaseRegistry.getNextVersion().toInt(), nextReleaseInfo.version.toInt(), "getNextVersion() return unexpected value #3");
                 assertEq(releaseRegistry.getLatestVersion().toInt(), prevReleaseInfo.version.toInt(), "getLatestVersion() return unexpected value #3");
             }
@@ -723,7 +763,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 _assert_releaseRegistry_getters(nextVersion, nextReleaseInfo);
                 _assert_releaseRegistry_getters(prevVersion, prevReleaseInfo);
 
-                assertEq(releaseRegistry.releases(), i, "releases() return unexpected value #1");
+                assertEq(releaseRegistry.releases(), i + 1, "releases() return unexpected value #1");
                 assertEq(releaseRegistry.getNextVersion().toInt(), nextReleaseInfo.version.toInt(), "getNextVersion() return unexpected value #1");
                 assertEq(releaseRegistry.getLatestVersion().toInt(), prevReleaseInfo.version.toInt(), "getLatestVersion() return unexpected value #1");
             }
@@ -752,7 +792,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 _assert_releaseRegistry_getters(nextVersion, nextReleaseInfo);
                 _assert_releaseRegistry_getters(prevVersion, prevReleaseInfo);
 
-                assertEq(releaseRegistry.releases(), i, "releases() return unexpected value #2");
+                assertEq(releaseRegistry.releases(), i + 1, "releases() return unexpected value #2");
                 assertEq(releaseRegistry.getNextVersion().toInt(), nextReleaseInfo.version.toInt(), "getNextVersion() return unexpected value #2");
                 assertEq(releaseRegistry.getLatestVersion().toInt(), prevReleaseInfo.version.toInt(), "getLatestVersion() return unexpected value #2");
             }
@@ -783,7 +823,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 _assert_releaseRegistry_getters(nextVersion, nextReleaseInfo);
                 _assert_releaseRegistry_getters(prevVersion, prevReleaseInfo);
 
-                assertEq(releaseRegistry.releases(), i, "releases() return unexpected value #3");
+                assertEq(releaseRegistry.releases(), i + 1, "releases() return unexpected value #3");
                 assertEq(releaseRegistry.getNextVersion().toInt(), nextReleaseInfo.version.toInt(), "getNextVersion() return unexpected value #3");
                 assertEq(releaseRegistry.getLatestVersion().toInt(), prevReleaseInfo.version.toInt(), "getLatestVersion() return unexpected value #3");
             }
@@ -939,7 +979,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
             VersionPartLib.toVersionPart(releaseRegistry.INITIAL_GIF_VERSION() - 1),
             zeroReleaseInfo());
 
-        assertEq(releaseRegistry.releases(), 0, "releases() return unexpected value");
+        assertEq(releaseRegistry.releases(), 1, "releases() return unexpected value");
         assertEq(releaseRegistry.getNextVersion().toInt(), expectedVersion.toInt(), "getNextVersion() return unexpected value");
         assertEq(releaseRegistry.getLatestVersion().toInt(), 0, "getLatestVersion() return unexpected value");
     }
@@ -1634,6 +1674,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
 
     function test_releaseRegistry_activateRelease_whenReleaseDeployedHappyCase() public
     {
+        // TODO ?
         // Equivalent to test_releaseRegistry_createRelease_whenReleaseActiveHappyCase()
         // create
         // prepare
