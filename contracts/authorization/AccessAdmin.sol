@@ -325,6 +325,7 @@ contract AccessAdmin is
         bool addFunctions
     )
         internal
+        onlyExistingTarget(target)
         returns (
             bytes4[] memory functionSelectors
         )
@@ -386,6 +387,8 @@ contract AccessAdmin is
         bytes4[] memory functionSelectors
     )
         internal
+        onlyExistingTarget(target)
+        onlyExistingRole(roleId, true)
     {
         _authority.setTargetFunctionRole(
             target,
@@ -511,7 +514,7 @@ contract AccessAdmin is
         bool custom
     )
         internal
-        nonReentrant()
+        nonReentrant() // TODO no state changing calls in this function -> impossible to reenter
     {
         // check target does not yet exist
         if(targetExists(target)) {
@@ -590,8 +593,8 @@ contract AccessAdmin is
         }
 
         uint64 roleIdInt = RoleId.unwrap(roleId);
-        if (roleIdInt == _authority.ADMIN_ROLE()
-            || roleIdInt == _authority.PUBLIC_ROLE())
+        if (roleIdInt == _authority.ADMIN_ROLE())
+            //|| roleIdInt == _authority.PUBLIC_ROLE()) prevents granting of public role
         {
             revert ErrorRoleIsLocked(roleId);
         }
