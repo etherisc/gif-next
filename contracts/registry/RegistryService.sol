@@ -18,8 +18,6 @@ contract RegistryService is
     Service,
     IRegistryService
 {
-    using NftIdLib for NftId;
-
     // TODO update to real hash when registry is stable
     bytes32 public constant REGISTRY_CREATION_CODE_HASH = bytes32(0);
 

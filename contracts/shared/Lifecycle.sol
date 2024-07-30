@@ -49,8 +49,9 @@ abstract contract Lifecycle is
     }
 
     function checkTransition(
+        StateId stateId,
         ObjectType objectType,
-        StateId fromId,
+        StateId expectedFromId,
         StateId toId
     )
         public
@@ -58,12 +59,22 @@ abstract contract Lifecycle is
     {
         // revert if no life cycle support
         if (_initialState[objectType].eqz()) {
-            revert ErrorNoLifecycle(objectType);
+            revert ErrorNoLifecycle(address(this), objectType);
+        }
+
+        // revert if current state is not expected `from` state
+        if(stateId != expectedFromId) {
+            revert ErrorFromStateMissmatch(address(this), objectType, stateId, expectedFromId);
         }
 
         // enforce valid state transition
-        if (!_isValidTransition[objectType][fromId][toId]) {
-            revert ErrorInvalidStateTransition(objectType, fromId, toId);
+        if (!_isValidTransition[objectType][stateId][toId]) {
+            revert ErrorInvalidStateTransition(
+                address(this),
+                objectType, 
+                stateId, 
+                toId
+            );
         }
     }
 

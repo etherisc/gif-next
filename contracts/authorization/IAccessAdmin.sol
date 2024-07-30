@@ -41,9 +41,10 @@ interface IAccessAdmin is
     // grant/revoke/renounce role
     error ErrorRoleUnknown(RoleId roleId);
     error ErrorRoleIsLocked(RoleId roleId);
-    error ErrorRoleIsDisabled(RoleId roleId);
+    error ErrorRoleIsPaused(RoleId roleId);
     error ErrorRoleMembersLimitReached(RoleId roleId, uint256 memberCountLimit);
-    error ErrorRoleRemovalDisabled(RoleId roleId);
+    error ErrorRoleMemberNotContract(RoleId roleId, address notContract);
+    error ErrorRoleMemberRemovalDisabled(RoleId roleId, address expectedMember);
 
     // create target
     error ErrorTargetAlreadyCreated(address target, string name);
@@ -54,6 +55,7 @@ interface IAccessAdmin is
 
     // lock target
     error ErrorTagetNotLockable();
+    error ErrorTargetAlreadyLocked(address target, bool isLocked);
 
     // authorize target functions
     error ErrorAuthorizeForAdminRoleInvalid(address target);

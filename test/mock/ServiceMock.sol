@@ -6,14 +6,14 @@ import {FoundryRandom} from "foundry-random/FoundryRandom.sol";
 
 import {NftId} from "../../contracts/type/NftId.sol";
 import {Version, VersionPart, VersionLib, VersionPartLib} from "../../contracts/type/Version.sol";
-import {ObjectType, ObjectTypeLib, SERVICE, PRODUCT, POOL, ORACLE, DISTRIBUTION} from "../../contracts/type/ObjectType.sol";
+import {ObjectType, ObjectTypeLib, REGISTRY, SERVICE, PRODUCT, POOL, ORACLE, DISTRIBUTION} from "../../contracts/type/ObjectType.sol";
 import {IService} from "../../contracts/shared/IService.sol";
 import {RegisterableMock} from "./RegisterableMock.sol";
 import {RoleId, RoleIdLib} from "../../contracts/type/RoleId.sol";
 
 contract ServiceMock is RegisterableMock, AccessManagedUpgradeable, IService {
 
-    constructor(NftId nftId, NftId registryNftId, bool isInterceptor, address initialOwner)
+    constructor(NftId nftId, NftId registryNftId, bool isInterceptor, address initialOwner, address initialAuthority)
         RegisterableMock(
             nftId,
             registryNftId,
@@ -23,6 +23,11 @@ contract ServiceMock is RegisterableMock, AccessManagedUpgradeable, IService {
             "")
     {
         _info.data = abi.encode(getDomain(), getVersion().toMajorPart());
+        initialize(initialAuthority);
+    }
+
+    function initialize(address initialAuthority) internal initializer() {
+        __AccessManaged_init(initialAuthority);
         _registerInterface(type(IService).interfaceId);
     }
 
@@ -52,12 +57,13 @@ contract ServiceMock is RegisterableMock, AccessManagedUpgradeable, IService {
 
 contract SelfOwnedServiceMock is ServiceMock {
 
-    constructor(NftId nftId, NftId registryNftId, bool isInterceptor)
+    constructor(NftId nftId, NftId registryNftId, bool isInterceptor, address initialAuthority)
         ServiceMock(
             nftId, 
             registryNftId, 
             isInterceptor, 
-            address(this))
+            address(this),
+            initialAuthority)
     {}
 
     function getDomain() public pure override returns(ObjectType) {
@@ -73,12 +79,13 @@ contract ServiceMockWithRandomInvalidType is ServiceMock {
 
     ObjectType public immutable _invalidType;
 
-    constructor(NftId nftId, NftId registryNftId, bool isInterceptor, address initialOwner)
+    constructor(NftId nftId, NftId registryNftId, bool isInterceptor, address initialOwner, address initialAuthority)
         ServiceMock(
             nftId,
             registryNftId,
             isInterceptor,
-            initialOwner)
+            initialOwner,
+            initialAuthority)
     {
         FoundryRandom rng = new FoundryRandom();
 
@@ -104,12 +111,13 @@ contract ServiceMockWithRandomInvalidAddress is ServiceMock {
 
     address public immutable _invalidAddress;
 
-    constructor(NftId nftId, NftId registryNftId, bool isInterceptor, address initialOwner)
+    constructor(NftId nftId, NftId registryNftId, bool isInterceptor, address initialOwner, address initialAuthority)
         ServiceMock(
             nftId,
             registryNftId,
             isInterceptor,
-            initialOwner)
+            initialOwner,
+            initialAuthority)
     {
         FoundryRandom rng = new FoundryRandom();
 
@@ -133,12 +141,13 @@ contract ServiceMockWithRandomInvalidAddress is ServiceMock {
 
 contract ServiceMockOldVersion is ServiceMock {
 
-    constructor(NftId nftId, NftId registryNftId, bool isInterceptor, address initialOwner)
+    constructor(NftId nftId, NftId registryNftId, bool isInterceptor, address initialOwner, address initialAuthority)
         ServiceMock(
             nftId,
             registryNftId,
             isInterceptor,
-            initialOwner)
+            initialOwner,
+            initialAuthority)
     {}
 
     function getDomain() public pure override returns(ObjectType) {
@@ -156,12 +165,13 @@ contract ServiceMockOldVersion is ServiceMock {
 
 contract ServiceMockNewVersion is ServiceMock {
 
-    constructor(NftId nftId, NftId registryNftId, bool isInterceptor, address initialOwner)
+    constructor(NftId nftId, NftId registryNftId, bool isInterceptor, address initialOwner, address initialAuthority)
         ServiceMock(
             nftId,
             registryNftId,
             isInterceptor,
-            initialOwner)
+            initialOwner,
+            initialAuthority)
     {}
 
     function getDomain() public pure override returns(ObjectType) {
@@ -174,5 +184,46 @@ contract ServiceMockNewVersion is ServiceMock {
 
     function getVersion() public pure override returns(Version) {
         return VersionLib.toVersion(4,0,0);
+    }
+}
+
+contract ServiceMockWithRegistryDomainV3 is ServiceMock {
+
+    constructor(NftId nftId, NftId registryNftId, bool isInterceptor, address initialOwner, address initialAuthority)
+        ServiceMock(nftId, registryNftId, isInterceptor, initialOwner, initialAuthority)
+    {}
+
+    function getDomain() public pure virtual override returns(ObjectType) {
+        return REGISTRY();
+    }
+}
+
+contract ServiceMockWithRegistryDomainV4 is ServiceMockWithRegistryDomainV3 
+{
+    constructor(NftId nftId, NftId registryNftId, bool isInterceptor, address initialOwner, address initialAuthority)
+        ServiceMockWithRegistryDomainV3(nftId, registryNftId, isInterceptor, initialOwner, initialAuthority)
+    {}
+
+    function getRoleId() external virtual override pure returns(RoleId serviceRoleId) {
+        return RoleIdLib.roleForTypeAndVersion(getDomain(), VersionPartLib.toVersionPart(4));
+    }
+
+    function getVersion() public pure override returns(Version) {
+        return VersionLib.toVersion(4,0,0);
+    }
+}
+
+contract ServiceMockWithRegistryDomainV5 is ServiceMockWithRegistryDomainV3 
+{
+    constructor(NftId nftId, NftId registryNftId, bool isInterceptor, address initialOwner, address initialAuthority)
+        ServiceMockWithRegistryDomainV3(nftId, registryNftId, isInterceptor, initialOwner, initialAuthority)
+    {}
+
+    function getRoleId() external virtual override pure returns(RoleId serviceRoleId) {
+        return RoleIdLib.roleForTypeAndVersion(getDomain(), VersionPartLib.toVersionPart(5));
+    }
+
+    function getVersion() public pure override returns(Version) {
+        return VersionLib.toVersion(5,0,0);
     }
 }

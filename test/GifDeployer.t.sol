@@ -99,7 +99,7 @@ contract GifDeployerTest is GifDeployer {
 
         // check linked contracts
         assertEq(address(releaseRegistry.getRegistry()), address(registry), "unexpected registry address");
-        assertEq(releaseRegistry.getInitialVersion().toInt(), gifV3.toInt(), "unexpected initial gif version");
+        assertEq(releaseRegistry.INITIAL_GIF_VERSION(), gifV3.toInt(), "unexpected initial gif version");
         assertEq(address(releaseRegistry.getRegistryAdmin()), address(registryAdmin), "unexpected registry address");
 
         // TODO amend once full gif setup is streamlined
@@ -135,7 +135,7 @@ contract GifDeployerTest is GifDeployer {
 
         // check linked contracts
         assertEq(address(releaseRegistry.getRegistry()), address(registry), "unexpected registry address");
-        assertEq(releaseRegistry.getInitialVersion().toInt(), gifV3.toInt(), "unexpected initial gif version");
+        assertEq(releaseRegistry.INITIAL_GIF_VERSION(), gifV3.toInt(), "unexpected initial gif version");
         assertEq(address(releaseRegistry.getRegistryAdmin()), address(registryAdmin), "unexpected registry address");
 
         // TODO amend once full gif setup is streamlined

@@ -24,13 +24,12 @@ import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
 import {Staking} from "../../contracts/staking/Staking.sol";
 import {StakingManager} from "../../contracts/staking/StakingManager.sol";
 import {StakingStore} from "../../contracts/staking/StakingStore.sol";
-import {StakingReader} from "../..//contracts/staking/StakingReader.sol";
-
+import {StakingReader} from "../../contracts/staking/StakingReader.sol";
 
 import {RegisterableMock} from "../mock/RegisterableMock.sol";
 import {RegistryServiceManagerMock} from "../mock/RegistryServiceManagerMock.sol";
 import {RegistryServiceMock} from "../mock/RegistryServiceMock.sol";
-import {ServiceMockAuthorizationV3} from "./ServiceMockAuthorizationV3.sol";
+import {ServiceAuthorizationMockWithRegistryService} from "../mock/ServiceAuthorizationMock.sol";
 
 import {GifDeployer} from "../base/GifDeployer.sol";
 
@@ -196,7 +195,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
                 VersionPart releaseVersion,
                 bytes32 releaseSalt
             ) = releaseRegistry.prepareNextRelease(
-                new ServiceMockAuthorizationV3(),
+                new ServiceAuthorizationMockWithRegistryService(VERSION),
                 salt);
 
             registryServiceManagerMock = new RegistryServiceManagerMock{salt: releaseSalt}(

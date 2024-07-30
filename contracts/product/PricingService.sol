@@ -31,10 +31,7 @@ contract PricingService is
     ComponentVerifyingService, 
     IPricingService
 {
-    using UFixedLib for UFixed;
-
     IDistributionService internal _distributionService;
-
 
     function _initialize(
         address owner, 

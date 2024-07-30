@@ -80,9 +80,7 @@ contract AccessAdmin is
     }
 
     modifier onlyRoleAdmin(RoleId roleId) {
-        if (!roleExists(roleId)) {
-            revert ErrorRoleUnknown(roleId);
-        }
+        _checkRoleExists(roleId, false);
 
         if (!hasAdminRole(msg.sender, roleId)) {
             revert ErrorNotAdminOfRole(_roleInfo[roleId].adminRoleId);
@@ -97,8 +95,8 @@ contract AccessAdmin is
         _;
     }
 
-    modifier onlyExistingRole(RoleId roleId) {
-        _checkRoleId(roleId);
+    modifier onlyExistingRole(RoleId roleId, bool onlyActiveRole) {
+        _checkRoleExists(roleId, onlyActiveRole);
         _;
     }
 
@@ -219,19 +217,6 @@ contract AccessAdmin is
                 selector.toBytes4()));
     }
 
-    // TODO cleanup
-    // function isAccessManaged(address target) public view returns (bool) {
-    //     if (!_isContract(target)) {
-    //         return false;
-    //     }
-
-    //     (bool success, ) = target.staticcall(
-    //         abi.encodeWithSelector(
-    //             AccessManagedUpgradeable.authority.selector));
-
-    //     return success;
-    // }
-
     function canCall(address caller, address target, Selector selector) external virtual view returns (bool can) {
         (can, ) = _authority.canCall(caller, target, selector.toBytes4());
     }
@@ -242,7 +227,8 @@ contract AccessAdmin is
             adminRoleId: adminRoleId,
             roleType: roleType,
             maxMemberCount: maxMemberCount,
-            createdAt: TimestampLib.blockTimestamp()
+            createdAt: TimestampLib.blockTimestamp(),
+            pausedAt: TimestampLib.max()
         });
     }
 
@@ -373,14 +359,6 @@ contract AccessAdmin is
                 name: PUBLIC_ROLE_NAME}));
     }
 
-    /// @dev check if target exists and reverts if it doesn't
-    function _checkTarget(address target)
-        internal
-    {
-        if (_targetInfo[target].createdAt.eqz()) {
-            revert ErrorTargetUnknown(target);
-        }
-    }
 
     /// @dev grant the specified role access to all functions in the provided selector list
     function _grantRoleAccessToFunctions(
@@ -398,22 +376,26 @@ contract AccessAdmin is
         // implizit logging: rely on OpenZeppelin log TargetFunctionRoleUpdated
     }
 
+
     /// @dev grant the specified role to the provided account
     function _grantRoleToAccount(RoleId roleId, address account)
         internal
+        onlyExistingRole(roleId, true)
     {
-        _checkRoleId(roleId);
-
         // check max role members will not be exceeded
         if (_roleMembers[roleId].length() >= _roleInfo[roleId].maxMemberCount) {
             revert ErrorRoleMembersLimitReached(roleId, _roleInfo[roleId].maxMemberCount);
         }
 
         // check account is contract for contract role
-        // TODO implement
-        if (_roleInfo[roleId].roleType == RoleType.Contract) {
+        if (
+            _roleInfo[roleId].roleType == RoleType.Contract &&
+            !ContractLib.isContract(account) // will fail in account's constructor
+        ) {
+            revert ErrorRoleMemberNotContract(roleId, account);
         }
 
+        // TODO check account already have roleId
         _roleMembers[roleId].add(account);
         _authority.grantRole(
             RoleId.unwrap(roleId), 
@@ -426,14 +408,15 @@ contract AccessAdmin is
     /// @dev revoke the specified role from the provided account
     function _revokeRoleFromAccount(RoleId roleId, address account)
         internal
+        onlyExistingRole(roleId, false)
     {
-        _checkRoleId(roleId);
 
         // check role removal is permitted
         if (_roleInfo[roleId].roleType == RoleType.Contract) {
-            revert ErrorRoleRemovalDisabled(roleId);
+            revert ErrorRoleMemberRemovalDisabled(roleId, account);
         }
 
+        // TODO check account have roleId?
         _roleMembers[roleId].remove(account);
         _authority.revokeRole(
             RoleId.unwrap(roleId), 
@@ -442,21 +425,6 @@ contract AccessAdmin is
         // indirect logging: rely on OpenZeppelin log RoleGranted
     }
 
-
-    function _checkRoleId(RoleId roleId)
-        internal
-    {
-        if (_roleInfo[roleId].createdAt.eqz()) {
-            revert ErrorRoleUnknown(roleId);
-        }
-
-        uint64 roleIdInt = RoleId.unwrap(roleId);
-        if (roleIdInt == _authority.ADMIN_ROLE()
-            || roleIdInt == _authority.PUBLIC_ROLE())
-        {
-            revert ErrorRoleIsLocked(roleId);
-        }
-    }
 
     /// @dev Creates a role based on the provided parameters.
     /// Checks that the provided role and role id and role name not already used.
@@ -576,17 +544,52 @@ contract AccessAdmin is
         emit LogTargetCreated(target, targetName);
     }
 
-    // TODO cleanup
-    // function _isContract(address target)
-    //     internal
-    //     view 
-    //     returns (bool)
-    // {
-    //     uint256 size;
-    //     assembly {
-    //         size := extcodesize(target)
-    //     }
-    //     return size > 0;
-    // }
-    
+    function _setTargetClosed(address target, bool locked)
+        internal
+    {
+        _checkTarget(target);
+
+        // target locked/unlocked already
+        if(_authority.isTargetClosed(target) == locked) {
+            revert ErrorTargetAlreadyLocked(target, locked);
+        }
+
+        _authority.setTargetClosed(target, locked);
+    }
+
+
+    function _checkRoleExists(
+        RoleId roleId, 
+        bool onlyActiveRole
+    )
+        internal
+        view
+    {
+        if (!roleExists(roleId)) {
+            revert ErrorRoleUnknown(roleId);
+        }
+
+        uint64 roleIdInt = RoleId.unwrap(roleId);
+        if (roleIdInt == _authority.ADMIN_ROLE()
+            || roleIdInt == _authority.PUBLIC_ROLE())
+        {
+            revert ErrorRoleIsLocked(roleId);
+        }
+
+        // check if role is disabled
+        if (onlyActiveRole && _roleInfo[roleId].pausedAt <= TimestampLib.blockTimestamp()) {
+            revert ErrorRoleIsPaused(roleId);
+        }
+    }
+
+
+    /// @dev check if target exists and reverts if it doesn't
+    function _checkTarget(address target)
+        internal
+        view
+    {
+        if (!targetExists(target)) {
+            revert ErrorTargetUnknown(target);
+        }
+    }
 }

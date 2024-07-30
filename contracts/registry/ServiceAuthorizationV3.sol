@@ -20,7 +20,7 @@ contract ServiceAuthorizationV3
 {
 
      constructor(string memory commitHash)
-          ServiceAuthorization(commitHash)
+          ServiceAuthorization(commitHash, 3)
      {}
 
      function _setupDomains()
