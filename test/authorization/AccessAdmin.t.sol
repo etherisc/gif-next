@@ -25,16 +25,18 @@ contract AccessAdminForTesting is AccessAdmin {
     /// @dev required role for state changes to this contract
     RoleId internal _managerRoleId;
 
-
+    // FIXME can not create targets in constructor -> isAccessManaged() will revert because of zero code size
     constructor() AccessAdmin() {
         _createAdminAndPublicRoles();
         _initializeAccessAdminForTesting();
     }
 
-
     function _initializeAccessAdminForTesting() internal {
 
         FunctionInfo[] memory functions;
+
+        // create targets
+        _createTarget(address(this), "AccessAdminForTesting", false, true);
 
         // setup manager role
         _managerRoleId = RoleIdLib.toRoleId(MANAGER_ROLE);
@@ -186,10 +188,11 @@ contract AccessAdminForTesting is AccessAdmin {
     )
         external
         virtual
-        onlyExistingTarget(target)
         restricted()
     {
-        _authority.setTargetClosed(target, locked);
+        // TODO figure out if it important to call directlly
+        //_authority.setTargetClosed(target, locked);
+        _setTargetClosed(target, locked);
 
         // implizit logging: rely on OpenZeppelin log TargetClosed
     }
