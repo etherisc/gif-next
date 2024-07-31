@@ -14,6 +14,7 @@ import {InstanceAdmin} from "../instance/InstanceAdmin.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
 import {IInstanceService} from "../instance/IInstanceService.sol";
+import {IRegisterable} from "../shared/IRegisterable.sol";
 import {IPoolComponent} from "../pool/IPoolComponent.sol";
 import {IProductComponent} from "../product/IProductComponent.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
@@ -28,14 +29,6 @@ contract ComponentService is
     ComponentVerifyingService,
     IComponentService
 {
-    error ErrorComponentServiceAlreadyRegistered(address component);
-    error ErrorComponentServiceNotComponent(address component);
-    error ErrorComponentServiceInvalidType(address component, ObjectType requiredType, ObjectType componentType);
-    error ErrorComponentServiceSenderNotOwner(address component, address initialOwner, address sender);
-    error ErrorComponentServiceExpectedRoleMissing(NftId instanceNftId, RoleId requiredRole, address sender);
-    error ErrorComponentServiceComponentLocked(address component);
-    error ErrorComponentServiceSenderNotService(address sender);
-    error ErrorComponentServiceComponentTypeInvalid(address component, ObjectType expectedType, ObjectType foundType);
 
     bool private constant INCREASE = true;
     bool private constant DECREASE = false;
@@ -555,6 +548,11 @@ contract ComponentService is
             componentAddress,
             requiredType);
 
+        // get instance supporting contracts (as function return values)
+        instanceReader = instance.getInstanceReader();
+        instanceAdmin = instance.getInstanceAdmin();
+        instanceStore = instance.getInstanceStore();
+
         // register with registry
         if (requiredType == PRODUCT()) {
             componentNftId = _registryService.registerProduct(
@@ -564,20 +562,12 @@ contract ComponentService is
                 component, requiredType, initialOwner).nftId;
         }
 
-        // get instance supporting contracts (as function return values)
-        instanceReader = instance.getInstanceReader();
-        instanceAdmin = instance.getInstanceAdmin();
-        instanceStore = instance.getInstanceStore();
-
         // deploy and wire token handler
         IComponents.ComponentInfo memory componentInfo = component.getInitialComponentInfo();
         IERC20Metadata token = componentInfo.token;
         componentInfo.tokenHandler = TokenHandlerDeployerLib.deployTokenHandler(
             address(token), 
             address(instanceAdmin.authority()));
-        
-        // set initial approval from component contract to tokenhandler
-        token.approve(componentAddress, type(uint256).max);
 
         // register component with instance
         instanceStore.createComponent(
@@ -603,12 +593,6 @@ contract ComponentService is
             feeAfter.fractionalFee,
             feeAfter.fixedFee
         );
-    }
-
-
-    function _createSelectors(bytes4 selector) internal pure returns (bytes4[] memory selectors) {
-        selectors = new bytes4[](1);
-        selectors[0] = selector;
     }
 
 
@@ -673,6 +657,12 @@ contract ComponentService is
         // check component has not already been registered
         if (getRegistry().getNftIdForAddress(componentAddress).gtz()) {
             revert ErrorComponentServiceAlreadyRegistered(componentAddress);
+        }
+
+        // check release matches
+        address parentAddress = registry.getObjectAddress(parentNftId);
+        if (component.getRelease() != IRegisterable(parentAddress).getRelease()) {
+            revert ErrorComponentServiceReleaseMismatch(componentAddress, component.getRelease(), IRegisterable(parentAddress).getRelease());
         }
 
         // check component belongs to same product cluster 

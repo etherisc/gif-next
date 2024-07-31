@@ -52,8 +52,6 @@ contract DistributorTest is GifTest {
     }
 
     function test_distributionReferralUnknown() public {
-        // TODO cleanup
-        // _prepareDistribution();
 
         string memory invalidCode = "some_invalid_referral_code";
         // solhint-disable-next-line 
@@ -132,8 +130,7 @@ contract DistributorTest is GifTest {
 
 
     function test_distributionDistributorCreateTwice() public {
-        // TODO cleanup
-        // _prepareDistribution();
+
         assertTrue(!distribution.isDistributor(customer), "customer is already distributor");
         _setupTestData(true);
         assertTrue(distribution.isDistributor(customer), "customer not yet distributor");
@@ -154,8 +151,6 @@ contract DistributorTest is GifTest {
 
 
     function test_distributionDistributorCreateTransfer() public {
-        // TODO cleanup
-        // _prepareDistribution();
 
         assertTrue(!distribution.isDistributor(customer), "customer is already distributor");
         _setupTestData(true);
@@ -197,24 +192,8 @@ contract DistributorTest is GifTest {
             "unexpected distributor data");
     }
 
-    // TODO cleanup
-    // function _prepareDistribution() internal {
-    //     _prepareProduct();
-
-    //     vm.startPrank(distributionOwner);
-    //     distribution.setFees(
-    //         FeeLib.toFee(UFixedLib.toUFixed(2,-1), 0), 
-    //         FeeLib.toFee(UFixedLib.toUFixed(5,-2), 0));
-    //     vm.stopPrank();
-
-    //     distributionNftId = distribution.getNftId();
-    //     assertTrue(distributionNftId.gtz(), "distribution nft id unexpectedly zero");
-    //     assertEq(registry.ownerOf(distributionNftId), distributionOwner, "distribution owner unexpectly not owner of distribution nft id");
-    // }
-
     function test_DistributorTypeCreateHappyCase() public {
-        // TODO cleanup
-        // _prepareDistribution();
+
         _createDistributorType();
 
         IDistribution.DistributorTypeInfo memory distributorTypeInfo = instanceReader.getDistributorTypeInfo(distributorType);
@@ -230,8 +209,7 @@ contract DistributorTest is GifTest {
     }
 
     function test_DistributorCreateHappyCase() public {
-        // TODO cleanup
-        // _prepareDistribution();
+
         _createDistributorType();
         _createDistributor();
 
@@ -244,8 +222,7 @@ contract DistributorTest is GifTest {
 
     function test_ReferralCreateHappyCase() public {
         // GIVEN
-        // TODO cleanup
-        // _prepareDistribution();
+
         _createDistributorType();
         _createDistributor();
 
@@ -323,11 +300,6 @@ contract DistributorTest is GifTest {
     }
 
     function _setupTestData(bool createDistributor) internal {
-        // TODO cleanup
-        // if (address(distribution) == address(0)) {
-        //     _prepareDistribution();
-        // }
-
         _createDistributorType();
 
         referralCode = "SAVE!!!";

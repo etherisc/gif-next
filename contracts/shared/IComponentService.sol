@@ -9,6 +9,7 @@ import {IService} from "../shared/IService.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType} from "../type/ObjectType.sol";
 import {UFixed} from "../type/UFixed.sol";
+import {VersionPart} from "../type/Version.sol";
 
 /// @dev component base class
 /// component examples are staking, product, distribution, pool and oracle
@@ -16,7 +17,12 @@ interface IComponentService is
     IService
 {
     error ErrorComponentServiceSenderNotRegistered(address sender);
-    error ErrorComponentServiceSenderNotComponentParent(NftId senderNftId, NftId compnentParentNftId);    error ErrorComponentServiceParentNotInstance(NftId nftId, ObjectType objectType);
+    error ErrorComponentServiceNotComponent(address component);
+    error ErrorComponentServiceInvalidType(address component, ObjectType requiredType, ObjectType componentType);
+    error ErrorComponentServiceAlreadyRegistered(address component);
+    error ErrorComponentServiceReleaseMismatch(address component, VersionPart componentRelease, VersionPart parentRelease);
+    error ErrorComponentServiceSenderNotComponentParent(NftId senderNftId, NftId compnentParentNftId);
+    error ErrorComponentServiceParentNotInstance(NftId nftId, ObjectType objectType);
     error ErrorComponentServiceParentNotProduct(NftId nftId, ObjectType objectType);
 
     error ErrorProductServiceDistributionAlreadyRegistered(NftId productNftId, NftId distributionNftId);

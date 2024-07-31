@@ -24,9 +24,6 @@ abstract contract Service is
     IService
 {
 
-    uint8 private constant GIF_MAJOR_VERSION = 3;
-
-
     function _initializeService(
         address registry, 
         address authority, // real authority for registry service adress(0) for other services
@@ -66,22 +63,22 @@ abstract contract Service is
     }
 
     function getRoleId() external virtual pure returns(RoleId serviceRoleId) {
-        return RoleIdLib.roleForTypeAndVersion(_getDomain(), VersionPartLib.toVersionPart(GIF_MAJOR_VERSION));
+        return RoleIdLib.roleForTypeAndVersion(_getDomain(), getRelease());
     }
 
-    // from Versionable
+    /// @inheritdoc IVersionable
     function getVersion()
         public 
         pure 
         virtual override (IVersionable, Versionable)
         returns(Version)
     {
-        return VersionLib.toVersion(GIF_MAJOR_VERSION,0,0);
+        return VersionLib.toVersion(GIF_RELEASE,0,0);
     }
 
     function _getDomain() internal virtual pure returns (ObjectType);
 
     function _getServiceAddress(ObjectType domain) internal view returns (address) {
-        return getRegistry().getServiceAddress(domain, VersionPartLib.toVersionPart(GIF_MAJOR_VERSION));
+        return getRegistry().getServiceAddress(domain, getRelease());
     }
 }

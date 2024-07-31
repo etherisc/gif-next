@@ -70,7 +70,7 @@ contract InstanceService is
             revert ErrorInstanceServiceNotInstance(instanceAddress, objectType);
         }
 
-        VersionPart instanceVersion = IInstance(instanceAddress).getMajorVersion();
+        VersionPart instanceVersion = IInstance(instanceAddress).getRelease();
         if (instanceVersion != getVersion().toMajorPart()) {
             revert ErrorInstanceServiceInstanceVersionMismatch(instanceAddress, instanceVersion);
         }
@@ -276,65 +276,6 @@ contract InstanceService is
         upgradedInstanceReaderClone.initializeWithInstance(address(instance));
         instance.setInstanceReader(upgradedInstanceReaderClone);
     }
-
-
-    // TODO cleanup
-    // function createGifTarget(
-    //     NftId instanceNftId,
-    //     address targetAddress,
-    //     string memory targetName,
-    //     bytes4[][] memory selectors,
-    //     RoleId[] memory roles
-    // )
-    //     external
-    //     virtual
-    //     restricted()
-    // {
-    //     _createGifTarget(
-    //         instanceNftId,
-    //         targetAddress,
-    //         targetName,
-    //         roles,
-    //         selectors
-    //     );
-    // }
-
-    // TODO cleanup
-    // function initializeAuthorization(
-    //     NftId instanceNftId, 
-    //     IInstanceLinkedComponent component
-    // )
-    //     external
-    //     virtual
-    //     restricted()
-    // {
-    //     (IInstance instance, ) = _validateInstanceAndComponent(
-    //         instanceNftId, 
-    //         address(component));
-
-    //     InstanceAdmin instanceAdmin = instance.getInstanceAdmin();
-    //     instanceAdmin.initializeComponentAuthorization(component);
-    // }
-
-    // function createComponentTarget(
-    //     NftId instanceNftId,
-    //     address targetAddress,
-    //     string memory targetName,
-    //     bytes4[][] memory selectors,
-    //     RoleId[] memory roles
-    // )
-    //     external
-    //     virtual
-    //     restricted()
-    // {
-    //     _createGifTarget(
-    //         instanceNftId,
-    //         targetAddress,
-    //         targetName,
-    //         roles,
-    //         selectors
-    //     );
-    // }
 
     /// @dev create new cloned instance admin
     /// function used to setup a new instance

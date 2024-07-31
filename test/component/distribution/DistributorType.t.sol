@@ -79,31 +79,6 @@ contract DistributorTypeTest is GifTest {
         assertTrue(equalBytes(info.data, data), "unexpected data for referral type");
     }
 
-    // TODO cleanup
-    // function _prepareDistribution() internal {
-    //     vm.startPrank(distributionOwner);
-    //     distribution = new SimpleDistribution(
-    //         address(registry),
-    //         instanceNftId,
-    //         new BasicDistributionAuthorization("SimpleDistribution"),
-    //         distributionOwner,
-    //         address(token));
-    //     vm.stopPrank();
-
-    //     distributionNftId = _registerComponent(product, address(distribution), "distribution");
-
-    //     distributionFee = FeeLib.toFee(UFixedLib.toUFixed(2, -1), 0); // 20%
-    //     minDistributionOwnerFee = FeeLib.toFee(UFixedLib.toUFixed(2, -2), 0); // 2%
-
-    //     vm.startPrank(distributionOwner);
-    //     distribution.setFees(
-    //         distributionFee, 
-    //         minDistributionOwnerFee);
-    //     vm.stopPrank();
-
-    //     distributionNftId = distribution.getNftId();
-    // }
-
 
     function _setupTestData(bool createDistributorType) internal {
         distributionFee = FeeLib.toFee(UFixedLib.toUFixed(2, -1), 0); // 20%

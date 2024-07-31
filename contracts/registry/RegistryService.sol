@@ -73,22 +73,6 @@ contract RegistryService is
         instance.linkToRegisteredNftId(); // asume safe
     }
 
-    // function registerProduct(IComponent product, address owner)
-    //     external
-    //     restricted
-    //     returns(
-    //         IRegistry.ObjectInfo memory info
-    //     ) 
-    // {
-    //     // CAN revert if no ERC165 support -> will revert with empty message 
-    //     if(!product.supportsInterface(type(IProductComponent).interfaceId)) {
-    //         revert ErrorRegistryServiceNotProduct(address(product));
-    //     }
-
-    //     info = _getAndVerifyContractInfo(product, PRODUCT(), owner);
-    //     info.nftId = getRegistry().register(info);
-    // }
-
     function registerProduct(
         IComponent product, 
         address initialOwner
@@ -100,9 +84,8 @@ contract RegistryService is
             IRegistry.ObjectInfo memory info
         ) 
     {
-        // CAN revert if no ERC165 support -> will revert with empty message 
-        if(!product.supportsInterface(type(IComponent).interfaceId)) {
-            revert ErrorRegistryServiceNotComponent(address(product));
+        if(!product.supportsInterface(type(IProductComponent).interfaceId)) {
+            revert ErrorRegistryServiceNotProduct(address(product));
         }
 
         info = _getAndVerifyContractInfo(product, PRODUCT(), initialOwner);

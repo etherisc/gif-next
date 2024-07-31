@@ -25,8 +25,6 @@ contract Instance is
     AccessManagedUpgradeable,
     Registerable
 {
-    uint256 public constant GIF_MAJOR_VERSION = 3;
-
     bool private _initialized;
 
     IComponentService internal _componentService;
@@ -84,12 +82,12 @@ contract Instance is
         _componentService = IComponentService(
             getRegistry().getServiceAddress(
                 COMPONENT(), 
-                getMajorVersion()));
+                getRelease()));
 
         _instanceService = IInstanceService(
             getRegistry().getServiceAddress(
                 INSTANCE(), 
-                getMajorVersion()));
+                getRelease()));
 
         _registerInterface(type(IInstance).interfaceId);    
     }
@@ -234,10 +232,6 @@ contract Instance is
 
     function getInstanceStore() external view returns (InstanceStore) {
         return _instanceStore;
-    }
-
-    function getMajorVersion() public pure returns (VersionPart majorVersion) {
-        return VersionPartLib.toVersionPart(GIF_MAJOR_VERSION);
     }
 
     //--- internal view/pure functions --------------------------------------//

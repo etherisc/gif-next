@@ -48,14 +48,6 @@ abstract contract InstanceLinkedComponent is
         IInstanceService(_getServiceAddress(INSTANCE())).setComponentLocked(false);
     }
 
-    function getInstance() public view override returns (IInstance instance) {
-        return _getInstanceLinkedComponentStorage()._instance;
-    }
-
-    function getAuthorization() external view returns (IAuthorization authorization) {
-        return _getInstanceLinkedComponentStorage()._initialAuthorization;
-    }
-
     /// @inheritdoc IInstanceLinkedComponent
     function withdrawFees(Amount amount)
         external
@@ -65,6 +57,16 @@ abstract contract InstanceLinkedComponent is
         returns (Amount withdrawnAmount)
     {
         return _withdrawFees(amount);
+    }
+
+    /// @inheritdoc IInstanceLinkedComponent
+    function getInstance() public view override returns (IInstance instance) {
+        return _getInstanceLinkedComponentStorage()._instance;
+    }
+
+    /// @inheritdoc IInstanceLinkedComponent
+    function getAuthorization() external view returns (IAuthorization authorization) {
+        return _getInstanceLinkedComponentStorage()._initialAuthorization;
     }
 
     function _getInstanceLinkedComponentStorage() private pure returns (InstanceLinkedComponentStorage storage $) {
@@ -205,7 +207,7 @@ abstract contract InstanceLinkedComponent is
     /// @dev returns the service address for the specified domain
     /// gets address via lookup from registry using the major version form the linked instance
     function _getServiceAddress(ObjectType domain) internal view returns (address service) {
-        VersionPart majorVersion = _getInstanceLinkedComponentStorage()._instance.getMajorVersion();
-        return getRegistry().getServiceAddress(domain, majorVersion);
+        VersionPart release = _getInstanceLinkedComponentStorage()._instance.getRelease();
+        return getRegistry().getServiceAddress(domain, release);
     }
 }

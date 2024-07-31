@@ -96,7 +96,7 @@ contract InstanceAdmin is
         _registry = _instance.getRegistry();
 
         // check matching releases
-        if (_instanceAuthorization.getRelease() != _instance.getMajorVersion()) {
+        if (_instanceAuthorization.getRelease() != _instance.getRelease()) {
             revert ErrorInstanceAdminReleaseMismatch();
         }
 

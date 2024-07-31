@@ -6,6 +6,7 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {NftId, NftIdLib} from "../type/NftId.sol";
 import {NftOwnable} from "../shared/NftOwnable.sol";
 import {ObjectType} from "../type/ObjectType.sol";
+import {VersionPart, VersionPartLib} from "../type/Version.sol";
 
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegisterable} from "./IRegisterable.sol";
@@ -14,6 +15,8 @@ contract Registerable is
     NftOwnable,
     IRegisterable
 {
+    uint256 public constant GIF_RELEASE = 3;
+
     // keccak256(abi.encode(uint256(keccak256("gif-next.contracts.shared.Registerable.sol")) - 1)) & ~bytes32(uint256(0xff));
     bytes32 public constant REGISTERABLE_LOCATION_V1 = 0x6548007c3f4340f82f348c576c0ff69f4f529cadd5ad41f96aae61abceeaa300;
 
@@ -52,6 +55,13 @@ contract Registerable is
     }
 
 
+    /// @inheritdoc IRegisterable
+    function getRelease() public pure returns (VersionPart release) {
+        return VersionPartLib.toVersionPart(GIF_RELEASE);
+    }
+
+
+    /// @inheritdoc IRegisterable
     function getInitialInfo() 
         public 
         view 

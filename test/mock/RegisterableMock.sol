@@ -2,16 +2,15 @@
 pragma solidity ^0.8.20;
 
 import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManaged.sol";
+import {FoundryRandom} from "foundry-random/FoundryRandom.sol";
 
-import { FoundryRandom } from "foundry-random/FoundryRandom.sol";
-
-import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
-import {ObjectType} from "../../contracts/type/ObjectType.sol";
 import {InitializableERC165} from "../../contracts/shared/InitializableERC165.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
-
 import {MockInterceptor} from "./MockInterceptor.sol";
+import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
+import {ObjectType} from "../../contracts/type/ObjectType.sol";
+import {VersionPart, VersionPartLib} from "../../contracts/type/Version.sol";
 
 
 contract RegisterableMock is InitializableERC165, IRegisterable, MockInterceptor {
@@ -50,6 +49,10 @@ contract RegisterableMock is InitializableERC165, IRegisterable, MockInterceptor
     }
 
     // from IRegisterable
+    function getRelease() public virtual pure returns (VersionPart release) {
+        return VersionPartLib.toVersionPart(3);
+    }
+
     function getInitialInfo() 
         public 
         view 

@@ -21,6 +21,7 @@ interface IRegistryService is
 
      error ErrorRegistryServiceNotService(address notService);
      error ErrorRegistryServiceNotInstance(address notInstance);
+     error ErrorRegistryServiceNotProduct(address notProduct);
      error ErrorRegistryServiceNotComponent(address notComponent);
      error ErrorRegistryServiceNotProductLinkedComponent(address notProductLinkedComponent);
 

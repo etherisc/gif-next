@@ -59,7 +59,6 @@ interface IInstance is
     function withdrawStakingRewardReserves(Amount dipAmount) external returns (Amount newBalance);
 
     // get instance release and supporting contracts
-    function getMajorVersion() external pure returns (VersionPart majorVersion);
     function getInstanceReader() external view returns (InstanceReader);
     function getBundleSet() external view returns (BundleSet);
     function getInstanceAdmin() external view returns (InstanceAdmin);
