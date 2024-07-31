@@ -67,7 +67,7 @@ contract BundleSet is
         }
 
         LibNftIdSet.remove(_activePolicies[bundleNftId], policyNftId);
-        emit LogBundleSetPolicyUnlinked(policyInfo.bundleNftId, policyNftId);
+        emit LogBundleSetPolicyUnlinked(bundleNftId, policyNftId);
     }
 
 

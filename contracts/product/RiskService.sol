@@ -14,6 +14,7 @@ import {KEEP_STATE} from "../type/StateId.sol";
 import {NftId} from "../type/NftId.sol";
 import {RiskId} from "../type/RiskId.sol";
 import {StateId} from "../type/StateId.sol";
+import {RiskSet} from "../instance/RiskSet.sol";
 import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
 
 contract RiskService is
@@ -61,6 +62,10 @@ contract RiskService is
             riskId,
             riskInfo
         );
+
+        // add risk to RiskSet
+        RiskSet riskSet = instance.getRiskSet();
+        riskSet.add(riskId);
     }
 
 
