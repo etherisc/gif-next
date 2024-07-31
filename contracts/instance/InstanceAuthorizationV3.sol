@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {
-     PRODUCT, ORACLE, POOL, INSTANCE, COMPONENT, DISTRIBUTION, APPLICATION, POLICY, CLAIM, BUNDLE
+     PRODUCT, ORACLE, POOL, INSTANCE, COMPONENT, DISTRIBUTION, APPLICATION, POLICY, CLAIM, BUNDLE, RISK
 } from "../../contracts/type/ObjectType.sol";
 
 import {
@@ -15,6 +15,7 @@ import {Instance} from "../instance/Instance.sol";
 import {InstanceAdmin} from "../instance/InstanceAdmin.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
 import {ModuleAuthorization} from "../authorization/ModuleAuthorization.sol";
+import {RiskSet} from "../instance/RiskSet.sol"; 
 
 
 contract InstanceAuthorizationV3
@@ -25,6 +26,7 @@ contract InstanceAuthorizationV3
      string public constant INSTANCE_STORE_TARGET_NAME = "InstanceStore";
      string public constant INSTANCE_ADMIN_TARGET_NAME = "InstanceAdmin";
      string public constant BUNDLE_SET_TARGET_NAME = "BundleSet";
+     string public constant RISK_SET_TARGET_NAME = "RiskSet";
 
      string public constant INSTANCE_ROLE_NAME = "InstanceRole";
      string public constant DISTRIBUTION_OWNER_ROLE_NAME = "DistributionOwnerRole";
@@ -60,6 +62,7 @@ contract InstanceAuthorizationV3
           _addTarget(INSTANCE_STORE_TARGET_NAME);
           _addTarget(INSTANCE_ADMIN_TARGET_NAME);
           _addTarget(BUNDLE_SET_TARGET_NAME);
+          _addTarget(RISK_SET_TARGET_NAME);
 
           // service targets relevant to instance
           _addServiceTargetWithRole(INSTANCE());
@@ -83,6 +86,7 @@ contract InstanceAuthorizationV3
           _setupInstanceAdminAuthorization();
           _setupInstanceStoreAuthorization();
           _setupBundleSetAuthorization();
+          _setUpRiskSetAuthorization();
      }
 
 
@@ -98,6 +102,20 @@ contract InstanceAuthorizationV3
           _authorize(functions, BundleSet.add.selector, "add");
           _authorize(functions, BundleSet.lock.selector, "lock");
           _authorize(functions, BundleSet.unlock.selector, "unlock");
+     }
+
+     function _setUpRiskSetAuthorization()
+          internal
+     {
+          IAccess.FunctionInfo[] storage functions;
+
+          // authorize risk service role
+          functions = _authorizeForTarget(RISK_SET_TARGET_NAME, getServiceRole(RISK()));
+          _authorize(functions, RiskSet.linkPolicy.selector, "linkPolicy");
+          _authorize(functions, RiskSet.add.selector, "add");
+          //_authorize(functions, RiskSet.active.selector, "active");
+          //_authorize(functions, RiskSet.pause.selector, "pause");
+          //_authorize(functions, RiskSet.archive.selector, "archive");
      }
 
 
