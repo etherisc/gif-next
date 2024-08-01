@@ -5,6 +5,7 @@ import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/acce
 
 import {Amount} from "../type/Amount.sol";
 import {BundleSet} from "./BundleSet.sol";
+import {RiskSet} from "./RiskSet.sol";
 import {IInstance} from "./IInstance.sol";
 import {IInstanceService} from "./IInstanceService.sol";
 import {InstanceReader} from "./InstanceReader.sol";
@@ -30,7 +31,8 @@ contract Instance is
     IInstanceService internal _instanceService;
     InstanceAdmin internal _instanceAdmin;
     InstanceReader internal _instanceReader;
-    BundleSet internal _bundleManager;
+    BundleSet internal _bundleSet;
+    RiskSet internal _riskSet;
     InstanceStore internal _instanceStore;
 
     modifier onlyChainNft() {
@@ -43,7 +45,8 @@ contract Instance is
     function initialize(
         InstanceAdmin instanceAdmin, 
         InstanceStore instanceStore,
-        BundleSet bundleManager,
+        BundleSet bundleSet,
+        RiskSet riskSet,
         InstanceReader instanceReader,
         IRegistry registry, 
         address initialOwner
@@ -71,12 +74,14 @@ contract Instance is
 
         // store instance supporting contracts
         _instanceStore = instanceStore;
-        _bundleManager = bundleManager;
+        _bundleSet = bundleSet;
+        _riskSet = riskSet;
         _instanceReader = instanceReader;
 
         // initialize instance supporting contracts
         _instanceStore.initialize();
-        _bundleManager.initialize();
+        _bundleSet.initialize();
+        _riskSet.initialize();
         _instanceReader.initialize();
 
         _instanceService = IInstanceService(
@@ -210,7 +215,11 @@ contract Instance is
     }
 
     function getBundleSet() external view returns (BundleSet) {
-        return _bundleManager;
+        return _bundleSet;
+    }
+
+    function getRiskSet() external view returns (RiskSet) {
+        return _riskSet;
     }
 
     function getInstanceAdmin() external view returns (InstanceAdmin) {
