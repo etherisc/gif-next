@@ -9,7 +9,7 @@ import {IRegistryService} from "../registry/IRegistryService.sol";
 import {IRisk} from "../instance/module/IRisk.sol";
 
 import {InstanceReader} from "../instance/InstanceReader.sol";
-import {ObjectType, INSTANCE, PRODUCT, POOL, POLICY, REGISTRY} from "../type/ObjectType.sol";
+import {ObjectType, INSTANCE, PRODUCT, POOL, POLICY, REGISTRY, RISK} from "../type/ObjectType.sol";
 import {KEEP_STATE} from "../type/StateId.sol";
 import {NftId} from "../type/NftId.sol";
 import {RiskId} from "../type/RiskId.sol";
@@ -96,6 +96,6 @@ contract RiskService is
 
 
     function _getDomain() internal pure override returns(ObjectType) {
-        return PRODUCT();
+        return RISK();
     }
 }

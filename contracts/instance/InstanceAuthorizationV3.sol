@@ -71,7 +71,7 @@ contract InstanceAuthorizationV3
           _addServiceTargetWithRole(ORACLE());
           _addServiceTargetWithRole(POOL());
           _addServiceTargetWithRole(BUNDLE());
-          _addServiceTargetWithRole(PRODUCT());
+          _addServiceTargetWithRole(RISK());
           _addServiceTargetWithRole(APPLICATION());
           _addServiceTargetWithRole(POLICY());
           _addServiceTargetWithRole(CLAIM());
@@ -192,7 +192,7 @@ contract InstanceAuthorizationV3
           _authorize(functions, InstanceStore.decreaseLocked.selector, "decreaseLocked");
 
           // authorize product service role
-          functions = _authorizeForTarget(INSTANCE_STORE_TARGET_NAME, getServiceRole(PRODUCT()));
+          functions = _authorizeForTarget(INSTANCE_STORE_TARGET_NAME, getServiceRole(RISK()));
           _authorize(functions, InstanceStore.createRisk.selector, "createRisk");
           _authorize(functions, InstanceStore.updateRisk.selector, "updateRisk");
           _authorize(functions, InstanceStore.updateRiskState.selector, "updateRiskState");

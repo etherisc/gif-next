@@ -16,7 +16,7 @@ import {IPricingService} from "./IPricingService.sol";
 import {IProductComponent} from "./IProductComponent.sol";
 import {NftId} from "../type/NftId.sol";
 import {PayoutId} from "../type/PayoutId.sol";
-import {COMPONENT, PRODUCT, APPLICATION, POLICY, CLAIM, PRICE, BUNDLE } from "../type/ObjectType.sol";
+import {COMPONENT, PRODUCT, APPLICATION, POLICY, CLAIM, PRICE, BUNDLE, RISK } from "../type/ObjectType.sol";
 import {ReferralId} from "../type/Referral.sol";
 import {RiskId, RiskIdLib} from "../type/RiskId.sol";
 import {Seconds} from "../type/Seconds.sol";
@@ -172,7 +172,7 @@ abstract contract Product is
         ProductStorage storage $ = _getProductStorage();
         // TODO add validation
         // TODO refactor to go via registry for all components linked to this product (#527)
-        $._riskService = IRiskService(_getServiceAddress(PRODUCT())); 
+        $._riskService = IRiskService(_getServiceAddress(RISK())); 
         $._applicationService = IApplicationService(_getServiceAddress(APPLICATION())); 
         $._policyService = IPolicyService(_getServiceAddress(POLICY())); 
         $._claimService = IClaimService(_getServiceAddress(CLAIM())); 

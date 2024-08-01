@@ -201,7 +201,7 @@ contract Authorization
                     createdAt: TimestampLib.blockTimestamp()}));
      }
 
-     function _toTargetRoleName(string memory targetName) internal view returns (string memory) {
+     function _toTargetRoleName(string memory targetName) internal pure returns (string memory) {
           return string(
                abi.encodePacked(
                     targetName,

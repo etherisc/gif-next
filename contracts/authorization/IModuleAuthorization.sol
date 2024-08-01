@@ -7,15 +7,16 @@ import {ObjectType} from "../type/ObjectType.sol";
 import {RoleId} from "../type/RoleId.sol";
 import {Str} from "../type/String.sol";
 
+// TODO why module is have get service functions
 interface IModuleAuthorization is 
      IAccess,
      IAuthorization 
 {
 
-     /// @dev Returns the list of service targets.
+     /// @dev Returns the list of service domains used by module.
      function getServiceDomains() external view returns(ObjectType[] memory serviceDomains);
 
-     /// @dev Returns the service target for the specified domain.
-     function getServiceTarget(ObjectType serviceDomain) external view returns(Str serviceTarget);
+     /// @dev Returns the service name for the specified domain.
+     function getServiceName(ObjectType serviceDomain) external view returns(Str serviceName);
 }
 

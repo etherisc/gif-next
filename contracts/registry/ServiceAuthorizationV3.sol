@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {
-     ALL, REGISTRY, PRODUCT, ORACLE, POOL, INSTANCE, COMPONENT, DISTRIBUTION, DISTRIBUTOR, APPLICATION, POLICY, CLAIM, BUNDLE, STAKING, PRICE
+     ALL, REGISTRY, RISK, ORACLE, POOL, INSTANCE, COMPONENT, DISTRIBUTION, DISTRIBUTOR, APPLICATION, POLICY, CLAIM, BUNDLE, STAKING, PRICE
 } from "../../contracts/type/ObjectType.sol";
 
 import {IAccess} from "../authorization/IAccess.sol";
@@ -36,7 +36,7 @@ contract ServiceAuthorizationV3
           _authorizeDomain(BUNDLE(), address(7));
           _authorizeDomain(POOL(), address(8));
           _authorizeDomain(ORACLE(), address(9));
-          _authorizeDomain(PRODUCT(), address(10));
+          _authorizeDomain(RISK(), address(10));
           _authorizeDomain(POLICY(), address(11));
           _authorizeDomain(CLAIM(), address(12));
           _authorizeDomain(APPLICATION(), address(13));

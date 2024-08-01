@@ -17,7 +17,7 @@ contract ModuleAuthorization is
 {
 
      ObjectType[] internal _serviceDomains;
-     mapping(ObjectType domain => Str target) internal _serviceTarget;
+     mapping(ObjectType domain => Str target) internal _serviceName;
 
      constructor(string memory moduleName)
           Authorization(moduleName)
@@ -27,8 +27,8 @@ contract ModuleAuthorization is
           return _serviceDomains;
      }
 
-     function getServiceTarget(ObjectType serviceDomain) external view returns(Str serviceTarget) {
-          return _serviceTarget[serviceDomain];
+     function getServiceName(ObjectType serviceDomain) external view returns(Str serviceName) {
+          return _serviceName[serviceDomain];
      }
 
      /// @dev Add a GIF role for the provided role id and name.
@@ -48,12 +48,12 @@ contract ModuleAuthorization is
           _serviceDomains.push(serviceDomain);
 
           // get versioned target name
-          string memory serviceTargetName = ObjectTypeLib.toVersionedName(
+          string memory serviceName = ObjectTypeLib.toVersionedName(
                     ObjectTypeLib.toName(serviceDomain), 
                     "Service", 
                     getRelease().toInt());
 
-          _serviceTarget[serviceDomain] = StrLib.toStr(serviceTargetName);
+          _serviceName[serviceDomain] = StrLib.toStr(serviceName);
 
           RoleId serviceRoleId = getServiceRole(serviceDomain);
           string memory serviceRoleName = ObjectTypeLib.toVersionedName(
@@ -62,7 +62,7 @@ contract ModuleAuthorization is
                     getRelease().toInt());
 
           _addTargetWithRole(
-               serviceTargetName,
+               serviceName,
                serviceRoleId,
                serviceRoleName);
      }
@@ -70,6 +70,7 @@ contract ModuleAuthorization is
      /// @dev role id for targets registry, staking and instance
      function _getTargetRoleId(ObjectType targetDomain) 
           internal
+          pure
           returns (RoleId targetRoleId)
      {
           return RoleIdLib.roleForType(targetDomain);
