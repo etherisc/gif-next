@@ -23,13 +23,14 @@ Service "n" -* cr
 cr *- "1" Staking
 cr *-- "n" Instance
 
-Product "n" -* Instance
-Instance *- "n" Pool
-Instance *-- "n" Distribution
-Instance *-- "n" Oracle
+Instance *-- "n" Product
+Product *-- "n" Distribution
+Product *-- "n" Oracle
+Product *-- "n" Pool
 
 Policy "n" -* Product
 Distributor "n" -* Distribution
+Distribution -[hidden]> Oracle
 Pool *- "n" Bundle
 
 @enduml
