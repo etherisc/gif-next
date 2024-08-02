@@ -17,7 +17,7 @@ import {NftId, NftIdLib} from "../contracts/type/NftId.sol";
 import {ObjectType, BUNDLE} from "../contracts/type/ObjectType.sol";
 import {Pool} from "../contracts/pool/Pool.sol";
 import {IPoolService} from "../contracts/pool/IPoolService.sol";
-import {POOL_OWNER_ROLE, PUBLIC_ROLE} from "../contracts/type/RoleId.sol";
+import {PUBLIC_ROLE} from "../contracts/type/RoleId.sol";
 import {ReferralLib} from "../contracts/type/Referral.sol";
 import {RiskId, RiskIdLib} from "../contracts/type/RiskId.sol";
 import {Seconds, SecondsLib} from "../contracts/type/Seconds.sol";

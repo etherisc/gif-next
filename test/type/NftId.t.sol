@@ -5,7 +5,6 @@ import {GifTest} from "../base/GifTest.sol";
 import {NftId, eqNftId, neNftId, NftIdLib} from "../../contracts/type/NftId.sol";
 
 contract NftIdTest is GifTest {
-    using NftIdLib for NftId;
 
     NftId nftId1;
     NftId nftId2;

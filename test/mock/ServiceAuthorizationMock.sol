@@ -56,7 +56,10 @@ contract ServiceAuthorizationMockWithRegistryService
           _authorize(functions, IRegistryService.registerDistributor.selector, "registerDistributor");
 
           functions = _authorizeForService(REGISTRY(), COMPONENT());
-          _authorize(functions, IRegistryService.registerComponent.selector, "registerComponent");
+          _authorize(functions, IRegistryService.registerProduct.selector, "registerProduct");
+
+          functions = _authorizeForService(REGISTRY(), COMPONENT());
+          _authorize(functions, IRegistryService.registerProductLinkedComponent.selector, "registerProductLinkedComponent");
 
           functions = _authorizeForService(REGISTRY(), INSTANCE());
           _authorize(functions, IRegistryService.registerInstance.selector, "registerInstance");

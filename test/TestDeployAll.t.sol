@@ -8,10 +8,9 @@ import {IRegistry} from "../contracts/registry/IRegistry.sol";
 import {NftId, NftIdLib} from "../contracts/type/NftId.sol";
 import {ObjectType} from "../contracts/type/ObjectType.sol";
 import {BUNDLE, COMPONENT, DISTRIBUTION, ORACLE, POOL, PRODUCT, POLICY, RISK, REQUEST, SERVICE, STAKING} from "../contracts/type/ObjectType.sol";
-import {RoleId, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, ORACLE_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE} from "../contracts/type/RoleId.sol";
+import {RoleId} from "../contracts/type/RoleId.sol";
 
 contract TestDeployAll is GifTest {
-    using NftIdLib for NftId;
 
     function setUp() public override {
         super.setUp();
@@ -53,19 +52,19 @@ contract TestDeployAll is GifTest {
     // }
 
     function test_deploySimpleProduct() public {
-        _checkMockComponent(product, productNftId, instanceNftId, PRODUCT(), "SimpleProduct", productOwner, PRODUCT_OWNER_ROLE());
+        _checkMockComponent(product, productNftId, instanceNftId, PRODUCT(), "SimpleProduct", productOwner);
     }
 
     function test_deploySimpleOracle() public {
-        _checkMockComponent(oracle, oracleNftId, instanceNftId, ORACLE(), "SimpleOracle", oracleOwner, ORACLE_OWNER_ROLE());
+        _checkMockComponent(oracle, oracleNftId, productNftId, ORACLE(), "SimpleOracle", oracleOwner);
     }
 
     function test_deploySimpleDistribution() public {
-        _checkMockComponent(distribution, distributionNftId, instanceNftId, DISTRIBUTION(), "SimpleDistribution", distributionOwner, DISTRIBUTION_OWNER_ROLE());
+        _checkMockComponent(distribution, distributionNftId, productNftId, DISTRIBUTION(), "SimpleDistribution", distributionOwner);
     }
 
     function test_deploySimplePool() public {
-        _checkMockComponent(pool, poolNftId, instanceNftId, POOL(), "SimplePool", poolOwner, POOL_OWNER_ROLE());
+        _checkMockComponent(pool, poolNftId, productNftId, POOL(), "SimplePool", poolOwner);
     }
 
 
@@ -159,8 +158,7 @@ contract TestDeployAll is GifTest {
         NftId parentNftId, 
         ObjectType componentType,
         string memory componentName,
-        address componentOwner,
-        RoleId ownerRoleId
+        address componentOwner
     )
         internal
     {
@@ -171,7 +169,6 @@ contract TestDeployAll is GifTest {
         assertTrue(componentType.gtz(), "component type 0");
         assertTrue(bytes(componentName).length > 0, "component name length 0");
         assertTrue(componentOwner != address(0), "component owner address 0");
-        assertTrue(ownerRoleId.gtz(), "component owner role 0");
 
         // check against registered object info
         IRegistry.ObjectInfo memory info = registry.getObjectInfo(address(component));
@@ -184,9 +181,6 @@ contract TestDeployAll is GifTest {
 
         // check owner
         assertEq(registry.ownerOf(address(component)), componentOwner, "unexpected component owner");
-
-        // check component owner has expected role
-        assertTrue(instanceReader.hasRole(componentOwner, ownerRoleId), "component owner missing component owner role");
     }
 
 }

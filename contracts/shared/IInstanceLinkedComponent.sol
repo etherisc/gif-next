@@ -9,19 +9,15 @@ import {IComponent} from "../shared/IComponent.sol";
 import {IAuthorization} from "../authorization/IAuthorization.sol";
 import {IInstance} from "../instance/IInstance.sol";
 import {NftId} from "../type/NftId.sol";
+import {ObjectType} from "../type/ObjectType.sol";
 
 /// @dev component base class
 /// component examples are product, distribution, pool and oracle
 interface IInstanceLinkedComponent is 
     IComponent
 {
-    error ErrorComponentNotInstance(NftId instanceNftId);
-    error ErrorComponentProductNftAlreadySet();
-
-    /// @dev registers this component with the registry and instance.
-    /// a component may only be linked once
-    /// only initial component owner (nft holder) is authorizes to call this function
-    function register() external;
+    error ErrorInstanceLinkedComponentTypeMismatch(ObjectType requiredType, ObjectType objectType);
+    error ErrorInstanceLinkedComponentNotProduct(NftId nftId, ObjectType objectType);
 
     /// @dev locks component to disable functions that may change state related to this component, the only exception is function "unlock"
     /// only component owner (nft holder) is authorizes to call this function
@@ -41,9 +37,5 @@ interface IInstanceLinkedComponent is
 
     /// @dev returns the initial component authorization specification.
     function getAuthorization() external view returns (IAuthorization authorization);
-
-    /// @dev defines the product to which this component is linked to
-    /// this is only relevant for pool and distribution components
-    function getProductNftId() external view returns (NftId productNftId);
 
 }

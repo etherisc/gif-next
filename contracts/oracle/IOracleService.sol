@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {IService} from "../shared/IService.sol";
 import {NftId} from "../type/NftId.sol";
+import {ObjectType} from "../type/ObjectType.sol";
 import {RequestId} from "../type/RequestId.sol";
 import {StateId} from "../type/StateId.sol";
 import {Timestamp} from "../type/Timestamp.sol";
@@ -17,7 +18,7 @@ interface IOracleService is IService {
     event LogOracleServiceRequestCancelled(RequestId requestId, NftId requesterNftId);
 
     // create request
-    error ErrorOracleServiceInstanceMismatch(NftId expectedInstanceNftId, NftId oracleInstanceNftId);
+    error ErrorOracleServiceProductMismatch(ObjectType callerObjectType, NftId productNft, NftId oracleParentNftId);
     error ErrorOracleServiceExpiryInThePast(Timestamp blockTimestamp, Timestamp expiryAt);
     error ErrorOracleServiceCallbackMethodNameEmpty();
 

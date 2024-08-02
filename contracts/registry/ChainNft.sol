@@ -104,10 +104,6 @@ contract ChainNft is ERC721Enumerable {
         }
 
         _safeMintWithInterceptorAddress(to, tokenId, interceptor);
-
-        if(interceptor != address(0)) {
-            ITransferInterceptor(interceptor).nftMint(to, tokenId);
-        }
     }
 
 
@@ -241,10 +237,10 @@ contract ChainNft is ERC721Enumerable {
         address interceptor
     )
         private
-    {
-        emit LogTokenInterceptorAddress(tokenId, interceptor);
-        
+    {        
         _totalMinted++;
         _safeMint(to, tokenId);
+
+        emit LogTokenInterceptorAddress(tokenId, interceptor);
     }
 }

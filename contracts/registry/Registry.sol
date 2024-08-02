@@ -699,13 +699,15 @@ contract Registry is
 
         // components with instance parent
         _coreContractCombinations[PRODUCT()][INSTANCE()] = true;
-        _coreContractCombinations[DISTRIBUTION()][INSTANCE()] = true;
-        _coreContractCombinations[ORACLE()][INSTANCE()] = true;
-        _coreContractCombinations[POOL()][INSTANCE()] = true;
+
+        // components with product parent
+        _coreContractCombinations[DISTRIBUTION()][PRODUCT()] = true;
+        _coreContractCombinations[ORACLE()][PRODUCT()] = true;
+        _coreContractCombinations[POOL()][PRODUCT()] = true;
 
         // objects with component parents
-        _coreObjectCombinations[DISTRIBUTOR()][DISTRIBUTION()] = true;
         _coreObjectCombinations[POLICY()][PRODUCT()] = true;
+        _coreObjectCombinations[DISTRIBUTOR()][DISTRIBUTION()] = true;
         _coreObjectCombinations[BUNDLE()][POOL()] = true;
 
         // staking

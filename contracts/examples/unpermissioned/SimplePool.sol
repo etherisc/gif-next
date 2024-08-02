@@ -16,7 +16,7 @@ contract SimplePool is
     
     constructor(
         address registry,
-        NftId instanceNftId,
+        NftId productNftId,
         address token,
         IAuthorization authorization,
         address initialOwner
@@ -24,7 +24,7 @@ contract SimplePool is
     {
         initialize(
             registry,
-            instanceNftId,
+            productNftId,
             token,
             authorization,
             initialOwner
@@ -33,7 +33,7 @@ contract SimplePool is
 
     function initialize(
         address registry,
-        NftId instanceNftId,
+        NftId productNftId,
         address token,
         IAuthorization authorization,
         address initialOwner
@@ -44,7 +44,7 @@ contract SimplePool is
     {
         _initializeBasicPool(
             registry,
-            instanceNftId,
+            productNftId,
             authorization,
             token,
             "SimplePool",

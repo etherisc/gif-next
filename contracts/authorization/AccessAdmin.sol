@@ -544,6 +544,7 @@ contract AccessAdmin is
         emit LogTargetCreated(target, targetName);
     }
 
+
     function _setTargetClosed(address target, bool locked)
         internal
     {

@@ -9,19 +9,8 @@ import {Amount, AmountLib} from "../../contracts/type/Amount.sol";
 import {NftId} from "../../contracts/type/NftId.sol";
 import {SecondsLib} from "../../contracts/type/Seconds.sol";
 import {Fee, FeeLib} from "../../contracts/type/Fee.sol";
-import {
-    // GIF_MANAGER_ROLE,
-    // GIF_ADMIN_ROLE,
-    // ADMIN_ROLE,
-    PUBLIC_ROLE,
-    PRODUCT_OWNER_ROLE, 
-    ORACLE_OWNER_ROLE, 
-    POOL_OWNER_ROLE, 
-    DISTRIBUTION_OWNER_ROLE
-} from "../../contracts/type/RoleId.sol";
 import {UFixed, UFixedLib} from "../../contracts/type/UFixed.sol";
 import {RoleId} from "../../contracts/type/RoleId.sol";
-// import {StateId, INITIAL, SCHEDULED, DEPLOYING, ACTIVE} from "../../contracts/type/StateId.sol";
 import {ACTIVE} from "../../contracts/type/StateId.sol";
 import {Timestamp} from "../../contracts/type/Timestamp.sol";
 
@@ -42,6 +31,7 @@ import {Registry} from "../../contracts/registry/Registry.sol";
 import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
 
 import {IComponents} from "../../contracts/instance/module/IComponents.sol";
+import {IProductComponent} from "../../contracts/product/IProductComponent.sol";
 
 import {Staking} from "../../contracts/staking/Staking.sol";
 import {StakingReader} from "../../contracts/staking/StakingReader.sol";
@@ -400,31 +390,17 @@ contract GifTest is GifDeployer {
         _printAuthz(instanceAdmin, "instanceWithProduct");
     }
 
+
     function _prepareProduct(bool createBundle) internal {
-        vm.startPrank(instanceOwner);
-        instance.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
-        vm.stopPrank();
 
-        _prepareDistributionAndPool();
+        (
+            product, 
+            productNftId
+        ) = _deployAndRegisterNewSimpleProduct("SimpleProduct");
 
-        // solhint-disable-next-line
-        console.log("--- deploy and register simple product");
-
-        vm.startPrank(productOwner);
-        product = new SimpleProduct(
-            address(registry),
-            instanceNftId,
-            new BasicProductAuthorization("SimpleProduct"),
-            productOwner,
-            address(token),
-            false,
-            address(pool), 
-            address(distribution)
-        );
-        
-        product.register();
-        productNftId = product.getNftId();
-        vm.stopPrank();
+        _preparePool();
+        _prepareDistribution();
+        _prepareOracle();
 
         // setup some meaningful distribution fees
         vm.startPrank(distributionOwner);
@@ -439,11 +415,6 @@ contract GifTest is GifDeployer {
             initialStakingFee, 
             FeeLib.zero());
         vm.stopPrank();
-        
-        // solhint-disable
-        console.log("product nft id", productNftId.toInt());
-        console.log("product component at", address(product));
-        // solhint-enable
 
         vm.startPrank(registryOwner);
         token.transfer(investor, DEFAULT_BUNDLE_CAPITALIZATION * 10**token.decimals());
@@ -466,58 +437,95 @@ contract GifTest is GifDeployer {
     }
 
 
-    function _prepareDistributionAndPool() internal {
-
-        // grant component owner roles
-        vm.startPrank(instanceOwner);
-        instance.grantRole(ORACLE_OWNER_ROLE(), oracleOwner);
-        instance.grantRole(DISTRIBUTION_OWNER_ROLE(), distributionOwner);
-        instance.grantRole(POOL_OWNER_ROLE(), poolOwner);
-        vm.stopPrank();
-
-        // deploy and register distribution
+    function _deployAndRegisterNewSimpleProduct(string memory name)
+        internal
+        returns (
+            SimpleProduct newProduct,
+            NftId newNftId
+        )
+    {
         // solhint-disable-next-line
-        console.log("--- deploy and register simple distribution");
+        console.log("--- deploy and register simple product");
 
-        vm.startPrank(distributionOwner);
-        distribution = new SimpleDistribution(
+        // product owner deploys product
+        vm.startPrank(productOwner);
+        newProduct = new SimpleProduct(
             address(registry),
             instanceNftId,
-            new BasicDistributionAuthorization("SimpleDistribution"),
-            distributionOwner,
-            address(token));
-
-        distribution.register();
-        distributionNftId = distribution.getNftId();
+            new BasicProductAuthorization(name),
+            productOwner, // initial owner
+            address(token),
+            false, // is interceptor
+            true, // has distribution
+            1 // number of oracles in product cluster
+        );
         vm.stopPrank();
 
-        // solhint-disable
-        console.log("distribution nft id", distributionNftId.toInt());
-        console.log("distribution component at", address(distribution));
-        // solhint-enable
+        // solhint-disable-next-line
+        console.log("product address", address(newProduct));
 
-        // deploy and register pool
+        // instance owner registeres product with instance (and registry)
+        vm.startPrank(instanceOwner);
+        newNftId = instance.registerProduct(address(newProduct));
+        vm.stopPrank();
+
+        // token handler only becomes available after registration
+        vm.startPrank(productOwner);
+        newProduct.approveTokenHandler(AmountLib.max());
+        vm.stopPrank();
+
+        // solhint-disable-next-line
+        console.log("product nft id", newNftId.toInt());
+    }
+
+    function _preparePool() internal {
+
         // solhint-disable-next-line
         console.log("--- deploy and register simple pool");
 
         vm.startPrank(poolOwner);
         pool = new SimplePool(
             address(registry),
-            instanceNftId,
+            productNftId,
             address(token),
             new BasicPoolAuthorization("SimplePool"),
             poolOwner
         );
-
-        pool.register();
-        poolNftId = pool.getNftId();
-        pool.approveTokenHandler(AmountLib.max());
         vm.stopPrank();
 
-        // solhint-disable
-        console.log("pool nft id", poolNftId.toInt());
-        console.log("pool component at", address(pool));
-        // solhint-enable
+        poolNftId = _registerComponent(product, address(pool), "pool");
+
+        // token handler only becomes available after registration
+        vm.startPrank(poolOwner);
+        pool.approveTokenHandler(AmountLib.max());
+        vm.stopPrank();
+    }
+
+
+    function _prepareDistribution() internal {
+
+        // solhint-disable-next-line
+        console.log("--- deploy and register simple distribution");
+
+        vm.startPrank(distributionOwner);
+        distribution = new SimpleDistribution(
+            address(registry),
+            productNftId,
+            new BasicDistributionAuthorization("SimpleDistribution"),
+            distributionOwner,
+            address(token));
+        vm.stopPrank();
+
+        distributionNftId = _registerComponent(product, address(distribution), "distribution");
+
+        // token handler only becomes available after registration
+        vm.startPrank(distributionOwner);
+        distribution.approveTokenHandler(AmountLib.max());
+        vm.stopPrank();
+    }
+
+
+    function _prepareOracle() internal {
 
         // deploy and register oracle
         // solhint-disable-next-line
@@ -526,44 +534,30 @@ contract GifTest is GifDeployer {
         vm.startPrank(oracleOwner);
         oracle = new SimpleOracle(
             address(registry),
-            instanceNftId,
+            productNftId,
             new BasicOracleAuthorization("SimpleOracle"),
             oracleOwner,
             address(token));
-
-        oracle.register();
-        oracleNftId = oracle.getNftId();
         vm.stopPrank();
 
-        // solhint-disable
-        console.log("oracle nft id", oracleNftId.toInt());
-        console.log("oracle component at", address(oracle));
-        // solhint-enable
+        oracleNftId = _registerComponent(product, address(oracle), "oracle");
     }
 
+    function _registerComponent(IProductComponent prd, address component, string memory componentName) internal returns (NftId componentNftId) {
+        return _registerComponent(productOwner, prd, component, componentName);
+    }
 
-    function _preparePool() internal {
-        vm.startPrank(instanceOwner);
-        instance.grantRole(POOL_OWNER_ROLE(), poolOwner);
+    function _registerComponent(address owner, IProductComponent prd, address component, string memory componentName) internal returns (NftId componentNftId) {
+        // solhint-disable-next-line
+        console.log(componentName, "component at", address(component));
+
+        // product owner registeres oracle with instance (and registry)
+        vm.startPrank(owner);
+        componentNftId = prd.registerComponent(component);
         vm.stopPrank();
 
-        vm.startPrank(poolOwner);
-        pool = new SimplePool(
-            address(registry),
-            instanceNftId,
-            address(token),
-            new BasicPoolAuthorization("SimplePool"),
-            poolOwner
-        );
-        pool.register();
-        poolNftId = pool.getNftId();
-        pool.approveTokenHandler(AmountLib.max());
-        vm.stopPrank();
-
-        // solhint-disable
-        console.log("pool nft id", poolNftId.toInt());
-        console.log("pool component at", address(pool));
-        // solhint-enable
+        // solhint-disable-next-line
+        console.log(componentName, "nft id", componentNftId.toInt());
     }
 
 

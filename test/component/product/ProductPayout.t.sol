@@ -4,11 +4,11 @@ pragma solidity ^0.8.20;
 import {Vm, console} from "../../../lib/forge-std/src/Test.sol";
 
 import {BasicProductAuthorization} from "../../../contracts/product/BasicProductAuthorization.sol";
+import {BasicPoolAuthorization} from "../../../contracts/pool/BasicPoolAuthorization.sol";
 import {GifTest} from "../../base/GifTest.sol";
 import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
 import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
 import {ClaimId} from "../../../contracts/type/ClaimId.sol";
-import {PRODUCT_OWNER_ROLE} from "../../../contracts/type/RoleId.sol";
 import {SimpleProduct} from "../../../contracts/examples/unpermissioned/SimpleProduct.sol";
 import {SimplePool} from "../../../contracts/examples/unpermissioned/SimplePool.sol";
 import {IComponents} from "../../../contracts/instance/module/IComponents.sol";
@@ -36,19 +36,18 @@ contract TestProductClaim is GifTest {
     uint256 public constant SUM_INSURED = 1000;
     uint256 public constant CUSTOMER_FUNDS = 400;
     
-    SimpleProduct public prdct;
     RiskId public riskId;
     NftId public policyNftId;
 
     function setUp() public override {
         super.setUp();
 
-        _prepareProductLocal();  
+        _prepareProduct();  
 
         // create risk
         vm.startPrank(productOwner);
         riskId = RiskIdLib.toRiskId("Risk_1");
-        prdct.createRisk(riskId, "");
+        product.createRisk(riskId, "");
         vm.stopPrank();
 
         // create application
@@ -65,7 +64,7 @@ contract TestProductClaim is GifTest {
     event LogClaimServicePayoutProcessed(NftId policyNftId, PayoutId payoutId, Amount amount);
 
 
-    function test_ProductPayoutCreateHappyCaseCheckLogAndPolicy() public {
+    function test_productPayoutCreateHappyCaseCheckLogAndPolicy() public {
         // GIVEN
         _approve();
         _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
@@ -90,7 +89,7 @@ contract TestProductClaim is GifTest {
         PayoutId payoutIdExpected = PayoutIdLib.toPayoutId(claimId, 1);
 
         vm.recordLogs();
-        PayoutId payoutId = prdct.createPayout(policyNftId, claimId, payoutAmount, payoutData);
+        PayoutId payoutId = product.createPayout(policyNftId, claimId, payoutAmount, payoutData);
         Vm.Log[] memory entries = vm.getRecordedLogs();
 
         // THEN
@@ -125,7 +124,7 @@ contract TestProductClaim is GifTest {
     }
 
 
-    function test_ProductPayoutCreateHappyCaseCheckClaimAndPayout() public {
+    function test_productPayoutCreateHappyCaseCheckClaimAndPayout() public {
         // GIVEN
         _approve();
         _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
@@ -171,7 +170,7 @@ contract TestProductClaim is GifTest {
     }
 
 
-    function test_ProductPayoutProcessHappyCase() public {
+    function test_productPayoutProcessHappyCase() public {
         // GIVEN
         _approve();
         _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
@@ -181,8 +180,8 @@ contract TestProductClaim is GifTest {
         bytes memory payoutData = "some sample payout data";
 
         // record balances before
-        uint256 poolBalanceBefore = prdct.getToken().balanceOf(pool.getWallet());
-        uint256 customerBalanceBefore = prdct.getToken().balanceOf(customer);
+        uint256 poolBalanceBefore = product.getToken().balanceOf(pool.getWallet());
+        uint256 customerBalanceBefore = product.getToken().balanceOf(customer);
 
         // solhint-disable
         console.log("payout amount:", payoutAmountInt);
@@ -203,7 +202,7 @@ contract TestProductClaim is GifTest {
 
         // WHEN
         vm.recordLogs();
-        prdct.processPayout(policyNftId, payoutId);
+        product.processPayout(policyNftId, payoutId);
         Vm.Log[] memory entries = vm.getRecordedLogs();
 
         // search for right index
@@ -260,8 +259,8 @@ contract TestProductClaim is GifTest {
         }
 
         // record balances after payout processing
-        uint256 poolBalanceAfter = prdct.getToken().balanceOf(pool.getWallet());
-        uint256 customerBalanceAfter = prdct.getToken().balanceOf(customer);
+        uint256 poolBalanceAfter = product.getToken().balanceOf(pool.getWallet());
+        uint256 customerBalanceAfter = product.getToken().balanceOf(customer);
 
         // solhint-disable
         console.log("pool balance after: ", poolBalanceAfter);
@@ -273,8 +272,8 @@ contract TestProductClaim is GifTest {
         assertEq(customerBalanceAfter - customerBalanceBefore, payoutAmountInt, "unexpected customer balance after payout");
     }
 
-    function test_ProductPolicyClaimPayoutPartial() public {
-        address newCustomer = makeAddr("customer_test_ProductPolicyClaimPayoutSimple");
+    function test_productClaimPayoutPartial() public {
+        address newCustomer = makeAddr("customer_test_productClaimPayoutSimple");
         uint256 sumInsuredAmountInt = 20000;
         uint256 lifetimeInt = 365 * 24 * 3600;
         uint256 claimAmountInt = 5000;
@@ -338,8 +337,8 @@ contract TestProductClaim is GifTest {
         }
     }
 
-    function test_ProductPolicyClaimPayoutFullExpected() public {
-        address newCustomer = makeAddr("customer_test_ProductPolicyClaimPayoutSimple");
+    function test_productClaimPayoutFullExpected() public {
+        address newCustomer = makeAddr("customer_test_productClaimPayoutSimple");
         uint256 sumInsuredAmountInt = 20000;
         uint256 lifetimeInt = 365 * 24 * 3600;
         uint256 claimAmountInt = 5000;
@@ -403,8 +402,8 @@ contract TestProductClaim is GifTest {
         }
     }
 
-    function test_ProductPolicyClaimPayoutFullProcessed() public {
-        address newCustomer = makeAddr("customer_test_ProductPolicyClaimPayoutSimple");
+    function test_productClaimPayoutFullProcessed() public {
+        address newCustomer = makeAddr("customer_test_productClaimPayoutSimple");
         uint256 sumInsuredAmountInt = 20000;
         uint256 lifetimeInt = 365 * 24 * 3600;
         uint256 claimAmountInt = 5000;
@@ -461,8 +460,8 @@ contract TestProductClaim is GifTest {
         }
     }
 
-    function test_ProductPolicyClaimPayoutMultiple() public {
-        address newCustomer = makeAddr("customer_test_ProductPolicyClaimPayoutSimple");
+    function test_productClaimPayoutMultiple() public {
+        address newCustomer = makeAddr("customer_test_productClaimPayoutSimple");
         uint256 sumInsuredAmountInt = 20000;
         uint256 lifetimeInt = 365 * 24 * 3600;
         uint256 claimAmountInt = 5000;
@@ -486,20 +485,20 @@ contract TestProductClaim is GifTest {
         uint256 payoutAmount2Int = 1000;
         uint256 payoutAmount3Int = 2000;
 
-        PayoutId payoutId2 = prdct.createPayout(
+        PayoutId payoutId2 = product.createPayout(
             policyNftId, 
             claimId, 
             AmountLib.toAmount(payoutAmount2Int), 
             "");
 
-        PayoutId payoutId3 = prdct.createPayout(
+        PayoutId payoutId3 = product.createPayout(
             policyNftId, 
             claimId, 
             AmountLib.toAmount(payoutAmount3Int), 
             "");
 
         // process 2nd payout
-        prdct.processPayout(policyNftId, payoutId2);
+        product.processPayout(policyNftId, payoutId2);
 
         // check policy
         {
@@ -565,8 +564,8 @@ contract TestProductClaim is GifTest {
     }
 
 
-    function test_ProductPolicyClaimMultiplePayoutMultiple() public {
-        address newCustomer = makeAddr("customer_test_ProductPolicyClaimPayoutSimple");
+    function test_productClaimMultiplePayoutMultiple() public {
+        address newCustomer = makeAddr("customer_test_productClaimPayoutSimple");
 
         // implicit assigning of policy nft id
         (ClaimId claimId,, PayoutId payoutId,) = _createPolicyWithClaimAndPayout(
@@ -578,13 +577,13 @@ contract TestProductClaim is GifTest {
             true); // process payout
 
         // add 2nd payout to 1st claim (filling up to full claim amount)
-        PayoutId payoutId2 = prdct.createPayout(
+        PayoutId payoutId2 = product.createPayout(
             policyNftId, 
             claimId, 
             AmountLib.toAmount(900), 
             "");
 
-        prdct.processPayout(policyNftId, payoutId2);
+        product.processPayout(policyNftId, payoutId2);
 
         // add 2nd claim
         uint256 claimAmount2Int = 2000;
@@ -721,7 +720,7 @@ contract TestProductClaim is GifTest {
 
     {
         // create application for policy holder
-        policyNftId = prdct.createApplication(
+        policyNftId = product.createApplication(
             policyHolder,
             riskId,
             sumInsuredAmountInt,
@@ -748,7 +747,7 @@ contract TestProductClaim is GifTest {
         Timestamp activateAt = TimestampLib.blockTimestamp();
 
         vm.startPrank(productOwner);
-        prdct.createPolicy(policyNftId, collectPremium, activateAt); 
+        product.createPolicy(policyNftId, collectPremium, activateAt); 
         vm.stopPrank();
 
         // create claim with payout
@@ -798,14 +797,14 @@ contract TestProductClaim is GifTest {
             claimState
         ) = _makeClaim(plcyNftId, AmountLib.toAmount(claimAmount));
 
-        payoutId = prdct.createPayout(
+        payoutId = product.createPayout(
             policyNftId, 
             claimId, 
             AmountLib.toAmount(payoutAmount), 
             payoutData);
 
         if (processPayout) {
-            prdct.processPayout(policyNftId, payoutId);
+            product.processPayout(policyNftId, payoutId);
         }
 
         // after create payout
@@ -826,8 +825,8 @@ contract TestProductClaim is GifTest {
             StateId claimState)
     {
         bytes memory claimData = "please pay";
-        claimId = prdct.submitClaim(nftId, claimAmount, claimData); 
-        prdct.confirmClaim(nftId, claimId, claimAmount, ""); 
+        claimId = product.submitClaim(nftId, claimAmount, claimData); 
+        product.confirmClaim(nftId, claimId, claimAmount, ""); 
         policyInfo = instanceReader.getPolicyInfo(policyNftId);
         claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
         claimState = instanceReader.getClaimState(policyNftId, claimId);
@@ -849,7 +848,7 @@ contract TestProductClaim is GifTest {
         internal
     {
         vm.startPrank(productOwner);
-        prdct.createPolicy(nftId, collectPremium, activateAt); 
+        product.createPolicy(nftId, collectPremium, activateAt); 
         vm.stopPrank();
     }
 
@@ -861,7 +860,7 @@ contract TestProductClaim is GifTest {
         internal
         returns (NftId)
     {
-        return prdct.createApplication(
+        return product.createApplication(
             customer,
             riskId,
             sumInsuredAmount,
@@ -872,48 +871,60 @@ contract TestProductClaim is GifTest {
     }
 
 
-    function _prepareProductLocal() internal {
+    // function _prepareProductLocal() internal {
 
-        _prepareDistributionAndPool();
+    //     // create product
+    //     vm.startPrank(productOwner);
+    //     prdct = new SimpleProduct(
+    //         address(registry),
+    //         instanceNftId, // parent of product is instance
+    //         new BasicProductAuthorization("SimpleProduct"),
+    //         productOwner,
+    //         address(token),
+    //         false, // isInterceptor
+    //         false, // has distribution
+    //         0 // number of oracles
+    //     );
+    //     vm.stopPrank();
 
-        vm.startPrank(instanceOwner);
-        instance.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
-        vm.stopPrank();
+    //     // instance owner registes product with instance (and registry)
+    //     vm.startPrank(instanceOwner);
+    //     prdctNftId = instance.registerProduct(address(prdct));
+    //     vm.stopPrank();
 
-        vm.startPrank(productOwner);
-        prdct = new SimpleProduct(
-            address(registry),
-            instanceNftId,
-            new BasicProductAuthorization("SimpleProduct"),
-            productOwner,
-            address(token),
-            false,
-            address(pool), 
-            address(distribution)
-        );
-        
-        prdct.register();
-        productNftId = prdct.getNftId();
-        vm.stopPrank();
+    //     // create pool
+    //     vm.startPrank(poolOwner);
+    //     pool = new SimplePool(
+    //         address(registry),
+    //         prdctNftId, // parent of pool is product
+    //         address(token),
+    //         new BasicPoolAuthorization("SimplePool"),
+    //         poolOwner);
+    //     vm.stopPrank();
 
+    //     // product owner registes product with instance (and registry)
+    //     vm.startPrank(productOwner);
+    //     plNftId = prdct.registerComponent(address(prdct));
+    //     vm.stopPrank();
 
-        vm.startPrank(registryOwner);
-        token.transfer(investor, BUNDLE_CAPITAL);
-        token.transfer(customer, CUSTOMER_FUNDS);
-        vm.stopPrank();
+    //     // fund investor and customer
+    //     vm.startPrank(registryOwner);
+    //     token.transfer(investor, BUNDLE_CAPITAL);
+    //     token.transfer(customer, CUSTOMER_FUNDS);
+    //     vm.stopPrank();
 
-        vm.startPrank(investor);
-        IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
-        token.approve(address(poolComponentInfo.tokenHandler), BUNDLE_CAPITAL);
+    //     vm.startPrank(investor);
+    //     IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
+    //     token.approve(address(poolComponentInfo.tokenHandler), BUNDLE_CAPITAL);
 
-        // SimplePool spool = SimplePool(address(pool));
-        (bundleNftId,) = SimplePool(address(pool)).createBundle(
-            FeeLib.zero(), 
-            BUNDLE_CAPITAL, 
-            SecondsLib.toSeconds(604800), 
-            ""
-        );
-        vm.stopPrank();
-    }
+    //     // SimplePool spool = SimplePool(address(pool));
+    //     (bundleNftId,) = SimplePool(address(pool)).createBundle(
+    //         FeeLib.zero(), 
+    //         BUNDLE_CAPITAL, 
+    //         SecondsLib.toSeconds(604800), 
+    //         ""
+    //     );
+    //     vm.stopPrank();
+    // }
 
 }

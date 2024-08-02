@@ -42,7 +42,6 @@ contract BasicOracle is
             initialOwner,
             name,
             token,
-            "",
             "");
     }
 }

@@ -54,18 +54,6 @@ function GIF_MANAGER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2)
 /// @dev role for registering remote staking targets and reporting remote total value locked amounts.
 function GIF_REMOTE_MANAGER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(3); } 
 
-/// @dev instance specific  role to register/own a product component
-function PRODUCT_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(11); }
-
-/// @dev instance specific  role to register/own an oracle component
-function ORACLE_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(12); }
-
-/// @dev instance specific role to register/own a distribution component
-function DISTRIBUTION_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(13); }
-
-/// @dev instance specific  role to register/own a pool component
-function POOL_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(14); }
-
 //--- GIF core contract roles (range: 200 - 9'900) --------------------------//
 // created and assigned during initial deployment for registry and staking
 // granting for instances and components in instance service

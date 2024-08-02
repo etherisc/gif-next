@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {Amount} from "../type/Amount.sol";
-import {COMPONENT, ORACLE} from "../type/ObjectType.sol";
+import {COMPONENT, PRODUCT, ORACLE} from "../type/ObjectType.sol";
 import {IAuthorization} from "../authorization/IAuthorization.sol";
 import {IComponentService} from "../shared/IComponentService.sol";
 import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
@@ -24,15 +24,6 @@ abstract contract Oracle is
     struct OracleStorage {
         IComponentService _componentService;
         IOracleService _oracleService;
-    }
-
-
-    function register()
-        external
-        virtual
-        onlyOwner()
-    {
-        _getOracleStorage()._componentService.registerOracle();
     }
 
 
@@ -86,12 +77,11 @@ abstract contract Oracle is
 
     function _initializeOracle(
         address registry,
-        NftId instanceNftId,
+        NftId productNftId,
         IAuthorization authorization,
         address initialOwner,
         string memory name,
         address token,
-        bytes memory registryData, // writeonly data that will saved in the object info record of the registry
         bytes memory componentData // component specifidc data 
     )
         internal
@@ -100,19 +90,18 @@ abstract contract Oracle is
     {
         _initializeInstanceLinkedComponent(
             registry, 
-            instanceNftId, 
+            productNftId, 
             name, 
             token, 
             ORACLE(), 
             authorization,
             true, 
             initialOwner, 
-            registryData, 
             componentData);
 
         OracleStorage storage $ = _getOracleStorage();
-        $._oracleService = IOracleService(_getServiceAddress(ORACLE())); 
         $._componentService = IComponentService(_getServiceAddress(COMPONENT())); 
+        $._oracleService = IOracleService(_getServiceAddress(ORACLE())); 
 
         _registerInterface(type(IOracleComponent).interfaceId);
     }

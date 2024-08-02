@@ -18,7 +18,7 @@ abstract contract BasicPool is
 
     function _initializeBasicPool(
         address registry,
-        NftId instanceNftId,
+        NftId productNftId,
         IAuthorization authorization,
         address token,
         string memory name,
@@ -30,13 +30,12 @@ abstract contract BasicPool is
     {
         _initializePool(
             registry, 
-            instanceNftId, 
+            productNftId, 
             name, 
             token, 
             authorization,
             false, // isInterceptingNftTransfers, 
             initialOwner, 
-            "", // registryData
             ""); // componentData
     }
 
@@ -137,16 +136,6 @@ abstract contract BasicPool is
         onlyOwner()
     {
         _setMaxBalanceAmount(maxBalanceAmount);
-    }
-
-
-    function setBundleOwnerRole(RoleId bundleOwnerRole)
-        public
-        virtual
-        restricted()
-        onlyOwner()
-    {
-        _setBundleOwnerRole(bundleOwnerRole);
     }
 
 

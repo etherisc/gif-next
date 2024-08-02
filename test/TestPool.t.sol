@@ -15,9 +15,10 @@ import {Key32} from "../contracts/type/Key32.sol";
 import {NftId, NftIdLib} from "../contracts/type/NftId.sol";
 import {ObjectType, BUNDLE} from "../contracts/type/ObjectType.sol";
 import {Pool} from "../contracts/pool/Pool.sol";
-import {POOL_OWNER_ROLE, PUBLIC_ROLE} from "../contracts/type/RoleId.sol";
+import {PUBLIC_ROLE} from "../contracts/type/RoleId.sol";
 import {Seconds, SecondsLib} from "../contracts/type/Seconds.sol";
 import {SimplePool} from "../contracts/examples/unpermissioned/SimplePool.sol";
+import {SimpleProduct} from "../contracts/examples/unpermissioned/SimpleProduct.sol";
 import {StateId, ACTIVE, PAUSED, CLOSED} from "../contracts/type/StateId.sol";
 import {TimestampLib} from "../contracts/type/Timestamp.sol";
 import {GifTest} from "./base/GifTest.sol";
@@ -25,12 +26,23 @@ import {UFixedLib} from "../contracts/type/UFixed.sol";
 
 contract TestPool is GifTest {
 
-    function test_PoolContractLocations() public {
-        pool = new SimplePool(
+    SimpleProduct public newProduct;
+    SimplePool public newPool;
+
+    NftId public newProductNftId;
+
+    function setUp() public override {
+        super.setUp();
+
+        _prepareProduct(false);
+    }
+
+    function test_poolContractLocations() public {
+        newPool = new SimplePool(
             address(registry),
-            instanceNftId,
+            productNftId,
             address(token),
-            new BasicPoolAuthorization("SimplePool"),
+            new BasicPoolAuthorization("NewSimplePool"),
             poolOwner
         );
 
@@ -54,30 +66,10 @@ contract TestPool is GifTest {
         // solhint-enable
     }
 
-    function test_PoolComponentAndPoolInfo() public {
-        vm.startPrank(instanceOwner);
-        instance.grantRole(POOL_OWNER_ROLE(), poolOwner);
-        vm.stopPrank();
-
-        vm.startPrank(poolOwner);
-
-        pool = new SimplePool(
-            address(registry),
-            instanceNftId,
-            address(token),
-            new BasicPoolAuthorization("SimplePool"),
-            poolOwner
-        );
-
-        pool.register();
-        NftId poolNftId = pool.getNftId();
-
-        // solhint-disable
-        console.log("pool nft id: ", poolNftId.toInt());
-        console.log("pool deployed at: ", address(pool));
-        // solhint-enable
+    function test_poolComponentAndPoolInfo() public {
 
         IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
+
         // solhint-disable
         console.log("pool name: ", componentInfo.name);
         console.log("pool token: ", componentInfo.token.symbol());
@@ -104,7 +96,6 @@ contract TestPool is GifTest {
         IComponents.PoolInfo memory poolInfo = instanceReader.getPoolInfo(poolNftId);
 
         // check nftid
-        assertTrue(componentInfo.productNftId.eqz(), "product nft not zero (not yet linked to product)");
         assertEq(poolInfo.bundleOwnerRole.toInt(), PUBLIC_ROLE().toInt(), "unexpected bundle owner role");
 
         // check pool balance
@@ -113,9 +104,8 @@ contract TestPool is GifTest {
     }
 
 
-    function test_PoolSetFees() public {
-        // GIVEN
-        _prepareProduct(); // includes pool and product
+    function test_poolSetFees() public {
+        // GIVEN setup includes pool and product
 
         IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
 
@@ -152,9 +142,9 @@ contract TestPool is GifTest {
         assertEq(performanceFee.fixedFee, 666, "performance fee not 666 (fixed)");
     }
 
-    function test_PoolCreateBundle() public {
-        // GIVEN
-        _prepareProduct(false);
+    function test_poolCreateBundle() public {
+        // GIVEN setup includes pool and product
+
         _fundInvestor();
 
         IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
@@ -202,9 +192,8 @@ contract TestPool is GifTest {
             "unexpected activatedAt");
     }
 
-    function test_PoolCreateBundle_twoBundlesMaxBalanceExceeded() public {
-        // GIVEN
-        _prepareProduct(false);
+    function test_poolCreateBundleTwoBundlesMaxBalanceExceeded() public {
+        // GIVEN setup includes pool and product
 
         vm.startPrank(poolOwner);
         pool.setMaxBalanceAmount(AmountLib.toAmount(5000));
@@ -233,13 +222,17 @@ contract TestPool is GifTest {
         );
     }
 
-    function test_PoolCreateBundle_maxBalanceExceeded() public {
-        // GIVEN
-        _prepareProduct(true);
-        
+    function test_poolCreateBundleMaxBalanceExceeded() public {
+        // GIVEN setup includes pool and product
+
+        uint256 maxBalance = 15000;
+        uint256 bundleStake = 20000;
+
         vm.startPrank(poolOwner);
-        pool.setMaxBalanceAmount(AmountLib.toAmount(15000));
+        pool.setMaxBalanceAmount(AmountLib.toAmount(maxBalance));
         vm.stopPrank();
+
+        _fundInvestor(bundleStake);
 
         // WHEN
         vm.startPrank(investor);
@@ -251,24 +244,32 @@ contract TestPool is GifTest {
         vm.expectRevert(abi.encodeWithSelector(
             IPoolService.ErrorPoolServiceMaxBalanceAmountExceeded.selector, 
             poolNftId,
-            AmountLib.toAmount(15000),
-            AmountLib.toAmount(100000000000),
-            AmountLib.toAmount(10000)));
+            AmountLib.toAmount(maxBalance),
+            AmountLib.toAmount(0), // current bundle amount
+            AmountLib.toAmount(bundleStake)));
 
         // WHEN
         pool.createBundle(
             zeroFee, 
-            10000, 
+            bundleStake, 
             lifetime, 
             ""
         );
     }
 
-    function test_PoolCreateBundle_withStakingFee() public {
-        // GIVEN
-        initialStakingFee = FeeLib.percentageFee(10);
-        _prepareProduct(false);
+    function test_poolCreateBundleWithStakingFee() public {
+        // GIVEN setup includes pool and product
+
         _fundInvestor();
+        initialStakingFee = FeeLib.percentageFee(10);
+
+        vm.startPrank(poolOwner);
+        pool.setFees(
+            FeeLib.zero(), // pool fee
+            initialStakingFee,
+            FeeLib.zero() // performance fee
+        );
+        vm.stopPrank();
 
         IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
 
@@ -280,7 +281,7 @@ contract TestPool is GifTest {
         Seconds lifetime = SecondsLib.toSeconds(604800);
         uint256 netStakedAmount;
         (bundleNftId, netStakedAmount) = pool.createBundle(
-            FeeLib.zero(), 
+            initialStakingFee, 
             10000, 
             lifetime, 
             ""
@@ -289,6 +290,12 @@ contract TestPool is GifTest {
 
         // THEN
         assertTrue(!bundleNftId.eqz(), "bundle nft id is zero");
+
+        IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
+        assertEq(bundleInfo.poolNftId.toInt(), poolNftId.toInt(), "unexpected pool nft id");
+        assertEq(bundleInfo.fee.fractionalFee.toInt(), initialStakingFee.fractionalFee.toInt(), "unexpected fractional bundle fee");
+        assertEq(bundleInfo.fee.fixedFee, initialStakingFee.fixedFee, "unexpected fixed bundle fee");
+
         assertEq(netStakedAmount, 9000, "net staked amount not 9000");
 
         assertEq(token.balanceOf(poolOwner), 0, "pool owner token balance not 0");
@@ -301,9 +308,9 @@ contract TestPool is GifTest {
     }
 
 
-    function test_PoolBundleInitialState() public {
-        // GIVEN
-        _prepareProduct(false);
+    function test_poolBundleInitialState() public {
+        // GIVEN setup includes pool and product
+
         _fundInvestor();
 
         // WHEN
@@ -325,9 +332,9 @@ contract TestPool is GifTest {
     }
 
 
-    function test_PoolBundleLockUnlockLockHappyCase() public {
-        // GIVEN
-        _prepareProduct(false);
+    function test_poolBundleLockUnlockLockHappyCase() public {
+        // GIVEN setup includes pool and product
+
         _fundInvestor();
 
         // WHEN lock bundle
@@ -374,9 +381,9 @@ contract TestPool is GifTest {
     }
 
 
-    function test_PoolBundleLockTwiceAttempt() public {
-        // GIVEN
-        _prepareProduct();
+    function test_poolBundleLockTwiceAttempt() public {
+        // GIVEN setup includes pool and product
+
         _fundInvestor();
 
         bundleNftId = _createBundle();
@@ -405,9 +412,11 @@ contract TestPool is GifTest {
     }
 
 
-    function test_PoolSetBundleFee() public {
-        // GIVEN
-        _prepareProduct();
+    function test_poolSetBundleFee() public {
+        // GIVEN setup includes pool and product
+
+        _fundInvestor();
+        bundleNftId = _createBundle();
 
         // WHEN
         Fee memory fee = FeeLib.toFee(UFixedLib.toUFixed(111,0), 222);
@@ -437,8 +446,16 @@ contract TestPool is GifTest {
     }
 
     function _fundInvestor() internal {
+        _fundInvestor(10000);
+    }
+
+    function _fundInvestor(uint256 amount) internal {
         vm.startPrank(registryOwner);
-        token.transfer(investor, 10000);
+        token.transfer(investor, amount);
+        vm.stopPrank();
+
+        vm.startPrank(investor);
+        token.approve(address(pool.getTokenHandler()), amount);
         vm.stopPrank();
     }
 

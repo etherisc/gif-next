@@ -1,43 +1,42 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Vm, console} from "../../lib/forge-std/src/Test.sol";
+import {Vm, console} from "../../../lib/forge-std/src/Test.sol";
 
-import {GifTest} from "../base/GifTest.sol";
-import {Amount, AmountLib} from "../../contracts/type/Amount.sol";
+import {GifTest} from "../../base/GifTest.sol";
+import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
 import {DistributionWithReinsuranceAuthorization} from "./DistributionWithReinsuranceAuthorization.sol";
 import {PoolWithReinsuranceAuthorization} from "./PoolWithReinsuranceAuthorization.sol";
 import {ProductWithReinsuranceAuthorization} from "./ProductWithReinsuranceAuthorization.sol";
-import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
-import {ClaimId, ClaimIdLib} from "../../contracts/type/ClaimId.sol";
-import {ContractLib} from "../../contracts/shared/ContractLib.sol";
-import {PRODUCT_OWNER_ROLE} from "../../contracts/type/RoleId.sol";
+import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
+import {ClaimId, ClaimIdLib} from "../../../contracts/type/ClaimId.sol";
+import {ContractLib} from "../../../contracts/shared/ContractLib.sol";
 import {ProductWithReinsurance} from "./ProductWithReinsurance.sol";
 import {PoolWithReinsurance} from "./PoolWithReinsurance.sol";
-import {SimpleDistribution} from "../../contracts/examples/unpermissioned/SimpleDistribution.sol";
-import {SimpleProduct} from "../../contracts/examples/unpermissioned/SimpleProduct.sol";
-import {SimplePool} from "../../contracts/examples/unpermissioned/SimplePool.sol";
-import {IComponents} from "../../contracts/instance/module/IComponents.sol";
-import {ILifecycle} from "../../contracts/shared/ILifecycle.sol";
-import {IPolicy} from "../../contracts/instance/module/IPolicy.sol";
-import {IPolicyHolder} from "../../contracts/shared/IPolicyHolder.sol";
-import {IBundle} from "../../contracts/instance/module/IBundle.sol";
-import {Fee, FeeLib} from "../../contracts/type/Fee.sol";
-import {UFixedLib} from "../../contracts/type/UFixed.sol";
-import {Seconds, SecondsLib} from "../../contracts/type/Seconds.sol";
-import {Timestamp, TimestampLib, zeroTimestamp} from "../../contracts/type/Timestamp.sol";
-import {IPolicyService} from "../../contracts/product/IPolicyService.sol";
-import {IRisk} from "../../contracts/instance/module/IRisk.sol";
-import {PayoutId, PayoutIdLib} from "../../contracts/type/PayoutId.sol";
-import {POLICY} from "../../contracts/type/ObjectType.sol";
-import {RiskId, RiskIdLib, eqRiskId} from "../../contracts/type/RiskId.sol";
-import {ReferralLib} from "../../contracts/type/Referral.sol";
-import {SUBMITTED, ACTIVE, COLLATERALIZED, CONFIRMED, PAID, DECLINED, CLOSED} from "../../contracts/type/StateId.sol";
-import {StateId} from "../../contracts/type/StateId.sol";
+import {SimpleDistribution} from "../../../contracts/examples/unpermissioned/SimpleDistribution.sol";
+import {SimpleProduct} from "../../../contracts/examples/unpermissioned/SimpleProduct.sol";
+import {SimplePool} from "../../../contracts/examples/unpermissioned/SimplePool.sol";
+import {IComponents} from "../../../contracts/instance/module/IComponents.sol";
+import {ILifecycle} from "../../../contracts/shared/ILifecycle.sol";
+import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
+import {IPolicyHolder} from "../../../contracts/shared/IPolicyHolder.sol";
+import {IBundle} from "../../../contracts/instance/module/IBundle.sol";
+import {Fee, FeeLib} from "../../../contracts/type/Fee.sol";
+import {UFixedLib} from "../../../contracts/type/UFixed.sol";
+import {Seconds, SecondsLib} from "../../../contracts/type/Seconds.sol";
+import {Timestamp, TimestampLib, zeroTimestamp} from "../../../contracts/type/Timestamp.sol";
+import {IPolicyService} from "../../../contracts/product/IPolicyService.sol";
+import {IRisk} from "../../../contracts/instance/module/IRisk.sol";
+import {PayoutId, PayoutIdLib} from "../../../contracts/type/PayoutId.sol";
+import {POLICY} from "../../../contracts/type/ObjectType.sol";
+import {RiskId, RiskIdLib, eqRiskId} from "../../../contracts/type/RiskId.sol";
+import {ReferralLib} from "../../../contracts/type/Referral.sol";
+import {SUBMITTED, ACTIVE, COLLATERALIZED, CONFIRMED, PAID, DECLINED, CLOSED} from "../../../contracts/type/StateId.sol";
+import {StateId} from "../../../contracts/type/StateId.sol";
 
 
-contract ProductWithReinsuranceTest
-    is GifTest
+contract ProductWithReinsuranceTest is
+    GifTest
 {
 
     uint256 public constant BUNDLE_CAPITAL = 5000;
@@ -65,7 +64,19 @@ contract ProductWithReinsuranceTest
     event LogClaimServicePayoutProcessed(NftId policyNftId, PayoutId payoutId, Amount amount);
 
 
+    function setUp() public override {
+        super.setUp();
+
+        // reinsurance product
+        _prepareProduct();  
+
+        // setup product with reinsurance
+        _prepareProductWithReinsurance();
+    }
+
+
     function test_reinsuranceSetUp() public {
+
         assertTrue(productNftId.gtz(), "product zero (reinsurance)");
         assertTrue(poolNftId.gtz(), "pool zero (reinsurance)");
 
@@ -264,17 +275,6 @@ contract ProductWithReinsuranceTest
     }
 
 
-    function setUp() public override {
-        super.setUp();
-
-        // reinsurance product
-        _prepareProduct();  
-
-        // setup product with reinsurance
-        _prepareProductWithReinsurance();
-    }
-
-
     function _createClaim(
         NftId policyNftId,
         uint256 claim
@@ -355,49 +355,6 @@ contract ProductWithReinsuranceTest
         // solhint-enable
 
         // solhint-disable-next-line
-        console.log("--- deploy and register distribution with reinsurance");
-
-        vm.startPrank(distributionOwner);
-        distributionRe = new SimpleDistribution(
-            address(registry),
-            instanceNftId,
-            new DistributionWithReinsuranceAuthorization(),
-            distributionOwner,
-            address(token));
-
-        distributionRe.register();
-        distributionReNftId = distributionRe.getNftId();
-        vm.stopPrank();
-
-        // solhint-disable
-        console.log("distribution nft id", distributionReNftId.toInt());
-        console.log("distribution component at", address(distributionRe));
-        // solhint-enable
-
-        // deploy and register pool
-        // solhint-disable-next-line
-        console.log("--- deploy and register pool with reinsurace");
-
-        vm.startPrank(poolOwner);
-        poolRe = new PoolWithReinsurance(
-            address(registry),
-            instanceNftId,
-            address(token),
-            new PoolWithReinsuranceAuthorization(),
-            poolOwner
-        );
-
-        poolRe.register();
-        poolReNftId = poolRe.getNftId();
-        pool.approveTokenHandler(AmountLib.max());
-        vm.stopPrank();
-
-        // solhint-disable
-        console.log("pool nft id", poolReNftId.toInt());
-        console.log("pool component at", address(poolRe));
-        // solhint-enable
-
-        // solhint-disable-next-line
         console.log("--- deploy and register product with reinsurace");
 
         vm.startPrank(productOwner);
@@ -406,19 +363,39 @@ contract ProductWithReinsuranceTest
             instanceNftId,
             new ProductWithReinsuranceAuthorization(),
             productOwner,
-            address(token),
-            address(poolRe), 
-            address(distributionRe)
+            address(token)
         );
-        
-        productRe.register();
-        productReNftId = productRe.getNftId();
+        vm.stopPrank();
+
+        // instance owner registeres product with instance (and registry)
+        vm.startPrank(instanceOwner);
+        productReNftId = instance.registerProduct(address(productRe));
         vm.stopPrank();
         
         // solhint-disable
         console.log("product nft id", productReNftId.toInt());
         console.log("product component at", address(productRe));
         // solhint-enable
+
+        // solhint-disable-next-line
+        console.log("--- deploy and register pool with reinsurace");
+
+        vm.startPrank(poolOwner);
+        poolRe = new PoolWithReinsurance(
+            address(registry),
+            productReNftId,
+            address(token),
+            new PoolWithReinsuranceAuthorization(),
+            poolOwner
+        );
+        vm.stopPrank();
+
+        poolReNftId = _registerComponent(productRe, address(poolRe), "pool re");
+
+        // token handler only becomes available after registration
+        vm.startPrank(poolOwner);
+        poolRe.approveTokenHandler(AmountLib.max());
+        vm.stopPrank();
 
         // solhint-disable-next-line
         console.log("--- fund investor and customer");

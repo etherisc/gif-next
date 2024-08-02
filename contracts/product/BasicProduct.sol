@@ -30,8 +30,8 @@ abstract contract BasicProduct is
         string memory name,
         address token,
         bool isInterceptor,
-        address pool,
-        address distribution
+        bool hasDistribution,
+        uint8 numberOfOracles
     )
         internal
         virtual
@@ -45,9 +45,9 @@ abstract contract BasicProduct is
             name, 
             token, 
             isInterceptor, 
-            pool,
-            distribution,
-            "", //registryData, 
-            ""); // componentData
+            false, // is processing funded claims
+            hasDistribution,
+            numberOfOracles,
+            ""); // component data
     }
 }

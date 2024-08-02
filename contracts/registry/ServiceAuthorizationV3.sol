@@ -67,27 +67,21 @@ contract ServiceAuthorizationV3
           functions = _authorizeForService(REGISTRY(), APPLICATION());
           _authorize(functions, IRegistryService.registerPolicy.selector, "registerPolicy");
 
-          // functions = _authorizeForService(REGISTRY(), POOL());
-          // _authorize(functions, IRegistryService.registerPool.selector, "registerPool");
-
           functions = _authorizeForService(REGISTRY(), BUNDLE());
           _authorize(functions, IRegistryService.registerBundle.selector, "registerBundle");
 
-          functions = _authorizeForService(REGISTRY(), DISTRIBUTION());
-          // _authorize(functions, IRegistryService.registerDistribution.selector, "registerDistribution");
-          _authorize(functions, IRegistryService.registerDistributor.selector, "registerDistributor");
-
           functions = _authorizeForService(REGISTRY(), COMPONENT());
-          _authorize(functions, IRegistryService.registerComponent.selector, "registerComponent");
+          _authorize(functions, IRegistryService.registerProduct.selector, "registerProduct");
+          _authorize(functions, IRegistryService.registerProductLinkedComponent.selector, "registerProductLinkedComponent");
+
+          functions = _authorizeForService(REGISTRY(), DISTRIBUTION());
+          _authorize(functions, IRegistryService.registerDistributor.selector, "registerDistributor");
 
           functions = _authorizeForService(REGISTRY(), INSTANCE());
           _authorize(functions, IRegistryService.registerInstance.selector, "registerInstance");
 
           functions = _authorizeForService(REGISTRY(), STAKING());
           _authorize(functions, IRegistryService.registerStake.selector, "registerStake");
-
-          // functions = _authorizeForService(REGISTRY(), PRODUCT());
-          // _authorize(functions, IRegistryService.registerProduct.selector, "registerProduct");
      }
 
 
@@ -119,10 +113,11 @@ contract ServiceAuthorizationV3
      function _setupInstanceServiceAuthorization()
           internal
      {
-          IAccess.FunctionInfo[] storage functions;
+          // TODO cleanup
+          // IAccess.FunctionInfo[] storage functions;
 
-          functions = _authorizeForService(INSTANCE(), COMPONENT());
-          _authorize(functions, IInstanceService.initializeAuthorization.selector, "initializeAuthorization");
+          // functions = _authorizeForService(INSTANCE(), COMPONENT());
+          // _authorize(functions, IInstanceService.initializeAuthorization.selector, "initializeAuthorization");
      }
 
 
@@ -130,6 +125,7 @@ contract ServiceAuthorizationV3
      function _setupComponentServiceAuthorization()
           internal
      {
+          // TODO cleanup
           // authz.authorizations = new DomainAuthorization[](4);
 
           // authz.authorizations[0].domain = POLICY();

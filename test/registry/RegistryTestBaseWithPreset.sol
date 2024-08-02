@@ -135,13 +135,13 @@ contract RegistryTestBaseWithPreset is RegistryTestBase
         _productNftId = _registerContractType(PRODUCT(), _instanceNftId);
         _nftIdByType.push(_productNftId);
 
-        _distributionNftId = _registerContractType(DISTRIBUTION(), _instanceNftId);
+        _distributionNftId = _registerContractType(DISTRIBUTION(), _productNftId);
         _nftIdByType.push(_distributionNftId);
 
-        _poolNftId = _registerContractType(POOL(), _instanceNftId);
+        _poolNftId = _registerContractType(POOL(), _productNftId);
         _nftIdByType.push(_poolNftId);
 
-        _oracleNftId = _registerContractType(ORACLE(), _instanceNftId);
+        _oracleNftId = _registerContractType(ORACLE(), _productNftId);
         _nftIdByType.push(_oracleNftId);
 
         _distributorNftId = _registerObjectType(DISTRIBUTOR(), _distributionNftId);

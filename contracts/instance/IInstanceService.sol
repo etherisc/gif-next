@@ -68,25 +68,5 @@ interface IInstanceService is IService {
     /// @dev Defunds the staking reward reserves for the specified target.
     function withdrawStakingRewardReserves(Amount dipAmount) external returns (Amount newBalance);
 
-    /// @dev Sets up the component authorization for the specified instance.
-    /// The authorization is based on the authz specification provided by the component via getAuthorization.
-    function initializeAuthorization(NftId instanceNftId, IInstanceLinkedComponent component) external;
-
-    function createComponentTarget(
-        NftId instanceNftId,
-        address targetAddress,
-        string memory targetName,
-        bytes4[][] memory selectors,
-        RoleId[] memory roles
-    ) external;
-
-    function createGifTarget(
-        NftId instanceNftId,
-        address targetAddress,
-        string memory targetName,
-        bytes4[][] memory selectors,
-        RoleId[] memory roles
-    ) external;
-
     function setComponentLocked(bool locked) external;
 }

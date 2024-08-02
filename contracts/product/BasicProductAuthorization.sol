@@ -36,7 +36,6 @@ contract BasicProductAuthorization
           // authorize public role (open access to any account, only allows to lock target)
           functions = _authorizeForTarget(getTargetName(), PUBLIC_ROLE());
           _authorize(functions, BasicProduct.setFees.selector, "setFees");
-
           _authorize(functions, IInstanceLinkedComponent.withdrawFees.selector, "withdrawFees");
      }
 }

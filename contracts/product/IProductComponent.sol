@@ -6,6 +6,7 @@ import {ClaimId} from "../type/ClaimId.sol";
 import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {NftId} from "../type/NftId.sol";
+import {ObjectType} from "../type/ObjectType.sol";
 import {ReferralId} from "../type/Referral.sol";
 import {RiskId} from "../type/RiskId.sol";
 import {Seconds} from "../type/Seconds.sol";
@@ -13,6 +14,11 @@ import {Seconds} from "../type/Seconds.sol";
 interface IProductComponent is
     IInstanceLinkedComponent
 {
+
+    // @dev register a new component for this product cluster.
+    function registerComponent(address component)
+        external
+        returns (NftId componentNftId);
 
     /// @dev Callback function to inform product compnent about arrival of funding for a claim.
     /// The callback is called by the pool service after the corresponding pool triggers this function.

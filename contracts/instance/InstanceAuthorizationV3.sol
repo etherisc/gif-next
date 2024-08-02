@@ -5,44 +5,33 @@ import {
      PRODUCT, ORACLE, POOL, INSTANCE, COMPONENT, DISTRIBUTION, APPLICATION, POLICY, CLAIM, BUNDLE
 } from "../../contracts/type/ObjectType.sol";
 
-import {
-     DISTRIBUTION_OWNER_ROLE, ORACLE_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE
-} from "../../contracts/type/RoleId.sol";
-
 import {BundleSet} from "../instance/BundleSet.sol"; 
 import {IAccess} from "../authorization/IAccess.sol";
 import {Instance} from "../instance/Instance.sol";
 import {InstanceAdmin} from "../instance/InstanceAdmin.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
-import {ModuleAuthorization} from "../authorization/ModuleAuthorization.sol";
+import {Authorization} from "../authorization/Authorization.sol";
 
 
 contract InstanceAuthorizationV3
-     is ModuleAuthorization
+     is Authorization
 {
+
+     string public constant INSTANCE_ROLE_NAME = "InstanceRole";
 
      string public constant INSTANCE_TARGET_NAME = "Instance";
      string public constant INSTANCE_STORE_TARGET_NAME = "InstanceStore";
      string public constant INSTANCE_ADMIN_TARGET_NAME = "InstanceAdmin";
      string public constant BUNDLE_SET_TARGET_NAME = "BundleSet";
 
-     string public constant INSTANCE_ROLE_NAME = "InstanceRole";
-     string public constant DISTRIBUTION_OWNER_ROLE_NAME = "DistributionOwnerRole";
-     string public constant ORACLE_OWNER_ROLE_NAME = "OracleOwnerRole";
-     string public constant POOL_OWNER_ROLE_NAME = "PoolOwnerRole";
-     string public constant PRODUCT_OWNER_ROLE_NAME = "ProductOwnerRole";
-
-     constructor() ModuleAuthorization(INSTANCE_TARGET_NAME) {}
+     constructor() Authorization(INSTANCE_TARGET_NAME) {}
 
 
      function _setupRoles()
           internal
           override
      {
-          _addGifRole(DISTRIBUTION_OWNER_ROLE(), DISTRIBUTION_OWNER_ROLE_NAME);
-          _addGifRole(ORACLE_OWNER_ROLE(), ORACLE_OWNER_ROLE_NAME);
-          _addGifRole(POOL_OWNER_ROLE(), POOL_OWNER_ROLE_NAME);
-          _addGifRole(PRODUCT_OWNER_ROLE(), PRODUCT_OWNER_ROLE_NAME);
+          // empty implementation
      }
 
 
@@ -53,7 +42,7 @@ contract InstanceAuthorizationV3
           // instance target
           _addTargetWithRole(
                INSTANCE_TARGET_NAME, 
-               _getTargetRoleId(INSTANCE()),
+               _toTargetRoleId(INSTANCE()),
                INSTANCE_ROLE_NAME);
 
           // instance supporting targets
@@ -83,6 +72,7 @@ contract InstanceAuthorizationV3
           _setupInstanceAdminAuthorization();
           _setupInstanceStoreAuthorization();
           _setupBundleSetAuthorization();
+
      }
 
 
@@ -118,7 +108,7 @@ contract InstanceAuthorizationV3
           IAccess.FunctionInfo[] storage functions;
 
           // authorize instance role
-          functions = _authorizeForTarget(INSTANCE_ADMIN_TARGET_NAME, _getTargetRoleId(INSTANCE()));
+          functions = _authorizeForTarget(INSTANCE_ADMIN_TARGET_NAME, _toTargetRoleId(INSTANCE()));
           _authorize(functions, InstanceAdmin.grantRole.selector, "grantRole");
 
           // authorize instance service role

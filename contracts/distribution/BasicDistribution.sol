@@ -134,7 +134,6 @@ contract BasicDistribution is
             initialOwner, 
             name, 
             token, 
-            "", // registry data
             ""); // component specifc data
     }
 }

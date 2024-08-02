@@ -17,6 +17,11 @@ contract RegisterContinuousTests is RegistryTestBase
 {
     uint constant ITTERATIONS = 150;
 
+    function test_continuous_registerCheckSetup() public {
+        assertTrue(true);
+    }
+
+
     function test_continuous_register(address sender, IRegistry.ObjectInfo memory info) public
     {
         if(
@@ -556,6 +561,10 @@ contract RegisterWithPresetContinuousTests is RegistryTestBaseWithPreset, Regist
         RegistryTestBaseWithPreset.setUp();
     }
 
+    function test_continuous_registerWithPresetCheckSetup() public {
+        assertTrue(true);
+    }
+
     // nftId - always random
     // parentNftId - from preset,
     // types - from types set
@@ -626,6 +635,10 @@ contract RegisterWithPresetContinuousTestL1 is RegisterWithPresetContinuousTests
     function setUp() public virtual override {
         vm.chainId(1);
         super.setUp();
+    }
+
+    function test_continuous_registerWithPresetContinuousL1CheckSetup() public {
+        assertTrue(true);
     }
 }
 

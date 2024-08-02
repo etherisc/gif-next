@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Authorization} from "../../contracts/authorization/Authorization.sol";
-import {IAccess} from "../../contracts/authorization/IAccess.sol";
-import {IInstanceLinkedComponent} from "../../contracts/shared/IInstanceLinkedComponent.sol";
-import {IPolicyHolder} from "../../contracts/shared/IPolicyHolder.sol";
-import {BasicPool} from "../../contracts/pool/BasicPool.sol";
-import {IPoolComponent} from "../../contracts/pool/IPoolComponent.sol";
-import {CLAIM, POOL, POLICY} from "../../contracts/type/ObjectType.sol";
-import {PUBLIC_ROLE} from "../../contracts/type/RoleId.sol";
-import {RoleId} from "../../contracts/type/RoleId.sol";
+import {Authorization} from "../../../contracts/authorization/Authorization.sol";
+import {IAccess} from "../../../contracts/authorization/IAccess.sol";
+import {IInstanceLinkedComponent} from "../../../contracts/shared/IInstanceLinkedComponent.sol";
+import {IPolicyHolder} from "../../../contracts/shared/IPolicyHolder.sol";
+import {BasicPool} from "../../../contracts/pool/BasicPool.sol";
+import {IPoolComponent} from "../../../contracts/pool/IPoolComponent.sol";
+import {CLAIM, POOL, POLICY} from "../../../contracts/type/ObjectType.sol";
+import {PUBLIC_ROLE} from "../../../contracts/type/RoleId.sol";
+import {RoleId} from "../../../contracts/type/RoleId.sol";
 
 
 contract PoolWithReinsuranceAuthorization
@@ -45,7 +45,6 @@ contract PoolWithReinsuranceAuthorization
           _authorize(functions, BasicPool.closeBundle.selector, "closeBundle");
           _authorize(functions, BasicPool.setBundleFee.selector, "setBundleFee");
           _authorize(functions, BasicPool.setMaxBalanceAmount.selector, "setMaxBalanceAmount");
-          _authorize(functions, BasicPool.setBundleOwnerRole.selector, "setBundleOwnerRole");
           _authorize(functions, BasicPool.setFees.selector, "setFees");
           _authorize(functions, BasicPool.stake.selector, "stake");
           _authorize(functions, BasicPool.unstake.selector, "unstake");

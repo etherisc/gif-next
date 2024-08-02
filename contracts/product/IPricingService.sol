@@ -14,15 +14,15 @@ interface IPricingService is IService
 {
 
     error ErrorPricingServiceTargetWalletAmountsMismatch();
-    error ErrorIPricingServiceBundlePoolMismatch(NftId bundleNftId, NftId bundlePoolNftId, NftId poolNftId);
-    error ErrorIPricingServiceFeeCalculationMismatch(
-                Amount distributionFeeFixAmount,
-                Amount distributionFeeVarAmount,
-                Amount distributionOwnerFeeFixAmount,
-                Amount distributionOwnerFeeVarAmount,
-                Amount commissionAmount,
-                Amount discountAmount
-            );
+    error ErrorPricingServiceBundlePoolMismatch(NftId bundleNftId, NftId bundlePoolNftId, NftId poolNftId);
+    error ErrorPricingServiceFeeCalculationMismatch(
+        Amount distributionFeeFixAmount,
+        Amount distributionFeeVarAmount,
+        Amount distributionOwnerFeeFixAmount,
+        Amount distributionOwnerFeeVarAmount,
+        Amount commissionAmount,
+        Amount discountAmount
+    );
 
     function calculatePremium(
         NftId productNftId,

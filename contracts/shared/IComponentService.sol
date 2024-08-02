@@ -7,13 +7,32 @@ import {Fee} from "../type/Fee.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
 import {IService} from "../shared/IService.sol";
 import {NftId} from "../type/NftId.sol";
+import {ObjectType} from "../type/ObjectType.sol";
 import {UFixed} from "../type/UFixed.sol";
+import {VersionPart} from "../type/Version.sol";
 
 /// @dev component base class
 /// component examples are staking, product, distribution, pool and oracle
 interface IComponentService is 
     IService
 {
+    error ErrorComponentServiceNotInstanceLinkedComponent(address component);
+    error ErrorComponentServiceSenderNotRegistered(address sender);
+    error ErrorComponentServiceNotComponent(address component);
+    error ErrorComponentServiceTypeNotSupported(address component, ObjectType invalidType);
+    error ErrorComponentServiceInvalidType(address component, ObjectType requiredType, ObjectType componentType);
+    error ErrorComponentServiceAlreadyRegistered(address component);
+    error ErrorComponentServiceReleaseMismatch(address component, VersionPart componentRelease, VersionPart parentRelease);
+    error ErrorComponentServiceSenderNotComponentParent(NftId senderNftId, NftId compnentParentNftId);
+    error ErrorComponentServiceParentNotInstance(NftId nftId, ObjectType objectType);
+    error ErrorComponentServiceParentNotProduct(NftId nftId, ObjectType objectType);
+
+    error ErrorProductServiceNoDistributionExpected(NftId productNftId);
+    error ErrorProductServiceDistributionAlreadyRegistered(NftId productNftId, NftId distributionNftId);
+    error ErrorProductServiceNoOraclesExpected(NftId productNftId);
+    error ErrorProductServiceOraclesAlreadyRegistered(NftId productNftId, uint8 expectedOracles);
+    error ErrorProductServicePoolAlreadyRegistered(NftId productNftId, NftId poolNftId);
+
     error ErrorComponentServiceNewWalletAddressZero();
     error ErrorComponentServiceWalletAddressZero();
     error ErrorComponentServiceWalletAddressIsSameAsCurrent();
@@ -22,6 +41,7 @@ interface IComponentService is
     error ErrorComponentServiceWithdrawAmountExceedsLimit(Amount withdrawnAmount, Amount withdrawLimit);
     error ErrorComponentServiceWalletAllowanceTooSmall(address wallet, address spender, uint256 allowance, uint256 amount);
 
+    event LogComponentServiceRegistered(NftId instanceNftId, NftId componentNftId, ObjectType componentType, address component, address token, address initialOwner); 
     event LogComponentServiceWalletAddressChanged(NftId componentNftId, address currentWallet, address newWallet);
     event LogComponentServiceComponentFeesWithdrawn(NftId componentNftId, address recipient, address token, Amount withdrawnAmount);
     event LogComponentServiceProductFeesUpdated(NftId productNftId);
@@ -52,10 +72,13 @@ interface IComponentService is
     /// @return withdrawnAmount the amount that was actually withdrawn
     function withdrawFees(Amount withdrawAmount) external returns (Amount withdrawnAmount);
 
+    /// @dev Registers the provided component with the product (sender)
+    function registerComponent(address component) external returns (NftId componentNftId);
+
     //-------- product ------------------------------------------------------//
 
-    /// @dev registers the sending component as a product component
-    function registerProduct() external;
+    /// @dev Registers the specified product component for the instance (sender)
+    function registerProduct(address product) external returns (NftId productNftId);
 
     function setProductFees(
         Fee memory productFee, // product fee on net premium
@@ -66,9 +89,6 @@ interface IComponentService is
     function decreaseProductFees(InstanceStore instanceStore, NftId productNftId, Amount feeAmount) external;
 
     //-------- distribution -------------------------------------------------//
-
-    /// @dev registers the sending component as a distribution component
-    function registerDistribution() external;
 
     function setDistributionFees(
         Fee memory distributionFee, // distribution fee for sales that do not include commissions
@@ -82,15 +102,7 @@ interface IComponentService is
     function increaseDistributorBalance(InstanceStore instanceStore, NftId distributorNftId, Amount amount, Amount feeAmount) external;
     function decreaseDistributorBalance(InstanceStore instanceStore, NftId distributorNftId, Amount amount, Amount feeAmount) external;
 
-    //-------- oracle -------------------------------------------------------//
-
-    /// @dev registers the sending component as an oracle component
-    function registerOracle() external;
-
     //-------- pool ---------------------------------------------------------//
-
-    /// @dev registers the sending component as a pool component
-    function registerPool() external;
 
     function setPoolFees(
         Fee memory poolFee, // pool fee on net premium
