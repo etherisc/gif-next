@@ -6,7 +6,7 @@ import {FoundryRandom} from "foundry-random/FoundryRandom.sol";
 
 import {NftId} from "../../contracts/type/NftId.sol";
 import {Version, VersionPart, VersionLib, VersionPartLib} from "../../contracts/type/Version.sol";
-import {ObjectType, ObjectTypeLib, SERVICE, PRODUCT, POOL, ORACLE, DISTRIBUTION} from "../../contracts/type/ObjectType.sol";
+import {ObjectType, ObjectTypeLib, REGISTRY, SERVICE, PRODUCT, POOL, ORACLE, DISTRIBUTION} from "../../contracts/type/ObjectType.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {IService} from "../../contracts/shared/IService.sol";
 import {RegisterableMock} from "./RegisterableMock.sol";

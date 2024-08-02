@@ -282,7 +282,8 @@ contract Authorization
                adminRoleId: adminRoleId,
                roleType: roleType,
                maxMemberCount: maxMemberCount,
-               createdAt: TimestampLib.blockTimestamp()});
+               createdAt: TimestampLib.blockTimestamp(),
+               pausedAt: TimestampLib.max()});
      }
 }
 
