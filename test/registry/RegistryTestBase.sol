@@ -428,9 +428,9 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
 
         // instance as parent
         _isCoreContractTypesCombo[PRODUCT()][INSTANCE()] = true;
-        _isCoreContractTypesCombo[DISTRIBUTION()][INSTANCE()] = true;
-        _isCoreContractTypesCombo[POOL()][INSTANCE()] = true;
-        _isCoreContractTypesCombo[ORACLE()][INSTANCE()] = true;
+        _isCoreContractTypesCombo[DISTRIBUTION()][PRODUCT()] = true;
+        _isCoreContractTypesCombo[POOL()][PRODUCT()] = true;
+        _isCoreContractTypesCombo[ORACLE()][PRODUCT()] = true;
 
         // component as parent
         _isCoreObjectTypesCombo[DISTRIBUTOR()][DISTRIBUTION()] = true;
