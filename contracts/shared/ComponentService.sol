@@ -5,6 +5,7 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
+import {ContractLib} from "../shared/ContractLib.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {IComponentService} from "./IComponentService.sol";
@@ -36,6 +37,14 @@ contract ComponentService is
     IRegistryService private _registryService;
     IInstanceService private _instanceService;
 
+    modifier onlyComponent(address component) {
+        if (!ContractLib.supportsInterface(component, type(IInstanceLinkedComponent).interfaceId)) {
+            revert ErrorComponentServiceNotInstanceLinkedComponent(component);
+        }
+        _;
+    }
+
+
     function _initialize(
         address owner, 
         bytes memory data
@@ -58,6 +67,29 @@ contract ComponentService is
     }
 
     //-------- component ----------------------------------------------------//
+
+    function registerComponent(address component)
+        external
+        virtual
+        onlyComponent(component)
+        returns (NftId componentNftId)
+    {
+        // type specific registration
+        ObjectType componentType = IInstanceLinkedComponent(component).getInitialInfo().objectType;
+        if (componentType == POOL()) {
+            return _registerPool(component);
+        }
+        if (componentType == DISTRIBUTION()) {
+            return _registerDistribution(component);
+        }
+        if (componentType == ORACLE()) {
+            return _registerOracle(component);
+        }
+
+        // fail
+        revert ErrorComponentServiceTypeNotSupported(component, componentType);
+    }
+
 
     function setWallet(address newWallet) external virtual {
         (NftId componentNftId,, IInstance instance) = _getAndVerifyActiveComponent(COMPONENT());
@@ -124,6 +156,7 @@ contract ComponentService is
     function registerProduct(address productAddress)
         external
         virtual
+        onlyComponent(productAddress)
         returns (NftId productNftId)
     {
         // register/create component setup
@@ -203,8 +236,8 @@ contract ComponentService is
     //-------- distribution -------------------------------------------------//
 
     /// @dev registers the sending component as a distribution component
-    function registerDistribution(address distributioAddress)
-        external
+    function _registerDistribution(address distributioAddress)
+        internal
         virtual
         returns (NftId distributionNftId)
     {
@@ -213,14 +246,17 @@ contract ComponentService is
         InstanceAdmin instanceAdmin;
         InstanceStore instanceStore;
         NftId productNftId;
-        (instanceReader, instanceAdmin, instanceStore, productNftId, distributionNftId) =_register(
+        (instanceReader, instanceAdmin, instanceStore, productNftId, distributionNftId) = _register(
             distributioAddress,
             DISTRIBUTION());
 
         // check product is still expecting a distribution registration
         IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
-        if (productInfo.hasDistribution && productInfo.distributionNftId.gtz()) {
-            revert ErrorProductServiceDistributionAlreadyRegistered(productNftId, productInfo.poolNftId);
+        if (!productInfo.hasDistribution) {
+            revert ErrorProductServiceNoDistributionExpected(productNftId);
+        }
+        if (productInfo.distributionNftId.gtz()) {
+            revert ErrorProductServiceDistributionAlreadyRegistered(productNftId, productInfo.distributionNftId);
         }
 
         // set distribution in product info
@@ -326,8 +362,8 @@ contract ComponentService is
 
     //-------- oracle -------------------------------------------------------//
 
-    function registerOracle(address oracleAddress)
-        external
+    function _registerOracle(address oracleAddress)
+        internal
         virtual
         returns (NftId oracleNftId)
     {
@@ -343,6 +379,9 @@ contract ComponentService is
 
         // check product is still expecting an oracle registration
         IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
+        if (productInfo.expectedNumberOfOracles == 0) {
+            revert ErrorProductServiceNoOraclesExpected(productNftId);
+        }
         if (productInfo.numberOfOracles == productInfo.expectedNumberOfOracles) {
             revert ErrorProductServiceOraclesAlreadyRegistered(productNftId, productInfo.expectedNumberOfOracles);
         }
@@ -359,8 +398,8 @@ contract ComponentService is
 
     //-------- pool ---------------------------------------------------------//
 
-    function registerPool(address poolAddress)
-        external
+    function _registerPool(address poolAddress)
+        internal
         virtual
         returns (NftId poolNftId)
     {
@@ -377,7 +416,7 @@ contract ComponentService is
         // check product is still expecting a pool registration
         IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
         if (productInfo.poolNftId.gtz()) {
-            revert ErrorProductServicePoolAlreadyRegistered(productNftId, poolNftId);
+            revert ErrorProductServicePoolAlreadyRegistered(productNftId, productInfo.poolNftId);
         }
 
         // create info
@@ -640,15 +679,12 @@ contract ComponentService is
         }
 
         // the sender is the parent of the component to be registered
+        // an instance caller wanting to register a product - or -
+        // a product caller wantint go register a distribution, oracle or pool
         parentNftId = senderInfo.nftId;
 
-        // check this is a component
-        component = IInstanceLinkedComponent(componentAddress);
-        if(!component.supportsInterface(type(IInstanceLinkedComponent).interfaceId)) {
-            revert ErrorComponentServiceNotComponent(componentAddress);
-        }
-
         // check component is of required type
+        component = IInstanceLinkedComponent(componentAddress);
         IRegistry.ObjectInfo memory info = component.getInitialInfo();
         if(info.objectType != requiredType) {
             revert ErrorComponentServiceInvalidType(componentAddress, requiredType, info.objectType);

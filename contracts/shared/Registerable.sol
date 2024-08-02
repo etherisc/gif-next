@@ -56,7 +56,7 @@ contract Registerable is
 
 
     /// @inheritdoc IRegisterable
-    function getRelease() public pure returns (VersionPart release) {
+    function getRelease() public virtual pure returns (VersionPart release) {
         return VersionPartLib.toVersionPart(GIF_RELEASE);
     }
 

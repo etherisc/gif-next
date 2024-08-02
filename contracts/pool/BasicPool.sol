@@ -18,7 +18,7 @@ abstract contract BasicPool is
 
     function _initializeBasicPool(
         address registry,
-        NftId instanceNftId,
+        NftId productNftId,
         IAuthorization authorization,
         address token,
         string memory name,
@@ -30,7 +30,7 @@ abstract contract BasicPool is
     {
         _initializePool(
             registry, 
-            instanceNftId, 
+            productNftId, 
             name, 
             token, 
             authorization,

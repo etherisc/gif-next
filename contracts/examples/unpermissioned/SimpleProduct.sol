@@ -32,7 +32,7 @@ contract SimpleProduct is
 
     constructor(
         address registry,
-        NftId instanceNftid,
+        NftId instanceNftId,
         IAuthorization authorization,
         address initialOwner,
         address token,
@@ -43,7 +43,7 @@ contract SimpleProduct is
     {
         initialize(
             registry,
-            instanceNftid,
+            instanceNftId,
             authorization,
             initialOwner,
             "SimpleProduct",

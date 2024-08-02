@@ -8,7 +8,6 @@ import {AccessManagerCloneable} from "../../contracts/authorization/AccessManage
 import {GifTest} from "../base/GifTest.sol";
 import {InstanceAdmin} from "../../contracts/instance/InstanceAdmin.sol";
 import {InstanceAuthorizationV3} from "../../contracts/instance/InstanceAuthorizationV3.sol";
-import {IModuleAuthorization} from "../../contracts/authorization/IModuleAuthorization.sol";
 import {InstanceLinkedComponent} from "../../contracts/shared/InstanceLinkedComponent.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";

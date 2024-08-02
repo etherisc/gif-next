@@ -10,11 +10,11 @@ import {IAccess} from "../authorization/IAccess.sol";
 import {Instance} from "../instance/Instance.sol";
 import {InstanceAdmin} from "../instance/InstanceAdmin.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
-import {ModuleAuthorization} from "../authorization/ModuleAuthorization.sol";
+import {Authorization} from "../authorization/Authorization.sol";
 
 
 contract InstanceAuthorizationV3
-     is ModuleAuthorization
+     is Authorization
 {
 
      string public constant INSTANCE_ROLE_NAME = "InstanceRole";
@@ -24,7 +24,7 @@ contract InstanceAuthorizationV3
      string public constant INSTANCE_ADMIN_TARGET_NAME = "InstanceAdmin";
      string public constant BUNDLE_SET_TARGET_NAME = "BundleSet";
 
-     constructor() ModuleAuthorization(INSTANCE_TARGET_NAME) {}
+     constructor() Authorization(INSTANCE_TARGET_NAME) {}
 
 
      function _setupRoles()
@@ -42,7 +42,7 @@ contract InstanceAuthorizationV3
           // instance target
           _addTargetWithRole(
                INSTANCE_TARGET_NAME, 
-               _getTargetRoleId(INSTANCE()),
+               _toTargetRoleId(INSTANCE()),
                INSTANCE_ROLE_NAME);
 
           // instance supporting targets
@@ -72,6 +72,7 @@ contract InstanceAuthorizationV3
           _setupInstanceAdminAuthorization();
           _setupInstanceStoreAuthorization();
           _setupBundleSetAuthorization();
+
      }
 
 
@@ -107,7 +108,7 @@ contract InstanceAuthorizationV3
           IAccess.FunctionInfo[] storage functions;
 
           // authorize instance role
-          functions = _authorizeForTarget(INSTANCE_ADMIN_TARGET_NAME, _getTargetRoleId(INSTANCE()));
+          functions = _authorizeForTarget(INSTANCE_ADMIN_TARGET_NAME, _toTargetRoleId(INSTANCE()));
           _authorize(functions, InstanceAdmin.grantRole.selector, "grantRole");
 
           // authorize instance service role

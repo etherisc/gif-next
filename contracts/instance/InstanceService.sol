@@ -29,7 +29,6 @@ import {IStakingService} from "../staking/IStakingService.sol";
 import {TargetManagerLib} from "../staking/TargetManagerLib.sol";
 
 import {Instance} from "./Instance.sol";
-import {IModuleAuthorization} from "../authorization/IModuleAuthorization.sol";
 import {IInstance} from "./IInstance.sol";
 import {InstanceAdmin} from "./InstanceAdmin.sol";
 import {IInstanceService} from "./IInstanceService.sol";

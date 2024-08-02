@@ -52,51 +52,13 @@ abstract contract Product is
     }
 
 
-    function registerComponent(address componentAddress)
+    function registerComponent(address component)
         external
         virtual
         onlyOwner()
         returns (NftId componentNftId)
     {
-        IInstanceLinkedComponent component = IInstanceLinkedComponent(componentAddress);
-        if (!component.supportsInterface(type(IInstanceLinkedComponent).interfaceId)) {
-            revert ErrorProductNotInstanceLinkedComponent(componentAddress);
-        }
-
-        // get component type
-        ObjectType componentType = component.getInitialInfo().objectType;
-        IComponentService componentService = _getProductStorage()._componentService;
-        IComponents.ProductInfo memory productInfo = _getInstanceReader().getProductInfo(getNftId());
-
-        // register as pool
-        if (componentType == POOL()) {
-            // check that product is not yet linked to pool
-            if (productInfo.poolNftId.gtz()) {
-                revert ErrorProductPoolAlreadyRegistered(productInfo.poolNftId);
-            }
-
-            // register pool
-            return componentService.registerPool(componentAddress);
-        }
-
-        // register as distribution
-        if (componentType == DISTRIBUTION()) {
-            // TODO check that product expects distribution
-            // TODO check that product is not yet linked to distribution
-            // TODO update linked distribution in product info
-            return componentService.registerDistribution(componentAddress);
-        }
-
-        // register as oracle
-        if (componentType == ORACLE()) {
-            // TODO check that product expects oracles
-            // TODO check that product is not yet linked to number of expected oracles
-            // TODO update linked oracles 
-            return componentService.registerOracle(componentAddress);
-        }
-
-        // fail
-        revert ErrorProductComponentTypeNotSupported(componentAddress, componentType);
+        return _getProductStorage()._componentService.registerComponent(component);
     }
 
 
@@ -241,8 +203,11 @@ abstract contract Product is
     function _createRisk(
         RiskId id,
         bytes memory data
-    ) internal {
-        _getRiskService().createRisk(
+    )
+        internal
+        virtual
+    {
+        _getProductStorage()._riskService.createRisk(
             id,
             data
         );
@@ -251,8 +216,11 @@ abstract contract Product is
     function _updateRisk(
         RiskId id,
         bytes memory data
-    ) internal {
-        _getRiskService().updateRisk(
+    )
+        internal
+        virtual
+    {
+        _getProductStorage()._riskService.updateRisk(
             id,
             data
         );
@@ -261,15 +229,18 @@ abstract contract Product is
     function _updateRiskState(
         RiskId id,
         StateId state
-    ) internal {
-        _getRiskService().updateRiskState(
+    )
+        internal
+        virtual
+    {
+        _getProductStorage()._riskService.updateRiskState(
             id,
             state
         );
     }
 
 
-    function _getRiskInfo(RiskId id) internal view returns (IRisk.RiskInfo memory info) {
+    function _getRiskInfo(RiskId id) internal virtual view returns (IRisk.RiskInfo memory info) {
         return getInstance().getInstanceReader().getRiskInfo(id);
     }
 
@@ -285,6 +256,7 @@ abstract contract Product is
         bytes memory applicationData
     )
         internal
+        virtual
         returns (NftId applicationNftId) 
     {
         return _getProductStorage()._applicationService.create(
@@ -304,6 +276,7 @@ abstract contract Product is
         Timestamp activateAt
     )
         internal
+        virtual
     {
         _getProductStorage()._policyService.createPolicy(
             applicationNftId, 
@@ -314,6 +287,7 @@ abstract contract Product is
         NftId policyNftId
     )
         internal
+        virtual
     {
         _getProductStorage()._policyService.decline(
             policyNftId);
@@ -324,6 +298,7 @@ abstract contract Product is
         Timestamp expireAt
     )
         internal
+        virtual
         returns (Timestamp expiredAt)
     {
         expiredAt = _getProductStorage()._policyService.expire(policyNftId, expireAt);
@@ -334,6 +309,7 @@ abstract contract Product is
         Timestamp activateAt
     )
         internal
+        virtual
     {
         _getProductStorage()._policyService.collectPremium(
             policyNftId, 
@@ -345,6 +321,7 @@ abstract contract Product is
         Timestamp activateAt
     )
         internal
+        virtual
     {
         _getProductStorage()._policyService.activate(
             policyNftId, 
@@ -355,6 +332,7 @@ abstract contract Product is
         NftId policyNftId
     )
         internal
+        virtual
     {
         _getProductStorage()._policyService.close(
             policyNftId);
@@ -366,6 +344,7 @@ abstract contract Product is
         bytes memory claimData
     )
         internal
+        virtual
         returns(ClaimId)
     {
         return _getProductStorage()._claimService.submit(
@@ -381,6 +360,7 @@ abstract contract Product is
         bytes memory data
     )
         internal
+        virtual
     {
         _getProductStorage()._claimService.confirm(
             policyNftId,
@@ -395,6 +375,7 @@ abstract contract Product is
         bytes memory data
     )
         internal
+        virtual
     {
         _getProductStorage()._claimService.decline(
             policyNftId,
@@ -407,6 +388,7 @@ abstract contract Product is
         ClaimId claimId
     )
         internal
+        virtual
     {
         _getProductStorage()._claimService.close(
             policyNftId,
@@ -420,6 +402,7 @@ abstract contract Product is
         bytes memory data
     )
         internal
+        virtual
         returns (PayoutId)
     {
         return _getProductStorage()._claimService.createPayout(
@@ -437,6 +420,7 @@ abstract contract Product is
         bytes memory data
     )
         internal
+        virtual
         returns (PayoutId)
     {
         return _getProductStorage()._claimService.createPayoutForBeneficiary(
@@ -452,23 +436,20 @@ abstract contract Product is
         PayoutId payoutId
     )
         internal
+        virtual
     {
         _getProductStorage()._claimService.processPayout(
             policyNftId,
             payoutId);
     }
 
-    function _toRiskId(string memory riskName) internal pure returns (RiskId riskId) {
+    function _toRiskId(string memory riskName) internal virtual pure returns (RiskId riskId) {
         return RiskIdLib.toRiskId(riskName);
     }
 
-    function _getProductStorage() internal pure returns (ProductStorage storage $) {
+    function _getProductStorage() internal virtual pure returns (ProductStorage storage $) {
         assembly {
             $.slot := PRODUCT_STORAGE_LOCATION_V1
         }
-    }
-
-    function _getRiskService() internal view returns (IRiskService) {
-        return _getProductStorage()._riskService;
     }
 }

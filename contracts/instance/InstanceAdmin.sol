@@ -8,7 +8,7 @@ import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.so
 import {IAccessAdmin} from "../authorization/IAccessAdmin.sol";
 import {IAuthorization} from "../authorization/IAuthorization.sol";
 import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
-import {IModuleAuthorization} from "../authorization/IModuleAuthorization.sol";
+import {IAuthorization} from "../authorization/IAuthorization.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IInstance} from "./IInstance.sol";
 import {IService} from "../shared/IService.sol";
@@ -38,12 +38,12 @@ contract InstanceAdmin is
     IRegistry internal _registry;
     uint64 _idNext;
 
-    IModuleAuthorization _instanceAuthorization;
+    IAuthorization _instanceAuthorization;
 
     /// @dev Only used for master instance admin.
     /// Contracts created via constructor come with disabled initializers.
     constructor(
-        IModuleAuthorization instanceAuthorization
+        IAuthorization instanceAuthorization
     )
         AccessAdmin()
     {
@@ -56,7 +56,7 @@ contract InstanceAdmin is
     /// Important: Initialization of this instance admin is only complete after calling function initializeInstance. 
     function initialize(
         AccessManagerCloneable accessManager,
-        IModuleAuthorization instanceAuthorization
+        IAuthorization instanceAuthorization
     )
         external
         initializer() 
@@ -68,7 +68,7 @@ contract InstanceAdmin is
         _createAdminAndPublicRoles();
 
         // store instance authorization specification
-        _instanceAuthorization = IModuleAuthorization(instanceAuthorization);
+        _instanceAuthorization = IAuthorization(instanceAuthorization);
     }
 
     function _checkTargetIsReadyForAuthorization(address target)
@@ -135,12 +135,12 @@ contract InstanceAdmin is
             true, 
             false);
         
-        // FIXME: make this a bit nicer and work with IAuthorization. Use a specific role, not public - access to TokenHandler must be restricted
         FunctionInfo[] memory functions = new FunctionInfo[](3);
         functions[0] = toFunction(TokenHandler.collectTokens.selector, "collectTokens");
         functions[1] = toFunction(TokenHandler.collectTokensToThreeRecipients.selector, "collectTokensToThreeRecipients");
         functions[2] = toFunction(TokenHandler.distributeTokens.selector, "distributeTokens");
 
+        // FIXME: make this a bit nicer and work with IAuthorization. Use a specific role, not public - access to TokenHandler must be restricted
         _authorizeTargetFunctions(
             address(component.getTokenHandler()),
             getPublicRole(),
@@ -148,7 +148,7 @@ contract InstanceAdmin is
 
         _grantRoleToAccount(
             authorization.getTargetRole(
-                authorization.getTarget()), 
+                authorization.getMainTarget()), 
             address(component));
         
         _createTargetAuthorizations(authorization);
@@ -177,7 +177,7 @@ contract InstanceAdmin is
     function getInstanceAuthorization()
         external
         view
-        returns (IModuleAuthorization instanceAuthorizaion)
+        returns (IAuthorization instanceAuthorizaion)
     {
         return _instanceAuthorization;
     }

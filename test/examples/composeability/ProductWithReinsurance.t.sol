@@ -378,21 +378,6 @@ contract ProductWithReinsuranceTest is
         // solhint-enable
 
         // solhint-disable-next-line
-        console.log("--- deploy and register distribution with reinsurance");
-
-        vm.startPrank(distributionOwner);
-        distributionRe = new SimpleDistribution(
-            address(registry),
-            productReNftId,
-            new DistributionWithReinsuranceAuthorization(),
-            distributionOwner,
-            address(token));
-        vm.stopPrank();
-
-        distributionReNftId = _registerComponent(productRe, address(distributionRe), "distribution re");
-
-        // deploy and register pool
-        // solhint-disable-next-line
         console.log("--- deploy and register pool with reinsurace");
 
         vm.startPrank(poolOwner);

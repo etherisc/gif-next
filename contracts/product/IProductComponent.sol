@@ -15,10 +15,6 @@ interface IProductComponent is
     IInstanceLinkedComponent
 {
 
-    error ErrorProductPoolAlreadyRegistered(NftId poolNftId);
-    error ErrorProductNotInstanceLinkedComponent(address component);
-    error ErrorProductComponentTypeNotSupported(address component, ObjectType componentType);
-
     // @dev register a new component for this product cluster.
     function registerComponent(address component)
         external
