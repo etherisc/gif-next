@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {Amount} from "../type/Amount.sol";
 import {Fee} from "../type/Fee.sol";
 import {IAuthorization} from "../authorization/IAuthorization.sol";
+import {IComponents} from "../instance/module/IComponents.sol";
 import {NftId} from "../type/NftId.sol";
 import {BUNDLE} from "../type/ObjectType.sol";
 import {RoleId} from "../type/RoleId.sol";
@@ -22,6 +23,7 @@ abstract contract BasicPool is
         IAuthorization authorization,
         address token,
         string memory name,
+        IComponents.PoolInfo memory poolInfo,
         address initialOwner
     )
         internal
@@ -34,7 +36,7 @@ abstract contract BasicPool is
             name, 
             token, 
             authorization,
-            false, // isInterceptingNftTransfers, 
+            poolInfo, 
             initialOwner, 
             ""); // componentData
     }

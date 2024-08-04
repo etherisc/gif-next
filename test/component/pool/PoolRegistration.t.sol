@@ -273,6 +273,7 @@ contract TestPoolRegistration is GifTest {
             productNftId,
             address(token),
             new BasicPoolAuthorization(name),
+            _getDefaultSimplePoolInfo(),
             owner);
     }
 }

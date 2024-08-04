@@ -6,6 +6,7 @@ import {BasicPool} from "../../pool/BasicPool.sol";
 import {BasicPoolAuthorization} from "../../pool/BasicPoolAuthorization.sol";
 import {Fee} from "../../type/Fee.sol";
 import {IAuthorization} from "../../authorization/IAuthorization.sol";
+import {IComponents} from "../../instance/module/IComponents.sol";
 import {NftId} from "../../type/NftId.sol";
 import {Seconds} from "../../type/Timestamp.sol";
 import {UFixed} from "../../type/UFixed.sol";
@@ -19,6 +20,7 @@ contract SimplePool is
         NftId productNftId,
         address token,
         IAuthorization authorization,
+        IComponents.PoolInfo memory poolInfo,
         address initialOwner
     ) 
     {
@@ -27,6 +29,7 @@ contract SimplePool is
             productNftId,
             token,
             authorization,
+            poolInfo,
             initialOwner
         );
     }
@@ -36,6 +39,7 @@ contract SimplePool is
         NftId productNftId,
         address token,
         IAuthorization authorization,
+        IComponents.PoolInfo memory poolInfo,
         address initialOwner
     )
         public
@@ -48,6 +52,7 @@ contract SimplePool is
             authorization,
             token,
             "SimplePool",
+            poolInfo,
             initialOwner);
     }
 

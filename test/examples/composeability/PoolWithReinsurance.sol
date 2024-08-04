@@ -47,6 +47,15 @@ contract PoolWithReinsurance is
             instanceNftId,
             token,
             authorization,
+            IComponents.PoolInfo({
+                maxBalanceAmount: AmountLib.max(),
+                isInterceptingBundleTransfers: false,
+                isProcessingConfirmedClaims: false,
+                isExternallyManaged: false,
+                isVerifyingApplications: false,
+                collateralizationLevel: UFixedLib.one(),
+                retentionLevel: UFixedLib.toUFixed(2, -1)
+            }),
             initialOwner
         )
     { 
@@ -211,23 +220,22 @@ contract PoolWithReinsurance is
         return abi.decode(claimData, (NftId, ClaimId));
     }
 
-
-    function getInitialPoolInfo()
-        public 
-        virtual override
-        view 
-        returns (IComponents.PoolInfo memory poolInfo)
-    {
-        return IComponents.PoolInfo({
-            maxBalanceAmount: AmountLib.max(),
-            bundleOwnerRole: PUBLIC_ROLE(), 
-            isInterceptingBundleTransfers: isNftInterceptor(),
-            isProcessingConfirmedClaims: true,
-            isExternallyManaged: false,
-            isVerifyingApplications: false,
-            collateralizationLevel: UFixedLib.one(),
-            retentionLevel: retentionLevel
-        });
-    }
+    // TODO cleanup
+    // function getInitialPoolInfo()
+    //     public 
+    //     virtual override
+    //     view 
+    //     returns (IComponents.PoolInfo memory poolInfo)
+    // {
+    //     return IComponents.PoolInfo({
+    //         maxBalanceAmount: AmountLib.max(),
+    //         isInterceptingBundleTransfers: isNftInterceptor(),
+    //         isProcessingConfirmedClaims: true,
+    //         isExternallyManaged: false,
+    //         isVerifyingApplications: false,
+    //         collateralizationLevel: UFixedLib.one(),
+    //         retentionLevel: retentionLevel
+    //     });
+    // }
 
 }

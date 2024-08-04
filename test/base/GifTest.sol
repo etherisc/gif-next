@@ -489,6 +489,7 @@ contract GifTest is GifDeployer {
             productNftId,
             address(token),
             new BasicPoolAuthorization("SimplePool"),
+            _getDefaultSimplePoolInfo(),
             poolOwner
         );
         vm.stopPrank();
@@ -501,6 +502,16 @@ contract GifTest is GifDeployer {
         vm.stopPrank();
     }
 
+    function _getDefaultSimplePoolInfo() internal view returns (IComponents.PoolInfo memory) {
+        return IComponents.PoolInfo({
+            maxBalanceAmount: AmountLib.max(),
+            isInterceptingBundleTransfers: false,
+            isProcessingConfirmedClaims: false,
+            isExternallyManaged: false,
+            isVerifyingApplications: false,
+            collateralizationLevel: UFixedLib.one(),
+            retentionLevel: UFixedLib.one()});
+    }
 
     function _prepareDistribution() internal {
 

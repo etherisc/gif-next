@@ -43,6 +43,7 @@ contract TestPool is GifTest {
             productNftId,
             address(token),
             new BasicPoolAuthorization("NewSimplePool"),
+            _getDefaultSimplePoolInfo(),
             poolOwner
         );
 
@@ -96,7 +97,13 @@ contract TestPool is GifTest {
         IComponents.PoolInfo memory poolInfo = instanceReader.getPoolInfo(poolNftId);
 
         // check nftid
-        assertEq(poolInfo.bundleOwnerRole.toInt(), PUBLIC_ROLE().toInt(), "unexpected bundle owner role");
+        assertEq(poolInfo.maxBalanceAmount.toInt(), AmountLib.max().toInt(), "unexpected max balance amount");
+        assertFalse(poolInfo.isInterceptingBundleTransfers, "unexpected is intercepting");
+        assertFalse(poolInfo.isProcessingConfirmedClaims, "unexpected is processing");
+        assertFalse(poolInfo.isExternallyManaged, "unexpected is externally managed");
+        assertFalse(poolInfo.isVerifyingApplications, "unexpected is verifing");
+        assertEq(poolInfo.collateralizationLevel.toInt(), AmountLib.max().toInt(), "unexpected max balance amount");
+        assertEq(poolInfo.retentionLevel.toInt(), AmountLib.max().toInt(), "unexpected max balance amount");
 
         // check pool balance
         assertTrue(instanceReader.getBalanceAmount(poolNftId).eqz(), "initial pool balance not zero");

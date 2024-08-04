@@ -16,7 +16,7 @@ import {NftId} from "../type/NftId.sol";
 import {RoleId, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {Timestamp} from "../type/Timestamp.sol";
-import {UFixedLib} from "../type/UFixed.sol";
+import {UFixed} from "../type/UFixed.sol";
 
 abstract contract Pool is
     InstanceLinkedComponent, 
@@ -26,6 +26,7 @@ abstract contract Pool is
     bytes32 public constant POOL_STORAGE_LOCATION_V1 = 0x25e3e51823fbfffb988e0a2744bb93722d9f3e906c07cc0a9e77884c46c58300;
 
     struct PoolStorage {
+        IComponents.PoolInfo _poolInfo;
         IComponentService _componentService;
         IPoolService _poolService;
         IBundleService _bundleService;
@@ -122,16 +123,7 @@ abstract contract Pool is
         view 
         returns (IComponents.PoolInfo memory poolInfo)
     {
-        return IComponents.PoolInfo({
-            maxBalanceAmount: AmountLib.max(),
-            bundleOwnerRole: PUBLIC_ROLE(), 
-            isInterceptingBundleTransfers: isNftInterceptor(),
-            isProcessingConfirmedClaims: false,
-            isExternallyManaged: false,
-            isVerifyingApplications: false,
-            collateralizationLevel: UFixedLib.toUFixed(1),
-            retentionLevel: UFixedLib.toUFixed(1)
-        });
+        return _getPoolStorage()._poolInfo;
     }
 
     // Internals
@@ -142,7 +134,7 @@ abstract contract Pool is
         string memory name,
         address token,
         IAuthorization authorization,
-        bool isInterceptingNftTransfers,
+        IComponents.PoolInfo memory poolInfo,
         address initialOwner,
         bytes memory componentData // component specifidc data 
     )
@@ -157,11 +149,13 @@ abstract contract Pool is
             token, 
             POOL(), 
             authorization, 
-            isInterceptingNftTransfers, 
+            poolInfo.isInterceptingBundleTransfers, 
             initialOwner, 
             componentData);
 
         PoolStorage storage $ = _getPoolStorage();
+
+        $._poolInfo = poolInfo;
         $._poolService = IPoolService(_getServiceAddress(POOL())); 
         $._bundleService = IBundleService(_getServiceAddress(BUNDLE()));
         $._componentService = IComponentService(_getServiceAddress(COMPONENT())); 
