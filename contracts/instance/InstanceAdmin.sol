@@ -273,7 +273,7 @@ contract InstanceAdmin is
 
             _checkAndCreateTargetWithRole(
                 _registry.getServiceAddress(serviceDomain, release),
-                _instanceAuthorization.getServiceName(serviceDomain).toString());
+                _instanceAuthorization.getServiceTarget(serviceDomain).toString());
         }
     }
 }
