@@ -178,7 +178,7 @@ abstract contract Product is
         $._isProcessingFundedClaims = isProcessingFundedClaims;
         $._hasDistribution = hasDistribution;
         $._numberOfOracles = numberOfOracles;
-        $._riskService = IRiskService(_getServiceAddress(PRODUCT())); 
+        $._riskService = IRiskService(_getServiceAddress(RISK())); 
         $._applicationService = IApplicationService(_getServiceAddress(APPLICATION())); 
         $._policyService = IPolicyService(_getServiceAddress(POLICY())); 
         $._claimService = IClaimService(_getServiceAddress(CLAIM())); 
