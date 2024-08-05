@@ -47,6 +47,12 @@ library RiskIdLib {
         return KeyId.wrap(bytes31(RiskId.unwrap(id)));
     }
 
+    function toRiskId(KeyId keyId) public pure returns (RiskId riskId) {
+        uint248 keyIdInt = uint248(KeyId.unwrap(keyId));
+        assert(keyIdInt <= type(uint64).max);
+        return RiskId.wrap(bytes8(KeyId.unwrap(keyId)));
+    }
+
     function eq(RiskId a, RiskId b) public pure returns (bool isSame) {
         return eqRiskId(a, b);
     }

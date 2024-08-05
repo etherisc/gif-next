@@ -7,14 +7,18 @@ import {InstanceReader} from "./InstanceReader.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {LibNftIdSet} from "../type/NftIdSet.sol";
-import {NftId} from "../type/NftId.sol";
+import {NftId, NftIdLib} from "../type/NftId.sol";
+import {Key32, KeyId, Key32Lib} from "../type/Key32.sol";
 import {TimestampLib} from "../type/Timestamp.sol";
+import {BUNDLE} from "../type/ObjectType.sol";
 
 import {ObjectSet} from "./base/ObjectSet.sol";
 
 contract BundleSet is 
     ObjectSet
 {
+    using Key32Lib for Key32;
+    using LibNftIdSet for LibNftIdSet.Set;
 
     event LogBundleSetPolicyLinked(NftId bundleNftId, NftId policyNftId);
     event LogBundleSetPolicyUnlinked(NftId bundleNftId, NftId policyNftId);
@@ -41,11 +45,11 @@ contract BundleSet is
         NftId poolNftId = _instance.getInstanceReader().getBundleInfo(bundleNftId).poolNftId;
 
         // ensure bundle is unlocked (in active set) and registered with this instance
-        if (!_isActive(poolNftId, bundleNftId)) {
+        if (!_isActive(poolNftId, _toBundleKey32(bundleNftId))) {
             revert ErrorBundleSetBundleLocked(bundleNftId, policyNftId);
         }
 
-        LibNftIdSet.add(_activePolicies[bundleNftId], policyNftId);
+        _activePolicies[bundleNftId].add(policyNftId);
         emit LogBundleSetPolicyLinked(bundleNftId, policyNftId);
     }
 
@@ -62,11 +66,11 @@ contract BundleSet is
         NftId poolNftId = _instance.getInstanceReader().getBundleInfo(bundleNftId).poolNftId;
 
         // ensure bundle is registered with this instance
-        if (!_contains(poolNftId, bundleNftId)) {
+        if (!_contains(poolNftId, _toBundleKey32(bundleNftId))) {
             revert ErrorBundleSetBundleUnknown(bundleNftId);
         }
 
-        LibNftIdSet.remove(_activePolicies[bundleNftId], policyNftId);
+        _activePolicies[bundleNftId].remove(policyNftId);
         emit LogBundleSetPolicyUnlinked(bundleNftId, policyNftId);
     }
 
@@ -81,7 +85,7 @@ contract BundleSet is
             revert ErrorBundleSetBundleNotRegistered(bundleNftId);
         }
 
-        _add(poolNftId, bundleNftId);
+        _add(poolNftId, _toBundleKey32(bundleNftId));
         emit LogBundleSetBundleAdded(poolNftId, bundleNftId);
     }
 
@@ -89,14 +93,14 @@ contract BundleSet is
     /// @dev unlocked (active) bundles are available to collateralize new policies
     function unlock(NftId bundleNftId) external restricted() {
         NftId poolNftId = _instance.getInstanceReader().getBundleInfo(bundleNftId).poolNftId;
-        _activate(poolNftId, bundleNftId);
+        _activate(poolNftId, _toBundleKey32(bundleNftId));
         emit LogBundleSetBundleUnlocked(poolNftId, bundleNftId);
     }
 
     /// @dev locked (deactivated) bundles may not collateralize any new policies
     function lock(NftId bundleNftId) external restricted() {
         NftId poolNftId = _instance.getInstanceReader().getBundleInfo(bundleNftId).poolNftId;
-        _deactivate(poolNftId, bundleNftId);
+        _deactivate(poolNftId, _toBundleKey32(bundleNftId));
         emit LogBundleSetBundleLocked(poolNftId, bundleNftId);
     }
 
@@ -104,23 +108,27 @@ contract BundleSet is
         return _objects(poolNftId);
     }
 
-    function getBundleNftId(NftId poolNftId, uint256 idx) external view returns(NftId bundleNftId) {
-        return _getObject(poolNftId, idx);
+    function getBundleNftId(NftId poolNftId, uint256 idx) external view returns(NftId) {
+        return NftIdLib.toNftId(_getObject(poolNftId, idx).toKeyId());
     }
 
     function activeBundles(NftId poolNftId) external view returns(uint256) {
         return _activeObjs(poolNftId);
     }
 
-    function getActiveBundleNftId(NftId poolNftId, uint256 idx) external view returns(NftId bundleNftId) {
-        return _getActiveObject(poolNftId, idx);
+    function getActiveBundleNftId(NftId poolNftId, uint256 idx) external view returns(NftId) {
+        return NftIdLib.toNftId(_getActiveObject(poolNftId, idx).toKeyId());
     }
 
     function activePolicies(NftId bundleNftId) external view returns(uint256) {
-        return LibNftIdSet.size(_activePolicies[bundleNftId]);
+        return _activePolicies[bundleNftId].size();
     }
 
     function getActivePolicy(NftId bundleNftId, uint256 idx) external view returns(NftId policyNftId) {
-        return LibNftIdSet.getElementAt(_activePolicies[bundleNftId], idx);
+        return _activePolicies[bundleNftId].getElementAt(idx);
+    }
+
+    function _toBundleKey32(NftId nftId) private pure returns (Key32) {
+        return nftId.toKey32(BUNDLE());
     }
 }

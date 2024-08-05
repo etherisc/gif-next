@@ -10,16 +10,18 @@ import {LibNftIdSet} from "../type/NftIdSet.sol";
 import {LibRiskIdSet} from "../type/RiskIdSet.sol";
 import {NftId} from "../type/NftId.sol";
 import {TimestampLib} from "../type/Timestamp.sol";
-import {RiskId} from "../type/RiskId.sol";
+import {RiskIdLib, RiskId} from "../type/RiskId.sol";
 
-import {RiskSetBase} from "./base/RiskSetBase.sol";
+import {ObjectSet} from "./base/ObjectSet.sol";
 
 contract RiskSet is 
-    RiskSetBase
+    ObjectSet
 {
+    using RiskIdLib for RiskId;
+    using LibNftIdSet for LibNftIdSet.Set;
 
     event LogRiskSetPolicyLinked(RiskId riskId, NftId policyNftId);
-    //event LogRiskSetPolicyUnlinked(RiskId riskId, NftId policyNftId); can not unlink a policy from a risk
+    event LogRiskSetPolicyUnlinked(RiskId riskId, NftId policyNftId);
 
     event LogRiskSetRiskAdded(NftId productNftId, RiskId riskId);
     event LogRiskSetRiskActive(NftId poolNftId,  RiskId riskId);
@@ -40,15 +42,14 @@ contract RiskSet is
         NftId productNftId = policyInfo.productNftId;
 
         // ensure risk is active (in active set) and registered with this instance
-        if (!_isActive(productNftId, riskId)) {
+        if (!_isActive(productNftId, riskId.toKey32())) {
             revert ErrorRiskSetRiskLocked(riskId, policyNftId);
         }
 
-        LibNftIdSet.add(_activePolicies[riskId], policyNftId);
+        _activePolicies[riskId].add(policyNftId);
         emit LogRiskSetPolicyLinked(riskId, policyNftId);
     }
 
-/*
     /// @dev unlinks a policy from its risk
     // to unlink a policy it must closable, ie. meet one of the following criterias
     // - the policy MUST be past its expiry period and it MUST NOT have any open claims
@@ -56,22 +57,19 @@ contract RiskSet is
     function unlinkPolicy(NftId policyNftId) external restricted() {
         IPolicy.PolicyInfo memory policyInfo = _instance.getInstanceReader().getPolicyInfo(policyNftId);
 
-       //  RiskId riskId = policyInfo.bundleNftId;
-        // decision will likely depend on the decision what to check here and what in the service
-        //NftId productNftId = _instance.getInstanceReader().getBundleInfo(bundleNftId).productNftId;
+        // TODO check policy is closable
 
         RiskId riskId = policyInfo.riskId;
         NftId productNftId = policyInfo.productNftId;
 
-        // ensure bundle is registered with this instance
-        if (!_contains(productNftId, riskId)) {
+        // ensure risk is registered with this instance
+        if (!_contains(productNftId, riskId.toKey32())) {
             revert ErrorRiskSetRiskUnknown(riskId);
         }
 
-        LibNftIdSet.remove(_activePolicies[riskId], policyNftId);
+        _activePolicies[riskId].remove(policyNftId);
         emit LogRiskSetPolicyUnlinked(riskId, policyNftId);
     }
-*/
 
     /// @dev add a new risk to a product registered with this instance
     // the corresponding product is fetched via instance reader
@@ -83,7 +81,7 @@ contract RiskSet is
             revert ErrorRiskSetRiskNotRegistered(riskId);
         }
 
-        _add(productNftId, riskId);
+        _add(productNftId, riskId.toKey32());
         emit LogRiskSetRiskAdded(productNftId, riskId);
     }
 
@@ -91,38 +89,38 @@ contract RiskSet is
     /// @dev active risks are available to ....
     function activate(RiskId riskId) external restricted() {
         NftId productNftId = _instance.getInstanceReader().getRiskInfo(riskId).productNftId;
-        _activate(productNftId, riskId);
+        _activate(productNftId, riskId.toKey32());
         emit LogRiskSetRiskActive(productNftId, riskId);
     }
 
     /// @dev paused (deactivated) risks may not ...
     function pause(RiskId riskId) external restricted() {
         NftId productNftId = _instance.getInstanceReader().getRiskInfo(riskId).productNftId;
-        _deactivate(productNftId, riskId);
+        _deactivate(productNftId, riskId.toKey32());
         emit LogRiskSetRiskPaused(productNftId, riskId);
     }
 
     function risks(NftId productNftId) external view returns(uint256) {
-        return _risks(productNftId);
+        return _objects(productNftId);
     }
 
     function getRiskId(NftId productNftId, uint256 idx) external view returns(RiskId riskId) {
-        return _getRisk(productNftId, idx);
+        return RiskIdLib.toRiskId(_getObject(productNftId, idx).toKeyId());
     }
     
     function activeRisks(NftId productNftId) external view returns(uint256) {
-        return _activeRsks(productNftId);
+        return _activeObjs(productNftId);
     }
 
     function getActiveRiskId(NftId productNftId, uint256 idx) external view returns(RiskId riskId) {
-        return _getActiveRisk(productNftId, idx);
+        return RiskIdLib.toRiskId(_getActiveObject(productNftId, idx).toKeyId());
     }
 
     function activePolicies(RiskId riskId) external view returns(uint256) {
-        return LibNftIdSet.size(_activePolicies[riskId]);
+        return _activePolicies[riskId].size();
     }
 
     function getActivePolicy(RiskId riskId, uint256 idx) external view returns(NftId policyNftId) {
-        return LibNftIdSet.getElementAt(_activePolicies[riskId], idx);
+        return _activePolicies[riskId].getElementAt(idx);
     }
 }
