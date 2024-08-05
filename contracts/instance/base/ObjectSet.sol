@@ -4,9 +4,6 @@ pragma solidity ^0.8.20;
 import {Cloneable} from "./Cloneable.sol";
 
 import {IInstance} from "../IInstance.sol";
-import {INSTANCE} from "../../type/ObjectType.sol";
-import {InstanceReader} from "../InstanceReader.sol";
-import {IRegistry} from "../../registry/IRegistry.sol";
 import {LibKey32Set} from "../../type/Key32Set.sol";
 import {NftId} from "../../type/NftId.sol";
 import {Key32} from "../../type/Key32.sol";

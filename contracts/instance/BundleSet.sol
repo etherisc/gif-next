@@ -1,15 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IInstance} from "./IInstance.sol";
-import {INSTANCE} from "../type/ObjectType.sol";
-import {InstanceReader} from "./InstanceReader.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
-import {IRegistry} from "../registry/IRegistry.sol";
 import {LibNftIdSet} from "../type/NftIdSet.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
-import {Key32, KeyId, Key32Lib} from "../type/Key32.sol";
-import {TimestampLib} from "../type/Timestamp.sol";
+import {Key32, Key32Lib} from "../type/Key32.sol";
 import {BUNDLE} from "../type/ObjectType.sol";
 
 import {ObjectSet} from "./base/ObjectSet.sol";
