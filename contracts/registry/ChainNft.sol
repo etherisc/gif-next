@@ -111,10 +111,11 @@ contract ChainNft is ERC721Enumerable {
      * @dev amend the open zeppelin transferFrom function by an interceptor call if such an interceptor is defined for the nft token id
      * this allows distribution, product and pool components to be notified when distributors, policies and bundles are transferred.
      */
-    function transferFrom(address from, address to, uint256 tokenId, address operator) public {
-        transferFrom(from, to, tokenId);
+    function transferFrom(address from, address to, uint256 tokenId) public override (IERC721, ERC721) {
+        super.transferFrom(from, to, tokenId);
 
         if (_interceptor[tokenId] != address(0)) {
+            address operator = msg.sender;
             ITransferInterceptor(_interceptor[tokenId]).nftTransferFrom(from, to, tokenId, operator);
         }
     }
