@@ -1,5 +1,5 @@
 import { AddressLike, Signer, ethers, resolveAddress } from "ethers";
-import { BundleSet, IInstance__factory, Instance, InstanceAdmin, InstanceAuthorizationV3, InstanceReader, InstanceService__factory, InstanceStore } from "../../typechain-types";
+import { BundleSet, RiskSet, IInstance__factory, Instance, InstanceAdmin, InstanceAuthorizationV3, InstanceReader, InstanceService__factory, InstanceStore } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
@@ -92,10 +92,28 @@ export async function deployAndRegisterMasterInstance(
             libraries: {
                 NftIdLib: libraries.nftIdLibAddress,
                 LibNftIdSet: libraries.libNftIdSetAddress,
+                Key32Lib: libraries.key32LibAddress,
+                LibKey32Set: libraries.libKey32SetAddress,
             }
         }
     );
     const masterInstanceBundleSet = masterBundleSetContrat as BundleSet;
+
+    const {address: masterInstanceRiskSetAddress, contract: masterRiskSetContrat} = await deployContract(
+        "RiskSet",
+        owner,
+        [],
+        { 
+            libraries: {
+                NftIdLib: libraries.nftIdLibAddress,
+                LibNftIdSet: libraries.libNftIdSetAddress,
+                Key32Lib: libraries.key32LibAddress,
+                LibKey32Set: libraries.libKey32SetAddress,
+                RiskIdLib: libraries.riskIdLibAddress,
+            }
+        }
+    );
+    const masterInstanceRiskSet = masterRiskSetContrat as RiskSet;
 
     const { address: masterInstanceReaderAddress, contract: masterInstanceReaderContract } = await deployContract(
         "InstanceReader",
@@ -141,6 +159,7 @@ export async function deployAndRegisterMasterInstance(
             masterInstanceAdmin,
             masterInstanceStore,
             masterInstanceBundleSet,
+            masterInstanceRiskSet,
             masterInstanceReader,
             registry.registryAddress, 
             resolveAddress(owner),
@@ -178,6 +197,7 @@ export async function deployAndRegisterMasterInstance(
         instanceAdminAddress: masterInstanceAdminAddress,
         instanceReaderAddress: masterInstanceReaderAddress,
         instanceBundleSetAddress: masterInstanceBundleSetAddress,
+        instanceRiskSetAddress: masterInstanceRiskSetAddress,
         instanceStoreAddress: masterInstanceStoreAddress,
         instanceAddress: masterInstanceAddress,
         instanceNftId: masterInstanceNfdId,
