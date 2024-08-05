@@ -5,9 +5,9 @@ import {ITransferInterceptor} from "../../contracts/registry/ITransferIntercepto
 
 contract MockInterceptor is ITransferInterceptor {
 
-    event LogNftTransferIntercepted(address from, address to, uint256 tokenId);
+    event LogNftTransferIntercepted(address from, address to, uint256 tokenId, address operator);
 
-    function nftTransferFrom(address from, address to, uint256 tokenId) public virtual {
-        emit LogNftTransferIntercepted(from, to, tokenId);
+    function nftTransferFrom(address from, address to, uint256 tokenId, address operator) public virtual {
+        emit LogNftTransferIntercepted(from, to, tokenId, operator);
     }
 }
