@@ -24,7 +24,6 @@ import {DistributorType} from "../contracts/type/DistributorType.sol";
 import {IPolicyService} from "../contracts/product/IPolicyService.sol";
 
 contract TestProduct is GifTest {
-    using NftIdLib for NftId;
 
     Seconds public sec30;
 
@@ -32,17 +31,20 @@ contract TestProduct is GifTest {
 
     function setUp() public override {
         super.setUp();
+
+        _prepareProduct();
+        _configureProduct(DEFAULT_BUNDLE_CAPITALIZATION);
+        
         sec30 = SecondsLib.toSeconds(30);
     }
 
     function test_productSetupInfo() public {
-        _prepareProductLocal();
 
         // check nft id (components -> product)
         uint256 productNftIdInt = product.getNftId().toInt();
         assertTrue(productNftIdInt > 0, "product nft zero");
-        assertEq(distribution.getProductNftId().toInt(), productNftIdInt, "unexpected product nft (distribution)");
-        assertEq(pool.getProductNftId().toInt(), productNftIdInt, "unexpected product nft (pool)");
+        assertEq(registry.getObjectInfo(address(distribution)).parentNftId.toInt(), productNftIdInt, "unexpected product nft (distribution)");
+        assertEq(registry.getObjectInfo(address(pool)).parentNftId.toInt(), productNftIdInt, "unexpected product nft (pool)");
 
         // check token handler
         IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(productNftId);
@@ -65,8 +67,6 @@ contract TestProduct is GifTest {
 
 
     function test_productSetFees() public {
-        _prepareProductLocal();
-        vm.startPrank(productOwner);
 
         IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
         Fee memory productFee = productInfo.productFee;
@@ -78,7 +78,10 @@ contract TestProduct is GifTest {
         
         Fee memory newProductFee = FeeLib.toFee(UFixedLib.toUFixed(123,0), 456);
         Fee memory newProcessingFee = FeeLib.toFee(UFixedLib.toUFixed(789,0), 101112);
+
+        vm.startPrank(productOwner);
         product.setFees(newProductFee, newProcessingFee);
+        vm.stopPrank();
 
         productInfo = instanceReader.getProductInfo(productNftId);
         productFee = productInfo.productFee;
@@ -88,16 +91,13 @@ contract TestProduct is GifTest {
         processingFee = productInfo.processingFee;
         assertEq(processingFee.fractionalFee.toInt(), 789, "processing fee not 789");
         assertEq(processingFee.fixedFee, 101112, "processing fee not 101112");
-
-        vm.stopPrank();
     }
 
     function test_productCalculatePremium() public {
-        _prepareProductLocal();  
-
-        vm.startPrank(productOwner);
 
         Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
+
+        vm.startPrank(productOwner);
         product.setFees(productFee, FeeLib.zero());
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
@@ -129,11 +129,10 @@ contract TestProduct is GifTest {
     }
 
     function test_productCreateApplication() public {
-        _prepareProductLocal();
-
-        vm.startPrank(productOwner);
 
         Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
+
+        vm.startPrank(productOwner);
         product.setFees(productFee, FeeLib.zero());
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
@@ -150,6 +149,7 @@ contract TestProduct is GifTest {
             bundleNftId,
             ReferralLib.zero()
         );
+
         assertTrue(policyNftId.gtz(), "policyNftId was zero");
         assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
 
@@ -164,7 +164,6 @@ contract TestProduct is GifTest {
 
     function test_productCollateralizeWithoutPayment() public {
         // GIVEN
-        _prepareProductLocal();  
 
         vm.startPrank(productOwner);
 
@@ -234,8 +233,6 @@ contract TestProduct is GifTest {
         vm.startPrank(registryOwner);
         token.transfer(customer, 1000);
         vm.stopPrank();
-
-        _prepareProductLocal();  
 
         vm.startPrank(productOwner);
         Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
@@ -342,8 +339,6 @@ contract TestProduct is GifTest {
         vm.startPrank(registryOwner);
         token.transfer(customer, 1000);
         vm.stopPrank();
-
-        _prepareProductLocal();  
 
         // set product fees and create risk
         Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
@@ -467,8 +462,6 @@ contract TestProduct is GifTest {
         token.transfer(customer, 1000);
         vm.stopPrank();
 
-        _prepareProductLocal();  
-
         // set product fees and create risk
         Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
@@ -574,8 +567,6 @@ contract TestProduct is GifTest {
         token.transfer(customer, 1000);
         vm.stopPrank();
 
-        _prepareProductLocal();  
-
         // set product fees and create risk
         vm.startPrank(productOwner);
 
@@ -672,8 +663,6 @@ contract TestProduct is GifTest {
 
     function test_productCollateralizeRevertsOnLockedBundle() public {
         // GIVEN
-        _prepareProductLocal();  
-
         vm.startPrank(productOwner);
 
         Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
@@ -723,7 +712,6 @@ contract TestProduct is GifTest {
 
     function test_productPolicyActivate() public {
         // GIVEN
-        _prepareProductLocal();  
 
         vm.startPrank(productOwner);
 
@@ -782,8 +770,6 @@ contract TestProduct is GifTest {
         vm.startPrank(registryOwner);
         token.transfer(customer, 1000);
         vm.stopPrank();
-
-        _prepareProductLocal();  
 
         vm.startPrank(productOwner);
 
@@ -892,8 +878,6 @@ contract TestProduct is GifTest {
         token.transfer(customer, 1000);
         vm.stopPrank();
 
-        _prepareProductLocal();  
-
         vm.startPrank(productOwner);
 
         Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
@@ -985,7 +969,6 @@ contract TestProduct is GifTest {
 
     function test_productDeclineApplication() public {
         // GIVEN
-        _prepareProductLocal();  
 
         vm.startPrank(productOwner);
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
@@ -1035,8 +1018,6 @@ contract TestProduct is GifTest {
         vm.startPrank(registryOwner);
         token.transfer(customer, 1000);
         vm.stopPrank();
-
-        _prepareProductLocal();  
 
         vm.startPrank(productOwner);
 
@@ -1099,8 +1080,6 @@ contract TestProduct is GifTest {
         token.transfer(customer, 1000);
         vm.stopPrank();
 
-        _prepareProductLocal();  
-
         vm.startPrank(productOwner);
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
@@ -1161,8 +1140,6 @@ contract TestProduct is GifTest {
         token.transfer(customer, 1000);
         vm.stopPrank();
 
-        _prepareProductLocal();  
-
         vm.startPrank(productOwner);
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
@@ -1219,8 +1196,6 @@ contract TestProduct is GifTest {
         vm.startPrank(registryOwner);
         token.transfer(customer, 1000);
         vm.stopPrank();
-
-        _prepareProductLocal();  
 
         vm.startPrank(productOwner);
 
@@ -1282,8 +1257,6 @@ contract TestProduct is GifTest {
         vm.startPrank(registryOwner);
         token.transfer(customer, 1000);
         vm.stopPrank();
-
-        _prepareProductLocal();  
 
         vm.startPrank(productOwner);
 
@@ -1359,8 +1332,6 @@ contract TestProduct is GifTest {
         token.transfer(customer, 1000);
         vm.stopPrank();
 
-        _prepareProductLocal();  
-
         vm.startPrank(productOwner);
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
@@ -1414,39 +1385,36 @@ contract TestProduct is GifTest {
     }
 
 
-    function test_productCreateRisk() public {
-        _prepareProductLocal();
-        vm.startPrank(productOwner);
-
+    function test_productRiskCreate() public {
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
 
-        SimpleProduct dproduct = SimpleProduct(address(product));
-        dproduct.createRisk(riskId, data);
-        IRisk.RiskInfo memory riskInfo = instanceReader.getRiskInfo(riskId);
+        // SimpleProduct dproduct = SimpleProduct(address(product));
+        vm.startPrank(productOwner);
+        product.createRisk(riskId, data);
+        vm.stopPrank();
 
+        IRisk.RiskInfo memory riskInfo = instanceReader.getRiskInfo(riskId);
         assertTrue(riskInfo.productNftId.eq(productNftId), "productNftId not set");
         assertEq(riskInfo.data, data, "data not set");
-
-        vm.stopPrank();
     }
 
-    function test_productUpdateRisk() public {
-        _prepareProductLocal();
-        vm.startPrank(productOwner);
+
+    function test_productRiskUpdate() public {
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
 
-        SimpleProduct dproduct = SimpleProduct(address(product));
-        dproduct.createRisk(riskId, data);
+        vm.startPrank(productOwner);
+        product.createRisk(riskId, data);
         IRisk.RiskInfo memory riskInfo = instanceReader.getRiskInfo(riskId);
 
         assertTrue(riskInfo.productNftId.eq(productNftId), "productNftId not set");
         assertEq(riskInfo.data, data, "data not set");
 
         bytes memory newData = "new data";
-        dproduct.updateRisk(riskId, newData);
+        product.updateRisk(riskId, newData);
+        vm.stopPrank();
 
         riskInfo = instanceReader.getRiskInfo(riskId);
 
@@ -1454,13 +1422,7 @@ contract TestProduct is GifTest {
         assertEq(riskInfo.data, newData, "data not updated to new data");
     }
 
-    function _prepareProductLocal() internal {
-        _prepareProductLocal(DEFAULT_BUNDLE_CAPITALIZATION);
-    }
-
-    function _prepareProductLocal(uint bundleCapital) internal {
-        _prepareProduct();
-
+    function _configureProduct(uint bundleCapital) internal {
         vm.startPrank(distributionOwner);
         Fee memory distributionFee = FeeLib.toFee(UFixedLib.zero(), 10);
         Fee memory minDistributionOwnerFee = FeeLib.toFee(UFixedLib.zero(), 10);
@@ -1494,5 +1456,4 @@ contract TestProduct is GifTest {
         );
         vm.stopPrank();
     }
-
 }

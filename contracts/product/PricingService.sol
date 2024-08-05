@@ -31,10 +31,7 @@ contract PricingService is
     ComponentVerifyingService, 
     IPricingService
 {
-    using UFixedLib for UFixed;
-
     IDistributionService internal _distributionService;
-
 
     function _initialize(
         address owner, 
@@ -101,7 +98,7 @@ contract PricingService is
 
             IBundle.BundleInfo memory bundleInfo = reader.getBundleInfo(bundleNftId);
             if(bundleInfo.poolNftId != productInfo.poolNftId) {
-                revert ErrorIPricingServiceBundlePoolMismatch(bundleNftId, bundleInfo.poolNftId, productInfo.poolNftId);
+                revert ErrorPricingServiceBundlePoolMismatch(bundleNftId, bundleInfo.poolNftId, productInfo.poolNftId);
             }
 
             // calculate fixed fees for product, pool, bundle
@@ -138,7 +135,7 @@ contract PricingService is
             }
 
             if (premium.distributionOwnerFeeFixAmount.toInt() < productInfo.minDistributionOwnerFee.fixedFee) {
-                revert ErrorIPricingServiceFeeCalculationMismatch( 
+                revert ErrorPricingServiceFeeCalculationMismatch( 
                     premium.distributionFeeFixAmount,
                     premium.distributionFeeVarAmount,
                     premium.distributionOwnerFeeFixAmount,
@@ -149,7 +146,7 @@ contract PricingService is
             }
 
             if ((premium.distributionFeeVarAmount) != (premium.discountAmount + premium.distributionOwnerFeeVarAmount + premium.commissionAmount)) {
-                revert ErrorIPricingServiceFeeCalculationMismatch(
+                revert ErrorPricingServiceFeeCalculationMismatch(
                     premium.distributionFeeFixAmount,
                     premium.distributionFeeVarAmount,
                     premium.distributionOwnerFeeFixAmount,

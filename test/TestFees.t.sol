@@ -22,7 +22,6 @@ import {Amount, AmountLib} from "../contracts/type/Amount.sol";
 import {INftOwnable} from "../contracts/shared/INftOwnable.sol";
 
 contract TestFees is GifTest {
-    using NftIdLib for NftId;
 
     DistributorType distributorType;
     NftId distributorNftId;

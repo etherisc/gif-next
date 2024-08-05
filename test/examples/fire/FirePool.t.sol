@@ -12,12 +12,9 @@ import {UFixedLib} from "../../../contracts/type/UFixed.sol";
 // solhint-disable func-name-mixedcase
 contract FirePoolTest is FireTestBase {
 
-    function setUp() public override {
-        super.setUp();
-    }
-
-    function test_FirePool_createBundle() public {
+    function test_firePoolCreateBundleSimple() public {
         // GIVEN
+
         vm.startPrank(investor);
         Fee memory bundleFee = FeeLib.percentageFee(2);
         Amount investAmount = AmountLib.toAmount(10000000 * 10 ** 6);
@@ -45,7 +42,7 @@ contract FirePoolTest is FireTestBase {
         assertEq(investAmount.toInt(), instanceReader.getBalanceAmount(bundleNftId).toInt());
     }
 
-    function test_FirePool_createBundle_withPoolFee() public {
+    function test_firePoolCreateBundleWithPoolFee() public {
         // GIVEN
         vm.startPrank(firePoolOwner);
         firePool.setFees(FeeLib.zero(), FeeLib.percentageFee(2), FeeLib.zero());

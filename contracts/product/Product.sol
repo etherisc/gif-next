@@ -3,18 +3,21 @@ pragma solidity ^0.8.20;
 
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {ClaimId} from "../type/ClaimId.sol";
-import {InstanceLinkedComponent} from "../shared/InstanceLinkedComponent.sol";
+import {IComponent} from "../shared/IComponent.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
 import {IRisk} from "../instance/module/IRisk.sol";
 import {IApplicationService} from "./IApplicationService.sol";
 import {IAuthorization} from "../authorization/IAuthorization.sol";
 import {IComponentService} from "../shared/IComponentService.sol";
+import {InstanceLinkedComponent} from "../shared/InstanceLinkedComponent.sol";
+import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
 import {IPolicyService} from "./IPolicyService.sol";
 import {IRiskService} from "./IRiskService.sol";
 import {IClaimService} from "./IClaimService.sol";
 import {IPricingService} from "./IPricingService.sol";
 import {IProductComponent} from "./IProductComponent.sol";
-import {NftId} from "../type/NftId.sol";
+import {NftId, NftIdLib} from "../type/NftId.sol";
+import {ObjectType, COMPONENT, DISTRIBUTION, ORACLE, POOL, PRODUCT, BUNDLE, APPLICATION, POLICY, CLAIM, PRICE } from "../type/ObjectType.sol";
 import {PayoutId} from "../type/PayoutId.sol";
 import {COMPONENT, PRODUCT, APPLICATION, POLICY, CLAIM, PRICE, BUNDLE, RISK } from "../type/ObjectType.sol";
 import {ReferralId} from "../type/Referral.sol";
@@ -25,8 +28,9 @@ import {Timestamp} from "../type/Timestamp.sol";
 
 import {IPolicy} from "../instance/module/IPolicy.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
-import {Pool} from "../pool/Pool.sol";
-import {Distribution} from "../distribution/Distribution.sol";
+import {IDistributionComponent} from "../distribution/IDistributionComponent.sol";
+import {IOracleComponent} from "../oracle/IOracleComponent.sol";
+import {IPoolComponent} from "../pool/IPoolComponent.sol";
 
 abstract contract Product is
     InstanceLinkedComponent, 
@@ -36,26 +40,25 @@ abstract contract Product is
     bytes32 public constant PRODUCT_STORAGE_LOCATION_V1 = 0x0bb7aafdb8e380f81267337bc5b5dfdf76e6d3a380ecadb51ec665246d9d6800;
 
     struct ProductStorage {
+        bool _isProcessingFundedClaims;
+        bool _hasDistribution;
+        uint8 _numberOfOracles;
         IRiskService _riskService;
         IApplicationService _applicationService;
         IPolicyService _policyService;
         IClaimService _claimService;
         IPricingService _pricingService;
         IComponentService _componentService;
-        NftId _poolNftId;
-        NftId _distributionNftId;
-        Pool _pool;
-        Distribution _distribution;
     }
 
 
-    function register()
+    function registerComponent(address component)
         external
         virtual
         onlyOwner()
+        returns (NftId componentNftId)
     {
-        _getProductStorage()._componentService.registerProduct();
-        _approveTokenHandler(type(uint256).max);
+        return _getProductStorage()._componentService.registerComponent(component);
     }
 
 
@@ -125,9 +128,13 @@ abstract contract Product is
         ProductStorage storage $ = _getProductStorage();
 
         return IComponents.ProductInfo({
-            distributionNftId: $._distributionNftId,
-            poolNftId: $._poolNftId,
             isProcessingFundedClaims: false,
+            hasDistribution: $._hasDistribution,
+            expectedNumberOfOracles: $._numberOfOracles,
+            numberOfOracles: 0,
+            poolNftId: NftIdLib.zero(),
+            distributionNftId: NftIdLib.zero(),
+            oracleNftId: new NftId[]($._numberOfOracles),
             productFee: FeeLib.zero(),
             processingFee: FeeLib.zero(),
             distributionFee: FeeLib.zero(),
@@ -147,10 +154,9 @@ abstract contract Product is
         string memory name,
         address token,
         bool isInterceptor,
-        address pool, // switch to pool nft id (#527)
-        address distribution, // switch to distribution nft id  (#527)
-        // add NftId [] oracleNftIds (#527)
-        bytes memory registryData, // writeonly data that will saved in the object info record of the registry
+        bool isProcessingFundedClaims,
+        bool hasDistribution,
+        uint8 numberOfOracles,
         bytes memory componentData // writeonly data that will saved in the object info record of the registry
     )
         internal
@@ -166,22 +172,18 @@ abstract contract Product is
             authorization, 
             isInterceptor, 
             initialOwner, 
-            registryData, 
             componentData);
 
         ProductStorage storage $ = _getProductStorage();
-        // TODO add validation
-        // TODO refactor to go via registry for all components linked to this product (#527)
-        $._riskService = IRiskService(_getServiceAddress(RISK())); 
+        $._isProcessingFundedClaims = isProcessingFundedClaims;
+        $._hasDistribution = hasDistribution;
+        $._numberOfOracles = numberOfOracles;
+        $._riskService = IRiskService(_getServiceAddress(PRODUCT())); 
         $._applicationService = IApplicationService(_getServiceAddress(APPLICATION())); 
         $._policyService = IPolicyService(_getServiceAddress(POLICY())); 
         $._claimService = IClaimService(_getServiceAddress(CLAIM())); 
         $._pricingService = IPricingService(_getServiceAddress(PRICE()));
         $._componentService = IComponentService(_getServiceAddress(COMPONENT()));
-        $._pool = Pool(pool);
-        $._distribution = Distribution(distribution);
-        $._poolNftId = getRegistry().getNftIdForAddress(pool);
-        $._distributionNftId = getRegistry().getNftIdForAddress(distribution);
 
         _registerInterface(type(IProductComponent).interfaceId);  
     }
@@ -201,8 +203,11 @@ abstract contract Product is
     function _createRisk(
         RiskId id,
         bytes memory data
-    ) internal {
-        _getRiskService().createRisk(
+    )
+        internal
+        virtual
+    {
+        _getProductStorage()._riskService.createRisk(
             id,
             data
         );
@@ -211,8 +216,11 @@ abstract contract Product is
     function _updateRisk(
         RiskId id,
         bytes memory data
-    ) internal {
-        _getRiskService().updateRisk(
+    )
+        internal
+        virtual
+    {
+        _getProductStorage()._riskService.updateRisk(
             id,
             data
         );
@@ -221,15 +229,18 @@ abstract contract Product is
     function _updateRiskState(
         RiskId id,
         StateId state
-    ) internal {
-        _getRiskService().updateRiskState(
+    )
+        internal
+        virtual
+    {
+        _getProductStorage()._riskService.updateRiskState(
             id,
             state
         );
     }
 
 
-    function _getRiskInfo(RiskId id) internal view returns (IRisk.RiskInfo memory info) {
+    function _getRiskInfo(RiskId id) internal virtual view returns (IRisk.RiskInfo memory info) {
         return getInstance().getInstanceReader().getRiskInfo(id);
     }
 
@@ -245,6 +256,7 @@ abstract contract Product is
         bytes memory applicationData
     )
         internal
+        virtual
         returns (NftId applicationNftId) 
     {
         return _getProductStorage()._applicationService.create(
@@ -264,6 +276,7 @@ abstract contract Product is
         Timestamp activateAt
     )
         internal
+        virtual
     {
         _getProductStorage()._policyService.createPolicy(
             applicationNftId, 
@@ -274,6 +287,7 @@ abstract contract Product is
         NftId policyNftId
     )
         internal
+        virtual
     {
         _getProductStorage()._policyService.decline(
             policyNftId);
@@ -284,6 +298,7 @@ abstract contract Product is
         Timestamp expireAt
     )
         internal
+        virtual
         returns (Timestamp expiredAt)
     {
         expiredAt = _getProductStorage()._policyService.expire(policyNftId, expireAt);
@@ -294,6 +309,7 @@ abstract contract Product is
         Timestamp activateAt
     )
         internal
+        virtual
     {
         _getProductStorage()._policyService.collectPremium(
             policyNftId, 
@@ -305,6 +321,7 @@ abstract contract Product is
         Timestamp activateAt
     )
         internal
+        virtual
     {
         _getProductStorage()._policyService.activate(
             policyNftId, 
@@ -315,6 +332,7 @@ abstract contract Product is
         NftId policyNftId
     )
         internal
+        virtual
     {
         _getProductStorage()._policyService.close(
             policyNftId);
@@ -326,6 +344,7 @@ abstract contract Product is
         bytes memory claimData
     )
         internal
+        virtual
         returns(ClaimId)
     {
         return _getProductStorage()._claimService.submit(
@@ -341,6 +360,7 @@ abstract contract Product is
         bytes memory data
     )
         internal
+        virtual
     {
         _getProductStorage()._claimService.confirm(
             policyNftId,
@@ -355,6 +375,7 @@ abstract contract Product is
         bytes memory data
     )
         internal
+        virtual
     {
         _getProductStorage()._claimService.decline(
             policyNftId,
@@ -367,6 +388,7 @@ abstract contract Product is
         ClaimId claimId
     )
         internal
+        virtual
     {
         _getProductStorage()._claimService.close(
             policyNftId,
@@ -380,6 +402,7 @@ abstract contract Product is
         bytes memory data
     )
         internal
+        virtual
         returns (PayoutId)
     {
         return _getProductStorage()._claimService.createPayout(
@@ -397,6 +420,7 @@ abstract contract Product is
         bytes memory data
     )
         internal
+        virtual
         returns (PayoutId)
     {
         return _getProductStorage()._claimService.createPayoutForBeneficiary(
@@ -412,23 +436,20 @@ abstract contract Product is
         PayoutId payoutId
     )
         internal
+        virtual
     {
         _getProductStorage()._claimService.processPayout(
             policyNftId,
             payoutId);
     }
 
-    function _toRiskId(string memory riskName) internal pure returns (RiskId riskId) {
+    function _toRiskId(string memory riskName) internal virtual pure returns (RiskId riskId) {
         return RiskIdLib.toRiskId(riskName);
     }
 
-    function _getProductStorage() internal pure returns (ProductStorage storage $) {
+    function _getProductStorage() internal virtual pure returns (ProductStorage storage $) {
         assembly {
             $.slot := PRODUCT_STORAGE_LOCATION_V1
         }
-    }
-
-    function _getRiskService() internal view returns (IRiskService) {
-        return _getProductStorage()._riskService;
     }
 }

@@ -30,7 +30,6 @@ contract Staking is
     IStaking
 {
     string public constant CONTRACT_NAME = "Staking";
-    uint8 private constant GIF_MAJOR_VERSION = 3;
 
     // keccak256(abi.encode(uint256(keccak256("gif-next.contracts.component.Staking.sol")) - 1)) & ~bytes32(uint256(0xff));
     bytes32 public constant STAKING_LOCATION_V1 = 0xafe8d4462b2ed26a47154f4b8f6d1497d2f772496965791d25bd456e342b7f00;
@@ -416,7 +415,7 @@ contract Staking is
         virtual override (IVersionable, Versionable)
         returns(Version)
     {
-        return VersionLib.toVersion(GIF_MAJOR_VERSION,0,0);
+        return VersionLib.toVersion(GIF_RELEASE,0,0);
     }
 
     //--- internal functions ------------------------------------------------//
@@ -469,7 +468,7 @@ contract Staking is
         _initializeComponent(
             authority,
             registryAddress, 
-            registry.getNftId(), 
+            registry.getNftId(), // parent nft id
             CONTRACT_NAME,
             dipTokenAddress,
             STAKING(), 

@@ -23,10 +23,10 @@ contract UFixedTest is Test {
     function testUFixedMathLib() public {
         UFixed a = UFixed.wrap(1 * 10 ** 18);
         UFixed b = UFixed.wrap(1 * 10 ** 18);
-        assertTrue(a.eq(b));
+        assertTrue(UFixedLib.eq(a, b));
 
         UFixed c = UFixed.wrap(2 * 10 ** 18);
-        assertFalse(a.eq(c));
+        assertFalse(UFixedLib.eq(a, c));
     }
 
     function testItof() public {
@@ -39,7 +39,7 @@ contract UFixedTest is Test {
         assertTrue(a.toInt() == 100);
 
         // 0.01 * 100
-        UFixed b = UFixedLib.toUFixed(1, -2).mul(UFixedLib.toUFixed(1, 2));
+        UFixed b = UFixedLib.toUFixed(1, -2) *  (UFixedLib.toUFixed(1, 2));
         assertTrue(b.toInt() == 1);
 
         // smalltest possible value
@@ -64,19 +64,19 @@ contract UFixedTest is Test {
 
     function testFtoiRounding() public {
         UFixed a = UFixed.wrap(4 * 10 ** 17);
-        assertTrue(a.toIntWithRounding(UFixedLib.ROUNDING_UP()) == 1);
-        assertTrue(a.toIntWithRounding(UFixedLib.ROUNDING_DOWN()) == 0);
-        assertTrue(a.toIntWithRounding(UFixedLib.ROUNDING_HALF_UP()) == 0);
+        assertTrue(UFixedLib.toIntWithRounding(a, UFixedLib.ROUNDING_UP()) == 1);
+        assertTrue(UFixedLib.toIntWithRounding(a, UFixedLib.ROUNDING_DOWN()) == 0);
+        assertTrue(UFixedLib.toIntWithRounding(a, UFixedLib.ROUNDING_HALF_UP()) == 0);
 
         UFixed b = UFixed.wrap(5 * 10 ** 17);
-        assertTrue(b.toIntWithRounding(UFixedLib.ROUNDING_UP()) == 1);
-        assertTrue(b.toIntWithRounding(UFixedLib.ROUNDING_DOWN()) == 0);
-        assertTrue(b.toIntWithRounding(UFixedLib.ROUNDING_HALF_UP()) == 1);
+        assertTrue(UFixedLib.toIntWithRounding(b, UFixedLib.ROUNDING_UP()) == 1);
+        assertTrue(UFixedLib.toIntWithRounding(b, UFixedLib.ROUNDING_DOWN()) == 0);
+        assertTrue(UFixedLib.toIntWithRounding(b, UFixedLib.ROUNDING_HALF_UP()) == 1);
 
         UFixed c = UFixed.wrap(6 * 10 ** 17);
-        assertTrue(c.toIntWithRounding(UFixedLib.ROUNDING_UP()) == 1);
-        assertTrue(c.toIntWithRounding(UFixedLib.ROUNDING_DOWN()) == 0);
-        assertTrue(c.toIntWithRounding(UFixedLib.ROUNDING_HALF_UP()) == 1);
+        assertTrue(UFixedLib.toIntWithRounding(c, UFixedLib.ROUNDING_UP()) == 1);
+        assertTrue(UFixedLib.toIntWithRounding(c, UFixedLib.ROUNDING_DOWN()) == 0);
+        assertTrue(UFixedLib.toIntWithRounding(c, UFixedLib.ROUNDING_HALF_UP()) == 1);
     }
 
     function testOpAdd() public {
@@ -85,18 +85,18 @@ contract UFixedTest is Test {
         UFixed c = UFixed.wrap(2 * 10 ** 18);
         UFixed d = UFixed.wrap(3 * 10 ** 18);
         assertTrue((a + b) == c);
-        assertTrue(a.add(b) == c);
+        assertTrue(UFixedLib.add(a, b) == c);
         assertFalse((a + b) == d);
-        assertFalse(a.add(b) == d);
+        assertFalse(UFixedLib.add(a, b) == d);
 
         assertTrue((a + c) == d);
-        assertTrue(a.add(c) == d);
+        assertTrue(UFixedLib.add(a, c) == d);
 
         UFixed e = UFixed.wrap(0 * 10 ** 18);
         assertTrue((a + e) == a);
-        assertTrue(a.add(e) == a);
+        assertTrue(UFixedLib.add(a, e) == a);
         assertTrue((e + e) == e);
-        assertTrue(e.add(e) == e);
+        assertTrue(UFixedLib.add(e, e) == e);
     }
 
     function testOpSub() public {
@@ -105,25 +105,25 @@ contract UFixedTest is Test {
         UFixed c = UFixed.wrap(2 * 10 ** 18);
         UFixed d = UFixed.wrap(3 * 10 ** 18);
         assertTrue((c - b) == a);
-        assertTrue(c.sub(b) == a);
+        assertTrue(UFixedLib.sub(c, b) == a);
 
         assertTrue((d - c) == a);
-        assertTrue(d.sub(c) == a);
+        assertTrue(UFixedLib.sub(d, c) == a);
         assertFalse((d - b) == b);
-        assertFalse(d.sub(b) == b);
+        assertFalse(UFixedLib.sub(d, b) == b);
 
         UFixed e = UFixed.wrap(0 * 10 ** 18);
         assertTrue((a - a) == e);
-        assertTrue(a.sub(a) == e);
+        assertTrue(UFixedLib.sub(a, a) == e);
         assertTrue((a - e) == a);
-        assertTrue(a.sub(e) == a);
+        assertTrue(UFixedLib.sub(a, e) == a);
         assertTrue((e - e) == e);
-        assertTrue(e.sub(e) == e);
+        assertTrue(UFixedLib.sub(e, e) == e);
 
         vm.expectRevert(abi.encodeWithSelector(UFixedLib.UFixedLibNegativeResult.selector));
         a - c;
         vm.expectRevert(abi.encodeWithSelector(UFixedLib.UFixedLibNegativeResult.selector));
-        a.sub(c);
+        UFixedLib.sub(a, c);
     }
 
     function testOpMul() public {

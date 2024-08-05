@@ -21,6 +21,7 @@ interface IAccess {
         uint32 maxMemberCount;
         Str name;
         Timestamp createdAt;
+        Timestamp pausedAt;
     }
 
     struct TargetInfo {

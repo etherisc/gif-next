@@ -10,7 +10,6 @@ import {Timestamp, toTimestamp} from "../../../contracts/type/Timestamp.sol";
 import {UFixed, UFixedLib} from "../../../contracts/type/UFixed.sol";
 import {SimpleDistribution} from "../../../contracts/examples/unpermissioned/SimpleDistribution.sol";
 import {FeeLib} from "../../../contracts/type/Fee.sol";
-import {DISTRIBUTION_OWNER_ROLE} from "../../../contracts/type/RoleId.sol";
 
 contract ReferralTestBase is GifTest {
 
@@ -36,9 +35,12 @@ contract ReferralTestBase is GifTest {
     bytes public referralData;
 
     function _setupTestData(bool createDistributor) internal {
-        if (address(distribution) == address(0)) {
-            _prepareDistribution();            
-        }
+
+        vm.startPrank(distributionOwner);
+        distribution.setFees(
+            FeeLib.toFee(UFixedLib.toUFixed(2,-1), 0), 
+            FeeLib.toFee(UFixedLib.toUFixed(5,-2), 0));
+        vm.stopPrank();
 
         name = "Basic";
         minDiscountPercentage = instanceReader.toUFixed(5, -2);
@@ -75,21 +77,6 @@ contract ReferralTestBase is GifTest {
                 distributorType,
                 distributorData);
         }
-        vm.stopPrank();
-    }
-
-
-    function _prepareDistribution() internal {
-        _prepareProduct();
-
-        vm.startPrank(instanceOwner);
-        instance.grantRole(DISTRIBUTION_OWNER_ROLE(), distributionOwner);
-        vm.stopPrank();
-
-        vm.startPrank(distributionOwner);
-        distribution.setFees(
-            FeeLib.toFee(UFixedLib.toUFixed(2,-1), 0), 
-            FeeLib.toFee(UFixedLib.toUFixed(5,-2), 0));
         vm.stopPrank();
     }
 }

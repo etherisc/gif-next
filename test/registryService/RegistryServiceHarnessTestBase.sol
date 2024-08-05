@@ -21,7 +21,7 @@ import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
 import {ReleaseRegistry} from "../../contracts/registry/ReleaseRegistry.sol";
 import {RegistryServiceManagerMockWithHarness} from "../mock/RegistryServiceManagerMock.sol";
 import {RegistryServiceHarness} from "./RegistryServiceHarness.sol";
-import {ServiceMockAuthorizationV3} from "../registry/ServiceMockAuthorizationV3.sol";
+import {ServiceAuthorizationMockWithRegistryService} from "../mock/ServiceAuthorizationMock.sol";
 
 import {GifDeployer} from "../base/GifDeployer.sol";
 import {GifTest} from "../base/GifTest.sol";
@@ -83,7 +83,7 @@ contract RegistryServiceHarnessTestBase is GifDeployer, FoundryRandom {
             VersionPart releaseVersion,
             bytes32 releaseSalt
         ) = releaseRegistry.prepareNextRelease(
-            new ServiceMockAuthorizationV3(),
+            new ServiceAuthorizationMockWithRegistryService(VersionPartLib.toVersionPart(3)),
             salt);
 
         registryServiceManagerWithHarness = new RegistryServiceManagerMockWithHarness{salt: releaseSalt}(

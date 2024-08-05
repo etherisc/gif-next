@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+
 import {IAccess} from "../authorization/IAccess.sol";
 import {ObjectType} from "../type/ObjectType.sol";
 import {VersionPart} from "../type/Version.sol";
 
-interface IServiceAuthorization {
+interface IServiceAuthorization is IERC165 {
 
      /// @dev Returns the commit hash representing the deployed release
      function getCommitHash()

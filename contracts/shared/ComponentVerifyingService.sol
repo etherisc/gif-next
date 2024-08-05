@@ -12,7 +12,6 @@ import {Service} from "../shared/Service.sol";
 abstract contract ComponentVerifyingService is 
     Service
 {
-
     error ErrorComponentVerifyingServiceComponentTypeInvalid(NftId componentNftId, ObjectType expectedType, ObjectType actualType);
     error ErrorComponentVerifyingServiceComponentIsLocked(NftId componentNftId);
 
@@ -83,7 +82,7 @@ abstract contract ComponentVerifyingService is
             }
         }
 
-        instance = _getInstance(info.parentNftId);
+        instance = _getInstanceForComponent(registry, info);
 
         // ensure component is not locked
         if (onlyActive) {
@@ -94,23 +93,34 @@ abstract contract ComponentVerifyingService is
     }
 
 
-    /// @dev returns the linked product nft id for the specified component
-    function _getProductNftId(
-        InstanceReader instanceReader,
-        NftId componentNftId
-    )
+    function _getInstanceForComponent(IRegistry registry, IRegistry.ObjectInfo memory componentInfo)
         internal
-        virtual
         view
-        returns (NftId productNftId)
+        returns (IInstance instance)
     {
-        return instanceReader.getComponentInfo(componentNftId).productNftId;
+        // parent of product is instance
+        if (componentInfo.objectType == PRODUCT()) {
+            instance = _getInstance(registry, componentInfo.parentNftId);
+        // parent of other types is product
+        } else {
+            instance = _getInstance(
+                registry,
+                registry.getObjectInfo(
+                    componentInfo.parentNftId).parentNftId);
+        }
+    }
+
+
+    /// @dev returns the product nft id from the registry.
+    /// assumes the component nft id is valid and represents a product linked component.
+    function _getProductNftId(NftId componentNftId) internal view returns (NftId productNftId) {
+        productNftId = getRegistry().getObjectInfo(componentNftId).parentNftId;
     }
 
 
     /// @dev returns an IInstance contract reference for the specified instance nft id
-    function _getInstance(NftId instanceNftId) internal view returns (IInstance) {
+    function _getInstance(IRegistry registry, NftId instanceNftId) internal view returns (IInstance) {
         return IInstance(
-            getRegistry().getObjectAddress(instanceNftId));
+            registry.getObjectAddress(instanceNftId));
     }
 }

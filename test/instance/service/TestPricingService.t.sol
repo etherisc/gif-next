@@ -4,7 +4,6 @@ pragma solidity ^0.8.20;
 import {console} from "../../../lib/forge-std/src/Script.sol";
 import {GifTest} from "../../base/GifTest.sol";
 import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
-import {PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE} from "../../../contracts/type/RoleId.sol";
 import {AmountLib} from "../../../contracts/type/Amount.sol";
 import {Pool} from "../../../contracts/pool/Pool.sol";
 import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
@@ -348,12 +347,6 @@ contract TestPricingService is GifTest {
         Fee memory productFee
     ) internal {
         _prepareProduct();
-
-        vm.startPrank(instanceOwner);
-        instance.grantRole(DISTRIBUTION_OWNER_ROLE(), distributionOwner);
-        instance.grantRole(POOL_OWNER_ROLE(), poolOwner);
-        instance.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
-        vm.stopPrank();
 
         // -- set various fees
         vm.startPrank(distributionOwner);

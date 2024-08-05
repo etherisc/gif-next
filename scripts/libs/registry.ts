@@ -217,6 +217,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
                 TimestampLib: libraries.timestampLibAddress,
                 TokenHandlerDeployerLib: libraries.tokenHandlerDeployerLibAddress,
                 VersionLib: libraries.versionLibAddress,
+                VersionPartLib: libraries.versionPartLibAddress,
             }
         });
 
@@ -270,7 +271,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     const { address: serviceAuthorizationV3Address, contract: serviceAuthorizationV3BaseContract, } = await deployContract(
         "ServiceAuthorizationV3",
         owner,
-        [ "SomeV3CommitHash" ],
+        [ "a41a84af9a430ef22e00d9c4a8012ce24830e7bf" ],
         { 
             libraries: { 
                 SelectorLib: libraries.selectorLibAddress,

@@ -38,9 +38,6 @@ contract PolicyService is
     ComponentVerifyingService, 
     IPolicyService
 {
-    using NftIdLib for NftId;
-    using TimestampLib for Timestamp;
-
     IApplicationService internal _applicationService;
     IComponentService internal _componentService;
     IBundleService internal _bundleService;

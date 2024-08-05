@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {BasicProductAuthorization} from "../../product/BasicProductAuthorization.sol";
 import {FireProduct} from "./FireProduct.sol";
 import {IAccess} from "../../../contracts/authorization/IAccess.sol";
-import {PRODUCT_OWNER_ROLE, PUBLIC_ROLE} from "../../../contracts/type/RoleId.sol";
+import {PUBLIC_ROLE} from "../../../contracts/type/RoleId.sol";
 
 
 contract FireProductAuthorization
@@ -36,7 +36,6 @@ contract FireProductAuthorization
         // only policy nft owner
         _authorize(functions, FireProduct.submitClaim.selector, "submitClaim"); 
 
-        functions = _authorizeForTarget(getTargetName(), PRODUCT_OWNER_ROLE());
         // TODO: add custom role for fire reporter
         _authorize(functions, FireProduct.reportFire.selector, "reportFire");
     }

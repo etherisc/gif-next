@@ -35,7 +35,8 @@ contract NftOwnableTest is GifTest {
         vm.stopPrank();
     }
 
-    function test_NftOwnableMockSimple() public {
+    function test_nftOwnableMockSimple() public {
+
         // solhint-disable no-console
         console.log("registryOwner", registryOwner);
         console.log("registry address", address(registry));
@@ -54,7 +55,7 @@ contract NftOwnableTest is GifTest {
 
     //--- linkToRegisteredNftId() tests
 
-    function test_NftOwnableLinkToRegNftIdTwice() public {
+    function test_nftOwnableLinkToRegNftIdTwice() public {
         vm.expectRevert(
             abi.encodeWithSelector(
                 INftOwnable.ErrorNftOwnableAlreadyLinked.selector,
@@ -63,7 +64,7 @@ contract NftOwnableTest is GifTest {
         registryService.linkToRegisteredNftId();
     }
 
-    function test_NftOwnableLinkToRegNftIdWithUninitializedRegistry() public {
+    function test_nftOwnableLinkToRegNftIdWithUninitializedRegistry() public {
         vm.expectRevert(
             abi.encodeWithSelector(
                 INftOwnable.ErrorNftOwnableContractNotRegistered.selector,
@@ -72,8 +73,8 @@ contract NftOwnableTest is GifTest {
         mock.linkToRegisteredNftId();
     }
 
-    function test_NftOwnableLinkToRegNftIdWithUnregisteredContract() public {
-        mockUninitialized.initialize(mockOwner, address(registry));
+    function test_nftOwnableLinkToRegNftIdWithUnregisteredContract() public {
+        mockUninitialized.initialize(address(registry), mockOwner);
 
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -84,7 +85,7 @@ contract NftOwnableTest is GifTest {
 
     //--- initializeNftOwnable(address initialOwner, address registryAddress) tests
 
-    function test_NftOwnableInitializeTwice() public {
+    function test_nftOwnableInitializeTwice() public {
 
         address fakeOwner = makeAddr("fakeOwner");
         address fakeRegistry = makeAddr("fakeRegistry");
@@ -95,29 +96,29 @@ contract NftOwnableTest is GifTest {
             abi.encodeWithSelector(
                 Initializable.InvalidInitialization.selector));
 
-        mock.initializeNftOwnable(fakeOwner, fakeRegistry);
+        mock.initializeNftOwnable(fakeRegistry, fakeOwner);
     }
 
-    function test_NftOwnableInitializeNftOwnableInitializeWithZeroRegistry() public {
+    function test_nftOwnableInitializeNftOwnableInitializeWithZeroRegistry() public {
         // attempt to initialize with zero registry address
         vm.expectRevert(
             abi.encodeWithSelector(
                 IRegistryLinked.ErrorNotRegistry.selector,
                 address(0)));
 
-        mockUninitialized.initialize(mockOwner, address(0));
+        mockUninitialized.initialize(address(0), mockOwner);
     }
 
-    function test_NftOwnableInitializeNftOwnableInitializeWithNonContract() public {
+    function test_nftOwnableInitializeNftOwnableInitializeWithNonContract() public {
         // attempt to initialize with non-registry
         vm.expectRevert(
             abi.encodeWithSelector(
                 IRegistryLinked.ErrorNotRegistry.selector,
                 address(1)));
-        mockUninitialized.initialize(mockOwner, address(1));
+        mockUninitialized.initialize(address(1), mockOwner);
     }
 
-    function test_NftOwnableInitializeNftOwnableInitializeWithNonRegistry() public {
+    function test_nftOwnableInitializeNftOwnableInitializeWithNonRegistry() public {
         Dip dip = new Dip();
         address fakeRegistryAddress = address(dip);
 
@@ -126,12 +127,12 @@ contract NftOwnableTest is GifTest {
             abi.encodeWithSelector(
                 IRegistryLinked.ErrorNotRegistry.selector,
                 fakeRegistryAddress));
-        mockUninitialized.initialize(mockOwner, fakeRegistryAddress);
+        mockUninitialized.initialize(fakeRegistryAddress, mockOwner);
     }
 
     //--- linkToNftOwnable(address registryAddress, address nftOwnableAddress) tests
 
-    function test_NftOwnableLinkToNftOwnableContractNotRegistered() public {
+    function test_nftOwnableLinkToNftOwnableContractNotRegistered() public {
         vm.expectRevert(
             abi.encodeWithSelector(
                 INftOwnable.ErrorNftOwnableContractNotRegistered.selector,
@@ -140,7 +141,7 @@ contract NftOwnableTest is GifTest {
         mock.linkToNftOwnable(address(mock));
     }
 
-    function test_NftOwnableLinkToNftOwnableHappyCase() public {
+    function test_nftOwnableLinkToNftOwnableHappyCase() public {
         address registryAddress = address(registry);
 
         assertEq(mock.getOwner(), mockOwner, "mock owner not initial mock owner before linking");
@@ -153,7 +154,7 @@ contract NftOwnableTest is GifTest {
         assertEq(mock.getOwner(), address(0x1), "mock owner not registry owner after linking");
     }
 
-    function test_NftOwnableLinkToNftOwnableLinkTwice() public {
+    function test_nftOwnableLinkToNftOwnableLinkTwice() public {
         address registryAddress = address(registry);
 
         // NFT_LOCK_ADDRESS becomes owner of mock

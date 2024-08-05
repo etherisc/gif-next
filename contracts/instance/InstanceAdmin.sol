@@ -7,13 +7,13 @@ import {AccessAdmin} from "../authorization/AccessAdmin.sol";
 import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
 import {IAccessAdmin} from "../authorization/IAccessAdmin.sol";
 import {IAuthorization} from "../authorization/IAuthorization.sol";
-import {IComponent} from "../shared/IComponent.sol";
-import {IModuleAuthorization} from "../authorization/IModuleAuthorization.sol";
+import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
+import {IAuthorization} from "../authorization/IAuthorization.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IInstance} from "./IInstance.sol";
 import {IService} from "../shared/IService.sol";
 import {ObjectType, ObjectTypeLib, ALL, POOL, RELEASE} from "../type/ObjectType.sol";
-import {RoleId, RoleIdLib, ADMIN_ROLE, PUBLIC_ROLE, DISTRIBUTION_OWNER_ROLE, ORACLE_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE} from "../type/RoleId.sol";
+import {RoleId, RoleIdLib, ADMIN_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {Str, StrLib} from "../type/String.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {VersionPart} from "../type/Version.sol";
@@ -39,12 +39,12 @@ contract InstanceAdmin is
     IRegistry internal _registry;
     uint64 _idNext;
 
-    IModuleAuthorization _instanceAuthorization;
+    IAuthorization _instanceAuthorization;
 
     /// @dev Only used for master instance admin.
     /// Contracts created via constructor come with disabled initializers.
     constructor(
-        IModuleAuthorization instanceAuthorization
+        IAuthorization instanceAuthorization
     )
         AccessAdmin()
     {
@@ -57,7 +57,7 @@ contract InstanceAdmin is
     /// Important: Initialization of this instance admin is only complete after calling function initializeInstance. 
     function initialize(
         AccessManagerCloneable accessManager,
-        IModuleAuthorization instanceAuthorization
+        IAuthorization instanceAuthorization
     )
         external
         initializer() 
@@ -69,7 +69,7 @@ contract InstanceAdmin is
         _createAdminAndPublicRoles();
 
         // store instance authorization specification
-        _instanceAuthorization = IModuleAuthorization(instanceAuthorization);
+        _instanceAuthorization = IAuthorization(instanceAuthorization);
     }
 
     function _checkTargetIsReadyForAuthorization(address target)
@@ -97,7 +97,7 @@ contract InstanceAdmin is
         _registry = _instance.getRegistry();
 
         // check matching releases
-        if (_instanceAuthorization.getRelease() != _instance.getMajorVersion()) {
+        if (_instanceAuthorization.getRelease() != _instance.getRelease()) {
             revert ErrorInstanceAdminReleaseMismatch();
         }
 
@@ -105,22 +105,22 @@ contract InstanceAdmin is
         _createRoles(_instanceAuthorization);
         _createModuleTargetsWithRoles();
         _createTargetAuthorizations(_instanceAuthorization);
-
-        // grant component owner roles to instance owner
-        _grantComponentOwnerRoles();
     }
 
 
     /// @dev Initializes the authorization for the specified component.
     /// Important: The component MUST be registered.
     function initializeComponentAuthorization(
-        IComponent component,
-        IAuthorization authorization
+        IInstanceLinkedComponent component
     )
         external
     {
         _checkTargetIsReadyForAuthorization(address(component));
 
+        // get authorization specification
+        IAuthorization authorization = component.getAuthorization();
+
+        // create roles
         _createRoles(authorization);
 
         // create component target
@@ -136,12 +136,12 @@ contract InstanceAdmin is
             true, 
             false);
         
-        // FIXME: make this a bit nicer and work with IAuthorization. Use a specific role, not public - access to TokenHandler must be restricted
         FunctionInfo[] memory functions = new FunctionInfo[](3);
         functions[0] = toFunction(TokenHandler.collectTokens.selector, "collectTokens");
         functions[1] = toFunction(TokenHandler.collectTokensToThreeRecipients.selector, "collectTokensToThreeRecipients");
         functions[2] = toFunction(TokenHandler.distributeTokens.selector, "distributeTokens");
 
+        // FIXME: make this a bit nicer and work with IAuthorization. Use a specific role, not public - access to TokenHandler must be restricted
         _authorizeTargetFunctions(
             address(component.getTokenHandler()),
             getPublicRole(),
@@ -149,21 +149,10 @@ contract InstanceAdmin is
 
         _grantRoleToAccount(
             authorization.getTargetRole(
-                authorization.getTarget()), 
+                authorization.getMainTarget()), 
             address(component));
         
         _createTargetAuthorizations(authorization);
-    }
-
-
-    function _grantComponentOwnerRoles()
-        internal
-    {
-        address instanceOwner = _registry.ownerOf(_instance.getNftId());
-        _grantRoleToAccount(DISTRIBUTION_OWNER_ROLE(), instanceOwner);
-        _grantRoleToAccount(ORACLE_OWNER_ROLE(), instanceOwner);
-        _grantRoleToAccount(POOL_OWNER_ROLE(), instanceOwner);
-        _grantRoleToAccount(PRODUCT_OWNER_ROLE(), instanceOwner);
     }
 
     /// @dev Creates a custom role
@@ -189,7 +178,7 @@ contract InstanceAdmin is
     function getInstanceAuthorization()
         external
         view
-        returns (IModuleAuthorization instanceAuthorizaion)
+        returns (IAuthorization instanceAuthorizaion)
     {
         return _instanceAuthorization;
     }

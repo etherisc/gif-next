@@ -24,13 +24,12 @@ import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
 import {Staking} from "../../contracts/staking/Staking.sol";
 import {StakingManager} from "../../contracts/staking/StakingManager.sol";
 import {StakingStore} from "../../contracts/staking/StakingStore.sol";
-import {StakingReader} from "../..//contracts/staking/StakingReader.sol";
-
+import {StakingReader} from "../../contracts/staking/StakingReader.sol";
 
 import {RegisterableMock} from "../mock/RegisterableMock.sol";
 import {RegistryServiceManagerMock} from "../mock/RegistryServiceManagerMock.sol";
 import {RegistryServiceMock} from "../mock/RegistryServiceMock.sol";
-import {ServiceMockAuthorizationV3} from "./ServiceMockAuthorizationV3.sol";
+import {ServiceAuthorizationMockWithRegistryService} from "../mock/ServiceAuthorizationMock.sol";
 
 import {GifDeployer} from "../base/GifDeployer.sol";
 
@@ -48,9 +47,6 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
 
     // keep identical to IERC721 events
     event Transfer(address indexed from, address indexed to, uint256 indexed value);    
-
-    // keep identical to MockInterceptor events
-    event LogNftMintIntercepted(address to, uint256 tokenId);
 
     VersionPart public constant VERSION = VersionPart.wrap(3);
 
@@ -180,7 +176,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         _deployRegistryServiceMock();
         _stopPrank();
 
-        // Tests book keeping
+        // tests book keeping
         _afterDeployment();
     }
 
@@ -196,7 +192,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
                 VersionPart releaseVersion,
                 bytes32 releaseSalt
             ) = releaseRegistry.prepareNextRelease(
-                new ServiceMockAuthorizationV3(),
+                new ServiceAuthorizationMockWithRegistryService(VERSION),
                 salt);
 
             registryServiceManagerMock = new RegistryServiceManagerMock{salt: releaseSalt}(
@@ -432,9 +428,9 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
 
         // instance as parent
         _isCoreContractTypesCombo[PRODUCT()][INSTANCE()] = true;
-        _isCoreContractTypesCombo[DISTRIBUTION()][INSTANCE()] = true;
-        _isCoreContractTypesCombo[POOL()][INSTANCE()] = true;
-        _isCoreContractTypesCombo[ORACLE()][INSTANCE()] = true;
+        _isCoreContractTypesCombo[DISTRIBUTION()][PRODUCT()] = true;
+        _isCoreContractTypesCombo[POOL()][PRODUCT()] = true;
+        _isCoreContractTypesCombo[ORACLE()][PRODUCT()] = true;
 
         // component as parent
         _isCoreObjectTypesCombo[DISTRIBUTOR()][DISTRIBUTION()] = true;
@@ -1099,10 +1095,10 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             emit LogChainRegistryRegistration(expectedNftId, chainId, registryAddress);
 
             vm.expectEmit(address(chainNft));
-            emit LogTokenInterceptorAddress(expectedId, address(0));
+            emit Transfer(address(0), registryInfo.initialOwner, expectedId);
 
             vm.expectEmit(address(chainNft));
-            emit Transfer(address(0), registryInfo.initialOwner, expectedId);
+            emit LogTokenInterceptorAddress(expectedId, address(0));
         }
 
         registry.registerRegistry(nftId, chainId, registryAddress); 
@@ -1308,19 +1304,13 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             );
 
             vm.expectEmit(address(chainNft));
+            emit Transfer(address(0), info.initialOwner, expectedId);
+
+            vm.expectEmit(address(chainNft));
             emit LogTokenInterceptorAddress(
                 expectedId, 
                 interceptor
             );
-
-            vm.expectEmit(address(chainNft));
-            emit Transfer(address(0), info.initialOwner, expectedId);
-
-            if(interceptor != address(0)) {
-                //expectedLogsCount = 5;
-                vm.expectEmit(interceptor);
-                emit LogNftMintIntercepted(info.initialOwner, expectedId);// TODO sort of duplicate log...
-            }
         }
         
         //vm.recordLogs();
@@ -1503,19 +1493,13 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             );
 
             vm.expectEmit(address(chainNft));
+            emit Transfer(address(0), info.initialOwner, expectedId);
+
+            vm.expectEmit(address(chainNft));
             emit LogTokenInterceptorAddress(
                 expectedId, 
                 interceptor
             );
-
-            vm.expectEmit(address(chainNft));
-            emit Transfer(address(0), info.initialOwner, expectedId);
-
-            if(interceptor != address(0)) {
-                //expectedLogsCount = 4;
-                vm.expectEmit(interceptor);
-                emit LogNftMintIntercepted(info.initialOwner, expectedId);// TODO sort of duplicate log...
-            }
         }
 
         nftId = registry.register(info);
@@ -1670,18 +1654,13 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             );
 
             vm.expectEmit(address(chainNft));
+            emit Transfer(address(0), info.initialOwner, expectedId);
+
+            vm.expectEmit(address(chainNft));
             emit LogTokenInterceptorAddress(
                 expectedId, 
                 interceptor
             );
-
-            vm.expectEmit(address(chainNft));
-            emit Transfer(address(0), info.initialOwner, expectedId);
-
-            if(info.isInterceptor) {
-                vm.expectEmit(info.initialOwner);
-                emit LogNftMintIntercepted(info.initialOwner, expectedId);
-            }
         }
 
         nftId = registry.registerWithCustomType(info);

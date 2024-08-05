@@ -115,21 +115,6 @@ contract RegistryAdmin is
             address(service)); 
     }
 
-    function revokeServiceRole(
-        IService service,
-        ObjectType domain, 
-        VersionPart version
-    )
-        external
-        restricted()
-    {
-        _revokeRoleFromAccount(
-            RoleIdLib.roleForTypeAndVersion(
-                domain, 
-                version), 
-            address(service));
-    }
-
     function grantServiceRoleForAllVersions(IService service, ObjectType domain)
         external
         restricted()
@@ -139,13 +124,11 @@ contract RegistryAdmin is
             address(service)); 
     }
 
-    function revokeServiceRoleForAllVersions(IService service, ObjectType domain)
+    function setServiceLocked(IService service, bool locked)
         external
         restricted()
     {
-        _revokeRoleFromAccount(
-            RoleIdLib.roleForTypeAndAllVersions(domain), 
-            address(service));
+        _setTargetClosed(address(service), locked);
     }
 
     /*function transferAdmin(address to)
@@ -187,6 +170,8 @@ contract RegistryAdmin is
             serviceTargetName,
             true,
             false);
+
+        _setTargetClosed(address(service), true);
 
         // create service role
         RoleId serviceRoleId = RoleIdLib.roleForTypeAndVersion(
@@ -330,12 +315,11 @@ contract RegistryAdmin is
                 name: RELEASE_REGISTRY_ROLE_NAME}));
 
         FunctionInfo[] memory functions;
-        functions = new FunctionInfo[](5);
+        functions = new FunctionInfo[](4);
         functions[0] = toFunction(RegistryAdmin.authorizeService.selector, "authorizeService");
         functions[1] = toFunction(RegistryAdmin.grantServiceRoleForAllVersions.selector, "grantServiceRoleForAllVersions");
-        functions[2] = toFunction(RegistryAdmin.revokeServiceRoleForAllVersions.selector, "revokeServiceRoleForAllVersions");
-        functions[3] = toFunction(RegistryAdmin.grantServiceRole.selector, "grantServiceRole");
-        functions[4] = toFunction(RegistryAdmin.revokeServiceRole.selector, "revokeServiceRole");
+        functions[2] = toFunction(RegistryAdmin.grantServiceRole.selector, "grantServiceRole");
+        functions[3] = toFunction(RegistryAdmin.setServiceLocked.selector, "setServiceLocked");
         _authorizeTargetFunctions(address(this), releaseRegistryRoleId, functions);
 
         _grantRoleToAccount(releaseRegistryRoleId, _releaseRegistry);

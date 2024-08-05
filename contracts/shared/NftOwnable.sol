@@ -46,14 +46,14 @@ contract NftOwnable is
     /// @dev initialization for upgradable contracts
     // used in _initializeRegisterable
     function _initializeNftOwnable(
-        address initialOwner,
-        address registryAddress
+        address registry,
+        address initialOwner
     )
         internal
         virtual
         onlyInitializing()
     {
-        _initializeRegistryLinked(registryAddress);
+        _initializeRegistryLinked(registry);
         _initializeERC165();
 
         if(initialOwner == address(0)) {

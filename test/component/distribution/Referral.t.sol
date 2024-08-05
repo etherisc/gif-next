@@ -19,9 +19,13 @@ import {TimestampLib} from "../../../contracts/type/Timestamp.sol";
 import {UFixedLib} from "../../../contracts/type/UFixed.sol";
 
 contract ReferralTest is ReferralTestBase {
-    using NftIdLib for NftId;
 
-    function test_DistributionReferralIsValidTrue() public {
+    function setUp() public override {
+        super.setUp();
+        _prepareProduct();
+    }
+
+    function test_referralIsValidTrue() public {
         _setupTestData(true);
 
         // solhint-disable-next-line 
@@ -41,7 +45,7 @@ contract ReferralTest is ReferralTestBase {
         assertTrue(distributionService.referralIsValid(distributionNftId, referralId), "referral is not valid");
     }
 
-    function test_Distribution_referralIsValid_false() public {
+    function test_referralIsValidFalse() public {
         _setupTestData(true);
 
         // solhint-disable-next-line 

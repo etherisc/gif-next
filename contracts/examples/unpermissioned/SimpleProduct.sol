@@ -32,25 +32,25 @@ contract SimpleProduct is
 
     constructor(
         address registry,
-        NftId instanceNftid,
+        NftId instanceNftId,
         IAuthorization authorization,
         address initialOwner,
         address token,
         bool isInterceptor,
-        address pool,
-        address distribution
+        bool hasDistribution,
+        uint8 numberOfOracles
     )
     {
         initialize(
             registry,
-            instanceNftid,
+            instanceNftId,
             authorization,
             initialOwner,
             "SimpleProduct",
             token,
             isInterceptor,
-            pool,
-            distribution); 
+            hasDistribution,
+            numberOfOracles); 
     }
 
 
@@ -62,8 +62,8 @@ contract SimpleProduct is
         string memory name,
         address token,
         bool isInterceptor,
-        address pool,
-        address distribution
+        bool hasDistribution,
+        uint8 numberOfOracles
     )
         public
         virtual
@@ -77,8 +77,8 @@ contract SimpleProduct is
             name,
             token,
             isInterceptor,
-            pool,
-            distribution); 
+            hasDistribution,
+            numberOfOracles); 
 
         _oracleService = IOracleService(_getServiceAddress(ORACLE()));
     }
