@@ -12,7 +12,7 @@ interface IDistributionComponent is IInstanceLinkedComponent {
     error ErrorDistributionNotDistributor(address distributor);
     error ErrorDistributionAlreadyDistributor(address distributor, NftId distributorNftId);
 
-    event LogDistributorUpdated(address to, address caller);
+    event LogDistributorUpdated(address to, address operator);
 
     /// @dev Returns true iff the provided address is registered as a distributor with this distribution component.
     function isDistributor(address candidate) external view returns (bool);
