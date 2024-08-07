@@ -6,24 +6,21 @@ import {IBundleService} from "./IBundleService.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {IComponentService} from "../shared/IComponentService.sol";
 import {IInstance} from "../instance/IInstance.sol";
-import {IInstanceService} from "../instance/IInstanceService.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
 import {IProductComponent} from "../product/IProductComponent.sol";
 import {IPoolService} from "./IPoolService.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
-import {IRegistryService} from "../registry/IRegistryService.sol";
 import {IStaking} from "../staking/IStaking.sol";
 
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {ClaimId} from "../type/ClaimId.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
 import {NftId} from "../type/NftId.sol";
-import {ObjectType, POOL, BUNDLE, COMPONENT, INSTANCE, REGISTRY} from "../type/ObjectType.sol";
-import {RoleId, PUBLIC_ROLE} from "../type/RoleId.sol";
+import {ObjectType, POOL, BUNDLE, PRODUCT, POLICY, COMPONENT} from "../type/ObjectType.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
 import {KEEP_STATE} from "../type/StateId.sol";
 import {Seconds} from "../type/Seconds.sol";
-import {UFixed, UFixedLib} from "../type/UFixed.sol";
+import {UFixed} from "../type/UFixed.sol";
 import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
@@ -108,6 +105,7 @@ contract PoolService is
     function closeBundle(NftId bundleNftId)
         external
         virtual
+        onlyNftOfType(bundleNftId, BUNDLE())
     {
         (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
 
@@ -142,6 +140,7 @@ contract PoolService is
     ) 
         external
         virtual
+        onlyNftOfType(policyNftId, POLICY())
     {
         (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
         InstanceReader instanceReader = instance.getInstanceReader();
@@ -230,6 +229,7 @@ contract PoolService is
     function unstake(NftId bundleNftId, Amount amount) 
         external 
         virtual
+        onlyNftOfType(bundleNftId, BUNDLE())
         // TODO: restricted() (once #462 is done)
         returns(Amount netAmount) 
     {
@@ -275,6 +275,7 @@ contract PoolService is
         external
         virtual
         restricted()
+        onlyNftOfType(poolNftId, POOL())
     {
         // TODO check that poolNftId is externally managed
         // TODO implement
@@ -285,6 +286,7 @@ contract PoolService is
         external
         virtual
         restricted()
+        onlyNftOfType(poolNftId, POOL())
     {
         // TODO check that poolNftId is externally managed
         // TODO implement
@@ -334,6 +336,9 @@ contract PoolService is
         external
         virtual
         restricted()
+        onlyNftOfType(productNftId, PRODUCT())
+        onlyNftOfType(applicationNftId, POLICY())
+        onlyNftOfType(bundleNftId, BUNDLE())
         returns (
             Amount totalCollateralAmount,
             Amount localCollateralAmount
@@ -371,6 +376,7 @@ contract PoolService is
         external
         virtual
         restricted()
+        onlyNftOfType(policyNftId, POLICY())
     {
         NftId bundleNftId = policyInfo.bundleNftId;
         NftId poolNftId = getRegistry().getObjectInfo(bundleNftId).parentNftId;
@@ -413,6 +419,7 @@ contract PoolService is
         external
         virtual
         restricted()
+        onlyNftOfType(policyNftId, POLICY())
     {
         Amount remainingCollateralAmount = policyInfo.sumInsuredAmount - policyInfo.claimAmount;
 
@@ -441,6 +448,7 @@ contract PoolService is
     )
         public
         view 
+        onlyNftOfType(productNftId, PRODUCT())
         returns(
             Amount totalCollateralAmount,
             Amount localCollateralAmount
@@ -486,6 +494,7 @@ contract PoolService is
         Amount stakingAmount
     )
         internal
+        pure
         returns (Amount stakingNetAmount)
     {
         stakingNetAmount = stakingAmount;
