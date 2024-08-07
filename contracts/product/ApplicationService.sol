@@ -13,7 +13,7 @@ import {IRegistryService} from "../registry/IRegistryService.sol";
 import {AmountLib} from "../type/Amount.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {zeroTimestamp} from "../type/Timestamp.sol";
-import {ObjectType, DISTRIBUTION, PRODUCT, REGISTRY, APPLICATION, POLICY, PRICE} from "../type/ObjectType.sol";
+import {ObjectType, BUNDLE, DISTRIBUTION, PRODUCT, REGISTRY, APPLICATION, POLICY, PRICE} from "../type/ObjectType.sol";
 import {REVOKED} from "../type/StateId.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
 import {ReferralId} from "../type/Referral.sol";
@@ -135,6 +135,7 @@ contract ApplicationService is
         external
         virtual
         nonReentrant()
+        onlyNftOfType(bundleNftId, BUNDLE())
         returns (NftId applicationNftId)
     {
         (NftId productNftId,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
@@ -211,6 +212,8 @@ contract ApplicationService is
         external
         virtual
         nonReentrant()
+        onlyNftOfType(policyNftId, POLICY())
+        onlyNftOfType(bundleNftId, BUNDLE())
         returns (NftId applicationNftId)
     {
         // TODO implement
@@ -229,6 +232,8 @@ contract ApplicationService is
         external
         virtual
         nonReentrant()
+        onlyNftOfType(applicationNftId, POLICY())
+        onlyNftOfType(bundleNftId, BUNDLE())
     {
         // TODO implement
     }
@@ -237,6 +242,7 @@ contract ApplicationService is
         external
         virtual
         nonReentrant()
+        onlyNftOfType(applicationNftId, POLICY())
     {
         (,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
         instance.getInstanceStore().updateApplicationState(applicationNftId, REVOKED());
