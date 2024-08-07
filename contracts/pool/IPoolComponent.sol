@@ -27,9 +27,7 @@ interface IPoolComponent is IInstanceLinkedComponent {
     /// The default implementation is empty.
     function verifyApplication(
         NftId applicationNftId, 
-        bytes memory applicationData,
         NftId bundleNftId, 
-        bytes memory bundleFilter,
         Amount collateralizationAmount
     ) external;
 

@@ -8,8 +8,9 @@ import {IComponentService} from "../shared/IComponentService.sol";
 import {IInstance} from "../instance/IInstance.sol";
 import {IInstanceService} from "../instance/IInstanceService.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
-import {IProductComponent} from "../product/IProductComponent.sol";
+import {IPoolComponent} from "../pool/IPoolComponent.sol";
 import {IPoolService} from "./IPoolService.sol";
+import {IProductComponent} from "../product/IProductComponent.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegistryService} from "../registry/IRegistryService.sol";
 import {IStaking} from "../staking/IStaking.sol";
@@ -339,9 +340,13 @@ contract PoolService is
             Amount localCollateralAmount
         )
     {
+        NftId poolNftId;
+        bool poolIsVerifyingApplications;
         (
+            poolNftId,
             totalCollateralAmount,
-            localCollateralAmount
+            localCollateralAmount,
+            poolIsVerifyingApplications
         ) = calculateRequiredCollateral(
             instance.getInstanceReader(),
             productNftId, 
@@ -359,6 +364,21 @@ contract PoolService is
             instance.getNftId(),
             token,
             totalCollateralAmount);
+
+        // pool callback when required
+        if (poolIsVerifyingApplications) {
+            IPoolComponent pool = IPoolComponent(
+                getRegistry().getObjectAddress(poolNftId));
+
+            pool.verifyApplication(
+                applicationNftId, 
+                bundleNftId, 
+                totalCollateralAmount);
+
+            // TODO add logging
+        }
+
+        // TODO add logging
     }
 
     function processPayout(
@@ -442,12 +462,15 @@ contract PoolService is
         public
         view 
         returns(
+            NftId poolNftId,
             Amount totalCollateralAmount,
-            Amount localCollateralAmount
+            Amount localCollateralAmount,
+            bool poolIsVerifyingApplications
         )
     {
-        NftId poolNftId = instanceReader.getProductInfo(productNftId).poolNftId;
+        poolNftId = instanceReader.getProductInfo(productNftId).poolNftId;
         IComponents.PoolInfo memory poolInfo = instanceReader.getPoolInfo(poolNftId);
+        poolIsVerifyingApplications = poolInfo.isVerifyingApplications;
 
         (
             totalCollateralAmount,

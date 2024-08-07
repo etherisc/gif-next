@@ -144,8 +144,10 @@ interface IPoolService is IService {
         external
         view 
         returns(
+            NftId poolNftId,
             Amount totalCollateralAmount,
-            Amount localCollateralAmount
+            Amount localCollateralAmount,
+            bool poolIsVerifyingApplications
         );
 
 

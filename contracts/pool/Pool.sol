@@ -11,6 +11,7 @@ import {IPoolService} from "./IPoolService.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {IComponentService} from "../shared/IComponentService.sol";
 import {InstanceLinkedComponent} from "../shared/InstanceLinkedComponent.sol";
+import {InstanceReader} from "../instance/InstanceReader.sol";
 import {Fee} from "../type/Fee.sol";
 import {NftId} from "../type/NftId.sol";
 import {RoleId, PUBLIC_ROLE} from "../type/RoleId.sol";
@@ -44,9 +45,7 @@ abstract contract Pool is
     /// @dev see {IPoolComponent.verifyApplication}
     function verifyApplication(
         NftId applicationNftId, 
-        bytes memory applicationData,
         NftId bundleNftId, 
-        bytes memory bundleFilter,
         Amount collateralizationAmount
     )
         public
@@ -54,11 +53,12 @@ abstract contract Pool is
         restricted()
         onlyNftOfType(applicationNftId, POLICY())
     {
+        InstanceReader reader = _getInstanceReader();
         if(!applicationMatchesBundle(
             applicationNftId,
-            applicationData, 
+            reader.getPolicyInfo(applicationNftId).applicationData, 
             bundleNftId, 
-            bundleFilter,
+            reader.getBundleInfo(bundleNftId).filter,
             collateralizationAmount)
         )
         {
