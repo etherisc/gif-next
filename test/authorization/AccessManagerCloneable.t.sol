@@ -60,7 +60,7 @@ contract AccessManagerCloneableTest is Test {
 
 
         vm.expectRevert(abi.encodeWithSelector(AccessManagerCloneable.ErrorAccessManagerCallerNotAdmin.selector, outsider));
-        vm.prank(accessManagedCaller);
+        vm.prank(outsider);
         accessManager.setLocked(true);
     }
 
@@ -72,7 +72,7 @@ contract AccessManagerCloneableTest is Test {
         accessManager.setLocked(false);
 
         vm.expectRevert(abi.encodeWithSelector(AccessManagerCloneable.ErrorAccessManagerCallerNotAdmin.selector, outsider));
-        vm.prank(accessManagedCaller);
+        vm.prank(outsider);
         accessManager.setLocked(false);
     }
 
