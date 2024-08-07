@@ -63,8 +63,9 @@ contract BundleService is
     )
         external
         virtual
-        onlyNftOfType(bundleNftId, BUNDLE())
     {
+        _checkNftType(bundleNftId, BUNDLE());
+
         (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
         InstanceReader instanceReader = instance.getInstanceReader();
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
@@ -93,9 +94,10 @@ contract BundleService is
         external
         override
         restricted
-        onlyNftOfType(poolNftId, POOL())
         returns(NftId bundleNftId)
     {
+        _checkNftType(poolNftId, POOL());
+
         // register bundle with registry
         bundleNftId = _registryService.registerBundle(
             IRegistry.ObjectInfo(
@@ -149,9 +151,10 @@ contract BundleService is
         external
         virtual
         restricted()
-        onlyNftOfType(policyNftId, POLICY())
-        onlyNftOfType(bundleNftId, BUNDLE())
     {
+        _checkNftType(policyNftId, POLICY());
+        _checkNftType(bundleNftId, BUNDLE());
+
         InstanceReader instanceReader = instance.getInstanceReader();
 
         {
@@ -191,8 +194,9 @@ contract BundleService is
     function lock(NftId bundleNftId) 
         external
         virtual
-        onlyNftOfType(bundleNftId, BUNDLE())
     {
+        _checkNftType(bundleNftId, BUNDLE());
+
         (,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
 
         // udpate bundle state
@@ -209,8 +213,9 @@ contract BundleService is
     function unlock(NftId bundleNftId) 
         external
         virtual
-        onlyNftOfType(bundleNftId, BUNDLE())
     {
+        _checkNftType(bundleNftId, BUNDLE());
+
         (,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
 
         // udpate bundle state
@@ -231,9 +236,10 @@ contract BundleService is
         external
         virtual
         restricted
-        onlyNftOfType(bundleNftId, BUNDLE())
         returns (Amount unstakedAmount, Amount feeAmount)
     {
+        _checkNftType(bundleNftId, BUNDLE());
+
         InstanceReader instanceReader = instance.getInstanceReader();
 
         // ensure no open policies attached to bundle
@@ -265,9 +271,10 @@ contract BundleService is
     ) 
         external 
         virtual
-        onlyNftOfType(bundleNftId, BUNDLE())
         // TODO: restricted() (once #462 is done)
     {
+        _checkNftType(bundleNftId, BUNDLE());
+
         IBundle.BundleInfo memory bundleInfo = instance.getInstanceReader().getBundleInfo(bundleNftId);
         StateId bundleState = instance.getInstanceReader().getBundleState(bundleNftId);
 
@@ -292,10 +299,11 @@ contract BundleService is
     ) 
         external 
         virtual
-        onlyNftOfType(bundleNftId, BUNDLE())
         // TODO: restricted() (once #462 is done)
         returns (Amount unstakedAmount)
     {
+        _checkNftType(bundleNftId, BUNDLE());
+
         InstanceStore instanceStore = instance.getInstanceStore();
         (
             Amount balanceAmount,
@@ -327,10 +335,11 @@ contract BundleService is
     function extend(NftId bundleNftId, Seconds lifetimeExtension) 
         external 
         virtual
-        onlyNftOfType(bundleNftId, BUNDLE())
         // TODO: restricted() (once #462 is done)
         returns (Timestamp extendedExpiredAt) 
     {
+        _checkNftType(bundleNftId, BUNDLE());
+
         (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
         IBundle.BundleInfo memory bundleInfo = instance.getInstanceReader().getBundleInfo(bundleNftId);
         StateId bundleState = instance.getInstanceReader().getBundleState(bundleNftId);
@@ -367,9 +376,10 @@ contract BundleService is
         external
         virtual
         restricted()
-        onlyNftOfType(policyNftId, POLICY())
-        onlyNftOfType(bundleNftId, BUNDLE())
     {
+        _checkNftType(policyNftId, POLICY());
+        _checkNftType(bundleNftId, BUNDLE());
+
         instance.getInstanceStore().decreaseLocked(bundleNftId, collateralAmount);
     }
 
@@ -381,8 +391,9 @@ contract BundleService is
         external
         virtual
         restricted
-        onlyNftOfType(policyNftId, POLICY())
     {
+        _checkNftType(policyNftId, POLICY());
+
         // ensure policy is closeable
         if (!policyIsCloseable(instance, policyNftId)) {
             revert ErrorBundleServicePolicyNotCloseable(policyNftId);
@@ -395,10 +406,11 @@ contract BundleService is
     function withdrawBundleFees(NftId bundleNftId, Amount amount) 
         public 
         virtual
-        onlyNftOfType(bundleNftId, BUNDLE())
         // TODO: restricted() (once #462 is done)
         returns (Amount withdrawnAmount) 
     {
+        _checkNftType(bundleNftId, BUNDLE());
+
         (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
         InstanceReader reader = instance.getInstanceReader();
         
@@ -438,9 +450,10 @@ contract BundleService is
     function policyIsCloseable(IInstance instance, NftId policyNftId)
         public
         view
-        onlyNftOfType(policyNftId, POLICY())
         returns (bool isCloseable)
     {
+        _checkNftType(policyNftId, POLICY());
+
         IPolicy.PolicyInfo memory info = instance.getInstanceReader().getPolicyInfo(policyNftId);
         
         if (info.productNftId.eqz()) { return false; } // not closeable: policy does not exist (or does not belong to this instance)
