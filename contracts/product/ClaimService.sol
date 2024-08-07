@@ -60,10 +60,11 @@ contract ClaimService is
     )
         external
         virtual
-        onlyNftOfType(policyNftId, POLICY())
         // nonReentrant() // prevents creating a reinsurance claim in a single tx
         returns (ClaimId claimId)
     {
+        _checkNftType(policyNftId, POLICY());
+
         (
             ,
             IInstance instance,,
@@ -117,9 +118,10 @@ contract ClaimService is
     )
         external
         virtual
-        onlyNftOfType(policyNftId, POLICY())
         // nonReentrant() // prevents creating a reinsurance claim in a single tx
     {
+        _checkNftType(policyNftId, POLICY());
+
         (
             NftId productNftId,
             IInstance instance,
@@ -162,9 +164,10 @@ contract ClaimService is
     )
         external
         virtual
-        onlyNftOfType(policyNftId, POLICY())
         // nonReentrant() // prevents creating a reinsurance claim in a single tx
     {
+        _checkNftType(policyNftId, POLICY());
+
         (
             ,
             IInstance instance,
@@ -194,9 +197,10 @@ contract ClaimService is
     )
         external
         virtual
-        onlyNftOfType(policyNftId, POLICY())
         // nonReentrant() // prevents creating a reinsurance claim in a single tx
     {
+        _checkNftType(policyNftId, POLICY());
+        
         (
             ,
             IInstance instance,
@@ -224,9 +228,10 @@ contract ClaimService is
     )
         external
         virtual
-        onlyNftOfType(policyNftId, POLICY())
         // nonReentrant() // prevents creating a reinsurance claim in a single tx
     {
+        _checkNftType(policyNftId, POLICY());
+        
         (
             ,
             IInstance instance,
@@ -269,10 +274,11 @@ contract ClaimService is
     )
         external
         virtual
-        onlyNftOfType(policyNftId, POLICY())
         // nonReentrant() // prevents creating a reinsurance claim in a single tx
         returns (PayoutId payoutId)
     {
+        _checkNftType(policyNftId, POLICY());
+        
         if (beneficiary == address(0)) {
             revert ErrorClaimServiceBeneficiaryIsZero(policyNftId, claimId);
         }
@@ -294,10 +300,11 @@ contract ClaimService is
     )
         external
         virtual
-        onlyNftOfType(policyNftId, POLICY())
         // nonReentrant() // prevents creating a reinsurance payout in a single tx
         returns (PayoutId payoutId)
     {
+        _checkNftType(policyNftId, POLICY());
+        
         return _createPayout(
             policyNftId, 
             claimId, 
@@ -313,9 +320,10 @@ contract ClaimService is
     )
         external
         virtual
-        onlyNftOfType(policyNftId, POLICY())
         // nonReentrant() // prevents creating a reinsurance payout in a single tx
     {
+        _checkNftType(policyNftId, POLICY());
+        
         (
             ,
             IInstance instance,

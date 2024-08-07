@@ -135,9 +135,10 @@ contract ApplicationService is
         external
         virtual
         nonReentrant()
-        onlyNftOfType(bundleNftId, BUNDLE())
         returns (NftId applicationNftId)
     {
+        _checkNftType(bundleNftId, BUNDLE());
+
         (NftId productNftId,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
 
         // check if provided references are valid and linked to calling product contract
@@ -212,10 +213,10 @@ contract ApplicationService is
         external
         virtual
         nonReentrant()
-        onlyNftOfType(policyNftId, POLICY())
-        onlyNftOfType(bundleNftId, BUNDLE())
         returns (NftId applicationNftId)
     {
+        _checkNftType(policyNftId, POLICY());
+        _checkNftType(bundleNftId, BUNDLE());
         // TODO implement
     }
 
@@ -232,9 +233,9 @@ contract ApplicationService is
         external
         virtual
         nonReentrant()
-        onlyNftOfType(applicationNftId, POLICY())
-        onlyNftOfType(bundleNftId, BUNDLE())
     {
+        _checkNftType(applicationNftId, POLICY());
+        _checkNftType(bundleNftId, BUNDLE());
         // TODO implement
     }
 
@@ -242,8 +243,9 @@ contract ApplicationService is
         external
         virtual
         nonReentrant()
-        onlyNftOfType(applicationNftId, POLICY())
     {
+        _checkNftType(applicationNftId, POLICY());
+
         (,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
         instance.getInstanceStore().updateApplicationState(applicationNftId, REVOKED());
     }
