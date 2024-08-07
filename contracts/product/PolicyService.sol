@@ -15,7 +15,7 @@ import {Amount, AmountLib} from "../type/Amount.sol";
 import {Timestamp, TimestampLib, zeroTimestamp} from "../type/Timestamp.sol";
 import {ObjectType, APPLICATION, COMPONENT, DISTRIBUTION, PRODUCT, POOL, POLICY, BUNDLE, CLAIM, PRICE} from "../type/ObjectType.sol";
 import {APPLIED, COLLATERALIZED, KEEP_STATE, CLOSED, DECLINED, PAID} from "../type/StateId.sol";
-import {NftId, NftIdLib} from "../type/NftId.sol";
+import {NftId} from "../type/NftId.sol";
 import {ReferralId} from "../type/Referral.sol";
 import {StateId} from "../type/StateId.sol";
 import {VersionPart} from "../type/Version.sol";
@@ -81,6 +81,8 @@ contract PolicyService is
         virtual
         nonReentrant()
     {
+        _checkNftType(applicationNftId, POLICY());
+
         (NftId productNftId,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
         InstanceReader instanceReader = instance.getInstanceReader();
 
@@ -117,6 +119,8 @@ contract PolicyService is
         virtual
         nonReentrant()
     {
+        _checkNftType(applicationNftId, POLICY());
+
         // check caller is registered product
         (NftId productNftId,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
         InstanceReader instanceReader = instance.getInstanceReader();
@@ -202,6 +206,8 @@ contract PolicyService is
         virtual
         nonReentrant()
     {
+        _checkNftType(policyNftId, POLICY());
+
         // check caller is registered product
         (,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
         InstanceReader instanceReader = instance.getInstanceReader();
@@ -246,6 +252,8 @@ contract PolicyService is
         virtual
         nonReentrant()
     {
+        _checkNftType(policyNftId, POLICY());
+
         // check caller is registered product
         (,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
         InstanceReader instanceReader = instance.getInstanceReader();
@@ -273,6 +281,8 @@ contract PolicyService is
         nonReentrant()
         returns (Timestamp expiredAt)
     {
+        _checkNftType(policyNftId, POLICY());
+
         (NftId productNftId,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
         
         // check policy matches with calling product
@@ -302,6 +312,8 @@ contract PolicyService is
         nonReentrant()
         returns (Timestamp expiredAt)
     {
+        _checkNftType(policyNftId, POLICY());
+
         return _expire(
             instance,
             policyNftId,
@@ -361,6 +373,8 @@ contract PolicyService is
         virtual
         nonReentrant()
     {
+        _checkNftType(policyNftId, POLICY());
+        
         (,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
         InstanceReader instanceReader = instance.getInstanceReader();
 
