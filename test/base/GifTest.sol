@@ -6,7 +6,7 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
 import {Amount, AmountLib} from "../../contracts/type/Amount.sol";
-import {NftId} from "../../contracts/type/NftId.sol";
+import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {SecondsLib} from "../../contracts/type/Seconds.sol";
 import {Fee, FeeLib} from "../../contracts/type/Fee.sol";
 import {UFixed, UFixedLib} from "../../contracts/type/UFixed.sol";
@@ -386,17 +386,36 @@ contract GifTest is GifDeployer {
     }
 
     function _prepareProduct() internal {
-        _prepareProduct(true);
-        _printAuthz(instanceAdmin, "instanceWithProduct");
+        _prepareProductWithParams(
+            "SimpleProduct",
+            _getSimpleProductInfo(),
+            true, // create bundle
+            false); // print authz
     }
 
 
     function _prepareProduct(bool createBundle) internal {
+        _prepareProductWithParams(
+            "SimpleProduct",
+            _getSimpleProductInfo(),
+            createBundle,
+            false); // print authz
+    }
+
+
+    function _prepareProductWithParams(
+        string memory name,
+        IComponents.ProductInfo memory productInfo,
+        bool createBundle,
+        bool printAuthz
+    )
+        internal
+    {
 
         (
             product, 
             productNftId
-        ) = _deployAndRegisterNewSimpleProduct("SimpleProduct");
+        ) = _deployAndRegisterNewSimpleProduct(name);
 
         _preparePool();
         _prepareDistribution();
@@ -434,8 +453,11 @@ contract GifTest is GifDeployer {
             );
             vm.stopPrank();
         }
-    }
 
+        if (printAuthz) {
+            _printAuthz(instance.getInstanceAdmin(), "instance");
+        }
+    }
 
     function _deployAndRegisterNewSimpleProduct(string memory name)
         internal
@@ -452,12 +474,11 @@ contract GifTest is GifDeployer {
         newProduct = new SimpleProduct(
             address(registry),
             instanceNftId,
-            new BasicProductAuthorization(name),
-            productOwner, // initial owner
+            "SimpleProduct",
             address(token),
-            false, // is interceptor
-            true, // has distribution
-            1 // number of oracles in product cluster
+            _getSimpleProductInfo(),
+            new BasicProductAuthorization(name),
+            productOwner // initial owner
         );
         vm.stopPrank();
 
@@ -478,6 +499,32 @@ contract GifTest is GifDeployer {
         console.log("product nft id", newNftId.toInt());
     }
 
+
+    function _getSimpleProductInfo()
+        internal
+        view
+        returns (IComponents.ProductInfo memory productInfo)
+    {
+        return IComponents.ProductInfo({
+            isProcessingFundedClaims: false,
+            isInterceptingPolicyTransfers: false,
+            hasDistribution: true,
+            expectedNumberOfOracles: 1,
+            numberOfOracles: 0,
+            poolNftId: NftIdLib.zero(),
+            distributionNftId: NftIdLib.zero(),
+            oracleNftId: new NftId[](1),
+            productFee: FeeLib.zero(),
+            processingFee: FeeLib.zero(),
+            distributionFee: FeeLib.zero(),
+            minDistributionOwnerFee: FeeLib.zero(),
+            poolFee: FeeLib.zero(),
+            stakingFee: FeeLib.zero(),
+            performanceFee: FeeLib.zero()
+        });
+    }
+
+
     function _preparePool() internal {
 
         // solhint-disable-next-line
@@ -488,8 +535,8 @@ contract GifTest is GifDeployer {
             address(registry),
             productNftId,
             address(token),
-            new BasicPoolAuthorization("SimplePool"),
             _getDefaultSimplePoolInfo(),
+            new BasicPoolAuthorization("SimplePool"),
             poolOwner
         );
         vm.stopPrank();

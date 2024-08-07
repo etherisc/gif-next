@@ -20,10 +20,10 @@ abstract contract BasicPool is
     function _initializeBasicPool(
         address registry,
         NftId productNftId,
-        IAuthorization authorization,
-        address token,
         string memory name,
+        address token,
         IComponents.PoolInfo memory poolInfo,
+        IAuthorization authorization,
         address initialOwner
     )
         internal
@@ -35,8 +35,8 @@ abstract contract BasicPool is
             productNftId, 
             name, 
             token, 
-            authorization,
             poolInfo, 
+            authorization,
             initialOwner, 
             ""); // componentData
     }

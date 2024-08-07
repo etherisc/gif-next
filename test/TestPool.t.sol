@@ -42,8 +42,8 @@ contract TestPool is GifTest {
             address(registry),
             productNftId,
             address(token),
-            new BasicPoolAuthorization("NewSimplePool"),
             _getDefaultSimplePoolInfo(),
+            new BasicPoolAuthorization("NewSimplePool"),
             poolOwner
         );
 
@@ -102,8 +102,8 @@ contract TestPool is GifTest {
         assertFalse(poolInfo.isProcessingConfirmedClaims, "unexpected is processing");
         assertFalse(poolInfo.isExternallyManaged, "unexpected is externally managed");
         assertFalse(poolInfo.isVerifyingApplications, "unexpected is verifing");
-        assertEq(poolInfo.collateralizationLevel.toInt(), AmountLib.max().toInt(), "unexpected max balance amount");
-        assertEq(poolInfo.retentionLevel.toInt(), AmountLib.max().toInt(), "unexpected max balance amount");
+        assertEq(poolInfo.collateralizationLevel.toInt(), UFixedLib.one().toInt(), "unexpected collateralization level");
+        assertEq(poolInfo.retentionLevel.toInt(), UFixedLib.one().toInt(), "unexpected retention level");
 
         // check pool balance
         assertTrue(instanceReader.getBalanceAmount(poolNftId).eqz(), "initial pool balance not zero");

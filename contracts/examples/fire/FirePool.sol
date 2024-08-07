@@ -29,7 +29,6 @@ contract FirePool is
             instanceNftId,
             componentName,
             token,
-            authorization,
             IComponents.PoolInfo({
                 maxBalanceAmount: AmountLib.max(),
                 isInterceptingBundleTransfers: false,
@@ -39,6 +38,7 @@ contract FirePool is
                 collateralizationLevel: UFixedLib.one(),
                 retentionLevel: UFixedLib.one()
             }),
+            authorization,
             initialOwner);
     }
 
@@ -47,8 +47,8 @@ contract FirePool is
         NftId instanceNftId,
         string memory componentName,
         address token,
-        IAuthorization authorization,
         IComponents.PoolInfo memory poolInfo,
+        IAuthorization authorization,
         address initialOwner
     )
         internal
@@ -57,10 +57,10 @@ contract FirePool is
         _initializeBasicPool(
             registry,
             instanceNftId,
-            authorization,
-            token,
             componentName,
+            token,
             poolInfo,
+            authorization,
             initialOwner);
     }
 

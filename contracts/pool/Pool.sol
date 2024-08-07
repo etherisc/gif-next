@@ -133,8 +133,8 @@ abstract contract Pool is
         NftId productNftId,
         string memory name,
         address token,
-        IAuthorization authorization,
         IComponents.PoolInfo memory poolInfo,
+        IAuthorization authorization,
         address initialOwner,
         bytes memory componentData // component specifidc data 
     )

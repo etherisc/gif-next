@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {Fee} from "../type/Fee.sol";
 import {IAuthorization} from "../authorization/IAuthorization.sol";
+import {IComponents} from "../instance/module/IComponents.sol";
 import {NftId} from "../type/NftId.sol";
 import {Product} from "../product/Product.sol";
 
@@ -25,13 +26,11 @@ abstract contract BasicProduct is
     function _initializeBasicProduct(
         address registry,
         NftId instanceNftId,
-        IAuthorization authorization,
-        address initialOwner,
         string memory name,
         address token,
-        bool isInterceptor,
-        bool hasDistribution,
-        uint8 numberOfOracles
+        IComponents.ProductInfo memory productInfo,
+        IAuthorization authorization,
+        address initialOwner
     )
         internal
         virtual
@@ -40,14 +39,11 @@ abstract contract BasicProduct is
         _initializeProduct(
             registry, 
             instanceNftId, 
-            authorization, 
-            initialOwner, 
             name, 
             token, 
-            isInterceptor, 
-            false, // is processing funded claims
-            hasDistribution,
-            numberOfOracles,
+            productInfo,
+            authorization, 
+            initialOwner, 
             ""); // component data
     }
 }

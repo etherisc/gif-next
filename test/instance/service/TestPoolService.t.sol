@@ -29,8 +29,8 @@ contract TestPoolService is GifTest {
             address(registry),
             testProdNftId,
             address(token),
-            new BasicPoolAuthorization("SimplePool"),
             _getDefaultSimplePoolInfo(),
+            new BasicPoolAuthorization("SimplePool"),
             outsider
         );
         vm.stopPrank();

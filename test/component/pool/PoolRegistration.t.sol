@@ -252,12 +252,11 @@ contract TestPoolRegistration is GifTest {
         return new SimpleProduct(
             address(registry),
             instanceNftId, 
-            new BasicProductAuthorization(name),
-            owner,
+            "SimpleProduct",
             address(token),
-            false, // is interceptor
-            hasDistribution,
-            oracleCount);
+            _getSimpleProductInfo(),
+            new BasicProductAuthorization(name),
+            owner);
     }
 
     function _deployPool(
@@ -272,8 +271,8 @@ contract TestPoolRegistration is GifTest {
             address(registry),
             productNftId,
             address(token),
-            new BasicPoolAuthorization(name),
             _getDefaultSimplePoolInfo(),
+            new BasicPoolAuthorization(name),
             owner);
     }
 }
@@ -284,22 +283,19 @@ contract SimpleProductV4 is SimpleProduct {
     constructor(
         address registry,
         NftId instanceNftId,
-        IAuthorization authorization,
-        address initialOwner,
         address token,
-        bool isInterceptor,
-        bool hasDistribution,
-        uint8 numberOfOracles
+        IComponents.ProductInfo memory productInfo,
+        IAuthorization authorization,
+        address initialOwner
     )
         SimpleProduct(
             registry,
             instanceNftId,
-            authorization,
-            initialOwner,
+            "SimpleProductV4",
             token,
-            isInterceptor,
-            hasDistribution,
-            numberOfOracles
+            productInfo,
+            authorization,
+            initialOwner
         )
     { }
 
