@@ -105,8 +105,9 @@ contract PoolService is
     function closeBundle(NftId bundleNftId)
         external
         virtual
-        onlyNftOfType(bundleNftId, BUNDLE())
     {
+        _checkNftType(bundleNftId, BUNDLE());
+
         (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
 
         // TODO get performance fee for pool (#477)
@@ -140,8 +141,9 @@ contract PoolService is
     ) 
         external
         virtual
-        onlyNftOfType(policyNftId, POLICY())
     {
+        _checkNftType(policyNftId, POLICY());
+
         (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
         InstanceReader instanceReader = instance.getInstanceReader();
         NftId productNftId = _getProductNftId(poolNftId);
@@ -170,9 +172,10 @@ contract PoolService is
         external 
         virtual
         // TODO: restricted() (once #462 is done)
-        onlyNftOfType(bundleNftId, BUNDLE())
         returns(Amount netAmount) 
     {
+        _checkNftType(bundleNftId, BUNDLE());
+
         (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
         InstanceReader instanceReader = instance.getInstanceReader();
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
@@ -229,10 +232,11 @@ contract PoolService is
     function unstake(NftId bundleNftId, Amount amount) 
         external 
         virtual
-        onlyNftOfType(bundleNftId, BUNDLE())
         // TODO: restricted() (once #462 is done)
         returns(Amount netAmount) 
     {
+        _checkNftType(bundleNftId, BUNDLE());
+
         (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
         InstanceReader instanceReader = instance.getInstanceReader();
         InstanceStore instanceStore = instance.getInstanceStore();
@@ -275,8 +279,8 @@ contract PoolService is
         external
         virtual
         restricted()
-        onlyNftOfType(poolNftId, POOL())
     {
+        _checkNftType(poolNftId, POOL());
         // TODO check that poolNftId is externally managed
         // TODO implement
     }
@@ -286,8 +290,9 @@ contract PoolService is
         external
         virtual
         restricted()
-        onlyNftOfType(poolNftId, POOL())
     {
+        _checkNftType(poolNftId, POOL());
+
         // TODO check that poolNftId is externally managed
         // TODO implement
     }
@@ -299,8 +304,9 @@ contract PoolService is
         external
         virtual
         restricted()
-        onlyNftOfType(bundleNftId, BUNDLE())
     {
+        _checkNftType(bundleNftId, BUNDLE());
+
         IRegistry registry = getRegistry();
         IRegistry.ObjectInfo memory bundleInfo = registry.getObjectInfo(bundleNftId);
         IRegistry.ObjectInfo memory poolInfo = registry.getObjectInfo(bundleInfo.parentNftId);
@@ -336,14 +342,15 @@ contract PoolService is
         external
         virtual
         restricted()
-        onlyNftOfType(productNftId, PRODUCT())
-        onlyNftOfType(applicationNftId, POLICY())
-        onlyNftOfType(bundleNftId, BUNDLE())
         returns (
             Amount totalCollateralAmount,
             Amount localCollateralAmount
         )
     {
+        _checkNftType(productNftId, PRODUCT());
+        _checkNftType(applicationNftId, POLICY());
+        _checkNftType(bundleNftId, BUNDLE());
+
         (
             totalCollateralAmount,
             localCollateralAmount
@@ -376,8 +383,9 @@ contract PoolService is
         external
         virtual
         restricted()
-        onlyNftOfType(policyNftId, POLICY())
     {
+        _checkNftType(policyNftId, POLICY());
+
         NftId bundleNftId = policyInfo.bundleNftId;
         NftId poolNftId = getRegistry().getObjectInfo(bundleNftId).parentNftId;
         InstanceStore instanceStore = instance.getInstanceStore();
@@ -419,8 +427,9 @@ contract PoolService is
         external
         virtual
         restricted()
-        onlyNftOfType(policyNftId, POLICY())
     {
+        _checkNftType(policyNftId, POLICY());
+
         Amount remainingCollateralAmount = policyInfo.sumInsuredAmount - policyInfo.claimAmount;
 
         _bundleService.releaseCollateral(
@@ -448,12 +457,13 @@ contract PoolService is
     )
         public
         view 
-        onlyNftOfType(productNftId, PRODUCT())
         returns(
             Amount totalCollateralAmount,
             Amount localCollateralAmount
         )
     {
+        _checkNftType(productNftId, PRODUCT());
+
         NftId poolNftId = instanceReader.getProductInfo(productNftId).poolNftId;
         IComponents.PoolInfo memory poolInfo = instanceReader.getPoolInfo(poolNftId);
 
