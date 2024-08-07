@@ -118,7 +118,7 @@ contract InstanceService is
             TargetManagerLib.getDefaultRewardRate());
 
         // MUST be set after instance is set up and registered
-        instanceAdmin.completeSetup(address(clonedInstance));
+        instanceAdmin.completeSetup(address(clonedInstance), address(getRegistry()));
 
         emit LogInstanceCloned(
             clonedInstanceNftId,

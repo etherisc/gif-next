@@ -16,7 +16,7 @@ import {ObjectType, ObjectTypeLib, ALL, POOL, RELEASE} from "../type/ObjectType.
 import {RoleId, RoleIdLib, ADMIN_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {Str, StrLib} from "../type/String.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
-import {VersionPart} from "../type/Version.sol";
+import {VersionPart, VersionPartLib} from "../type/Version.sol";
 
 
 contract InstanceAdmin is
@@ -88,10 +88,11 @@ contract InstanceAdmin is
     /// @dev Completes the initialization of this instance admin using the provided instance.
     /// Important: The instance MUST be registered and all instance supporting contracts must be wired to this instance.
     /// Important: MUST be called in the same tx as initialize()
-    function completeSetup(address instanceAddress)
+    function completeSetup(address instanceAddress, address registry)
         external
+        onlyDeployer()
     {
-        // !!! TODO add caller restrictions?
+        AccessManagerCloneable(authority()).completeSetup(registry, IInstance(instanceAddress).getRelease()); 
 
         _checkTargetIsReadyForAuthorization(instanceAddress);
 

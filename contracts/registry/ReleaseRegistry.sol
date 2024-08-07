@@ -14,7 +14,7 @@ import {VersionPart, VersionPartLib} from "../type/Version.sol";
 import {IService} from "../shared/IService.sol";
 
 import {IAccessAdmin} from "../authorization/IAccessAdmin.sol";
-import {ReleaseAccessManagerCloneable} from "../authorization/ReleaseAccessManagerCloneable.sol";
+import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
 
 import {IRegistry} from "./IRegistry.sol";
 import {IRegistryLinked} from "../shared/IRegistryLinked.sol";
@@ -361,7 +361,7 @@ contract ReleaseRegistry is
         private
         returns (ReleaseAdmin clonedAdmin)
     {
-        ReleaseAccessManagerCloneable releaseAccessManager = ReleaseAccessManagerCloneable(
+        AccessManagerCloneable releaseAccessManager = AccessManagerCloneable(
             Clones.clone(
                 _masterReleaseAdmin.authority()
             )
@@ -371,7 +371,7 @@ contract ReleaseRegistry is
                 address(_masterReleaseAdmin)
             )
         );
-        clonedAdmin.initialize(releaseAccessManager, address(this));
+        clonedAdmin.initialize(releaseAccessManager, address(_registry), address(this));
         clonedAdmin.setReleaseLocked(true);
     }
 

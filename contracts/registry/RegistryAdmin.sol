@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {AccessAdmin} from "../authorization/AccessAdmin.sol";
+import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
 import {IAccess} from "../authorization/IAccess.sol";
 import {IRegistry} from "./IRegistry.sol";
 import {IService} from "../shared/IService.sol";
@@ -13,7 +14,7 @@ import {RoleId, RoleIdLib, ADMIN_ROLE, GIF_MANAGER_ROLE, GIF_ADMIN_ROLE, PUBLIC_
 import {StakingStore} from "../staking/StakingStore.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {TokenRegistry} from "./TokenRegistry.sol";
-import {VersionPart} from "../type/Version.sol";
+import {VersionPart, VersionPartLib} from "../type/Version.sol";
 
 /*
     1) GIF_MANAGER_ROLE
@@ -28,6 +29,8 @@ import {VersionPart} from "../type/Version.sol";
         - granted/revoked ONLY in transferAdminRole() -> consider lock out situations!!!
         - responsible for creation, activation and locking/unlocking of releases
 */
+
+/// @dev IMPORTANT: MUST not use authority().setLocked() 
 contract RegistryAdmin is
     AccessAdmin
 {
@@ -70,6 +73,8 @@ contract RegistryAdmin is
         initializer
         onlyDeployer()
     {
+        AccessManagerCloneable(authority()).completeSetup(address(registry), VersionPartLib.toVersionPart(type(uint8).max)); 
+
         _registry = address(registry);
         _releaseRegistry = registry.getReleaseRegistryAddress();
         _tokenRegistry = registry.getTokenRegistryAddress();

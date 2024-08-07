@@ -69,7 +69,6 @@ contract AccessAdmin is
     modifier onlyDeployer() {
         // special case for cloned AccessAdmin contracts
         // IMPORTANT cloning and _initializeAuthority needs to be done in a single transaction
-        // TODO do not set in modifier? -> hard to track wich function will be caled first and who can call it
         if (_deployer == address(0)) {
             _deployer = msg.sender;
         }
@@ -110,7 +109,7 @@ contract AccessAdmin is
     // constructor creates all master contracts and does no further initializations
     constructor() {
         _deployer = msg.sender;
-        _authority = _createAuthority();
+        _authority = new AccessManagerCloneable();
 
         // admin role is granted before it is created
         _authority.initialize(address(this));
@@ -123,14 +122,6 @@ contract AccessAdmin is
 
         // done in child classes because of RegistryAdmin.completeSetup()
         //_disableInitalizers();
-    }
-
-    function _createAuthority()
-        internal
-        virtual
-        returns (AccessManagerCloneable)
-    {
-        return new AccessManagerCloneable();
     }
 
     //-------------- initialization functions ------------------------------//

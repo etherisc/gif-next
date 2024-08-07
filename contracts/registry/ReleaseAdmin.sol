@@ -8,8 +8,7 @@ import {IService} from "../shared/IService.sol";
 import {IServiceAuthorization} from "../authorization/IServiceAuthorization.sol";
 import {ObjectType, ObjectTypeLib, ALL, RELEASE} from "../type/ObjectType.sol";
 import {RoleId, RoleIdLib, ADMIN_ROLE, RELEASE_REGISTRY_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
-import {VersionPart} from "../type/Version.sol";
-import {ReleaseAccessManagerCloneable} from "../authorization/ReleaseAccessManagerCloneable.sol";
+import {VersionPart, VersionPartLib} from "../type/Version.sol";
 import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
 
 
@@ -42,18 +41,14 @@ contract ReleaseAdmin is
         _disableInitializers();
     }
 
-    function _createAuthority()
-        internal
-        virtual override
-        returns (AccessManagerCloneable)
-    {
-        return new ReleaseAccessManagerCloneable();
-    }
-
     // TODO can store IServiceAuthorization like InstanceAdmin does
-    /// @dev Initializes this releae admin with the provided access manager and release registry address.
+    /// @dev Initializes this release admin with the provided access manager, registry and release registry addresses.
     /// Used for cloned release admin.
-    function initialize(ReleaseAccessManagerCloneable accessManager, address releaseRegistry)
+    function initialize(
+        AccessManagerCloneable accessManager, 
+        address registry, 
+        address releaseRegistry
+    )
         external
         initializer
     {
@@ -61,6 +56,7 @@ contract ReleaseAdmin is
         // admin role is granted before it is created
         // _deployer initialized here
         _initializeAuthority(accessManager);
+        AccessManagerCloneable(authority()).completeSetup(registry, VersionPartLib.toVersionPart(type(uint8).max)); 
 
         // create basic release independent setup
         _initializeAdminAndPublicRoles();
@@ -227,12 +223,12 @@ contract ReleaseAdmin is
     function _setReleaseLocked(bool locked)
         private
     {
-        ReleaseAccessManagerCloneable accessManager = ReleaseAccessManagerCloneable(authority());
-        if(accessManager.isReleaseLocked() == locked) {
+        AccessManagerCloneable accessManager = AccessManagerCloneable(authority());
+        if(accessManager.isLocked() == locked) {
             revert ErrorReleaseAdminReleaseAlreadyLocked();
         }
 
-        accessManager.setReleaseLocked(locked);
+        accessManager.setLocked(locked);
     }
 
     //--- private initialization functions -------------------------------------------//
