@@ -38,10 +38,7 @@ contract PolicyService is
     ComponentVerifyingService, 
     IPolicyService
 {
-    IApplicationService internal _applicationService;
     IComponentService internal _componentService;
-    IBundleService internal _bundleService;
-    IClaimService internal _claimService;
     IDistributionService internal _distributionService;
     IPoolService internal _poolService;
     IPricingService internal _pricingService;
@@ -62,10 +59,7 @@ contract PolicyService is
         _initializeService(registryAddress, authority, owner);
 
         VersionPart majorVersion = getVersion().toMajorPart();
-        _applicationService = IApplicationService(getRegistry().getServiceAddress(APPLICATION(), majorVersion));
-        _bundleService = IBundleService(getRegistry().getServiceAddress(BUNDLE(), majorVersion));
         _componentService = IComponentService(getRegistry().getServiceAddress(COMPONENT(), majorVersion));
-        _claimService = IClaimService(getRegistry().getServiceAddress(CLAIM(), majorVersion));
         _poolService = IPoolService(getRegistry().getServiceAddress(POOL(), majorVersion));
         _distributionService = IDistributionService(getRegistry().getServiceAddress(DISTRIBUTION(), majorVersion));
         _pricingService = IPricingService(getRegistry().getServiceAddress(PRICE(), majorVersion));
