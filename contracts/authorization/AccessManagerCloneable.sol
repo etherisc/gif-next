@@ -59,11 +59,11 @@ contract AccessManagerCloneable is
     {
         IRegistry registry = getRegistry();
 
-        // TODO limitation: in order to be checked for a lock caller must be registered
+        // TODO limitation: in order to be checked caller must be registered
         if(registry.isRegistered(caller)) { // caller is access managed
 
             // TODO getAdmin() returns 0 if registered caller is managed by registry / instance access managers
-            //      register must be aware of registry and instance admins too?
+            //      registry must be aware of registry and instance admins too?
             //AccessManagerCloneable callerAm = AccessManagerCloneable(getRegistry().getAdmin(caller).authority());
             AccessManagerCloneable callerAm = AccessManagerCloneable(IAccessManaged(caller).authority());
 

@@ -371,7 +371,7 @@ contract ReleaseRegistry is
                 address(_masterReleaseAdmin)
             )
         );
-        clonedAdmin.initialize(releaseAccessManager, address(_registry), address(this));
+        clonedAdmin.initialize(releaseAccessManager, address(_registry), address(this), _next);
         clonedAdmin.setReleaseLocked(true);
     }
 

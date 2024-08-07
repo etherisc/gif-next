@@ -47,7 +47,8 @@ contract ReleaseAdmin is
     function initialize(
         AccessManagerCloneable accessManager, 
         address registry, 
-        address releaseRegistry
+        address releaseRegistry,
+        VersionPart releaseVersion
     )
         external
         initializer
@@ -56,7 +57,7 @@ contract ReleaseAdmin is
         // admin role is granted before it is created
         // _deployer initialized here
         _initializeAuthority(accessManager);
-        AccessManagerCloneable(authority()).completeSetup(registry, VersionPartLib.toVersionPart(type(uint8).max)); 
+        accessManager.completeSetup(registry, releaseVersion); 
 
         // create basic release independent setup
         _initializeAdminAndPublicRoles();
@@ -94,7 +95,6 @@ contract ReleaseAdmin is
 
     /// @dev Lock/unlock specific service of release.
     /// Permissioned function: Access is restricted to release registry.
-    /// Note: service locked with this function wont'be unlocked by setReleaseLocked(false).
     function setServiceLocked(IService service, bool locked)
         external
         restricted()
@@ -105,7 +105,6 @@ contract ReleaseAdmin is
             revert ErrorReleaseAdminNotService(address(service));
         }
 
-        // will check for release lock
         _setTargetClosed(address(service), locked);
     }
 
