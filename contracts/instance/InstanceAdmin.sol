@@ -29,8 +29,10 @@ contract InstanceAdmin is
 
     uint64 public constant CUSTOM_ROLE_ID_MIN = 10000; // MUST be even
 
-    error ErrorInstanceAdminNotRegistered(address target);
-    error ErrorInstanceAdminAlreadyAuthorized(address target);
+    error ErrorInstanceAdminCallerNotInstanceOwner(address caller);
+    error ErrorInstanceAdminInstanceAlreadyLocked();
+    error ErrorInstanceAdminTargetNotRegistered(address target);
+    error ErrorInstanceAdminTargetAlreadyAuthorized(address target);
     error ErrorInstanceAdminReleaseMismatch();
     error ErrorInstanceAdminExpectedTargetMissing(string targetName);
 
@@ -39,6 +41,14 @@ contract InstanceAdmin is
     uint64 _idNext;
 
     IAuthorization _instanceAuthorization;
+
+
+    modifier onlyInstanceOwner() {        
+        if(msg.sender != _registry.ownerOf(address(_instance))) {
+            revert ErrorInstanceAdminCallerNotInstanceOwner(msg.sender);
+        }
+        _;
+    }
 
     /// @dev Only used for master instance admin.
     /// Contracts created via constructor come with disabled initializers.
@@ -77,11 +87,11 @@ contract InstanceAdmin is
         view
     {
         if (address(_registry) != address(0) && !_registry.isRegistered(target)) {
-            revert ErrorInstanceAdminNotRegistered(target);
+            revert ErrorInstanceAdminTargetNotRegistered(target);
         }
 
         if (targetExists(target)) {
-            revert ErrorInstanceAdminAlreadyAuthorized(target);
+            revert ErrorInstanceAdminTargetAlreadyAuthorized(target);
         }
     }
 
@@ -178,6 +188,19 @@ contract InstanceAdmin is
         restricted()
     {
         _grantRoleToAccount(roleId, account);
+    }
+
+
+    function setInstanceLocked(bool locked)
+        external
+        onlyInstanceOwner()
+    {
+        AccessManagerCloneable accessManager = AccessManagerCloneable(authority());
+
+        if(accessManager.isLocked() == locked) {
+            revert ErrorInstanceAdminInstanceAlreadyLocked();
+        }
+        accessManager.setLocked(locked);
     }
 
     /// @dev Returns the instance authorization specification used to set up this instance admin.
