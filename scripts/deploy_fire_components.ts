@@ -30,7 +30,7 @@ async function main() {
         RegistryAdmin__factory.createInterface(),
     ]);
 
-    const { instanceOwner } = await getNamedAccounts();
+    const { protocolOwner: fireOwner } = await getNamedAccounts();
 
     const amountLibAddress = process.env.AMOUNTLIB_ADDRESS;
     const feeLibAddress = process.env.FEELIB_ADDRESS;
@@ -48,27 +48,28 @@ async function main() {
     const instanceServiceAddress = process.env.INSTANCE_SERVICE_ADDRESS;
 
     // logger.debug(`instanceServiceAddress: ${instanceServiceAddress}`);
-    const instanceService = IInstanceService__factory.connect(instanceServiceAddress!, instanceOwner);
+    const instanceService = IInstanceService__factory.connect(instanceServiceAddress!, fireOwner);
 
     console.log("create new instance");
     const instanceCreateTx = await executeTx(async () => 
-        await instanceService.createInstance(getTxOpts())
+        await instanceService.createInstance(getTxOpts()),
+        "fire ex - createInstance"
     );
 
     const instanceAddress = getFieldFromLogs(instanceCreateTx.logs, instanceService.interface, "LogInstanceCloned", "instance") as string;
     const instanceNftId = getFieldFromLogs(instanceCreateTx.logs, instanceService.interface, "LogInstanceCloned", "instanceNftId") as string;
-    const instance = IInstance__factory.connect(instanceAddress, instanceOwner);
+    const instance = IInstance__factory.connect(instanceAddress, fireOwner);
     logger.info(`Instance created at ${instanceAddress} with NFT ID ${instanceNftId}`);
 
     const { address: fireUsdAddress } = await deployContract(
         "FireUSD",
-        instanceOwner);
+        fireOwner);
     
     const deploymentId = Math.random().toString(16).substring(7);
     const fireProductName = "FireProduct_" + deploymentId;
     const { address: fireProductAuthAddress } = await deployContract(
         "FireProductAuthorization",
-        instanceOwner,
+        fireOwner,
         [fireProductName],
         {
             libraries: {
@@ -78,11 +79,12 @@ async function main() {
                 TimestampLib: timestampLibAddress,
                 VersionPartLib: versionPartLibAddress,
             }
-        });
+        },
+        "contracts/examples/fire/FireProductAuthorization.sol:FireProductAuthorization");
 
     const { address: fireProductAddress, contract: fireProductBaseContract } = await deployContract(
         "FireProduct",
-        instanceOwner,
+        fireOwner,
         [
             await instance.getRegistry(),
             instanceNftId,
@@ -106,7 +108,10 @@ async function main() {
     const fireProduct = fireProductBaseContract as FireProduct;
     logger.info(`registering FireProduct on Instance`);
     try {
-        await executeTx(async () => await instance.registerProduct(fireProductAddress, getTxOpts()));
+        await executeTx(async () => 
+            await instance.registerProduct(fireProductAddress, getTxOpts()),
+            "fire ex - registerProduct"
+        );
     } catch (err) {
         const decodedError: DecodedError = await errorDecoder.decode(err)
         logger.error(decodedError.reason);
@@ -118,7 +123,7 @@ async function main() {
     const firePoolName = "FirePool_" + deploymentId;
     const { address: firePoolAuthAddress } = await deployContract(
         "FirePoolAuthorization",
-        instanceOwner,
+        fireOwner,
         [firePoolName],
         {
             libraries: {
@@ -128,11 +133,12 @@ async function main() {
                 TimestampLib: timestampLibAddress,
                 VersionPartLib: versionPartLibAddress,
             }
-        });
+        },
+        "contracts/examples/fire/FirePoolAuthorization.sol:FirePoolAuthorization");
 
     const { address: firePoolAddress, contract: firePoolBaseContract } = await deployContract(
         "FirePool",
-        instanceOwner,
+        fireOwner,
         [
             await instance.getRegistry(),
             fireProductNftId,
@@ -152,7 +158,10 @@ async function main() {
     const firePool = firePoolBaseContract as FirePool;
     logger.info(`registering FirePool on FireProduct`);
     try {
-        await executeTx(async () => await fireProduct.registerComponent(firePoolAddress, getTxOpts()));
+        await executeTx(async () => 
+            await fireProduct.registerComponent(firePoolAddress, getTxOpts()),
+            "fire ex - registerComponent"
+        );
     } catch (err) {
         const decodedError: DecodedError = await errorDecoder.decode(err)
         logger.error(decodedError.reason);

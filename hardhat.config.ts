@@ -34,7 +34,8 @@ const config: HardhatUserConfig = {
     polygonAmoy: {
       chainId: 80002,
       url: process.env.NETWORK_URL || 'https://rpc-amoy.polygon.technology/',
-      gasPrice: 1500000000,
+      gasPrice: 30000000000,
+      // maxFeePerGas: 30000000000,
       accounts: {
         mnemonic: process.env.WALLET_MNEMONIC || "candy maple cake sugar pudding cream honey rich smooth crumble sweet treat",
         count: 20,
