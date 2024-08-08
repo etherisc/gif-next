@@ -2,11 +2,14 @@ import { DecodedError, ErrorDecoder } from 'ethers-decode-error';
 import { AccessManaged__factory, AccessManagedUpgradeable__factory, BasicPool__factory, FirePool, FirePool__factory, FireProduct, FireProduct__factory, IAccessManaged__factory, IComponent__factory, IComponentService__factory, IInstance__factory, IInstanceLinkedComponent__factory, IInstanceService__factory, INftOwnable__factory, InstanceAdmin__factory, IPoolComponent__factory, IRegisterable__factory, IRegistry__factory, IRegistryService__factory, Pool__factory, RegistryAdmin__factory } from "../typechain-types";
 import { getNamedAccounts } from "./libs/accounts";
 import { deployContract } from "./libs/deployment";
-import { executeTx, getFieldFromLogs } from "./libs/transaction";
+import { executeTx, getFieldFromLogs, getTxOpts } from "./libs/transaction";
 import { logger } from "./logger";
+import { loadVerificationQueueState } from './libs/verification_queue';
 
 async function main() {
     logger.info("deploying components ...");
+    loadVerificationQueueState();
+    
     const errorDecoder = ErrorDecoder.create([
         FirePool__factory.createInterface(),
         FireProduct__factory.createInterface(),
@@ -49,7 +52,7 @@ async function main() {
 
     console.log("create new instance");
     const instanceCreateTx = await executeTx(async () => 
-        await instanceService.createInstance()
+        await instanceService.createInstance(getTxOpts())
     );
 
     const instanceAddress = getFieldFromLogs(instanceCreateTx.logs, instanceService.interface, "LogInstanceCloned", "instance") as string;
@@ -103,7 +106,7 @@ async function main() {
     const fireProduct = fireProductBaseContract as FireProduct;
     logger.info(`registering FireProduct on Instance`);
     try {
-        await executeTx(async () => await instance.registerProduct(fireProductAddress));
+        await executeTx(async () => await instance.registerProduct(fireProductAddress, getTxOpts()));
     } catch (err) {
         const decodedError: DecodedError = await errorDecoder.decode(err)
         logger.error(decodedError.reason);
@@ -149,7 +152,7 @@ async function main() {
     const firePool = firePoolBaseContract as FirePool;
     logger.info(`registering FirePool on FireProduct`);
     try {
-        await executeTx(async () => await fireProduct.registerComponent(firePoolAddress));
+        await executeTx(async () => await fireProduct.registerComponent(firePoolAddress, getTxOpts()));
     } catch (err) {
         const decodedError: DecodedError = await errorDecoder.decode(err)
         logger.error(decodedError.reason);
@@ -158,6 +161,7 @@ async function main() {
     }
     const firePoolNftId = await firePool.getNftId();
 
+    logger.info(`FireUSD deployed at ${fireUsdAddress}`);
     logger.info(`FirePool registered at ${firePoolAddress} with NFT ID ${firePoolNftId}`);
     logger.info(`FireProduct registered at ${fireProductAddress} with NFT ID ${fireProductNftId}`);
 }
