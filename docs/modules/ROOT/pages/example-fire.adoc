@@ -21,23 +21,23 @@ The payout is 25% for small fires, 50% for medium fires and 100% for large fires
 
 === With Remix
 
-1. Checkout repository `gif-next`` (https://github.com/etherisc/gif-next.git) in Remix IDE
-2. Call 'Update submodules' (Link at the bottom left of the page)
-3. Open the `InstanceService` contract in directory `contracts/instance/InstanceService.sol` and compile it
-4. Switch to the `Deploy & Run Transactions` tab and connect to the network of choice (must have a GIF deployment)
-5. Connect to the existing `InstanceService` contract 
-6. Call the `createInstance` function (no arguments) and find the log `LogInstanceCloned` that shows the address of the new instance in field `instance` and the instance nft id in field `instanceNftId`
-7. Now compile the contracts `FireUSD.sol`, `FirePoolAuthorization`, `FirePool`, `FireProductAuthorization` and `FireProduct` in the directory `contracts/examples/fire`
+1. Checkout repository `gif-next`` (https://github.com/etherisc/gif-next.git) in Remix IDE.
+2. Call 'Update submodules' (Link at the bottom left of the page).
+3. Open the `InstanceService` contract in directory `contracts/instance/InstanceService.sol` and compile it.
+4. Switch to the `Deploy & Run Transactions` tab and connect to the network of choice (must have a GIF deployment).
+5. Connect to the existing `InstanceService` contract.
+6. Call the `createInstance` function (no arguments) and find the log `LogInstanceCloned` that shows the address of the new instance in field `instance` and the instance nft id in field `instanceNftId`.
+7. Now compile the contracts `FireUSD.sol`, `FirePoolAuthorization`, `FirePool`, `FireProductAuthorization` and `FireProduct` in the directory `contracts/examples/fire`.
 8. Deploy the FireUSD contract and save the address. You can also use any pre-existing ERC20 Token. 
 9. Deploy the FirePoolAuthorization contract with an arbitrary unique name and save the address.
 10. Deploy tye FireProductAuthorization contract with an arbitrary unique name and save the address.
-11. Deploy the FirePool contract and save the address. The pool requires the registry address, the instance nft id, the name of the component (same as used in step 9) , the address of the token as well as the address of the pool authorization contract as arguments.
-12. Call `register` on the `FirePool` contract. 
-13. Get the nft if of the pool by calling `getNftId` function on the `FirePool` contract
-14. Deploy the FireProduct contract and save the address. The product requires the registry address, the instance nft id, the name of the component (same as used in step 10) , the address of the token as well as the address of the pool and the address of the product authorization contract as arguments.
-15. Call `register` on the `FireProduct` contract 
-16. Get the nft if of the product by calling `getNftId` function on the `FireProduct` contract
-17. Congratulations, the fire product is now deployed and ready to use
+11. Deploy the FireProduct contract and save the address. The product requires the registry address, the instance nft id, the name of the component (same as used in step 10) and the address of the product authorization contract as arguments.
+12. Call `registerProduct` on the `Instance` contract and provide the address of the product contract as argument.
+13. Get the nft id of the product by calling `getNftId` function on the `FireProduct` contract.
+14. Deploy the FirePool contract and save the address. The pool requires the registry address, the product nft id, the name of the component (same as used in step 9) , the address of the token as well as the address of the pool authorization contract as arguments.
+15. Call `registerComponent` on the `FireProduct` contract and provide the address of the pool as argument. 
+16. Get the nft if of the pool by calling `getNftId` function on the `FirePool` contract.
+17. Congratulations, the fire product is now deployed and ready to use.
 
 
 === Using the hardhat script
