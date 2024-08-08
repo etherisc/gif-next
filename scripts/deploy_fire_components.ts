@@ -30,7 +30,7 @@ async function main() {
         RegistryAdmin__factory.createInterface(),
     ]);
 
-    const { protocolOwner: fireOwner } = await getNamedAccounts();
+    const { productOwner: fireOwner } = await getNamedAccounts();
 
     const amountLibAddress = process.env.AMOUNTLIB_ADDRESS;
     const feeLibAddress = process.env.FEELIB_ADDRESS;
