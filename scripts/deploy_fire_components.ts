@@ -33,7 +33,6 @@ async function main() {
     const feeLibAddress = process.env.FEELIB_ADDRESS;
     const nftIdLibAddress = process.env.NFTIDLIB_ADDRESS;
     const referralLibAddress = process.env.REFERRALLIB_ADDRESS;
-    const objectTypeLibAddress = process.env.OBJECTTYPELIB_ADDRESS;
     const riskIdLibAddress = process.env.RISKIDLIB_ADDRESS;
     const roleIdLibAddress = process.env.ROLEIDLIB_ADDRESS;
     const secondsLibAddress = process.env.SECONDSLIB_ADDRESS;
@@ -62,51 +61,8 @@ async function main() {
         "FireUSD",
         instanceOwner);
     
-    const firePoolName = "FirePool_" + Math.random().toString(16).substring(7);
-    const { address: firePoolAuthAddress } = await deployContract(
-        "FirePoolAuthorization",
-        instanceOwner,
-        [firePoolName],
-        {
-            libraries: {
-                RoleIdLib: roleIdLibAddress,
-                SelectorLib: selectorLibAddress,
-                StrLib: strLibAddress,
-                TimestampLib: timestampLibAddress,
-                VersionPartLib: versionPartLibAddress,
-            }
-        });
-
-    const { address: firePoolAddress, contract: firePoolBaseContract } = await deployContract(
-        "FirePool",
-        instanceOwner,
-        [
-            await instance.getRegistry(),
-            instanceNftId,
-            firePoolName,
-            fireUsdAddress,
-            firePoolAuthAddress,
-        ],
-        {
-            libraries: {
-                AmountLib: amountLibAddress,
-                NftIdLib: nftIdLibAddress,
-                RoleIdLib: roleIdLibAddress,
-                UFixedLib: ufixedLibAddress,
-            }
-        });
-    const firePool = firePoolBaseContract as FirePool;
-    try {
-        await executeTx(async () => await firePool.register());
-    } catch (err) {
-        const decodedError: DecodedError = await errorDecoder.decode(err)
-        logger.error(decodedError.reason);
-        logger.error(decodedError.args);
-        throw err;
-    }
-    const firePoolNftId = await firePool.getNftId();
-
-    const fireProductName = "FireProduct_" + Math.random().toString(16).substring(7);
+    const deploymentId = Math.random().toString(16).substring(7);
+    const fireProductName = "FireProduct_" + deploymentId;
     const { address: fireProductAuthAddress } = await deployContract(
         "FireProductAuthorization",
         instanceOwner,
@@ -129,7 +85,6 @@ async function main() {
             instanceNftId,
             fireProductName,
             fireUsdAddress,
-            firePoolAddress,
             fireProductAuthAddress,
         ],
         {
@@ -137,17 +92,18 @@ async function main() {
                 AmountLib: amountLibAddress,
                 FeeLib: feeLibAddress,
                 NftIdLib: nftIdLibAddress,
-                ObjectTypeLib: objectTypeLibAddress,
                 ReferralLib: referralLibAddress,
                 RiskIdLib: riskIdLibAddress,
                 SecondsLib: secondsLibAddress,
                 TimestampLib: timestampLibAddress,
                 UFixedLib: ufixedLibAddress,
+                VersionPartLib: versionPartLibAddress,
             }
         });
     const fireProduct = fireProductBaseContract as FireProduct;
+    logger.info(`registering FireProduct on Instance`);
     try {
-        await executeTx(async () => await fireProduct.register());
+        await executeTx(async () => await instance.registerProduct(fireProductAddress));
     } catch (err) {
         const decodedError: DecodedError = await errorDecoder.decode(err)
         logger.error(decodedError.reason);
@@ -155,6 +111,52 @@ async function main() {
         throw err;
     }
     const fireProductNftId = await fireProduct.getNftId();
+
+    const firePoolName = "FirePool_" + deploymentId;
+    const { address: firePoolAuthAddress } = await deployContract(
+        "FirePoolAuthorization",
+        instanceOwner,
+        [firePoolName],
+        {
+            libraries: {
+                RoleIdLib: roleIdLibAddress,
+                SelectorLib: selectorLibAddress,
+                StrLib: strLibAddress,
+                TimestampLib: timestampLibAddress,
+                VersionPartLib: versionPartLibAddress,
+            }
+        });
+
+    const { address: firePoolAddress, contract: firePoolBaseContract } = await deployContract(
+        "FirePool",
+        instanceOwner,
+        [
+            await instance.getRegistry(),
+            fireProductNftId,
+            firePoolName,
+            fireUsdAddress,
+            firePoolAuthAddress,
+        ],
+        {
+            libraries: {
+                AmountLib: amountLibAddress,
+                NftIdLib: nftIdLibAddress,
+                RoleIdLib: roleIdLibAddress,
+                UFixedLib: ufixedLibAddress,
+                VersionPartLib: versionPartLibAddress,
+            }
+        });
+    const firePool = firePoolBaseContract as FirePool;
+    logger.info(`registering FirePool on FireProduct`);
+    try {
+        await executeTx(async () => await fireProduct.registerComponent(firePoolAddress));
+    } catch (err) {
+        const decodedError: DecodedError = await errorDecoder.decode(err)
+        logger.error(decodedError.reason);
+        logger.error(decodedError.args);
+        throw err;
+    }
+    const firePoolNftId = await firePool.getNftId();
 
     logger.info(`FirePool registered at ${firePoolAddress} with NFT ID ${firePoolNftId}`);
     logger.info(`FireProduct registered at ${fireProductAddress} with NFT ID ${fireProductNftId}`);

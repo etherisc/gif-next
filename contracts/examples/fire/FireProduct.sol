@@ -65,7 +65,6 @@ contract FireProduct is
         NftId instanceNftid,
         string memory componentName,
         address token,
-        address pool,
         IAuthorization authorization
     )
     {
@@ -76,7 +75,6 @@ contract FireProduct is
             instanceNftid,
             componentName,
             token,
-            pool,
             authorization,
             initialOwner);
     }
@@ -86,7 +84,6 @@ contract FireProduct is
         NftId instanceNftid,
         string memory componentName,
         address token,
-        address pool,
         IAuthorization authorization,
         address initialOwner
     )
