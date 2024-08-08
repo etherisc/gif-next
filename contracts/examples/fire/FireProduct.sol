@@ -10,7 +10,7 @@ import {IAuthorization} from "../../authorization/IAuthorization.sol";
 import {IPolicy} from "../../instance/module/IPolicy.sol";
 import {NftId} from "../../type/NftId.sol";
 import {PayoutId} from "../../type/PayoutId.sol";
-import {POLICY} from "../../type/ObjectType.sol";
+import {POLICY, BUNDLE} from "../../type/ObjectType.sol";
 import {ReferralLib} from "../../type/Referral.sol";
 import {RiskId, RiskIdLib} from "../../type/RiskId.sol";
 import {Seconds} from "../../type/Seconds.sol";
@@ -157,6 +157,7 @@ contract FireProduct is
     ) 
         public
         view
+        onlyNftOfType(bundleNftId, BUNDLE())
         returns (Amount premiumAmount)
     {
         RiskId risk = _riskMapping[cityName];
@@ -198,6 +199,7 @@ contract FireProduct is
     )
         public
         restricted()
+        onlyNftOfType(bundleNftId, BUNDLE())
         returns (NftId policyNftId)
     {
         address applicationOwner = msg.sender;
@@ -247,6 +249,7 @@ contract FireProduct is
         public 
         restricted()
         onlyOwner()
+        onlyNftOfType(policyNftId, POLICY())
     {
         _createPolicy(policyNftId, activateAt);
         _collectPremium(policyNftId, activateAt);
@@ -259,6 +262,7 @@ contract FireProduct is
         public 
         restricted()
         onlyOwner()
+        onlyNftOfType(policyNftId, POLICY())
     {
         _decline(policyNftId);
     }
@@ -270,6 +274,7 @@ contract FireProduct is
         public 
         restricted()
         onlyOwner()
+        onlyNftOfType(policyNftId, POLICY())
         returns (Timestamp)
     {
         return _expire(policyNftId, expireAt);
@@ -281,6 +286,7 @@ contract FireProduct is
         public 
         restricted()
         onlyOwner()
+        onlyNftOfType(policyNftId, POLICY())
     {
         _close(policyNftId);
     }

@@ -319,6 +319,7 @@ contract DistributionService is
     function referralIsValid(NftId distributionNftId, ReferralId referralId) 
         public 
         view 
+        onlyNftOfType(distributionNftId, DISTRIBUTION())
         returns (bool isValid) 
     {
         if (distributionNftId.eqz() || referralId.eqz()) {

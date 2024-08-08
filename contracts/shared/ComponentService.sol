@@ -22,7 +22,7 @@ import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegistryService} from "../registry/IRegistryService.sol";
 import {KEEP_STATE} from "../type/StateId.sol";
 import {NftId} from "../type/NftId.sol";
-import {ObjectType, REGISTRY, COMPONENT, DISTRIBUTION, INSTANCE, ORACLE, POOL, PRODUCT} from "../type/ObjectType.sol";
+import {ObjectType, REGISTRY, BUNDLE, COMPONENT, DISTRIBUTION, DISTRIBUTOR, INSTANCE, ORACLE, POOL, PRODUCT} from "../type/ObjectType.sol";
 import {RoleId} from "../type/RoleId.sol";
 import {TokenHandlerDeployerLib} from "../shared/TokenHandlerDeployerLib.sol";
 
@@ -220,6 +220,7 @@ contract ComponentService is
         // TODO re-enable once role granting is stable and fixed
         // restricted()
     {
+        _checkNftType(productNftId, PRODUCT());
         _changeTargetBalance(INCREASE, instanceStore, productNftId, AmountLib.zero(), feeAmount);
     }
 
@@ -230,6 +231,7 @@ contract ComponentService is
         // TODO re-enable once role granting is stable and fixed
         // restricted()
     {
+        _checkNftType(productNftId, PRODUCT());
         _changeTargetBalance(DECREASE, instanceStore, productNftId, AmountLib.zero(), feeAmount);
     }
 
@@ -312,6 +314,7 @@ contract ComponentService is
         // TODO re-enable once role granting is stable and fixed
         // restricted()
     {
+        _checkNftType(distributionNftId, DISTRIBUTION());
         _changeTargetBalance(INCREASE, instanceStore, distributionNftId, amount, feeAmount);
     }
 
@@ -327,6 +330,7 @@ contract ComponentService is
         // TODO re-enable once role granting is stable and fixed
         // restricted()
     {
+        _checkNftType(distributionNftId, DISTRIBUTION());
         _changeTargetBalance(DECREASE, instanceStore, distributionNftId, amount, feeAmount);
     }
 
@@ -343,6 +347,7 @@ contract ComponentService is
         // TODO re-enable once role granting is stable and fixed
         // restricted()
     {
+        _checkNftType(distributorNftId, DISTRIBUTOR());
         _changeTargetBalance(INCREASE, instanceStore, distributorNftId, amount, feeAmount);
     }
 
@@ -357,6 +362,7 @@ contract ComponentService is
         // TODO re-enable once role granting is stable and fixed
         // restricted()
     {
+        _checkNftType(distributorNftId, DISTRIBUTOR());
         _changeTargetBalance(DECREASE, instanceStore, distributorNftId, amount, feeAmount);
     }
 
@@ -485,6 +491,7 @@ contract ComponentService is
         // TODO re-enable once role granting is stable and fixed
         // restricted()
     {
+        _checkNftType(poolNftId, POOL());
         _changeTargetBalance(INCREASE, instanceStore, poolNftId, amount, feeAmount);
     }
 
@@ -499,6 +506,7 @@ contract ComponentService is
         // TODO re-enable once role granting is stable and fixed
         // restricted()
     {
+        _checkNftType(poolNftId, POOL());
         _changeTargetBalance(DECREASE, instanceStore, poolNftId, amount, feeAmount);
     }
 
@@ -515,6 +523,7 @@ contract ComponentService is
         // TODO re-enable once role granting is stable and fixed
         // restricted()
     {
+        _checkNftType(bundleNftId, BUNDLE());
         _changeTargetBalance(INCREASE, instanceStore, bundleNftId, amount, feeAmount);
     }
 
@@ -529,6 +538,7 @@ contract ComponentService is
         // TODO re-enable once role granting is stable and fixed
         // restricted()
     {
+        _checkNftType(bundleNftId, BUNDLE());
         _changeTargetBalance(DECREASE, instanceStore, bundleNftId, amount, feeAmount);
     }
 

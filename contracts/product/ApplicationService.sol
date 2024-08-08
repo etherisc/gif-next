@@ -13,7 +13,7 @@ import {IRegistryService} from "../registry/IRegistryService.sol";
 import {AmountLib} from "../type/Amount.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {zeroTimestamp} from "../type/Timestamp.sol";
-import {ObjectType, DISTRIBUTION, PRODUCT, REGISTRY, APPLICATION, POLICY, PRICE} from "../type/ObjectType.sol";
+import {ObjectType, BUNDLE, DISTRIBUTION, PRODUCT, REGISTRY, APPLICATION, POLICY, PRICE} from "../type/ObjectType.sol";
 import {REVOKED} from "../type/StateId.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
 import {ReferralId} from "../type/Referral.sol";
@@ -137,6 +137,8 @@ contract ApplicationService is
         nonReentrant()
         returns (NftId applicationNftId)
     {
+        _checkNftType(bundleNftId, BUNDLE());
+
         (NftId productNftId,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
 
         // check if provided references are valid and linked to calling product contract
@@ -213,6 +215,8 @@ contract ApplicationService is
         nonReentrant()
         returns (NftId applicationNftId)
     {
+        _checkNftType(policyNftId, POLICY());
+        _checkNftType(bundleNftId, BUNDLE());
         // TODO implement
     }
 
@@ -230,6 +234,8 @@ contract ApplicationService is
         virtual
         nonReentrant()
     {
+        _checkNftType(applicationNftId, POLICY());
+        _checkNftType(bundleNftId, BUNDLE());
         // TODO implement
     }
 
@@ -238,6 +244,8 @@ contract ApplicationService is
         virtual
         nonReentrant()
     {
+        _checkNftType(applicationNftId, POLICY());
+
         (,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
         instance.getInstanceStore().updateApplicationState(applicationNftId, REVOKED());
     }
