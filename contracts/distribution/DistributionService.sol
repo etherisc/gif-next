@@ -171,7 +171,7 @@ contract DistributionService is
         if (bytes(code).length == 0) {
             revert ErrorIDistributionServiceInvalidReferral(code);
         }
-        if (expiryAt.eqz()) {
+        if (expiryAt.eqz() || expiryAt.lte(TimestampLib.blockTimestamp())) {
             revert ErrorIDistributionServiceExpirationInvalid(expiryAt);
         }
 
