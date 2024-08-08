@@ -19,16 +19,18 @@ import {UFixed} from "../type/UFixed.sol";
 interface IPoolService is IService {
 
     event LogPoolServiceMaxBalanceAmountUpdated(NftId poolNftId, Amount previousMaxCapitalAmount, Amount currentMaxCapitalAmount);
-    event LogPoolServiceBundleOwnerRoleSet(NftId poolNftId, RoleId bundleOwnerRole);
+    event LogPoolServiceWalletFunded(NftId poolNftId, address poolOwner, Amount amount);
+    event LogPoolServiceWalletDefunded(NftId poolNftId, address poolOwner, Amount amount);
 
     event LogPoolServiceBundleCreated(NftId instanceNftId, NftId poolNftId, NftId bundleNftId);
     event LogPoolServiceBundleClosed(NftId instanceNftId, NftId poolNftId, NftId bundleNftId);
 
     event LogPoolServiceBundleStaked(NftId instanceNftId, NftId poolNftId, NftId bundleNftId, Amount amount, Amount netAmount);
-    event LogPoolServiceBundleUnstaked(NftId instanceNftId, NftId poolNftId, NftId bundleNftId, Amount amount);
+    event LogPoolServiceBundleUnstaked(NftId instanceNftId, NftId poolNftId, NftId bundleNftId, Amount amount, Amount netAmount);
 
     event LogPoolServiceProcessFundedClaim(NftId policyNftId, ClaimId claimId, Amount availableAmount);
 
+    error ErrorPoolServicePoolNotExternallyManaged(NftId poolNftId);
     error ErrorPoolServicePolicyPoolMismatch(NftId policyNftId, NftId productNftId, NftId expectedProductNftId);
     error ErrorPoolServiceBundleOwnerRoleAlreadySet(NftId poolNftId);
     error ErrorPoolServiceInvalidTransferAmount(Amount expectedAmount, Amount actualAmount);
@@ -117,18 +119,18 @@ interface IPoolService is IService {
     function processFundedClaim(NftId policyNftId, ClaimId claimId, Amount availableAmount) external;
 
 
-    /// @dev Fund the specified pool wallet with the provided amount.
-    /// This function will collect the amount from the sender address and transfers it to the pool wallet.
+    /// @dev Fund the pool wallet with the provided amount.
+    /// This function will collect the amount from the pool owner and transfers it to the pool wallet.
     /// The function will not update balance amounts managed by the framework.
     /// Only available for externally managed pools.
-    function fundPoolWallet(NftId poolNftId, Amount amount) external;
+    function fundPoolWallet(Amount amount) external;
 
 
     /// @dev Defund the specified pool wallet with the provided amount.
-    /// This function will transfer the amount from the pool wallet to the sender address.
+    /// This function will transfer the amount from the pool wallet to the pool owner.
     /// The function will not update balance amounts managed by the framework.
     /// Only available for externally managed pools.
-    function defundPoolWallet(NftId poolNftId, Amount amount) external;
+    function defundPoolWallet(Amount amount) external;
 
 
     /// @dev processes the sale of a bundle and track the pool fee and bundle fee amounts

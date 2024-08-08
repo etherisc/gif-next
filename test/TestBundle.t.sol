@@ -350,7 +350,7 @@ contract TestBundle is GifTest {
 
         // THEN - expect log event
         vm.expectEmit();
-        emit IPoolService.LogPoolServiceBundleUnstaked(instanceNftId, poolNftId, bundleNftId, unstakeAmt);
+        emit IPoolService.LogPoolServiceBundleUnstaked(instanceNftId, poolNftId, bundleNftId, unstakeAmt, unstakeAmt);
 
         // WHEN - 500 tokens are unstaked
         pool.unstake(bundleNftId, unstakeAmt);
@@ -402,7 +402,7 @@ contract TestBundle is GifTest {
         
         // THEN - expect log event
         vm.expectEmit();
-        emit IPoolService.LogPoolServiceBundleUnstaked(instanceNftId, poolNftId, bundleNftId, expectedUnstakeAmount);
+        emit IPoolService.LogPoolServiceBundleUnstaked(instanceNftId, poolNftId, bundleNftId, expectedUnstakeAmount, expectedUnstakeAmount);
 
         // WHEN - max tokens are unstaked
         pool.unstake(bundleNftId, unstakeAmount);

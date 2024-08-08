@@ -27,12 +27,12 @@ abstract contract ComponentVerifyingService is
         view
         returns(
             NftId componentNftId,
-            IRegistry.ObjectInfo memory componentInfo, 
+            IRegistry.ObjectInfo memory objectInfo, 
             IInstance instance
         )
     {
         componentNftId = getRegistry().getNftIdForAddress(msg.sender);
-        (componentInfo, instance) = _getAndVerifyComponentInfo(
+        (objectInfo, instance) = _getAndVerifyComponentInfo(
             componentNftId, 
             expectedType,
             true); // only active

@@ -45,6 +45,7 @@ interface IPoolComponent is IInstanceLinkedComponent {
         view
         returns (bool isMatching);
 
+
     /// @dev This is a callback function that is called by the claim service when a claim is confirmed.
     /// The pool has the option to implement custom behavirous such as triggering a reinsurance claim or blocking the claim confirmaation.
     /// The default implementation is empty.
@@ -54,11 +55,6 @@ interface IPoolComponent is IInstanceLinkedComponent {
         Amount amount
     ) external;
 
-    /// @dev Withdraw bundle feeds for the given bundle
-    /// @param bundleNftId the bundle Nft Id
-    /// @param amount the amount to withdraw. If set to AMOUNT_MAX, the full commission available is withdrawn
-    /// @return withdrawnAmount the effective withdrawn amount
-    function withdrawBundleFees(NftId bundleNftId, Amount amount) external returns (Amount withdrawnAmount);
 
     /// @dev Returns initial pool specific infos for this pool
     function getInitialPoolInfo() external view returns (IComponents.PoolInfo memory info);
