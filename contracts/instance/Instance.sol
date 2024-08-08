@@ -191,13 +191,7 @@ contract Instance is
 
     //--- ITransferInterceptor ----------------------------------------------//
 
-    // TODO interception of child components nfts
-    function nftMint(address to, uint256 tokenId) external onlyChainNft {
-        // TODO refactor
-        // _instanceAdmin.transferInstanceOwnerRole(address(0), to);
-    }
-
-    function nftTransferFrom(address from, address to, uint256 tokenId) external onlyChainNft {
+    function nftTransferFrom(address from, address to, uint256 tokenId, address operator) external onlyChainNft {
         // TODO refactor
         // _instanceAdmin.transferInstanceOwnerRole(from, to);
     }

@@ -9,7 +9,7 @@ import {NftId} from "../type/NftId.sol";
 import {Fee} from "../type/Fee.sol";
 import {ReferralId} from "../type/Referral.sol";
 import {RiskId} from "../type/RiskId.sol";
-import {PRODUCT, DISTRIBUTION, PRICE} from "../type/ObjectType.sol";
+import {PRODUCT, BUNDLE, DISTRIBUTION, PRICE} from "../type/ObjectType.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 
 import {IProductComponent} from "./IProductComponent.sol";
@@ -70,6 +70,9 @@ contract PricingService is
             IPolicy.PremiumInfo memory premium
         )
     {
+        _checkNftType(productNftId, PRODUCT());
+        _checkNftType(bundleNftId, BUNDLE());
+
         InstanceReader reader;
         Amount netPremiumAmount;
 

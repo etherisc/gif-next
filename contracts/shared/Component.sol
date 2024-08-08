@@ -152,25 +152,14 @@ abstract contract Component is
         }
     }
 
-
-    /// @dev callback function for nft mints
-    /// may only be called by chain nft contract.
-    /// override internal function _nftMint to implement custom behaviour
-    function nftMint(address to, uint256 tokenId) 
-        external 
-        onlyChainNft
-    {
-        _nftMint(to, tokenId);
-    }
-
     /// @dev callback function for nft transfers
     /// may only be called by chain nft contract.
     /// override internal function _nftTransferFrom to implement custom behaviour
-    function nftTransferFrom(address from, address to, uint256 tokenId)
+    function nftTransferFrom(address from, address to, uint256 tokenId, address operator)
         external
         onlyChainNft
     {
-        _nftTransferFrom(from, to, tokenId);
+        _nftTransferFrom(from, to, tokenId, operator);
     }
 
 
@@ -228,7 +217,7 @@ abstract contract Component is
 
     /// @dev internal function for nft transfers.
     /// handling logic that deals with nft transfers need to overwrite this function
-    function _nftTransferFrom(address from, address to, uint256 tokenId)
+    function _nftTransferFrom(address from, address to, uint256 tokenId, address operator)
         internal
         virtual
     { }

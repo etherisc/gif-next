@@ -269,9 +269,9 @@ abstract contract Distribution is
         return _getDistributionStorage()._distributionService.withdrawCommission(distributorNftId, amount);
     }
 
-    function _nftTransferFrom(address from, address to, uint256 tokenId) internal virtual override {
+    function _nftTransferFrom(address from, address to, uint256 tokenId, address operator) internal virtual override {
         // keep track of distributor nft owner
-        emit LogDistributorUpdated(to, msg.sender);
+        emit LogDistributorUpdated(to, operator);
         DistributionStorage storage $ = _getDistributionStorage();
         $._distributorNftId[from] = NftIdLib.zero();
         $._distributorNftId[to] = NftIdLib.toNftId(tokenId);

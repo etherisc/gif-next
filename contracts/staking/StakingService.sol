@@ -58,6 +58,7 @@ contract StakingService is
         virtual
         restricted()
     {
+        _checkNftType(instanceNftId, INSTANCE());
         _getStakingServiceStorage()._staking.setLockingPeriod(
             instanceNftId, 
             lockingPeriod);
@@ -69,6 +70,7 @@ contract StakingService is
         virtual
         restricted()
     {
+        _checkNftType(instanceNftId, INSTANCE());
         _getStakingServiceStorage()._staking.setRewardRate(
             instanceNftId, 
             rewardRate);
@@ -81,6 +83,7 @@ contract StakingService is
         restricted()
         returns (Amount newBalance)
     {
+        _checkNftType(instanceNftId, INSTANCE());
         return _refillRewardReserves(instanceNftId, rewardProvider, dipAmount);
     }
 
@@ -102,6 +105,7 @@ contract StakingService is
         restricted()
         returns (Amount newBalance)
     {
+        _checkNftType(instanceNftId, INSTANCE());
         // update reward reserve book keeping
         StakingServiceStorage storage $ = _getStakingServiceStorage();
         newBalance = $._staking.withdrawRewardReserves(instanceNftId, dipAmount);
@@ -172,6 +176,8 @@ contract StakingService is
         restricted()
         onlyNftOwner(stakeNftId)
     {
+        _checkNftType(stakeNftId, STAKE());
+
         StakingServiceStorage storage $ = _getStakingServiceStorage();
         address stakeOwner = msg.sender;
 
@@ -202,6 +208,8 @@ contract StakingService is
             NftId newStakeNftId
         )
     {
+        _checkNftType(stakeNftId, STAKE());
+
         StakingServiceStorage storage $ = _getStakingServiceStorage();
         // TODO implement
     } 
@@ -214,6 +222,8 @@ contract StakingService is
         virtual
         restricted()
     {
+        _checkNftType(stakeNftId, STAKE());
+
         StakingServiceStorage storage $ = _getStakingServiceStorage();
         $._staking.updateRewards(stakeNftId);
 
@@ -227,6 +237,8 @@ contract StakingService is
         restricted()
         onlyNftOwner(stakeNftId)
     {
+        _checkNftType(stakeNftId, STAKE());
+
         StakingServiceStorage storage $ = _getStakingServiceStorage();
         address stakeOwner = msg.sender;
 
@@ -244,6 +256,8 @@ contract StakingService is
         restricted()
         onlyNftOwner(stakeNftId)
     {
+        _checkNftType(stakeNftId, STAKE());
+        
         StakingServiceStorage storage $ = _getStakingServiceStorage();
         address stakeOwner = msg.sender;
 
