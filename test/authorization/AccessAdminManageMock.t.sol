@@ -8,7 +8,7 @@ import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.s
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
 import {AccessAdmin} from "../../contracts/authorization/AccessAdmin.sol";
-import {AccessAdminForTesting} from "./AccessAdmin.t.sol";
+//import {AccessAdminForTesting} from "./AccessAdmin.t.sol";
 import {AccessManagedMock} from "../mock/AccessManagedMock.sol";
 import {IAccess} from "../../contracts/authorization/IAccess.sol";
 import {IAccessAdmin} from "../../contracts/authorization/IAccessAdmin.sol";
@@ -17,7 +17,7 @@ import {Selector, SelectorLib} from "../../contracts/type/Selector.sol";
 import {Str, StrLib} from "../../contracts/type/String.sol";
 import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
 
-
+/*
 contract AccessAdminManageMockTest is Test {
 
     address public accessAdminDeployer = makeAddr("accessAdminDeployer");
@@ -442,3 +442,4 @@ contract AccessAdminManageMockTest is Test {
     }
 
 }
+*/

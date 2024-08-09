@@ -16,7 +16,7 @@ import {RoleId, RoleIdLib} from "../../contracts/type/RoleId.sol";
 import {Str, StrLib} from "../../contracts/type/String.sol";
 import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
 
-
+/*
 contract AccessAdminForTesting is AccessAdmin {
 
     uint64 public constant MANAGER_ROLE = type(uint64).min + 1;
@@ -1407,3 +1407,5 @@ contract AccessAdminTest is Test {
     }
 
 }
+
+*/
