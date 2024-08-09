@@ -271,6 +271,7 @@ contract InstanceService is
     function upgradeInstanceReader(NftId instanceNftId) 
         external 
         onlyInstanceOwner(instanceNftId) 
+        onlyNftOfType(instanceNftId, INSTANCE())
     {
         IRegistry registry = getRegistry();
         IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(instanceNftId);

@@ -56,6 +56,7 @@ contract InstanceAdmin is
         address instanceAuthorization
     ) {
         initialize(new AccessManagerCloneable());
+
         _instanceAuthorization = IAuthorization(instanceAuthorization);
 
         _disableInitializers();

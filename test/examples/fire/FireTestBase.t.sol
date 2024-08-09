@@ -44,7 +44,6 @@ contract FireTestBase is GifTest {
             instanceNftId,
             "FireProduct",
             address(fireUSD),
-            address(firePool),
             productAuth
         );
         vm.stopPrank();

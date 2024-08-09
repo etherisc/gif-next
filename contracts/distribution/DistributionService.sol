@@ -171,7 +171,7 @@ contract DistributionService is
         if (bytes(code).length == 0) {
             revert ErrorIDistributionServiceInvalidReferral(code);
         }
-        if (expiryAt.eqz()) {
+        if (expiryAt.eqz() || expiryAt.lte(TimestampLib.blockTimestamp())) {
             revert ErrorIDistributionServiceExpirationInvalid(expiryAt);
         }
 
@@ -319,6 +319,7 @@ contract DistributionService is
     function referralIsValid(NftId distributionNftId, ReferralId referralId) 
         public 
         view 
+        onlyNftOfType(distributionNftId, DISTRIBUTION())
         returns (bool isValid) 
     {
         if (distributionNftId.eqz() || referralId.eqz()) {

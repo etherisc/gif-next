@@ -8,6 +8,8 @@ import { RegistryAddresses, deployAndInitializeRegistry } from "./libs/registry"
 import { ServiceAddresses, deployAndRegisterServices } from "./libs/services";
 import { loadVerificationQueueState } from "./libs/verification_queue";
 import { logger } from "./logger";
+import { WRITE_ADDRESSES_TO_FILE } from "./libs/constants";
+import fs from "fs";
 
 
 async function main() {
@@ -124,8 +126,8 @@ function printAddresses(
     // distributionAddress: AddressLike, distributionNftId: string,
     // productAddress: AddressLike, productNftId: string,
 ) {
-    let addresses = "\nAddresses of deployed smart contracts:\n==========\n";
-    addresses += `Library Addresses:\n----------\n`;
+    let addresses = "\n# Addresses of deployed smart contracts:\n# ==========\n";
+    addresses += `# Library Addresses:\n# ----------\n`;
     for (const lib in libraries) {
         let libName = lib.toUpperCase();
         libName = libName.replace("ADDRESS", "_ADDRESS");
@@ -212,6 +214,10 @@ function printAddresses(
     // addresses += `productNftId: ${productNftId}\n`;    
     
     logger.info(addresses);
+    
+    if (WRITE_ADDRESSES_TO_FILE) {
+        fs.writeFileSync("deployment.env", addresses);
+    }
 }
 
 main().catch((error) => {

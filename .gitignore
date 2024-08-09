@@ -32,3 +32,4 @@ lcov.info
 .*.drawio.bkp
 deployments/
 soljson*.js
+deployment.env

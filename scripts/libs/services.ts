@@ -659,7 +659,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
 
     logger.info("======== Activating release ========");
     await executeTx(
-        async () => await releaseRegistry.activateNextRelease(),
+        async () => await releaseRegistry.activateNextRelease(getTxOpts()),
         "releaseRegistry.activateNextRelease"
     );
     logger.info("======== release activated ========");
