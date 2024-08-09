@@ -17,8 +17,7 @@ contract AccessManagerCloneable is
 {
     error ErrorAccessManagerCallerNotAdmin(address caller);
     error ErrorAccessManagerRegistryAlreadySet(address registry);
-    error ErrorAccessManagedCallerAdminLocked(address caller);
-    error ErrorAccessManagedTargetAdminLocked(address target);
+    error ErrorAccessManagerTargetAdminLocked(address target);
 
     bool private _isLocked;
 
@@ -57,29 +56,11 @@ contract AccessManagerCloneable is
         bytes4 selector
     ) public view virtual override returns (bool immediate, uint32 delay) 
     {
-        IRegistry registry = getRegistry();
-
-        // TODO limitation: in order to be checked caller must be registered
-        if(registry.isRegistered(caller)) { // caller is access managed
-
-            // TODO getAdmin() returns 0 if registered caller is managed by registry / instance access managers
-            //      registry must be aware of registry and instance admins too?
-            //AccessManagerCloneable callerAm = AccessManagerCloneable(getRegistry().getAdmin(caller).authority());
-            AccessManagerCloneable callerAm = AccessManagerCloneable(IAccessManaged(caller).authority());
-
-            if(callerAm.isLocked()) {
-                revert ErrorAccessManagedCallerAdminLocked(caller);
-                // ErrorReleaseAccessManagedReleaseLockViolated(caller, version);
-                // MUST be impossible to get here if caller contract is properlly engineered
-                // otherwise caller violates lock
-            }
-        }
+        (immediate, delay) = super.canCall(caller, target, selector);
 
         if(isLocked()) {
-            revert ErrorAccessManagedTargetAdminLocked(target);
+            revert ErrorAccessManagerTargetAdminLocked(target);
         }
-
-        (immediate, delay) = super.canCall(caller, target, selector);
     }
 
     function setLocked(bool locked)
