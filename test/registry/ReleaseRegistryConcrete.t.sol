@@ -5,6 +5,7 @@ import {IAccessManager} from "@openzeppelin/contracts/access/manager/IAccessMana
 import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 import {FoundryRandom} from "foundry-random/FoundryRandom.sol";
 import {console} from "../../lib/forge-std/src/Test.sol";
+import {StdUtils} from "../../lib/forge-std/src/StdUtils.sol";
 
 import {VersionPart, VersionPartLib} from "../../contracts/type/Version.sol";
 import {StateIdLib, SCHEDULED, DEPLOYING, DEPLOYED, SKIPPED, ACTIVE, PAUSED} from "../../contracts/type/StateId.sol";
@@ -35,7 +36,7 @@ import {ServiceMock, ServiceMockWithRegistryDomainV3, ServiceMockWithRegistryDom
 contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
 
     // keep identical to ReleaseRegistry events
-    event LogReleaseCreation(VersionPart version, bytes32 salt); 
+    event LogReleaseCreation(IAccessAdmin admin, VersionPart version, bytes32 salt); 
     event LogReleaseActivation(VersionPart version);
     event LogReleaseDisabled(VersionPart version);
     event LogReleaseEnabled(VersionPart version);
@@ -327,9 +328,10 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 // prepare
                 IServiceAuthorization nextAuthMock = new ServiceAuthorizationMockWithRegistryService(nextVersion);
                 bytes32 nextSalt = bytes32(randomNumber(type(uint256).max)); 
+                address nextAdmin = StdUtils.computeCreateAddress(address(releaseRegistry), vm.getNonce(address(releaseRegistry)) + 1);
 
                 vm.expectEmit(address(releaseRegistry));
-                emit LogReleaseCreation(nextVersion, nextSalt);
+                emit LogReleaseCreation(IAccessAdmin(nextAdmin), nextVersion, nextSalt);
 
                 vm.prank(gifManager);
                 (
@@ -1014,12 +1016,13 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
         VersionPart expectedVersion = VersionPartLib.toVersionPart(releaseRegistry.INITIAL_GIF_VERSION());
         ServiceAuthorizationMockWithRegistryService serviceAuth = new ServiceAuthorizationMockWithRegistryService(expectedVersion);
         bytes32 salt = "0x1234";
+        address admin = StdUtils.computeCreateAddress(address(releaseRegistry), vm.getNonce(address(releaseRegistry)) + 1);
 
         vm.prank(gifAdmin);
         releaseRegistry.createNextRelease();
 
         vm.expectEmit(address(releaseRegistry));
-        emit LogReleaseCreation(expectedVersion, salt);
+        emit LogReleaseCreation(IAccessAdmin(admin), expectedVersion, salt);
 
         vm.prank(gifManager);
         (
