@@ -56,6 +56,7 @@ export async function deployAndRegisterMasterInstance(
                 SelectorSetLib: libraries.selectorSetLibAddress,
                 StrLib: libraries.strLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
+                VersionPartLib: libraries.versionPartLibAddress
             }
         }
     );

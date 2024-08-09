@@ -32,7 +32,7 @@ contract ReleaseRegistry is
 {
     uint256 public constant INITIAL_GIF_VERSION = 3;// first active version  
 
-    event LogReleaseCreation(VersionPart version, bytes32 salt); 
+    event LogReleaseCreation(IAccessAdmin admin, VersionPart version, bytes32 salt); 
     event LogReleaseActivation(VersionPart version);
     event LogReleaseDisabled(VersionPart version);
     event LogReleaseEnabled(VersionPart version);
@@ -159,7 +159,7 @@ contract ReleaseRegistry is
         _releaseInfo[releaseVersion].auth = serviceAuthorization;
         _releaseInfo[releaseVersion].admin = releaseAdmin;
 
-        emit LogReleaseCreation(releaseVersion, releaseSalt);
+        emit LogReleaseCreation(releaseAdmin, releaseVersion, releaseSalt);
     }
 
     function registerService(IService service) 
@@ -348,13 +348,11 @@ contract ReleaseRegistry is
 
     //--- private functions ----------------------------------------------------//
 
-    // close / open service targets instead of revoking / granting roles
     function _setReleaseLocked(VersionPart version, bool locked)
         private
     {
         ReleaseAdmin releaseAdmin = ReleaseAdmin(address(_releaseInfo[version].admin));
         releaseAdmin.setReleaseLocked(locked);
-        // TODO add check for active/disabled release in core contracts functions callable by release contracts
     }
 
     function _createReleaseAdmin()

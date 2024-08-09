@@ -101,12 +101,11 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     //const salt = zeroPadBytes("0x03", 32);
     const salt: BytesLike = id(`0x5678`);
     const release = await createRelease(owner, registry, salt);
-    logger.info(`Release created - version: ${release.version} salt: ${release.salt} access manager: ${release.accessManager}`);
+    logger.info(`Release created - version: ${release.version} salt: ${release.salt} admin: ${release.adminAddress}`);
 
     logger.info("======== Starting deployment of services ========");
-    const releaseRegistry = await registry.releaseRegistry.connect(owner);
     logger.info("-------- registry service --------");
-    const authority = await registry.registryAdmin.authority();
+    const authority = await release.admin.authority();
     const { address: registryServiceManagerAddress, contract: registryServiceManagerBaseContract } = await deployContract(
         "RegistryServiceManager",
         owner,
@@ -135,7 +134,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         undefined);
 
     const rcptRs = await executeTx(
-        async () => await releaseRegistry.registerService(registryServiceAddress, getTxOpts()),
+        async () => await registry.releaseRegistry.registerService(registryServiceAddress, getTxOpts()),
         "registerService - registryService"
     );
     const logRegistrationInfoRs = getFieldFromTxRcptLogs(rcptRs!, registry.registry.interface, "LogRegistration", "nftId");
@@ -176,7 +175,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         undefined);
 
     const rcptStk = await executeTx(
-        async () => await releaseRegistry.registerService(stakingServiceAddress, getTxOpts()),
+        async () => await registry.releaseRegistry.registerService(stakingServiceAddress, getTxOpts()),
         "registerService - stakingService"
     );
     const logRegistrationInfoStk = getFieldFromTxRcptLogs(rcptStk!, registry.registry.interface, "LogRegistration", "nftId");
@@ -217,7 +216,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         undefined);
 
     const rcptInst = await executeTx(
-        async () => await releaseRegistry.registerService(instanceServiceAddress, getTxOpts()),
+        async () => await registry.releaseRegistry.registerService(instanceServiceAddress, getTxOpts()),
         "registerService - instanceService"
     );
     const logRegistrationInfoInst = getFieldFromTxRcptLogs(rcptInst!, registry.registry.interface, "LogRegistration", "nftId");
@@ -261,7 +260,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         undefined);
 
     const rcptCmpt = await executeTx(
-        async () => await releaseRegistry.registerService(componentServiceAddress, getTxOpts()),
+        async () => await registry.releaseRegistry.registerService(componentServiceAddress, getTxOpts()),
         "registerService - componentService"
     );
     const logRegistrationInfoCmpt = getFieldFromTxRcptLogs(rcptCmpt!, registry.registry.interface, "LogRegistration", "nftId");
@@ -302,7 +301,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         undefined);
 
     const rcptDs = await executeTx(
-        async () => await releaseRegistry.registerService(distributionServiceAddress, getTxOpts()),
+        async () => await registry.releaseRegistry.registerService(distributionServiceAddress, getTxOpts()),
         "registerService - distributionService"
     );
     const logRegistrationInfoDs = getFieldFromTxRcptLogs(rcptDs!, registry.registry.interface, "LogRegistration", "nftId");
@@ -344,7 +343,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         undefined);
 
     const rcptPrs = await executeTx(
-        async () => await releaseRegistry.registerService(pricingServiceAddress, getTxOpts()),
+        async () => await registry.releaseRegistry.registerService(pricingServiceAddress, getTxOpts()),
         "registerService - pricingService"
     );
     const logRegistrationInfoPrs = getFieldFromTxRcptLogs(rcptPrs!, registry.registry.interface, "LogRegistration", "nftId");
@@ -386,7 +385,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         undefined);
 
     const rcptBdl = await executeTx(
-        async () => await releaseRegistry.registerService(bundleServiceAddress, getTxOpts()),
+        async () => await registry.releaseRegistry.registerService(bundleServiceAddress, getTxOpts()),
         "registerService - bundleService"
     );
     const logRegistrationInfoBdl = getFieldFromTxRcptLogs(rcptBdl!, registry.registry.interface, "LogRegistration", "nftId");
@@ -430,7 +429,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         undefined);
 
     const rcptPs = await executeTx(
-        async () => await releaseRegistry.registerService(poolServiceAddress, getTxOpts()),
+        async () => await registry.releaseRegistry.registerService(poolServiceAddress, getTxOpts()),
         "registerService - poolService"
     );
     const logRegistrationInfoPs = getFieldFromTxRcptLogs(rcptPs!, registry.registry.interface, "LogRegistration", "nftId");
@@ -472,7 +471,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         undefined);
 
     const orclPrs = await executeTx(
-        async () => await releaseRegistry.registerService(oracleServiceAddress, getTxOpts()),
+        async () => await registry.releaseRegistry.registerService(oracleServiceAddress, getTxOpts()),
         "registerService - oracleService"
     );
     const logRegistrationInfoOrc = getFieldFromTxRcptLogs(orclPrs!, registry.registry.interface, "LogRegistration", "nftId");
@@ -513,7 +512,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         undefined);
 
     const rcptPrd = await executeTx(
-        async () => await releaseRegistry.registerService(riskServiceAddress, getTxOpts()),
+        async () => await registry.releaseRegistry.registerService(riskServiceAddress, getTxOpts()),
         "registerService - riskService"
     );
     const logRegistrationInfoPrd = getFieldFromTxRcptLogs(rcptPrd!, registry.registry.interface, "LogRegistration", "nftId");
@@ -556,7 +555,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         undefined);
 
     const rcptPol = await executeTx(
-        async () => await releaseRegistry.registerService(policyServiceAddress, getTxOpts()),
+        async () => await registry.releaseRegistry.registerService(policyServiceAddress, getTxOpts()),
         "registerService - policyService"
     );
     const logRegistrationInfoPol = getFieldFromTxRcptLogs(rcptPol!, registry.registry.interface, "LogRegistration", "nftId");
@@ -602,7 +601,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         undefined);
 
     const rcptClm = await executeTx(
-        async () => await releaseRegistry.registerService(claimServiceAddress, getTxOpts()),
+        async () => await registry.releaseRegistry.registerService(claimServiceAddress, getTxOpts()),
         "registerService - claimService"
     );
     const logRegistrationInfoClm = getFieldFromTxRcptLogs(rcptClm!, registry.registry.interface, "LogRegistration", "nftId");
@@ -644,7 +643,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         undefined);
     
     const rcptAppl = await executeTx(
-        async () => await releaseRegistry.registerService(applicationServiceAddress, getTxOpts()),
+        async () => await registry.releaseRegistry.registerService(applicationServiceAddress, getTxOpts()),
         "registerService - applicationService"
     );
     const logRegistrationInfoAppl = getFieldFromTxRcptLogs(rcptAppl!, registry.registry.interface, "LogRegistration", "nftId");
@@ -659,7 +658,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
 
     logger.info("======== Activating release ========");
     await executeTx(
-        async () => await releaseRegistry.activateNextRelease(getTxOpts()),
+        async () => await registry.releaseRegistry.activateNextRelease(),
         "releaseRegistry.activateNextRelease"
     );
     logger.info("======== release activated ========");

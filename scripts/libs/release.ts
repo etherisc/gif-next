@@ -1,9 +1,10 @@
 
 import { AddressLike, BigNumberish, BytesLike, Signer } from "ethers";
-import { BundleService__factory, DistributionService__factory, InstanceService__factory, PoolService__factory, RegistryService__factory } from "../../typechain-types";
+import { BundleService__factory, DistributionService__factory, InstanceService__factory, PoolService__factory, RegistryService__factory, ReleaseAdmin } from "../../typechain-types";
 import { logger } from "../logger";
 import { RegistryAddresses } from "./registry";
 import { executeTx, getFieldFromTxRcptLogs, getTxOpts } from "./transaction";
+import { ethers } from "hardhat";
 
 
 export type ReleaseAddresses = {
@@ -143,9 +144,10 @@ export type ReleaseConfig = {
 };
 
 export type Release = {
+    adminAddress: AddressLike,
+    admin: ReleaseAdmin,
     version: BigNumberish,
-    salt: BytesLike,
-    accessManager: AddressLike
+    salt: BytesLike
 };
 
 // TODO implement release addresses computation
@@ -365,17 +367,21 @@ export async function createRelease(owner: Signer, registry: RegistryAddresses, 
         ),
         "releaseRegistry.prepareNextRelease");
 
-    let logCreationInfo = getFieldFromTxRcptLogs(rcpt!, registry.releaseRegistry.interface, "LogReleaseCreation", "version");
+    let logCreationInfo = getFieldFromTxRcptLogs(rcpt!, registry.releaseRegistry.interface, "LogReleaseCreation", "admin");
+    const releaseAdminAddress = (logCreationInfo as AddressLike);
+    logCreationInfo = getFieldFromTxRcptLogs(rcpt!, registry.releaseRegistry.interface, "LogReleaseCreation", "version");
     const releaseVersion = (logCreationInfo as BigNumberish);
     logCreationInfo = getFieldFromTxRcptLogs(rcpt!, registry.releaseRegistry.interface, "LogReleaseCreation", "salt");
     const releaseSalt = (logCreationInfo as BytesLike);
-    logCreationInfo = getFieldFromTxRcptLogs(rcpt!, registry.releaseRegistry.interface, "LogReleaseCreation", "accessManager");
-    const releaseAccessManager = (logCreationInfo as AddressLike);
+
+    const releaseAdminBasecontract = await ethers.getContractAt("ReleaseAdmin", releaseAdminAddress, owner);
+    const releaseAdmin = releaseAdminBasecontract as ReleaseAdmin;
 
     const release: Release = {
+        adminAddress: releaseAdminAddress,
+        admin: releaseAdmin,
         version: releaseVersion,
-        salt: releaseSalt,
-        accessManager: releaseAccessManager,
+        salt: releaseSalt
     };
     
     return release;
