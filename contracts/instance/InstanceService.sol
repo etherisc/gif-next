@@ -293,9 +293,11 @@ contract InstanceService is
         clonedAccessManager.initialize(
             address(clonedInstanceAdmin)); // grant ADMIN_ROLE to instance admin
 
+        address authorization = address(
+            InstanceAdmin(_masterInstanceAdmin).getInstanceAuthorization());
         clonedInstanceAdmin.initialize(
             clonedAccessManager,
-            InstanceAdmin(_masterInstanceAdmin).getInstanceAuthorization());
+            authorization);
     }
 
 

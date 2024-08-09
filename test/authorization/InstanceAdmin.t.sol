@@ -19,14 +19,14 @@ contract TestInstanceAdmin is
     GifTest
 {
     AccessManagerCloneable public someAccessManager;
-    InstanceAuthorizationV3 public someInstanceAuthz;
+    address public someInstanceAuthz;
     InstanceAdmin public someInstanceAdminMaster;
 
     function setUp() public override {
         super.setUp();
 
         someAccessManager = new AccessManagerCloneable();
-        someInstanceAuthz = new InstanceAuthorizationV3();
+        someInstanceAuthz = address(new InstanceAuthorizationV3());
         someInstanceAdminMaster = new InstanceAdmin(someInstanceAuthz);
         someAccessManager = AccessManagerCloneable(someInstanceAdminMaster.authority());
     }

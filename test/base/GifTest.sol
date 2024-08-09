@@ -82,7 +82,7 @@ contract GifTest is GifDeployer {
 
     AccessManagerCloneable public masterAccessManager;
     InstanceAdmin public masterInstanceAdmin;
-    InstanceAuthorizationV3 public instanceAuthorizationV3;
+    address public instanceAuthorizationV3; //InstanceAuthorizationV3
     BundleSet public masterBundleSet;
     InstanceStore public masterInstanceStore;
     Instance public masterInstance;
@@ -300,7 +300,7 @@ contract GifTest is GifDeployer {
     function _deployMasterInstance() internal 
     {
         // create instance supporting contracts
-        instanceAuthorizationV3 = new InstanceAuthorizationV3();
+        instanceAuthorizationV3 = address(new InstanceAuthorizationV3());
         masterInstanceAdmin = new InstanceAdmin(instanceAuthorizationV3);
         masterInstanceStore = new InstanceStore();
         masterBundleSet = new BundleSet();
