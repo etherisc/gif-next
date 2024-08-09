@@ -82,7 +82,11 @@ abstract contract ComponentVerifyingService is
             }
         }
 
-        instance = _getInstanceForComponent(registry, info);
+        if (info.objectType == PRODUCT()) {
+            instance = _getInstance(registry, info.parentNftId);
+        } else {
+            instance = _getInstanceForComponent(registry, info.parentNftId);
+        }
 
         // ensure component is not locked
         if (onlyActive) {
@@ -93,21 +97,15 @@ abstract contract ComponentVerifyingService is
     }
 
 
-    function _getInstanceForComponent(IRegistry registry, IRegistry.ObjectInfo memory componentInfo)
+    function _getInstanceForComponent(IRegistry registry, NftId productNftId)
         internal
         view
         returns (IInstance instance)
     {
-        // parent of product is instance
-        if (componentInfo.objectType == PRODUCT()) {
-            instance = _getInstance(registry, componentInfo.parentNftId);
-        // parent of other types is product
-        } else {
-            instance = _getInstance(
+        return _getInstance(
                 registry,
                 registry.getObjectInfo(
-                    componentInfo.parentNftId).parentNftId);
-        }
+                    productNftId).parentNftId);
     }
 
 

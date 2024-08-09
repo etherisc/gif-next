@@ -13,6 +13,7 @@ import {Timestamp} from "../type/Timestamp.sol";
 
 interface IBundleService is IService {
 
+    event LogBundleServiceBundleCreated(NftId bundleNftId, NftId poolNftId);
     event LogBundleServiceBundleActivated(NftId bundleNftId);
     event LogBundleServiceBundleLocked(NftId bundleNftId);
 
@@ -35,14 +36,10 @@ interface IBundleService is IService {
     event LogBundleServiceFeesWithdrawn(NftId bundleNftId, address recipient, address tokenAddress, Amount amount);
     event LogBundleServiceBundleExtended(NftId bundleNftId, Seconds lifetimeExtension, Timestamp extendedExpiredAt);
 
-    /// @dev create a new bundle for the specified attributes
-    /// may only be called by pool service
+    /// @dev Create a new bundle for the specified attributes.
     function create(
-        IInstance instance, // instance relevant for bundle
-        NftId poolNftId, // the pool the bundle will be linked to
         address owner, // initial bundle owner
         Fee memory fee, // fees deducted from premium that go to bundle owner
-        Amount stakingAmount, // staking amount - staking fees result in initial bundle capital
         Seconds lifetime, // initial duration for which new policies are covered
         bytes calldata filter // optional use case specific criteria that define if a policy may be covered by this bundle
     )

@@ -75,32 +75,31 @@ contract PoolService is
         emit LogPoolServiceMaxBalanceAmountUpdated(poolNftId, previousMaxBalanceAmount, maxBalanceAmount);
     }
 
+    // TODO cleanup
+    // /// @inheritdoc IPoolService
+    // function createBundle(
+    //     address bundleOwner, // initial bundle owner
+    //     Fee memory fee, // fees deducted from premium that go to bundle owner
+    //     Seconds lifetime, // initial duration for which new policies are covered
+    //     bytes calldata filter // optional use case specific criteria that define if a policy may be covered by this bundle
+    // )
+    //     external 
+    //     virtual
+    //     returns(NftId bundleNftId)
+    // {
+    //     (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
 
-    /// @inheritdoc IPoolService
-    function createBundle(
-        address bundleOwner, // initial bundle owner
-        Fee memory fee, // fees deducted from premium that go to bundle owner
-        Seconds lifetime, // initial duration for which new policies are covered
-        bytes calldata filter // optional use case specific criteria that define if a policy may be covered by this bundle
-    )
-        external 
-        virtual
-        returns(NftId bundleNftId)
-    {
-        (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
+    //     // create the empty bundle
+    //     bundleNftId = _bundleService.create(
+    //         instance,
+    //         poolNftId,
+    //         bundleOwner,
+    //         fee,
+    //         lifetime,
+    //         filter);
 
-        // create the empty bundle
-        bundleNftId = _bundleService.create(
-            instance,
-            poolNftId,
-            bundleOwner,
-            fee,
-            AmountLib.zero(), 
-            lifetime,
-            filter);
-
-        emit LogPoolServiceBundleCreated(instance.getNftId(), poolNftId, bundleNftId);
-    }
+    //     emit LogPoolServiceBundleCreated(instance.getNftId(), poolNftId, bundleNftId);
+    // }
 
 
     function closeBundle(NftId bundleNftId)
@@ -349,9 +348,10 @@ contract PoolService is
         _checkNftType(bundleNftId, BUNDLE());
 
         IRegistry registry = getRegistry();
-        IRegistry.ObjectInfo memory bundleInfo = registry.getObjectInfo(bundleNftId);
-        IRegistry.ObjectInfo memory poolInfo = registry.getObjectInfo(bundleInfo.parentNftId);
-        IInstance instance = _getInstanceForComponent(registry, poolInfo);
+        NftId poolNftId = registry.getObjectInfo(bundleNftId).parentNftId;
+        IInstance instance = _getInstanceForComponent(
+            registry, 
+            registry.getObjectInfo(poolNftId).parentNftId);
 
         Amount poolFeeAmount = premium.poolFeeFixAmount + premium.poolFeeVarAmount;
         Amount bundleFeeAmount = premium.bundleFeeFixAmount + premium.bundleFeeVarAmount;
@@ -360,13 +360,13 @@ contract PoolService is
         InstanceStore instanceStore = instance.getInstanceStore();
         _componentService.increasePoolBalance(
             instanceStore,
-            poolInfo.nftId,
+            poolNftId,
             bundleNetAmount + bundleFeeAmount, 
             poolFeeAmount);
 
         _componentService.increaseBundleBalance(
             instanceStore,
-            bundleInfo.nftId,
+            bundleNftId,
             bundleNetAmount, 
             bundleFeeAmount);
     }
@@ -527,7 +527,6 @@ contract PoolService is
         _checkNftType(productNftId, PRODUCT());
 
         poolNftId = instanceReader.getProductInfo(productNftId).poolNftId;
-        NftId poolNftId = instanceReader.getProductInfo(productNftId).poolNftId;
         IComponents.PoolInfo memory poolInfo = instanceReader.getPoolInfo(poolNftId);
         poolIsVerifyingApplications = poolInfo.isVerifyingApplications;
 

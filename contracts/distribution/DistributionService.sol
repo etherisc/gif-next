@@ -223,7 +223,7 @@ contract DistributionService is
         if (referralIsValid(distributionNftId, referralId)) {
             IRegistry registry = getRegistry();
             IRegistry.ObjectInfo memory distributionInfo = registry.getObjectInfo(distributionNftId);
-            IInstance instance = _getInstanceForComponent(registry, distributionInfo);
+            IInstance instance = _getInstanceForComponent(registry, distributionInfo.parentNftId);
 
             // update book keeping for referral info
             IDistribution.ReferralInfo memory referralInfo = instance.getInstanceReader().getReferralInfo(referralId);
@@ -244,7 +244,7 @@ contract DistributionService is
     {
         IRegistry registry = getRegistry();
         IRegistry.ObjectInfo memory distributionInfo = registry.getObjectInfo(distributionNftId);
-        IInstance instance = _getInstanceForComponent(registry, distributionInfo);
+        IInstance instance = _getInstanceForComponent(registry, distributionInfo.parentNftId);
         InstanceReader reader = instance.getInstanceReader();
         InstanceStore store = instance.getInstanceStore();
 
@@ -328,7 +328,7 @@ contract DistributionService is
 
         IRegistry registry = getRegistry();
         IRegistry.ObjectInfo memory distributionInfo = registry.getObjectInfo(distributionNftId);
-        IInstance instance = _getInstanceForComponent(registry, distributionInfo);
+        IInstance instance = _getInstanceForComponent(registry, distributionInfo.parentNftId);
         IDistribution.ReferralInfo memory info = instance.getInstanceReader().getReferralInfo(referralId);
 
         if (info.distributorNftId.eqz()) {

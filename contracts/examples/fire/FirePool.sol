@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Amount} from "../../type/Amount.sol";
+import {Amount, AmountLib} from "../../type/Amount.sol";
 import {BasicPool} from "../../pool/BasicPool.sol";
 import {Fee} from "../../type/Fee.sol";
 import {IAuthorization} from "../../authorization/IAuthorization.sol";
@@ -55,7 +55,7 @@ contract FirePool is
     {
         _initializeBasicPool(
             registry,
-            instanceNftId,
+            fireProductNftId,
             componentName,
             token,
             poolInfo,

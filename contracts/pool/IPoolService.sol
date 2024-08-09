@@ -82,16 +82,17 @@ interface IPoolService is IService {
     ) external;
 
 
-    /// @dev create a new empty bundle with the provided parameters
-    /// may only be called by registered and unlocked pool components.
-    function createBundle(
-        address owner, // initial bundle owner
-        Fee memory fee, // fees deducted from premium that go to bundle owner
-        Seconds lifetime, // initial duration for which new policies are covered
-        bytes calldata filter // optional use case specific criteria that define if a policy may be covered by this bundle
-    )
-        external 
-        returns(NftId bundleNftId); // the nft id of the newly created bundle
+    // TODO cleanup
+    // /// @dev create a new empty bundle with the provided parameters
+    // /// may only be called by registered and unlocked pool components.
+    // function createBundle(
+    //     address owner, // initial bundle owner
+    //     Fee memory fee, // fees deducted from premium that go to bundle owner
+    //     Seconds lifetime, // initial duration for which new policies are covered
+    //     bytes calldata filter // optional use case specific criteria that define if a policy may be covered by this bundle
+    // )
+    //     external 
+    //     returns(NftId bundleNftId); // the nft id of the newly created bundle
 
 
     /// @dev increase stakes for bundle
