@@ -154,7 +154,7 @@ jobs:
     permissions:
         contents: read
         # id-token: write
-    # needs: [build_hardhat, build_foundry, test_foundry]
+    needs: [build_hardhat, build_foundry]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
