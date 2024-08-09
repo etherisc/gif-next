@@ -53,62 +53,35 @@ contract InstanceAdmin is
     /// @dev Only used for master instance admin.
     /// Contracts created via constructor come with disabled initializers.
     constructor(
-        IAuthorization instanceAuthorization
-    )
-        AccessAdmin()
-    {
-        _instanceAuthorization = instanceAuthorization;
+        address instanceAuthorization
+    ) {
+        initialize(new AccessManagerCloneable());
+        _instanceAuthorization = IAuthorization(instanceAuthorization);
+
         _disableInitializers();
     }
 
-    /// @dev Initializes this instance admin with the provided instances authorization specification.
-    /// Internally the function creates an instance specific OpenZeppelin AccessManager that is used as the authority
-    /// for the inststance authorizatios.
-    /// Important: Initialization of this instance admin is only complete after calling function initializeInstance. 
-    function initialize(
-        AccessManagerCloneable accessManager,
-        IAuthorization instanceAuthorization
+    /// @dev Completes the initialization of this instance admin using the provided instance, registry and version.
+    /// Important: Initialization of instance admin is only complete after calling this function. 
+    /// Important: The instance MUST be registered and all instance supporting contracts must be wired to this instance.
+    function completeSetup(
+        address instanceAddress,
+        address instanceAuthorization,
+        VersionPart releaseVersion
     )
         external
-        initializer() 
-    {
-        // set and initialize access manager for this instance admin
-        _initializeAuthority(accessManager);
-
-        // create basic instance independent setup
-        _initializeAdminAndPublicRoles();
-
-        // store instance authorization specification
-        _instanceAuthorization = IAuthorization(instanceAuthorization);
-    }
-
-    function _checkTargetIsReadyForAuthorization(address target)
-        internal
-        view
-    {
-        if (address(_registry) != address(0) && !_registry.isRegistered(target)) {
-            revert ErrorInstanceAdminTargetNotRegistered(target);
-        }
-
-        if (targetExists(target)) {
-            revert ErrorInstanceAdminTargetAlreadyAuthorized(target);
-        }
-    }
-
-    /// @dev Completes the initialization of this instance admin using the provided instance.
-    /// Important: The instance MUST be registered and all instance supporting contracts must be wired to this instance.
-    /// Important: MUST be called in the same tx as initialize()
-    function completeSetup(address instanceAddress, address registry)
-        external
+        reinitializer(uint64(releaseVersion.toInt()))
         onlyDeployer()
     {
-        AccessManagerCloneable(authority()).completeSetup(registry, IInstance(instanceAddress).getRelease()); 
-
-        _checkTargetIsReadyForAuthorization(instanceAddress);
-
         _idNext = CUSTOM_ROLE_ID_MIN;
         _instance = IInstance(instanceAddress);
-        _registry = _instance.getRegistry();
+        _registry = IRegistry(_instance.getRegistry());
+        _instanceAuthorization = IAuthorization(instanceAuthorization);
+
+        AccessManagerCloneable accessManager = AccessManagerCloneable(authority());
+        accessManager.completeSetup(address(_registry), VersionPartLib.toVersionPart(type(uint8).max)); 
+
+        _checkTargetIsReadyForAuthorization(instanceAddress);
 
         // check matching releases
         if (_instanceAuthorization.getRelease() != _instance.getRelease()) {
@@ -212,6 +185,20 @@ contract InstanceAdmin is
         return _instanceAuthorization;
     }
 
+    // ------------------- Internal functions ------------------- //
+
+    function _checkTargetIsReadyForAuthorization(address target)
+        internal
+        view
+    {
+        if (!_registry.isRegistered(target)) {
+            revert ErrorInstanceAdminTargetNotRegistered(target);
+        }
+
+        if (targetExists(target)) {
+            revert ErrorInstanceAdminTargetAlreadyAuthorized(target);
+        }
+    }
 
     function _createRoles(IAuthorization authorization)
         internal

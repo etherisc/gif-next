@@ -105,26 +105,28 @@ contract AccessAdmin is
         _;
     }
 
-    /// @dev this contract is cloneable thus initialization functions present on par with constructor
-    // constructor creates all master contracts and does no further initializations
-    constructor() {
-        _deployer = msg.sender;
-        _authority = new AccessManagerCloneable();
-
-        // admin role is granted before it is created
-        _authority.initialize(address(this));
-
-        _setAuthority(address(_authority));
-
-        // done in child class constructor (only RegistryAdmin, the only child not supposed to be cloned and needs this roles created in constructor)
-        // or initializers
-        // _createAdminAndPublicRoles();
-
-        // done in child classes because of RegistryAdmin.completeSetup()
-        //_disableInitalizers();
-    }
-
     //-------------- initialization functions ------------------------------//
+
+    /// @dev Initializes this admin with the provided accessManager (and authorization specification).
+    /// Internally initializes access manager with this admin and creates basic role setup.
+    function initialize(
+        AccessManagerCloneable authority 
+        //,IAuthorization authorization
+    )
+        public
+        virtual
+        initializer
+        onlyDeployer() // initializes deployer if not initialized yet
+    {
+        // set and initialize access manager for this admin
+        // admin role is granted before it is created
+        _initializeAuthority(authority);
+
+        // create basic admin independent setup
+        _initializeAdminAndPublicRoles();
+
+        //_authorization = authorization;
+    }
 
     function _initializeAuthority(
         AccessManagerCloneable authority
@@ -132,7 +134,6 @@ contract AccessAdmin is
         internal
         virtual
         onlyInitializing()
-        onlyDeployer()
     {
         _authority = authority;
         _authority.initialize(address(this));
@@ -140,13 +141,33 @@ contract AccessAdmin is
         __AccessManaged_init(address(_authority));
     }
 
-
     function _initializeAdminAndPublicRoles()
         internal
         virtual
         onlyInitializing()
     {
-        _createAdminAndPublicRoles();
+        RoleId adminRoleId = RoleIdLib.toRoleId(_authority.ADMIN_ROLE());
+
+        // setup admin role
+        _createRoleUnchecked(
+            ADMIN_ROLE(),
+            toRole({
+                adminRoleId: ADMIN_ROLE(),
+                roleType: RoleType.Contract,
+                maxMemberCount: 1,
+                name: ADMIN_ROLE_NAME}));
+
+        // add this contract as admin role member
+        _roleMembers[adminRoleId].add(address(this));
+
+        // setup public role
+        _createRoleUnchecked(
+            PUBLIC_ROLE(),
+            toRole({
+                adminRoleId: ADMIN_ROLE(),
+                roleType: RoleType.Gif,
+                maxMemberCount: type(uint32).max,
+                name: PUBLIC_ROLE_NAME}));
     }
 
     //--- view functions for roles ------------------------------------------//
@@ -341,35 +362,6 @@ contract AccessAdmin is
             functionSelectors[i] = selector.toBytes4();
         }
     }
-
-    /// @dev internal setup function that can be used in both constructor and initializer.
-    function _createAdminAndPublicRoles()
-        internal
-    {
-        RoleId adminRoleId = RoleIdLib.toRoleId(_authority.ADMIN_ROLE());
-
-        // setup admin role
-        _createRoleUnchecked(
-            ADMIN_ROLE(),
-            toRole({
-                adminRoleId: ADMIN_ROLE(),
-                roleType: RoleType.Contract,
-                maxMemberCount: 1,
-                name: ADMIN_ROLE_NAME}));
-
-        // add this contract as admin role member
-        _roleMembers[adminRoleId].add(address(this));
-
-        // setup public role
-        _createRoleUnchecked(
-            PUBLIC_ROLE(),
-            toRole({
-                adminRoleId: ADMIN_ROLE(),
-                roleType: RoleType.Gif,
-                maxMemberCount: type(uint32).max,
-                name: PUBLIC_ROLE_NAME}));
-    }
-
 
     /// @dev grant the specified role access to all functions in the provided selector list
     function _grantRoleAccessToFunctions(

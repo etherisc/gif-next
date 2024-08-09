@@ -62,7 +62,9 @@ contract RegistryAdmin is
     address private _staking;
     address private _stakingStore;
 
-    constructor() AccessAdmin() { }
+    constructor() {
+        initialize(new AccessManagerCloneable());
+    }
 
     function completeSetup(
         IRegistry registry,
@@ -70,10 +72,11 @@ contract RegistryAdmin is
         address gifManager
     )
         external
-        initializer
+        reinitializer(type(uint8).max)
         onlyDeployer()
     {
-        AccessManagerCloneable(authority()).completeSetup(address(registry), VersionPartLib.toVersionPart(type(uint8).max)); 
+        AccessManagerCloneable accessManager = AccessManagerCloneable(authority());
+        accessManager.completeSetup(address(registry), VersionPartLib.toVersionPart(type(uint8).max)); 
 
         _registry = address(registry);
         _releaseRegistry = registry.getReleaseRegistryAddress();
@@ -81,8 +84,6 @@ contract RegistryAdmin is
         _staking = registry.getStakingAddress();
         _stakingStore = address(
             IStaking(_staking).getStakingStore());
-
-        _initializeAdminAndPublicRoles();
 
         _createTargets();
 
@@ -161,7 +162,7 @@ contract RegistryAdmin is
         functions = new FunctionInfo[](3);
         functions[0] = toFunction(ReleaseRegistry.createNextRelease.selector, "createNextRelease");
         functions[1] = toFunction(ReleaseRegistry.activateNextRelease.selector, "activateNextRelease");
-        functions[2] = toFunction(ReleaseRegistry.setActive.selector, "pauseRelease");
+        functions[2] = toFunction(ReleaseRegistry.setActive.selector, "setActive");
         _authorizeTargetFunctions(_releaseRegistry, GIF_ADMIN_ROLE(), functions);
 
         _grantRoleToAccount(GIF_ADMIN_ROLE(), gifAdmin);

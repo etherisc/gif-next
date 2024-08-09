@@ -14,19 +14,20 @@ import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {ObjectType} from "../../contracts/type/ObjectType.sol";
 import {BUNDLE, COMPONENT, DISTRIBUTION, ORACLE, POOL, PRODUCT, POLICY, RISK, REQUEST, SERVICE, STAKING} from "../../contracts/type/ObjectType.sol";
 import {RoleId} from "../../contracts/type/RoleId.sol";
+import {VersionPartLib} from "../../contracts/type/Version.sol";
 
 contract TestInstanceAdmin is
     GifTest
 {
     AccessManagerCloneable public someAccessManager;
-    InstanceAuthorizationV3 public someInstanceAuthz;
+    address public someInstanceAuthz;
     InstanceAdmin public someInstanceAdminMaster;
 
     function setUp() public override {
         super.setUp();
 
         someAccessManager = new AccessManagerCloneable();
-        someInstanceAuthz = new InstanceAuthorizationV3();
+        someInstanceAuthz = address(new InstanceAuthorizationV3());
         someInstanceAdminMaster = new InstanceAdmin(someInstanceAuthz);
         someAccessManager = AccessManagerCloneable(someInstanceAdminMaster.authority());
     }
@@ -47,15 +48,11 @@ contract TestInstanceAdmin is
 
         // create AccessManager and assign admin role to clonedInstanceAdmin
         AccessManagerCloneable accessMananger = new AccessManagerCloneable();
-        // TODO initialization is done in instance admin
-        //ozAccessManager.initialize(address(clonedInstanceAdmin));
 
-        clonedInstanceAdmin.initialize(
-            accessMananger,
-            someInstanceAuthz);
-
+        clonedInstanceAdmin.initialize(accessMananger);
         clonedInstanceAdmin.completeSetup(
             address(instance),
-            address(registry));
+            someInstanceAuthz,
+            VersionPartLib.toVersionPart(3));
     }
 }

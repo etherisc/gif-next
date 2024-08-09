@@ -35,36 +35,24 @@ contract ReleaseAdmin is
     }
     /// @dev Only used for master release admin.
     /// Contracts created via constructor come with disabled initializers.
-    constructor()
-        AccessAdmin()
-    {
+    constructor() {
+        initialize(new AccessManagerCloneable());
         _disableInitializers();
     }
 
-    // TODO can store IServiceAuthorization like InstanceAdmin does
-    /// @dev Initializes this release admin with the provided access manager, registry and release registry addresses.
-    /// Used for cloned release admin.
-    function initialize(
-        AccessManagerCloneable accessManager, 
+    function completeSetup(
         address registry, 
         address releaseRegistry,
         VersionPart releaseVersion
     )
         external
-        initializer
+        reinitializer(uint64(releaseVersion.toInt()))
     {
-        // set and initialize access manager for this release admin
-        // admin role is granted before it is created
-        // _deployer initialized here
-        _initializeAuthority(accessManager);
+        AccessManagerCloneable accessManager = AccessManagerCloneable(authority());
         accessManager.completeSetup(registry, releaseVersion); 
-
-        // create basic release independent setup
-        _initializeAdminAndPublicRoles();
 
         _setupReleaseRegistry(releaseRegistry);
     }
-
 
     /// @dev Sets up authorizaion for specified service.
     /// For all authorized services its authorized functions are enabled.

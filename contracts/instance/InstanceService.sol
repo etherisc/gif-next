@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {ShortString, ShortStrings} from "@openzeppelin/contracts/utils/ShortStrings.sol";
 
+import {IAuthorization} from "../authorization/IAuthorization.sol";
 import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
 import {Amount} from "../type/Amount.sol";
 import {BundleSet} from "./BundleSet.sol";
@@ -118,7 +119,11 @@ contract InstanceService is
             TargetManagerLib.getDefaultRewardRate());
 
         // MUST be set after instance is set up and registered
-        instanceAdmin.completeSetup(address(clonedInstance), address(getRegistry()));
+        IAuthorization instanceAuthorization = InstanceAdmin(_masterInstanceAdmin).getInstanceAuthorization();
+        instanceAdmin.completeSetup(
+            address(clonedInstance),
+            address(instanceAuthorization),
+            getVersion().toMajorPart());
 
         emit LogInstanceCloned(
             clonedInstanceNftId,
@@ -290,13 +295,7 @@ contract InstanceService is
         
         // set up the instance admin
         clonedInstanceAdmin = InstanceAdmin(Clones.clone(_masterInstanceAdmin));
-        // TODO initialization is done in instance admin
-        //clonedAccessManager.initialize(
-        //    address(clonedInstanceAdmin)); // grant ADMIN_ROLE to instance admin
-
-        clonedInstanceAdmin.initialize(
-            clonedAccessManager,
-            InstanceAdmin(_masterInstanceAdmin).getInstanceAuthorization());
+        clonedInstanceAdmin.initialize(clonedAccessManager);
     }
 
 
