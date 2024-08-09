@@ -112,6 +112,7 @@ contract PolicyService is
         external 
         virtual
         nonReentrant()
+        returns (Amount premiumAmount)
     {
         _checkNftType(applicationNftId, POLICY());
 
@@ -170,6 +171,8 @@ contract PolicyService is
             applicationNftId,
             premium);
 
+        premiumAmount = premium.fullPremiumAmount;
+
         // update referral counter 
         {
             IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
@@ -183,8 +186,6 @@ contract PolicyService is
 
         // log policy creation before interactions with token and policy holder
         emit LogPolicyServicePolicyCreated(applicationNftId, premium.premiumAmount, activateAt);
-
-        // TODO add calling pool contract if it needs to validate application
 
         // callback to policy holder if applicable
         _policyHolderPolicyActivated(applicationNftId, activateAt);

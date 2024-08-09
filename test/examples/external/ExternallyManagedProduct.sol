@@ -23,8 +23,6 @@ contract ExternallyManagedProduct is
 {
 
     RiskId public riskId;
-    Amount public sumInsuredAmount;
-    Amount public premiumAmount;
     Seconds public policyDuration;
     ReferralId public referralId;
 
@@ -51,32 +49,80 @@ contract ExternallyManagedProduct is
         riskId = RiskIdLib.toRiskId("Risk1");
         _createRisk(riskId, "Risk1");
 
-        sumInsuredAmount = AmountLib.toAmount(1000);
-        premiumAmount = AmountLib.toAmount(100);
         policyDuration = SecondsLib.toSeconds(14 * 24 * 3600);
         referralId = ReferralLib.zero();
     }
 
     function createPolicy(
-        uint256 applicationUint,
+        Amount sumInsuredAmount,
+        Amount estimatedPremiumAmount,
         NftId bundleNftId
     )
         external
-        returns (NftId policyNftId)
+        returns (
+            NftId policyNftId,
+            Amount premiumAmount
+        )
     {
         address applicationOwner = msg.sender;
         policyNftId = _createApplication(
             applicationOwner,
             riskId,
             sumInsuredAmount,
-            premiumAmount,
+            estimatedPremiumAmount,
             policyDuration,
             bundleNftId,
             referralId,
-            abi.encode(applicationUint));
+            "");
         
-        _createPolicy(
+        premiumAmount = _createPolicy(
             policyNftId,
             TimestampLib.blockTimestamp());
+
+        _collectPremium(
+            policyNftId,
+            TimestampLib.blockTimestamp());
+    }
+
+
+    function closePolicy(
+        NftId policyNftId
+    )
+        external
+    {
+        _close(policyNftId);
+    }
+
+
+    function createAndProcessPayout(
+        NftId policyNftId,
+        Amount amount
+    )
+        external
+        returns (
+            ClaimId claimId,
+            PayoutId payoutId
+        )
+    {
+        claimId = _submitClaim(
+            policyNftId,
+            amount,
+            "");
+
+        _confirmClaim(
+            policyNftId,
+            claimId,
+            amount,
+            "");
+
+        payoutId = _createPayout(
+            policyNftId,
+            claimId,
+            amount,
+            "");
+
+        _processPayout(
+            policyNftId,
+            payoutId);
     }
 }

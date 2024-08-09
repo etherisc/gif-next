@@ -47,53 +47,10 @@ contract ExternallyManagedPool is
     }
 
     function init() public {
+        // TODO move this to component registration flow
         getToken().approve(
             address(getTokenHandler()), 
             type(uint256).max);
-    }
-
-
-    function fundPoolWallet(
-        Amount amount
-    )
-        external
-    {
-        _fundPoolWallet(amount);
-    }
-
-    function defundPoolWallet(
-        Amount amount
-    )
-        external
-    {
-        _defundPoolWallet(amount);
-    }
-
-    function applicationMatchesBundle(
-        NftId applicationNftId, 
-        bytes memory applicationData,
-        NftId bundleNftId, 
-        bytes memory bundleFilter,
-        Amount collateralizationAmount
-    )
-        public
-        virtual override
-        view
-        returns (bool isMatching)
-    {
-        // super implementation handles input validation
-        super.applicationMatchesBundle(
-            applicationNftId,
-            applicationData,
-            bundleNftId,
-            bundleFilter,
-            collateralizationAmount
-        );
-
-        uint256 applicationUint = abi.decode(applicationData, (uint256));
-        uint256 bundleUint = abi.decode(bundleFilter, (uint256));
-
-        return applicationUint == bundleUint;
     }
 
     function createAndFundBundle(

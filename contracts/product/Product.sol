@@ -253,8 +253,9 @@ abstract contract Product is
     )
         internal
         virtual
+        returns (Amount premiumAmount)
     {
-        _getProductStorage()._policyService.createPolicy(
+        premiumAmount = _getProductStorage()._policyService.createPolicy(
             applicationNftId, 
             activateAt);
     }

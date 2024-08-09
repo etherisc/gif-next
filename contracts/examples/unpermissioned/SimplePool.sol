@@ -34,6 +34,7 @@ contract SimplePool is
         );
     }
 
+
     function initialize(
         address registry,
         NftId productNftId,
@@ -78,4 +79,21 @@ contract SimplePool is
         netStakedAmountInt = netStakedAmount.toInt();
     }
 
+
+    function fundPoolWallet(
+        Amount amount
+    )
+        external
+    {
+        _fundPoolWallet(amount);
+    }
+
+
+    function defundPoolWallet(
+        Amount amount
+    )
+        external
+    {
+        _defundPoolWallet(amount);
+    }
 }
