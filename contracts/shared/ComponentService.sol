@@ -122,21 +122,6 @@ contract ComponentService is
 
         // interactions
         info.tokenHandler.addAllowedTarget(newWallet);
-        
-        // FIXME: transfer tokens to new wallet in case of instance linked component too?
-        // if (currentBalance > 0) {
-        //     // move tokens from old to new wallet 
-        //     emit LogComponentWalletTokensTransferred(currentWallet, newWallet, currentBalance);
-
-        //     if (currentWallet == address(this)) {
-        //         // transfer from the component requires an allowance
-        //         info.tokenHandler.distributeTokens(currentWallet, newWallet, AmountLib.toAmount(currentBalance));
-        //     } else {
-        //         info.tokenHandler.collectTokens(currentWallet, newWallet, AmountLib.toAmount(currentBalance));
-        //     }
-        // }
-
-        // this breaks the cei pattern, but right now i don't see a way how to change this
         info.tokenHandler.removeAllowedTarget(currentWallet);
     }
 
