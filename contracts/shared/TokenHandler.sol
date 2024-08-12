@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManaged.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -11,17 +12,37 @@ import {Amount} from "../type/Amount.sol";
 /// a default token contract is provided via contract constructor
 /// relies internally on oz SafeERC20.safeTransferFrom
 contract TokenHandler is AccessManaged {
+    using EnumerableSet for EnumerableSet.AddressSet;
+
     error ErrorTokenHandlerAmountIsZero();
     error ErrorTokenHandlerBalanceTooLow(address token, address from, uint256 balance, uint256 expectedBalance);
     error ErrorTokenHandlerAllowanceTooSmall(address token, address from, address spender, uint256 allowance, uint256 expectedAllowance);
     error ErrorTokenHandlerRecipientWalletsMustBeDistinct(address to, address to2, address to3);
+    error ErrorTokenHandlerRecipientNotAllowed(address from, address to, Amount amount);
+    error ErrorTokenHandlerSenderNotAllowed(address from, address to, Amount amount);
     
     event LogTokenHandlerTokenTransfer(address token, address from, address to, uint256 amountTransferred);
 
     IERC20Metadata private _token;
+    EnumerableSet.AddressSet private _allowedTargets;
+
 
     constructor(address token, address initialAuthority) AccessManaged(initialAuthority) {
         _token = IERC20Metadata(token);
+    }
+
+    function addAllowedTarget(address target) 
+        external 
+        // FIXME: restricted() 
+    {
+        _allowedTargets.add(target);
+    }
+
+    function removeAllowedTarget(address target) 
+        external
+        // FIXME: restricted() 
+    {
+        _allowedTargets.remove(target);
     }
 
     /// @dev returns the default token defined for this TokenHandler
@@ -43,6 +64,9 @@ contract TokenHandler is AccessManaged {
         external
         restricted()
     {
+        if (_allowedTargets.length() > 0 && ! _allowedTargets.contains(to)) {
+            revert ErrorTokenHandlerRecipientNotAllowed(from, to, amount);
+        }
         _transfer(from, to, amount, true);
     }
 
@@ -63,6 +87,8 @@ contract TokenHandler is AccessManaged {
         if (to == to2 || to == to3 || to2 == to3) {
             revert ErrorTokenHandlerRecipientWalletsMustBeDistinct(to, to2, to3);
         }
+
+        // FIXME: limit to allowed targets
 
         _checkPreconditions(from, amount + amount2 + amount3);
 
@@ -87,6 +113,10 @@ contract TokenHandler is AccessManaged {
         external
         restricted()
     {
+        if (_allowedTargets.length() > 0 && ! _allowedTargets.contains(from)) {
+            revert ErrorTokenHandlerSenderNotAllowed(from, to, amount);
+        }
+
         _transfer(from, to, amount, true);
     }
 

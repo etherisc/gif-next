@@ -138,6 +138,9 @@ abstract contract Component is
         // effects
         _setWallet(newWallet);
 
+        // temporaryly allow current wallet to transfer tokens to new wallet
+        getTokenHandler().addAllowedTarget(currentWallet);
+
         // interactions
         if (currentBalance > 0) {
             // move tokens from old to new wallet 
@@ -150,6 +153,9 @@ abstract contract Component is
                 getTokenHandler().collectTokens(currentWallet, newWallet, AmountLib.toAmount(currentBalance));
             }
         }
+
+        // this breaks cei pattern, but not sure how to bet resolve this
+        getTokenHandler().removeAllowedTarget(currentWallet);
     }
 
     /// @dev callback function for nft transfers

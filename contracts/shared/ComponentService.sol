@@ -24,6 +24,7 @@ import {KEEP_STATE} from "../type/StateId.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType, REGISTRY, BUNDLE, COMPONENT, DISTRIBUTION, DISTRIBUTOR, INSTANCE, ORACLE, POOL, PRODUCT} from "../type/ObjectType.sol";
 import {RoleId} from "../type/RoleId.sol";
+import {TokenHandler} from "../shared/TokenHandler.sol";
 import {TokenHandlerDeployerLib} from "../shared/TokenHandlerDeployerLib.sol";
 
 contract ComponentService is
@@ -92,6 +93,7 @@ contract ComponentService is
 
 
     function setWallet(address newWallet) external virtual {
+        // checks
         (NftId componentNftId,, IInstance instance) = _getAndVerifyActiveComponent(COMPONENT());
         IComponents.ComponentInfo memory info = instance.getInstanceReader().getComponentInfo(componentNftId);
         address currentWallet = info.wallet;
@@ -108,9 +110,32 @@ contract ComponentService is
             revert ErrorComponentServiceWalletAddressIsSameAsCurrent();
         }
 
+        uint256 currentBalance = info.token.balanceOf(currentWallet);
+
+        // effects
         info.wallet = newWallet;
         instance.getInstanceStore().updateComponent(componentNftId, info, KEEP_STATE());
+
         emit LogComponentServiceWalletAddressChanged(componentNftId, currentWallet, newWallet);
+
+        // interactions
+        info.tokenHandler.addAllowedTarget(newWallet);
+        
+        // FIXME: transfer tokens to new wallet in case of instance linked component too?
+        // if (currentBalance > 0) {
+        //     // move tokens from old to new wallet 
+        //     emit LogComponentWalletTokensTransferred(currentWallet, newWallet, currentBalance);
+
+        //     if (currentWallet == address(this)) {
+        //         // transfer from the component requires an allowance
+        //         info.tokenHandler.distributeTokens(currentWallet, newWallet, AmountLib.toAmount(currentBalance));
+        //     } else {
+        //         info.tokenHandler.collectTokens(currentWallet, newWallet, AmountLib.toAmount(currentBalance));
+        //     }
+        // }
+
+        // this breaks the cei pattern, but right now i don't see a way how to change this
+        info.tokenHandler.removeAllowedTarget(currentWallet);
     }
 
     // TODO implement
@@ -617,6 +642,7 @@ contract ComponentService is
         componentInfo.tokenHandler = TokenHandlerDeployerLib.deployTokenHandler(
             address(token), 
             address(instanceAdmin.authority()));
+        componentInfo.tokenHandler.addAllowedTarget(component.getWallet());
 
         // register component with instance
         instanceStore.createComponent(
