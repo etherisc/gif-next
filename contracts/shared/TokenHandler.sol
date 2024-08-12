@@ -18,19 +18,18 @@ contract TokenHandler is AccessManaged {
     error ErrorTokenHandlerBalanceTooLow(address token, address from, uint256 balance, uint256 expectedBalance);
     error ErrorTokenHandlerAllowanceTooSmall(address token, address from, address spender, uint256 allowance, uint256 expectedAllowance);
     error ErrorTokenHandlerRecipientWalletsMustBeDistinct(address to, address to2, address to3);
-    error ErrorTokenHandlerRecipientNotAllowed(address to);
-    error ErrorTokenHandlerSenderNotAllowed(address from);
+    error ErrorTokenHandlerWalletNotAllowed(address to);
     
     event LogTokenHandlerTokenTransfer(address token, address from, address to, uint256 amountTransferred);
 
     IERC20Metadata private _token;
-    EnumerableSet.AddressSet private _allowedTargets;
+    EnumerableSet.AddressSet private _allowedWallets;
 
 
     constructor(address token, address initialAuthority, address initialAllowedWallet) AccessManaged(initialAuthority) {
         _token = IERC20Metadata(token);
         if (initialAllowedWallet != address(0)) {
-            _allowedTargets.add(initialAllowedWallet);
+            _allowedWallets.add(initialAllowedWallet);
         }
     }
 
@@ -38,14 +37,14 @@ contract TokenHandler is AccessManaged {
         external 
         restricted() 
     {
-        _allowedTargets.add(target);
+        _allowedWallets.add(target);
     }
 
     function removeAllowedTarget(address target) 
         external
         restricted() 
     {
-        _allowedTargets.remove(target);
+        _allowedWallets.remove(target);
     }
 
     /// @dev returns the default token defined for this TokenHandler
@@ -67,9 +66,7 @@ contract TokenHandler is AccessManaged {
         external
         restricted()
     {
-        if (_allowedTargets.length() > 0 && ! _allowedTargets.contains(to)) {
-            revert ErrorTokenHandlerRecipientNotAllowed(to);
-        }
+        _checkisAllowedWallet(to);
         _transfer(from, to, amount, true);
     }
 
@@ -93,26 +90,16 @@ contract TokenHandler is AccessManaged {
 
         _checkPreconditions(from, amount + amount2 + amount3);
 
-        if(_allowedTargets.length() > 0) {
-            if (amount.gtz() && ! _allowedTargets.contains(to)) {
-                revert ErrorTokenHandlerRecipientNotAllowed(to);
-            }
-            if (amount2.gtz() && ! _allowedTargets.contains(to2)) {
-                revert ErrorTokenHandlerRecipientNotAllowed(to2);
-            }
-            if (amount3.gtz() && ! _allowedTargets.contains(to3)) {
-                revert ErrorTokenHandlerRecipientNotAllowed(to3);
-            }
-        }
-
-
         if (amount.gtz()) {
+            _checkisAllowedWallet(to);
             _transfer(from, to, amount, false);
         }
         if (amount2.gtz()) {
+            _checkisAllowedWallet(to2);
             _transfer(from, to2, amount2, false);
         }
         if (amount3.gtz()) {
+            _checkisAllowedWallet(to3);
             _transfer(from, to3, amount3, false);
         }
     }
@@ -127,10 +114,7 @@ contract TokenHandler is AccessManaged {
         external
         restricted()
     {
-        if (_allowedTargets.length() > 0 && ! _allowedTargets.contains(from)) {
-            revert ErrorTokenHandlerSenderNotAllowed(from);
-        }
-
+        _checkisAllowedWallet(from);
         _transfer(from, to, amount, true);
     }
 
@@ -178,6 +162,18 @@ contract TokenHandler is AccessManaged {
         uint256 allowance = _token.allowance(from, address(this));
         if (allowance < amount.toInt()) {
             revert ErrorTokenHandlerAllowanceTooSmall(address(_token), from, address(this), allowance, amount.toInt());
+        }
+    }
+
+    function _checkisAllowedWallet(address wallet)
+        internal
+        view
+    {
+        if (_allowedWallets.length() == 0) {
+            return;
+        } 
+        if(! _allowedWallets.contains(wallet)) {
+            revert ErrorTokenHandlerWalletNotAllowed(wallet);
         }
     }
 }
