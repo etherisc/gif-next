@@ -57,6 +57,15 @@ contract SimplePool is
             initialOwner);
     }
 
+
+    function setWallet(address newWallet)
+        external
+        onlyOwner()
+    {
+        _setWallet(newWallet);
+    }
+
+
     function createBundle(
         Fee memory fee,
         uint256 initialAmount,

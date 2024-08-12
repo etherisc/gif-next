@@ -12,7 +12,7 @@ import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
 import {IPoolService} from "../../../contracts/pool/IPoolService.sol";
 import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
 import {SecondsLib} from "../../../contracts/type/Seconds.sol";
-import {TokenHandler} from "../../../contracts/shared/TokenHandler.sol";
+import {TokenHandler, TokenHandlerBase} from "../../../contracts/shared/TokenHandler.sol";
 import {UFixedLib} from "../../../contracts/type/UFixed.sol";
 import {ExternallyManagedPool} from "./ExternallyManagedPool.sol";
 import {ExternallyManagedProduct} from "./ExternallyManagedProduct.sol";
@@ -51,7 +51,7 @@ contract ExternallyManagedPoolTest is GifTest {
         // WHEN + THEN
         IComponents.PoolInfo memory emPoolInfo = instanceReader.getPoolInfo(emPoolNftId);
 
-        assertTrue(emPoolInfo.isExternallyManaged, "unexpected emPoolInfo.isVerifyingApplications");
+        assertTrue(emPoolInfo.isExternallyManaged, "unexpected emPoolInfo.isExternallyManaged");
         assertEq(instanceReader.getBalanceAmount(emPoolNftId).toInt(), 0, "unexpected em pool balance amount");
         assertEq(instanceReader.getFeeAmount(emPoolNftId).toInt(), 0, "unexpected em pool fee amount");
         assertEq(instanceReader.activeBundles(emPoolNftId), 0, "unexpected em pool active bundle count");
@@ -196,7 +196,6 @@ contract ExternallyManagedPoolTest is GifTest {
         // GIVEN just setUp
 
         // WHEN creating a bundle and fund pool wallet
-
         Amount bundleAmount = AmountLib.toAmount(10042);
 
         vm.startPrank(registryOwner);
@@ -213,7 +212,7 @@ contract ExternallyManagedPoolTest is GifTest {
         token.approve(address(emPool.getTokenHandler()), bundleAmount.toInt());
         emPool.fundPoolWallet(bundleAmount);
 
-        // THEN
+        // THEN (expected effect: pool wallet and book keeping show matching funds)
 
         // check pool, bundle and wallet balances
         assertEq(instanceReader.getBalanceAmount(emPoolNftId).toInt(), bundleAmount.toInt(), "unexpected em pool balance amount");
@@ -226,12 +225,10 @@ contract ExternallyManagedPoolTest is GifTest {
         vm.stopPrank();
 
         // THEN (expected effect: unstaking only affects book keeping, not pool balance)
-
         Amount expectedBalance = bundleAmount - unstakeAmount;
         assertEq(instanceReader.getBalanceAmount(emPoolNftId).toInt(), expectedBalance.toInt(), "unexpected em pool balance amount (after unstaking)");
         assertEq(instanceReader.getBalanceAmount(bundleNftId).toInt(), expectedBalance.toInt(), "unexpected em pool balance amount (after unstaking)");
         assertEq(token.balanceOf(emPool.getWallet()), bundleAmount.toInt(), "unexpected em pool balance (after unstaking)");
-
     }
 
 
@@ -401,7 +398,7 @@ contract ExternallyManagedPoolTest is GifTest {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                TokenHandler.ErrorTokenHandlerBalanceTooLow.selector,
+                TokenHandlerBase.ErrorTokenHandlerBalanceTooLow.selector,
                 address(token),
                 address(emPool.getWallet()),
                 premiumAmount, // pool balance after premium payment

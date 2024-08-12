@@ -126,7 +126,7 @@ contract PoolService is
         if ((unstakedAmount + feeAmount).gtz()){
             IComponents.ComponentInfo memory poolComponentInfo = instance.getInstanceReader().getComponentInfo(poolNftId);
             poolComponentInfo.tokenHandler.distributeTokens(
-                poolComponentInfo.wallet, 
+                poolComponentInfo.tokenHandler.getWallet(), 
                 getRegistry().ownerOf(bundleNftId), 
                 unstakedAmount + feeAmount);
         }
@@ -594,7 +594,6 @@ contract PoolService is
         IComponents.ComponentInfo memory info = reader.getComponentInfo(poolNftId);
         info.tokenHandler.collectTokens(
             from,
-            info.wallet,
             amount);
     }
 
@@ -609,7 +608,7 @@ contract PoolService is
     {
         IComponents.ComponentInfo memory info = reader.getComponentInfo(poolNftId);
         info.tokenHandler.distributeTokens(
-            info.wallet, 
+            info.tokenHandler.getWallet(), 
             to, 
             amount);
     }

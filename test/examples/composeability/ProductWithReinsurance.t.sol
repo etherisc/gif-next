@@ -394,7 +394,7 @@ contract ProductWithReinsuranceTest is
 
         // token handler only becomes available after registration
         vm.startPrank(poolOwner);
-        poolRe.approveTokenHandler(AmountLib.max());
+        poolRe.approveTokenHandler(token, AmountLib.max());
         vm.stopPrank();
 
         // solhint-disable-next-line

@@ -24,7 +24,7 @@ import {Seconds, SecondsLib} from "../contracts/type/Seconds.sol";
 import {SimplePool} from "../contracts/examples/unpermissioned/SimplePool.sol";
 import {StateId, ACTIVE, PAUSED, CLOSED} from "../contracts/type/StateId.sol";
 import {Timestamp, TimestampLib, toTimestamp} from "../contracts/type/Timestamp.sol";
-import {TokenHandler} from "../contracts/shared/TokenHandler.sol";
+import {TokenHandler, TokenHandlerBase} from "../contracts/shared/TokenHandler.sol";
 import {GifTest} from "./base/GifTest.sol";
 import {UFixedLib} from "../contracts/type/UFixed.sol";
 
@@ -53,7 +53,7 @@ contract TestBundle is GifTest {
 
         assertTrue(!bundleNftId.eqz(), "bundle nft id is zero");
 
-        assertEq(token.balanceOf(poolComponentInfo.wallet), 1000, "pool wallet token balance not 1000");
+        assertEq(token.balanceOf(poolComponentInfo.tokenHandler.getWallet()), 1000, "pool wallet token balance not 1000");
         uint256 investorBalanceBefore = token.balanceOf(investor);
 
         assertEq(instanceReader.getBalanceAmount(poolNftId).toInt(), 1000, "pool balance not 1000");
@@ -75,7 +75,7 @@ contract TestBundle is GifTest {
         pool.stake(bundleNftId, stakeAmt);
         
         // THEN - assert all counters are updated
-        assertEq(token.balanceOf(poolComponentInfo.wallet), 2000, "pool wallet token balance not 2000");
+        assertEq(token.balanceOf(poolComponentInfo.tokenHandler.getWallet()), 2000, "pool wallet token balance not 2000");
         assertEq(token.balanceOf(investor), investorBalanceBefore - stakeAmount, "investor token balance not 0");
 
         assertEq(instanceReader.getBalanceAmount(poolNftId).toInt(), 2000, "pool balance not 2000");
@@ -106,7 +106,7 @@ contract TestBundle is GifTest {
 
         assertTrue(!bundleNftId.eqz(), "bundle nft id is zero");
 
-        assertEq(token.balanceOf(poolComponentInfo.wallet), 1000, "pool wallet token balance not 1000");
+        assertEq(token.balanceOf(poolComponentInfo.tokenHandler.getWallet()), 1000, "pool wallet token balance not 1000");
         uint256 investorBalanceBefore = token.balanceOf(investor);
 
         assertEq(instanceReader.getBalanceAmount(poolNftId).toInt(), 1000, "pool balance not 1000");
@@ -129,7 +129,7 @@ contract TestBundle is GifTest {
         pool.stake(bundleNftId, stakeAmt);
         
         // THEN - assert all counters are updated
-        assertEq(token.balanceOf(poolComponentInfo.wallet), 2000, "pool wallet token balance not 2000");
+        assertEq(token.balanceOf(poolComponentInfo.tokenHandler.getWallet()), 2000, "pool wallet token balance not 2000");
         assertEq(token.balanceOf(investor), investorBalanceBefore - stakeAmount, "investor token balance not 0");
 
         assertEq(instanceReader.getBalanceAmount(poolNftId).toInt(), 2000, "pool balance not 2000");
@@ -203,7 +203,7 @@ contract TestBundle is GifTest {
 
         // THEN  
         vm.expectRevert(abi.encodeWithSelector(
-            TokenHandler.ErrorTokenHandlerAllowanceTooSmall.selector, 
+            TokenHandlerBase.ErrorTokenHandlerAllowanceTooSmall.selector, 
             address(token),
             investor,
             address(pool.getTokenHandler()),
@@ -238,7 +238,7 @@ contract TestBundle is GifTest {
 
         // THEN  
         vm.expectRevert(abi.encodeWithSelector(
-            TokenHandler.ErrorTokenHandlerAmountIsZero.selector));
+            TokenHandlerBase.ErrorTokenHandlerAmountIsZero.selector));
 
         // WHEN 
         pool.stake(bundleNftId, stakeAmount);
@@ -336,7 +336,7 @@ contract TestBundle is GifTest {
 
         assertTrue(!bundleNftId.eqz(), "bundle nft id is zero");
 
-        assertEq(token.balanceOf(poolComponentInfo.wallet), 1000, "pool wallet token balance not 1000");
+        assertEq(token.balanceOf(poolComponentInfo.tokenHandler.getWallet()), 1000, "pool wallet token balance not 1000");
         uint256 investorBalanceBefore = token.balanceOf(investor);
 
         assertEq(instanceReader.getBalanceAmount(poolNftId).toInt(), 1000, "pool balance not 1000");
@@ -356,7 +356,7 @@ contract TestBundle is GifTest {
         pool.unstake(bundleNftId, unstakeAmt);
         
         // THEN - assert all counters are updated
-        assertEq(token.balanceOf(poolComponentInfo.wallet), 500, "pool wallet token balance not 500");
+        assertEq(token.balanceOf(poolComponentInfo.tokenHandler.getWallet()), 500, "pool wallet token balance not 500");
         assertEq(token.balanceOf(investor), investorBalanceBefore + unstakeAmount, "investor token balance not 500");
 
         assertEq(instanceReader.getBalanceAmount(poolNftId).toInt(), 500, "pool balance not 500");
@@ -387,7 +387,7 @@ contract TestBundle is GifTest {
 
         assertTrue(!bundleNftId.eqz(), "bundle nft id is zero");
 
-        assertEq(token.balanceOf(poolComponentInfo.wallet), 1000, "pool wallet token balance not 1000");
+        assertEq(token.balanceOf(poolComponentInfo.tokenHandler.getWallet()), 1000, "pool wallet token balance not 1000");
         uint256 investorBalanceBefore = token.balanceOf(investor);
 
         assertEq(instanceReader.getBalanceAmount(poolNftId).toInt(), 1000, "pool balance not 1000");
@@ -408,7 +408,7 @@ contract TestBundle is GifTest {
         pool.unstake(bundleNftId, unstakeAmount);
         
         // THEN - assert all counters are updated
-        assertEq(token.balanceOf(poolComponentInfo.wallet), 40, "pool wallet token balance not 40");
+        assertEq(token.balanceOf(poolComponentInfo.tokenHandler.getWallet()), 40, "pool wallet token balance not 40");
         assertEq(token.balanceOf(investor), investorBalanceBefore + expectedUnstakeAmt, "investor token balance not 960");
 
         assertEq(instanceReader.getBalanceAmount(poolNftId).toInt(), 40, "pool balance not 40");
@@ -473,7 +473,7 @@ contract TestBundle is GifTest {
         
         // THEN - expect revert
         vm.expectRevert(abi.encodeWithSelector(
-            TokenHandler.ErrorTokenHandlerAmountIsZero.selector));
+            TokenHandlerBase.ErrorTokenHandlerAmountIsZero.selector));
 
         // WHEN - 0 tokens are unstaked
         pool.unstake(bundleNftId, unstakeAmount);
@@ -511,7 +511,7 @@ contract TestBundle is GifTest {
         
         // THEN - expect revert
         vm.expectRevert(abi.encodeWithSelector(
-            TokenHandler.ErrorTokenHandlerAllowanceTooSmall.selector,
+            TokenHandlerBase.ErrorTokenHandlerAllowanceTooSmall.selector,
             address(token),
             externalWallet,
             address(pool.getTokenHandler()),
@@ -667,7 +667,7 @@ contract TestBundle is GifTest {
 
         assertTrue(!bundleNftId.eqz(), "bundle nft id is zero");
 
-        assertEq(token.balanceOf(poolComponentInfo.wallet), DEFAULT_BUNDLE_CAPITALIZATION * 10 ** 6, "pool wallet token balance not 100000");
+        assertEq(token.balanceOf(poolComponentInfo.tokenHandler.getWallet()), DEFAULT_BUNDLE_CAPITALIZATION * 10 ** 6, "pool wallet token balance not 100000");
         uint256 investorBalanceBefore = token.balanceOf(investor);
 
         assertEq(instanceReader.getBalanceAmount(poolNftId).toInt(), DEFAULT_BUNDLE_CAPITALIZATION * 10 ** 6, "pool balance not 100000");
@@ -683,7 +683,7 @@ contract TestBundle is GifTest {
         pool.closeBundle(bundleNftId);
 
         // THEN
-        assertEq(token.balanceOf(poolComponentInfo.wallet), 4000 * 10 ** 6, "pool wallet token balance not 4000");
+        assertEq(token.balanceOf(poolComponentInfo.tokenHandler.getWallet()), 4000 * 10 ** 6, "pool wallet token balance not 4000");
         uint256 investorBalanceAfter = token.balanceOf(investor);
         assertEq(investorBalanceAfter, investorBalanceBefore + 96000 * 10 ** 6, "investor token balance not increased by 96000");
 
@@ -711,7 +711,7 @@ contract TestBundle is GifTest {
 
         assertTrue(!bundleNftId.eqz(), "bundle nft id is zero");
 
-        assertEq(token.balanceOf(poolComponentInfo.wallet), (DEFAULT_BUNDLE_CAPITALIZATION + 100 + 3 + 3)* 10 ** 6 , "pool wallet token balance not 100000 + 100 + 3");
+        assertEq(token.balanceOf(poolComponentInfo.tokenHandler.getWallet()), (DEFAULT_BUNDLE_CAPITALIZATION + 100 + 3 + 3)* 10 ** 6 , "pool wallet token balance not 100000 + 100 + 3");
         uint256 investorBalanceBefore = token.balanceOf(investor);
 
         assertEq(instanceReader.getBalanceAmount(poolNftId).toInt(), (DEFAULT_BUNDLE_CAPITALIZATION + 100 + 3 + 3) * 10 ** 6, "pool balance not 100000 + 100 + 3");
@@ -726,7 +726,7 @@ contract TestBundle is GifTest {
         pool.closeBundle(bundleNftId);
 
         // THEN - assert all counters are updated and tokens moved
-        assertEq(token.balanceOf(poolComponentInfo.wallet), 3 * 10 ** 6, "pool wallet token balance not 3 (2)");
+        assertEq(token.balanceOf(poolComponentInfo.tokenHandler.getWallet()), 3 * 10 ** 6, "pool wallet token balance not 3 (2)");
         uint256 investorBalanceAfter = token.balanceOf(investor);
         assertEq(investorBalanceAfter, investorBalanceBefore + (100000 + 100 + 3) * 10 ** 6, "investor token balance not increased by 100000 + 100 + 3");
 
@@ -754,7 +754,7 @@ contract TestBundle is GifTest {
 
         assertTrue(!bundleNftId.eqz(), "bundle nft id is zero");
 
-        assertEq(token.balanceOf(poolComponentInfo.wallet), 3000 * 10 ** 6 , "pool wallet token balance not 3");
+        assertEq(token.balanceOf(poolComponentInfo.tokenHandler.getWallet()), 3000 * 10 ** 6 , "pool wallet token balance not 3");
         uint256 investorBalanceBefore = token.balanceOf(investor);
 
         assertEq(instanceReader.getBalanceAmount(poolNftId).toInt(), 3000 * 10 ** 6, "pool balance not 3000");
@@ -769,7 +769,7 @@ contract TestBundle is GifTest {
         pool.closeBundle(bundleNftId);
 
         // THEN - assert all counters are updated, but no tokens moved
-        assertEq(token.balanceOf(poolComponentInfo.wallet), 3000 * 10 ** 6, "pool wallet token balance not 3 (2)");
+        assertEq(token.balanceOf(poolComponentInfo.tokenHandler.getWallet()), 3000 * 10 ** 6, "pool wallet token balance not 3 (2)");
         uint256 investorBalanceAfter = token.balanceOf(investor);
         assertEq(investorBalanceAfter, investorBalanceBefore, "investor token balance should not change");
 
@@ -801,7 +801,7 @@ contract TestBundle is GifTest {
 
         assertTrue(!bundleNftId.eqz(), "bundle nft id is zero");
 
-        assertEq(token.balanceOf(poolComponentInfo.wallet), (3000 + 6 + 3) * 10 ** 6 , "pool wallet token balance not 3009");
+        assertEq(token.balanceOf(poolComponentInfo.tokenHandler.getWallet()), (3000 + 6 + 3) * 10 ** 6 , "pool wallet token balance not 3009");
         uint256 investorBalanceBefore = token.balanceOf(investor);
 
         assertEq(instanceReader.getBalanceAmount(poolNftId).toInt(), (3000 + 6 + 3) * 10 ** 6, "pool balance not 3009");
@@ -816,7 +816,7 @@ contract TestBundle is GifTest {
         pool.closeBundle(bundleNftId);
 
         // THEN - assert all counters are updated
-        assertEq(token.balanceOf(poolComponentInfo.wallet), (3000 + 3) * 10 ** 6, "pool wallet token balance not 3003 (2)");
+        assertEq(token.balanceOf(poolComponentInfo.tokenHandler.getWallet()), (3000 + 3) * 10 ** 6, "pool wallet token balance not 3003 (2)");
         uint256 investorBalanceAfter = token.balanceOf(investor);
         assertEq(investorBalanceAfter, investorBalanceBefore + 6 * 10 ** 6, "investor token balance should be increased by 6");
 
@@ -848,7 +848,7 @@ contract TestBundle is GifTest {
 
         assertTrue(!bundleNftId.eqz(), "bundle nft id is zero");
 
-        assertEq(token.balanceOf(poolComponentInfo.wallet), (97000 + 100 + 3000 + 3) * 10 ** 6 , "pool wallet token balance not 100103");
+        assertEq(token.balanceOf(poolComponentInfo.tokenHandler.getWallet()), (97000 + 100 + 3000 + 3) * 10 ** 6 , "pool wallet token balance not 100103");
         uint256 investorBalanceBefore = token.balanceOf(investor);
 
         assertEq(instanceReader.getBalanceAmount(poolNftId).toInt(), (97000 + 100 + 3000 + 3) * 10 ** 6, "pool balance not 100103");
@@ -863,7 +863,7 @@ contract TestBundle is GifTest {
         pool.closeBundle(bundleNftId);
 
         // THEN - assert all counters are updated
-        assertEq(token.balanceOf(poolComponentInfo.wallet), (3000 + 3) * 10 ** 6, "pool wallet token balance not 3003 (2)");
+        assertEq(token.balanceOf(poolComponentInfo.tokenHandler.getWallet()), (3000 + 3) * 10 ** 6, "pool wallet token balance not 3003 (2)");
         uint256 investorBalanceAfter = token.balanceOf(investor);
         assertEq(investorBalanceAfter, investorBalanceBefore + 97100 * 10 ** 6, "investor token balance should be increased by 97100");
 
@@ -896,7 +896,7 @@ contract TestBundle is GifTest {
 
         assertTrue(!bundleNftId.eqz(), "bundle nft id is zero");
 
-        assertEq(token.balanceOf(poolComponentInfo.wallet), (3000 + 3) * 10 ** 6 , "pool wallet token balance not 3003");
+        assertEq(token.balanceOf(poolComponentInfo.tokenHandler.getWallet()), (3000 + 3) * 10 ** 6 , "pool wallet token balance not 3003");
         uint256 investorBalanceBefore = token.balanceOf(investor);
 
         assertEq(instanceReader.getBalanceAmount(poolNftId).toInt(), (3000 + 3) * 10 ** 6, "pool balance not 3003");
@@ -911,7 +911,7 @@ contract TestBundle is GifTest {
         pool.closeBundle(bundleNftId);
 
         // THEN - assert all counters are updated
-        assertEq(token.balanceOf(poolComponentInfo.wallet), (3000 + 3) * 10 ** 6, "pool wallet token balance not 3003 (2)");
+        assertEq(token.balanceOf(poolComponentInfo.tokenHandler.getWallet()), (3000 + 3) * 10 ** 6, "pool wallet token balance not 3003 (2)");
         uint256 investorBalanceAfter = token.balanceOf(investor);
         assertEq(investorBalanceAfter, investorBalanceBefore, "investor token balance should not change");
 
@@ -982,7 +982,7 @@ contract TestBundle is GifTest {
 
         // THEN - expect revert
         vm.expectRevert(abi.encodeWithSelector(
-            TokenHandler.ErrorTokenHandlerAllowanceTooSmall.selector, 
+            TokenHandlerBase.ErrorTokenHandlerAllowanceTooSmall.selector, 
             address(token),
             externalWallet,
             address(pool.getTokenHandler()),

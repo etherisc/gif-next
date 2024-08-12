@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManaged.sol";
 
+import {ContractLib} from "../shared/ContractLib.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType, ObjectTypeLib, POOL, RELEASE, REGISTRY, SERVICE, STAKING} from "../type/ObjectType.sol";
 import {TimestampLib, zeroTimestamp} from "../type/Timestamp.sol";
@@ -76,8 +77,7 @@ contract ReleaseRegistry is
     constructor(Registry registry)
         AccessManaged(msg.sender)
     {
-        // TODO move this part to RegistryLinked constructor
-        if(!_isRegistry(address(registry))) {
+        if (!ContractLib.isRegistry(address(registry))) {
             revert ErrorReleaseRegistryNotRegistry(registry);
         }
 
@@ -480,22 +480,6 @@ contract ReleaseRegistry is
         if(_registry.isRegistered(owner)) { 
             revert ErrorReleaseRegistryServiceOwnerRegistered(service, owner);
         }
-    }
-
-    /// @dev returns true iff a the address passes some simple proxy tests.
-    function _isRegistry(address registryAddress) internal view returns (bool) {
-
-        // zero address is certainly not registry
-        if (registryAddress == address(0)) {
-            return false;
-        }
-        // TODO try catch and return false in case of revert or just panic
-        // check if contract returns a zero nft id for its own address
-        if (IRegistry(registryAddress).getNftIdForAddress(registryAddress).eqz()) {
-            return false;
-        }
-
-        return true;
     }
 }
 

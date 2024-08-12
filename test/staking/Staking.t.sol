@@ -20,10 +20,25 @@ import {UFixed, UFixedLib} from "../../contracts/type/UFixed.sol";
 import {VersionPart} from "../../contracts/type/Version.sol";
 
 
-contract Staking is GifTest {
+contract StakingTest is GifTest {
 
     uint256 public constant STAKING_WALLET_APPROVAL = 5000;
 
+
+    function setUp() public override {
+        super.setUp();
+
+        // needs component service to be registered
+        // can therefore only be called after service registration
+        vm.startPrank(staking.getOwner());
+        staking.approveTokenHandler(dip, AmountLib.max());
+        vm.stopPrank();
+    }
+
+    function test_stakingSetUp() public {
+        assertEq(staking.getWallet(), address(staking.getTokenHandler()), "unexpected staking wallet");
+        assertEq(dip.allowance(staking.getWallet(), address(staking.getTokenHandler())), type(uint256).max, "unexpected allowance for staking token handler");
+    }
 
     function test_stakingStakeCreateProtocolStake() public {
 
@@ -363,7 +378,7 @@ contract Staking is GifTest {
     }
 
 
-    function test_stakingStakeUnstake() public {
+    function test_stakingStakeUnstakeHappyCase() public {
 
         // GIVEN
         (
@@ -560,16 +575,6 @@ contract Staking is GifTest {
 
         vm.startPrank(staker);
         stakingService.claimRewards(stakeNftId);
-        vm.stopPrank();
-    }
-
-
-    function setUp() public override {
-        super.setUp();
-
-        // set staking wallet approval for staking token handler
-        vm.startPrank(registryOwner);
-        staking.approveTokenHandler(AmountLib.max());
         vm.stopPrank();
     }
 

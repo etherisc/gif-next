@@ -5,7 +5,7 @@ import {IInstance} from "../instance/IInstance.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {NftId} from "../type/NftId.sol";
-import {ObjectType, COMPONENT, DISTRIBUTION, ORACLE, POOL, PRODUCT} from "../type/ObjectType.sol";
+import {ObjectType, COMPONENT, DISTRIBUTION, ORACLE, POOL, PRODUCT, STAKING} from "../type/ObjectType.sol";
 import {Service} from "../shared/Service.sol";
 
 
@@ -82,6 +82,10 @@ abstract contract ComponentVerifyingService is
             }
         }
 
+        if (info.objectType == STAKING()) {
+            return (info, instance);
+        }
+        
         if (info.objectType == PRODUCT()) {
             instance = _getInstance(registry, info.parentNftId);
         } else {

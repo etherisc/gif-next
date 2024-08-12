@@ -492,7 +492,7 @@ contract GifTest is GifDeployer {
 
         // token handler only becomes available after registration
         vm.startPrank(productOwner);
-        newProduct.approveTokenHandler(AmountLib.max());
+        newProduct.approveTokenHandler(token, AmountLib.max());
         vm.stopPrank();
 
         // solhint-disable-next-line
@@ -545,7 +545,7 @@ contract GifTest is GifDeployer {
 
         // token handler only becomes available after registration
         vm.startPrank(poolOwner);
-        pool.approveTokenHandler(AmountLib.max());
+        pool.approveTokenHandler(token, AmountLib.max());
         vm.stopPrank();
     }
 
@@ -578,7 +578,7 @@ contract GifTest is GifDeployer {
 
         // token handler only becomes available after registration
         vm.startPrank(distributionOwner);
-        distribution.approveTokenHandler(AmountLib.max());
+        distribution.approveTokenHandler(token, AmountLib.max());
         vm.stopPrank();
     }
 

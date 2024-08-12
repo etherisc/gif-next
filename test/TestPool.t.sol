@@ -75,7 +75,7 @@ contract TestPool is GifTest {
         console.log("pool name: ", componentInfo.name);
         console.log("pool token: ", componentInfo.token.symbol());
         console.log("pool token handler at: ", address(componentInfo.tokenHandler));
-        console.log("pool wallet: ", componentInfo.wallet);
+        console.log("pool wallet: ", componentInfo.tokenHandler.getWallet());
         // solhint-enable
 
         // check pool
@@ -89,10 +89,10 @@ contract TestPool is GifTest {
 
         // check token handler
         assertTrue(address(componentInfo.tokenHandler) != address(0), "token handler zero");
-        assertEq(address(componentInfo.tokenHandler.getToken()), address(pool.getToken()), "unexpected token for token handler");
+        assertEq(address(componentInfo.tokenHandler.TOKEN()), address(pool.getToken()), "unexpected token for token handler");
 
         // check wallet
-        assertEq(componentInfo.wallet, address(pool), "unexpected wallet address");
+        assertEq(componentInfo.tokenHandler.getWallet(), address(pool.getTokenHandler()), "unexpected wallet address");
 
         IComponents.PoolInfo memory poolInfo = instanceReader.getPoolInfo(poolNftId);
 
@@ -176,7 +176,7 @@ contract TestPool is GifTest {
         assertEq(netStakedAmount, 10000, "net staked amount not 10000");
 
         assertEq(token.balanceOf(poolOwner), 0, "pool owner token balance not 0");
-        assertEq(token.balanceOf(componentInfo.wallet), 10000, "pool wallet token balance not 10000");
+        assertEq(token.balanceOf(componentInfo.tokenHandler.getWallet()), 10000, "pool wallet token balance not 10000");
 
         assertEq(instanceReader.getBalanceAmount(poolNftId).toInt(), 10000, "pool balance not 10000");
         assertEq(instanceReader.getFeeAmount(poolNftId).toInt(), 0, "pool fee not 0");
@@ -306,7 +306,7 @@ contract TestPool is GifTest {
         assertEq(netStakedAmount, 9000, "net staked amount not 9000");
 
         assertEq(token.balanceOf(poolOwner), 0, "pool owner token balance not 0");
-        assertEq(token.balanceOf(componentInfo.wallet), 10000, "pool wallet token balance not 10000");
+        assertEq(token.balanceOf(componentInfo.tokenHandler.getWallet()), 10000, "pool wallet token balance not 10000");
 
         assertEq(instanceReader.getBalanceAmount(poolNftId).toInt(), 10000, "pool balance not 10000");
         assertEq(instanceReader.getFeeAmount(poolNftId).toInt(), 1000, "pool fee not 0");

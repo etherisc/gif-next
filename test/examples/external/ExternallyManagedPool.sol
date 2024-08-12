@@ -47,10 +47,9 @@ contract ExternallyManagedPool is
     }
 
     function init() public {
-        // TODO move this to component registration flow
-        getToken().approve(
-            address(getTokenHandler()), 
-            type(uint256).max);
+        _approveTokenHandler(
+            getToken(), 
+            AmountLib.max());
     }
 
     function createAndFundBundle(

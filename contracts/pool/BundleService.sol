@@ -407,7 +407,7 @@ contract BundleService is
         InstanceReader reader = instance.getInstanceReader();
         
         IComponents.ComponentInfo memory poolInfo = reader.getComponentInfo(poolNftId);
-        address poolWallet = poolInfo.wallet;
+        address poolWallet = poolInfo.tokenHandler.getWallet();
         
         // IBundle.BundleInfo memory bundleInfo = reader.getBundleInfo(bundleNftId);
         

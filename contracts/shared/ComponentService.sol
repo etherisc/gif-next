@@ -7,6 +7,7 @@ import {Amount, AmountLib} from "../type/Amount.sol";
 import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
 import {ContractLib} from "../shared/ContractLib.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
+import {IComponent} from "../shared/IComponent.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {IComponentService} from "./IComponentService.sol";
 import {IInstance} from "../instance/IInstance.sol";
@@ -22,8 +23,9 @@ import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegistryService} from "../registry/IRegistryService.sol";
 import {KEEP_STATE} from "../type/StateId.sol";
 import {NftId} from "../type/NftId.sol";
-import {ObjectType, REGISTRY, BUNDLE, COMPONENT, DISTRIBUTION, DISTRIBUTOR, INSTANCE, ORACLE, POOL, PRODUCT} from "../type/ObjectType.sol";
+import {ObjectType, REGISTRY, BUNDLE, COMPONENT, DISTRIBUTION, DISTRIBUTOR, INSTANCE, ORACLE, POOL, PRODUCT, STAKING} from "../type/ObjectType.sol";
 import {RoleId} from "../type/RoleId.sol";
+import {TokenHandler} from "../shared/TokenHandler.sol";
 import {TokenHandlerDeployerLib} from "../shared/TokenHandlerDeployerLib.sol";
 
 contract ComponentService is
@@ -90,27 +92,54 @@ contract ComponentService is
         revert ErrorComponentServiceTypeNotSupported(component, componentType);
     }
 
-
-    function setWallet(address newWallet) external virtual {
+    function approveTokenHandler(
+        IERC20Metadata token,
+        Amount amount
+    )
+        external
+        virtual
+    {
+        // checks
         (NftId componentNftId,, IInstance instance) = _getAndVerifyActiveComponent(COMPONENT());
-        IComponents.ComponentInfo memory info = instance.getInstanceReader().getComponentInfo(componentNftId);
-        address currentWallet = info.wallet;
+        TokenHandler tokenHandler = instance.getInstanceReader().getComponentInfo(
+            componentNftId).tokenHandler;
 
-        if (newWallet == address(0)) {
-            revert ErrorComponentServiceNewWalletAddressZero();
-        }
+        // effects
+        tokenHandler.approve(token, amount);
+    }
 
-        if (currentWallet == address(0)) {
-            revert ErrorComponentServiceWalletAddressZero();
-        }
 
-        if (newWallet == currentWallet) {
-            revert ErrorComponentServiceWalletAddressIsSameAsCurrent();
-        }
+    function approveStakingTokenHandler(
+        IERC20Metadata token,
+        Amount amount
+    )
+        external
+        virtual
+    {
+        // checks
+        NftId stakingNftId = getRegistry().getNftIdForAddress(msg.sender);
+        (IRegistry.ObjectInfo memory objectInfo,) = _getAndVerifyComponentInfo(
+            stakingNftId, 
+            STAKING(),
+            true);
 
-        info.wallet = newWallet;
-        instance.getInstanceStore().updateComponent(componentNftId, info, KEEP_STATE());
-        emit LogComponentServiceWalletAddressChanged(componentNftId, currentWallet, newWallet);
+        // effects
+        TokenHandler tokenHandler = IComponent(msg.sender).getTokenHandler();
+        tokenHandler.approve(token, amount);
+    }
+
+
+    function setWallet(address newWallet)
+        external
+        virtual
+    {
+        // checks
+        (NftId componentNftId,, IInstance instance) = _getAndVerifyActiveComponent(COMPONENT());
+        TokenHandler tokenHandler = instance.getInstanceReader().getComponentInfo(
+            componentNftId).tokenHandler;
+
+        // effects
+        tokenHandler.setWallet(newWallet);
     }
 
     // TODO implement
@@ -126,7 +155,7 @@ contract ComponentService is
     {
         (NftId componentNftId,, IInstance instance) = _getAndVerifyActiveComponent(COMPONENT());
         IComponents.ComponentInfo memory info = instance.getInstanceReader().getComponentInfo(componentNftId);
-        address componentWallet = info.wallet;
+        address componentWallet = info.tokenHandler.getWallet();
 
         // determine withdrawn amount
         withdrawnAmount = amount;
@@ -615,8 +644,13 @@ contract ComponentService is
         IComponents.ComponentInfo memory componentInfo = component.getInitialComponentInfo();
         IERC20Metadata token = componentInfo.token;
         componentInfo.tokenHandler = TokenHandlerDeployerLib.deployTokenHandler(
+            address(getRegistry()),
+            address(component), // initially, component is its own wallet
             address(token), 
             address(instanceAdmin.authority()));
+        
+        // set token handler allowance to max
+        // componentInfo.tokenHandler.approve(token, AmountLib.max());
 
         // register component with instance
         instanceStore.createComponent(

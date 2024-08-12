@@ -42,6 +42,7 @@ contract RegistryAdmin is
     string public constant RELEASE_REGISTRY_TARGET_NAME = "ReleaseRegistry";
     string public constant TOKEN_REGISTRY_TARGET_NAME = "TokenRegistry";
     string public constant STAKING_TARGET_NAME = "Staking";
+    string public constant STAKING_TH_TARGET_NAME = "StakingTH";
     string public constant STAKING_STORE_TARGET_NAME = "StakingStore";
 
     uint8 public constant MAX_NUM_RELEASES = 99;
@@ -363,6 +364,7 @@ contract RegistryAdmin is
         onlyInitializing()
     {
         _createTarget(_staking, STAKING_TARGET_NAME, true, false);
+        _createTarget(address(IStaking(_staking).getTokenHandler()), STAKING_TH_TARGET_NAME, true, false);
         _createTarget(_stakingStore, STAKING_STORE_TARGET_NAME, true, false);
 
         // staking function authorization for staking service
@@ -376,7 +378,7 @@ contract RegistryAdmin is
                 name: STAKING_SERVICE_ROLE_NAME}));
 
         FunctionInfo[] memory functions;
-        functions = new FunctionInfo[](13);
+        functions = new FunctionInfo[](12);
         functions[0] = toFunction(IStaking.registerTarget.selector, "registerTarget");
         functions[1] = toFunction(IStaking.setLockingPeriod.selector, "setLockingPeriod");
         functions[2] = toFunction(IStaking.setRewardRate.selector, "setRewardRate");
@@ -388,9 +390,21 @@ contract RegistryAdmin is
         functions[8] = toFunction(IStaking.restake.selector, "restake");
         functions[9] = toFunction(IStaking.updateRewards.selector, "updateRewards");
         functions[10] = toFunction(IStaking.claimRewards.selector, "claimRewards");
-        functions[11] = toFunction(IStaking.collectDipAmount.selector, "collectDipAmount");
-        functions[12] = toFunction(IStaking.transferDipAmount.selector, "transferDipAmount");
+        // TODO cleanup
+        // functions[11] = toFunction(IStaking.collectDipAmount.selector, "collectDipAmount");
+        // functions[11] = toFunction(IStaking.transferDipAmount.selector, "transferDipAmount");
         _authorizeTargetFunctions(_staking, stakingServiceRoleId, functions);
+    
+        // grant token handler authorizations
+        IStaking staking = IStaking(_staking);
+        functions = new FunctionInfo[](2);
+        functions[0] = toFunction(TokenHandler.collectTokens.selector, "collectTokens");
+        functions[1] = toFunction(TokenHandler.distributeTokens.selector, "distributeTokens");
+
+        _authorizeTargetFunctions(
+            address(staking.getTokenHandler()), 
+            stakingServiceRoleId, 
+            functions);
 
         // staking function authorization for pool service
         RoleId poolServiceRoleId = RoleIdLib.roleForTypeAndAllVersions(POOL());
@@ -437,12 +451,12 @@ contract RegistryAdmin is
         
         _grantRoleToAccount(stakingRoleId, _staking);
     
+        // TODO cleanup
         // grant token handler authorizations
-        IStaking staking = IStaking(_staking);
-        functions = new FunctionInfo[](2);
-        functions[0] = toFunction(TokenHandler.collectTokens.selector, "collectTokens");
-        functions[1] = toFunction(TokenHandler.distributeTokens.selector, "distributeTokens");
+        // IStaking staking = IStaking(_staking);
+        // functions = new FunctionInfo[](1);
+        // functions[0] = toFunction(TokenHandler.distributeTokens.selector, "distributeTokens");
         
-        _authorizeTargetFunctions(address(staking.getTokenHandler()), stakingRoleId, functions);
+        // _authorizeTargetFunctions(address(staking.getTokenHandler()), stakingRoleId, functions);
     }
 }
