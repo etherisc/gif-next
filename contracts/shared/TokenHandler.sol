@@ -33,18 +33,18 @@ contract TokenHandler is AccessManaged {
         }
     }
 
-    function addAllowedTarget(address target) 
+    function addAllowedWallet(address wallet) 
         external 
         restricted() 
     {
-        _allowedWallets.add(target);
+        _allowedWallets.add(wallet);
     }
 
-    function removeAllowedTarget(address target) 
+    function removeAllowedWallet(address wallet) 
         external
         restricted() 
     {
-        _allowedWallets.remove(target);
+        _allowedWallets.remove(wallet);
     }
 
     /// @dev returns the default token defined for this TokenHandler
@@ -66,7 +66,7 @@ contract TokenHandler is AccessManaged {
         external
         restricted()
     {
-        _checkisAllowedWallet(to);
+        _checkIsAllowedWallet(to);
         _transfer(from, to, amount, true);
     }
 
@@ -91,15 +91,15 @@ contract TokenHandler is AccessManaged {
         _checkPreconditions(from, amount + amount2 + amount3);
 
         if (amount.gtz()) {
-            _checkisAllowedWallet(to);
+            _checkIsAllowedWallet(to);
             _transfer(from, to, amount, false);
         }
         if (amount2.gtz()) {
-            _checkisAllowedWallet(to2);
+            _checkIsAllowedWallet(to2);
             _transfer(from, to2, amount2, false);
         }
         if (amount3.gtz()) {
-            _checkisAllowedWallet(to3);
+            _checkIsAllowedWallet(to3);
             _transfer(from, to3, amount3, false);
         }
     }
@@ -114,7 +114,7 @@ contract TokenHandler is AccessManaged {
         external
         restricted()
     {
-        _checkisAllowedWallet(from);
+        _checkIsAllowedWallet(from);
         _transfer(from, to, amount, true);
     }
 
@@ -165,15 +165,16 @@ contract TokenHandler is AccessManaged {
         }
     }
 
-    function _checkisAllowedWallet(address wallet)
-        internal
-        view
+    function _checkIsAllowedWallet(address wallet) internal
     {
         if (_allowedWallets.length() == 0) {
             return;
-        } 
-        if(! _allowedWallets.contains(wallet)) {
-            revert ErrorTokenHandlerWalletNotAllowed(wallet);
         }
+
+        if(_allowedWallets.contains(wallet)) {
+            return;
+        }
+        
+        revert ErrorTokenHandlerWalletNotAllowed(wallet);
     }
 }

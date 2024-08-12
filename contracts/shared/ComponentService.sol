@@ -121,8 +121,8 @@ contract ComponentService is
         emit LogComponentServiceWalletAddressChanged(componentNftId, currentWallet, newWallet);
 
         // interactions
-        info.tokenHandler.addAllowedTarget(newWallet);
-        info.tokenHandler.removeAllowedTarget(currentWallet);
+        info.tokenHandler.addAllowedWallet(newWallet);
+        info.tokenHandler.removeAllowedWallet(currentWallet);
     }
 
     // TODO implement
@@ -283,7 +283,7 @@ contract ComponentService is
 
         IDistributionComponent distribution = IDistributionComponent(distributioAddress);
         IComponents.ComponentInfo memory productComponentInfo = instanceReader.getComponentInfo(productNftId);
-        productComponentInfo.tokenHandler.addAllowedTarget(distribution.getWallet());
+        productComponentInfo.tokenHandler.addAllowedWallet(distribution.getWallet());
     }
 
 
@@ -455,7 +455,7 @@ contract ComponentService is
         instanceAdmin.initializeComponentAuthorization(pool);
 
         IComponents.ComponentInfo memory productComponentInfo = instanceReader.getComponentInfo(productNftId);
-        productComponentInfo.tokenHandler.addAllowedTarget(pool.getWallet());
+        productComponentInfo.tokenHandler.addAllowedWallet(pool.getWallet());
     }
 
 

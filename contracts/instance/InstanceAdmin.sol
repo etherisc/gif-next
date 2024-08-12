@@ -139,9 +139,9 @@ contract InstanceAdmin is
         functions[0] = toFunction(TokenHandler.collectTokens.selector, "collectTokens");
         functions[1] = toFunction(TokenHandler.collectTokensToThreeRecipients.selector, "collectTokensToThreeRecipients");
         functions[2] = toFunction(TokenHandler.distributeTokens.selector, "distributeTokens");
-        functions[3] = toFunction(TokenHandler.addAllowedTarget.selector, "addAllowedTarget");
-        functions[4] = toFunction(TokenHandler.removeAllowedTarget.selector, "removeAllowedTarget");
-
+        functions[3] = toFunction(TokenHandler.addAllowedWallet.selector, "addAllowedWallet");
+        functions[4] = toFunction(TokenHandler.removeAllowedWallet.selector, "removeAllowedWallet");
+        
         // FIXME: make this a bit nicer and work with IAuthorization. Use a specific role, not public - access to TokenHandler must be restricted
         _authorizeTargetFunctions(
             address(component.getTokenHandler()),
