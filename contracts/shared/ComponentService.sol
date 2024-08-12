@@ -650,8 +650,8 @@ contract ComponentService is
         IERC20Metadata token = componentInfo.token;
         componentInfo.tokenHandler = TokenHandlerDeployerLib.deployTokenHandler(
             address(token), 
-            address(instanceAdmin.authority()));
-        componentInfo.tokenHandler.addAllowedTarget(component.getWallet());
+            address(instanceAdmin.authority()),
+            componentInfo.wallet);
 
         // register component with instance
         instanceStore.createComponent(

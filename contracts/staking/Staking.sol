@@ -483,7 +483,7 @@ contract Staking is
         $._store = StakingStore(stakingStoreAddress);
         $._reader = StakingStore(stakingStoreAddress).getStakingReader();
         $._tokenRegistry = TokenRegistry(tokenRegistryAddress);
-        $._tokenHandler = TokenHandlerDeployerLib.deployTokenHandler(dipTokenAddress, authority);
+        $._tokenHandler = TokenHandlerDeployerLib.deployTokenHandler(dipTokenAddress, authority, address(this));
 
         _registerInterface(type(IStaking).interfaceId);
     }

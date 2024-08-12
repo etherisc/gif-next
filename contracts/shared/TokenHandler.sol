@@ -27,20 +27,23 @@ contract TokenHandler is AccessManaged {
     EnumerableSet.AddressSet private _allowedTargets;
 
 
-    constructor(address token, address initialAuthority) AccessManaged(initialAuthority) {
+    constructor(address token, address initialAuthority, address initialAllowedWallet) AccessManaged(initialAuthority) {
         _token = IERC20Metadata(token);
+        if (initialAllowedWallet != address(0)) {
+            _allowedTargets.add(initialAllowedWallet);
+        }
     }
 
     function addAllowedTarget(address target) 
         external 
-        // FIXME: restricted() 
+        restricted() 
     {
         _allowedTargets.add(target);
     }
 
     function removeAllowedTarget(address target) 
         external
-        // FIXME: restricted() 
+        restricted() 
     {
         _allowedTargets.remove(target);
     }

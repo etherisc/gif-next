@@ -17,7 +17,7 @@ contract TokenHandlerTest is Test {
     function setUp() public {
         dip = new Dip();        
         accessManager = new AccessManager(address(this));
-        tokenHandler = new TokenHandler(address(dip), address(accessManager));
+        tokenHandler = new TokenHandler(address(dip), address(accessManager), address(0));
 
         // configure rights for tokenHandler (all public for test)
         bytes4[] memory selectors = new bytes4[](3);
