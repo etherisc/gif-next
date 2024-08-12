@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {Amount, AmountLib} from "../type/Amount.sol";
+import {ComponentServiceHelperLib} from "./ComponentServiceHelperLib.sol";
 import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
 import {ContractLib} from "../shared/ContractLib.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
@@ -625,7 +626,7 @@ contract ComponentService is
             parentNftId, 
             component, 
             initialOwner
-        ) = _getAndVerifyRegisterableComponent(
+        ) = ComponentServiceHelperLib.getAndVerifyRegisterableComponent(
             getRegistry(),
             componentAddress,
             requiredType);
@@ -693,85 +694,6 @@ contract ComponentService is
         productNftId = _getProductNftId(componentNftId);
         info = instanceReader.getProductInfo(productNftId);
     }
-
-
-    /// @dev Based on the provided component address required type the component 
-    /// and related instance contract this function reverts iff:
-    /// - the sender is not registered
-    /// - the component contract does not support IInstanceLinkedComponent
-    /// - the component type does not match with the required type
-    /// - the component has already been registered
-    function _getAndVerifyRegisterableComponent(
-        IRegistry registry,
-        address componentAddress,
-        ObjectType requiredType
-    )
-        internal
-        view
-        returns (
-            NftId instanceNftId,
-            IInstance instance,
-            NftId parentNftId,
-            IInstanceLinkedComponent component,
-            address initialOwner
-        )
-    {
-        // check sender (instance or product) is registered
-        IRegistry.ObjectInfo memory senderInfo = registry.getObjectInfo(msg.sender);
-        if (senderInfo.nftId.eqz()) {
-            revert ErrorComponentServiceSenderNotRegistered(msg.sender);
-        }
-
-        // the sender is the parent of the component to be registered
-        // an instance caller wanting to register a product - or -
-        // a product caller wantint go register a distribution, oracle or pool
-        parentNftId = senderInfo.nftId;
-
-        // check component is of required type
-        component = IInstanceLinkedComponent(componentAddress);
-        IRegistry.ObjectInfo memory info = component.getInitialInfo();
-        if(info.objectType != requiredType) {
-            revert ErrorComponentServiceInvalidType(componentAddress, requiredType, info.objectType);
-        }
-
-        // check component has not already been registered
-        if (getRegistry().getNftIdForAddress(componentAddress).gtz()) {
-            revert ErrorComponentServiceAlreadyRegistered(componentAddress);
-        }
-
-        // check release matches
-        address parentAddress = registry.getObjectAddress(parentNftId);
-        if (component.getRelease() != IRegisterable(parentAddress).getRelease()) {
-            revert ErrorComponentServiceReleaseMismatch(componentAddress, component.getRelease(), IRegisterable(parentAddress).getRelease());
-        }
-
-        // check component belongs to same product cluster 
-        // parent of product must be instance, parent of other componet types must be product
-        if (info.parentNftId != senderInfo.nftId) {
-            revert ErrorComponentServiceSenderNotComponentParent(senderInfo.nftId, info.parentNftId);
-        }
-
-        // verify parent is registered instance
-        if (requiredType == PRODUCT()) {
-            if (senderInfo.objectType != INSTANCE()) {
-                revert ErrorComponentServiceParentNotInstance(senderInfo.nftId, senderInfo.objectType);
-            }
-
-            instanceNftId = senderInfo.nftId;
-        // verify parent is registered product
-        } else {
-            if (senderInfo.objectType != PRODUCT()) {
-                revert ErrorComponentServiceParentNotProduct(senderInfo.nftId, senderInfo.objectType);
-            }
-
-            instanceNftId = senderInfo.parentNftId;
-        }
-
-        // get initial owner and instance
-        initialOwner = info.initialOwner;
-        instance = _getInstance(registry, instanceNftId);
-    }
-
 
     function _getDomain() internal pure virtual override returns(ObjectType) {
         return COMPONENT();
