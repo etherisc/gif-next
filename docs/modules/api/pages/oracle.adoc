@@ -1,0 +1,1060 @@
+:github-icon: pass:[<svg class="icon"><use href="#github-icon"/></svg>]
+
+= Oracle
+ 
+Contains interfaces and contracts related to oracles. 
+
+== Contracts
+
+:ErrorOracleNotImplemented: pass:normal[xref:#IOracleComponent-ErrorOracleNotImplemented-string-[`++ErrorOracleNotImplemented++`]]
+:request: pass:normal[xref:#IOracleComponent-request-RequestId-NftId-bytes-Timestamp-[`++request++`]]
+:cancel: pass:normal[xref:#IOracleComponent-cancel-RequestId-[`++cancel++`]]
+:isVerifying: pass:normal[xref:#IOracleComponent-isVerifying--[`++isVerifying++`]]
+
+[.contract]
+[[IOracleComponent]]
+=== `++IOracleComponent++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/oracle/IOracleComponent.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/oracle/IOracleComponent.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++request(requestId, requesterNftId, requestData, expiryAt)++`]
+* [`++cancel(requestId)++`]
+* [`++isVerifying()++`]
+
+[.contract-subindex-inherited]
+.IInstanceLinkedComponent
+* [`++lock()++`]
+* [`++unlock()++`]
+* [`++withdrawFees(amount)++`]
+* [`++getInstance()++`]
+* [`++getAuthorization()++`]
+
+[.contract-subindex-inherited]
+.IComponent
+* [`++approveTokenHandler(spendingLimitAmount)++`]
+* [`++setWallet(walletAddress)++`]
+* [`++getName()++`]
+* [`++getToken()++`]
+* [`++getTokenHandler()++`]
+* [`++getWallet()++`]
+* [`++isNftInterceptor()++`]
+* [`++isRegistered()++`]
+* [`++getComponentInfo()++`]
+* [`++getInitialComponentInfo()++`]
+
+[.contract-subindex-inherited]
+.ITransferInterceptor
+* [`++nftTransferFrom(from, to, tokenId, operator)++`]
+
+[.contract-subindex-inherited]
+.IRegisterable
+* [`++getRelease()++`]
+* [`++getInitialInfo()++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IERC165
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++authority()++`]
+* [`++setAuthority()++`]
+* [`++isConsumingScheduledOp()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.IInstanceLinkedComponent
+
+[.contract-subindex-inherited]
+.IComponent
+* [`++LogComponentWalletAddressChanged(oldWallet, newWallet)++`]
+* [`++LogComponentWalletTokensTransferred(from, to, amount)++`]
+* [`++LogComponentTokenHandlerApproved(token, limit, isMaxAmount)++`]
+
+[.contract-subindex-inherited]
+.ITransferInterceptor
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+--
+
+[.contract-item]
+[[IOracleComponent-request-RequestId-NftId-bytes-Timestamp-]]
+==== `[.contract-item-name]#++request++#++(RequestId requestId, NftId requesterNftId, bytes requestData, Timestamp expiryAt)++` [.item-kind]#external#
+
+callback method for requesting some data from the oracle
+
+[.contract-item]
+[[IOracleComponent-cancel-RequestId-]]
+==== `[.contract-item-name]#++cancel++#++(RequestId requestId)++` [.item-kind]#external#
+
+callback method for cancelling the specified oracle request
+
+[.contract-item]
+[[IOracleComponent-isVerifying--]]
+==== `[.contract-item-name]#++isVerifying++#++() → bool verifying++` [.item-kind]#external#
+
+returns true iff the component needs to be called when selling/renewing policis
+
+:ORACLE_STORAGE_LOCATION_V1: pass:normal[xref:#Oracle-ORACLE_STORAGE_LOCATION_V1-bytes32[`++ORACLE_STORAGE_LOCATION_V1++`]]
+:OracleStorage: pass:normal[xref:#Oracle-OracleStorage[`++OracleStorage++`]]
+:request: pass:normal[xref:#Oracle-request-RequestId-NftId-bytes-Timestamp-[`++request++`]]
+:cancel: pass:normal[xref:#Oracle-cancel-RequestId-[`++cancel++`]]
+:isVerifying: pass:normal[xref:#Oracle-isVerifying--[`++isVerifying++`]]
+:withdrawFees: pass:normal[xref:#Oracle-withdrawFees-Amount-[`++withdrawFees++`]]
+:_initializeOracle: pass:normal[xref:#Oracle-_initializeOracle-address-NftId-contract-IAuthorization-address-string-address-bytes-[`++_initializeOracle++`]]
+:_request: pass:normal[xref:#Oracle-_request-RequestId-NftId-bytes-Timestamp-[`++_request++`]]
+:_cancel: pass:normal[xref:#Oracle-_cancel-RequestId-[`++_cancel++`]]
+:_respond: pass:normal[xref:#Oracle-_respond-RequestId-bytes-[`++_respond++`]]
+
+[.contract]
+[[Oracle]]
+=== `++Oracle++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/oracle/Oracle.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/oracle/Oracle.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++request(requestId, requesterId, requestData, expiryAt)++`]
+* [`++cancel(requestId)++`]
+* [`++isVerifying()++`]
+* [`++withdrawFees(amount)++`]
+* [`++_initializeOracle(registry, productNftId, authorization, initialOwner, name, token, componentData)++`]
+* [`++_request(requestId, requesterId, requestData, expiryAt)++`]
+* [`++_cancel(requestId)++`]
+* [`++_respond(requestId, responseData)++`]
+
+[.contract-subindex-inherited]
+.IOracleComponent
+
+[.contract-subindex-inherited]
+.InstanceLinkedComponent
+* [`++lock()++`]
+* [`++unlock()++`]
+* [`++getInstance()++`]
+* [`++getAuthorization()++`]
+* [`++_initializeInstanceLinkedComponent(registry, parentNftId, name, token, componentType, authorization, isInterceptor, initialOwner, componentData)++`]
+* [`++_checkAndGetInstanceNftId(registryAddress, parentNftId, componentType)++`]
+* [`++_checkAndGetRegistry(registryAddress, objectNftId, requiredType)++`]
+* [`++_setWallet(newWallet)++`]
+* [`++_getComponentInfo()++`]
+* [`++_getInstanceReader()++`]
+* [`++_withdrawFees(amount)++`]
+* [`++_getServiceAddress(domain)++`]
+
+[.contract-subindex-inherited]
+.IInstanceLinkedComponent
+
+[.contract-subindex-inherited]
+.Component
+* [`++_initializeComponent(authority, registry, parentNftId, name, token, componentType, isInterceptor, initialOwner, registryData, componentData)++`]
+* [`++approveTokenHandler(spendingLimitAmount)++`]
+* [`++approveTokenHandler(token, spendingLimitAmount)++`]
+* [`++setWallet(newWallet)++`]
+* [`++nftTransferFrom(from, to, tokenId, operator)++`]
+* [`++getWallet()++`]
+* [`++getTokenHandler()++`]
+* [`++getToken()++`]
+* [`++getName()++`]
+* [`++getComponentInfo()++`]
+* [`++getInitialComponentInfo()++`]
+* [`++isNftInterceptor()++`]
+* [`++isRegistered()++`]
+* [`++_nftMint(to, tokenId)++`]
+* [`++_nftTransferFrom(from, to, tokenId, operator)++`]
+* [`++_approveTokenHandler(amount)++`]
+
+[.contract-subindex-inherited]
+.IComponent
+
+[.contract-subindex-inherited]
+.ITransferInterceptor
+
+[.contract-subindex-inherited]
+.Registerable
+* [`++_initializeRegisterable(registry, parentNftId, objectType, isInterceptor, initialOwner, data)++`]
+* [`++getRelease()++`]
+* [`++getInitialInfo()++`]
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.NftOwnable
+* [`++_checkNftType(nftId, expectedObjectType)++`]
+* [`++_initializeNftOwnable(registry, initialOwner)++`]
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+* [`++_linkToNftOwnable(nftOwnableAddress)++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+* [`++_initializeRegistryLinked(registryAddress)++`]
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+* [`++_initializeERC165()++`]
+* [`++_registerInterface(interfaceId)++`]
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+* [`++__AccessManaged_init(initialAuthority)++`]
+* [`++__AccessManaged_init_unchained(initialAuthority)++`]
+* [`++authority()++`]
+* [`++setAuthority(newAuthority)++`]
+* [`++isConsumingScheduledOp()++`]
+* [`++_setAuthority(newAuthority)++`]
+* [`++_checkCanCall(caller, data)++`]
+
+[.contract-subindex-inherited]
+.IAccessManaged
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+* [`++__Context_init()++`]
+* [`++__Context_init_unchained()++`]
+* [`++_msgSender()++`]
+* [`++_msgData()++`]
+* [`++_contextSuffixLength()++`]
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.IOracleComponent
+
+[.contract-subindex-inherited]
+.InstanceLinkedComponent
+
+[.contract-subindex-inherited]
+.IInstanceLinkedComponent
+
+[.contract-subindex-inherited]
+.Component
+
+[.contract-subindex-inherited]
+.IComponent
+* [`++LogComponentWalletAddressChanged(oldWallet, newWallet)++`]
+* [`++LogComponentWalletTokensTransferred(from, to, amount)++`]
+* [`++LogComponentTokenHandlerApproved(token, limit, isMaxAmount)++`]
+
+[.contract-subindex-inherited]
+.ITransferInterceptor
+
+[.contract-subindex-inherited]
+.Registerable
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.NftOwnable
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[Oracle-request-RequestId-NftId-bytes-Timestamp-]]
+==== `[.contract-item-name]#++request++#++(RequestId requestId, NftId requesterId, bytes requestData, Timestamp expiryAt)++` [.item-kind]#external#
+
+[.contract-item]
+[[Oracle-cancel-RequestId-]]
+==== `[.contract-item-name]#++cancel++#++(RequestId requestId)++` [.item-kind]#external#
+
+callback method for cancelling the specified oracle request
+
+[.contract-item]
+[[Oracle-isVerifying--]]
+==== `[.contract-item-name]#++isVerifying++#++() → bool verifying++` [.item-kind]#external#
+
+Not relevant for oracle components, always returns false.
+
+[.contract-item]
+[[Oracle-withdrawFees-Amount-]]
+==== `[.contract-item-name]#++withdrawFees++#++(Amount amount) → Amount withdrawnAmount++` [.item-kind]#external#
+
+Not relevant for oracle components
+
+[.contract-item]
+[[Oracle-_initializeOracle-address-NftId-contract-IAuthorization-address-string-address-bytes-]]
+==== `[.contract-item-name]#++_initializeOracle++#++(address registry, NftId productNftId, contract IAuthorization authorization, address initialOwner, string name, address token, bytes componentData)++` [.item-kind]#internal#
+
+[.contract-item]
+[[Oracle-_request-RequestId-NftId-bytes-Timestamp-]]
+==== `[.contract-item-name]#++_request++#++(RequestId requestId, NftId requesterId, bytes requestData, Timestamp expiryAt)++` [.item-kind]#internal#
+
+Internal function for handling requests.
+Empty implementation.
+Overwrite this function to implement use case specific handling for oracle calls.
+
+[.contract-item]
+[[Oracle-_cancel-RequestId-]]
+==== `[.contract-item-name]#++_cancel++#++(RequestId requestId)++` [.item-kind]#internal#
+
+Internal function for cancelling requests.
+Empty implementation.
+Overwrite this function to implement use case specific cancelling.
+
+[.contract-item]
+[[Oracle-_respond-RequestId-bytes-]]
+==== `[.contract-item-name]#++_respond++#++(RequestId requestId, bytes responseData)++` [.item-kind]#internal#
+
+Internal function for handling oracle responses.
+Default implementation sends response back to oracle service.
+Use this function in use case specific external/public functions to handle use case specific response handling.
+
+:respond: pass:normal[xref:#BasicOracle-respond-RequestId-bytes-[`++respond++`]]
+:_initializeBasicOracle: pass:normal[xref:#BasicOracle-_initializeBasicOracle-address-NftId-contract-IAuthorization-address-string-address-[`++_initializeBasicOracle++`]]
+
+[.contract]
+[[BasicOracle]]
+=== `++BasicOracle++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/oracle/BasicOracle.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/oracle/BasicOracle.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++respond(requestId, responseData)++`]
+* [`++_initializeBasicOracle(registry, instanceNftId, authorization, initialOwner, name, token)++`]
+
+[.contract-subindex-inherited]
+.Oracle
+* [`++request(requestId, requesterId, requestData, expiryAt)++`]
+* [`++cancel(requestId)++`]
+* [`++isVerifying()++`]
+* [`++withdrawFees(amount)++`]
+* [`++_initializeOracle(registry, productNftId, authorization, initialOwner, name, token, componentData)++`]
+* [`++_request(requestId, requesterId, requestData, expiryAt)++`]
+* [`++_cancel(requestId)++`]
+* [`++_respond(requestId, responseData)++`]
+
+[.contract-subindex-inherited]
+.IOracleComponent
+
+[.contract-subindex-inherited]
+.InstanceLinkedComponent
+* [`++lock()++`]
+* [`++unlock()++`]
+* [`++getInstance()++`]
+* [`++getAuthorization()++`]
+* [`++_initializeInstanceLinkedComponent(registry, parentNftId, name, token, componentType, authorization, isInterceptor, initialOwner, componentData)++`]
+* [`++_checkAndGetInstanceNftId(registryAddress, parentNftId, componentType)++`]
+* [`++_checkAndGetRegistry(registryAddress, objectNftId, requiredType)++`]
+* [`++_setWallet(newWallet)++`]
+* [`++_getComponentInfo()++`]
+* [`++_getInstanceReader()++`]
+* [`++_withdrawFees(amount)++`]
+* [`++_getServiceAddress(domain)++`]
+
+[.contract-subindex-inherited]
+.IInstanceLinkedComponent
+
+[.contract-subindex-inherited]
+.Component
+* [`++_initializeComponent(authority, registry, parentNftId, name, token, componentType, isInterceptor, initialOwner, registryData, componentData)++`]
+* [`++approveTokenHandler(spendingLimitAmount)++`]
+* [`++approveTokenHandler(token, spendingLimitAmount)++`]
+* [`++setWallet(newWallet)++`]
+* [`++nftTransferFrom(from, to, tokenId, operator)++`]
+* [`++getWallet()++`]
+* [`++getTokenHandler()++`]
+* [`++getToken()++`]
+* [`++getName()++`]
+* [`++getComponentInfo()++`]
+* [`++getInitialComponentInfo()++`]
+* [`++isNftInterceptor()++`]
+* [`++isRegistered()++`]
+* [`++_nftMint(to, tokenId)++`]
+* [`++_nftTransferFrom(from, to, tokenId, operator)++`]
+* [`++_approveTokenHandler(amount)++`]
+
+[.contract-subindex-inherited]
+.IComponent
+
+[.contract-subindex-inherited]
+.ITransferInterceptor
+
+[.contract-subindex-inherited]
+.Registerable
+* [`++_initializeRegisterable(registry, parentNftId, objectType, isInterceptor, initialOwner, data)++`]
+* [`++getRelease()++`]
+* [`++getInitialInfo()++`]
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.NftOwnable
+* [`++_checkNftType(nftId, expectedObjectType)++`]
+* [`++_initializeNftOwnable(registry, initialOwner)++`]
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+* [`++_linkToNftOwnable(nftOwnableAddress)++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+* [`++_initializeRegistryLinked(registryAddress)++`]
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+* [`++_initializeERC165()++`]
+* [`++_registerInterface(interfaceId)++`]
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+* [`++__AccessManaged_init(initialAuthority)++`]
+* [`++__AccessManaged_init_unchained(initialAuthority)++`]
+* [`++authority()++`]
+* [`++setAuthority(newAuthority)++`]
+* [`++isConsumingScheduledOp()++`]
+* [`++_setAuthority(newAuthority)++`]
+* [`++_checkCanCall(caller, data)++`]
+
+[.contract-subindex-inherited]
+.IAccessManaged
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+* [`++__Context_init()++`]
+* [`++__Context_init_unchained()++`]
+* [`++_msgSender()++`]
+* [`++_msgData()++`]
+* [`++_contextSuffixLength()++`]
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.Oracle
+
+[.contract-subindex-inherited]
+.IOracleComponent
+
+[.contract-subindex-inherited]
+.InstanceLinkedComponent
+
+[.contract-subindex-inherited]
+.IInstanceLinkedComponent
+
+[.contract-subindex-inherited]
+.Component
+
+[.contract-subindex-inherited]
+.IComponent
+* [`++LogComponentWalletAddressChanged(oldWallet, newWallet)++`]
+* [`++LogComponentWalletTokensTransferred(from, to, amount)++`]
+* [`++LogComponentTokenHandlerApproved(token, limit, isMaxAmount)++`]
+
+[.contract-subindex-inherited]
+.ITransferInterceptor
+
+[.contract-subindex-inherited]
+.Registerable
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.NftOwnable
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[BasicOracle-respond-RequestId-bytes-]]
+==== `[.contract-item-name]#++respond++#++(RequestId requestId, bytes responseData)++` [.item-kind]#external#
+
+[.contract-item]
+[[BasicOracle-_initializeBasicOracle-address-NftId-contract-IAuthorization-address-string-address-]]
+==== `[.contract-item-name]#++_initializeBasicOracle++#++(address registry, NftId instanceNftId, contract IAuthorization authorization, address initialOwner, string name, address token)++` [.item-kind]#internal#
+
+:constructor: pass:normal[xref:#BasicOracleAuthorization-constructor-string-[`++constructor++`]]
+:_setupTargets: pass:normal[xref:#BasicOracleAuthorization-_setupTargets--[`++_setupTargets++`]]
+:_setupTargetAuthorizations: pass:normal[xref:#BasicOracleAuthorization-_setupTargetAuthorizations--[`++_setupTargetAuthorizations++`]]
+
+[.contract]
+[[BasicOracleAuthorization]]
+=== `++BasicOracleAuthorization++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/oracle/BasicOracleAuthorization.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/oracle/BasicOracleAuthorization.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++constructor(componentName)++`]
+* [`++_setupTargets()++`]
+* [`++_setupTargetAuthorizations()++`]
+
+[.contract-subindex-inherited]
+.Authorization
+* [`++getServiceDomains()++`]
+* [`++getServiceRole(serviceDomain)++`]
+* [`++getServiceTarget(serviceDomain)++`]
+* [`++getRoles()++`]
+* [`++roleExists(roleId)++`]
+* [`++getRoleInfo(roleId)++`]
+* [`++getTargetName()++`]
+* [`++getMainTarget()++`]
+* [`++getTarget(targetName)++`]
+* [`++getTargets()++`]
+* [`++targetExists(target)++`]
+* [`++getTargetRole(target)++`]
+* [`++getAuthorizedRoles(target)++`]
+* [`++getAuthorizedFunctions(target, roleId)++`]
+* [`++getRelease()++`]
+* [`++_setupServiceTargets()++`]
+* [`++_setupRoles()++`]
+* [`++_addServiceTargetWithRole(serviceDomain)++`]
+* [`++_addRole(roleId, info)++`]
+* [`++_addContractRole(roleId, name)++`]
+* [`++_addServiceRole(serviceDomain)++`]
+* [`++_addComponentTargetWithRole(componentType)++`]
+* [`++_addComponentTargetWithRole(componentType, index)++`]
+* [`++_addCustomRole(roleId, adminRoleId, maxMemberCount, name)++`]
+* [`++_addTargetWithRole(targetName, roleId, roleName)++`]
+* [`++_addTarget(name)++`]
+* [`++_authorizeForTarget(target, authorizedRoleId)++`]
+* [`++_authorize(functions, selector, name)++`]
+* [`++_toTargetRoleId(targetDomain)++`]
+* [`++_toTargetRoleName(targetName)++`]
+* [`++_toRoleInfo(adminRoleId, roleType, maxMemberCount, name)++`]
+
+[.contract-subindex-inherited]
+.IAuthorization
+
+[.contract-subindex-inherited]
+.IAccess
+
+--
+
+[.contract-item]
+[[BasicOracleAuthorization-constructor-string-]]
+==== `[.contract-item-name]#++constructor++#++(string componentName)++` [.item-kind]#public#
+
+[.contract-item]
+[[BasicOracleAuthorization-_setupTargets--]]
+==== `[.contract-item-name]#++_setupTargets++#++()++` [.item-kind]#internal#
+
+Sets up the relevant (non-service) targets for the component.
+Overwrite this function for a specific component.
+
+[.contract-item]
+[[BasicOracleAuthorization-_setupTargetAuthorizations--]]
+==== `[.contract-item-name]#++_setupTargetAuthorizations++#++()++` [.item-kind]#internal#
+
+Sets up the relevant target authorizations for the component.
+Overwrite this function for a specific realease.
+
+:_initialize: pass:normal[xref:#OracleService-_initialize-address-bytes-[`++_initialize++`]]
+:request: pass:normal[xref:#OracleService-request-NftId-bytes-Timestamp-string-[`++request++`]]
+:respond: pass:normal[xref:#OracleService-respond-RequestId-bytes-[`++respond++`]]
+:resend: pass:normal[xref:#OracleService-resend-RequestId-[`++resend++`]]
+:cancel: pass:normal[xref:#OracleService-cancel-RequestId-[`++cancel++`]]
+:_checkAndGetRequestInfo: pass:normal[xref:#OracleService-_checkAndGetRequestInfo-contract-IInstance-RequestId-NftId-bool-[`++_checkAndGetRequestInfo++`]]
+:_getInstanceForComponent: pass:normal[xref:#OracleService-_getInstanceForComponent-NftId-[`++_getInstanceForComponent++`]]
+:_getDomain: pass:normal[xref:#OracleService-_getDomain--[`++_getDomain++`]]
+
+[.contract]
+[[OracleService]]
+=== `++OracleService++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/oracle/OracleService.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/oracle/OracleService.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++_initialize(owner, data)++`]
+* [`++request(oracleNftId, requestData, expiryAt, callbackMethodName)++`]
+* [`++respond(requestId, responseData)++`]
+* [`++resend(requestId)++`]
+* [`++cancel(requestId)++`]
+* [`++_checkAndGetRequestInfo(instance, requestId, callerNftId, callerIsOracle)++`]
+* [`++_getInstanceForComponent(componentNftId)++`]
+* [`++_getDomain()++`]
+
+[.contract-subindex-inherited]
+.IOracleService
+
+[.contract-subindex-inherited]
+.ComponentVerifyingService
+* [`++_getAndVerifyActiveComponent(expectedType)++`]
+* [`++_getAndVerifyComponentInfo(componentNftId, expectedType, onlyActive)++`]
+* [`++_getInstanceForComponent(registry, componentInfo)++`]
+* [`++_getProductNftId(componentNftId)++`]
+* [`++_getInstance(registry, instanceNftId)++`]
+
+[.contract-subindex-inherited]
+.Service
+* [`++_initializeService(registry, authority, initialOwner)++`]
+* [`++getDomain()++`]
+* [`++getRoleId()++`]
+* [`++getVersion()++`]
+* [`++_getServiceAddress(domain)++`]
+
+[.contract-subindex-inherited]
+.IService
+
+[.contract-subindex-inherited]
+.ReentrancyGuardUpgradeable
+* [`++__ReentrancyGuard_init()++`]
+* [`++__ReentrancyGuard_init_unchained()++`]
+* [`++_reentrancyGuardEntered()++`]
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+* [`++__AccessManaged_init(initialAuthority)++`]
+* [`++__AccessManaged_init_unchained(initialAuthority)++`]
+* [`++authority()++`]
+* [`++setAuthority(newAuthority)++`]
+* [`++isConsumingScheduledOp()++`]
+* [`++_setAuthority(newAuthority)++`]
+* [`++_checkCanCall(caller, data)++`]
+
+[.contract-subindex-inherited]
+.IAccessManaged
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+* [`++__Context_init()++`]
+* [`++__Context_init_unchained()++`]
+* [`++_msgSender()++`]
+* [`++_msgData()++`]
+* [`++_contextSuffixLength()++`]
+
+[.contract-subindex-inherited]
+.Versionable
+* [`++initializeVersionable(activatedBy, data)++`]
+* [`++upgradeVersionable(data)++`]
+* [`++_upgrade(data)++`]
+
+[.contract-subindex-inherited]
+.IVersionable
+
+[.contract-subindex-inherited]
+.Registerable
+* [`++_initializeRegisterable(registry, parentNftId, objectType, isInterceptor, initialOwner, data)++`]
+* [`++getRelease()++`]
+* [`++getInitialInfo()++`]
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.NftOwnable
+* [`++_checkNftType(nftId, expectedObjectType)++`]
+* [`++_initializeNftOwnable(registry, initialOwner)++`]
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+* [`++_linkToNftOwnable(nftOwnableAddress)++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+* [`++_initializeRegistryLinked(registryAddress)++`]
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+* [`++_initializeERC165()++`]
+* [`++_registerInterface(interfaceId)++`]
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.IOracleService
+* [`++LogOracleServiceRequestCreated(requestId, requesterNftId, oracleNftId, expiryAt)++`]
+* [`++LogOracleServiceResponseProcessed(requestId, oracleNftId)++`]
+* [`++LogOracleServiceDeliveryFailed(requestId, requesterAddress, functionSignature)++`]
+* [`++LogOracleServiceResponseResent(requestId, requesterNftId)++`]
+* [`++LogOracleServiceRequestCancelled(requestId, requesterNftId)++`]
+
+[.contract-subindex-inherited]
+.ComponentVerifyingService
+
+[.contract-subindex-inherited]
+.Service
+
+[.contract-subindex-inherited]
+.IService
+
+[.contract-subindex-inherited]
+.ReentrancyGuardUpgradeable
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+
+[.contract-subindex-inherited]
+.Versionable
+
+[.contract-subindex-inherited]
+.IVersionable
+
+[.contract-subindex-inherited]
+.Registerable
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.NftOwnable
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[OracleService-_initialize-address-bytes-]]
+==== `[.contract-item-name]#++_initialize++#++(address owner, bytes data)++` [.item-kind]#internal#
+
+[.contract-item]
+[[OracleService-request-NftId-bytes-Timestamp-string-]]
+==== `[.contract-item-name]#++request++#++(NftId oracleNftId, bytes requestData, Timestamp expiryAt, string callbackMethodName) → RequestId requestId++` [.item-kind]#external#
+
+send an oracle request to the specified oracle component.
+the function returns the id of the newly created request.
+permissioned: only registered components may send requests to oracles.
+
+[.contract-item]
+[[OracleService-respond-RequestId-bytes-]]
+==== `[.contract-item-name]#++respond++#++(RequestId requestId, bytes responseData) → bool success++` [.item-kind]#external#
+
+respond to oracle request by oracle compnent.
+permissioned: only the oracle component linked to the request id may call this method
+
+[.contract-item]
+[[OracleService-resend-RequestId-]]
+==== `[.contract-item-name]#++resend++#++(RequestId requestId)++` [.item-kind]#external#
+
+re send a failed response to the requester.
+only requests in state FAILED may be re sent.
+the request state changes to FULFILLED when calling the callback method of the requester is successful.
+permissioned: only the requester may resend a request
+
+[.contract-item]
+[[OracleService-cancel-RequestId-]]
+==== `[.contract-item-name]#++cancel++#++(RequestId requestId)++` [.item-kind]#external#
+
+notify the oracle component that the specified request has become invalid.
+only requests in state ACTIVE may be cancelled.
+permissioned: only the requester may cancel a request
+
+[.contract-item]
+[[OracleService-_checkAndGetRequestInfo-contract-IInstance-RequestId-NftId-bool-]]
+==== `[.contract-item-name]#++_checkAndGetRequestInfo++#++(contract IInstance instance, RequestId requestId, NftId callerNftId, bool callerIsOracle) → struct IOracle.RequestInfo info++` [.item-kind]#internal#
+
+[.contract-item]
+[[OracleService-_getInstanceForComponent-NftId-]]
+==== `[.contract-item-name]#++_getInstanceForComponent++#++(NftId componentNftId) → contract IInstance instance++` [.item-kind]#internal#
+
+[.contract-item]
+[[OracleService-_getDomain--]]
+==== `[.contract-item-name]#++_getDomain++#++() → ObjectType++` [.item-kind]#internal#
+
+:constructor: pass:normal[xref:#OracleServiceManager-constructor-address-address-bytes32-[`++constructor++`]]
+:getOracleService: pass:normal[xref:#OracleServiceManager-getOracleService--[`++getOracleService++`]]
+
+[.contract]
+[[OracleServiceManager]]
+=== `++OracleServiceManager++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/oracle/OracleServiceManager.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/oracle/OracleServiceManager.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++constructor(authority, registry, salt)++`]
+* [`++getOracleService()++`]
+
+[.contract-subindex-inherited]
+.ProxyManager
+* [`++initialize(registry, implementation, data, salt)++`]
+* [`++deploy(registry, initialImplementation, initializationData)++`]
+* [`++deployDetermenistic(registry, initialImplementation, initializationData, salt)++`]
+* [`++upgrade(newImplementation, upgradeData)++`]
+* [`++linkToProxy()++`]
+* [`++getDeployData(proxyOwner, deployData)++`]
+* [`++getUpgradeData(upgradeData)++`]
+* [`++getProxy()++`]
+* [`++getVersion()++`]
+* [`++getVersionCount()++`]
+* [`++getVersion(idx)++`]
+* [`++getVersionInfo(_version)++`]
+
+[.contract-subindex-inherited]
+.NftOwnable
+* [`++_checkNftType(nftId, expectedObjectType)++`]
+* [`++_initializeNftOwnable(registry, initialOwner)++`]
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+* [`++_linkToNftOwnable(nftOwnableAddress)++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+* [`++_initializeRegistryLinked(registryAddress)++`]
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+* [`++_initializeERC165()++`]
+* [`++_registerInterface(interfaceId)++`]
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.ProxyManager
+* [`++LogProxyManagerVersionableDeployed(proxy, initialImplementation)++`]
+* [`++LogProxyManagerVersionableUpgraded(proxy, upgradedImplementation)++`]
+
+[.contract-subindex-inherited]
+.NftOwnable
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[OracleServiceManager-constructor-address-address-bytes32-]]
+==== `[.contract-item-name]#++constructor++#++(address authority, address registry, bytes32 salt)++` [.item-kind]#public#
+
+initializes proxy manager with service implementation and deploys instance
+
+[.contract-item]
+[[OracleServiceManager-getOracleService--]]
+==== `[.contract-item-name]#++getOracleService++#++() → contract OracleService oracleService++` [.item-kind]#external#
+

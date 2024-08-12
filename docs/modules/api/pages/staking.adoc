@@ -1,0 +1,2306 @@
+:github-icon: pass:[<svg class="icon"><use href="#github-icon"/></svg>]
+:xref-Staking-onlyStake-NftId-: xref:staking.adoc#Staking-onlyStake-NftId-
+:xref-Staking-onlyTarget-NftId-: xref:staking.adoc#Staking-onlyTarget-NftId-
+= Staking
+ 
+Contains all staking related interfaces and contracts. 
+
+== Contracts
+
+:LogStakingStakingRateSet: pass:normal[xref:#IStaking-LogStakingStakingRateSet-uint256-address-UFixed-UFixed-[`++LogStakingStakingRateSet++`]]
+:LogStakingLockingPeriodSet: pass:normal[xref:#IStaking-LogStakingLockingPeriodSet-NftId-Seconds-Seconds-[`++LogStakingLockingPeriodSet++`]]
+:LogStakingRewardRateSet: pass:normal[xref:#IStaking-LogStakingRewardRateSet-NftId-UFixed-UFixed-[`++LogStakingRewardRateSet++`]]
+:ErrorStakingNotStake: pass:normal[xref:#IStaking-ErrorStakingNotStake-NftId-[`++ErrorStakingNotStake++`]]
+:ErrorStakingNotTarget: pass:normal[xref:#IStaking-ErrorStakingNotTarget-NftId-[`++ErrorStakingNotTarget++`]]
+:ErrorStakingNotStakingOwner: pass:normal[xref:#IStaking-ErrorStakingNotStakingOwner--[`++ErrorStakingNotStakingOwner++`]]
+:ErrorStakingNotNftOwner: pass:normal[xref:#IStaking-ErrorStakingNotNftOwner-NftId-[`++ErrorStakingNotNftOwner++`]]
+:ErrorStakingTokenNotRegistered: pass:normal[xref:#IStaking-ErrorStakingTokenNotRegistered-uint256-address-[`++ErrorStakingTokenNotRegistered++`]]
+:ErrorStakingDipBalanceInsufficient: pass:normal[xref:#IStaking-ErrorStakingDipBalanceInsufficient-address-uint256-uint256-[`++ErrorStakingDipBalanceInsufficient++`]]
+:ErrorStakingDipAllowanceInsufficient: pass:normal[xref:#IStaking-ErrorStakingDipAllowanceInsufficient-address-address-uint256-uint256-[`++ErrorStakingDipAllowanceInsufficient++`]]
+:ErrorStakingStakingReaderStakingMismatch: pass:normal[xref:#IStaking-ErrorStakingStakingReaderStakingMismatch-address-[`++ErrorStakingStakingReaderStakingMismatch++`]]
+:ErrorStakingTargetAlreadyRegistered: pass:normal[xref:#IStaking-ErrorStakingTargetAlreadyRegistered-NftId-[`++ErrorStakingTargetAlreadyRegistered++`]]
+:ErrorStakingTargetNftIdZero: pass:normal[xref:#IStaking-ErrorStakingTargetNftIdZero--[`++ErrorStakingTargetNftIdZero++`]]
+:ErrorStakingTargetTypeNotSupported: pass:normal[xref:#IStaking-ErrorStakingTargetTypeNotSupported-NftId-ObjectType-[`++ErrorStakingTargetTypeNotSupported++`]]
+:ErrorStakingTargetUnexpectedObjectType: pass:normal[xref:#IStaking-ErrorStakingTargetUnexpectedObjectType-NftId-ObjectType-ObjectType-[`++ErrorStakingTargetUnexpectedObjectType++`]]
+:ErrorStakingLockingPeriodTooShort: pass:normal[xref:#IStaking-ErrorStakingLockingPeriodTooShort-NftId-Seconds-Seconds-[`++ErrorStakingLockingPeriodTooShort++`]]
+:ErrorStakingLockingPeriodTooLong: pass:normal[xref:#IStaking-ErrorStakingLockingPeriodTooLong-NftId-Seconds-Seconds-[`++ErrorStakingLockingPeriodTooLong++`]]
+:ErrorStakingStakeLocked: pass:normal[xref:#IStaking-ErrorStakingStakeLocked-NftId-Timestamp-[`++ErrorStakingStakeLocked++`]]
+:ErrorStakingRewardRateTooHigh: pass:normal[xref:#IStaking-ErrorStakingRewardRateTooHigh-NftId-UFixed-UFixed-[`++ErrorStakingRewardRateTooHigh++`]]
+:ErrorStakingTargetNotFound: pass:normal[xref:#IStaking-ErrorStakingTargetNotFound-NftId-[`++ErrorStakingTargetNotFound++`]]
+:ErrorStakingTargetTokenNotFound: pass:normal[xref:#IStaking-ErrorStakingTargetTokenNotFound-NftId-uint256-address-[`++ErrorStakingTargetTokenNotFound++`]]
+:ErrorStakingTargetNotActive: pass:normal[xref:#IStaking-ErrorStakingTargetNotActive-NftId-[`++ErrorStakingTargetNotActive++`]]
+:ErrorStakingStakeAmountZero: pass:normal[xref:#IStaking-ErrorStakingStakeAmountZero-NftId-[`++ErrorStakingStakeAmountZero++`]]
+:StakeInfo: pass:normal[xref:#IStaking-StakeInfo[`++StakeInfo++`]]
+:TargetInfo: pass:normal[xref:#IStaking-TargetInfo[`++TargetInfo++`]]
+:setStakingRate: pass:normal[xref:#IStaking-setStakingRate-uint256-address-UFixed-[`++setStakingRate++`]]
+:registerTarget: pass:normal[xref:#IStaking-registerTarget-NftId-ObjectType-uint256-Seconds-UFixed-[`++registerTarget++`]]
+:setLockingPeriod: pass:normal[xref:#IStaking-setLockingPeriod-NftId-Seconds-[`++setLockingPeriod++`]]
+:setRewardRate: pass:normal[xref:#IStaking-setRewardRate-NftId-UFixed-[`++setRewardRate++`]]
+:refillRewardReserves: pass:normal[xref:#IStaking-refillRewardReserves-NftId-Amount-[`++refillRewardReserves++`]]
+:withdrawRewardReserves: pass:normal[xref:#IStaking-withdrawRewardReserves-NftId-Amount-[`++withdrawRewardReserves++`]]
+:increaseTotalValueLocked: pass:normal[xref:#IStaking-increaseTotalValueLocked-NftId-address-Amount-[`++increaseTotalValueLocked++`]]
+:decreaseTotalValueLocked: pass:normal[xref:#IStaking-decreaseTotalValueLocked-NftId-address-Amount-[`++decreaseTotalValueLocked++`]]
+:updateRemoteTvl: pass:normal[xref:#IStaking-updateRemoteTvl-NftId-address-Amount-[`++updateRemoteTvl++`]]
+:createStake: pass:normal[xref:#IStaking-createStake-NftId-NftId-Amount-[`++createStake++`]]
+:stake: pass:normal[xref:#IStaking-stake-NftId-Amount-[`++stake++`]]
+:restake: pass:normal[xref:#IStaking-restake-NftId-NftId-[`++restake++`]]
+:unstake: pass:normal[xref:#IStaking-unstake-NftId-[`++unstake++`]]
+:updateRewards: pass:normal[xref:#IStaking-updateRewards-NftId-[`++updateRewards++`]]
+:claimRewards: pass:normal[xref:#IStaking-claimRewards-NftId-[`++claimRewards++`]]
+:collectDipAmount: pass:normal[xref:#IStaking-collectDipAmount-address-Amount-[`++collectDipAmount++`]]
+:transferDipAmount: pass:normal[xref:#IStaking-transferDipAmount-address-Amount-[`++transferDipAmount++`]]
+:getStakingStore: pass:normal[xref:#IStaking-getStakingStore--[`++getStakingStore++`]]
+:getStakingReader: pass:normal[xref:#IStaking-getStakingReader--[`++getStakingReader++`]]
+
+[.contract]
+[[IStaking]]
+=== `++IStaking++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/staking/IStaking.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/staking/IStaking.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++setStakingRate(chainId, token, stakingRate)++`]
+* [`++registerTarget(targetNftId, expectedObjectType, chainId, initialLockingPeriod, initialRewardRate)++`]
+* [`++setLockingPeriod(targetNftId, lockingPeriod)++`]
+* [`++setRewardRate(targetNftId, rewardRate)++`]
+* [`++refillRewardReserves(targetNftId, dipAmount)++`]
+* [`++withdrawRewardReserves(targetNftId, dipAmount)++`]
+* [`++increaseTotalValueLocked(targetNftId, token, amount)++`]
+* [`++decreaseTotalValueLocked(targetNftId, token, amount)++`]
+* [`++updateRemoteTvl(targetNftId, token, amount)++`]
+* [`++createStake(stakeNftId, targetNftId, dipAmount)++`]
+* [`++stake(stakeNftId, dipAmount)++`]
+* [`++restake(stakeNftId, newTargetNftId)++`]
+* [`++unstake(stakeNftId)++`]
+* [`++updateRewards(stakeNftId)++`]
+* [`++claimRewards(stakeNftId)++`]
+* [`++collectDipAmount(from, dipAmount)++`]
+* [`++transferDipAmount(to, dipAmount)++`]
+* [`++getStakingStore()++`]
+* [`++getStakingReader()++`]
+
+[.contract-subindex-inherited]
+.IVersionable
+* [`++initializeVersionable(activatedBy, activationData)++`]
+* [`++upgradeVersionable(upgradeData)++`]
+* [`++getVersion()++`]
+
+[.contract-subindex-inherited]
+.IComponent
+* [`++approveTokenHandler(spendingLimitAmount)++`]
+* [`++setWallet(walletAddress)++`]
+* [`++getName()++`]
+* [`++getToken()++`]
+* [`++getTokenHandler()++`]
+* [`++getWallet()++`]
+* [`++isNftInterceptor()++`]
+* [`++isRegistered()++`]
+* [`++getComponentInfo()++`]
+* [`++getInitialComponentInfo()++`]
+
+[.contract-subindex-inherited]
+.ITransferInterceptor
+* [`++nftTransferFrom(from, to, tokenId, operator)++`]
+
+[.contract-subindex-inherited]
+.IRegisterable
+* [`++getRelease()++`]
+* [`++getInitialInfo()++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IERC165
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++authority()++`]
+* [`++setAuthority()++`]
+* [`++isConsumingScheduledOp()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+* [`++LogStakingStakingRateSet(chainId, token, oldStakingRate, newStakingRate)++`]
+* [`++LogStakingLockingPeriodSet(targetNftId, oldLockingPeriod, lockingPeriod)++`]
+* [`++LogStakingRewardRateSet(targetNftId, oldRewardRate, rewardRate)++`]
+
+[.contract-subindex-inherited]
+.IVersionable
+
+[.contract-subindex-inherited]
+.IComponent
+* [`++LogComponentWalletAddressChanged(oldWallet, newWallet)++`]
+* [`++LogComponentWalletTokensTransferred(from, to, amount)++`]
+* [`++LogComponentTokenHandlerApproved(token, limit, isMaxAmount)++`]
+
+[.contract-subindex-inherited]
+.ITransferInterceptor
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+--
+
+[.contract-item]
+[[IStaking-setStakingRate-uint256-address-UFixed-]]
+==== `[.contract-item-name]#++setStakingRate++#++(uint256 chainId, address token, UFixed stakingRate)++` [.item-kind]#external#
+
+sets the rate that converts 1 token of total value locked into the
+the required staked dip amount to back up the locked token value
+
+[.contract-item]
+[[IStaking-registerTarget-NftId-ObjectType-uint256-Seconds-UFixed-]]
+==== `[.contract-item-name]#++registerTarget++#++(NftId targetNftId, ObjectType expectedObjectType, uint256 chainId, Seconds initialLockingPeriod, UFixed initialRewardRate)++` [.item-kind]#external#
+
+[.contract-item]
+[[IStaking-setLockingPeriod-NftId-Seconds-]]
+==== `[.contract-item-name]#++setLockingPeriod++#++(NftId targetNftId, Seconds lockingPeriod)++` [.item-kind]#external#
+
+set the stake locking period to the specified duration.
+permissioned: only the staking service may call this function
+
+[.contract-item]
+[[IStaking-setRewardRate-NftId-UFixed-]]
+==== `[.contract-item-name]#++setRewardRate++#++(NftId targetNftId, UFixed rewardRate)++` [.item-kind]#external#
+
+update the target specific reward rate.
+permissioned: only the staking service may call this function
+
+[.contract-item]
+[[IStaking-refillRewardReserves-NftId-Amount-]]
+==== `[.contract-item-name]#++refillRewardReserves++#++(NftId targetNftId, Amount dipAmount) → Amount newBalance++` [.item-kind]#external#
+
+(re)fills the staking reward reserves for the specified target
+unpermissioned: anybody may fill up staking reward reserves
+
+[.contract-item]
+[[IStaking-withdrawRewardReserves-NftId-Amount-]]
+==== `[.contract-item-name]#++withdrawRewardReserves++#++(NftId targetNftId, Amount dipAmount) → Amount newBalance++` [.item-kind]#external#
+
+defunds the staking reward reserves for the specified target
+permissioned: only the staking service may call this function
+
+[.contract-item]
+[[IStaking-increaseTotalValueLocked-NftId-address-Amount-]]
+==== `[.contract-item-name]#++increaseTotalValueLocked++#++(NftId targetNftId, address token, Amount amount) → Amount newBalance++` [.item-kind]#external#
+
+increases the total value locked amount for the specified target by the provided token amount.
+function is called when a new policy is collateralized.
+function restricted to the pool service.
+
+[.contract-item]
+[[IStaking-decreaseTotalValueLocked-NftId-address-Amount-]]
+==== `[.contract-item-name]#++decreaseTotalValueLocked++#++(NftId targetNftId, address token, Amount amount) → Amount newBalance++` [.item-kind]#external#
+
+decreases the total value locked amount for the specified target by the provided token amount.
+function is called when a new policy is closed or payouts are executed.
+function restricted to the pool service.
+
+[.contract-item]
+[[IStaking-updateRemoteTvl-NftId-address-Amount-]]
+==== `[.contract-item-name]#++updateRemoteTvl++#++(NftId targetNftId, address token, Amount amount)++` [.item-kind]#external#
+
+[.contract-item]
+[[IStaking-createStake-NftId-NftId-Amount-]]
+==== `[.contract-item-name]#++createStake++#++(NftId stakeNftId, NftId targetNftId, Amount dipAmount)++` [.item-kind]#external#
+
+creat a new stake info object
+permissioned: only staking service may call this function.
+
+[.contract-item]
+[[IStaking-stake-NftId-Amount-]]
+==== `[.contract-item-name]#++stake++#++(NftId stakeNftId, Amount dipAmount) → Amount stakeBalance++` [.item-kind]#external#
+
+increase the staked dip by dipAmount for the specified stake.
+staking rewards are updated and added to the staked dips as well.
+the function returns the new total amount of staked dips.
+
+[.contract-item]
+[[IStaking-restake-NftId-NftId-]]
+==== `[.contract-item-name]#++restake++#++(NftId stakeNftId, NftId newTargetNftId) → NftId newStakeNftId++` [.item-kind]#external#
+
+restakes the dips to a new target.
+the sum of the staked dips and the accumulated rewards will be restaked.
+permissioned: only staking service may call this function.
+
+[.contract-item]
+[[IStaking-unstake-NftId-]]
+==== `[.contract-item-name]#++unstake++#++(NftId stakeNftId) → Amount unstakedAmount, Amount rewardsClaimedAmount++` [.item-kind]#external#
+
+retuns the specified amount of dips to the holder of the specified stake nft.
+if dipAmount is set to Amount.max() all staked dips and all rewards are transferred to 
+permissioned: only staking service may call this function.
+
+[.contract-item]
+[[IStaking-updateRewards-NftId-]]
+==== `[.contract-item-name]#++updateRewards++#++(NftId stakeNftId)++` [.item-kind]#external#
+
+update stake rewards for current time.
+may be called before an announement of a decrease of a reward rate reduction.
+calling this functions ensures that reward balance is updated using the current (higher) reward rate.
+unpermissioned.
+
+[.contract-item]
+[[IStaking-claimRewards-NftId-]]
+==== `[.contract-item-name]#++claimRewards++#++(NftId stakeNftId) → Amount rewardsClaimedAmount++` [.item-kind]#external#
+
+transfers all rewards accumulated so far to the holder of the specified stake nft.
+permissioned: only staking service may call this function.
+
+[.contract-item]
+[[IStaking-collectDipAmount-address-Amount-]]
+==== `[.contract-item-name]#++collectDipAmount++#++(address from, Amount dipAmount)++` [.item-kind]#external#
+
+transfers the specified amount of dips from the from address to the staking wallet.
+
+[.contract-item]
+[[IStaking-transferDipAmount-address-Amount-]]
+==== `[.contract-item-name]#++transferDipAmount++#++(address to, Amount dipAmount)++` [.item-kind]#external#
+
+transfers the specified amount of dips from the staking wallet to the to addess.
+
+[.contract-item]
+[[IStaking-getStakingStore--]]
+==== `[.contract-item-name]#++getStakingStore++#++() → contract StakingStore stakingStore++` [.item-kind]#external#
+
+[.contract-item]
+[[IStaking-getStakingReader--]]
+==== `[.contract-item-name]#++getStakingReader++#++() → contract StakingReader reader++` [.item-kind]#external#
+
+[.contract-item]
+[[IStaking-LogStakingStakingRateSet-uint256-address-UFixed-UFixed-]]
+==== `[.contract-item-name]#++LogStakingStakingRateSet++#++(uint256 chainId, address token, UFixed oldStakingRate, UFixed newStakingRate)++` [.item-kind]#event#
+
+[.contract-item]
+[[IStaking-LogStakingLockingPeriodSet-NftId-Seconds-Seconds-]]
+==== `[.contract-item-name]#++LogStakingLockingPeriodSet++#++(NftId targetNftId, Seconds oldLockingPeriod, Seconds lockingPeriod)++` [.item-kind]#event#
+
+[.contract-item]
+[[IStaking-LogStakingRewardRateSet-NftId-UFixed-UFixed-]]
+==== `[.contract-item-name]#++LogStakingRewardRateSet++#++(NftId targetNftId, UFixed oldRewardRate, UFixed rewardRate)++` [.item-kind]#event#
+
+:LogStakingServiceProtocolTargetRegistered: pass:normal[xref:#IStakingService-LogStakingServiceProtocolTargetRegistered-NftId-[`++LogStakingServiceProtocolTargetRegistered++`]]
+:LogStakingServiceInstanceTargetRegistered: pass:normal[xref:#IStakingService-LogStakingServiceInstanceTargetRegistered-NftId-uint256-[`++LogStakingServiceInstanceTargetRegistered++`]]
+:LogStakingServiceLockingPeriodSet: pass:normal[xref:#IStakingService-LogStakingServiceLockingPeriodSet-NftId-Seconds-Seconds-[`++LogStakingServiceLockingPeriodSet++`]]
+:LogStakingServiceRewardRateSet: pass:normal[xref:#IStakingService-LogStakingServiceRewardRateSet-NftId-UFixed-UFixed-[`++LogStakingServiceRewardRateSet++`]]
+:LogStakingServiceRewardReservesIncreased: pass:normal[xref:#IStakingService-LogStakingServiceRewardReservesIncreased-NftId-address-Amount-Amount-[`++LogStakingServiceRewardReservesIncreased++`]]
+:LogStakingServiceRewardReservesDecreased: pass:normal[xref:#IStakingService-LogStakingServiceRewardReservesDecreased-NftId-address-Amount-Amount-[`++LogStakingServiceRewardReservesDecreased++`]]
+:LogStakingServiceStakeCreated: pass:normal[xref:#IStakingService-LogStakingServiceStakeCreated-NftId-NftId-address-Amount-[`++LogStakingServiceStakeCreated++`]]
+:LogStakingServiceStakeIncreased: pass:normal[xref:#IStakingService-LogStakingServiceStakeIncreased-NftId-address-Amount-Amount-[`++LogStakingServiceStakeIncreased++`]]
+:LogStakingServiceUnstaked: pass:normal[xref:#IStakingService-LogStakingServiceUnstaked-NftId-address-Amount-[`++LogStakingServiceUnstaked++`]]
+:LogStakingServiceRewardsUpdated: pass:normal[xref:#IStakingService-LogStakingServiceRewardsUpdated-NftId-[`++LogStakingServiceRewardsUpdated++`]]
+:LogStakingServiceRewardsClaimed: pass:normal[xref:#IStakingService-LogStakingServiceRewardsClaimed-NftId-address-Amount-[`++LogStakingServiceRewardsClaimed++`]]
+:ErrorStakingServiceNotStaking: pass:normal[xref:#IStakingService-ErrorStakingServiceNotStaking-address-[`++ErrorStakingServiceNotStaking++`]]
+:ErrorStakingServiceNotSupportingIStaking: pass:normal[xref:#IStakingService-ErrorStakingServiceNotSupportingIStaking-address-[`++ErrorStakingServiceNotSupportingIStaking++`]]
+:ErrorStakingServiceZeroTargetNftId: pass:normal[xref:#IStakingService-ErrorStakingServiceZeroTargetNftId--[`++ErrorStakingServiceZeroTargetNftId++`]]
+:ErrorStakingServiceNotTargetNftId: pass:normal[xref:#IStakingService-ErrorStakingServiceNotTargetNftId-NftId-[`++ErrorStakingServiceNotTargetNftId++`]]
+:ErrorStakingServiceNotActiveTargetNftId: pass:normal[xref:#IStakingService-ErrorStakingServiceNotActiveTargetNftId-NftId-[`++ErrorStakingServiceNotActiveTargetNftId++`]]
+:ErrorStakingServiceDipBalanceInsufficient: pass:normal[xref:#IStakingService-ErrorStakingServiceDipBalanceInsufficient-NftId-uint256-uint256-[`++ErrorStakingServiceDipBalanceInsufficient++`]]
+:ErrorStakingServiceDipAllowanceInsufficient: pass:normal[xref:#IStakingService-ErrorStakingServiceDipAllowanceInsufficient-NftId-address-uint256-uint256-[`++ErrorStakingServiceDipAllowanceInsufficient++`]]
+:createInstanceTarget: pass:normal[xref:#IStakingService-createInstanceTarget-NftId-Seconds-UFixed-[`++createInstanceTarget++`]]
+:setInstanceLockingPeriod: pass:normal[xref:#IStakingService-setInstanceLockingPeriod-NftId-Seconds-[`++setInstanceLockingPeriod++`]]
+:setInstanceRewardRate: pass:normal[xref:#IStakingService-setInstanceRewardRate-NftId-UFixed-[`++setInstanceRewardRate++`]]
+:refillInstanceRewardReserves: pass:normal[xref:#IStakingService-refillInstanceRewardReserves-NftId-address-Amount-[`++refillInstanceRewardReserves++`]]
+:refillRewardReservesBySender: pass:normal[xref:#IStakingService-refillRewardReservesBySender-NftId-Amount-[`++refillRewardReservesBySender++`]]
+:withdrawInstanceRewardReserves: pass:normal[xref:#IStakingService-withdrawInstanceRewardReserves-NftId-Amount-[`++withdrawInstanceRewardReserves++`]]
+:create: pass:normal[xref:#IStakingService-create-NftId-Amount-[`++create++`]]
+:stake: pass:normal[xref:#IStakingService-stake-NftId-Amount-[`++stake++`]]
+:restakeToNewTarget: pass:normal[xref:#IStakingService-restakeToNewTarget-NftId-NftId-[`++restakeToNewTarget++`]]
+:updateRewards: pass:normal[xref:#IStakingService-updateRewards-NftId-[`++updateRewards++`]]
+:claimRewards: pass:normal[xref:#IStakingService-claimRewards-NftId-[`++claimRewards++`]]
+:unstake: pass:normal[xref:#IStakingService-unstake-NftId-[`++unstake++`]]
+:setTotalValueLocked: pass:normal[xref:#IStakingService-setTotalValueLocked-NftId-address-Amount-[`++setTotalValueLocked++`]]
+:getDipToken: pass:normal[xref:#IStakingService-getDipToken--[`++getDipToken++`]]
+:getTokenHandler: pass:normal[xref:#IStakingService-getTokenHandler--[`++getTokenHandler++`]]
+:getStaking: pass:normal[xref:#IStakingService-getStaking--[`++getStaking++`]]
+
+[.contract]
+[[IStakingService]]
+=== `++IStakingService++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/staking/IStakingService.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/staking/IStakingService.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++createInstanceTarget(targetNftId, initialLockingPeriod, initialRewardRate)++`]
+* [`++setInstanceLockingPeriod(instanceNftId, lockingPeriod)++`]
+* [`++setInstanceRewardRate(instanceNftId, rewardRate)++`]
+* [`++refillInstanceRewardReserves(instanceNftId, rewardProvider, dipAmount)++`]
+* [`++refillRewardReservesBySender(targetNftId, dipAmount)++`]
+* [`++withdrawInstanceRewardReserves(instanceNftId, dipAmount)++`]
+* [`++create(targetNftId, amount)++`]
+* [`++stake(stakeNftId, amount)++`]
+* [`++restakeToNewTarget(stakeNftId, newTargetNftId)++`]
+* [`++updateRewards(stakeNftId)++`]
+* [`++claimRewards(stakeNftId)++`]
+* [`++unstake(stakeNftId)++`]
+* [`++setTotalValueLocked(targetNftId, token, amount)++`]
+* [`++getDipToken()++`]
+* [`++getTokenHandler()++`]
+* [`++getStaking()++`]
+
+[.contract-subindex-inherited]
+.IService
+* [`++getDomain()++`]
+* [`++getRoleId()++`]
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++authority()++`]
+* [`++setAuthority()++`]
+* [`++isConsumingScheduledOp()++`]
+
+[.contract-subindex-inherited]
+.IVersionable
+* [`++initializeVersionable(activatedBy, activationData)++`]
+* [`++upgradeVersionable(upgradeData)++`]
+* [`++getVersion()++`]
+
+[.contract-subindex-inherited]
+.IRegisterable
+* [`++getRelease()++`]
+* [`++getInitialInfo()++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IERC165
+* [`++supportsInterface(interfaceId)++`]
+
+--
+
+[.contract-index]
+.Events
+--
+* [`++LogStakingServiceProtocolTargetRegistered(protocolNftId)++`]
+* [`++LogStakingServiceInstanceTargetRegistered(instanceNftId, chainId)++`]
+* [`++LogStakingServiceLockingPeriodSet(targetNftId, oldLockingDuration, lockingDuration)++`]
+* [`++LogStakingServiceRewardRateSet(targetNftId, oldRewardRate, rewardRate)++`]
+* [`++LogStakingServiceRewardReservesIncreased(targetNftId, rewardProvider, dipAmount, newBalance)++`]
+* [`++LogStakingServiceRewardReservesDecreased(targetNftId, targetOwner, dipAmount, newBalance)++`]
+* [`++LogStakingServiceStakeCreated(stakeNftId, targetNftId, owner, stakedAmount)++`]
+* [`++LogStakingServiceStakeIncreased(stakeNftId, owner, stakedAmount, stakeBalance)++`]
+* [`++LogStakingServiceUnstaked(stakeNftId, stakeOwner, totalAmount)++`]
+* [`++LogStakingServiceRewardsUpdated(stakeNftId)++`]
+* [`++LogStakingServiceRewardsClaimed(stakeNftId, stakeOwner, rewardsClaimedAmount)++`]
+
+[.contract-subindex-inherited]
+.IService
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+[.contract-subindex-inherited]
+.IVersionable
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.IERC165
+
+--
+
+[.contract-item]
+[[IStakingService-createInstanceTarget-NftId-Seconds-UFixed-]]
+==== `[.contract-item-name]#++createInstanceTarget++#++(NftId targetNftId, Seconds initialLockingPeriod, UFixed initialRewardRate)++` [.item-kind]#external#
+
+creates/registers an on-chain instance staking target.
+function granted to instance service
+
+[.contract-item]
+[[IStakingService-setInstanceLockingPeriod-NftId-Seconds-]]
+==== `[.contract-item-name]#++setInstanceLockingPeriod++#++(NftId instanceNftId, Seconds lockingPeriod)++` [.item-kind]#external#
+
+Set the instance stake locking period to the specified duration.
+Permissioned: Only owner of the specified target.
+
+[.contract-item]
+[[IStakingService-setInstanceRewardRate-NftId-UFixed-]]
+==== `[.contract-item-name]#++setInstanceRewardRate++#++(NftId instanceNftId, UFixed rewardRate)++` [.item-kind]#external#
+
+Set the instance reward rate to the specified value.
+Permissioned: Only owner of the specified target.
+
+[.contract-item]
+[[IStakingService-refillInstanceRewardReserves-NftId-address-Amount-]]
+==== `[.contract-item-name]#++refillInstanceRewardReserves++#++(NftId instanceNftId, address rewardProvider, Amount dipAmount) → Amount newBalance++` [.item-kind]#external#
+
+(Re)fills the staking reward reserves for the specified target using the dips provided by the reward provider.
+unpermissioned: anybody may fill up staking reward reserves
+
+[.contract-item]
+[[IStakingService-refillRewardReservesBySender-NftId-Amount-]]
+==== `[.contract-item-name]#++refillRewardReservesBySender++#++(NftId targetNftId, Amount dipAmount) → Amount newBalance++` [.item-kind]#external#
+
+(Re)fills the staking reward reserves for the specified target using the dips provided by the sender
+unpermissioned: anybody may fill up staking reward reserves
+
+[.contract-item]
+[[IStakingService-withdrawInstanceRewardReserves-NftId-Amount-]]
+==== `[.contract-item-name]#++withdrawInstanceRewardReserves++#++(NftId instanceNftId, Amount dipAmount) → Amount newBalance++` [.item-kind]#external#
+
+Defunds the staking reward reserves for the specified target
+Permissioned: only the target owner may call this function
+
+[.contract-item]
+[[IStakingService-create-NftId-Amount-]]
+==== `[.contract-item-name]#++create++#++(NftId targetNftId, Amount amount) → NftId stakeNftId++` [.item-kind]#external#
+
+create a new stake with amount DIP to the specified target
+returns the id of the newly minted stake nft
+permissionless function
+
+[.contract-item]
+[[IStakingService-stake-NftId-Amount-]]
+==== `[.contract-item-name]#++stake++#++(NftId stakeNftId, Amount amount)++` [.item-kind]#external#
+
+increase an existing stake by amount DIP
+updates and restakes the staking reward amount
+function restricted to the current stake owner
+
+[.contract-item]
+[[IStakingService-restakeToNewTarget-NftId-NftId-]]
+==== `[.contract-item-name]#++restakeToNewTarget++#++(NftId stakeNftId, NftId newTargetNftId) → NftId newStakeNftId++` [.item-kind]#external#
+
+re-stakes the current staked DIP as well as all accumulated rewards to the new stake target.
+all related stakes and all accumulated reward DIP are transferred to the current stake holder
+function restricted to the current stake owner
+
+[.contract-item]
+[[IStakingService-updateRewards-NftId-]]
+==== `[.contract-item-name]#++updateRewards++#++(NftId stakeNftId)++` [.item-kind]#external#
+
+updates the reward balance of the stake using the current reward rate.
+
+[.contract-item]
+[[IStakingService-claimRewards-NftId-]]
+==== `[.contract-item-name]#++claimRewards++#++(NftId stakeNftId)++` [.item-kind]#external#
+
+claims all available rewards.
+
+[.contract-item]
+[[IStakingService-unstake-NftId-]]
+==== `[.contract-item-name]#++unstake++#++(NftId stakeNftId)++` [.item-kind]#external#
+
+unstakes all dips (stakes and rewards) of an existing stake.
+function restricted to the current stake owner
+
+[.contract-item]
+[[IStakingService-setTotalValueLocked-NftId-address-Amount-]]
+==== `[.contract-item-name]#++setTotalValueLocked++#++(NftId targetNftId, address token, Amount amount)++` [.item-kind]#external#
+
+sets total value locked data for a target contract on a different chain.
+this is done via CCIP (cross chain communication)
+
+[.contract-item]
+[[IStakingService-getDipToken--]]
+==== `[.contract-item-name]#++getDipToken++#++() → contract IERC20Metadata dip++` [.item-kind]#external#
+
+[.contract-item]
+[[IStakingService-getTokenHandler--]]
+==== `[.contract-item-name]#++getTokenHandler++#++() → contract TokenHandler tokenHandler++` [.item-kind]#external#
+
+[.contract-item]
+[[IStakingService-getStaking--]]
+==== `[.contract-item-name]#++getStaking++#++() → contract IStaking staking++` [.item-kind]#external#
+
+[.contract-item]
+[[IStakingService-LogStakingServiceProtocolTargetRegistered-NftId-]]
+==== `[.contract-item-name]#++LogStakingServiceProtocolTargetRegistered++#++(NftId protocolNftId)++` [.item-kind]#event#
+
+[.contract-item]
+[[IStakingService-LogStakingServiceInstanceTargetRegistered-NftId-uint256-]]
+==== `[.contract-item-name]#++LogStakingServiceInstanceTargetRegistered++#++(NftId instanceNftId, uint256 chainId)++` [.item-kind]#event#
+
+[.contract-item]
+[[IStakingService-LogStakingServiceLockingPeriodSet-NftId-Seconds-Seconds-]]
+==== `[.contract-item-name]#++LogStakingServiceLockingPeriodSet++#++(NftId targetNftId, Seconds oldLockingDuration, Seconds lockingDuration)++` [.item-kind]#event#
+
+[.contract-item]
+[[IStakingService-LogStakingServiceRewardRateSet-NftId-UFixed-UFixed-]]
+==== `[.contract-item-name]#++LogStakingServiceRewardRateSet++#++(NftId targetNftId, UFixed oldRewardRate, UFixed rewardRate)++` [.item-kind]#event#
+
+[.contract-item]
+[[IStakingService-LogStakingServiceRewardReservesIncreased-NftId-address-Amount-Amount-]]
+==== `[.contract-item-name]#++LogStakingServiceRewardReservesIncreased++#++(NftId targetNftId, address rewardProvider, Amount dipAmount, Amount newBalance)++` [.item-kind]#event#
+
+[.contract-item]
+[[IStakingService-LogStakingServiceRewardReservesDecreased-NftId-address-Amount-Amount-]]
+==== `[.contract-item-name]#++LogStakingServiceRewardReservesDecreased++#++(NftId targetNftId, address targetOwner, Amount dipAmount, Amount newBalance)++` [.item-kind]#event#
+
+[.contract-item]
+[[IStakingService-LogStakingServiceStakeCreated-NftId-NftId-address-Amount-]]
+==== `[.contract-item-name]#++LogStakingServiceStakeCreated++#++(NftId stakeNftId, NftId targetNftId, address owner, Amount stakedAmount)++` [.item-kind]#event#
+
+[.contract-item]
+[[IStakingService-LogStakingServiceStakeIncreased-NftId-address-Amount-Amount-]]
+==== `[.contract-item-name]#++LogStakingServiceStakeIncreased++#++(NftId stakeNftId, address owner, Amount stakedAmount, Amount stakeBalance)++` [.item-kind]#event#
+
+[.contract-item]
+[[IStakingService-LogStakingServiceUnstaked-NftId-address-Amount-]]
+==== `[.contract-item-name]#++LogStakingServiceUnstaked++#++(NftId stakeNftId, address stakeOwner, Amount totalAmount)++` [.item-kind]#event#
+
+[.contract-item]
+[[IStakingService-LogStakingServiceRewardsUpdated-NftId-]]
+==== `[.contract-item-name]#++LogStakingServiceRewardsUpdated++#++(NftId stakeNftId)++` [.item-kind]#event#
+
+[.contract-item]
+[[IStakingService-LogStakingServiceRewardsClaimed-NftId-address-Amount-]]
+==== `[.contract-item-name]#++LogStakingServiceRewardsClaimed++#++(NftId stakeNftId, address stakeOwner, Amount rewardsClaimedAmount)++` [.item-kind]#event#
+
+:CONTRACT_NAME: pass:normal[xref:#Staking-CONTRACT_NAME-string[`++CONTRACT_NAME++`]]
+:STAKING_LOCATION_V1: pass:normal[xref:#Staking-STAKING_LOCATION_V1-bytes32[`++STAKING_LOCATION_V1++`]]
+:StakingStorage: pass:normal[xref:#Staking-StakingStorage[`++StakingStorage++`]]
+:onlyStake: pass:normal[xref:#Staking-onlyStake-NftId-[`++onlyStake++`]]
+:onlyTarget: pass:normal[xref:#Staking-onlyTarget-NftId-[`++onlyTarget++`]]
+:setStakingReader: pass:normal[xref:#Staking-setStakingReader-contract-StakingReader-[`++setStakingReader++`]]
+:setStakingRate: pass:normal[xref:#Staking-setStakingRate-uint256-address-UFixed-[`++setStakingRate++`]]
+:registerTarget: pass:normal[xref:#Staking-registerTarget-NftId-ObjectType-uint256-Seconds-UFixed-[`++registerTarget++`]]
+:setLockingPeriod: pass:normal[xref:#Staking-setLockingPeriod-NftId-Seconds-[`++setLockingPeriod++`]]
+:setRewardRate: pass:normal[xref:#Staking-setRewardRate-NftId-UFixed-[`++setRewardRate++`]]
+:refillRewardReserves: pass:normal[xref:#Staking-refillRewardReserves-NftId-Amount-[`++refillRewardReserves++`]]
+:withdrawRewardReserves: pass:normal[xref:#Staking-withdrawRewardReserves-NftId-Amount-[`++withdrawRewardReserves++`]]
+:increaseTotalValueLocked: pass:normal[xref:#Staking-increaseTotalValueLocked-NftId-address-Amount-[`++increaseTotalValueLocked++`]]
+:decreaseTotalValueLocked: pass:normal[xref:#Staking-decreaseTotalValueLocked-NftId-address-Amount-[`++decreaseTotalValueLocked++`]]
+:registerRemoteTarget: pass:normal[xref:#Staking-registerRemoteTarget-NftId-struct-IStaking-TargetInfo-[`++registerRemoteTarget++`]]
+:updateRemoteTvl: pass:normal[xref:#Staking-updateRemoteTvl-NftId-address-Amount-[`++updateRemoteTvl++`]]
+:createStake: pass:normal[xref:#Staking-createStake-NftId-NftId-Amount-[`++createStake++`]]
+:stake: pass:normal[xref:#Staking-stake-NftId-Amount-[`++stake++`]]
+:restake: pass:normal[xref:#Staking-restake-NftId-NftId-[`++restake++`]]
+:updateRewards: pass:normal[xref:#Staking-updateRewards-NftId-[`++updateRewards++`]]
+:claimRewards: pass:normal[xref:#Staking-claimRewards-NftId-[`++claimRewards++`]]
+:unstake: pass:normal[xref:#Staking-unstake-NftId-[`++unstake++`]]
+:collectDipAmount: pass:normal[xref:#Staking-collectDipAmount-address-Amount-[`++collectDipAmount++`]]
+:transferDipAmount: pass:normal[xref:#Staking-transferDipAmount-address-Amount-[`++transferDipAmount++`]]
+:getStakingReader: pass:normal[xref:#Staking-getStakingReader--[`++getStakingReader++`]]
+:getStakingStore: pass:normal[xref:#Staking-getStakingStore--[`++getStakingStore++`]]
+:getTokenRegistryAddress: pass:normal[xref:#Staking-getTokenRegistryAddress--[`++getTokenRegistryAddress++`]]
+:getTokenHandler: pass:normal[xref:#Staking-getTokenHandler--[`++getTokenHandler++`]]
+:getVersion: pass:normal[xref:#Staking-getVersion--[`++getVersion++`]]
+:_updateRewards: pass:normal[xref:#Staking-_updateRewards-contract-StakingReader-contract-StakingStore-NftId-[`++_updateRewards++`]]
+:_initialize: pass:normal[xref:#Staking-_initialize-address-bytes-[`++_initialize++`]]
+
+[.contract]
+[[Staking]]
+=== `++Staking++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/staking/Staking.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/staking/Staking.sol";
+```
+
+[.contract-index]
+.Modifiers
+--
+* {xref-Staking-onlyStake-NftId-}[`++onlyStake(stakeNftId)++`]
+* {xref-Staking-onlyTarget-NftId-}[`++onlyTarget(targetNftId)++`]
+--
+
+[.contract-index]
+.Functions
+--
+* [`++setStakingReader(stakingReader)++`]
+* [`++setStakingRate(chainId, token, stakingRate)++`]
+* [`++registerTarget(targetNftId, expectedObjectType, chainId, initialLockingPeriod, initialRewardRate)++`]
+* [`++setLockingPeriod(targetNftId, lockingPeriod)++`]
+* [`++setRewardRate(targetNftId, rewardRate)++`]
+* [`++refillRewardReserves(targetNftId, dipAmount)++`]
+* [`++withdrawRewardReserves(targetNftId, dipAmount)++`]
+* [`++increaseTotalValueLocked(targetNftId, token, amount)++`]
+* [`++decreaseTotalValueLocked(targetNftId, token, amount)++`]
+* [`++registerRemoteTarget(targetNftId, targetInfo)++`]
+* [`++updateRemoteTvl(targetNftId, token, amount)++`]
+* [`++createStake(stakeNftId, targetNftId, stakeAmount)++`]
+* [`++stake(stakeNftId, stakeAmount)++`]
+* [`++restake(stakeNftId, newTargetNftId)++`]
+* [`++updateRewards(stakeNftId)++`]
+* [`++claimRewards(stakeNftId)++`]
+* [`++unstake(stakeNftId)++`]
+* [`++collectDipAmount(from, dipAmount)++`]
+* [`++transferDipAmount(to, dipAmount)++`]
+* [`++getStakingReader()++`]
+* [`++getStakingStore()++`]
+* [`++getTokenRegistryAddress()++`]
+* [`++getTokenHandler()++`]
+* [`++getVersion()++`]
+* [`++_updateRewards(reader, store, stakeNftId)++`]
+* [`++_initialize(owner, data)++`]
+
+[.contract-subindex-inherited]
+.IStaking
+
+[.contract-subindex-inherited]
+.Versionable
+* [`++initializeVersionable(activatedBy, data)++`]
+* [`++upgradeVersionable(data)++`]
+* [`++_upgrade(data)++`]
+
+[.contract-subindex-inherited]
+.IVersionable
+
+[.contract-subindex-inherited]
+.Component
+* [`++_initializeComponent(authority, registry, parentNftId, name, token, componentType, isInterceptor, initialOwner, registryData, componentData)++`]
+* [`++approveTokenHandler(spendingLimitAmount)++`]
+* [`++approveTokenHandler(token, spendingLimitAmount)++`]
+* [`++setWallet(newWallet)++`]
+* [`++nftTransferFrom(from, to, tokenId, operator)++`]
+* [`++getWallet()++`]
+* [`++getToken()++`]
+* [`++getName()++`]
+* [`++getComponentInfo()++`]
+* [`++getInitialComponentInfo()++`]
+* [`++isNftInterceptor()++`]
+* [`++isRegistered()++`]
+* [`++_nftMint(to, tokenId)++`]
+* [`++_nftTransferFrom(from, to, tokenId, operator)++`]
+* [`++_setWallet(newWallet)++`]
+* [`++_getComponentInfo()++`]
+* [`++_approveTokenHandler(amount)++`]
+
+[.contract-subindex-inherited]
+.IComponent
+
+[.contract-subindex-inherited]
+.ITransferInterceptor
+
+[.contract-subindex-inherited]
+.Registerable
+* [`++_initializeRegisterable(registry, parentNftId, objectType, isInterceptor, initialOwner, data)++`]
+* [`++getRelease()++`]
+* [`++getInitialInfo()++`]
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.NftOwnable
+* [`++_checkNftType(nftId, expectedObjectType)++`]
+* [`++_initializeNftOwnable(registry, initialOwner)++`]
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+* [`++_linkToNftOwnable(nftOwnableAddress)++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+* [`++_initializeRegistryLinked(registryAddress)++`]
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+* [`++_initializeERC165()++`]
+* [`++_registerInterface(interfaceId)++`]
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+* [`++__AccessManaged_init(initialAuthority)++`]
+* [`++__AccessManaged_init_unchained(initialAuthority)++`]
+* [`++authority()++`]
+* [`++setAuthority(newAuthority)++`]
+* [`++isConsumingScheduledOp()++`]
+* [`++_setAuthority(newAuthority)++`]
+* [`++_checkCanCall(caller, data)++`]
+
+[.contract-subindex-inherited]
+.IAccessManaged
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+* [`++__Context_init()++`]
+* [`++__Context_init_unchained()++`]
+* [`++_msgSender()++`]
+* [`++_msgData()++`]
+* [`++_contextSuffixLength()++`]
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.IStaking
+* [`++LogStakingStakingRateSet(chainId, token, oldStakingRate, newStakingRate)++`]
+* [`++LogStakingLockingPeriodSet(targetNftId, oldLockingPeriod, lockingPeriod)++`]
+* [`++LogStakingRewardRateSet(targetNftId, oldRewardRate, rewardRate)++`]
+
+[.contract-subindex-inherited]
+.Versionable
+
+[.contract-subindex-inherited]
+.IVersionable
+
+[.contract-subindex-inherited]
+.Component
+
+[.contract-subindex-inherited]
+.IComponent
+* [`++LogComponentWalletAddressChanged(oldWallet, newWallet)++`]
+* [`++LogComponentWalletTokensTransferred(from, to, amount)++`]
+* [`++LogComponentTokenHandlerApproved(token, limit, isMaxAmount)++`]
+
+[.contract-subindex-inherited]
+.ITransferInterceptor
+
+[.contract-subindex-inherited]
+.Registerable
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.NftOwnable
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[Staking-onlyStake-NftId-]]
+==== `[.contract-item-name]#++onlyStake++#++(NftId stakeNftId)++` [.item-kind]#modifier#
+
+[.contract-item]
+[[Staking-onlyTarget-NftId-]]
+==== `[.contract-item-name]#++onlyTarget++#++(NftId targetNftId)++` [.item-kind]#modifier#
+
+[.contract-item]
+[[Staking-setStakingReader-contract-StakingReader-]]
+==== `[.contract-item-name]#++setStakingReader++#++(contract StakingReader stakingReader)++` [.item-kind]#external#
+
+[.contract-item]
+[[Staking-setStakingRate-uint256-address-UFixed-]]
+==== `[.contract-item-name]#++setStakingRate++#++(uint256 chainId, address token, UFixed stakingRate)++` [.item-kind]#external#
+
+sets the rate that converts 1 token of total value locked into the
+the required staked dip amount to back up the locked token value
+
+[.contract-item]
+[[Staking-registerTarget-NftId-ObjectType-uint256-Seconds-UFixed-]]
+==== `[.contract-item-name]#++registerTarget++#++(NftId targetNftId, ObjectType expectedObjectType, uint256 chainId, Seconds initialLockingPeriod, UFixed initialRewardRate)++` [.item-kind]#external#
+
+[.contract-item]
+[[Staking-setLockingPeriod-NftId-Seconds-]]
+==== `[.contract-item-name]#++setLockingPeriod++#++(NftId targetNftId, Seconds lockingPeriod)++` [.item-kind]#external#
+
+set the stake locking period to the specified duration.
+permissioned: only the staking service may call this function
+
+[.contract-item]
+[[Staking-setRewardRate-NftId-UFixed-]]
+==== `[.contract-item-name]#++setRewardRate++#++(NftId targetNftId, UFixed rewardRate)++` [.item-kind]#external#
+
+update the target specific reward rate.
+permissioned: only the staking service may call this function
+
+[.contract-item]
+[[Staking-refillRewardReserves-NftId-Amount-]]
+==== `[.contract-item-name]#++refillRewardReserves++#++(NftId targetNftId, Amount dipAmount) → Amount newBalance++` [.item-kind]#external#
+
+(re)fills the staking reward reserves for the specified target
+unpermissioned: anybody may fill up staking reward reserves
+
+[.contract-item]
+[[Staking-withdrawRewardReserves-NftId-Amount-]]
+==== `[.contract-item-name]#++withdrawRewardReserves++#++(NftId targetNftId, Amount dipAmount) → Amount newBalance++` [.item-kind]#external#
+
+defunds the staking reward reserves for the specified target
+permissioned: only the staking service may call this function
+
+[.contract-item]
+[[Staking-increaseTotalValueLocked-NftId-address-Amount-]]
+==== `[.contract-item-name]#++increaseTotalValueLocked++#++(NftId targetNftId, address token, Amount amount) → Amount newBalance++` [.item-kind]#external#
+
+increases the total value locked amount for the specified target by the provided token amount.
+function is called when a new policy is collateralized.
+function restricted to the pool service.
+
+[.contract-item]
+[[Staking-decreaseTotalValueLocked-NftId-address-Amount-]]
+==== `[.contract-item-name]#++decreaseTotalValueLocked++#++(NftId targetNftId, address token, Amount amount) → Amount newBalance++` [.item-kind]#external#
+
+decreases the total value locked amount for the specified target by the provided token amount.
+function is called when a new policy is closed or payouts are executed.
+function restricted to the pool service.
+
+[.contract-item]
+[[Staking-registerRemoteTarget-NftId-struct-IStaking-TargetInfo-]]
+==== `[.contract-item-name]#++registerRemoteTarget++#++(NftId targetNftId, struct IStaking.TargetInfo targetInfo)++` [.item-kind]#external#
+
+[.contract-item]
+[[Staking-updateRemoteTvl-NftId-address-Amount-]]
+==== `[.contract-item-name]#++updateRemoteTvl++#++(NftId targetNftId, address token, Amount amount)++` [.item-kind]#external#
+
+[.contract-item]
+[[Staking-createStake-NftId-NftId-Amount-]]
+==== `[.contract-item-name]#++createStake++#++(NftId stakeNftId, NftId targetNftId, Amount stakeAmount)++` [.item-kind]#external#
+
+[.contract-item]
+[[Staking-stake-NftId-Amount-]]
+==== `[.contract-item-name]#++stake++#++(NftId stakeNftId, Amount stakeAmount) → Amount stakeBalance++` [.item-kind]#external#
+
+[.contract-item]
+[[Staking-restake-NftId-NftId-]]
+==== `[.contract-item-name]#++restake++#++(NftId stakeNftId, NftId newTargetNftId) → NftId newStakeNftId++` [.item-kind]#external#
+
+restakes the dips to a new target.
+the sum of the staked dips and the accumulated rewards will be restaked.
+permissioned: only staking service may call this function.
+
+[.contract-item]
+[[Staking-updateRewards-NftId-]]
+==== `[.contract-item-name]#++updateRewards++#++(NftId stakeNftId)++` [.item-kind]#external#
+
+update stake rewards for current time.
+may be called before an announement of a decrease of a reward rate reduction.
+calling this functions ensures that reward balance is updated using the current (higher) reward rate.
+unpermissioned.
+
+[.contract-item]
+[[Staking-claimRewards-NftId-]]
+==== `[.contract-item-name]#++claimRewards++#++(NftId stakeNftId) → Amount rewardsClaimedAmount++` [.item-kind]#external#
+
+transfers all rewards accumulated so far to the holder of the specified stake nft.
+permissioned: only staking service may call this function.
+
+[.contract-item]
+[[Staking-unstake-NftId-]]
+==== `[.contract-item-name]#++unstake++#++(NftId stakeNftId) → Amount unstakedAmount, Amount rewardsClaimedAmount++` [.item-kind]#external#
+
+retuns the specified amount of dips to the holder of the specified stake nft.
+if dipAmount is set to Amount.max() all staked dips and all rewards are transferred to 
+permissioned: only staking service may call this function.
+
+[.contract-item]
+[[Staking-collectDipAmount-address-Amount-]]
+==== `[.contract-item-name]#++collectDipAmount++#++(address from, Amount dipAmount)++` [.item-kind]#external#
+
+transfers the specified amount of dips from the from address to the staking wallet.
+
+[.contract-item]
+[[Staking-transferDipAmount-address-Amount-]]
+==== `[.contract-item-name]#++transferDipAmount++#++(address to, Amount dipAmount)++` [.item-kind]#external#
+
+transfers the specified amount of dips from the staking wallet to the to addess.
+
+[.contract-item]
+[[Staking-getStakingReader--]]
+==== `[.contract-item-name]#++getStakingReader++#++() → contract StakingReader reader++` [.item-kind]#public#
+
+[.contract-item]
+[[Staking-getStakingStore--]]
+==== `[.contract-item-name]#++getStakingStore++#++() → contract StakingStore stakingStore++` [.item-kind]#external#
+
+[.contract-item]
+[[Staking-getTokenRegistryAddress--]]
+==== `[.contract-item-name]#++getTokenRegistryAddress++#++() → address tokenRegistry++` [.item-kind]#external#
+
+[.contract-item]
+[[Staking-getTokenHandler--]]
+==== `[.contract-item-name]#++getTokenHandler++#++() → contract TokenHandler tokenHandler++` [.item-kind]#public#
+
+[.contract-item]
+[[Staking-getVersion--]]
+==== `[.contract-item-name]#++getVersion++#++() → Version++` [.item-kind]#public#
+
+[.contract-item]
+[[Staking-_updateRewards-contract-StakingReader-contract-StakingStore-NftId-]]
+==== `[.contract-item-name]#++_updateRewards++#++(contract StakingReader reader, contract StakingStore store, NftId stakeNftId) → NftId targetNftId++` [.item-kind]#internal#
+
+[.contract-item]
+[[Staking-_initialize-address-bytes-]]
+==== `[.contract-item-name]#++_initialize++#++(address owner, bytes data)++` [.item-kind]#internal#
+
+:LogStakingStoreReserveBalanceIncreased: pass:normal[xref:#StakingStore-LogStakingStoreReserveBalanceIncreased-NftId-Amount-Amount-Blocknumber-[`++LogStakingStoreReserveBalanceIncreased++`]]
+:LogStakingStoreReserveBalanceDecreased: pass:normal[xref:#StakingStore-LogStakingStoreReserveBalanceDecreased-NftId-Amount-Amount-Blocknumber-[`++LogStakingStoreReserveBalanceDecreased++`]]
+:LogStakingStoreTotalValueLockedIncreased: pass:normal[xref:#StakingStore-LogStakingStoreTotalValueLockedIncreased-NftId-address-Amount-Amount-Blocknumber-[`++LogStakingStoreTotalValueLockedIncreased++`]]
+:LogStakingStoreTotalValueLockedDecreased: pass:normal[xref:#StakingStore-LogStakingStoreTotalValueLockedDecreased-NftId-address-Amount-Amount-Blocknumber-[`++LogStakingStoreTotalValueLockedDecreased++`]]
+:LogStakingStoreStakesIncreased: pass:normal[xref:#StakingStore-LogStakingStoreStakesIncreased-NftId-Amount-Amount-Blocknumber-[`++LogStakingStoreStakesIncreased++`]]
+:LogStakingStoreStakesDecreased: pass:normal[xref:#StakingStore-LogStakingStoreStakesDecreased-NftId-Amount-Amount-Blocknumber-[`++LogStakingStoreStakesDecreased++`]]
+:LogStakingStoreRewardsIncreased: pass:normal[xref:#StakingStore-LogStakingStoreRewardsIncreased-NftId-Amount-Amount-Blocknumber-[`++LogStakingStoreRewardsIncreased++`]]
+:LogStakingStoreRewardsDecreased: pass:normal[xref:#StakingStore-LogStakingStoreRewardsDecreased-NftId-Amount-Amount-Blocknumber-[`++LogStakingStoreRewardsDecreased++`]]
+:LogStakingStoreRewardsRestaked: pass:normal[xref:#StakingStore-LogStakingStoreRewardsRestaked-NftId-Amount-Amount-Amount-Amount-Blocknumber-[`++LogStakingStoreRewardsRestaked++`]]
+:ErrorStakingStoreNotTarget: pass:normal[xref:#StakingStore-ErrorStakingStoreNotTarget-NftId-[`++ErrorStakingStoreNotTarget++`]]
+:ErrorStakingStoreRewardReservesInsufficient: pass:normal[xref:#StakingStore-ErrorStakingStoreRewardReservesInsufficient-NftId-Amount-Amount-[`++ErrorStakingStoreRewardReservesInsufficient++`]]
+:ErrorStakingStoreBalanceAlreadyInitialized: pass:normal[xref:#StakingStore-ErrorStakingStoreBalanceAlreadyInitialized-NftId-[`++ErrorStakingStoreBalanceAlreadyInitialized++`]]
+:ErrorStakingStoreBalanceNotInitialized: pass:normal[xref:#StakingStore-ErrorStakingStoreBalanceNotInitialized-NftId-[`++ErrorStakingStoreBalanceNotInitialized++`]]
+:ErrorStakingStoreTvlBalanceNotInitialized: pass:normal[xref:#StakingStore-ErrorStakingStoreTvlBalanceNotInitialized-NftId-[`++ErrorStakingStoreTvlBalanceNotInitialized++`]]
+:constructor: pass:normal[xref:#StakingStore-constructor-contract-IRegistry-contract-StakingReader-[`++constructor++`]]
+:setStakingRate: pass:normal[xref:#StakingStore-setStakingRate-uint256-address-UFixed-[`++setStakingRate++`]]
+:createTarget: pass:normal[xref:#StakingStore-createTarget-NftId-struct-IStaking-TargetInfo-[`++createTarget++`]]
+:updateTarget: pass:normal[xref:#StakingStore-updateTarget-NftId-struct-IStaking-TargetInfo-[`++updateTarget++`]]
+:increaseReserves: pass:normal[xref:#StakingStore-increaseReserves-NftId-Amount-[`++increaseReserves++`]]
+:decreaseReserves: pass:normal[xref:#StakingStore-decreaseReserves-NftId-Amount-[`++decreaseReserves++`]]
+:increaseTotalValueLocked: pass:normal[xref:#StakingStore-increaseTotalValueLocked-NftId-UFixed-address-Amount-[`++increaseTotalValueLocked++`]]
+:decreaseTotalValueLocked: pass:normal[xref:#StakingStore-decreaseTotalValueLocked-NftId-UFixed-address-Amount-[`++decreaseTotalValueLocked++`]]
+:create: pass:normal[xref:#StakingStore-create-NftId-struct-IStaking-StakeInfo-[`++create++`]]
+:update: pass:normal[xref:#StakingStore-update-NftId-struct-IStaking-StakeInfo-[`++update++`]]
+:increaseStake: pass:normal[xref:#StakingStore-increaseStake-NftId-NftId-Amount-[`++increaseStake++`]]
+:restakeRewards: pass:normal[xref:#StakingStore-restakeRewards-NftId-NftId-Amount-[`++restakeRewards++`]]
+:updateRewards: pass:normal[xref:#StakingStore-updateRewards-NftId-NftId-Amount-[`++updateRewards++`]]
+:claimUpTo: pass:normal[xref:#StakingStore-claimUpTo-NftId-NftId-Amount-[`++claimUpTo++`]]
+:unstakeUpTo: pass:normal[xref:#StakingStore-unstakeUpTo-NftId-NftId-Amount-Amount-[`++unstakeUpTo++`]]
+:getStakingReader: pass:normal[xref:#StakingStore-getStakingReader--[`++getStakingReader++`]]
+:getTargetNftIdSet: pass:normal[xref:#StakingStore-getTargetNftIdSet--[`++getTargetNftIdSet++`]]
+:getStakingRate: pass:normal[xref:#StakingStore-getStakingRate-uint256-address-[`++getStakingRate++`]]
+:exists: pass:normal[xref:#StakingStore-exists-NftId-[`++exists++`]]
+:getTotalValueLocked: pass:normal[xref:#StakingStore-getTotalValueLocked-NftId-address-[`++getTotalValueLocked++`]]
+:getRequiredStakeBalance: pass:normal[xref:#StakingStore-getRequiredStakeBalance-NftId-[`++getRequiredStakeBalance++`]]
+:getReserveBalance: pass:normal[xref:#StakingStore-getReserveBalance-NftId-[`++getReserveBalance++`]]
+:getStakeBalance: pass:normal[xref:#StakingStore-getStakeBalance-NftId-[`++getStakeBalance++`]]
+:getRewardBalance: pass:normal[xref:#StakingStore-getRewardBalance-NftId-[`++getRewardBalance++`]]
+:getBalanceUpdatedAt: pass:normal[xref:#StakingStore-getBalanceUpdatedAt-NftId-[`++getBalanceUpdatedAt++`]]
+:getBalanceUpdatedIn: pass:normal[xref:#StakingStore-getBalanceUpdatedIn-NftId-[`++getBalanceUpdatedIn++`]]
+:getTargetBalances: pass:normal[xref:#StakingStore-getTargetBalances-NftId-[`++getTargetBalances++`]]
+:getStakeBalances: pass:normal[xref:#StakingStore-getStakeBalances-NftId-[`++getStakeBalances++`]]
+
+[.contract]
+[[StakingStore]]
+=== `++StakingStore++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/staking/StakingStore.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/staking/StakingStore.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++constructor(registry, reader)++`]
+* [`++setStakingRate(chainId, token, stakingRate)++`]
+* [`++createTarget(targetNftId, targetInfo)++`]
+* [`++updateTarget(targetNftId, targetInfo)++`]
+* [`++increaseReserves(targetNftId, dipAmount)++`]
+* [`++decreaseReserves(targetNftId, dipAmount)++`]
+* [`++increaseTotalValueLocked(targetNftId, stakingRate, token, amount)++`]
+* [`++decreaseTotalValueLocked(targetNftId, stakingRate, token, amount)++`]
+* [`++create(stakeNftId, stakeInfo)++`]
+* [`++update(stakeNftId, stakeInfo)++`]
+* [`++increaseStake(nftId, targetNftId, amount)++`]
+* [`++restakeRewards(nftId, targetNftId, rewardIncrementAmount)++`]
+* [`++updateRewards(nftId, targetNftId, rewardIncrementAmount)++`]
+* [`++claimUpTo(nftId, targetNftId, maxClaimAmount)++`]
+* [`++unstakeUpTo(nftId, targetNftId, maxUnstakeAmount, maxClaimAmount)++`]
+* [`++getStakingReader()++`]
+* [`++getTargetNftIdSet()++`]
+* [`++getStakingRate(chainId, token)++`]
+* [`++exists(stakeNftId)++`]
+* [`++getTotalValueLocked(nftId, token)++`]
+* [`++getRequiredStakeBalance(nftId)++`]
+* [`++getReserveBalance(nftId)++`]
+* [`++getStakeBalance(nftId)++`]
+* [`++getRewardBalance(nftId)++`]
+* [`++getBalanceUpdatedAt(nftId)++`]
+* [`++getBalanceUpdatedIn(nftId)++`]
+* [`++getTargetBalances(nftId)++`]
+* [`++getStakeBalances(nftId)++`]
+
+[.contract-subindex-inherited]
+.StakingLifecycle
+* [`++_setupLifecycle()++`]
+
+[.contract-subindex-inherited]
+.KeyValueStore
+* [`++_create(key32, data)++`]
+* [`++_update(key32, data, state)++`]
+* [`++_updateState(key32, state)++`]
+* [`++exists(key32)++`]
+* [`++get(key32)++`]
+* [`++getMetadata(key32)++`]
+* [`++getData(key32)++`]
+* [`++getState(key32)++`]
+* [`++toKey32(objectType, id)++`]
+
+[.contract-subindex-inherited]
+.IKeyValueStore
+
+[.contract-subindex-inherited]
+.Lifecycle
+* [`++setInitialState(ttype, state)++`]
+* [`++setStateTransition(ttype, oldState, newState)++`]
+* [`++hasLifecycle(objectType)++`]
+* [`++getInitialState(objectType)++`]
+* [`++checkTransition(stateId, objectType, expectedFromId, toId)++`]
+* [`++isValidTransition(objectType, fromId, toId)++`]
+
+[.contract-subindex-inherited]
+.ILifecycle
+
+[.contract-subindex-inherited]
+.AccessManaged
+* [`++authority()++`]
+* [`++setAuthority(newAuthority)++`]
+* [`++isConsumingScheduledOp()++`]
+* [`++_setAuthority(newAuthority)++`]
+* [`++_checkCanCall(caller, data)++`]
+
+[.contract-subindex-inherited]
+.IAccessManaged
+
+--
+
+[.contract-index]
+.Events
+--
+* [`++LogStakingStoreReserveBalanceIncreased(targetNftId, dipAmount, reserveBalance, lastUpdatedIn)++`]
+* [`++LogStakingStoreReserveBalanceDecreased(targetNftId, dipAmount, reserveBalance, lastUpdatedIn)++`]
+* [`++LogStakingStoreTotalValueLockedIncreased(targetNftId, token, amount, newBalance, lastUpdatedIn)++`]
+* [`++LogStakingStoreTotalValueLockedDecreased(targetNftId, token, amount, newBalance, lastUpdatedIn)++`]
+* [`++LogStakingStoreStakesIncreased(nftId, addedAmount, newBalance, lastUpdatedIn)++`]
+* [`++LogStakingStoreStakesDecreased(nftId, addedAmount, newBalance, lastUpdatedIn)++`]
+* [`++LogStakingStoreRewardsIncreased(nftId, addedAmount, newBalance, lastUpdatedIn)++`]
+* [`++LogStakingStoreRewardsDecreased(nftId, addedAmount, newBalance, lastUpdatedIn)++`]
+* [`++LogStakingStoreRewardsRestaked(nftId, amount, rewardAmount, rewardIncrementAmount, newBalance, lastUpdatedIn)++`]
+
+[.contract-subindex-inherited]
+.StakingLifecycle
+
+[.contract-subindex-inherited]
+.KeyValueStore
+
+[.contract-subindex-inherited]
+.IKeyValueStore
+* [`++LogInfoCreated(objectType, keyId, state, createdBy, txOrigin)++`]
+* [`++LogInfoUpdated(objectType, keyId, state, updatedBy, txOrigin, lastUpdatedIn)++`]
+* [`++LogStateUpdated(objectType, keyId, stateOld, stateNew, updatedBy, txOrigin, lastUpdatedIn)++`]
+
+[.contract-subindex-inherited]
+.Lifecycle
+
+[.contract-subindex-inherited]
+.ILifecycle
+
+[.contract-subindex-inherited]
+.AccessManaged
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+--
+
+[.contract-item]
+[[StakingStore-constructor-contract-IRegistry-contract-StakingReader-]]
+==== `[.contract-item-name]#++constructor++#++(contract IRegistry registry, contract StakingReader reader)++` [.item-kind]#public#
+
+[.contract-item]
+[[StakingStore-setStakingRate-uint256-address-UFixed-]]
+==== `[.contract-item-name]#++setStakingRate++#++(uint256 chainId, address token, UFixed stakingRate)++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingStore-createTarget-NftId-struct-IStaking-TargetInfo-]]
+==== `[.contract-item-name]#++createTarget++#++(NftId targetNftId, struct IStaking.TargetInfo targetInfo)++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingStore-updateTarget-NftId-struct-IStaking-TargetInfo-]]
+==== `[.contract-item-name]#++updateTarget++#++(NftId targetNftId, struct IStaking.TargetInfo targetInfo)++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingStore-increaseReserves-NftId-Amount-]]
+==== `[.contract-item-name]#++increaseReserves++#++(NftId targetNftId, Amount dipAmount) → Amount newReserveBalance++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingStore-decreaseReserves-NftId-Amount-]]
+==== `[.contract-item-name]#++decreaseReserves++#++(NftId targetNftId, Amount dipAmount) → Amount newReserveBalance++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingStore-increaseTotalValueLocked-NftId-UFixed-address-Amount-]]
+==== `[.contract-item-name]#++increaseTotalValueLocked++#++(NftId targetNftId, UFixed stakingRate, address token, Amount amount) → Amount newBalance++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingStore-decreaseTotalValueLocked-NftId-UFixed-address-Amount-]]
+==== `[.contract-item-name]#++decreaseTotalValueLocked++#++(NftId targetNftId, UFixed stakingRate, address token, Amount amount) → Amount newBalance++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingStore-create-NftId-struct-IStaking-StakeInfo-]]
+==== `[.contract-item-name]#++create++#++(NftId stakeNftId, struct IStaking.StakeInfo stakeInfo)++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingStore-update-NftId-struct-IStaking-StakeInfo-]]
+==== `[.contract-item-name]#++update++#++(NftId stakeNftId, struct IStaking.StakeInfo stakeInfo)++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingStore-increaseStake-NftId-NftId-Amount-]]
+==== `[.contract-item-name]#++increaseStake++#++(NftId nftId, NftId targetNftId, Amount amount)++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingStore-restakeRewards-NftId-NftId-Amount-]]
+==== `[.contract-item-name]#++restakeRewards++#++(NftId nftId, NftId targetNftId, Amount rewardIncrementAmount)++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingStore-updateRewards-NftId-NftId-Amount-]]
+==== `[.contract-item-name]#++updateRewards++#++(NftId nftId, NftId targetNftId, Amount rewardIncrementAmount)++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingStore-claimUpTo-NftId-NftId-Amount-]]
+==== `[.contract-item-name]#++claimUpTo++#++(NftId nftId, NftId targetNftId, Amount maxClaimAmount) → Amount claimedAmount++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingStore-unstakeUpTo-NftId-NftId-Amount-Amount-]]
+==== `[.contract-item-name]#++unstakeUpTo++#++(NftId nftId, NftId targetNftId, Amount maxUnstakeAmount, Amount maxClaimAmount) → Amount unstakedAmount, Amount claimedAmount++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingStore-getStakingReader--]]
+==== `[.contract-item-name]#++getStakingReader++#++() → contract StakingReader stakingReader++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingStore-getTargetNftIdSet--]]
+==== `[.contract-item-name]#++getTargetNftIdSet++#++() → contract NftIdSet targetNftIdSet++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingStore-getStakingRate-uint256-address-]]
+==== `[.contract-item-name]#++getStakingRate++#++(uint256 chainId, address token) → UFixed stakingRate++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingStore-exists-NftId-]]
+==== `[.contract-item-name]#++exists++#++(NftId stakeNftId) → bool++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingStore-getTotalValueLocked-NftId-address-]]
+==== `[.contract-item-name]#++getTotalValueLocked++#++(NftId nftId, address token) → Amount tvlBalanceAmount++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingStore-getRequiredStakeBalance-NftId-]]
+==== `[.contract-item-name]#++getRequiredStakeBalance++#++(NftId nftId) → Amount requiredAmount++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingStore-getReserveBalance-NftId-]]
+==== `[.contract-item-name]#++getReserveBalance++#++(NftId nftId) → Amount balanceAmount++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingStore-getStakeBalance-NftId-]]
+==== `[.contract-item-name]#++getStakeBalance++#++(NftId nftId) → Amount balanceAmount++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingStore-getRewardBalance-NftId-]]
+==== `[.contract-item-name]#++getRewardBalance++#++(NftId nftId) → Amount rewardAmount++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingStore-getBalanceUpdatedAt-NftId-]]
+==== `[.contract-item-name]#++getBalanceUpdatedAt++#++(NftId nftId) → Timestamp updatedAt++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingStore-getBalanceUpdatedIn-NftId-]]
+==== `[.contract-item-name]#++getBalanceUpdatedIn++#++(NftId nftId) → Blocknumber blocknumber++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingStore-getTargetBalances-NftId-]]
+==== `[.contract-item-name]#++getTargetBalances++#++(NftId nftId) → Amount stakeBalance, Amount rewardBalance, Amount reserveBalance, Blocknumber lastUpdatedIn++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingStore-getStakeBalances-NftId-]]
+==== `[.contract-item-name]#++getStakeBalances++#++(NftId nftId) → Amount stakeBalance, Amount rewardBalance, Timestamp lastUpdatedAt++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingStore-LogStakingStoreReserveBalanceIncreased-NftId-Amount-Amount-Blocknumber-]]
+==== `[.contract-item-name]#++LogStakingStoreReserveBalanceIncreased++#++(NftId targetNftId, Amount dipAmount, Amount reserveBalance, Blocknumber lastUpdatedIn)++` [.item-kind]#event#
+
+[.contract-item]
+[[StakingStore-LogStakingStoreReserveBalanceDecreased-NftId-Amount-Amount-Blocknumber-]]
+==== `[.contract-item-name]#++LogStakingStoreReserveBalanceDecreased++#++(NftId targetNftId, Amount dipAmount, Amount reserveBalance, Blocknumber lastUpdatedIn)++` [.item-kind]#event#
+
+[.contract-item]
+[[StakingStore-LogStakingStoreTotalValueLockedIncreased-NftId-address-Amount-Amount-Blocknumber-]]
+==== `[.contract-item-name]#++LogStakingStoreTotalValueLockedIncreased++#++(NftId targetNftId, address token, Amount amount, Amount newBalance, Blocknumber lastUpdatedIn)++` [.item-kind]#event#
+
+[.contract-item]
+[[StakingStore-LogStakingStoreTotalValueLockedDecreased-NftId-address-Amount-Amount-Blocknumber-]]
+==== `[.contract-item-name]#++LogStakingStoreTotalValueLockedDecreased++#++(NftId targetNftId, address token, Amount amount, Amount newBalance, Blocknumber lastUpdatedIn)++` [.item-kind]#event#
+
+[.contract-item]
+[[StakingStore-LogStakingStoreStakesIncreased-NftId-Amount-Amount-Blocknumber-]]
+==== `[.contract-item-name]#++LogStakingStoreStakesIncreased++#++(NftId nftId, Amount addedAmount, Amount newBalance, Blocknumber lastUpdatedIn)++` [.item-kind]#event#
+
+[.contract-item]
+[[StakingStore-LogStakingStoreStakesDecreased-NftId-Amount-Amount-Blocknumber-]]
+==== `[.contract-item-name]#++LogStakingStoreStakesDecreased++#++(NftId nftId, Amount addedAmount, Amount newBalance, Blocknumber lastUpdatedIn)++` [.item-kind]#event#
+
+[.contract-item]
+[[StakingStore-LogStakingStoreRewardsIncreased-NftId-Amount-Amount-Blocknumber-]]
+==== `[.contract-item-name]#++LogStakingStoreRewardsIncreased++#++(NftId nftId, Amount addedAmount, Amount newBalance, Blocknumber lastUpdatedIn)++` [.item-kind]#event#
+
+[.contract-item]
+[[StakingStore-LogStakingStoreRewardsDecreased-NftId-Amount-Amount-Blocknumber-]]
+==== `[.contract-item-name]#++LogStakingStoreRewardsDecreased++#++(NftId nftId, Amount addedAmount, Amount newBalance, Blocknumber lastUpdatedIn)++` [.item-kind]#event#
+
+[.contract-item]
+[[StakingStore-LogStakingStoreRewardsRestaked-NftId-Amount-Amount-Amount-Amount-Blocknumber-]]
+==== `[.contract-item-name]#++LogStakingStoreRewardsRestaked++#++(NftId nftId, Amount amount, Amount rewardAmount, Amount rewardIncrementAmount, Amount newBalance, Blocknumber lastUpdatedIn)++` [.item-kind]#event#
+
+:ErrorStakingReaderUnauthorizedCaler: pass:normal[xref:#StakingReader-ErrorStakingReaderUnauthorizedCaler--[`++ErrorStakingReaderUnauthorizedCaler++`]]
+:constructor: pass:normal[xref:#StakingReader-constructor-contract-IRegistry-[`++constructor++`]]
+:initialize: pass:normal[xref:#StakingReader-initialize-address-address-[`++initialize++`]]
+:getRegistry: pass:normal[xref:#StakingReader-getRegistry--[`++getRegistry++`]]
+:getStaking: pass:normal[xref:#StakingReader-getStaking--[`++getStaking++`]]
+:getStakingRate: pass:normal[xref:#StakingReader-getStakingRate-uint256-address-[`++getStakingRate++`]]
+:isTarget: pass:normal[xref:#StakingReader-isTarget-NftId-[`++isTarget++`]]
+:targets: pass:normal[xref:#StakingReader-targets--[`++targets++`]]
+:getTargetNftId: pass:normal[xref:#StakingReader-getTargetNftId-uint256-[`++getTargetNftId++`]]
+:isActive: pass:normal[xref:#StakingReader-isActive-NftId-[`++isActive++`]]
+:activeTargets: pass:normal[xref:#StakingReader-activeTargets--[`++activeTargets++`]]
+:getActiveTargetNftId: pass:normal[xref:#StakingReader-getActiveTargetNftId-uint256-[`++getActiveTargetNftId++`]]
+:getTargetNftId: pass:normal[xref:#StakingReader-getTargetNftId-NftId-[`++getTargetNftId++`]]
+:getTargetInfo: pass:normal[xref:#StakingReader-getTargetInfo-NftId-[`++getTargetInfo++`]]
+:getStakeInfo: pass:normal[xref:#StakingReader-getStakeInfo-NftId-[`++getStakeInfo++`]]
+:getTargetRewardRate: pass:normal[xref:#StakingReader-getTargetRewardRate-NftId-[`++getTargetRewardRate++`]]
+:getRewardRate: pass:normal[xref:#StakingReader-getRewardRate-NftId-[`++getRewardRate++`]]
+:getReserveBalance: pass:normal[xref:#StakingReader-getReserveBalance-NftId-[`++getReserveBalance++`]]
+:getStakeBalance: pass:normal[xref:#StakingReader-getStakeBalance-NftId-[`++getStakeBalance++`]]
+:getRewardBalance: pass:normal[xref:#StakingReader-getRewardBalance-NftId-[`++getRewardBalance++`]]
+:getBalanceUpdatedAt: pass:normal[xref:#StakingReader-getBalanceUpdatedAt-NftId-[`++getBalanceUpdatedAt++`]]
+:getBalanceUpdatedIn: pass:normal[xref:#StakingReader-getBalanceUpdatedIn-NftId-[`++getBalanceUpdatedIn++`]]
+:getTotalValueLocked: pass:normal[xref:#StakingReader-getTotalValueLocked-NftId-address-[`++getTotalValueLocked++`]]
+:getRequiredStakeBalance: pass:normal[xref:#StakingReader-getRequiredStakeBalance-NftId-[`++getRequiredStakeBalance++`]]
+:getTargetBalances: pass:normal[xref:#StakingReader-getTargetBalances-NftId-[`++getTargetBalances++`]]
+:getStakeBalances: pass:normal[xref:#StakingReader-getStakeBalances-NftId-[`++getStakeBalances++`]]
+
+[.contract]
+[[StakingReader]]
+=== `++StakingReader++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/staking/StakingReader.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/staking/StakingReader.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++constructor(registry)++`]
+* [`++initialize(stakingAddress, stakingStoreAddress)++`]
+* [`++getRegistry()++`]
+* [`++getStaking()++`]
+* [`++getStakingRate(chainId, token)++`]
+* [`++isTarget(targetNftId)++`]
+* [`++targets()++`]
+* [`++getTargetNftId(idx)++`]
+* [`++isActive(targetNftId)++`]
+* [`++activeTargets()++`]
+* [`++getActiveTargetNftId(idx)++`]
+* [`++getTargetNftId(stakeNftId)++`]
+* [`++getTargetInfo(targetNftId)++`]
+* [`++getStakeInfo(stakeNftId)++`]
+* [`++getTargetRewardRate(stakeNftId)++`]
+* [`++getRewardRate(targetNftId)++`]
+* [`++getReserveBalance(targetNftId)++`]
+* [`++getStakeBalance(nftId)++`]
+* [`++getRewardBalance(nftId)++`]
+* [`++getBalanceUpdatedAt(nftId)++`]
+* [`++getBalanceUpdatedIn(nftId)++`]
+* [`++getTotalValueLocked(nftId, token)++`]
+* [`++getRequiredStakeBalance(nftId)++`]
+* [`++getTargetBalances(stakeNftId)++`]
+* [`++getStakeBalances(stakeNftId)++`]
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+--
+
+[.contract-item]
+[[StakingReader-constructor-contract-IRegistry-]]
+==== `[.contract-item-name]#++constructor++#++(contract IRegistry registry)++` [.item-kind]#public#
+
+[.contract-item]
+[[StakingReader-initialize-address-address-]]
+==== `[.contract-item-name]#++initialize++#++(address stakingAddress, address stakingStoreAddress)++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingReader-getRegistry--]]
+==== `[.contract-item-name]#++getRegistry++#++() → contract IRegistry registry++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingReader-getStaking--]]
+==== `[.contract-item-name]#++getStaking++#++() → contract IStaking staking++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingReader-getStakingRate-uint256-address-]]
+==== `[.contract-item-name]#++getStakingRate++#++(uint256 chainId, address token) → UFixed stakingRate++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingReader-isTarget-NftId-]]
+==== `[.contract-item-name]#++isTarget++#++(NftId targetNftId) → bool++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingReader-targets--]]
+==== `[.contract-item-name]#++targets++#++() → uint256++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingReader-getTargetNftId-uint256-]]
+==== `[.contract-item-name]#++getTargetNftId++#++(uint256 idx) → NftId++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingReader-isActive-NftId-]]
+==== `[.contract-item-name]#++isActive++#++(NftId targetNftId) → bool++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingReader-activeTargets--]]
+==== `[.contract-item-name]#++activeTargets++#++() → uint256++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingReader-getActiveTargetNftId-uint256-]]
+==== `[.contract-item-name]#++getActiveTargetNftId++#++(uint256 idx) → NftId++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingReader-getTargetNftId-NftId-]]
+==== `[.contract-item-name]#++getTargetNftId++#++(NftId stakeNftId) → NftId targetNftId++` [.item-kind]#public#
+
+[.contract-item]
+[[StakingReader-getTargetInfo-NftId-]]
+==== `[.contract-item-name]#++getTargetInfo++#++(NftId targetNftId) → struct IStaking.TargetInfo info++` [.item-kind]#public#
+
+[.contract-item]
+[[StakingReader-getStakeInfo-NftId-]]
+==== `[.contract-item-name]#++getStakeInfo++#++(NftId stakeNftId) → struct IStaking.StakeInfo stakeInfo++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingReader-getTargetRewardRate-NftId-]]
+==== `[.contract-item-name]#++getTargetRewardRate++#++(NftId stakeNftId) → NftId targetNftId, UFixed rewardRate++` [.item-kind]#external#
+
+get the reward rate that applies to the specified stake nft id.
+
+[.contract-item]
+[[StakingReader-getRewardRate-NftId-]]
+==== `[.contract-item-name]#++getRewardRate++#++(NftId targetNftId) → UFixed rewardRate++` [.item-kind]#external#
+
+get the reward rate for the specified target nft id.
+
+[.contract-item]
+[[StakingReader-getReserveBalance-NftId-]]
+==== `[.contract-item-name]#++getReserveBalance++#++(NftId targetNftId) → Amount rewardReserveBalance++` [.item-kind]#external#
+
+returns the current reward reserve balance for the specified target.
+
+[.contract-item]
+[[StakingReader-getStakeBalance-NftId-]]
+==== `[.contract-item-name]#++getStakeBalance++#++(NftId nftId) → Amount balanceAmount++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingReader-getRewardBalance-NftId-]]
+==== `[.contract-item-name]#++getRewardBalance++#++(NftId nftId) → Amount rewardAmount++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingReader-getBalanceUpdatedAt-NftId-]]
+==== `[.contract-item-name]#++getBalanceUpdatedAt++#++(NftId nftId) → Timestamp updatedAt++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingReader-getBalanceUpdatedIn-NftId-]]
+==== `[.contract-item-name]#++getBalanceUpdatedIn++#++(NftId nftId) → Blocknumber blocknumber++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingReader-getTotalValueLocked-NftId-address-]]
+==== `[.contract-item-name]#++getTotalValueLocked++#++(NftId nftId, address token) → Amount totalValueLocked++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingReader-getRequiredStakeBalance-NftId-]]
+==== `[.contract-item-name]#++getRequiredStakeBalance++#++(NftId nftId) → Amount requiredStakedAmount++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingReader-getTargetBalances-NftId-]]
+==== `[.contract-item-name]#++getTargetBalances++#++(NftId stakeNftId) → Amount balanceAmount, Amount stakeAmount, Amount rewardAmount, Blocknumber lastUpdatedIn++` [.item-kind]#public#
+
+[.contract-item]
+[[StakingReader-getStakeBalances-NftId-]]
+==== `[.contract-item-name]#++getStakeBalances++#++(NftId stakeNftId) → Amount stakeAmount, Amount rewardAmount, Timestamp lastUpdatedAt++` [.item-kind]#external#
+
+:constructor: pass:normal[xref:#StakingLifecycle-constructor--[`++constructor++`]]
+:_setupLifecycle: pass:normal[xref:#StakingLifecycle-_setupLifecycle--[`++_setupLifecycle++`]]
+
+[.contract]
+[[StakingLifecycle]]
+=== `++StakingLifecycle++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/staking/StakingLifecycle.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/staking/StakingLifecycle.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++constructor()++`]
+* [`++_setupLifecycle()++`]
+
+[.contract-subindex-inherited]
+.Lifecycle
+* [`++setInitialState(ttype, state)++`]
+* [`++setStateTransition(ttype, oldState, newState)++`]
+* [`++hasLifecycle(objectType)++`]
+* [`++getInitialState(objectType)++`]
+* [`++checkTransition(stateId, objectType, expectedFromId, toId)++`]
+* [`++isValidTransition(objectType, fromId, toId)++`]
+
+[.contract-subindex-inherited]
+.ILifecycle
+
+--
+
+[.contract-item]
+[[StakingLifecycle-constructor--]]
+==== `[.contract-item-name]#++constructor++#++()++` [.item-kind]#public#
+
+[.contract-item]
+[[StakingLifecycle-_setupLifecycle--]]
+==== `[.contract-item-name]#++_setupLifecycle++#++()++` [.item-kind]#internal#
+
+child class must implement and CALL setup func at deployment/initializaton time
+
+:STAKING_SERVICE_LOCATION_V1: pass:normal[xref:#StakingService-STAKING_SERVICE_LOCATION_V1-bytes32[`++STAKING_SERVICE_LOCATION_V1++`]]
+:StakingServiceStorage: pass:normal[xref:#StakingService-StakingServiceStorage[`++StakingServiceStorage++`]]
+:createInstanceTarget: pass:normal[xref:#StakingService-createInstanceTarget-NftId-Seconds-UFixed-[`++createInstanceTarget++`]]
+:setInstanceLockingPeriod: pass:normal[xref:#StakingService-setInstanceLockingPeriod-NftId-Seconds-[`++setInstanceLockingPeriod++`]]
+:setInstanceRewardRate: pass:normal[xref:#StakingService-setInstanceRewardRate-NftId-UFixed-[`++setInstanceRewardRate++`]]
+:refillInstanceRewardReserves: pass:normal[xref:#StakingService-refillInstanceRewardReserves-NftId-address-Amount-[`++refillInstanceRewardReserves++`]]
+:refillRewardReservesBySender: pass:normal[xref:#StakingService-refillRewardReservesBySender-NftId-Amount-[`++refillRewardReservesBySender++`]]
+:withdrawInstanceRewardReserves: pass:normal[xref:#StakingService-withdrawInstanceRewardReserves-NftId-Amount-[`++withdrawInstanceRewardReserves++`]]
+:create: pass:normal[xref:#StakingService-create-NftId-Amount-[`++create++`]]
+:stake: pass:normal[xref:#StakingService-stake-NftId-Amount-[`++stake++`]]
+:restakeToNewTarget: pass:normal[xref:#StakingService-restakeToNewTarget-NftId-NftId-[`++restakeToNewTarget++`]]
+:updateRewards: pass:normal[xref:#StakingService-updateRewards-NftId-[`++updateRewards++`]]
+:claimRewards: pass:normal[xref:#StakingService-claimRewards-NftId-[`++claimRewards++`]]
+:unstake: pass:normal[xref:#StakingService-unstake-NftId-[`++unstake++`]]
+:setTotalValueLocked: pass:normal[xref:#StakingService-setTotalValueLocked-NftId-address-Amount-[`++setTotalValueLocked++`]]
+:getDipToken: pass:normal[xref:#StakingService-getDipToken--[`++getDipToken++`]]
+:getTokenHandler: pass:normal[xref:#StakingService-getTokenHandler--[`++getTokenHandler++`]]
+:getStaking: pass:normal[xref:#StakingService-getStaking--[`++getStaking++`]]
+:_initialize: pass:normal[xref:#StakingService-_initialize-address-bytes-[`++_initialize++`]]
+:_registerStaking: pass:normal[xref:#StakingService-_registerStaking-address-[`++_registerStaking++`]]
+:_refillRewardReserves: pass:normal[xref:#StakingService-_refillRewardReserves-NftId-address-Amount-[`++_refillRewardReserves++`]]
+:_getDomain: pass:normal[xref:#StakingService-_getDomain--[`++_getDomain++`]]
+
+[.contract]
+[[StakingService]]
+=== `++StakingService++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/staking/StakingService.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/staking/StakingService.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++createInstanceTarget(targetNftId, initialLockingPeriod, initialRewardRate)++`]
+* [`++setInstanceLockingPeriod(instanceNftId, lockingPeriod)++`]
+* [`++setInstanceRewardRate(instanceNftId, rewardRate)++`]
+* [`++refillInstanceRewardReserves(instanceNftId, rewardProvider, dipAmount)++`]
+* [`++refillRewardReservesBySender(targetNftId, dipAmount)++`]
+* [`++withdrawInstanceRewardReserves(instanceNftId, dipAmount)++`]
+* [`++create(targetNftId, dipAmount)++`]
+* [`++stake(stakeNftId, dipAmount)++`]
+* [`++restakeToNewTarget(stakeNftId, newTargetNftId)++`]
+* [`++updateRewards(stakeNftId)++`]
+* [`++claimRewards(stakeNftId)++`]
+* [`++unstake(stakeNftId)++`]
+* [`++setTotalValueLocked(targetNftId, token, amount)++`]
+* [`++getDipToken()++`]
+* [`++getTokenHandler()++`]
+* [`++getStaking()++`]
+* [`++_initialize(owner, data)++`]
+* [`++_registerStaking(stakingAddress)++`]
+* [`++_refillRewardReserves(targetNftId, rewardProvider, dipAmount)++`]
+* [`++_getDomain()++`]
+
+[.contract-subindex-inherited]
+.IStakingService
+
+[.contract-subindex-inherited]
+.Service
+* [`++_initializeService(registry, authority, initialOwner)++`]
+* [`++getDomain()++`]
+* [`++getRoleId()++`]
+* [`++getVersion()++`]
+* [`++_getServiceAddress(domain)++`]
+
+[.contract-subindex-inherited]
+.IService
+
+[.contract-subindex-inherited]
+.ReentrancyGuardUpgradeable
+* [`++__ReentrancyGuard_init()++`]
+* [`++__ReentrancyGuard_init_unchained()++`]
+* [`++_reentrancyGuardEntered()++`]
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+* [`++__AccessManaged_init(initialAuthority)++`]
+* [`++__AccessManaged_init_unchained(initialAuthority)++`]
+* [`++authority()++`]
+* [`++setAuthority(newAuthority)++`]
+* [`++isConsumingScheduledOp()++`]
+* [`++_setAuthority(newAuthority)++`]
+* [`++_checkCanCall(caller, data)++`]
+
+[.contract-subindex-inherited]
+.IAccessManaged
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+* [`++__Context_init()++`]
+* [`++__Context_init_unchained()++`]
+* [`++_msgSender()++`]
+* [`++_msgData()++`]
+* [`++_contextSuffixLength()++`]
+
+[.contract-subindex-inherited]
+.Versionable
+* [`++initializeVersionable(activatedBy, data)++`]
+* [`++upgradeVersionable(data)++`]
+* [`++_upgrade(data)++`]
+
+[.contract-subindex-inherited]
+.IVersionable
+
+[.contract-subindex-inherited]
+.Registerable
+* [`++_initializeRegisterable(registry, parentNftId, objectType, isInterceptor, initialOwner, data)++`]
+* [`++getRelease()++`]
+* [`++getInitialInfo()++`]
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.NftOwnable
+* [`++_checkNftType(nftId, expectedObjectType)++`]
+* [`++_initializeNftOwnable(registry, initialOwner)++`]
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+* [`++_linkToNftOwnable(nftOwnableAddress)++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+* [`++_initializeRegistryLinked(registryAddress)++`]
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+* [`++_initializeERC165()++`]
+* [`++_registerInterface(interfaceId)++`]
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.IStakingService
+* [`++LogStakingServiceProtocolTargetRegistered(protocolNftId)++`]
+* [`++LogStakingServiceInstanceTargetRegistered(instanceNftId, chainId)++`]
+* [`++LogStakingServiceLockingPeriodSet(targetNftId, oldLockingDuration, lockingDuration)++`]
+* [`++LogStakingServiceRewardRateSet(targetNftId, oldRewardRate, rewardRate)++`]
+* [`++LogStakingServiceRewardReservesIncreased(targetNftId, rewardProvider, dipAmount, newBalance)++`]
+* [`++LogStakingServiceRewardReservesDecreased(targetNftId, targetOwner, dipAmount, newBalance)++`]
+* [`++LogStakingServiceStakeCreated(stakeNftId, targetNftId, owner, stakedAmount)++`]
+* [`++LogStakingServiceStakeIncreased(stakeNftId, owner, stakedAmount, stakeBalance)++`]
+* [`++LogStakingServiceUnstaked(stakeNftId, stakeOwner, totalAmount)++`]
+* [`++LogStakingServiceRewardsUpdated(stakeNftId)++`]
+* [`++LogStakingServiceRewardsClaimed(stakeNftId, stakeOwner, rewardsClaimedAmount)++`]
+
+[.contract-subindex-inherited]
+.Service
+
+[.contract-subindex-inherited]
+.IService
+
+[.contract-subindex-inherited]
+.ReentrancyGuardUpgradeable
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+
+[.contract-subindex-inherited]
+.Versionable
+
+[.contract-subindex-inherited]
+.IVersionable
+
+[.contract-subindex-inherited]
+.Registerable
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.NftOwnable
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[StakingService-createInstanceTarget-NftId-Seconds-UFixed-]]
+==== `[.contract-item-name]#++createInstanceTarget++#++(NftId targetNftId, Seconds initialLockingPeriod, UFixed initialRewardRate)++` [.item-kind]#external#
+
+creates/registers an on-chain instance staking target.
+function granted to instance service
+
+[.contract-item]
+[[StakingService-setInstanceLockingPeriod-NftId-Seconds-]]
+==== `[.contract-item-name]#++setInstanceLockingPeriod++#++(NftId instanceNftId, Seconds lockingPeriod)++` [.item-kind]#external#
+
+Set the instance stake locking period to the specified duration.
+Permissioned: Only owner of the specified target.
+
+[.contract-item]
+[[StakingService-setInstanceRewardRate-NftId-UFixed-]]
+==== `[.contract-item-name]#++setInstanceRewardRate++#++(NftId instanceNftId, UFixed rewardRate)++` [.item-kind]#external#
+
+Set the instance reward rate to the specified value.
+Permissioned: Only owner of the specified target.
+
+[.contract-item]
+[[StakingService-refillInstanceRewardReserves-NftId-address-Amount-]]
+==== `[.contract-item-name]#++refillInstanceRewardReserves++#++(NftId instanceNftId, address rewardProvider, Amount dipAmount) → Amount newBalance++` [.item-kind]#external#
+
+(Re)fills the staking reward reserves for the specified target using the dips provided by the reward provider.
+unpermissioned: anybody may fill up staking reward reserves
+
+[.contract-item]
+[[StakingService-refillRewardReservesBySender-NftId-Amount-]]
+==== `[.contract-item-name]#++refillRewardReservesBySender++#++(NftId targetNftId, Amount dipAmount) → Amount newBalance++` [.item-kind]#external#
+
+(Re)fills the staking reward reserves for the specified target using the dips provided by the sender
+unpermissioned: anybody may fill up staking reward reserves
+
+[.contract-item]
+[[StakingService-withdrawInstanceRewardReserves-NftId-Amount-]]
+==== `[.contract-item-name]#++withdrawInstanceRewardReserves++#++(NftId instanceNftId, Amount dipAmount) → Amount newBalance++` [.item-kind]#external#
+
+Defunds the staking reward reserves for the specified target
+Permissioned: only the target owner may call this function
+
+[.contract-item]
+[[StakingService-create-NftId-Amount-]]
+==== `[.contract-item-name]#++create++#++(NftId targetNftId, Amount dipAmount) → NftId stakeNftId++` [.item-kind]#external#
+
+creates a new stake to the specified target nft id with the provided dip amount
+the target nft id must have been registered as an active staking target prior to this call
+the sender of this transaction becomes the stake owner via the minted nft.
+to create the new stake balance and allowance of the staker need to cover the dip amount
+the allowance needs to be on the token handler of the staking contract (getTokenHandler())
+this is a permissionless function.
+
+[.contract-item]
+[[StakingService-stake-NftId-Amount-]]
+==== `[.contract-item-name]#++stake++#++(NftId stakeNftId, Amount dipAmount)++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingService-restakeToNewTarget-NftId-NftId-]]
+==== `[.contract-item-name]#++restakeToNewTarget++#++(NftId stakeNftId, NftId newTargetNftId) → NftId newStakeNftId++` [.item-kind]#external#
+
+re-stakes the current staked DIP as well as all accumulated rewards to the new stake target.
+all related stakes and all accumulated reward DIP are transferred to the current stake holder
+function restricted to the current stake owner
+
+[.contract-item]
+[[StakingService-updateRewards-NftId-]]
+==== `[.contract-item-name]#++updateRewards++#++(NftId stakeNftId)++` [.item-kind]#external#
+
+updates the reward balance of the stake using the current reward rate.
+
+[.contract-item]
+[[StakingService-claimRewards-NftId-]]
+==== `[.contract-item-name]#++claimRewards++#++(NftId stakeNftId)++` [.item-kind]#external#
+
+claims all available rewards.
+
+[.contract-item]
+[[StakingService-unstake-NftId-]]
+==== `[.contract-item-name]#++unstake++#++(NftId stakeNftId)++` [.item-kind]#external#
+
+unstakes all dips (stakes and rewards) of an existing stake.
+function restricted to the current stake owner
+
+[.contract-item]
+[[StakingService-setTotalValueLocked-NftId-address-Amount-]]
+==== `[.contract-item-name]#++setTotalValueLocked++#++(NftId targetNftId, address token, Amount amount)++` [.item-kind]#external#
+
+sets total value locked data for a target contract on a different chain.
+this is done via CCIP (cross chain communication)
+
+[.contract-item]
+[[StakingService-getDipToken--]]
+==== `[.contract-item-name]#++getDipToken++#++() → contract IERC20Metadata dip++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingService-getTokenHandler--]]
+==== `[.contract-item-name]#++getTokenHandler++#++() → contract TokenHandler tokenHandler++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingService-getStaking--]]
+==== `[.contract-item-name]#++getStaking++#++() → contract IStaking staking++` [.item-kind]#external#
+
+[.contract-item]
+[[StakingService-_initialize-address-bytes-]]
+==== `[.contract-item-name]#++_initialize++#++(address owner, bytes data)++` [.item-kind]#internal#
+
+[.contract-item]
+[[StakingService-_registerStaking-address-]]
+==== `[.contract-item-name]#++_registerStaking++#++(address stakingAddress) → contract IStaking staking++` [.item-kind]#internal#
+
+[.contract-item]
+[[StakingService-_refillRewardReserves-NftId-address-Amount-]]
+==== `[.contract-item-name]#++_refillRewardReserves++#++(NftId targetNftId, address rewardProvider, Amount dipAmount) → Amount newBalance++` [.item-kind]#internal#
+
+[.contract-item]
+[[StakingService-_getDomain--]]
+==== `[.contract-item-name]#++_getDomain++#++() → ObjectType++` [.item-kind]#internal#
+
+:stake: pass:normal[xref:#StakeManagerLib-stake-contract-IRegistry-contract-StakingReader-contract-StakingStore-NftId-Amount-[`++stake++`]]
+:checkCreateParameters: pass:normal[xref:#StakeManagerLib-checkCreateParameters-contract-StakingReader-NftId-Amount-[`++checkCreateParameters++`]]
+:checkStakeParameters: pass:normal[xref:#StakeManagerLib-checkStakeParameters-contract-StakingReader-NftId-[`++checkStakeParameters++`]]
+:checkUnstakeParameters: pass:normal[xref:#StakeManagerLib-checkUnstakeParameters-contract-StakingReader-NftId-[`++checkUnstakeParameters++`]]
+:checkTarget: pass:normal[xref:#StakeManagerLib-checkTarget-contract-StakingReader-NftId-[`++checkTarget++`]]
+:checkDipAmount: pass:normal[xref:#StakeManagerLib-checkDipAmount-contract-StakingReader-NftId-Amount-[`++checkDipAmount++`]]
+:calculateRewardIncrease: pass:normal[xref:#StakeManagerLib-calculateRewardIncrease-contract-StakingReader-NftId-UFixed-[`++calculateRewardIncrease++`]]
+:calculateRewardAmount: pass:normal[xref:#StakeManagerLib-calculateRewardAmount-UFixed-Seconds-Amount-[`++calculateRewardAmount++`]]
+:getYearFraction: pass:normal[xref:#StakeManagerLib-getYearFraction-Seconds-[`++getYearFraction++`]]
+
+[.contract]
+[[StakeManagerLib]]
+=== `++StakeManagerLib++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/staking/StakeManagerLib.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/staking/StakeManagerLib.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++stake(registry, stakingReader, stakingStore, stakeNftId, stakeAmount)++`]
+* [`++checkCreateParameters(stakingReader, targetNftId, dipAmount)++`]
+* [`++checkStakeParameters(stakingReader, stakeNftId)++`]
+* [`++checkUnstakeParameters(stakingReader, stakeNftId)++`]
+* [`++checkTarget(stakingReader, targetNftId)++`]
+* [`++checkDipAmount(stakingReader, targetNftId, dipAmount)++`]
+* [`++calculateRewardIncrease(stakingReader, stakeNftId, rewardRate)++`]
+* [`++calculateRewardAmount(rewardRate, duration, stakeAmount)++`]
+* [`++getYearFraction(duration)++`]
+
+--
+
+[.contract-item]
+[[StakeManagerLib-stake-contract-IRegistry-contract-StakingReader-contract-StakingStore-NftId-Amount-]]
+==== `[.contract-item-name]#++stake++#++(contract IRegistry registry, contract StakingReader stakingReader, contract StakingStore stakingStore, NftId stakeNftId, Amount stakeAmount) → Amount stakeBalance++` [.item-kind]#external#
+
+[.contract-item]
+[[StakeManagerLib-checkCreateParameters-contract-StakingReader-NftId-Amount-]]
+==== `[.contract-item-name]#++checkCreateParameters++#++(contract StakingReader stakingReader, NftId targetNftId, Amount dipAmount) → Timestamp lockedUntil++` [.item-kind]#external#
+
+[.contract-item]
+[[StakeManagerLib-checkStakeParameters-contract-StakingReader-NftId-]]
+==== `[.contract-item-name]#++checkStakeParameters++#++(contract StakingReader stakingReader, NftId stakeNftId) → UFixed rewardRate, Seconds lockingPeriod++` [.item-kind]#public#
+
+[.contract-item]
+[[StakeManagerLib-checkUnstakeParameters-contract-StakingReader-NftId-]]
+==== `[.contract-item-name]#++checkUnstakeParameters++#++(contract StakingReader stakingReader, NftId stakeNftId) → UFixed rewardRate, Seconds lockingPeriod++` [.item-kind]#public#
+
+[.contract-item]
+[[StakeManagerLib-checkTarget-contract-StakingReader-NftId-]]
+==== `[.contract-item-name]#++checkTarget++#++(contract StakingReader stakingReader, NftId targetNftId) → Seconds lockingPeriod++` [.item-kind]#public#
+
+[.contract-item]
+[[StakeManagerLib-checkDipAmount-contract-StakingReader-NftId-Amount-]]
+==== `[.contract-item-name]#++checkDipAmount++#++(contract StakingReader stakingReader, NftId targetNftId, Amount dipAmount)++` [.item-kind]#public#
+
+[.contract-item]
+[[StakeManagerLib-calculateRewardIncrease-contract-StakingReader-NftId-UFixed-]]
+==== `[.contract-item-name]#++calculateRewardIncrease++#++(contract StakingReader stakingReader, NftId stakeNftId, UFixed rewardRate) → Amount rewardIncreaseAmount, Amount totalDipAmount++` [.item-kind]#public#
+
+[.contract-item]
+[[StakeManagerLib-calculateRewardAmount-UFixed-Seconds-Amount-]]
+==== `[.contract-item-name]#++calculateRewardAmount++#++(UFixed rewardRate, Seconds duration, Amount stakeAmount) → Amount rewardAmount++` [.item-kind]#public#
+
+[.contract-item]
+[[StakeManagerLib-getYearFraction-Seconds-]]
+==== `[.contract-item-name]#++getYearFraction++#++(Seconds duration) → UFixed yearFraction++` [.item-kind]#public#
+
+:updateLockingPeriod: pass:normal[xref:#TargetManagerLib-updateLockingPeriod-contract-IStaking-NftId-Seconds-[`++updateLockingPeriod++`]]
+:updateRewardRate: pass:normal[xref:#TargetManagerLib-updateRewardRate-contract-IStaking-NftId-UFixed-[`++updateRewardRate++`]]
+:checkTargetParameters: pass:normal[xref:#TargetManagerLib-checkTargetParameters-contract-IRegistry-contract-StakingReader-NftId-ObjectType-Seconds-UFixed-[`++checkTargetParameters++`]]
+:isTargetTypeSupported: pass:normal[xref:#TargetManagerLib-isTargetTypeSupported-ObjectType-[`++isTargetTypeSupported++`]]
+:checkLockingPeriod: pass:normal[xref:#TargetManagerLib-checkLockingPeriod-NftId-Seconds-[`++checkLockingPeriod++`]]
+:checkRewardRate: pass:normal[xref:#TargetManagerLib-checkRewardRate-NftId-UFixed-[`++checkRewardRate++`]]
+:calculateRequiredDipAmount: pass:normal[xref:#TargetManagerLib-calculateRequiredDipAmount-Amount-UFixed-[`++calculateRequiredDipAmount++`]]
+:calculateStakingRate: pass:normal[xref:#TargetManagerLib-calculateStakingRate-contract-IERC20Metadata-contract-IERC20Metadata-UFixed-[`++calculateStakingRate++`]]
+:getMaxLockingPeriod: pass:normal[xref:#TargetManagerLib-getMaxLockingPeriod--[`++getMaxLockingPeriod++`]]
+:getDefaultLockingPeriod: pass:normal[xref:#TargetManagerLib-getDefaultLockingPeriod--[`++getDefaultLockingPeriod++`]]
+:getMinimumLockingPeriod: pass:normal[xref:#TargetManagerLib-getMinimumLockingPeriod--[`++getMinimumLockingPeriod++`]]
+:getMaxRewardRate: pass:normal[xref:#TargetManagerLib-getMaxRewardRate--[`++getMaxRewardRate++`]]
+:getDefaultRewardRate: pass:normal[xref:#TargetManagerLib-getDefaultRewardRate--[`++getDefaultRewardRate++`]]
+:toTargetKey: pass:normal[xref:#TargetManagerLib-toTargetKey-NftId-[`++toTargetKey++`]]
+
+[.contract]
+[[TargetManagerLib]]
+=== `++TargetManagerLib++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/staking/TargetManagerLib.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/staking/TargetManagerLib.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++updateLockingPeriod(staking, targetNftId, lockingPeriod)++`]
+* [`++updateRewardRate(staking, targetNftId, rewardRate)++`]
+* [`++checkTargetParameters(registry, stakingReader, targetNftId, expectedObjectType, initialLockingPeriod, initialRewardRate)++`]
+* [`++isTargetTypeSupported(objectType)++`]
+* [`++checkLockingPeriod(targetNftId, lockingPeriod)++`]
+* [`++checkRewardRate(targetNftId, rewardRate)++`]
+* [`++calculateRequiredDipAmount(tokenAmount, stakingRate)++`]
+* [`++calculateStakingRate(dipToken, token, requiredDipPerToken)++`]
+* [`++getMaxLockingPeriod()++`]
+* [`++getDefaultLockingPeriod()++`]
+* [`++getMinimumLockingPeriod()++`]
+* [`++getMaxRewardRate()++`]
+* [`++getDefaultRewardRate()++`]
+* [`++toTargetKey(targetNftId)++`]
+
+--
+
+[.contract-item]
+[[TargetManagerLib-updateLockingPeriod-contract-IStaking-NftId-Seconds-]]
+==== `[.contract-item-name]#++updateLockingPeriod++#++(contract IStaking staking, NftId targetNftId, Seconds lockingPeriod) → Seconds oldLockingPeriod, struct IStaking.TargetInfo targetInfo++` [.item-kind]#external#
+
+[.contract-item]
+[[TargetManagerLib-updateRewardRate-contract-IStaking-NftId-UFixed-]]
+==== `[.contract-item-name]#++updateRewardRate++#++(contract IStaking staking, NftId targetNftId, UFixed rewardRate) → UFixed oldRewardRate, struct IStaking.TargetInfo targetInfo++` [.item-kind]#external#
+
+[.contract-item]
+[[TargetManagerLib-checkTargetParameters-contract-IRegistry-contract-StakingReader-NftId-ObjectType-Seconds-UFixed-]]
+==== `[.contract-item-name]#++checkTargetParameters++#++(contract IRegistry registry, contract StakingReader stakingReader, NftId targetNftId, ObjectType expectedObjectType, Seconds initialLockingPeriod, UFixed initialRewardRate)++` [.item-kind]#external#
+
+[.contract-item]
+[[TargetManagerLib-isTargetTypeSupported-ObjectType-]]
+==== `[.contract-item-name]#++isTargetTypeSupported++#++(ObjectType objectType) → bool isSupported++` [.item-kind]#public#
+
+[.contract-item]
+[[TargetManagerLib-checkLockingPeriod-NftId-Seconds-]]
+==== `[.contract-item-name]#++checkLockingPeriod++#++(NftId targetNftId, Seconds lockingPeriod)++` [.item-kind]#public#
+
+[.contract-item]
+[[TargetManagerLib-checkRewardRate-NftId-UFixed-]]
+==== `[.contract-item-name]#++checkRewardRate++#++(NftId targetNftId, UFixed rewardRate)++` [.item-kind]#public#
+
+[.contract-item]
+[[TargetManagerLib-calculateRequiredDipAmount-Amount-UFixed-]]
+==== `[.contract-item-name]#++calculateRequiredDipAmount++#++(Amount tokenAmount, UFixed stakingRate) → Amount dipAmount++` [.item-kind]#public#
+
+[.contract-item]
+[[TargetManagerLib-calculateStakingRate-contract-IERC20Metadata-contract-IERC20Metadata-UFixed-]]
+==== `[.contract-item-name]#++calculateStakingRate++#++(contract IERC20Metadata dipToken, contract IERC20Metadata token, UFixed requiredDipPerToken) → UFixed stakingRate++` [.item-kind]#public#
+
+[.contract-item]
+[[TargetManagerLib-getMaxLockingPeriod--]]
+==== `[.contract-item-name]#++getMaxLockingPeriod++#++() → Seconds maxLockingPeriod++` [.item-kind]#public#
+
+[.contract-item]
+[[TargetManagerLib-getDefaultLockingPeriod--]]
+==== `[.contract-item-name]#++getDefaultLockingPeriod++#++() → Seconds maxLockingPeriod++` [.item-kind]#public#
+
+[.contract-item]
+[[TargetManagerLib-getMinimumLockingPeriod--]]
+==== `[.contract-item-name]#++getMinimumLockingPeriod++#++() → Seconds minLockingPeriod++` [.item-kind]#public#
+
+the minimum locking period is 24 hours
+
+[.contract-item]
+[[TargetManagerLib-getMaxRewardRate--]]
+==== `[.contract-item-name]#++getMaxRewardRate++#++() → UFixed maxRewardRate++` [.item-kind]#public#
+
+[.contract-item]
+[[TargetManagerLib-getDefaultRewardRate--]]
+==== `[.contract-item-name]#++getDefaultRewardRate++#++() → UFixed defaultRewardRate++` [.item-kind]#public#
+
+[.contract-item]
+[[TargetManagerLib-toTargetKey-NftId-]]
+==== `[.contract-item-name]#++toTargetKey++#++(NftId targetNftId) → Key32 targetKey++` [.item-kind]#public#
+
+:constructor: pass:normal[xref:#StakingManager-constructor-address-address-address-address-bytes32-[`++constructor++`]]
+:getStaking: pass:normal[xref:#StakingManager-getStaking--[`++getStaking++`]]
+
+[.contract]
+[[StakingManager]]
+=== `++StakingManager++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/staking/StakingManager.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/staking/StakingManager.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++constructor(registry, tokenRegistry, stakingStore, initialOwner, salt)++`]
+* [`++getStaking()++`]
+
+[.contract-subindex-inherited]
+.ProxyManager
+* [`++initialize(registry, implementation, data, salt)++`]
+* [`++deploy(registry, initialImplementation, initializationData)++`]
+* [`++deployDetermenistic(registry, initialImplementation, initializationData, salt)++`]
+* [`++upgrade(newImplementation, upgradeData)++`]
+* [`++linkToProxy()++`]
+* [`++getDeployData(proxyOwner, deployData)++`]
+* [`++getUpgradeData(upgradeData)++`]
+* [`++getProxy()++`]
+* [`++getVersion()++`]
+* [`++getVersionCount()++`]
+* [`++getVersion(idx)++`]
+* [`++getVersionInfo(_version)++`]
+
+[.contract-subindex-inherited]
+.NftOwnable
+* [`++_checkNftType(nftId, expectedObjectType)++`]
+* [`++_initializeNftOwnable(registry, initialOwner)++`]
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+* [`++_linkToNftOwnable(nftOwnableAddress)++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+* [`++_initializeRegistryLinked(registryAddress)++`]
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+* [`++_initializeERC165()++`]
+* [`++_registerInterface(interfaceId)++`]
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.ProxyManager
+* [`++LogProxyManagerVersionableDeployed(proxy, initialImplementation)++`]
+* [`++LogProxyManagerVersionableUpgraded(proxy, upgradedImplementation)++`]
+
+[.contract-subindex-inherited]
+.NftOwnable
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[StakingManager-constructor-address-address-address-address-bytes32-]]
+==== `[.contract-item-name]#++constructor++#++(address registry, address tokenRegistry, address stakingStore, address initialOwner, bytes32 salt)++` [.item-kind]#public#
+
+initializes proxy manager with service implementation
+
+[.contract-item]
+[[StakingManager-getStaking--]]
+==== `[.contract-item-name]#++getStaking++#++() → contract Staking++` [.item-kind]#external#
+
+:constructor: pass:normal[xref:#StakingServiceManager-constructor-address-address-bytes32-[`++constructor++`]]
+:getStakingService: pass:normal[xref:#StakingServiceManager-getStakingService--[`++getStakingService++`]]
+
+[.contract]
+[[StakingServiceManager]]
+=== `++StakingServiceManager++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/staking/StakingServiceManager.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/staking/StakingServiceManager.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++constructor(authority, registryAddress, salt)++`]
+* [`++getStakingService()++`]
+
+[.contract-subindex-inherited]
+.ProxyManager
+* [`++initialize(registry, implementation, data, salt)++`]
+* [`++deploy(registry, initialImplementation, initializationData)++`]
+* [`++deployDetermenistic(registry, initialImplementation, initializationData, salt)++`]
+* [`++upgrade(newImplementation, upgradeData)++`]
+* [`++linkToProxy()++`]
+* [`++getDeployData(proxyOwner, deployData)++`]
+* [`++getUpgradeData(upgradeData)++`]
+* [`++getProxy()++`]
+* [`++getVersion()++`]
+* [`++getVersionCount()++`]
+* [`++getVersion(idx)++`]
+* [`++getVersionInfo(_version)++`]
+
+[.contract-subindex-inherited]
+.NftOwnable
+* [`++_checkNftType(nftId, expectedObjectType)++`]
+* [`++_initializeNftOwnable(registry, initialOwner)++`]
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+* [`++_linkToNftOwnable(nftOwnableAddress)++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+* [`++_initializeRegistryLinked(registryAddress)++`]
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+* [`++_initializeERC165()++`]
+* [`++_registerInterface(interfaceId)++`]
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.ProxyManager
+* [`++LogProxyManagerVersionableDeployed(proxy, initialImplementation)++`]
+* [`++LogProxyManagerVersionableUpgraded(proxy, upgradedImplementation)++`]
+
+[.contract-subindex-inherited]
+.NftOwnable
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[StakingServiceManager-constructor-address-address-bytes32-]]
+==== `[.contract-item-name]#++constructor++#++(address authority, address registryAddress, bytes32 salt)++` [.item-kind]#public#
+
+initializes proxy manager with service implementation
+
+[.contract-item]
+[[StakingServiceManager-getStakingService--]]
+==== `[.contract-item-name]#++getStakingService++#++() → contract StakingService++` [.item-kind]#external#
+
