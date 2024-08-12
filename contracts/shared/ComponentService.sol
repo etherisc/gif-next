@@ -9,6 +9,7 @@ import {ContractLib} from "../shared/ContractLib.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {IComponentService} from "./IComponentService.sol";
+import {IDistributionComponent} from "../distribution/IDistributionComponent.sol";
 import {IInstance} from "../instance/IInstance.sol";
 import {IInstanceLinkedComponent} from "./IInstanceLinkedComponent.sol";
 import {InstanceAdmin} from "../instance/InstanceAdmin.sol";
@@ -293,6 +294,10 @@ contract ComponentService is
         // authorize
         instanceAdmin.initializeComponentAuthorization(
             IInstanceLinkedComponent(distributioAddress));
+
+        IDistributionComponent distribution = IDistributionComponent(distributioAddress);
+        IComponents.ComponentInfo memory productComponentInfo = instanceReader.getComponentInfo(productNftId);
+        productComponentInfo.tokenHandler.addAllowedTarget(distribution.getWallet());
     }
 
 
@@ -462,6 +467,9 @@ contract ComponentService is
 
         // authorize
         instanceAdmin.initializeComponentAuthorization(pool);
+
+        IComponents.ComponentInfo memory productComponentInfo = instanceReader.getComponentInfo(productNftId);
+        productComponentInfo.tokenHandler.addAllowedTarget(pool.getWallet());
     }
 
 
