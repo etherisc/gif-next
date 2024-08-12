@@ -11,6 +11,7 @@ export type LibraryAddresses = {
     uFixedLibAddress: AddressLike;
     amountLibAddress: AddressLike;
     claimIdLibAddress: AddressLike;
+    componentServiceHelperLibAddress: AddressLike;
     payoutIdLibAddress: AddressLike;
     objectTypeLibAddress: AddressLike;
     blockNumberLibAddress: AddressLike;
@@ -303,6 +304,17 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
             }
         });
     LIBRARY_ADDRESSES.set("TokenHandlerDeployerLib", tokenHandlerDeployerLibAddress);
+
+    const { address: componentServiceHelperLibAddress } = await deployContract(
+        "ComponentServiceHelperLib",
+        owner,
+        undefined,
+        {
+            libraries: {
+                NftIdLib: nftIdLibAddress,
+            }
+        });
+    LIBRARY_ADDRESSES.set("ComponentServiceHelperLib", componentServiceHelperLibAddress);
         
     logger.info("======== Finished deployment of libraries ========");
 
@@ -313,6 +325,7 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         mathLibAddress,
         uFixedLibAddress,
         amountLibAddress,
+        componentServiceHelperLibAddress,
         contractLibAddress,
         claimIdLibAddress,
         payoutIdLibAddress,

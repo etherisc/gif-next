@@ -142,13 +142,7 @@ abstract contract Component is
         if (currentBalance > 0) {
             // move tokens from old to new wallet 
             emit LogComponentWalletTokensTransferred(currentWallet, newWallet, currentBalance);
-
-            if (currentWallet == address(this)) {
-                // transfer from the component requires an allowance
-                getTokenHandler().distributeTokens(currentWallet, newWallet, AmountLib.toAmount(currentBalance));
-            } else {
-                getTokenHandler().collectTokens(currentWallet, newWallet, AmountLib.toAmount(currentBalance));
-            }
+            getTokenHandler().collectTokens(currentWallet, newWallet, AmountLib.toAmount(currentBalance));
         }
     }
 

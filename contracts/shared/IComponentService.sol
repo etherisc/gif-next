@@ -43,6 +43,7 @@ interface IComponentService is
 
     event LogComponentServiceRegistered(NftId instanceNftId, NftId componentNftId, ObjectType componentType, address component, address token, address initialOwner); 
     event LogComponentServiceWalletAddressChanged(NftId componentNftId, address currentWallet, address newWallet);
+    event LogComponentWalletTokensTransferred(address from, address to, uint256 amount);
     event LogComponentServiceComponentFeesWithdrawn(NftId componentNftId, address recipient, address token, Amount withdrawnAmount);
     event LogComponentServiceProductFeesUpdated(NftId productNftId);
     event LogComponentServiceDistributionFeesUpdated(NftId distributionNftId);

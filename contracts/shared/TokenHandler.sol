@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManaged.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -11,17 +12,39 @@ import {Amount} from "../type/Amount.sol";
 /// a default token contract is provided via contract constructor
 /// relies internally on oz SafeERC20.safeTransferFrom
 contract TokenHandler is AccessManaged {
+    using EnumerableSet for EnumerableSet.AddressSet;
+
     error ErrorTokenHandlerAmountIsZero();
     error ErrorTokenHandlerBalanceTooLow(address token, address from, uint256 balance, uint256 expectedBalance);
     error ErrorTokenHandlerAllowanceTooSmall(address token, address from, address spender, uint256 allowance, uint256 expectedAllowance);
     error ErrorTokenHandlerRecipientWalletsMustBeDistinct(address to, address to2, address to3);
+    error ErrorTokenHandlerWalletNotAllowed(address to);
     
     event LogTokenHandlerTokenTransfer(address token, address from, address to, uint256 amountTransferred);
 
     IERC20Metadata private _token;
+    EnumerableSet.AddressSet private _allowedWallets;
 
-    constructor(address token, address initialAuthority) AccessManaged(initialAuthority) {
+
+    constructor(address token, address initialAuthority, address initialAllowedWallet) AccessManaged(initialAuthority) {
         _token = IERC20Metadata(token);
+        if (initialAllowedWallet != address(0)) {
+            _allowedWallets.add(initialAllowedWallet);
+        }
+    }
+
+    function addAllowedWallet(address wallet) 
+        external 
+        restricted() 
+    {
+        _allowedWallets.add(wallet);
+    }
+
+    function removeAllowedWallet(address wallet) 
+        external
+        restricted() 
+    {
+        _allowedWallets.remove(wallet);
     }
 
     /// @dev returns the default token defined for this TokenHandler
@@ -43,6 +66,7 @@ contract TokenHandler is AccessManaged {
         external
         restricted()
     {
+        _checkIsAllowedWallet(to);
         _transfer(from, to, amount, true);
     }
 
@@ -67,12 +91,15 @@ contract TokenHandler is AccessManaged {
         _checkPreconditions(from, amount + amount2 + amount3);
 
         if (amount.gtz()) {
+            _checkIsAllowedWallet(to);
             _transfer(from, to, amount, false);
         }
         if (amount2.gtz()) {
+            _checkIsAllowedWallet(to2);
             _transfer(from, to2, amount2, false);
         }
         if (amount3.gtz()) {
+            _checkIsAllowedWallet(to3);
             _transfer(from, to3, amount3, false);
         }
     }
@@ -87,6 +114,7 @@ contract TokenHandler is AccessManaged {
         external
         restricted()
     {
+        _checkIsAllowedWallet(from);
         _transfer(from, to, amount, true);
     }
 
@@ -135,5 +163,18 @@ contract TokenHandler is AccessManaged {
         if (allowance < amount.toInt()) {
             revert ErrorTokenHandlerAllowanceTooSmall(address(_token), from, address(this), allowance, amount.toInt());
         }
+    }
+
+    function _checkIsAllowedWallet(address wallet) internal
+    {
+        if (_allowedWallets.length() == 0) {
+            return;
+        }
+
+        if(_allowedWallets.contains(wallet)) {
+            return;
+        }
+        
+        revert ErrorTokenHandlerWalletNotAllowed(wallet);
     }
 }
