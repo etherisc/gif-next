@@ -16,8 +16,10 @@ async function main() {
     await deployFireComponentContracts(
         {
             amountLibAddress: process.env.AMOUNTLIB_ADDRESS!,
+            contractLibAddress: process.env.CONTRACTLIB_ADDRESS!,
             feeLibAddress: process.env.FEELIB_ADDRESS!,
             nftIdLibAddress: process.env.NFTIDLIB_ADDRESS!,
+            objectTypeLibAddress: process.env.OBJECTTYPELIB_ADDRESS!,
             referralLibAddress: process.env.REFERRALLIB_ADDRESS!,
             riskIdLibAddress: process.env.RISKIDLIB_ADDRESS!,
             roleIdLibAddress: process.env.ROLEIDLIB_ADDRESS!,
@@ -40,8 +42,10 @@ export async function deployFireComponentContracts(libraries: LibraryAddresses, 
     logger.info("===== deploying fire insurance components ...");
     
     const amountLibAddress = libraries.amountLibAddress;
+    const contractLibAddress = libraries.contractLibAddress;
     const feeLibAddress = libraries.feeLibAddress;
     const nftIdLibAddress = libraries.nftIdLibAddress;
+    const objectTypeLibAddress = libraries.objectTypeLibAddress;
     const referralLibAddress = libraries.referralLibAddress;
     const riskIdLibAddress = libraries.riskIdLibAddress;
     const roleIdLibAddress = libraries.roleIdLibAddress;
@@ -105,6 +109,7 @@ export async function deployFireComponentContracts(libraries: LibraryAddresses, 
         {
             libraries: {
                 AmountLib: amountLibAddress,
+                ContractLib: contractLibAddress,
                 FeeLib: feeLibAddress,
                 NftIdLib: nftIdLibAddress,
                 ReferralLib: referralLibAddress,
@@ -132,6 +137,7 @@ export async function deployFireComponentContracts(libraries: LibraryAddresses, 
         [firePoolName],
         {
             libraries: {
+                ObjectTypeLib: objectTypeLibAddress,
                 RoleIdLib: roleIdLibAddress,
                 SelectorLib: selectorLibAddress,
                 StrLib: strLibAddress,
@@ -154,8 +160,8 @@ export async function deployFireComponentContracts(libraries: LibraryAddresses, 
         {
             libraries: {
                 AmountLib: amountLibAddress,
+                ContractLib: contractLibAddress,
                 NftIdLib: nftIdLibAddress,
-                RoleIdLib: roleIdLibAddress,
                 UFixedLib: ufixedLibAddress,
                 VersionPartLib: versionPartLibAddress,
             }
