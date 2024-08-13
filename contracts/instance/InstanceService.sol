@@ -96,8 +96,8 @@ contract InstanceService is
     function createInstance()
         external 
         returns (
-            Instance clonedInstance,
-            NftId clonedInstanceNftId
+            IInstance instance,
+            NftId instanceNftId
         )
     {
         // tx sender will become instance owner
@@ -105,24 +105,24 @@ contract InstanceService is
 
         // create instance admin and instance
         InstanceAdmin instanceAdmin = _createInstanceAdmin();
-        clonedInstance = _createInstance(instanceAdmin, instanceOwner);
+        instance = _createInstance(instanceAdmin, instanceOwner);
 
         // register cloned instance with registry
-        clonedInstanceNftId = _registryService.registerInstance(
-            clonedInstance, instanceOwner).nftId;
+        instanceNftId = _registryService.registerInstance(
+            instance, instanceOwner).nftId;
 
         // register cloned instance as staking target
         _stakingService.createInstanceTarget(
-            clonedInstanceNftId,
+            instanceNftId,
             TargetManagerLib.getDefaultLockingPeriod(),
             TargetManagerLib.getDefaultRewardRate());
 
         // MUST be set after instance is set up and registered
-        instanceAdmin.initializeInstanceAuthorization(address(clonedInstance));
+        instanceAdmin.initializeInstanceAuthorization(address(instance));
 
         emit LogInstanceCloned(
-            clonedInstanceNftId,
-            address(clonedInstance));
+            instanceNftId,
+            address(instance));
     }
 
 
@@ -309,14 +309,14 @@ contract InstanceService is
     )
         internal
         virtual
-        returns (Instance clonedInstance)
+        returns (IInstance)
     {
         InstanceStore clonedInstanceStore = InstanceStore(Clones.clone(address(_masterInstanceStore)));
         BundleSet clonedBundleSet = BundleSet(Clones.clone(_masterInstanceBundleSet));
         InstanceReader clonedInstanceReader = InstanceReader(Clones.clone(address(_masterInstanceReader)));
 
         // clone instance
-        clonedInstance = Instance(Clones.clone(_masterInstance));
+        Instance clonedInstance = Instance(Clones.clone(_masterInstance));
         clonedInstance.initialize(
             instanceAdmin,
             clonedInstanceStore,
@@ -324,6 +324,7 @@ contract InstanceService is
             clonedInstanceReader,
             getRegistry(),
             instanceOwner);
+        return clonedInstance;
     }
 
 
