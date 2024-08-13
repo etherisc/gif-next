@@ -1,7 +1,8 @@
+import { getImplementationAddress } from "@openzeppelin/upgrades-core";
 import { AddressLike, Signer, resolveAddress } from "ethers";
+import { ethers as hhEthers } from "hardhat";
 import {
     ChainNft, ChainNft__factory,
-    ContractLib,
     Dip,
     Registry,
     RegistryAdmin,
@@ -17,8 +18,6 @@ import { logger } from "../logger";
 import { deployContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
 import { executeTx, getTxOpts } from "./transaction";
-import { getImplementationAddress } from "@openzeppelin/upgrades-core";
-import { ethers as hhEthers } from "hardhat";
 import { prepareVerificationData } from "./verification";
 
 
