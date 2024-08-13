@@ -118,11 +118,6 @@ export async function deployAndRegisterMasterInstance(
     );
     const masterInstanceReader = masterInstanceReaderContract as InstanceReader;
 
-    // await executeTx(
-    //     () => masterInstanceReader.initialize(masterInstanceReaderAddress, getTxOpts()),
-    //     "masterInstance instanceReader.initialize"
-    // );
-
     const { address: masterInstanceAddress, contract: masterInstanceBaseContract } = await deployContract(
         "Instance",
         owner,
