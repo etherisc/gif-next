@@ -235,17 +235,20 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
 
     await executeTx(
         async () => await stakingReader.initialize(stakingAddress, stakingStoreAddress, getTxOpts()),
-        "stakingReader.initialize"
+        "stakingReader.initialize",
+        [stakingReader.interface]
     );
 
     await executeTx(
         async () => await registry.initialize(releaseRegistryAddress, tokenRegistryAddress, stakingAddress, getTxOpts()),
-        "registry.initialize"
+        "registry.initialize",
+        [registry.interface]
     );
 
     await executeTx(
         async () => await registryAdmin.completeSetup(registry, owner, owner, getTxOpts()),
-        "registryAdmin.completeSetup"
+        "registryAdmin.completeSetup",
+        [registryAdmin.interface]
     );
 
     await verifyRegistryComponents(

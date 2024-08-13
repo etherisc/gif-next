@@ -191,7 +191,8 @@ export async function createRelease(owner: Signer, registry: RegistryAddresses, 
     
     await executeTx(
         async () => await releaseRegistry.createNextRelease(getTxOpts()),
-        "releaseRegistry.createNextRelease"
+        "releaseRegistry.createNextRelease",
+        [releaseRegistry.interface]
     );
 
 
@@ -201,7 +202,8 @@ export async function createRelease(owner: Signer, registry: RegistryAddresses, 
             salt,
             getTxOpts()
         ),
-        "releaseRegistry.prepareNextRelease");
+        "releaseRegistry.prepareNextRelease",
+        [releaseRegistry.interface]);
 
     let logCreationInfo = getFieldFromTxRcptLogs(rcpt!, registry.releaseRegistry.interface, "LogReleaseCreation", "version");
     const releaseVersion = (logCreationInfo as BigNumberish);

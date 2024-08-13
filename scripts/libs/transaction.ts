@@ -86,7 +86,7 @@ export async function executeTx(
         return tx;
     } catch (err) {
         // if an error occurred, decode the error and log the reason and args
-        if (errorInterfaces !== undefined) {
+        if (errorInterfaces !== undefined && errorInterfaces.length > 0) {
             const errorDecoder = ErrorDecoder.create(errorInterfaces);
             const decodedError = await errorDecoder.decode(err);
             logger.error(`Decoded error reason: ${decodedError.reason}`);
