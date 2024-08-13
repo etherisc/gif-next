@@ -304,11 +304,6 @@ abstract contract Pool is
         // TODO add logging
     }
 
-    // TODO remove function once this is no longer used to produce contract locations on the fly ...
-    function getContractLocation(bytes memory name) external pure returns (bytes32 hash) {
-        return keccak256(abi.encode(uint256(keccak256(name)) - 1)) & ~bytes32(uint256(0xff));
-    }
-
     function _withdrawBundleFees(NftId bundleNftId, Amount amount) 
         internal
         returns (Amount withdrawnAmount) 

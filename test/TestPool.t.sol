@@ -37,34 +37,34 @@ contract TestPool is GifTest {
         _prepareProduct(false);
     }
 
-    function test_poolContractLocations() public {
-        newPool = new SimplePool(
-            address(registry),
-            productNftId,
-            address(token),
-            new BasicPoolAuthorization("NewSimplePool"),
-            poolOwner
-        );
+    // function test_poolContractLocations() public {
+    //     newPool = new SimplePool(
+    //         address(registry),
+    //         productNftId,
+    //         address(token),
+    //         new BasicPoolAuthorization("NewSimplePool"),
+    //         poolOwner
+    //     );
 
-        bytes32 locationHash = getLocationHash("gif-next.contracts.component.Pool.sol");
-        assertEq(locationHash, 0xecf35607b7e822969ee3625cd815bfc27031f3a93d0be2676e5bde943e2e2300, "check hash");
+    //     bytes32 locationHash = getLocationHash("gif-next.contracts.component.Pool.sol");
+    //     assertEq(locationHash, 0xecf35607b7e822969ee3625cd815bfc27031f3a93d0be2676e5bde943e2e2300, "check hash");
 
-        getLocationHash("etherisc.storage.Pool");
-        getLocationHash("etherisc.storage.NftOwnable");
-        getLocationHash("etherisc.storage.PolicyHolder");
-        getLocationHash("etherisc.storage.Distribution");
-        getLocationHash("etherisc.storage.Pool");
-        getLocationHash("etherisc.storage.Product");
-        getLocationHash("etherisc.storage.Oracle");
-    }
+    //     getLocationHash("etherisc.storage.Pool");
+    //     getLocationHash("etherisc.storage.NftOwnable");
+    //     getLocationHash("etherisc.storage.PolicyHolder");
+    //     getLocationHash("etherisc.storage.Distribution");
+    //     getLocationHash("etherisc.storage.Pool");
+    //     getLocationHash("etherisc.storage.Product");
+    //     getLocationHash("etherisc.storage.Oracle");
+    // }
 
-    function getLocationHash(string memory location) public returns (bytes32 locationHash) {
-        locationHash = pool.getContractLocation(bytes(location));
-        // solhint-disable
-        console.log(location);
-        console.logBytes32(locationHash);
-        // solhint-enable
-    }
+    // function getLocationHash(string memory location) public returns (bytes32 locationHash) {
+    //     locationHash = pool.getContractLocation(bytes(location));
+    //     // solhint-disable
+    //     console.log(location);
+    //     console.logBytes32(locationHash);
+    //     // solhint-enable
+    // }
 
     function test_poolComponentAndPoolInfo() public {
 
