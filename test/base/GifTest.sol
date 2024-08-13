@@ -38,6 +38,7 @@ import {StakingReader} from "../../contracts/staking/StakingReader.sol";
 import {StakingManager} from "../../contracts/staking/StakingManager.sol";
 
 import {AccessManagerCloneable} from "../../contracts/authorization/AccessManagerCloneable.sol";
+import {IInstance} from "../../contracts/instance/IInstance.sol";
 import {InstanceAdmin} from "../../contracts/instance/InstanceAdmin.sol";
 import {InstanceAuthorizationV3} from "../../contracts/instance/InstanceAuthorizationV3.sol";
 import {Instance} from "../../contracts/instance/Instance.sol";
@@ -82,7 +83,7 @@ contract GifTest is GifDeployer {
 
     AccessManagerCloneable public masterAccessManager;
     InstanceAdmin public masterInstanceAdmin;
-    InstanceAuthorizationV3 public instanceAuthorizationV3;
+    address public instanceAuthorizationV3; //InstanceAuthorizationV3
     BundleSet public masterBundleSet;
     InstanceStore public masterInstanceStore;
     Instance public masterInstance;
@@ -92,7 +93,7 @@ contract GifTest is GifDeployer {
     InstanceAdmin public instanceAdmin;
     BundleSet public instanceBundleSet;
     InstanceStore public instanceStore;
-    Instance public instance;
+    IInstance public instance;
     NftId public instanceNftId;
     InstanceReader public instanceReader;
 
@@ -300,7 +301,7 @@ contract GifTest is GifDeployer {
     function _deployMasterInstance() internal 
     {
         // create instance supporting contracts
-        instanceAuthorizationV3 = new InstanceAuthorizationV3();
+        instanceAuthorizationV3 = address(new InstanceAuthorizationV3());
         masterInstanceAdmin = new InstanceAdmin(instanceAuthorizationV3);
         masterInstanceStore = new InstanceStore();
         masterBundleSet = new BundleSet();

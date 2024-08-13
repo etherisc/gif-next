@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import {Amount} from "../type/Amount.sol";
 import {BundleSet} from "./BundleSet.sol";
-import {Instance} from "./Instance.sol";
+import {IInstance} from "./IInstance.sol";
 import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
 import {IService} from "../shared/IService.sol";
 import {NftId} from "../type/NftId.sol";
@@ -55,8 +55,7 @@ interface IInstanceService is IService {
     function createInstance()
         external 
         returns (
-            // TODO check if Instance can be changed to IInstance
-            Instance clonedInstance,
+            IInstance instance,
             NftId instanceNftId
         );
 
