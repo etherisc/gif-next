@@ -64,21 +64,21 @@ Install the dependencies before running the script below for the first time.
 npm install
 ```
 
-The deploy script will deploy all required contracts and create a test instance with a test product and a test pool. 
+The deploy script will deploy all required contracts for gif and create a test instance. 
 
 ```bash
 # run deployment on a locally created ganache instance
-hh run scripts/deploy_all.ts
+hh run scripts/deploy_gif.ts
 ```
 
 ```bash
 # set appropriate values vor env variables (see below)
 
 # run deployment on another network
-hh run --network <networkname> scripts/deploy_all.ts
+hh run --network <networkname> scripts/deploy_gif.ts
 ```
 
-The deployment will persist deployment information into the files `deployment_state_<chainid>.json`, `libraries_<chainid>.json` and `verification_log_<chainid>.json`. 
+The deployment will persist deployment information into the files `deployments/<chainid>/deployment_state.json`, `deployments/<chainid>/libraries.json` and `deployments/<chainid>/verification_log.json`. 
 This data can then be used for verification of the deployed contracts on etherscan/polygonscan.
 
 For the verification of the contracts on etherscan/polygonscan the above files (created by previous deployment) are required and then the following command can be used:
@@ -111,7 +111,6 @@ Environment variables:
 - `WEB3_INFURA_PROJECT_ID` set to infura project id (required for mumbai and mainnet)
 - `WALLET_MNEMONIC` the mnemonic of the wallet to use for deployment (required for mumbai and mainnet)
 - `REGISTRY_ADDRESS` the address of the registry that is already deployed and configured and has a valid master instance
-
 
 ### Console
 
