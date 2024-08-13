@@ -47,4 +47,12 @@ contract SimpleDistribution is
             name,
             token);
     }
+
+
+    function setWallet(address newWallet)
+        external
+        onlyOwner()
+    {
+        _setWallet(newWallet);
+    }
 }

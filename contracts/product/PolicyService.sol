@@ -112,6 +112,7 @@ contract PolicyService is
         external 
         virtual
         nonReentrant()
+        returns (Amount premiumAmount)
     {
         _checkNftType(applicationNftId, POLICY());
 
@@ -170,6 +171,8 @@ contract PolicyService is
             applicationNftId,
             premium);
 
+        premiumAmount = premium.fullPremiumAmount;
+
         // update referral counter 
         {
             IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
@@ -183,8 +186,6 @@ contract PolicyService is
 
         // log policy creation before interactions with token and policy holder
         emit LogPolicyServicePolicyCreated(applicationNftId, premium.premiumAmount, activateAt);
-
-        // TODO add calling pool contract if it needs to validate application
 
         // callback to policy holder if applicable
         _policyHolderPolicyActivated(applicationNftId, activateAt);
@@ -431,7 +432,7 @@ contract PolicyService is
             address policyHolder = getRegistry().ownerOf(applicationNftId);
         
             _checkPremiumBalanceAndAllowance(
-                tokenHandler.getToken(), 
+                tokenHandler.TOKEN(), 
                 address(tokenHandler),
                 policyHolder, 
                 premium.premiumAmount);
@@ -671,10 +672,13 @@ contract PolicyService is
         )
     {
         IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
-        distributionNftId = productInfo.distributionNftId;
-        distributionWallet = instanceReader.getComponentInfo(distributionNftId).wallet;
-        poolWallet = instanceReader.getComponentInfo(productInfo.poolNftId).wallet;
-        productWallet = instanceReader.getComponentInfo(productNftId).wallet;
+        productWallet = instanceReader.getComponentInfo(productNftId).tokenHandler.getWallet();
+        poolWallet = instanceReader.getComponentInfo(productInfo.poolNftId).tokenHandler.getWallet();
+
+        if (productInfo.hasDistribution) {
+            distributionNftId = productInfo.distributionNftId;
+            distributionWallet = instanceReader.getComponentInfo(distributionNftId).tokenHandler.getWallet();
+        }
     }
 
 

@@ -68,12 +68,11 @@ contract ProductWithReinsuranceTest is
         super.setUp();
 
         // reinsurance product
-        _prepareProduct();  
+        _prepareProduct();
 
         // setup product with reinsurance
         _prepareProductWithReinsurance();
     }
-
 
     function test_reinsuranceSetUp() public {
 
@@ -87,11 +86,11 @@ contract ProductWithReinsuranceTest is
 
         // test product with reinsurance
         IComponents.ProductInfo memory productReInfo = instanceReader.getProductInfo(productReNftId);
-        assertTrue(productReInfo.isProcessingFundedClaims, "not processing funded claims");
+        assertTrue(productReInfo.isProcessingFundedClaims, "product not processing funded claims");
 
         // test pool with reinsurance
         IComponents.PoolInfo memory poolReInfo = instanceReader.getPoolInfo(poolReNftId);
-        assertTrue(poolReInfo.isProcessingConfirmedClaims, "not processing confirmed claims");
+        assertTrue(poolReInfo.isProcessingConfirmedClaims, "pool not processing confirmed claims");
         assertTrue(poolReInfo.collateralizationLevel == UFixedLib.one(), "collateralization level not 100%");
         assertTrue(poolReInfo.retentionLevel == UFixedLib.toUFixed(2, -1), "retention level not 20%");
 
@@ -361,9 +360,10 @@ contract ProductWithReinsuranceTest is
         productRe = new ProductWithReinsurance(
             address(registry),
             instanceNftId,
+            address(token),
+            _getProductWithReinsuranceProductInfo(),
             new ProductWithReinsuranceAuthorization(),
-            productOwner,
-            address(token)
+            productOwner
         );
         vm.stopPrank();
 
@@ -394,7 +394,7 @@ contract ProductWithReinsuranceTest is
 
         // token handler only becomes available after registration
         vm.startPrank(poolOwner);
-        poolRe.approveTokenHandler(AmountLib.max());
+        poolRe.approveTokenHandler(token, AmountLib.max());
         vm.stopPrank();
 
         // solhint-disable-next-line
@@ -441,6 +441,16 @@ contract ProductWithReinsuranceTest is
 
         // solhint-disable
         console.log("reinsurance policy nft id", poolRe.resinsurancePolicyNftId().toInt());
-
     }
+
+    function _getProductWithReinsuranceProductInfo()
+        internal
+        view
+        returns (IComponents.ProductInfo memory productInfo)
+    {
+        productInfo = _getSimpleProductInfo();
+        productInfo.isProcessingFundedClaims = true;
+        productInfo.expectedNumberOfOracles = 0;
+        productInfo.oracleNftId = new NftId[](0);
+    }   
 }

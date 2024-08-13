@@ -13,6 +13,7 @@ import {ObjectType, ObjectTypeLib, PROTOCOL, REGISTRY, SERVICE, INSTANCE, STAKE,
 import {ChainNft} from "./ChainNft.sol";
 import {IRegistry} from "./IRegistry.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
+import {IStaking} from "../staking/IStaking.sol";
 import {ReleaseRegistry} from "./ReleaseRegistry.sol";
 import {TokenRegistry} from "./TokenRegistry.sol";
 import {RegistryAdmin} from "./RegistryAdmin.sol";
@@ -354,7 +355,12 @@ contract Registry is
         return _info[nftId];
     }
 
-    function isObjectType(NftId nftId, ObjectType expectedObjectType) external view returns (bool) {
+    function isObjectType(address contractAddress, ObjectType expectedObjectType) external view returns (bool) {
+        NftId nftId = _nftIdByAddress[contractAddress];
+        return isObjectType(nftId, expectedObjectType);
+    }
+
+    function isObjectType(NftId nftId, ObjectType expectedObjectType) public view returns (bool) {
         return _info[nftId].objectType == expectedObjectType;
     }
 
@@ -635,6 +641,8 @@ contract Registry is
                 initialOwner: stakingOwner,
                 data: ""}),
             true); 
+
+        IStaking(_stakingAddress).initializeTokenHandler();
     }
 
     /// @dev Register the provided object info for the specified NFT ID.

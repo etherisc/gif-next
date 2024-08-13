@@ -129,6 +129,7 @@ export async function deployAndRegisterMasterInstance(
         undefined,
         { 
             libraries: {
+                ContractLib: libraries.contractLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
                 VersionPartLib: libraries.versionPartLibAddress,
             }

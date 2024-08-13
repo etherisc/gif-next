@@ -5,8 +5,16 @@ import {TokenHandler} from "./TokenHandler.sol";
 
 library TokenHandlerDeployerLib {
 
-    function deployTokenHandler(address token, address authority) public returns (TokenHandler) {
-        return new TokenHandler(address(token), authority);
+    function deployTokenHandler(
+        address registry,
+        address component,
+        address token, 
+        address authority
+    )
+        public 
+        returns (TokenHandler)
+    {
+        return new TokenHandler(registry, component, token, authority);
     }
 
 }

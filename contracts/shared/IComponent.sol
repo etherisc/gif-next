@@ -31,19 +31,12 @@ interface IComponent is
 
     event LogComponentWalletAddressChanged(address oldWallet, address newWallet);
     event LogComponentWalletTokensTransferred(address from, address to, uint256 amount);
-    event LogComponentTokenHandlerApproved(address token, Amount limit, bool isMaxAmount);
+    event LogComponentTokenHandlerApproved(address tokenHandler, address token, Amount limit, bool isMaxAmount);
 
-    /// @dev approves token hanlder to spend up to the specified amount of tokens
-    /// reverts if component wallet is not component itself
-    /// only component owner (nft holder) is authorizes to call this function
-    function approveTokenHandler(Amount spendingLimitAmount) external;
-
-    /// @dev sets the wallet address for the component.
-    /// if the current wallet has tokens, these will be transferred.
-    /// if the new wallet address is externally owned, an approval from the 
-    /// owner of the external wallet to the tokenhandler of the component that 
-    /// covers the current component balance must exist
-    function setWallet(address walletAddress) external;
+    /// @dev Approves token hanlder to spend up to the specified amount of tokens.
+    /// Reverts if component wallet is not token handler itself.
+    /// Only component owner (nft holder) is authorizes to call this function.
+    function approveTokenHandler(IERC20Metadata token, Amount spendingLimitAmount) external;
 
     /// @dev returns the name of this component
     /// to successfully register the component with an instance the name MUST be unique in the linked instance

@@ -6,9 +6,11 @@ import {Amount, AmountLib} from "../../type/Amount.sol";
 import {BasicProduct} from "../../product/BasicProduct.sol";
 import {ClaimId} from "../../type/ClaimId.sol";
 import {DamageLevel, DAMAGE_SMALL, DAMAGE_MEDIUM, DAMAGE_LARGE} from "./DamageLevel.sol";
+import {FeeLib} from "../../type/Fee.sol";
 import {IAuthorization} from "../../authorization/IAuthorization.sol";
+import {IComponents} from "../../instance/module/IComponents.sol";
 import {IPolicy} from "../../instance/module/IPolicy.sol";
-import {NftId} from "../../type/NftId.sol";
+import {NftId, NftIdLib} from "../../type/NftId.sol";
 import {PayoutId} from "../../type/PayoutId.sol";
 import {POLICY, BUNDLE} from "../../type/ObjectType.sol";
 import {ReferralLib} from "../../type/Referral.sol";
@@ -81,7 +83,7 @@ contract FireProduct is
 
     function _initialize(
         address registry,
-        NftId instanceNftid,
+        NftId instanceNftId,
         string memory componentName,
         address token,
         IAuthorization authorization,
@@ -92,14 +94,28 @@ contract FireProduct is
     {
         _initializeBasicProduct(
             registry,
-            instanceNftid,
-            authorization,
-            initialOwner,
+            instanceNftId,
             componentName,
             token,
-            false, // is interceptor
-            false, // has distribution
-            0);  // number of oracles
+            IComponents.ProductInfo({
+                isProcessingFundedClaims: false,
+                isInterceptingPolicyTransfers: false,
+                hasDistribution: false,
+                expectedNumberOfOracles: 0,
+                numberOfOracles: 0,
+                poolNftId: NftIdLib.zero(),
+                distributionNftId: NftIdLib.zero(),
+                oracleNftId: new NftId[](0),
+                productFee: FeeLib.zero(),
+                processingFee: FeeLib.zero(),
+                distributionFee: FeeLib.zero(),
+                minDistributionOwnerFee: FeeLib.zero(),
+                poolFee: FeeLib.zero(),
+                stakingFee: FeeLib.zero(),
+                performanceFee: FeeLib.zero()
+            }),
+            authorization,
+            initialOwner);  // number of oracles
     }
     
     function cities() public view returns (uint256) {

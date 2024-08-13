@@ -5,7 +5,7 @@ import {IInstance} from "../instance/IInstance.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {NftId} from "../type/NftId.sol";
-import {ObjectType, COMPONENT, DISTRIBUTION, ORACLE, POOL, PRODUCT} from "../type/ObjectType.sol";
+import {ObjectType, COMPONENT, DISTRIBUTION, ORACLE, POOL, PRODUCT, STAKING} from "../type/ObjectType.sol";
 import {Service} from "../shared/Service.sol";
 
 
@@ -27,12 +27,12 @@ abstract contract ComponentVerifyingService is
         view
         returns(
             NftId componentNftId,
-            IRegistry.ObjectInfo memory componentInfo, 
+            IRegistry.ObjectInfo memory objectInfo, 
             IInstance instance
         )
     {
         componentNftId = getRegistry().getNftIdForAddress(msg.sender);
-        (componentInfo, instance) = _getAndVerifyComponentInfo(
+        (objectInfo, instance) = _getAndVerifyComponentInfo(
             componentNftId, 
             expectedType,
             true); // only active
@@ -82,7 +82,15 @@ abstract contract ComponentVerifyingService is
             }
         }
 
-        instance = _getInstanceForComponent(registry, info);
+        if (info.objectType == STAKING()) {
+            return (info, instance);
+        }
+        
+        if (info.objectType == PRODUCT()) {
+            instance = _getInstance(registry, info.parentNftId);
+        } else {
+            instance = _getInstanceForComponent(registry, info.parentNftId);
+        }
 
         // ensure component is not locked
         if (onlyActive) {
@@ -93,21 +101,15 @@ abstract contract ComponentVerifyingService is
     }
 
 
-    function _getInstanceForComponent(IRegistry registry, IRegistry.ObjectInfo memory componentInfo)
+    function _getInstanceForComponent(IRegistry registry, NftId productNftId)
         internal
         view
         returns (IInstance instance)
     {
-        // parent of product is instance
-        if (componentInfo.objectType == PRODUCT()) {
-            instance = _getInstance(registry, componentInfo.parentNftId);
-        // parent of other types is product
-        } else {
-            instance = _getInstance(
+        return _getInstance(
                 registry,
                 registry.getObjectInfo(
-                    componentInfo.parentNftId).parentNftId);
-        }
+                    productNftId).parentNftId);
     }
 
 

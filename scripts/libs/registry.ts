@@ -128,11 +128,11 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         [registryAddress], 
         {
             libraries: {
-                NftIdLib: libraries.nftIdLibAddress,
+                ContractLib: libraries.contractLibAddress,
+                StateIdLib: libraries.stateIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
                 VersionLib: libraries.versionLibAddress,
                 VersionPartLib: libraries.versionPartLibAddress,
-                StateIdLib: libraries.stateIdLibAddress
             }
         });
 
@@ -210,6 +210,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         { 
             libraries: { 
                 AmountLib: libraries.amountLibAddress, 
+                ContractLib: libraries.contractLibAddress,
                 NftIdLib: libraries.nftIdLibAddress, 
                 StakeManagerLib: libraries.stakeManagerLibAddress, 
                 TargetManagerLib: libraries.targetManagerLibAddress, 

@@ -32,7 +32,7 @@ library RiskIdLib {
         return RiskId.wrap(bytes8(0));
     }
 
-    // @dev Converts a role string into a role id.
+    // @dev Converts a string into a risk id.
     function toRiskId(string memory risk) public pure returns (RiskId) {
         return RiskId.wrap(bytes8(keccak256(abi.encode(risk))));
     }

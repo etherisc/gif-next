@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Amount} from "../../type/Amount.sol";
+import {Amount, AmountLib} from "../../type/Amount.sol";
 import {BasicPool} from "../../pool/BasicPool.sol";
 import {Fee} from "../../type/Fee.sol";
 import {IAuthorization} from "../../authorization/IAuthorization.sol";
+import {IComponents} from "../../instance/module/IComponents.sol";
 import {NftId} from "../../type/NftId.sol";
 import {Seconds} from "../../type/Timestamp.sol";
+import {UFixed, UFixedLib} from "../../type/UFixed.sol";
 
 contract FirePool is
     BasicPool
@@ -26,6 +28,15 @@ contract FirePool is
             fireProductNftId,
             componentName,
             token,
+            IComponents.PoolInfo({
+                maxBalanceAmount: AmountLib.max(),
+                isInterceptingBundleTransfers: false,
+                isProcessingConfirmedClaims: false,
+                isExternallyManaged: false,
+                isVerifyingApplications: false,
+                collateralizationLevel: UFixedLib.one(),
+                retentionLevel: UFixedLib.one()
+            }),
             authorization,
             initialOwner);
     }
@@ -35,6 +46,7 @@ contract FirePool is
         NftId fireProductNftId,
         string memory componentName,
         address token,
+        IComponents.PoolInfo memory poolInfo,
         IAuthorization authorization,
         address initialOwner
     )
@@ -44,9 +56,10 @@ contract FirePool is
         _initializeBasicPool(
             registry,
             fireProductNftId,
-            authorization,
-            token,
             componentName,
+            token,
+            poolInfo,
+            authorization,
             initialOwner);
     }
 

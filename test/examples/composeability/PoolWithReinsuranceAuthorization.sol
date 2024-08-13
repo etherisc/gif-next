@@ -49,8 +49,8 @@ contract PoolWithReinsuranceAuthorization
           _authorize(functions, BasicPool.stake.selector, "stake");
           _authorize(functions, BasicPool.unstake.selector, "unstake");
           _authorize(functions, BasicPool.extend.selector, "extend");
+          _authorize(functions, BasicPool.withdrawBundleFees.selector, "withdrawBundleFees");
           _authorize(functions, IInstanceLinkedComponent.withdrawFees.selector, "withdrawFees");
-          _authorize(functions, IPoolComponent.withdrawBundleFees.selector, "withdrawBundleFees");
 
           // authorize claim service for callback
           functions = _authorizeForTarget(getTargetName(), getServiceRole(CLAIM()));

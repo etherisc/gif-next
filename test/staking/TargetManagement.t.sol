@@ -233,9 +233,10 @@ contract StakingTargetManagementTest is GifTest {
     function setUp() public override {
         super.setUp();
 
-        // set staking wallet approval for staking token handler
-        vm.startPrank(stakingOwner);
-        staking.approveTokenHandler(AmountLib.max());
+        // needs component service to be registered
+        // can therefore only be called after service registration
+        vm.startPrank(staking.getOwner());
+        staking.approveTokenHandler(dip, AmountLib.max());
         vm.stopPrank();
     }
 

@@ -182,4 +182,4 @@ jobs:
           hh node > /dev/null 2>&1 &
           hh run scripts/deploy_all.ts --network localhost
           mv deployment.env .env
-          hh run scripts/deploy_fire_components.ts --network localhost
+          # hh run scripts/deploy_fire_components.ts --network localhost

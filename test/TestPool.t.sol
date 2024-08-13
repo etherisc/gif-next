@@ -37,34 +37,35 @@ contract TestPool is GifTest {
         _prepareProduct(false);
     }
 
-    // function test_poolContractLocations() public {
-    //     newPool = new SimplePool(
-    //         address(registry),
-    //         productNftId,
-    //         address(token),
-    //         new BasicPoolAuthorization("NewSimplePool"),
-    //         poolOwner
-    //     );
+    function test_poolContractLocations() public {
+        newPool = new SimplePool(
+            address(registry),
+            productNftId,
+            address(token),
+            _getDefaultSimplePoolInfo(),
+            new BasicPoolAuthorization("NewSimplePool"),
+            poolOwner
+        );
 
-    //     bytes32 locationHash = getLocationHash("gif-next.contracts.component.Pool.sol");
-    //     assertEq(locationHash, 0xecf35607b7e822969ee3625cd815bfc27031f3a93d0be2676e5bde943e2e2300, "check hash");
+        bytes32 locationHash = getLocationHash("gif-next.contracts.component.Pool.sol");
+        assertEq(locationHash, 0xecf35607b7e822969ee3625cd815bfc27031f3a93d0be2676e5bde943e2e2300, "check hash");
 
-    //     getLocationHash("etherisc.storage.Pool");
-    //     getLocationHash("etherisc.storage.NftOwnable");
-    //     getLocationHash("etherisc.storage.PolicyHolder");
-    //     getLocationHash("etherisc.storage.Distribution");
-    //     getLocationHash("etherisc.storage.Pool");
-    //     getLocationHash("etherisc.storage.Product");
-    //     getLocationHash("etherisc.storage.Oracle");
-    // }
+        getLocationHash("etherisc.storage.Pool");
+        getLocationHash("etherisc.storage.NftOwnable");
+        getLocationHash("etherisc.storage.PolicyHolder");
+        getLocationHash("etherisc.storage.Distribution");
+        getLocationHash("etherisc.storage.Pool");
+        getLocationHash("etherisc.storage.Product");
+        getLocationHash("etherisc.storage.Oracle");
+    }
 
-    // function getLocationHash(string memory location) public returns (bytes32 locationHash) {
-    //     locationHash = pool.getContractLocation(bytes(location));
-    //     // solhint-disable
-    //     console.log(location);
-    //     console.logBytes32(locationHash);
-    //     // solhint-enable
-    // }
+    function getLocationHash(string memory location) public returns (bytes32 locationHash) {
+        locationHash = pool.getContractLocation(bytes(location));
+        // solhint-disable
+        console.log(location);
+        console.logBytes32(locationHash);
+        // solhint-enable
+    }
 
     function test_poolComponentAndPoolInfo() public {
 
@@ -74,7 +75,7 @@ contract TestPool is GifTest {
         console.log("pool name: ", componentInfo.name);
         console.log("pool token: ", componentInfo.token.symbol());
         console.log("pool token handler at: ", address(componentInfo.tokenHandler));
-        console.log("pool wallet: ", componentInfo.wallet);
+        console.log("pool wallet: ", componentInfo.tokenHandler.getWallet());
         // solhint-enable
 
         // check pool
@@ -88,15 +89,21 @@ contract TestPool is GifTest {
 
         // check token handler
         assertTrue(address(componentInfo.tokenHandler) != address(0), "token handler zero");
-        assertEq(address(componentInfo.tokenHandler.getToken()), address(pool.getToken()), "unexpected token for token handler");
+        assertEq(address(componentInfo.tokenHandler.TOKEN()), address(pool.getToken()), "unexpected token for token handler");
 
         // check wallet
-        assertEq(componentInfo.wallet, address(pool), "unexpected wallet address");
+        assertEq(componentInfo.tokenHandler.getWallet(), address(pool.getTokenHandler()), "unexpected wallet address");
 
         IComponents.PoolInfo memory poolInfo = instanceReader.getPoolInfo(poolNftId);
 
         // check nftid
-        assertEq(poolInfo.bundleOwnerRole.toInt(), PUBLIC_ROLE().toInt(), "unexpected bundle owner role");
+        assertEq(poolInfo.maxBalanceAmount.toInt(), AmountLib.max().toInt(), "unexpected max balance amount");
+        assertFalse(poolInfo.isInterceptingBundleTransfers, "unexpected is intercepting");
+        assertFalse(poolInfo.isProcessingConfirmedClaims, "unexpected is processing");
+        assertFalse(poolInfo.isExternallyManaged, "unexpected is externally managed");
+        assertFalse(poolInfo.isVerifyingApplications, "unexpected is verifing");
+        assertEq(poolInfo.collateralizationLevel.toInt(), UFixedLib.one().toInt(), "unexpected collateralization level");
+        assertEq(poolInfo.retentionLevel.toInt(), UFixedLib.one().toInt(), "unexpected retention level");
 
         // check pool balance
         assertTrue(instanceReader.getBalanceAmount(poolNftId).eqz(), "initial pool balance not zero");
@@ -169,7 +176,7 @@ contract TestPool is GifTest {
         assertEq(netStakedAmount, 10000, "net staked amount not 10000");
 
         assertEq(token.balanceOf(poolOwner), 0, "pool owner token balance not 0");
-        assertEq(token.balanceOf(componentInfo.wallet), 10000, "pool wallet token balance not 10000");
+        assertEq(token.balanceOf(componentInfo.tokenHandler.getWallet()), 10000, "pool wallet token balance not 10000");
 
         assertEq(instanceReader.getBalanceAmount(poolNftId).toInt(), 10000, "pool balance not 10000");
         assertEq(instanceReader.getFeeAmount(poolNftId).toInt(), 0, "pool fee not 0");
@@ -299,7 +306,7 @@ contract TestPool is GifTest {
         assertEq(netStakedAmount, 9000, "net staked amount not 9000");
 
         assertEq(token.balanceOf(poolOwner), 0, "pool owner token balance not 0");
-        assertEq(token.balanceOf(componentInfo.wallet), 10000, "pool wallet token balance not 10000");
+        assertEq(token.balanceOf(componentInfo.tokenHandler.getWallet()), 10000, "pool wallet token balance not 10000");
 
         assertEq(instanceReader.getBalanceAmount(poolNftId).toInt(), 10000, "pool balance not 10000");
         assertEq(instanceReader.getFeeAmount(poolNftId).toInt(), 1000, "pool fee not 0");

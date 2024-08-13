@@ -17,7 +17,7 @@ import {RiskId, RiskIdLib} from "../contracts/type/RiskId.sol";
 import {ReferralId, ReferralLib} from "../contracts/type/Referral.sol";
 import {Seconds, SecondsLib} from "../contracts/type/Seconds.sol";
 import {Timestamp, TimestampLib} from "../contracts/type/Timestamp.sol";
-import {TokenHandler} from "../contracts/shared/TokenHandler.sol";
+import {TokenHandler, TokenHandlerBase} from "../contracts/shared/TokenHandler.sol";
 import {Amount, AmountLib} from "../contracts/type/Amount.sol";
 import {INftOwnable} from "../contracts/shared/INftOwnable.sol";
 
@@ -28,7 +28,7 @@ contract TestFees is GifTest {
     ReferralId referralId;
 
     /// @dev test withdraw fees from distribution component as distribution owner
-    function test_Fees_withdrawDistributionFees() public {
+    function test_feesWithdrawDistributionFees() public {
         // GIVEN
         _setupWithActivePolicy(false);
 
@@ -38,7 +38,7 @@ contract TestFees is GifTest {
         Amount distributionBalance = instanceReader.getBalanceAmount(distributionNftId);
 
         uint256 distributionOwnerTokenBalanceBefore = token.balanceOf(distributionOwner);
-        uint256 distributionTokenBalanceBefore = token.balanceOf(address(distribution));
+        uint256 distributionTokenBalanceBefore = token.balanceOf(distribution.getWallet());
         vm.stopPrank();
 
         Amount withdrawAmount = AmountLib.toAmount(15);
@@ -59,7 +59,7 @@ contract TestFees is GifTest {
         assertEq(amountWithdrawn.toInt(), withdrawAmount.toInt(), "withdrawn amount not 15");
         uint256 distributionOwnerTokenBalanceAfter = token.balanceOf(distributionOwner);
         assertEq(distributionOwnerTokenBalanceAfter, distributionOwnerTokenBalanceBefore + withdrawAmount.toInt(), "distribution owner balance not 15 higher");
-        uint256 distributionTokenBalanceAfter = token.balanceOf(address(distribution));
+        uint256 distributionTokenBalanceAfter = token.balanceOf(distribution.getWallet());
         assertEq(distributionTokenBalanceAfter, distributionTokenBalanceBefore - withdrawAmount.toInt(), "distribution balance not 15 lower");
 
         Amount distributionFeeAfter = instanceReader.getFeeAmount(distributionNftId);
@@ -69,7 +69,7 @@ contract TestFees is GifTest {
     }
 
     /// @dev test withdraw fees from distribution component as not the distribution owner
-    function test_Fees_withdrawDistributionFees_notOwner() public {
+    function test_feesWithdrawDistributionFees_notOwner() public {
         // GIVEN
         _setupWithActivePolicy(false);
 
@@ -86,7 +86,7 @@ contract TestFees is GifTest {
     }
 
     /// @dev try to withdraw all fees from distribution component
-    function test_Fees_withdrawDistributionFees_getMaxAmount() public {
+    function test_feesWithdrawDistributionFees_getMaxAmount() public {
         // GIVEN
         _setupWithActivePolicy(false);
 
@@ -95,7 +95,7 @@ contract TestFees is GifTest {
         assertEq(distributionFee.toInt(), 20, "distribution fee not 20"); // 20% of the 10% premium -> 20
 
         uint256 distributionOwnerBalanceBefore = token.balanceOf(distributionOwner);
-        uint256 distributionBalanceBefore = token.balanceOf(address(distribution));
+        uint256 distributionBalanceBefore = token.balanceOf(distribution.getWallet());
         vm.stopPrank();
 
         // WHEN
@@ -106,7 +106,7 @@ contract TestFees is GifTest {
         assertEq(withdrawnAmount.toInt(), 20, "withdrawn amount not 20");
         uint256 distributionOwnerBalanceAfter = token.balanceOf(distributionOwner);
         assertEq(distributionOwnerBalanceAfter, distributionOwnerBalanceBefore + 20, "distribution owner balance not 20 higher");
-        uint256 distributionBalanceAfter = token.balanceOf(address(distribution));
+        uint256 distributionBalanceAfter = token.balanceOf(distribution.getWallet());
         assertEq(distributionBalanceAfter, distributionBalanceBefore - 20, "distribution balance not 20 lower");
 
         Amount distributionFeeAfter = instanceReader.getFeeAmount(distributionNftId);
@@ -114,7 +114,7 @@ contract TestFees is GifTest {
     }
 
     /// @dev try to withdraw more fees than available from distribution component 
-    function test_Fees_withdrawDistributionFees_withdrawlAmountTooLarge() public {
+    function test_feesWithdrawDistributionFees_withdrawlAmountTooLarge() public {
         // GIVEN
         _setupWithActivePolicy(false);
 
@@ -123,7 +123,7 @@ contract TestFees is GifTest {
         assertEq(distributionFee.toInt(), 20, "distribution fee not 20"); // 20% of the 10% premium -> 20
 
         uint256 distributionOwnerBalanceBefore = token.balanceOf(distributionOwner);
-        uint256 distributionBalanceBefore = token.balanceOf(address(distribution));
+        uint256 distributionBalanceBefore = token.balanceOf(distribution.getWallet());
         vm.stopPrank();
 
         Amount withdrawalAmount = AmountLib.toAmount(30);
@@ -140,7 +140,7 @@ contract TestFees is GifTest {
     }
 
     /// @dev try to withdraw when allowance is too small
-    function test_Fees_withdrawDistributionFees_allowanceTooSmall() public {
+    function test_feesWithdrawDistributionFees_allowanceTooSmall() public {
         // GIVEN
         _setupWithActivePolicy(false);
 
@@ -154,7 +154,7 @@ contract TestFees is GifTest {
         
         // THEN
         vm.expectRevert(abi.encodeWithSelector(
-            TokenHandler.ErrorTokenHandlerAllowanceTooSmall.selector, 
+            TokenHandlerBase.ErrorTokenHandlerAllowanceTooSmall.selector, 
             address(token),
             externalWallet, 
             address(distribution.getTokenHandler()),
@@ -166,7 +166,7 @@ contract TestFees is GifTest {
     }
 
     /// @dev try to withdraw zero amount
-    function test_Fees_withdrawDistributionFees_withdrawalAmountZero() public {
+    function test_feesWithdrawDistributionFees_withdrawalAmountZero() public {
         // GIVEN
         _setupWithActivePolicy(false);
 
@@ -182,7 +182,7 @@ contract TestFees is GifTest {
     }
 
     /// @dev test withdraw fees from pool component as pool owner
-    function test_Fees_withdrawPoolFees() public {
+    function test_feesWithdrawPoolFees() public {
         // GIVEN
         _setupWithActivePolicy(false);
 
@@ -192,7 +192,7 @@ contract TestFees is GifTest {
         Amount poolBalance = instanceReader.getBalanceAmount(poolNftId);
 
         uint256 poolOwnerTokenBalanceBefore = token.balanceOf(poolOwner);
-        uint256 poolTokenBalanceBefore = token.balanceOf(address(pool));
+        uint256 poolTokenBalanceBefore = token.balanceOf(pool.getWallet());
         vm.stopPrank();
 
         // WHEN
@@ -203,7 +203,7 @@ contract TestFees is GifTest {
         assertEq(amountWithdrawn.toInt(), 3, "withdrawn amount not 3");
         uint256 poolOwnerTokenBalanceAfter = token.balanceOf(poolOwner);
         assertEq(poolOwnerTokenBalanceAfter, poolOwnerTokenBalanceBefore + 3, "pool owner balance not 3 higher");
-        uint256 poolTokenBalanceAfter = token.balanceOf(address(pool));
+        uint256 poolTokenBalanceAfter = token.balanceOf(pool.getWallet());
         assertEq(poolTokenBalanceAfter, poolTokenBalanceBefore - 3, "pool balance not 3 lower");
 
         Amount poolFeeAfter = instanceReader.getFeeAmount(poolNftId);
@@ -213,7 +213,7 @@ contract TestFees is GifTest {
     }
 
     /// @dev test withdraw fees from pool component as not the pool owner
-    function test_Fees_withdrawPoolFees_notOwner() public {
+    function test_feesWithdrawPoolFees_notOwner() public {
         // GIVEN
         _setupWithActivePolicy(false);
 
@@ -230,7 +230,7 @@ contract TestFees is GifTest {
     }
 
     /// @dev test withdraw fees from product component as product owner
-    function test_Fees_withdrawProductFees() public {
+    function test_feesWithdrawProductFeesHappyCase() public {
         // GIVEN
         _setupWithActivePolicy(false);
 
@@ -240,7 +240,7 @@ contract TestFees is GifTest {
         Amount productBalance = instanceReader.getBalanceAmount(productNftId);
 
         uint256 productOwnerTokenBalanceBefore = token.balanceOf(productOwner);
-        uint256 productTokenBalanceBefore = token.balanceOf(address(product));
+        uint256 productTokenBalanceBefore = token.balanceOf(product.getWallet());
         vm.stopPrank();
 
         // WHEN
@@ -251,7 +251,7 @@ contract TestFees is GifTest {
         assertEq(amountWithdrawn.toInt(), 3, "withdrawn amount not 3");
         uint256 productOwnerTokenBalanceAfter = token.balanceOf(productOwner);
         assertEq(productOwnerTokenBalanceAfter, productOwnerTokenBalanceBefore + 3, "product owner balance not 3 higher");
-        uint256 productTokenBalanceAfter = token.balanceOf(address(product));
+        uint256 productTokenBalanceAfter = token.balanceOf(product.getWallet());
         assertEq(productTokenBalanceAfter, productTokenBalanceBefore - 3, "product balance not 3 lower");
 
         Amount productFeeAfter = instanceReader.getFeeAmount(productNftId);
@@ -261,7 +261,7 @@ contract TestFees is GifTest {
     }
 
     /// @dev test withdraw fees from product component as not the product owner
-    function test_Fees_withdrawProductFees_notOwner() public {
+    function test_feesWithdrawProductFees_notOwner() public {
         // GIVEN
         _setupWithActivePolicy(false);
 
@@ -278,7 +278,7 @@ contract TestFees is GifTest {
     }
     
     /// @dev test withdraw of distributor commission
-    function test_Fees_withdrawCommission() public {
+    function test_feesWithdrawCommission() public {
         // GIVEN
         _setupWithActivePolicy(true);
 
@@ -292,7 +292,7 @@ contract TestFees is GifTest {
 
         uint256 distributionOwnerTokenBalanceBefore = token.balanceOf(distributionOwner);
         uint256 distributorTokenBalanceBefore = token.balanceOf(distributor);
-        uint256 distributionTokenBalanceBefore = token.balanceOf(address(distribution));
+        uint256 distributionTokenBalanceBefore = token.balanceOf(distribution.getWallet());
         vm.stopPrank();
 
         Amount withdrawAmount = AmountLib.toAmount(3);
@@ -324,12 +324,12 @@ contract TestFees is GifTest {
         assertEq(distributionOwnerTokenBalanceAfter, distributionOwnerTokenBalanceBefore, "distribution owner balance changed");
         uint256 distributorTokenBalanceAfter = token.balanceOf(distributor);
         assertEq(distributorTokenBalanceAfter, distributorTokenBalanceBefore + withdrawAmount.toInt(), "distribution owner balance not 3 higher");
-        uint256 distributionTokenBalanceAfter = token.balanceOf(address(distribution));
+        uint256 distributionTokenBalanceAfter = token.balanceOf(distribution.getWallet());
         assertEq(distributionTokenBalanceAfter, distributionTokenBalanceBefore - withdrawAmount.toInt(), "distribution balance not 3 lower");
     }
 
     /// @dev test withdraw of distributor commission as not the distributor
-    function test_Fees_withdrawCommission_notDistributor() public {
+    function test_feesWithdrawCommission_notDistributor() public {
         // GIVEN
         _setupWithActivePolicy(true);
 
@@ -344,7 +344,7 @@ contract TestFees is GifTest {
     }
 
     /// @dev test withdraw of distributor commission with max value
-    function test_Fees_withdrawCommission_maxAmount() public {
+    function test_feesWithdrawCommission_maxAmount() public {
         // GIVEN
         _setupWithActivePolicy(true);
 
@@ -357,7 +357,7 @@ contract TestFees is GifTest {
 
         uint256 distributionOwnerBalanceBefore = token.balanceOf(distributionOwner);
         uint256 distributorBalanceBefore = token.balanceOf(distributor);
-        uint256 distributionBalanceBefore = token.balanceOf(address(distribution));
+        uint256 distributionBalanceBefore = token.balanceOf(distribution.getWallet());
         vm.stopPrank();
 
         Amount withdrawAmount = AmountLib.max();
@@ -388,12 +388,12 @@ contract TestFees is GifTest {
         assertEq(distributionOwnerBalanceAfter, distributionOwnerBalanceBefore, "distribution owner balance changed");
         uint256 distributorBalanceAfter = token.balanceOf(distributor);
         assertEq(distributorBalanceAfter, distributorBalanceBefore + expectedWithdrawnAmount.toInt(), "distribution owner balance not 5 higher");
-        uint256 distributionBalanceAfter = token.balanceOf(address(distribution));
+        uint256 distributionBalanceAfter = token.balanceOf(distribution.getWallet());
         assertEq(distributionBalanceAfter, distributionBalanceBefore - expectedWithdrawnAmount.toInt(), "distribution balance not 5 lower");
     }
 
     /// @dev test withdraw of distributor commission with a too large amount
-    function test_Fees_withdrawCommission_amountTooLarge() public {
+    function test_feesWithdrawCommission_amountTooLarge() public {
         // GIVEN
         _setupWithActivePolicy(true);
 
@@ -411,7 +411,7 @@ contract TestFees is GifTest {
     }
 
     /// @dev test withdraw of distributor commission with a zero amount
-    function test_Fees_withdrawCommission_amountIsZero() public {
+    function test_feesWithdrawCommission_amountIsZero() public {
         // GIVEN
         _setupWithActivePolicy(true);
 
@@ -420,14 +420,14 @@ contract TestFees is GifTest {
 
         // THEN 
         vm.expectRevert(abi.encodeWithSelector(
-            TokenHandler.ErrorTokenHandlerAmountIsZero.selector));
+            TokenHandlerBase.ErrorTokenHandlerAmountIsZero.selector));
         
         // WHEN - the distributor withdraws part of his commission
         distribution.withdrawCommission(distributorNftId, withdrawAmount);
     }
 
     /// @dev test withdraw of distributor commission when allowance is too small
-    function test_Fees_withdrawCommission_allowanceTooSmall() public {
+    function test_feesWithdrawCommission_allowanceTooSmall() public {
         // GIVEN
         _setupWithActivePolicy(true);
 
@@ -441,7 +441,7 @@ contract TestFees is GifTest {
 
         // THEN 
         vm.expectRevert(abi.encodeWithSelector(
-            TokenHandler.ErrorTokenHandlerAllowanceTooSmall.selector,
+            TokenHandlerBase.ErrorTokenHandlerAllowanceTooSmall.selector,
             address(token),
             externalWallet,
             address(distribution.getTokenHandler()),
@@ -452,7 +452,7 @@ contract TestFees is GifTest {
         distribution.withdrawCommission(distributorNftId, withdrawAmount);
     }
 
-    function test_Fees_withdrawBundleFees() public {
+    function test_feesWithdrawBundleFees() public {
         // GIVEN
         _setupWithActivePolicy(false);
 
@@ -464,7 +464,7 @@ contract TestFees is GifTest {
         Amount poolFeeBefore = instanceReader.getFeeAmount(poolNftId);
 
         uint256 investorTokenBalanceBefore = token.balanceOf(investor);
-        uint256 poolTokenBalanceBefore = token.balanceOf(address(pool));
+        uint256 poolTokenBalanceBefore = token.balanceOf(pool.getWallet());
         vm.stopPrank();
 
         Amount withdrawAmount = AmountLib.toAmount(5);
@@ -496,12 +496,12 @@ contract TestFees is GifTest {
         // and the tokens have been transferred
         uint256 investorTokenBalanceAfter = token.balanceOf(investor);
         assertEq(investorTokenBalanceAfter, investorTokenBalanceBefore + withdrawAmount.toInt(), "investor did not received the withdrawn tokens");
-        uint256 poolTokenBalanceAfter = token.balanceOf(address(pool));
+        uint256 poolTokenBalanceAfter = token.balanceOf(pool.getWallet());
         assertEq(poolTokenBalanceAfter, poolTokenBalanceBefore - withdrawAmount.toInt(), "pool did not transfer the withdrawn tokens");
     }
 
     /// @dev test withdraw of bundle fees when the bundle is locked
-    function test_Fees_withdrawBundleFees_bundleLocked() public {
+    function test_feesWithdrawBundleFees_bundleLocked() public {
         // GIVEN
         _setupWithActivePolicy(false);
 
@@ -529,7 +529,7 @@ contract TestFees is GifTest {
     }
 
     /// @dev test withdraw of bundle fees when the requester is not the bundle owner
-    function test_Fees_withdrawBundleFees_notBundleOwner() public {
+    function test_feesWithdrawBundleFees_notBundleOwner() public {
         // GIVEN
         _setupWithActivePolicy(false);
 
@@ -549,7 +549,7 @@ contract TestFees is GifTest {
     }
 
     /// @dev test withdraw of bundle fees when the max amount is requested
-    function test_Fees_withdrawBundleFees_maxAmount() public {
+    function test_feesWithdrawBundleFees_maxAmount() public {
         // GIVEN
         _setupWithActivePolicy(false);
 
@@ -561,7 +561,7 @@ contract TestFees is GifTest {
         Amount poolFeeBefore = instanceReader.getFeeAmount(poolNftId);
 
         uint256 investorTokenBalanceBefore = token.balanceOf(investor);
-        uint256 poolTokenBalanceBefore = token.balanceOf(address(pool));
+        uint256 poolTokenBalanceBefore = token.balanceOf(pool.getWallet());
         vm.stopPrank();
 
         Amount withdrawAmount = AmountLib.max();
@@ -594,12 +594,12 @@ contract TestFees is GifTest {
         // and the tokens have been transferred
         uint256 investorTokenBalanceAfter = token.balanceOf(investor);
         assertEq(investorTokenBalanceAfter, investorTokenBalanceBefore + expectedWithdrawAmount.toInt(), "investor did not received the withdrawn tokens");
-        uint256 poolTokenBalanceAfter = token.balanceOf(address(pool));
+        uint256 poolTokenBalanceAfter = token.balanceOf(pool.getWallet());
         assertEq(poolTokenBalanceAfter, poolTokenBalanceBefore - expectedWithdrawAmount.toInt(), "pool did not transfer the withdrawn tokens");
     }
 
     /// @dev test withdraw of bundle fees when the withdraw amount is too large
-    function test_Fees_withdrawBundleFees_amountTooLarge() public {
+    function test_feesWithdrawBundleFees_amountTooLarge() public {
         // GIVEN
         _setupWithActivePolicy(false);
 
@@ -619,7 +619,7 @@ contract TestFees is GifTest {
     }
 
     /// @dev test withdraw of bundle fees when the allowance is too small
-    function test_Fees_withdrawBundleFees_allowanceTooSmall() public {
+    function test_feesWithdrawBundleFees_allowanceTooSmall() public {
         // GIVEN
         _setupWithActivePolicy(false);
 
@@ -635,7 +635,7 @@ contract TestFees is GifTest {
         
         // THEN - expect a revert
         vm.expectRevert(abi.encodeWithSelector(
-            TokenHandler.ErrorTokenHandlerAllowanceTooSmall.selector, 
+            TokenHandlerBase.ErrorTokenHandlerAllowanceTooSmall.selector, 
             address(token),
             externalWallet,
             address(pool.getTokenHandler()),
@@ -647,7 +647,7 @@ contract TestFees is GifTest {
     }
 
     /// @dev test withdraw of bundle fees when the amount is zero
-    function test_Fees_withdrawBundleFees_amountIsZero() public {
+    function test_feesWithdrawBundleFees_amountIsZero() public {
         // GIVEN
         _setupWithActivePolicy(false);
 
@@ -663,7 +663,7 @@ contract TestFees is GifTest {
         
         // THEN - expect a revert
         vm.expectRevert(abi.encodeWithSelector(
-            TokenHandler.ErrorTokenHandlerAmountIsZero.selector));
+            TokenHandlerBase.ErrorTokenHandlerAmountIsZero.selector));
         
         // WHEN - the investor tries to withdraw more tokens than available 
         pool.withdrawBundleFees(bundleNftId, withdrawAmount);

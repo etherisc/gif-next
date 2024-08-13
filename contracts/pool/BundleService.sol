@@ -63,6 +63,7 @@ contract BundleService is
     )
         external
         virtual
+        restricted()
     {
         _checkNftType(bundleNftId, BUNDLE());
 
@@ -83,20 +84,17 @@ contract BundleService is
 
 
     function create(
-        IInstance instance,
-        NftId poolNftId,
         address owner, 
         Fee memory bundleFee, 
-        Amount stakingAmount, 
         Seconds lifetime, 
         bytes calldata filter
     )
         external
-        override
-        restricted
+        virtual
+        restricted()
         returns(NftId bundleNftId)
     {
-        _checkNftType(poolNftId, POOL());
+        (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
 
         // register bundle with registry
         bundleNftId = _registryService.registerBundle(
@@ -125,19 +123,11 @@ contract BundleService is
             })
         );
 
-        if (stakingAmount.gtz()) {
-            // bundle book keeping
-            _componentService.increaseBundleBalance(
-                instanceStore, 
-                bundleNftId, 
-                stakingAmount, 
-                AmountLib.zero()); // fee amount
-        }
-
         // put bundle under bundle managemet
         BundleSet bundleManager = instance.getBundleSet();
         bundleManager.add(bundleNftId);
-        // TODO add logging
+
+        emit LogBundleServiceBundleCreated(bundleNftId, poolNftId);
     }
 
 
@@ -194,6 +184,7 @@ contract BundleService is
     function lock(NftId bundleNftId) 
         external
         virtual
+        restricted()
     {
         _checkNftType(bundleNftId, BUNDLE());
 
@@ -213,6 +204,7 @@ contract BundleService is
     function unlock(NftId bundleNftId) 
         external
         virtual
+        restricted()
     {
         _checkNftType(bundleNftId, BUNDLE());
 
@@ -235,7 +227,7 @@ contract BundleService is
     ) 
         external
         virtual
-        restricted
+        restricted()
         returns (Amount unstakedAmount, Amount feeAmount)
     {
         _checkNftType(bundleNftId, BUNDLE());
@@ -271,7 +263,7 @@ contract BundleService is
     ) 
         external 
         virtual
-        // TODO: restricted() (once #462 is done)
+        restricted()
     {
         _checkNftType(bundleNftId, BUNDLE());
 
@@ -299,7 +291,7 @@ contract BundleService is
     ) 
         external 
         virtual
-        // TODO: restricted() (once #462 is done)
+        restricted()
         returns (Amount unstakedAmount)
     {
         _checkNftType(bundleNftId, BUNDLE());
@@ -335,7 +327,7 @@ contract BundleService is
     function extend(NftId bundleNftId, Seconds lifetimeExtension) 
         external 
         virtual
-        // TODO: restricted() (once #462 is done)
+        restricted()
         returns (Timestamp extendedExpiredAt) 
     {
         _checkNftType(bundleNftId, BUNDLE());
@@ -406,7 +398,7 @@ contract BundleService is
     function withdrawBundleFees(NftId bundleNftId, Amount amount) 
         public 
         virtual
-        // TODO: restricted() (once #462 is done)
+        restricted()
         returns (Amount withdrawnAmount) 
     {
         _checkNftType(bundleNftId, BUNDLE());
@@ -415,7 +407,7 @@ contract BundleService is
         InstanceReader reader = instance.getInstanceReader();
         
         IComponents.ComponentInfo memory poolInfo = reader.getComponentInfo(poolNftId);
-        address poolWallet = poolInfo.wallet;
+        address poolWallet = poolInfo.tokenHandler.getWallet();
         
         // IBundle.BundleInfo memory bundleInfo = reader.getBundleInfo(bundleNftId);
         

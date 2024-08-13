@@ -388,7 +388,9 @@ contract ClaimService is
             {
                 NftId poolNftId = getRegistry().getObjectInfo(policyInfo.bundleNftId).parentNftId;
                 IComponents.ComponentInfo memory poolInfo = instanceReader.getComponentInfo(poolNftId);
-                poolInfo.tokenHandler.distributeTokens(poolInfo.wallet, beneficiary, netPayoutAmount);
+                poolInfo.tokenHandler.pushToken(
+                    beneficiary, 
+                    netPayoutAmount);
 
                 // TODO add 2nd token tx if processingFeeAmount > 0
             }
