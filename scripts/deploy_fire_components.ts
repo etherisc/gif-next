@@ -1,35 +1,63 @@
+import { resolveAddress, Signer } from "ethers";
 import { FirePool, FireProduct, FireProduct__factory, IInstance__factory, IInstanceService__factory } from "../typechain-types";
 import { getNamedAccounts } from "./libs/accounts";
 import { deployContract } from "./libs/deployment";
+import { LibraryAddresses } from "./libs/libraries";
+import { ServiceAddresses } from "./libs/services";
 import { executeTx, getFieldFromLogs, getTxOpts } from "./libs/transaction";
 import { loadVerificationQueueState } from './libs/verification_queue';
 import { logger } from "./logger";
 
 async function main() {
-    logger.info("deploying components ...");
     loadVerificationQueueState();
 
     const { productOwner: fireOwner } = await getNamedAccounts();
 
-    const amountLibAddress = process.env.AMOUNTLIB_ADDRESS;
-    const feeLibAddress = process.env.FEELIB_ADDRESS;
-    const nftIdLibAddress = process.env.NFTIDLIB_ADDRESS;
-    const referralLibAddress = process.env.REFERRALLIB_ADDRESS;
-    const riskIdLibAddress = process.env.RISKIDLIB_ADDRESS;
-    const roleIdLibAddress = process.env.ROLEIDLIB_ADDRESS;
-    const secondsLibAddress = process.env.SECONDSLIB_ADDRESS;
-    const selectorLibAddress = process.env.SELECTORLIB_ADDRESS;
-    const strLibAddress = process.env.STRLIB_ADDRESS;
-    const timestampLibAddress = process.env.TIMESTAMPLIB_ADDRESS;
-    const ufixedLibAddress = process.env.UFIXEDLIB_ADDRESS;
-    const versionPartLibAddress = process.env.VERSIONPARTLIB_ADDRESS;
+    await deployFireComponentContracts(
+        {
+            amountLibAddress: process.env.AMOUNTLIB_ADDRESS!,
+            feeLibAddress: process.env.FEELIB_ADDRESS!,
+            nftIdLibAddress: process.env.NFTIDLIB_ADDRESS!,
+            referralLibAddress: process.env.REFERRALLIB_ADDRESS!,
+            riskIdLibAddress: process.env.RISKIDLIB_ADDRESS!,
+            roleIdLibAddress: process.env.ROLEIDLIB_ADDRESS!,
+            secondsLibAddress: process.env.SECONDSLIB_ADDRESS!,
+            selectorLibAddress: process.env.SELECTORLIB_ADDRESS!,
+            strLibAddress: process.env.STRLIB_ADDRESS!,
+            timestampLibAddress: process.env.TIMESTAMPLIB_ADDRESS!,
+            uFixedLibAddress: process.env.UFIXEDLIB_ADDRESS!,
+            versionPartLibAddress: process.env.VERSIONPARTLIB_ADDRESS!,
+        } as LibraryAddresses,
+        {
+            instanceServiceAddress: process.env.INSTANCE_SERVICE_ADDRESS!,
+        } as ServiceAddresses,
+        fireOwner
+    );
+}
+
+
+export async function deployFireComponentContracts(libraries: LibraryAddresses, services: ServiceAddresses, fireOwner: Signer) {
+    logger.info("===== deploying fire insurance components ...");
+    
+    const amountLibAddress = libraries.amountLibAddress;
+    const feeLibAddress = libraries.feeLibAddress;
+    const nftIdLibAddress = libraries.nftIdLibAddress;
+    const referralLibAddress = libraries.referralLibAddress;
+    const riskIdLibAddress = libraries.riskIdLibAddress;
+    const roleIdLibAddress = libraries.roleIdLibAddress;
+    const secondsLibAddress = libraries.secondsLibAddress;
+    const selectorLibAddress = libraries.selectorLibAddress;
+    const strLibAddress = libraries.strLibAddress;
+    const timestampLibAddress = libraries.timestampLibAddress;
+    const ufixedLibAddress = libraries.uFixedLibAddress;
+    const versionPartLibAddress = libraries.versionPartLibAddress;
         
-    const instanceServiceAddress = process.env.INSTANCE_SERVICE_ADDRESS;
+    const instanceServiceAddress = services.instanceServiceAddress;
 
-    // logger.debug(`instanceServiceAddress: ${instanceServiceAddress}`);
-    const instanceService = IInstanceService__factory.connect(instanceServiceAddress!, fireOwner);
+    logger.debug(`instanceServiceAddress: ${instanceServiceAddress}`);
+    const instanceService = IInstanceService__factory.connect(await resolveAddress(instanceServiceAddress), fireOwner);
 
-    console.log("create new instance");
+    logger.info("===== create new instance");
     const instanceCreateTx = await executeTx(async () => 
         await instanceService.createInstance(getTxOpts()),
         "fire ex - createInstance",
@@ -38,8 +66,10 @@ async function main() {
 
     const instanceAddress = getFieldFromLogs(instanceCreateTx.logs, instanceService.interface, "LogInstanceCloned", "instance") as string;
     const instanceNftId = getFieldFromLogs(instanceCreateTx.logs, instanceService.interface, "LogInstanceCloned", "instanceNftId") as string;
+    logger.debug(`Instance created at ${instanceAddress} with NFT ID ${instanceNftId}`);
     const instance = IInstance__factory.connect(instanceAddress, fireOwner);
-    logger.info(`Instance created at ${instanceAddress} with NFT ID ${instanceNftId}`);
+
+    logger.info(`===== deploying Fire contracts`);
 
     const { address: fireUsdAddress } = await deployContract(
         "FireUSD",
@@ -140,14 +170,16 @@ async function main() {
     );
     const firePoolNftId = await firePool.getNftId();
 
-    logger.info(`FireUSD deployed at ${fireUsdAddress}`);
-    logger.info(`FirePool registered at ${firePoolAddress} with NFT ID ${firePoolNftId}`);
-    logger.info(`FireProduct registered at ${fireProductAddress} with NFT ID ${fireProductNftId}`);
+    logger.info(`===== Instance created. address: ${instanceAddress}, NFT ID: ${instanceNftId}`);
+    logger.info(`===== FireUSD deployed at ${fireUsdAddress}`);
+    logger.info(`===== FireProduct deployed at ${fireProductAddress} and registered with NFT ID ${fireProductNftId}`);
+    logger.info(`===== FirePool deployed at ${firePoolAddress} and registered with NFT ID ${firePoolNftId}`);
 }
 
-
-main().catch((error) => {
-    logger.error(error.stack);
-    logger.error(error.data);
-    process.exit(1);
-});
+if (require.main === module) {
+    main().catch((error) => {
+        logger.error(error.stack);
+        logger.error(error.data);
+        process.exit(1);
+    });
+}
