@@ -1,34 +1,13 @@
-import { DecodedError, ErrorDecoder } from 'ethers-decode-error';
-import { AccessManaged__factory, AccessManagedUpgradeable__factory, BasicPool__factory, FirePool, FirePool__factory, FireProduct, FireProduct__factory, IAccessManaged__factory, IComponent__factory, IComponentService__factory, IInstance__factory, IInstanceLinkedComponent__factory, IInstanceService__factory, INftOwnable__factory, InstanceAdmin__factory, IPoolComponent__factory, IRegisterable__factory, IRegistry__factory, IRegistryService__factory, Pool__factory, RegistryAdmin__factory } from "../typechain-types";
+import { FirePool, FireProduct, FireProduct__factory, IInstance__factory, IInstanceService__factory } from "../typechain-types";
 import { getNamedAccounts } from "./libs/accounts";
 import { deployContract } from "./libs/deployment";
 import { executeTx, getFieldFromLogs, getTxOpts } from "./libs/transaction";
-import { logger } from "./logger";
 import { loadVerificationQueueState } from './libs/verification_queue';
+import { logger } from "./logger";
 
 async function main() {
     logger.info("deploying components ...");
     loadVerificationQueueState();
-    
-    const errorDecoder = ErrorDecoder.create([
-        FirePool__factory.createInterface(),
-        FireProduct__factory.createInterface(),
-        BasicPool__factory.createInterface(),
-        Pool__factory.createInterface(),
-        IPoolComponent__factory.createInterface(),
-        IInstanceLinkedComponent__factory.createInterface(),
-        IComponentService__factory.createInterface(),
-        IComponent__factory.createInterface(),
-        IRegistry__factory.createInterface(),
-        IRegistryService__factory.createInterface(),
-        IRegisterable__factory.createInterface(),
-        INftOwnable__factory.createInterface(),
-        AccessManaged__factory.createInterface(),
-        IAccessManaged__factory.createInterface(),
-        AccessManagedUpgradeable__factory.createInterface(),
-        InstanceAdmin__factory.createInterface(),
-        RegistryAdmin__factory.createInterface(),
-    ]);
 
     const { productOwner: fireOwner } = await getNamedAccounts();
 
@@ -53,7 +32,8 @@ async function main() {
     console.log("create new instance");
     const instanceCreateTx = await executeTx(async () => 
         await instanceService.createInstance(getTxOpts()),
-        "fire ex - createInstance"
+        "fire ex - createInstance",
+        [IInstanceService__factory.createInterface()]
     );
 
     const instanceAddress = getFieldFromLogs(instanceCreateTx.logs, instanceService.interface, "LogInstanceCloned", "instance") as string;
@@ -106,18 +86,13 @@ async function main() {
             }
         });
     const fireProduct = fireProductBaseContract as FireProduct;
+
     logger.info(`registering FireProduct on Instance`);
-    try {
-        await executeTx(async () => 
-            await instance.registerProduct(fireProductAddress, getTxOpts()),
-            "fire ex - registerProduct"
-        );
-    } catch (err) {
-        const decodedError: DecodedError = await errorDecoder.decode(err)
-        logger.error(decodedError.reason);
-        logger.error(decodedError.args);
-        throw err;
-    }
+    await executeTx(async () => 
+        await instance.registerProduct(fireProductAddress, getTxOpts()),
+        "fire ex - registerProduct",
+        [IInstance__factory.createInterface()]
+    );
     const fireProductNftId = await fireProduct.getNftId();
 
     const firePoolName = "FirePool_" + deploymentId;
@@ -156,18 +131,13 @@ async function main() {
             }
         });
     const firePool = firePoolBaseContract as FirePool;
+    
     logger.info(`registering FirePool on FireProduct`);
-    try {
-        await executeTx(async () => 
-            await fireProduct.registerComponent(firePoolAddress, getTxOpts()),
-            "fire ex - registerComponent"
-        );
-    } catch (err) {
-        const decodedError: DecodedError = await errorDecoder.decode(err)
-        logger.error(decodedError.reason);
-        logger.error(decodedError.args);
-        throw err;
-    }
+    await executeTx(async () => 
+        await fireProduct.registerComponent(firePoolAddress, getTxOpts()),
+        "fire ex - registerComponent",
+        [FireProduct__factory.createInterface()]
+    );
     const firePoolNftId = await firePool.getNftId();
 
     logger.info(`FireUSD deployed at ${fireUsdAddress}`);
