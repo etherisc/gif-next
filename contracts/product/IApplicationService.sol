@@ -15,8 +15,11 @@ import {Seconds} from "../type/Seconds.sol";
 /// only product components may call transaction functions
 interface IApplicationService is IService {
     
-    error ErrorApplicationServiceNotProduct(NftId callerNftId, ObjectType callerType);
-    error ErrorApplicationServiceBundlePoolMismatch(NftId bundleNftId, NftId bundlePoolNftId, NftId poolNftId);
+    // _checkLinkedApplicationParameters
+    error ErrorApplicationServiceRiskUnknown(RiskId riskId, NftId productNftId);
+    error ErrorApplicationServiceRiskPaused(RiskId riskId, NftId productNftId);
+    error ErrorApplicationServiceBundleUnknown(NftId bundleNftId, NftId poolNftId);
+    error ErrorApplicationServiceBundleLocked(NftId bundleNftId, NftId poolNftId);
 
     /// @dev creates a new application based on the specified attributes
     /// may only be called by a product component

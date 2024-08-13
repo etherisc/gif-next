@@ -27,6 +27,7 @@ import {TimestampLib} from "../type/Timestamp.sol";
 
 import {InstanceStore} from "./InstanceStore.sol";
 import {BundleSet} from "./BundleSet.sol";
+import {RiskSet} from "./RiskSet.sol";
 
 
 contract InstanceReader {
@@ -39,6 +40,7 @@ contract InstanceReader {
     IInstance internal _instance;
     InstanceStore internal _store;
     BundleSet internal _bundleSet;
+    RiskSet internal _riskSet;
 
     /// @dev This initializer needs to be called from the instance itself.
     function initialize() public {
@@ -59,6 +61,7 @@ contract InstanceReader {
         _instance = IInstance(instanceAddress);
         _store = _instance.getInstanceStore();
         _bundleSet = _instance.getBundleSet();
+        _riskSet = _instance.getRiskSet();
     }
 
 
@@ -102,6 +105,14 @@ contract InstanceReader {
         return _store.getState(toPremiumKey(policyNftId));
     }
 
+    function bundles(NftId poolNftId)
+        public
+        view
+        returns (uint256 bundles)
+    {
+        return _bundleSet.bundles(poolNftId);
+    }
+
     function activeBundles(NftId poolNftId)
         public
         view
@@ -116,6 +127,14 @@ contract InstanceReader {
         returns (NftId bundleNftId)
     {
         return _bundleSet.getActiveBundleNftId(poolNftId, idx);
+    }
+
+    function getBundleNftId(NftId poolNftId, uint256 idx)
+        public
+        view
+        returns (NftId bundleNftId)
+    {
+        return _bundleSet.getBundleNftId(poolNftId, idx);
     }
 
     function getBundleState(NftId bundleNftId)
@@ -226,6 +245,38 @@ contract InstanceReader {
         return _store.getState(payoutId.toKey32(policyNftId));
     }
 
+    function risks(NftId productNftId)
+        public
+        view
+        returns (uint256 activeRisks)
+    {
+        return _riskSet.risks(productNftId);
+    }
+
+    function getRiskId(NftId productNftId, uint256 idx)
+        public
+        view
+        returns (RiskId riskId)
+    {
+        return _riskSet.getRiskId(productNftId, idx);
+    }
+
+    function activeRisks(NftId productNftId)
+        public
+        view
+        returns (uint256 activeRisks)
+    {
+        return _riskSet.activeRisks(productNftId);
+    }
+
+    function getActiveRiskId(NftId productNftId, uint256 idx)
+        public
+        view
+        returns (RiskId riskId)
+    {
+        return _riskSet.getActiveRiskId(productNftId, idx);
+    }
+
     function getRiskInfo(RiskId riskId)
         public 
         view 
@@ -235,6 +286,31 @@ contract InstanceReader {
         if (data.length > 0) {
             return abi.decode(data, (IRisk.RiskInfo));
         }
+    }
+
+    function getRiskState(RiskId riskId)
+        public 
+        view 
+        returns (StateId stateId)
+    {
+        bytes memory data = _store.getData(riskId.toKey32());
+        return _store.getState(riskId.toKey32());
+    }
+
+    function policiesForRisk(RiskId riskId)
+        public
+        view
+        returns (uint256 linkedPolicies)
+    {
+        return _riskSet.linkedPolicies(riskId);
+    }
+
+    function getPolicyNftIdForRisk(RiskId riskId, uint256 idx)
+        public
+        view
+        returns (NftId linkedPolicyNftId)
+    {
+        return _riskSet.getLinkedPolicyNftId(riskId, idx);
     }
 
     function getWallet(NftId componentNftId)
@@ -483,6 +559,14 @@ contract InstanceReader {
 
     function getInstanceStore() external view returns (IKeyValueStore store) {
         return _store;
+    }
+
+    function getBundleSet() external view returns (BundleSet bundleSet) {
+        return _bundleSet;
+    }
+
+    function getRiskSet() external view returns (RiskSet riskSet) {
+        return _riskSet;
     }
 
     function toUFixed(uint256 value, int8 exp) public pure returns (UFixed) {

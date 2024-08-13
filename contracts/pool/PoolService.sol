@@ -422,9 +422,10 @@ contract PoolService is
             policyInfo.bundleNftId, 
             remainingCollateralAmount);
 
-        _bundleService.unlinkPolicy(
-            instance, 
-            policyNftId);
+        // TODO cleanup
+        // _bundleService.unlinkPolicy(
+        //     instance, 
+        //     policyNftId);
 
         // update value locked with staking service
         _staking.decreaseTotalValueLocked(

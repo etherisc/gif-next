@@ -86,11 +86,14 @@ contract InstanceAuthorizationV3
 
           // authorize bundle service role
           functions = _authorizeForTarget(BUNDLE_SET_TARGET_NAME, getServiceRole(BUNDLE()));
-          _authorize(functions, BundleSet.linkPolicy.selector, "linkPolicy");
-          _authorize(functions, BundleSet.unlinkPolicy.selector, "unlinkPolicy");
           _authorize(functions, BundleSet.add.selector, "add");
           _authorize(functions, BundleSet.lock.selector, "lock");
           _authorize(functions, BundleSet.unlock.selector, "unlock");
+
+          // authorize bundle service role
+          functions = _authorizeForTarget(BUNDLE_SET_TARGET_NAME, getServiceRole(POLICY()));
+          _authorize(functions, BundleSet.linkPolicy.selector, "linkPolicy");
+          _authorize(functions, BundleSet.unlinkPolicy.selector, "unlinkPolicy");
      }
 
      function _setUpRiskSetAuthorization()
@@ -100,11 +103,14 @@ contract InstanceAuthorizationV3
 
           // authorize risk service role
           functions = _authorizeForTarget(RISK_SET_TARGET_NAME, getServiceRole(RISK()));
-          _authorize(functions, RiskSet.linkPolicy.selector, "linkPolicy");
           _authorize(functions, RiskSet.add.selector, "add");
-          //_authorize(functions, RiskSet.active.selector, "active");
-          //_authorize(functions, RiskSet.pause.selector, "pause");
-          //_authorize(functions, RiskSet.archive.selector, "archive");
+          _authorize(functions, RiskSet.pause.selector, "pause");
+          _authorize(functions, RiskSet.activate.selector, "activate");
+
+          // authorize policy service role
+          functions = _authorizeForTarget(RISK_SET_TARGET_NAME, getServiceRole(POLICY()));
+          _authorize(functions, RiskSet.linkPolicy.selector, "linkPolicy");
+          _authorize(functions, RiskSet.unlinkPolicy.selector, "unlinkPolicy");
      }
 
 

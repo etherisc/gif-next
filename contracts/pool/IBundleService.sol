@@ -116,14 +116,6 @@ interface IBundleService is IService {
         Amount collateralAmount
     ) external;
 
-    /// @dev unlink policy from bundle
-    /// policy may only be unlinked if policy is closeable
-    /// may only be called by pool service
-    function unlinkPolicy(
-        IInstance instance, 
-        NftId policyNftId
-    ) external;
-
     // FIXME: move to pool service
     /// @dev Withdraw bundle feeds for the given bundle
     /// @param bundleNftId the bundle Nft Id
@@ -131,13 +123,22 @@ interface IBundleService is IService {
     /// @return withdrawnAmount the effective withdrawn amount
     function withdrawBundleFees(NftId bundleNftId, Amount amount) external returns (Amount withdrawnAmount);
 
-    /// @dev returns true iff policy may be closed
-    /// a policy can be closed all conditions below are met
-    /// - policy exists
-    /// - has been activated
-    /// - is not yet closed
-    /// - has no open claims
-    /// - claim amount matches sum insured amount or is expired
-    function policyIsCloseable(IInstance instance, NftId policyNftId) external view returns (bool isCloseable);
+    // TODO cleanup
+    // /// @dev unlink policy from bundle
+    // /// policy may only be unlinked if policy is closeable
+    // /// may only be called by pool service
+    // function unlinkPolicy(
+    //     IInstance instance, 
+    //     NftId policyNftId
+    // ) external;
+
+    // /// @dev returns true iff policy may be closed
+    // /// a policy can be closed all conditions below are met
+    // /// - policy exists
+    // /// - has been activated
+    // /// - is not yet closed
+    // /// - has no open claims
+    // /// - claim amount matches sum insured amount or is expired
+    // function policyIsCloseable(IInstance instance, NftId policyNftId) external view returns (bool isCloseable);
 
 }

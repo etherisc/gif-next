@@ -188,7 +188,6 @@ contract ServiceAuthorizationV3
           _authorize(functions, IBundleService.close.selector, "close");
           _authorize(functions, IBundleService.lockCollateral.selector, "lockCollateral");
           _authorize(functions, IBundleService.releaseCollateral.selector, "releaseCollateral");
-          _authorize(functions, IBundleService.unlinkPolicy.selector, "unlinkPolicy");
      }
 }
 

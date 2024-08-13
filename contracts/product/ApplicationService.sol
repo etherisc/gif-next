@@ -55,10 +55,10 @@ contract ApplicationService is
     }
 
 
-    function _checkLinkedpplicationParameters(
+    function _checkLinkedApplicationParameters(
         InstanceReader instanceReader,
         NftId productNftId,
-        RiskId rirskId,
+        RiskId riskId,
         ReferralId referralId,
         NftId bundleNftId
     )
@@ -66,18 +66,18 @@ contract ApplicationService is
         virtual
         view
     {
-        IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
-
-        // TODO check riskId with product
-
-        // TODO check referral with distribution
+        // check risk with product
+        (bool exists, bool active) = instanceReader.getRiskSet().checkRisk(productNftId, riskId);
+        if (!exists) { revert ErrorApplicationServiceRiskUnknown(riskId, productNftId); }
+        if (!active) { revert ErrorApplicationServiceRiskPaused(riskId, productNftId); }
 
         // check bundle with pool
-        NftId productPoolNftId = productInfo.poolNftId;
-        NftId bundlePoolNftId = instanceReader.getBundleInfo(bundleNftId).poolNftId;
-        if(bundlePoolNftId != productPoolNftId) {
-            revert ErrorApplicationServiceBundlePoolMismatch(bundleNftId, productPoolNftId, bundlePoolNftId);
-        }
+        NftId poolNftId = instanceReader.getProductInfo(productNftId).poolNftId;
+        (exists, active) = instanceReader.getBundleSet().checkBundle(poolNftId, bundleNftId);
+        if (!exists) { revert ErrorApplicationServiceBundleUnknown(bundleNftId, poolNftId); }
+        if (!active) { revert ErrorApplicationServiceBundleLocked(bundleNftId, poolNftId); }
+
+        // TODO check referral with distribution
     }
 
 
@@ -141,7 +141,7 @@ contract ApplicationService is
 
         // check if provided references are valid and linked to calling product contract
         InstanceReader instanceReader = instance.getInstanceReader();
-        _checkLinkedpplicationParameters(
+        _checkLinkedApplicationParameters(
             instanceReader,
             productNftId,
             riskId,

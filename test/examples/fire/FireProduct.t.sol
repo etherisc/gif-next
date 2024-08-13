@@ -95,7 +95,7 @@ contract FireProductTest is FireTestBase {
         vm.stopPrank();
 
         assertTrue(APPLIED().eq(instanceReader.getPolicyState(policyNftId)));
-        Timestamp now = TimestampLib.blockTimestamp();
+        Timestamp timestamp = TimestampLib.blockTimestamp();
 
         uint256 tokenBalanceCustomerBefore = fireUSD.balanceOf(customer);
         uint256 tokenBalancePoolBefore = fireUSD.balanceOf(firePool.getWallet());
@@ -106,14 +106,14 @@ contract FireProductTest is FireTestBase {
         vm.startPrank(fireProductOwner);
 
         // WHEN - policy is created
-        fireProduct.createPolicy(policyNftId, now);
+        fireProduct.createPolicy(policyNftId, timestamp);
 
         // THEN - check created policy
         assertTrue(COLLATERALIZED().eq(instanceReader.getPolicyState(policyNftId)));
 
         IPolicy.PolicyInfo memory policy = instanceReader.getPolicyInfo(policyNftId);
-        assertEq(now, policy.activatedAt, "policy.activatedAt mismatch");
-        assertEq(now.addSeconds(ONE_YEAR()), policy.expiredAt, "policy.expiredAt mismatch");
+        assertEq(timestamp, policy.activatedAt, "policy.activatedAt mismatch");
+        assertEq(timestamp.addSeconds(ONE_YEAR()), policy.expiredAt, "policy.expiredAt mismatch");
         assertEq(TimestampLib.zero(), policy.closedAt, "policy.closedAt mismatch");
 
         // check premium state is PAID (product uses immediate payment) and then check the premium values
@@ -146,7 +146,7 @@ contract FireProductTest is FireTestBase {
             ONE_YEAR(), 
             bundleNftId);
 
-        Timestamp now = TimestampLib.blockTimestamp();
+        Timestamp timestamp = TimestampLib.blockTimestamp();
 
         // THEN - expect revert for wrong role
         vm.expectRevert(abi.encodeWithSelector(
@@ -154,7 +154,7 @@ contract FireProductTest is FireTestBase {
             customer));
 
         // WHEN - policy is created
-        fireProduct.createPolicy(policyNftId, now);
+        fireProduct.createPolicy(policyNftId, timestamp);
     }
 
     function test_fireProductDecline() public {
@@ -225,11 +225,11 @@ contract FireProductTest is FireTestBase {
 
         assertTrue(APPLIED().eq(instanceReader.getPolicyState(policyNftId)));
         
-        Timestamp now = TimestampLib.blockTimestamp();
+        Timestamp timestamp = TimestampLib.blockTimestamp();
 
         vm.startPrank(fireProductOwner);
 
-        fireProduct.createPolicy(policyNftId, now);
+        fireProduct.createPolicy(policyNftId, timestamp);
 
         assertTrue(COLLATERALIZED().eq(instanceReader.getPolicyState(policyNftId)));
 
@@ -244,7 +244,7 @@ contract FireProductTest is FireTestBase {
         assertTrue(COLLATERALIZED().eq(instanceReader.getPolicyState(policyNftId)));
 
         IPolicy.PolicyInfo memory policy = instanceReader.getPolicyInfo(policyNftId);
-        assertEq(now, policy.activatedAt, "policy.activatedAt mismatch");
+        assertEq(timestamp, policy.activatedAt, "policy.activatedAt mismatch");
         assertEq(hundertDaysLater, policy.expiredAt, "policy.expiredAt mismatch");
         assertEq(TimestampLib.zero(), policy.closedAt, "policy.closedAt mismatch");
 
@@ -275,11 +275,11 @@ contract FireProductTest is FireTestBase {
 
         assertTrue(APPLIED().eq(instanceReader.getPolicyState(policyNftId)));
         
-        Timestamp now = TimestampLib.blockTimestamp();
+        Timestamp timestamp = TimestampLib.blockTimestamp();
 
         vm.startPrank(fireProductOwner);
 
-        fireProduct.createPolicy(policyNftId, now);
+        fireProduct.createPolicy(policyNftId, timestamp);
 
         assertTrue(COLLATERALIZED().eq(instanceReader.getPolicyState(policyNftId)));
 
@@ -322,11 +322,11 @@ contract FireProductTest is FireTestBase {
 
         assertTrue(APPLIED().eq(instanceReader.getPolicyState(policyNftId)));
         
-        Timestamp now = TimestampLib.blockTimestamp();
+        Timestamp timestamp = TimestampLib.blockTimestamp();
 
         vm.startPrank(fireProductOwner);
 
-        fireProduct.createPolicy(policyNftId, now);
+        fireProduct.createPolicy(policyNftId, timestamp);
 
         assertTrue(COLLATERALIZED().eq(instanceReader.getPolicyState(policyNftId)));
 
@@ -341,8 +341,8 @@ contract FireProductTest is FireTestBase {
         assertTrue(CLOSED().eq(instanceReader.getPolicyState(policyNftId)));
 
         IPolicy.PolicyInfo memory policy = instanceReader.getPolicyInfo(policyNftId);
-        assertEq(now, policy.activatedAt, "policy.activatedAt mismatch");
-        assertEq(now.addSeconds(ONE_YEAR()), policy.expiredAt, "policy.expiredAt mismatch");
+        assertEq(timestamp, policy.activatedAt, "policy.activatedAt mismatch");
+        assertEq(timestamp.addSeconds(ONE_YEAR()), policy.expiredAt, "policy.expiredAt mismatch");
         assertEq(threeHundertSixtyOneDaysLater, policy.closedAt, "policy.closedAt mismatch");
 
         // ensure tokens were transferred and balances updates
@@ -372,11 +372,11 @@ contract FireProductTest is FireTestBase {
 
         assertTrue(APPLIED().eq(instanceReader.getPolicyState(policyNftId)));
         
-        Timestamp now = TimestampLib.blockTimestamp();
+        Timestamp timestamp = TimestampLib.blockTimestamp();
 
         vm.startPrank(fireProductOwner);
 
-        fireProduct.createPolicy(policyNftId, now);
+        fireProduct.createPolicy(policyNftId, timestamp);
 
         assertTrue(COLLATERALIZED().eq(instanceReader.getPolicyState(policyNftId)));
 

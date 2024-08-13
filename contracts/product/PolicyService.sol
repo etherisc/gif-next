@@ -17,6 +17,7 @@ import {ObjectType, APPLICATION, COMPONENT, DISTRIBUTION, PRODUCT, POOL, POLICY,
 import {APPLIED, COLLATERALIZED, KEEP_STATE, CLOSED, DECLINED, PAID} from "../type/StateId.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
 import {ReferralId} from "../type/Referral.sol";
+import {RiskId} from "../type/RiskId.sol";
 import {StateId} from "../type/StateId.sol";
 import {VersionPart} from "../type/Version.sol";
 
@@ -159,13 +160,16 @@ contract PolicyService is
             COLLATERALIZED());
 
         // calculate and store premium
+        RiskId riskId = applicationInfo.riskId;
+        NftId bundleNftId = applicationInfo.bundleNftId;
+
         IPolicy.PremiumInfo memory premium = _pricingService.calculatePremium(
             productNftId,
-            applicationInfo.riskId,
+            riskId,
             applicationInfo.sumInsuredAmount,
             applicationInfo.lifetime,
             applicationInfo.applicationData,
-            applicationInfo.bundleNftId,
+            bundleNftId,
             applicationInfo.referralId);
 
         instance.getInstanceStore().createPremium(
@@ -182,6 +186,11 @@ contract PolicyService is
                     applicationInfo.referralId);
             }
         }
+
+        // link policy to risk and bundle
+        NftId poolNftId = getRegistry().getObjectInfo(bundleNftId).parentNftId;
+        instance.getRiskSet().linkPolicy(productNftId, riskId, applicationNftId);
+        instance.getBundleSet().linkPolicy(poolNftId, bundleNftId, applicationNftId);
 
         // log policy creation before interactions with token and policy holder
         emit LogPolicyServicePolicyCreated(applicationNftId, premium.premiumAmount, activateAt);
@@ -364,22 +373,15 @@ contract PolicyService is
         (,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
         InstanceReader instanceReader = instance.getInstanceReader();
 
+        if (!policyIsCloseable(instanceReader, policyNftId)) {
+            revert ErrorPolicyServicePolicyNotCloseable(policyNftId);
+        }
+
         // check that policy has been activated
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
-        StateId policyState = instanceReader.getPolicyState(policyNftId);
-        if (!_policyHasBeenActivated(policyState, policyInfo)) {
-            revert ErrorPolicyServicePolicyNotActive(policyNftId, policyState);
-        }
-
-        // check that policy has not already been closed
-        if (policyInfo.closedAt.gtz()) {
-            revert ErrorPolicyServicePolicyAlreadyClosed(policyNftId);
-        }
-
-        // check that policy does not have any open claims
-        if (policyInfo.openClaimsCount > 0) {
-            revert ErrorPolicyServiceOpenClaims(policyNftId, policyInfo.openClaimsCount);
-        }
+        NftId productNftId = policyInfo.productNftId;
+        RiskId riskId = policyInfo.riskId;
+        NftId bundleNftId = policyInfo.bundleNftId;
 
         // TODO consider to allow for underpaid premiums (with the effects of reducing max payouts accordingly)
         // TODO consider to remove requirement for fully paid premiums altogether
@@ -390,7 +392,7 @@ contract PolicyService is
         // release (remaining) collateral that was blocked by policy
         _poolService.releaseCollateral(
             instance, 
-            address(instanceReader.getComponentInfo(policyInfo.productNftId).token),
+            address(instanceReader.getComponentInfo(productNftId).token),
             policyNftId, 
             policyInfo);
 
@@ -400,7 +402,39 @@ contract PolicyService is
         policyInfo.closedAt = TimestampLib.blockTimestamp();
         instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, CLOSED());
 
+        // unlink policy from risk and bundle
+        NftId poolNftId = getRegistry().getObjectInfo(bundleNftId).parentNftId;
+        instance.getRiskSet().unlinkPolicy(productNftId, riskId, policyNftId);
+        instance.getBundleSet().unlinkPolicy(poolNftId, bundleNftId, policyNftId);
+
         emit LogPolicyServicePolicyClosed(policyNftId);
+    }
+
+
+    function policyIsCloseable(InstanceReader instanceReader, NftId policyNftId)
+        public
+        view
+        returns (bool isCloseable)
+    {
+        // policy already closed
+        if (instanceReader.getPolicyState(policyNftId) == CLOSED()) {
+            return false;
+        }
+
+        IPolicy.PolicyInfo memory info = instanceReader.getPolicyInfo(policyNftId);
+        
+        if (info.productNftId.eqz()) { return false; } // not closeable: policy does not exist (or does not belong to this instance)
+        if (info.activatedAt.eqz()) { return false; } // not closeable: not yet activated
+        if (info.openClaimsCount > 0) { return false; } // not closeable: has open claims
+
+        // closeable: if sum of claims matches sum insured a policy may be closed prior to the expiry date
+        if (info.claimAmount == info.sumInsuredAmount) { return true; }
+
+        // not closeable: not yet expired
+        if (TimestampLib.blockTimestamp() < info.expiredAt) { return false; }
+
+        // all conditions to close the policy are met
+        return true; 
     }
 
 

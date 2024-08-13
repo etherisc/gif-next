@@ -240,11 +240,6 @@ abstract contract Product is
     }
 
 
-    function _getRiskInfo(RiskId id) internal virtual view returns (IRisk.RiskInfo memory info) {
-        return getInstance().getInstanceReader().getRiskInfo(id);
-    }
-
-
     function _createApplication(
         address applicationOwner,
         RiskId riskId,

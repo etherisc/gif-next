@@ -10,7 +10,7 @@ import {IRisk} from "../instance/module/IRisk.sol";
 
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {ObjectType, INSTANCE, PRODUCT, POOL, POLICY, REGISTRY, RISK} from "../type/ObjectType.sol";
-import {KEEP_STATE} from "../type/StateId.sol";
+import {ACTIVE, PAUSED, KEEP_STATE} from "../type/StateId.sol";
 import {NftId} from "../type/NftId.sol";
 import {RiskId} from "../type/RiskId.sol";
 import {StateId} from "../type/StateId.sol";
@@ -92,6 +92,12 @@ contract RiskService is
     {
         (,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
         instance.getInstanceStore().updateRiskState(riskId, state);
+
+        if (state == ACTIVE()) {
+            instance.getRiskSet().activate(riskId);
+        } else if (state == PAUSED()) {
+            instance.getRiskSet().pause(riskId);
+        }
     }
 
 
