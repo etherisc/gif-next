@@ -153,9 +153,7 @@ abstract contract Product is
             componentData);
 
         ProductStorage storage $ = _getProductStorage();
-        $._isProcessingFundedClaims = isProcessingFundedClaims;
-        $._hasDistribution = hasDistribution;
-        $._numberOfOracles = numberOfOracles;
+        $._productInfo = productInfo;
         $._riskService = IRiskService(_getServiceAddress(RISK())); 
         $._applicationService = IApplicationService(_getServiceAddress(APPLICATION())); 
         $._policyService = IPolicyService(_getServiceAddress(POLICY())); 

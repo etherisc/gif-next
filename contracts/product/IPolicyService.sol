@@ -67,19 +67,23 @@ interface IPolicyService is IService {
     /// to activate a policy it needs to be in underwritten state
     function activate(NftId policyNftId, Timestamp activateAt) external;
 
-    /// @dev Expires the specified policy and sets the expiry date in the policy metadata. If expiry date is set to 0, then the earliest possible expiry date (current blocktime) is set
+    /// @dev Expires the specified policy and sets the expiry date in the policy metadata. 
+    /// Function consumers are products.
+    /// If expiry date is set to 0, then the earliest possible expiry date (current blocktime) is set
     /// to expire a policy it must be in active state, policies may be expired even when the predefined expiry date is still in the future
     /// a policy can only be closed when it has been expired. in addition, it must not have any open claims
     /// this function can only be called by a product. the policy needs to match with the calling product
     /// @return expiredAt the effective expiry date
     function expire(NftId policyNftId, Timestamp expireAt) external returns (Timestamp expiredAt);
 
-    function expirePolicy(IInstance instance, NftId policyNftId, Timestamp expireAt) external returns (Timestamp expiredAt);
-
     /// @dev Closes the specified policy and sets the closed data in the policy metadata
     /// a policy can only be closed when it has been expired. in addition, it must not have any open claims
     /// this function can only be called by a product. the policy needs to match with the calling product
     function close(NftId policyNftId) external;
+
+    /// @dev Expires the specified policy and sets the expiry date in the policy metadata. 
+    /// Function consumers is claim service.
+    function expirePolicy(IInstance instance, NftId policyNftId, Timestamp expireAt) external returns (Timestamp expiredAt);
 
     /// @dev Returns true iff policy is closeable
     function policyIsCloseable(InstanceReader instanceReader, NftId policyNftId) external view returns (bool isCloseable);

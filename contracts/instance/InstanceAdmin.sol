@@ -5,7 +5,6 @@ import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManage
 
 import {AccessAdmin} from "../authorization/AccessAdmin.sol";
 import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
-import {IAccessAdmin} from "../authorization/IAccessAdmin.sol";
 import {IAuthorization} from "../authorization/IAuthorization.sol";
 import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
 import {IAuthorization} from "../authorization/IAuthorization.sol";
