@@ -2,7 +2,6 @@
 pragma solidity ^0.8.20;
 
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
-import {ShortString, ShortStrings} from "@openzeppelin/contracts/utils/ShortStrings.sol";
 
 import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
 import {Amount} from "../type/Amount.sol";
@@ -11,24 +10,17 @@ import {RiskSet} from "./RiskSet.sol";
 import {ChainNft} from "../registry/ChainNft.sol";
 import {NftId} from "../type/NftId.sol";
 import {RoleId} from "../type/RoleId.sol";
-import {SecondsLib} from "../type/Seconds.sol";
-import {UFixed, UFixedLib} from "../type/UFixed.sol";
-import {ADMIN_ROLE} from "../type/RoleId.sol";
-import {ObjectType, INSTANCE, BUNDLE, APPLICATION, CLAIM, DISTRIBUTION, INSTANCE, POLICY, POOL, PRODUCT, REGISTRY, STAKING} from "../type/ObjectType.sol";
+import {UFixed} from "../type/UFixed.sol";
+import {ObjectType, INSTANCE, COMPONENT, INSTANCE, REGISTRY, STAKING} from "../type/ObjectType.sol";
 
 import {Service} from "../shared/Service.sol";
-import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
-import {IService} from "../shared/IService.sol";
-
-import {IDistributionComponent} from "../distribution/IDistributionComponent.sol";
-import {IPoolComponent} from "../pool/IPoolComponent.sol";
-import {IProductComponent} from "../product/IProductComponent.sol";
 
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegistryService} from "../registry/IRegistryService.sol";
 import {IStakingService} from "../staking/IStakingService.sol";
 import {TargetManagerLib} from "../staking/TargetManagerLib.sol";
 
+import {IComponentService} from "../shared/IComponentService.sol";
 import {Instance} from "./Instance.sol";
 import {IInstance} from "./IInstance.sol";
 import {InstanceAdmin} from "./InstanceAdmin.sol";
@@ -36,7 +28,7 @@ import {IInstanceService} from "./IInstanceService.sol";
 import {InstanceReader} from "./InstanceReader.sol";
 import {InstanceStore} from "./InstanceStore.sol";
 import {Seconds} from "../type/Seconds.sol";
-import {VersionPart, VersionPartLib} from "../type/Version.sol";
+import {VersionPart} from "../type/Version.sol";
 
 
 contract InstanceService is
@@ -49,6 +41,7 @@ contract InstanceService is
 
     IRegistryService internal _registryService;
     IStakingService internal _stakingService;
+    IComponentService internal _componentService;
 
     address internal _masterAccessManager;
     address internal _masterInstanceAdmin;
@@ -176,33 +169,6 @@ contract InstanceService is
             instanceNftId,
             dipAmount);
     }
-
-
-    function setComponentLocked(bool locked)
-        external
-        virtual
-        onlyComponent()
-    {
-        // checks
-        address componentAddress = msg.sender;
-
-        if (!IInstanceLinkedComponent(componentAddress).supportsInterface(type(IInstanceLinkedComponent).interfaceId)) {
-            revert ErrorInstanceServiceComponentNotInstanceLinked(componentAddress);
-        }
-
-        IRegistry registry = getRegistry();
-        NftId instanceNftId = registry.getObjectInfo(componentAddress).parentNftId;
-
-        IInstance instance = IInstance(
-            registry.getObjectAddress(instanceNftId));
-
-        // no revert in case already locked
-        // TODO refactor/implement
-        // instance.getInstanceAdmin().setTargetLockedByService(
-        //     componentAddress, 
-        //     locked);
-    }
-
 
     function getMasterInstanceReader() external view returns (address) {
         return _masterInstanceReader;
@@ -386,6 +352,7 @@ contract InstanceService is
 
         _registryService = IRegistryService(_getServiceAddress(REGISTRY()));
         _stakingService = IStakingService(_getServiceAddress(STAKING()));
+        _componentService = IComponentService(_getServiceAddress(COMPONENT()));
 
         _registerInterface(type(IInstanceService).interfaceId);
     }

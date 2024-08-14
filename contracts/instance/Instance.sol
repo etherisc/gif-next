@@ -19,7 +19,6 @@ import {Registerable} from "../shared/Registerable.sol";
 import {RoleId} from "../type/RoleId.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {UFixed} from "../type/UFixed.sol";
-import {VersionPart, VersionPartLib} from "../type/Version.sol";
 
 contract Instance is
     IInstance,
@@ -186,12 +185,11 @@ contract Instance is
         // _instanceAdmin.setTargetFunctionRoleByInstance(targetName, selectors, roleId);
     }
 
-    function setTargetLocked(address target, bool locked)
+    function setLocked(address target, bool locked)
         external 
         onlyOwner()
     {
-        // TODO refactor
-        // _instanceAdmin.setTargetLockedByInstance(target, locked);
+        _componentService.setLockedFromInstance(target, locked);
     }
 
     //--- ITransferInterceptor ----------------------------------------------//

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
 
 import {AccessAdmin} from "../authorization/AccessAdmin.sol";
 import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
@@ -10,9 +9,8 @@ import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
 import {IAuthorization} from "../authorization/IAuthorization.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IInstance} from "./IInstance.sol";
-import {IService} from "../shared/IService.sol";
-import {ObjectType, ObjectTypeLib, ALL, POOL, RELEASE} from "../type/ObjectType.sol";
-import {RoleId, RoleIdLib, ADMIN_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
+import {ObjectType} from "../type/ObjectType.sol";
+import {RoleId, RoleIdLib} from "../type/RoleId.sol";
 import {Str, StrLib} from "../type/String.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {VersionPart} from "../type/Version.sol";
@@ -34,11 +32,11 @@ contract InstanceAdmin is
     error ErrorInstanceAdminReleaseMismatch();
     error ErrorInstanceAdminExpectedTargetMissing(string targetName);
 
-    IInstance _instance;
+    IInstance internal _instance;
     IRegistry internal _registry;
-    uint64 _idNext;
+    uint64 internal _idNext;
 
-    IAuthorization _instanceAuthorization;
+    IAuthorization internal _instanceAuthorization;
 
     /// @dev Only used for master instance admin.
     /// Contracts created via constructor come with disabled initializers.
@@ -161,6 +159,15 @@ contract InstanceAdmin is
     {
         _grantRoleToAccount(roleId, account);
     }
+
+    function setTargetLocked(address target, bool locked) 
+        external 
+        // FIXME: restricted()
+    {
+        _setTargetClosed(target, locked);
+    }
+
+
 
     /// @dev Returns the instance authorization specification used to set up this instance admin.
     function getInstanceAuthorization()

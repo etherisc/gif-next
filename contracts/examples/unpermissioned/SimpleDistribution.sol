@@ -55,4 +55,11 @@ contract SimpleDistribution is
     {
         _setWallet(newWallet);
     }
+
+    function setLocked(bool locked)
+        external
+        onlyOwner()
+    {
+        _setLocked(locked);
+    }
 }

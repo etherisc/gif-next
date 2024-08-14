@@ -9,6 +9,7 @@ import {IAccess} from "../authorization/IAccess.sol";
 import {IBundleService} from "../pool/IBundleService.sol";
 import {IDistributionService} from "../distribution/IDistributionService.sol";
 import {IInstanceService} from "../instance/IInstanceService.sol";
+import {InstanceAdmin} from "../instance/InstanceAdmin.sol";
 import {IPoolService} from "../pool/IPoolService.sol";
 import {IStakingService} from "../staking/IStakingService.sol";
 import {IRegistryService} from "./IRegistryService.sol";
