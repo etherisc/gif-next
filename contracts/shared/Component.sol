@@ -4,17 +4,15 @@ pragma solidity ^0.8.20;
 import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {Amount, AmountLib} from "../type/Amount.sol";
+import {Amount} from "../type/Amount.sol";
 import {IComponent} from "./IComponent.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {IComponentService} from "./IComponentService.sol";
-import {NftId, NftIdLib} from "../type/NftId.sol";
+import {NftId} from "../type/NftId.sol";
 import {ObjectType, COMPONENT} from "../type/ObjectType.sol";
 import {Registerable} from "../shared/Registerable.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
-import {VersionPartLib} from "../type/Version.sol";
 
 abstract contract Component is
     AccessManagedUpgradeable,
@@ -193,6 +191,13 @@ abstract contract Component is
         virtual
     {
         _getComponentStorage()._componentService.setWallet(newWallet);
+    }
+
+    function _setLocked(bool locked)
+        internal
+        virtual
+    {
+        _getComponentStorage()._componentService.setLockedFromComponent(address(this), locked);
     }
 
 

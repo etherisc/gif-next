@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {console} from "../lib/forge-std/src/Test.sol";
+import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 
 import {BasicDistributionAuthorization} from "../contracts/distribution/BasicDistributionAuthorization.sol";
 import {Fee, FeeLib} from "../contracts/type/Fee.sol";
@@ -258,33 +259,34 @@ contract TestComponent is GifTest {
         assertEq(token.balanceOf(externallyOwnedWallet2), INITIAL_BALANCE, "externally owned wallet 2 balance not 100000");
     }
 
-    // TODO re-enable
-    function skip_test_component_lock() public {
+    function test_component_lock() public {
         // GIVEN - just setUp
-
         Fee memory newDistributionFee = FeeLib.toFee(UFixedLib.toUFixed(123,0), 456);
         Fee memory newMinDistributionOwnerFee = FeeLib.toFee(UFixedLib.toUFixed(124,0), 457);
 
+        vm.startPrank(distributionOwner);
+
         // WHEN
-        distribution.lock();
+        distribution.setLocked(true);
 
         // THEN
-        vm.expectRevert(abi.encodeWithSelector(IAccess.ErrorIAccessTargetLocked.selector, address(distribution)));
+        vm.expectRevert(abi.encodeWithSelector(IAccessManaged.AccessManagedUnauthorized.selector, address(distributionOwner)));
         distribution.setFees(newMinDistributionOwnerFee, newDistributionFee);
     }
 
-    // TODO re-enable
-    function skip_test_component_unlock() public {
+    function test_component_unlock() public {
         // GIVEN - just setUp
-
-        distribution.lock();
-        
-        // WHEN
-        distribution.unlock();
-
-        // THEN
         Fee memory newDistributionFee = FeeLib.toFee(UFixedLib.toUFixed(123,0), 456);
         Fee memory newMinDistributionOwnerFee = FeeLib.toFee(UFixedLib.toUFixed(124,0), 457);
+        
+        vm.startPrank(distributionOwner);
+
+        distribution.setLocked(true);
+        
+        // WHEN
+        distribution.setLocked(false);
+
+        // THEN
         distribution.setFees(newMinDistributionOwnerFee, newDistributionFee);
     }
 

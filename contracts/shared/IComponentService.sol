@@ -28,6 +28,10 @@ interface IComponentService is
     error ErrorComponentServiceParentNotInstance(NftId nftId, ObjectType objectType);
     error ErrorComponentServiceParentNotProduct(NftId nftId, ObjectType objectType);
 
+    error ErrorComponentServiceNotRegistered(address instanceAddress);
+    error ErrorComponentServiceNotInstance(address instanceAddress, ObjectType objectType);
+    error ErrorComponentServiceInstanceVersionMismatch(address instanceAddress, VersionPart instanceVersion);
+    
     error ErrorProductServiceNoDistributionExpected(NftId productNftId);
     error ErrorProductServiceDistributionAlreadyRegistered(NftId productNftId, NftId distributionNftId);
     error ErrorProductServiceNoOraclesExpected(NftId productNftId);
@@ -71,11 +75,11 @@ interface IComponentService is
     /// @dev Sets the components associated wallet address
     function setWallet(address newWallet) external;
 
-    /// @dev Locks the component associated with the caller
-    function lock() external;
+    /// @dev Locks/Unlocks the given component - call from instanceService
+    function setLockedFromInstance(address componentAddress, bool locked) external;
 
-    /// @dev Unlocks the component associated with the caller
-    function unlock() external;
+    /// @dev Locks/Unlocks the given component - call from component
+    function setLockedFromComponent(address componentAddress, bool locked) external;
 
     /// @dev Withdraw fees from the distribution component. Only component owner is allowed to withdraw fees.
     /// @param withdrawAmount the amount to withdraw

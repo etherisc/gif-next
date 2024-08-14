@@ -3,6 +3,11 @@ pragma solidity ^0.8.20;
 
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
+import {AccessAdmin} from "../authorization/AccessAdmin.sol";
+import {Amount, AmountLib} from "../type/Amount.sol";
+import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
+import {ContractLib} from "../shared/ContractLib.sol";
+import {Fee, FeeLib} from "../type/Fee.sol";
 import {IComponent} from "../shared/IComponent.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {IComponentService} from "./IComponentService.sol";
@@ -27,6 +32,7 @@ import {ObjectType, REGISTRY, BUNDLE, COMPONENT, DISTRIBUTION, DISTRIBUTOR, INST
 import {Service} from "../shared/Service.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {TokenHandlerDeployerLib} from "../shared/TokenHandlerDeployerLib.sol";
+import {VersionPart} from "../type/Version.sol";
 
 
 contract ComponentService is
@@ -40,9 +46,26 @@ contract ComponentService is
     IInstanceService private _instanceService;
 
     modifier onlyComponent(address component) {
-        if (!ContractLib.supportsInterface(component, type(IInstanceLinkedComponent).interfaceId)) {
-            revert ErrorComponentServiceNotInstanceLinkedComponent(component);
+        _checkSupportsInterface(component);
+        _;
+    }
+
+    modifier onlyInstance() {        
+        NftId instanceNftId = getRegistry().getNftIdForAddress(msg.sender);
+        if (instanceNftId.eqz()) {
+            revert ErrorComponentServiceNotRegistered(msg.sender);
         }
+
+        ObjectType objectType = getRegistry().getObjectInfo(instanceNftId).objectType;
+        if (objectType != INSTANCE()) {
+            revert ErrorComponentServiceNotInstance(msg.sender, objectType);
+        }
+
+        VersionPart instanceVersion = IInstance(msg.sender).getRelease();
+        if (instanceVersion != getVersion().toMajorPart()) {
+            revert ErrorComponentServiceInstanceVersionMismatch(msg.sender, instanceVersion);
+        }
+
         _;
     }
 
@@ -140,11 +163,31 @@ contract ComponentService is
         tokenHandler.setWallet(newWallet);
     }
 
-    // TODO implement
-    function lock() external virtual {}
+    /// @inheritdoc IComponentService
+    function setLockedFromInstance(address componentAddress, bool locked) 
+        external 
+        virtual
+        onlyInstance()
+    {
+        address instanceAddress = msg.sender;
+        // NftId instanceNftId = getRegistry().getNftIdForAddress(msg.sender);
+        IInstance instance = IInstance(instanceAddress);
+        _setLocked(instance.getInstanceAdmin(), componentAddress, locked);
+    }
 
-    // TODO implement
-    function unlock() external virtual {}
+    /// @inheritdoc IComponentService
+    function setLockedFromComponent(address componentAddress, bool locked) 
+        external
+        virtual
+        onlyComponent(msg.sender)
+    {
+        (, IInstance instance) = _getAndVerifyComponentInfo(
+            getRegistry().getNftIdForAddress(msg.sender), 
+            COMPONENT(),
+            false); // only active
+
+        _setLocked(instance.getInstanceAdmin(), componentAddress, locked);
+    }
 
     function withdrawFees(Amount amount)
         external
@@ -771,6 +814,10 @@ contract ComponentService is
         instance = IInstance(registry.getObjectAddress(instanceNftId));
     }
 
+    function _setLocked(InstanceAdmin instanceAdmin, address componentAddress, bool locked) internal {
+        instanceAdmin.setTargetLocked(componentAddress, locked);
+    }
+
     function _getAndVerifyActiveComponent(ObjectType expectedType) 
         internal 
         view 
@@ -802,5 +849,11 @@ contract ComponentService is
 
     function _getDomain() internal pure virtual override returns(ObjectType) {
         return COMPONENT();
+    }
+
+    function _checkSupportsInterface(address component) internal view {
+        if (!ContractLib.supportsInterface(component, type(IInstanceLinkedComponent).interfaceId)) {
+            revert ErrorComponentServiceNotInstanceLinkedComponent(component);
+        }
     }
 }

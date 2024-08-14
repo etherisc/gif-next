@@ -40,14 +40,6 @@ abstract contract InstanceLinkedComponent is
         IComponentService _componentService;
     }
 
-    function lock() external onlyOwner {
-        IInstanceService(_getServiceAddress(INSTANCE())).setComponentLocked(true);
-    }
-    
-    function unlock() external onlyOwner {
-        IInstanceService(_getServiceAddress(INSTANCE())).setComponentLocked(false);
-    }
-
     /// @inheritdoc IInstanceLinkedComponent
     function withdrawFees(Amount amount)
         external
