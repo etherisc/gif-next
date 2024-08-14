@@ -36,6 +36,9 @@
 				"asciidoctor.asciidoctor-vscode",
 				"alefragnani.bookmarks",
 				"olympixai.olympix",
+				"RaillyHugo.one-hunter",
+				"zhuangtongfa.Material-theme",
+				"monokai.theme-monokai-pro-vscode"
 			]
 		}
 	},
