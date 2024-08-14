@@ -175,9 +175,6 @@ contract BundleService is
 
         // updated locked amount
         instanceStore.increaseLocked(bundleNftId, collateralAmount);
-        
-        // link policy to bundle in bundle manger
-        _linkPolicy(instance, policyNftId);
     }
 
 
@@ -375,24 +372,6 @@ contract BundleService is
         instance.getInstanceStore().decreaseLocked(bundleNftId, collateralAmount);
     }
 
-    /// @dev unlinks policy from bundle
-    function unlinkPolicy(
-        IInstance instance, 
-        NftId policyNftId
-    ) 
-        external
-        virtual
-        restricted
-    {
-        _checkNftType(policyNftId, POLICY());
-
-        // ensure policy is closeable
-        if (!policyIsCloseable(instance, policyNftId)) {
-            revert ErrorBundleServicePolicyNotCloseable(policyNftId);
-        }
-
-        instance.getBundleSet().unlinkPolicy(policyNftId);
-    }
 
     /// @inheritdoc IBundleService
     function withdrawBundleFees(NftId bundleNftId, Amount amount) 
@@ -436,47 +415,6 @@ contract BundleService is
             emit LogBundleServiceFeesWithdrawn(bundleNftId, owner, address(poolInfo.token), withdrawnAmount);
             poolInfo.tokenHandler.distributeTokens(poolWallet, owner, withdrawnAmount);
         }
-    }
-
-    /// @inheritdoc IBundleService
-    function policyIsCloseable(IInstance instance, NftId policyNftId)
-        public
-        view
-        returns (bool isCloseable)
-    {
-        _checkNftType(policyNftId, POLICY());
-
-        IPolicy.PolicyInfo memory info = instance.getInstanceReader().getPolicyInfo(policyNftId);
-        
-        if (info.productNftId.eqz()) { return false; } // not closeable: policy does not exist (or does not belong to this instance)
-        if (info.activatedAt.eqz()) { return false; } // not closeable: not yet activated
-        if (info.closedAt.gtz()) { return false; } // not closeable: already closed
-        if (info.openClaimsCount > 0) { return false; } // not closeable: has open claims
-
-        // closeable: if sum of claims matches sum insured a policy may be closed prior to the expiry date
-        if (info.claimAmount == info.sumInsuredAmount) { return true; }
-
-        // not closeable: not yet expired
-        if (TimestampLib.blockTimestamp() < info.expiredAt) { return false; }
-
-        // all conditionsl to close the policy are met
-        return true; 
-    }
-
-    /// @dev links policy to bundle
-    function _linkPolicy(IInstance instance, NftId policyNftId) 
-        internal
-    {
-        InstanceReader instanceReader = instance.getInstanceReader();
-        IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
-
-        // ensure policy has not yet been activated in a previous tx already
-        if (policyInfo.activatedAt.gtz() && policyInfo.activatedAt < TimestampLib.blockTimestamp()) {
-            revert BundleSet.ErrorBundleSetPolicyAlreadyActivated(policyNftId);
-        }
-        
-        BundleSet bundleManager = instance.getBundleSet();
-        bundleManager.linkPolicy(policyNftId);
     }
 
     function _getDomain() internal pure override returns(ObjectType) {

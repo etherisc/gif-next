@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {
-     ALL, REGISTRY, PRODUCT, ORACLE, POOL, INSTANCE, COMPONENT, DISTRIBUTION, DISTRIBUTOR, APPLICATION, POLICY, CLAIM, BUNDLE, STAKING, PRICE
+     ALL, REGISTRY, RISK, ORACLE, POOL, INSTANCE, COMPONENT, DISTRIBUTION, DISTRIBUTOR, APPLICATION, POLICY, CLAIM, BUNDLE, STAKING, PRICE
 } from "../../contracts/type/ObjectType.sol";
 
 import {IAccess} from "../authorization/IAccess.sol";
@@ -36,7 +36,7 @@ contract ServiceAuthorizationV3
           _authorizeDomain(BUNDLE(), address(7));
           _authorizeDomain(POOL(), address(8));
           _authorizeDomain(ORACLE(), address(9));
-          _authorizeDomain(PRODUCT(), address(10));
+          _authorizeDomain(RISK(), address(10));
           _authorizeDomain(POLICY(), address(11));
           _authorizeDomain(CLAIM(), address(12));
           _authorizeDomain(APPLICATION(), address(13));
@@ -113,11 +113,6 @@ contract ServiceAuthorizationV3
      function _setupInstanceServiceAuthorization()
           internal
      {
-          // TODO cleanup
-          // IAccess.FunctionInfo[] storage functions;
-
-          // functions = _authorizeForService(INSTANCE(), COMPONENT());
-          // _authorize(functions, IInstanceService.initializeAuthorization.selector, "initializeAuthorization");
      }
 
 
@@ -125,28 +120,6 @@ contract ServiceAuthorizationV3
      function _setupComponentServiceAuthorization()
           internal
      {
-          // TODO cleanup
-          // authz.authorizations = new DomainAuthorization[](4);
-
-          // authz.authorizations[0].domain = POLICY();
-          // _functions = new IAccessAdmin.Function[](1);
-          // __authorize(ComponentService.increaseProductFees.selector, "increaseProductFees"));
-          // authz.authorizations[0].functions = _functions;
-
-          // authz.authorizations[1].domain = DISTRIBUTION();
-          // _functions = new IAccessAdmin.Function[](1);
-          // __authorize(ComponentService.increaseDistributionBalance.selector, "increaseDistributionBalance"));
-          // authz.authorizations[1].functions = _functions;
-
-          // authz.authorizations[2].domain = POOL();
-          // _functions = new IAccessAdmin.Function[](1);
-          // __authorize(ComponentService.increasePoolBalance.selector, "increasePoolBalance"));
-          // authz.authorizations[2].functions = _functions;
-
-          // authz.authorizations[3].domain = BUNDLE();
-          // _functions = new IAccessAdmin.Function[](1);
-          // __authorize(ComponentService.increaseBundleBalance.selector, "increaseBundleBalance"));
-          // authz.authorizations[3].functions = _functions;
      }
 
      /// @dev Distribution service function authorization.
@@ -189,7 +162,6 @@ contract ServiceAuthorizationV3
           _authorize(functions, IBundleService.close.selector, "close");
           _authorize(functions, IBundleService.lockCollateral.selector, "lockCollateral");
           _authorize(functions, IBundleService.releaseCollateral.selector, "releaseCollateral");
-          _authorize(functions, IBundleService.unlinkPolicy.selector, "unlinkPolicy");
 
           functions = _authorizeForService(BUNDLE(), ALL());
           _authorize(functions, IBundleService.create.selector, "create");

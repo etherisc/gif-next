@@ -38,23 +38,23 @@ contract FireProductClaimsTest is FireTestBase {
 
     function test_fireClaimsReportFire() public {
         // GIVEN
-        Timestamp now = TimestampLib.blockTimestamp();
+        Timestamp timestamp = TimestampLib.blockTimestamp();
         uint256 fireId = 42;
         vm.startPrank(fireProductOwner);
 
         // WHEN
-        fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), now);
+        fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), timestamp);
 
         // THEN
         FireProduct.Fire memory fire = fireProduct.fire(fireId);
         assertEq(cityName, fire.cityName);
         assertEq(DAMAGE_SMALL().toInt(), fire.damageLevel.toInt());
-        assertEq(now, fire.reportedAt, "reportedAt mismatch");
+        assertEq(timestamp, fire.reportedAt, "reportedAt mismatch");
     }
 
     function test_fireClaimsReportFireInvalidRole() public {
         // GIVEN
-        Timestamp now = TimestampLib.blockTimestamp();
+        Timestamp timestamp = TimestampLib.blockTimestamp();
         uint256 fireId = 42;
 
         vm.startPrank(customer);
@@ -66,29 +66,29 @@ contract FireProductClaimsTest is FireTestBase {
         //     customer));
 
         // WHEN - reportFire called by customer
-        fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), now);
+        fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), timestamp);
     }
 
     function test_fireClaimsReportFireDuplicateId() public {
         // GIVEN
-        Timestamp now = TimestampLib.blockTimestamp();
+        Timestamp timestamp = TimestampLib.blockTimestamp();
         uint256 fireId = 42;
 
         vm.startPrank(fireProductOwner);
 
-        fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), now);
+        fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), timestamp);
         
         // THEN - unauthorized
         vm.expectRevert(abi.encodeWithSelector(
             FireProduct.ErrorFireProductFireAlreadyReported.selector));
 
         // WHEN - reportFire called by customer
-        fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), now);
+        fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), timestamp);
     }
 
     function test_fireClaimsReportFireUnknownCity() public {
         // GIVEN
-        Timestamp now = TimestampLib.blockTimestamp();
+        Timestamp timestamp = TimestampLib.blockTimestamp();
         uint256 fireId = 42;
 
         vm.startPrank(fireProductOwner);
@@ -99,7 +99,7 @@ contract FireProductClaimsTest is FireTestBase {
             "Zurich"));
 
         // WHEN - reportFire called by customer
-        fireProduct.reportFire(fireId, "Zurich", DAMAGE_SMALL(), now);
+        fireProduct.reportFire(fireId, "Zurich", DAMAGE_SMALL(), timestamp);
     }
 
     function test_fireClaimsReportFireInFuture() public {
@@ -122,18 +122,18 @@ contract FireProductClaimsTest is FireTestBase {
     function test_fireClaimsSubmitClaimSmallFire() public {
         // GIVEN
         Amount sumInsured = AmountLib.toAmount(100000 * 10 ** 6);
-        Timestamp now = TimestampLib.blockTimestamp();
+        Timestamp timestamp = TimestampLib.blockTimestamp();
         policyNftId = _preparePolicy(
             customer,
             cityName, 
             sumInsured, 
             ONE_YEAR(), 
-            now,
+            timestamp,
             bundleNftId);
         
         vm.startPrank(fireProductOwner);
         uint256 fireId = 42;
-        fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), now);
+        fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), timestamp);
         vm.stopPrank();
         
         vm.startPrank(customer);
@@ -188,18 +188,18 @@ contract FireProductClaimsTest is FireTestBase {
     function test_fireClaimsSubmitClaimMediumFire() public {
         // GIVEN
         Amount sumInsured = AmountLib.toAmount(100000 * 10 ** 6);
-        Timestamp now = TimestampLib.blockTimestamp();
+        Timestamp timestamp = TimestampLib.blockTimestamp();
         policyNftId = _preparePolicy(
             customer,
             cityName, 
             sumInsured, 
             ONE_YEAR(), 
-            now,
+            timestamp,
             bundleNftId);
         
         vm.startPrank(fireProductOwner);
         uint256 fireId = 42;
-        fireProduct.reportFire(fireId, cityName, DAMAGE_MEDIUM(), now);
+        fireProduct.reportFire(fireId, cityName, DAMAGE_MEDIUM(), timestamp);
         vm.stopPrank();
         
         vm.startPrank(customer);
@@ -254,18 +254,18 @@ contract FireProductClaimsTest is FireTestBase {
     function test_fireClaimsSubmitClaimLargeFire() public {
         // GIVEN
         Amount sumInsured = AmountLib.toAmount(100000 * 10 ** 6);
-        Timestamp now = TimestampLib.blockTimestamp();
+        Timestamp timestamp = TimestampLib.blockTimestamp();
         policyNftId = _preparePolicy(
             customer,
             cityName, 
             sumInsured, 
             ONE_YEAR(), 
-            now,
+            timestamp,
             bundleNftId);
         
         vm.startPrank(fireProductOwner);
         uint256 fireId = 42;
-        fireProduct.reportFire(fireId, cityName, DAMAGE_LARGE(), now);
+        fireProduct.reportFire(fireId, cityName, DAMAGE_LARGE(), timestamp);
         vm.stopPrank();
         
         vm.startPrank(customer);
@@ -322,20 +322,20 @@ contract FireProductClaimsTest is FireTestBase {
     function test_fireClaimsSubmitClaimTwoSmallFires() public {
         // GIVEN
         Amount sumInsured = AmountLib.toAmount(100000 * 10 ** 6);
-        Timestamp now = TimestampLib.blockTimestamp();
+        Timestamp timestamp = TimestampLib.blockTimestamp();
         policyNftId = _preparePolicy(
             customer,
             cityName, 
             sumInsured, 
             ONE_YEAR(), 
-            now,
+            timestamp,
             bundleNftId);
         
         vm.startPrank(fireProductOwner);
         uint256 fireId = 42;
         uint256 fireId2 = 43;
-        fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), now);
-        fireProduct.reportFire(fireId2, cityName, DAMAGE_SMALL(), now);
+        fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), timestamp);
+        fireProduct.reportFire(fireId2, cityName, DAMAGE_SMALL(), timestamp);
         vm.stopPrank();
         
         vm.startPrank(customer);
@@ -420,18 +420,18 @@ contract FireProductClaimsTest is FireTestBase {
         // GIVEN
         Amount sumInsured = AmountLib.toAmount(100000 * 10 ** 6);
         {
-            Timestamp now = TimestampLib.blockTimestamp();
+            Timestamp timestamp = TimestampLib.blockTimestamp();
             policyNftId = _preparePolicy(
                 customer,
                 cityName, 
                 sumInsured, 
                 ONE_YEAR(), 
-                now,
+                timestamp,
                 bundleNftId);
             
             vm.startPrank(fireProductOwner);
-            fireProduct.reportFire(42, cityName, DAMAGE_SMALL(), now);
-            fireProduct.reportFire(43, cityName, DAMAGE_LARGE(), now);
+            fireProduct.reportFire(42, cityName, DAMAGE_SMALL(), timestamp);
+            fireProduct.reportFire(43, cityName, DAMAGE_LARGE(), timestamp);
             vm.stopPrank();
         }
         
@@ -521,18 +521,18 @@ contract FireProductClaimsTest is FireTestBase {
     function test_fireClaimsSubmitClaimNotNftOwner() public {
         // GIVEN
         Amount sumInsured = AmountLib.toAmount(100000 * 10 ** 6);
-        Timestamp now = TimestampLib.blockTimestamp();
+        Timestamp timestamp = TimestampLib.blockTimestamp();
         policyNftId = _preparePolicy(
             customer,
             cityName, 
             sumInsured, 
             ONE_YEAR(), 
-            now,
+            timestamp,
             bundleNftId);
         
         vm.startPrank(fireProductOwner);
         uint256 fireId = 42;
-        fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), now);
+        fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), timestamp);
         vm.stopPrank();
         
         vm.startPrank(customer2);
@@ -550,13 +550,13 @@ contract FireProductClaimsTest is FireTestBase {
     function test_fireClaimsSubmitClaimNotNftOwner2() public {
         // GIVEN
         Amount sumInsured = AmountLib.toAmount(100000 * 10 ** 6);
-        Timestamp now = TimestampLib.blockTimestamp();
+        Timestamp timestamp = TimestampLib.blockTimestamp();
         policyNftId = _preparePolicy(
             customer,
             cityName, 
             sumInsured, 
             ONE_YEAR(), 
-            now,
+            timestamp,
             bundleNftId);
         _fundAccount(customer2, 10000 * 10 ** 6);
         _preparePolicy(
@@ -564,12 +564,12 @@ contract FireProductClaimsTest is FireTestBase {
             cityName, 
             sumInsured, 
             ONE_YEAR(), 
-            now,
+            timestamp,
             bundleNftId);
         
         vm.startPrank(fireProductOwner);
         uint256 fireId = 42;
-        fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), now);
+        fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), timestamp);
         vm.stopPrank();
         
         vm.startPrank(customer2);
@@ -587,17 +587,17 @@ contract FireProductClaimsTest is FireTestBase {
     function test_fireClaimsSubmitClaimUnknownFireId() public {
         // GIVEN
         Amount sumInsured = AmountLib.toAmount(100000 * 10 ** 6);
-        Timestamp now = TimestampLib.blockTimestamp();
+        Timestamp timestamp = TimestampLib.blockTimestamp();
         policyNftId = _preparePolicy(
             customer,
             cityName, 
             sumInsured, 
             ONE_YEAR(), 
-            now,
+            timestamp,
             bundleNftId);
         
         vm.startPrank(fireProductOwner);
-        fireProduct.reportFire(42, cityName, DAMAGE_SMALL(), now);
+        fireProduct.reportFire(42, cityName, DAMAGE_SMALL(), timestamp);
         vm.stopPrank();
         
         vm.startPrank(customer);
@@ -615,18 +615,18 @@ contract FireProductClaimsTest is FireTestBase {
     function test_fireClaimsSubmitClaimAlreadyClaimed() public {
         // GIVEN
         Amount sumInsured = AmountLib.toAmount(100000 * 10 ** 6);
-        Timestamp now = TimestampLib.blockTimestamp();
+        Timestamp timestamp = TimestampLib.blockTimestamp();
         policyNftId = _preparePolicy(
             customer,
             cityName, 
             sumInsured, 
             ONE_YEAR(), 
-            now,
+            timestamp,
             bundleNftId);
         
         vm.startPrank(fireProductOwner);
         uint256 fireId = 42;
-        fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), now);
+        fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), timestamp);
         vm.stopPrank();
         
         vm.startPrank(customer);
@@ -644,18 +644,18 @@ contract FireProductClaimsTest is FireTestBase {
     function test_fireClaimsSubmitClaimExpiredPolicy() public {
         // GIVEN
         Amount sumInsured = AmountLib.toAmount(100000 * 10 ** 6);
-        Timestamp now = TimestampLib.blockTimestamp();
+        Timestamp timestamp = TimestampLib.blockTimestamp();
         policyNftId = _preparePolicy(
             customer,
             cityName, 
             sumInsured, 
             ONE_YEAR(), 
-            now,
+            timestamp,
             bundleNftId);
         
         vm.startPrank(fireProductOwner);
         uint256 fireId = 42;
-        fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), now);
+        fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), timestamp);
 
         vm.warp(100);
         fireProduct.expire(policyNftId, TimestampLib.blockTimestamp());
@@ -676,18 +676,18 @@ contract FireProductClaimsTest is FireTestBase {
     function test_fireClaimsSubmitClaimClosedPolicy() public {
         // GIVEN
         Amount sumInsured = AmountLib.toAmount(100000 * 10 ** 6);
-        Timestamp now = TimestampLib.blockTimestamp();
+        Timestamp timestamp = TimestampLib.blockTimestamp();
         policyNftId = _preparePolicy(
             customer,
             cityName, 
             sumInsured, 
             ONE_YEAR(), 
-            now,
+            timestamp,
             bundleNftId);
         
         vm.startPrank(fireProductOwner);
         uint256 fireId = 42;
-        fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), now);
+        fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), timestamp);
 
         vm.warp(100);
         fireProduct.expire(policyNftId, TimestampLib.blockTimestamp());
@@ -709,8 +709,8 @@ contract FireProductClaimsTest is FireTestBase {
     function test_fireClaimsSubmitClaimPolicyNotActive() public {
         // GIVEN
         Amount sumInsured = AmountLib.toAmount(100000 * 10 ** 6);
-        Timestamp now = TimestampLib.blockTimestamp();
-        Timestamp inADay = now.addSeconds(SecondsLib.toSeconds(24 * 60 * 60));
+        Timestamp timestamp = TimestampLib.blockTimestamp();
+        Timestamp inADay = timestamp.addSeconds(SecondsLib.toSeconds(24 * 60 * 60));
         policyNftId = _preparePolicy(
             customer,
             cityName, 
@@ -721,7 +721,7 @@ contract FireProductClaimsTest is FireTestBase {
         
         vm.startPrank(fireProductOwner);
         uint256 fireId = 42;
-        fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), now);
+        fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), timestamp);
         vm.stopPrank();
         
         vm.warp(100);
@@ -741,8 +741,8 @@ contract FireProductClaimsTest is FireTestBase {
     function test_fireClaimsSubmitClaimInvalidNftId() public {
         // GIVEN
         Amount sumInsured = AmountLib.toAmount(100000 * 10 ** 6);
-        Timestamp now = TimestampLib.blockTimestamp();
-        Timestamp inADay = now.addSeconds(SecondsLib.toSeconds(24 * 60 * 60));
+        Timestamp timestamp = TimestampLib.blockTimestamp();
+        Timestamp inADay = timestamp.addSeconds(SecondsLib.toSeconds(24 * 60 * 60));
         policyNftId = _preparePolicy(
             customer,
             cityName, 
@@ -753,7 +753,7 @@ contract FireProductClaimsTest is FireTestBase {
         
         vm.startPrank(fireProductOwner);
         uint256 fireId = 42;
-        fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), now);
+        fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), timestamp);
         vm.stopPrank();
         
         vm.warp(100);
@@ -774,8 +774,8 @@ contract FireProductClaimsTest is FireTestBase {
     function test_fireClaimsSubmitClaimInvalidNftType() public {
         // GIVEN
         Amount sumInsured = AmountLib.toAmount(100000 * 10 ** 6);
-        Timestamp now = TimestampLib.blockTimestamp();
-        Timestamp inADay = now.addSeconds(SecondsLib.toSeconds(24 * 60 * 60));
+        Timestamp timestamp = TimestampLib.blockTimestamp();
+        Timestamp inADay = timestamp.addSeconds(SecondsLib.toSeconds(24 * 60 * 60));
         policyNftId = _preparePolicy(
             customer,
             cityName, 
@@ -786,7 +786,7 @@ contract FireProductClaimsTest is FireTestBase {
         
         vm.startPrank(fireProductOwner);
         uint256 fireId = 42;
-        fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), now);
+        fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), timestamp);
         vm.stopPrank();
         
         vm.startPrank(firePoolOwner);
@@ -805,20 +805,20 @@ contract FireProductClaimsTest is FireTestBase {
     function test_fireClaimsSubmitClaimWrongCity() public {
         // GIVEN
         Amount sumInsured = AmountLib.toAmount(100000 * 10 ** 6);
-        Timestamp now = TimestampLib.blockTimestamp();
+        Timestamp timestamp = TimestampLib.blockTimestamp();
         policyNftId = _preparePolicy(
             customer,
             cityName, 
             sumInsured, 
             ONE_YEAR(), 
-            now,
+            timestamp,
             bundleNftId);
         
         vm.startPrank(fireProductOwner);
         string memory cityName2 = "Zurich";
         fireProduct.initializeCity(cityName2);
         uint256 fireId = 42;
-        fireProduct.reportFire(fireId, cityName2, DAMAGE_SMALL(), now);
+        fireProduct.reportFire(fireId, cityName2, DAMAGE_SMALL(), timestamp);
         vm.stopPrank();
 
         vm.warp(100);
@@ -839,13 +839,13 @@ contract FireProductClaimsTest is FireTestBase {
     function test_fireClaimsSubmitClaimFireAfterPolicyExpiration() public {
         // GIVEN
         Amount sumInsured = AmountLib.toAmount(100000 * 10 ** 6);
-        Timestamp now = TimestampLib.blockTimestamp();
+        Timestamp timestamp = TimestampLib.blockTimestamp();
         policyNftId = _preparePolicy(
             customer,
             cityName, 
             sumInsured, 
             ONE_YEAR(), 
-            now,
+            timestamp,
             bundleNftId);
         
         vm.startPrank(fireProductOwner);

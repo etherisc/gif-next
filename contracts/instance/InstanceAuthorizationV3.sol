@@ -2,10 +2,11 @@
 pragma solidity ^0.8.20;
 
 import {
-     PRODUCT, ORACLE, POOL, INSTANCE, COMPONENT, DISTRIBUTION, APPLICATION, POLICY, CLAIM, BUNDLE
+     PRODUCT, ORACLE, POOL, INSTANCE, COMPONENT, DISTRIBUTION, APPLICATION, POLICY, CLAIM, BUNDLE, RISK
 } from "../../contracts/type/ObjectType.sol";
 
-import {BundleSet} from "../instance/BundleSet.sol"; 
+import {BundleSet} from "../instance/BundleSet.sol";
+import {RiskSet} from "../instance/RiskSet.sol"; 
 import {IAccess} from "../authorization/IAccess.sol";
 import {Instance} from "../instance/Instance.sol";
 import {InstanceAdmin} from "../instance/InstanceAdmin.sol";
@@ -23,6 +24,7 @@ contract InstanceAuthorizationV3
      string public constant INSTANCE_STORE_TARGET_NAME = "InstanceStore";
      string public constant INSTANCE_ADMIN_TARGET_NAME = "InstanceAdmin";
      string public constant BUNDLE_SET_TARGET_NAME = "BundleSet";
+     string public constant RISK_SET_TARGET_NAME = "RiskSet";
 
      constructor() Authorization(INSTANCE_TARGET_NAME) {}
 
@@ -49,6 +51,7 @@ contract InstanceAuthorizationV3
           _addTarget(INSTANCE_STORE_TARGET_NAME);
           _addTarget(INSTANCE_ADMIN_TARGET_NAME);
           _addTarget(BUNDLE_SET_TARGET_NAME);
+          _addTarget(RISK_SET_TARGET_NAME);
 
           // service targets relevant to instance
           _addServiceTargetWithRole(INSTANCE());
@@ -57,7 +60,7 @@ contract InstanceAuthorizationV3
           _addServiceTargetWithRole(ORACLE());
           _addServiceTargetWithRole(POOL());
           _addServiceTargetWithRole(BUNDLE());
-          _addServiceTargetWithRole(PRODUCT());
+          _addServiceTargetWithRole(RISK());
           _addServiceTargetWithRole(APPLICATION());
           _addServiceTargetWithRole(POLICY());
           _addServiceTargetWithRole(CLAIM());
@@ -72,7 +75,7 @@ contract InstanceAuthorizationV3
           _setupInstanceAdminAuthorization();
           _setupInstanceStoreAuthorization();
           _setupBundleSetAuthorization();
-
+          _setUpRiskSetAuthorization();
      }
 
 
@@ -83,11 +86,31 @@ contract InstanceAuthorizationV3
 
           // authorize bundle service role
           functions = _authorizeForTarget(BUNDLE_SET_TARGET_NAME, getServiceRole(BUNDLE()));
-          _authorize(functions, BundleSet.linkPolicy.selector, "linkPolicy");
-          _authorize(functions, BundleSet.unlinkPolicy.selector, "unlinkPolicy");
           _authorize(functions, BundleSet.add.selector, "add");
           _authorize(functions, BundleSet.lock.selector, "lock");
           _authorize(functions, BundleSet.unlock.selector, "unlock");
+
+          // authorize bundle service role
+          functions = _authorizeForTarget(BUNDLE_SET_TARGET_NAME, getServiceRole(POLICY()));
+          _authorize(functions, BundleSet.linkPolicy.selector, "linkPolicy");
+          _authorize(functions, BundleSet.unlinkPolicy.selector, "unlinkPolicy");
+     }
+
+     function _setUpRiskSetAuthorization()
+          internal
+     {
+          IAccess.FunctionInfo[] storage functions;
+
+          // authorize risk service role
+          functions = _authorizeForTarget(RISK_SET_TARGET_NAME, getServiceRole(RISK()));
+          _authorize(functions, RiskSet.add.selector, "add");
+          _authorize(functions, RiskSet.pause.selector, "pause");
+          _authorize(functions, RiskSet.activate.selector, "activate");
+
+          // authorize policy service role
+          functions = _authorizeForTarget(RISK_SET_TARGET_NAME, getServiceRole(POLICY()));
+          _authorize(functions, RiskSet.linkPolicy.selector, "linkPolicy");
+          _authorize(functions, RiskSet.unlinkPolicy.selector, "unlinkPolicy");
      }
 
 
@@ -164,7 +187,7 @@ contract InstanceAuthorizationV3
           _authorize(functions, InstanceStore.decreaseLocked.selector, "decreaseLocked");
 
           // authorize product service role
-          functions = _authorizeForTarget(INSTANCE_STORE_TARGET_NAME, getServiceRole(PRODUCT()));
+          functions = _authorizeForTarget(INSTANCE_STORE_TARGET_NAME, getServiceRole(RISK()));
           _authorize(functions, InstanceStore.createRisk.selector, "createRisk");
           _authorize(functions, InstanceStore.updateRisk.selector, "updateRisk");
           _authorize(functions, InstanceStore.updateRiskState.selector, "updateRiskState");

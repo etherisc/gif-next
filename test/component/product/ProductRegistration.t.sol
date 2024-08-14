@@ -198,14 +198,6 @@ contract TestProductRegistration is GifTest {
         vm.stopPrank();
     }
 
-    // TODO cleanup
-    // error ErrorComponentServiceNotComponent(address component);
-    // error ErrorComponentServiceReleaseMismatch(address component, VersionPart componentRelease, VersionPart parentRelease);
-    // error ErrorComponentServiceSenderNotComponentParent(NftId senderNftId, NftId compnentParentNftId);
-    // error ErrorComponentServiceParentNotInstance(NftId nftId, ObjectType objectType);
-    // error ErrorComponentServiceParentNotProduct(NftId nftId, ObjectType objectType);
-
-
     function _deployProductDefault(string memory name) internal returns(SimpleProduct) {
         return _deployProduct(name, myProductOwner, false, 0);
     }

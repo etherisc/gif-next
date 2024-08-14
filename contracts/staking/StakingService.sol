@@ -166,13 +166,6 @@ contract StakingService is
             $._staking.getTokenHandler(),
             stakeOwner, 
             dipAmount);
-
-        // TODO cleanup
-        // TokenHandler tokenHandler = $._staking.getTokenHandler();
-        // tokenHandler.collectTokens(
-        //     stakeOwner, 
-        //     tokenHandler.getWallet(), 
-        //     dipAmount);
     }
 
     function _collectToken(
@@ -310,12 +303,6 @@ contract StakingService is
         $._staking.getTokenHandler().pushToken(
             stakeOwner, 
             totalAmount);
-
-        // TODO cleanup
-        // _distributeToken(
-        //     $._staking.getTokenHandler(),
-        //     stakeOwner,
-        //     totalAmount);
     }
 
 

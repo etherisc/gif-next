@@ -101,18 +101,6 @@ abstract contract Component is
     }
 
 
-    // TODO cleanup
-    // /// @dev Approves the component's token hander to spend tokens up to the specified limit.
-    // /// When the spending limit amount equals AmountLib.max it is set to type(uint256).max.
-    // function approveTokenHandler(address token, Amount spendingLimitAmount)
-    //     public
-    //     virtual
-    //     onlyOwner
-    // {
-    //     _approveTokenHandler(token, spendingLimitAmount);
-    // }
-
-
     // function setWallet(address newWallet)
     //     external
     //     virtual

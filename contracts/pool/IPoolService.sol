@@ -3,17 +3,11 @@ pragma solidity ^0.8.20;
 
 import {Amount} from "../type/Amount.sol";
 import {ClaimId} from "../type/ClaimId.sol";
-import {Fee} from "../type/Fee.sol";
-import {IBundle} from "../instance/module/IBundle.sol";
 import {IInstance} from "../instance/IInstance.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
 import {IService} from "../shared/IService.sol";
 import {NftId} from "../type/NftId.sol";
-import {PayoutId} from "../type/PayoutId.sol";
-import {RoleId} from "../type/RoleId.sol";
-import {Seconds} from "../type/Seconds.sol";
-import {StateId} from "../type/StateId.sol";
 import {UFixed} from "../type/UFixed.sol";
 
 interface IPoolService is IService {
@@ -80,19 +74,6 @@ interface IPoolService is IService {
         IPolicy.PolicyInfo memory policyInfo,
         Amount payoutAmount
     ) external;
-
-
-    // TODO cleanup
-    // /// @dev create a new empty bundle with the provided parameters
-    // /// may only be called by registered and unlocked pool components.
-    // function createBundle(
-    //     address owner, // initial bundle owner
-    //     Fee memory fee, // fees deducted from premium that go to bundle owner
-    //     Seconds lifetime, // initial duration for which new policies are covered
-    //     bytes calldata filter // optional use case specific criteria that define if a policy may be covered by this bundle
-    // )
-    //     external 
-    //     returns(NftId bundleNftId); // the nft id of the newly created bundle
 
 
     /// @dev increase stakes for bundle

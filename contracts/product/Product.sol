@@ -19,7 +19,7 @@ import {IProductComponent} from "./IProductComponent.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
 import {ObjectType, COMPONENT, DISTRIBUTION, ORACLE, POOL, PRODUCT, BUNDLE, APPLICATION, POLICY, CLAIM, PRICE } from "../type/ObjectType.sol";
 import {PayoutId} from "../type/PayoutId.sol";
-import {COMPONENT, PRODUCT, APPLICATION, POLICY, CLAIM, PRICE, BUNDLE } from "../type/ObjectType.sol";
+import {COMPONENT, PRODUCT, APPLICATION, POLICY, CLAIM, PRICE, BUNDLE, RISK } from "../type/ObjectType.sol";
 import {ReferralId} from "../type/Referral.sol";
 import {RiskId, RiskIdLib} from "../type/RiskId.sol";
 import {Seconds} from "../type/Seconds.sol";
@@ -154,7 +154,7 @@ abstract contract Product is
 
         ProductStorage storage $ = _getProductStorage();
         $._productInfo = productInfo;
-        $._riskService = IRiskService(_getServiceAddress(PRODUCT())); 
+        $._riskService = IRiskService(_getServiceAddress(RISK())); 
         $._applicationService = IApplicationService(_getServiceAddress(APPLICATION())); 
         $._policyService = IPolicyService(_getServiceAddress(POLICY())); 
         $._claimService = IClaimService(_getServiceAddress(CLAIM())); 
@@ -213,11 +213,6 @@ abstract contract Product is
             id,
             state
         );
-    }
-
-
-    function _getRiskInfo(RiskId id) internal virtual view returns (IRisk.RiskInfo memory info) {
-        return getInstance().getInstanceReader().getRiskInfo(id);
     }
 
 

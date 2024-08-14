@@ -204,6 +204,7 @@ contract TestPoolRegistration is GifTest {
 
 
     // check that pool cannot be directly registerd with instance
+    // TODO re-enable/fix
     function test_poolRegisterAttemptPool() public {
         // GIVEN
         // SimpleProduct myProduct = _deployPool("MyPool", myProduct1NftId, myPoolOwner);
@@ -226,13 +227,6 @@ contract TestPoolRegistration is GifTest {
         // NftId myNftId = instance.registerProduct(address(myPool));
         // vm.stopPrank();
     }
-
-    // TODO cleanup
-    // error ErrorComponentServiceNotComponent(address component);
-    // error ErrorComponentServiceReleaseMismatch(address component, VersionPart componentRelease, VersionPart parentRelease);
-    // error ErrorComponentServiceSenderNotComponentParent(NftId senderNftId, NftId compnentParentNftId);
-    // error ErrorComponentServiceParentNotInstance(NftId nftId, ObjectType objectType);
-    // error ErrorComponentServiceParentNotProduct(NftId nftId, ObjectType objectType);
 
 
     function _deployProductDefault(string memory name) internal returns(SimpleProduct) {

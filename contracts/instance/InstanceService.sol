@@ -7,6 +7,7 @@ import {ShortString, ShortStrings} from "@openzeppelin/contracts/utils/ShortStri
 import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
 import {Amount} from "../type/Amount.sol";
 import {BundleSet} from "./BundleSet.sol";
+import {RiskSet} from "./RiskSet.sol";
 import {ChainNft} from "../registry/ChainNft.sol";
 import {NftId} from "../type/NftId.sol";
 import {RoleId} from "../type/RoleId.sol";
@@ -54,6 +55,7 @@ contract InstanceService is
     address internal _masterInstance;
     address internal _masterInstanceReader;
     address internal _masterInstanceBundleSet;
+    address internal _masterInstanceRiskSet;
     address internal _masterInstanceStore;
 
 
@@ -214,7 +216,7 @@ contract InstanceService is
         if(_masterInstance != address(0)) { revert ErrorInstanceServiceMasterInstanceAlreadySet(); }
         if(_masterInstanceAdmin != address(0)) { revert ErrorInstanceServiceMasterInstanceAdminAlreadySet(); }
         if(_masterInstanceBundleSet != address(0)) { revert ErrorInstanceServiceMasterBundleSetAlreadySet(); }
-
+        if(_masterInstanceRiskSet != address(0)) { revert ErrorInstanceServiceMasterRiskSetAlreadySet(); }
         if(instanceAddress == address(0)) { revert ErrorInstanceServiceInstanceAddressZero(); }
 
         IInstance instance = IInstance(instanceAddress);
@@ -223,28 +225,34 @@ contract InstanceService is
         address instanceAdminAddress = address(instanceAdmin);
         InstanceReader instanceReader = instance.getInstanceReader();
         address instanceReaderAddress = address(instanceReader);
-        BundleSet bundleManager = instance.getBundleSet();
-        address bundleManagerAddress = address(bundleManager);
+        BundleSet bundleSet = instance.getBundleSet();
+        address bundleSetAddress = address(bundleSet);
+        RiskSet riskSet = instance.getRiskSet();
+        address riskSetAddress = address(riskSet);
         InstanceStore instanceStore = instance.getInstanceStore();
         address instanceStoreAddress = address(instanceStore);
 
         if(accessManagerAddress == address(0)) { revert ErrorInstanceServiceAccessManagerZero(); }
         if(instanceAdminAddress == address(0)) { revert ErrorInstanceServiceInstanceAdminZero(); }
         if(instanceReaderAddress == address(0)) { revert ErrorInstanceServiceInstanceReaderZero(); }
-        if(bundleManagerAddress == address(0)) { revert ErrorInstanceServiceBundleSetZero(); }
+        if(bundleSetAddress == address(0)) { revert ErrorInstanceServiceBundleSetZero(); }
+        if(riskSetAddress == address(0)) { revert ErrorInstanceServiceRiskSetZero(); }
         if(instanceStoreAddress == address(0)) { revert ErrorInstanceServiceInstanceStoreZero(); }
         
         if(instance.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceInstanceAuthorityMismatch(); }
-        if(bundleManager.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceBundleSetAuthorityMismatch(); }
+        if(bundleSet.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceBundleSetAuthorityMismatch(); }
+        if(riskSet.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceRiskSetAuthorityMismatch(); }
         if(instanceStore.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceInstanceStoreAuthorityMismatch(); }
-        if(bundleManager.getInstance() != instance) { revert ErrorInstanceServiceBundleMangerInstanceMismatch(); }
+        if(bundleSet.getInstance() != instance) { revert ErrorInstanceServiceBundleSetInstanceMismatch(); }
+        if(riskSet.getInstance() != instance) { revert ErrorInstanceServiceRiskSetInstanceMismatch(); }
         if(instanceReader.getInstance() != instance) { revert ErrorInstanceServiceInstanceReaderInstanceMismatch2(); }
 
         _masterAccessManager = accessManagerAddress;
         _masterInstanceAdmin = instanceAdminAddress;
         _masterInstance = instanceAddress;
         _masterInstanceReader = instanceReaderAddress;
-        _masterInstanceBundleSet = bundleManagerAddress;
+        _masterInstanceBundleSet = bundleSetAddress;
+        _masterInstanceRiskSet = riskSetAddress;
         _masterInstanceStore = instanceStoreAddress;
         
         IInstance masterInstance = IInstance(_masterInstance);
@@ -313,6 +321,7 @@ contract InstanceService is
     {
         InstanceStore clonedInstanceStore = InstanceStore(Clones.clone(address(_masterInstanceStore)));
         BundleSet clonedBundleSet = BundleSet(Clones.clone(_masterInstanceBundleSet));
+        RiskSet clonedRiskSet = RiskSet(Clones.clone(_masterInstanceRiskSet));
         InstanceReader clonedInstanceReader = InstanceReader(Clones.clone(address(_masterInstanceReader)));
 
         // clone instance
@@ -321,6 +330,7 @@ contract InstanceService is
             instanceAdmin,
             clonedInstanceStore,
             clonedBundleSet,
+            clonedRiskSet,
             clonedInstanceReader,
             getRegistry(),
             instanceOwner);

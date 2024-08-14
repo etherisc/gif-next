@@ -5,6 +5,7 @@ import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessMana
 
 import {Amount} from "../type/Amount.sol";
 import {BundleSet} from "./BundleSet.sol";
+import {RiskSet} from "./RiskSet.sol";
 import {InstanceAdmin} from "./InstanceAdmin.sol";
 import {InstanceReader} from "./InstanceReader.sol";
 import {InstanceStore} from "./InstanceStore.sol";
@@ -29,6 +30,10 @@ interface IInstance is
     error ErrorInstanceBundleSetAlreadySet(address instanceBundleSet);
     error ErrorInstanceBundleSetInstanceMismatch(address instance);
     error ErrorInstanceBundleSetAuthorityMismatch(address instanceAuthority);
+
+    error ErrorInstanceRiskSetAlreadySet(address instanceRiskSet);
+    error ErrorInstanceRiskSetInstanceMismatch(address instance);
+    error ErrorInstanceRiskSetAuthorityMismatch(address instanceAuthority);
 
     error ErrorInstanceInstanceReaderInstanceMismatch(address instanceAuthority);
 
@@ -61,6 +66,7 @@ interface IInstance is
     // get instance release and supporting contracts
     function getInstanceReader() external view returns (InstanceReader);
     function getBundleSet() external view returns (BundleSet);
+    function getRiskSet() external view returns (RiskSet);
     function getInstanceAdmin() external view returns (InstanceAdmin);
     function getInstanceStore() external view returns (InstanceStore);
 }

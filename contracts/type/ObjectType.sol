@@ -202,6 +202,8 @@ library ObjectTypeLib {
             return "Price";
         } else if (objectType == BUNDLE()) {
             return "Bundle";
+        } else if (objectType == RISK()) {
+            return "Risk";
         }
 
         // fallback: ObjectType<obect-type-int>

@@ -3,10 +3,6 @@ pragma solidity ^0.8.20;
 
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import {Amount, AmountLib} from "../type/Amount.sol";
-import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
-import {ContractLib} from "../shared/ContractLib.sol";
-import {Fee, FeeLib} from "../type/Fee.sol";
 import {IComponent} from "../shared/IComponent.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {IComponentService} from "./IComponentService.sol";
@@ -16,23 +12,27 @@ import {InstanceAdmin} from "../instance/InstanceAdmin.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
 import {IInstanceService} from "../instance/IInstanceService.sol";
-import {IRegisterable} from "../shared/IRegisterable.sol";
 import {IPoolComponent} from "../pool/IPoolComponent.sol";
 import {IProductComponent} from "../product/IProductComponent.sol";
+import {IRegisterable} from "../shared/IRegisterable.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegistryService} from "../registry/IRegistryService.sol";
+
+import {Amount, AmountLib} from "../type/Amount.sol";
+import {ContractLib} from "../shared/ContractLib.sol";
+import {Fee, FeeLib} from "../type/Fee.sol";
 import {KEEP_STATE} from "../type/StateId.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType, REGISTRY, BUNDLE, COMPONENT, DISTRIBUTION, DISTRIBUTOR, INSTANCE, ORACLE, POOL, PRODUCT, STAKING} from "../type/ObjectType.sol";
-import {RoleId} from "../type/RoleId.sol";
+import {Service} from "../shared/Service.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {TokenHandlerDeployerLib} from "../shared/TokenHandlerDeployerLib.sol";
 
+
 contract ComponentService is
-    ComponentVerifyingService,
+    Service,
     IComponentService
 {
-
     bool private constant INCREASE = true;
     bool private constant DECREASE = false;
 
@@ -100,7 +100,7 @@ contract ComponentService is
         virtual
     {
         // checks
-        (NftId componentNftId,, IInstance instance) = _getAndVerifyActiveComponent(COMPONENT());
+        (NftId componentNftId, IInstance instance) = _getAndVerifyActiveComponent(COMPONENT());
         TokenHandler tokenHandler = instance.getInstanceReader().getComponentInfo(
             componentNftId).tokenHandler;
 
@@ -117,11 +117,9 @@ contract ComponentService is
         virtual
     {
         // checks
-        NftId stakingNftId = getRegistry().getNftIdForAddress(msg.sender);
-        (IRegistry.ObjectInfo memory objectInfo,) = _getAndVerifyComponentInfo(
-            stakingNftId, 
-            STAKING(),
-            true);
+        ContractLib.getAndVerifyStaking(
+            getRegistry(),
+            msg.sender); // only active
 
         // effects
         TokenHandler tokenHandler = IComponent(msg.sender).getTokenHandler();
@@ -134,7 +132,7 @@ contract ComponentService is
         virtual
     {
         // checks
-        (NftId componentNftId,, IInstance instance) = _getAndVerifyActiveComponent(COMPONENT());
+        (NftId componentNftId, IInstance instance) = _getAndVerifyActiveComponent(COMPONENT());
         TokenHandler tokenHandler = instance.getInstanceReader().getComponentInfo(
             componentNftId).tokenHandler;
 
@@ -153,7 +151,7 @@ contract ComponentService is
         virtual
         returns (Amount withdrawnAmount)
     {
-        (NftId componentNftId,, IInstance instance) = _getAndVerifyActiveComponent(COMPONENT());
+        (NftId componentNftId, IInstance instance) = _getAndVerifyActiveComponent(COMPONENT());
         IComponents.ComponentInfo memory info = instance.getInstanceReader().getComponentInfo(componentNftId);
         address componentWallet = info.tokenHandler.getWallet();
 
@@ -215,7 +213,7 @@ contract ComponentService is
         external
         virtual
     {
-        (NftId productNftId,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
+        (NftId productNftId, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
         IComponents.ProductInfo memory productInfo = instance.getInstanceReader().getProductInfo(productNftId);
         bool feesChanged = false;
 
@@ -307,7 +305,7 @@ contract ComponentService is
         external
         virtual
     {
-        (NftId distributionNftId,, IInstance instance) = _getAndVerifyActiveComponent(DISTRIBUTION());
+        (NftId distributionNftId, IInstance instance) = _getAndVerifyActiveComponent(DISTRIBUTION());
         (NftId productNftId, IComponents.ProductInfo memory productInfo) = _getLinkedProductInfo(
             instance.getInstanceReader(), distributionNftId);
         bool feesChanged = false;
@@ -408,7 +406,7 @@ contract ComponentService is
         InstanceStore instanceStore;
         NftId productNftId;
 
-        (instanceReader, instanceAdmin, instanceStore, productNftId, oracleNftId) =_register(
+        (instanceReader, instanceAdmin, instanceStore, productNftId, oracleNftId) = _register(
             oracleAddress,
             ORACLE());
 
@@ -444,7 +442,7 @@ contract ComponentService is
         InstanceStore instanceStore;
         NftId productNftId;
 
-        (instanceReader, instanceAdmin, instanceStore, productNftId, poolNftId) =_register(
+        (instanceReader, instanceAdmin, instanceStore, productNftId, poolNftId) = _register(
             poolAddress,
             POOL());
 
@@ -477,7 +475,8 @@ contract ComponentService is
         external
         virtual
     {
-        (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
+        (NftId poolNftId, IInstance instance) = _getAndVerifyActiveComponent(POOL());
+
         (NftId productNftId, IComponents.ProductInfo memory productInfo) = _getLinkedProductInfo(
             instance.getInstanceReader(), poolNftId);
         bool feesChanged = false;
@@ -690,7 +689,7 @@ contract ComponentService is
             IComponents.ProductInfo memory info
         )
     {
-        productNftId = _getProductNftId(componentNftId);
+        productNftId = getRegistry().getObjectInfo(componentNftId).parentNftId;
         info = instanceReader.getProductInfo(productNftId);
     }
 
@@ -769,9 +768,37 @@ contract ComponentService is
 
         // get initial owner and instance
         initialOwner = info.initialOwner;
-        instance = _getInstance(registry, instanceNftId);
+        instance = IInstance(registry.getObjectAddress(instanceNftId));
     }
 
+    function _getAndVerifyActiveComponent(ObjectType expectedType) 
+        internal 
+        view 
+        returns (
+            NftId componentNftId,
+            IInstance instance
+        )
+    {
+        IRegistry.ObjectInfo memory info;
+        address instanceAddress;
+
+        if (expectedType != COMPONENT()) {
+            (info, instanceAddress) = ContractLib.getAndVerifyComponent(
+                getRegistry(),
+                msg.sender, // caller
+                expectedType,
+                true); // only active
+        } else {
+            (info, instanceAddress) = ContractLib.getAndVerifyAnyComponent(
+                getRegistry(),
+                msg.sender,
+                true); // only active
+        }
+
+        // get component nft id and instance
+        componentNftId = info.nftId;
+        instance = IInstance(instanceAddress);
+    }
 
     function _getDomain() internal pure virtual override returns(ObjectType) {
         return COMPONENT();

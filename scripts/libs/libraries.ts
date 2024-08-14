@@ -21,6 +21,7 @@ export type LibraryAddresses = {
     secondsLibAddress: AddressLike;
     libNftIdSetAddress: AddressLike;
     key32LibAddress: AddressLike;
+    libKey32SetAddress: AddressLike;
     feeLibAddress: AddressLike;
     stateIdLibAddress: AddressLike;
     roleIdLibAddress: AddressLike;
@@ -140,7 +141,13 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
 
     const { address: contractLibAddress } = await deployContract(
         "ContractLib",
-        owner);
+        owner,
+        undefined,
+        {
+            libraries: {
+                NftIdLib: nftIdLibAddress,
+            }
+        });
     LIBRARY_ADDRESSES.set("ContractLib", contractLibAddress);
 
     const { address: secondsLibAddress } = await deployContract(
@@ -199,6 +206,11 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         "LibNftIdSet",
         owner);
     LIBRARY_ADDRESSES.set("LibNftIdSet", libNftIdSetAddress);
+
+    const { address: libKey32SetAddress } = await deployContract(
+        "LibKey32Set",
+        owner);
+    LIBRARY_ADDRESSES.set("LibKey32Set", libKey32SetAddress);
 
     const { address: riskIdLibAddress } = await deployContract(
         "RiskIdLib",
@@ -326,6 +338,7 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         secondsLibAddress,
         libNftIdSetAddress,
         key32LibAddress,
+        libKey32SetAddress,
         feeLibAddress,
         stateIdLibAddress,
         roleIdLibAddress,

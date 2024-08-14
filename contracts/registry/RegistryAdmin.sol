@@ -390,9 +390,6 @@ contract RegistryAdmin is
         functions[8] = toFunction(IStaking.restake.selector, "restake");
         functions[9] = toFunction(IStaking.updateRewards.selector, "updateRewards");
         functions[10] = toFunction(IStaking.claimRewards.selector, "claimRewards");
-        // TODO cleanup
-        // functions[11] = toFunction(IStaking.collectDipAmount.selector, "collectDipAmount");
-        // functions[11] = toFunction(IStaking.transferDipAmount.selector, "transferDipAmount");
         _authorizeTargetFunctions(_staking, stakingServiceRoleId, functions);
     
         // grant token handler authorizations
@@ -450,13 +447,5 @@ contract RegistryAdmin is
         _authorizeTargetFunctions(_stakingStore, stakingRoleId, functions);
         
         _grantRoleToAccount(stakingRoleId, _staking);
-    
-        // TODO cleanup
-        // grant token handler authorizations
-        // IStaking staking = IStaking(_staking);
-        // functions = new FunctionInfo[](1);
-        // functions[0] = toFunction(TokenHandler.distributeTokens.selector, "distributeTokens");
-        
-        // _authorizeTargetFunctions(address(staking.getTokenHandler()), stakingRoleId, functions);
     }
 }
