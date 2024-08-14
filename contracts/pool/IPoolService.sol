@@ -3,17 +3,11 @@ pragma solidity ^0.8.20;
 
 import {Amount} from "../type/Amount.sol";
 import {ClaimId} from "../type/ClaimId.sol";
-import {Fee} from "../type/Fee.sol";
-import {IBundle} from "../instance/module/IBundle.sol";
 import {IInstance} from "../instance/IInstance.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
 import {IService} from "../shared/IService.sol";
 import {NftId} from "../type/NftId.sol";
-import {PayoutId} from "../type/PayoutId.sol";
-import {RoleId} from "../type/RoleId.sol";
-import {Seconds} from "../type/Seconds.sol";
-import {StateId} from "../type/StateId.sol";
 import {UFixed} from "../type/UFixed.sol";
 
 interface IPoolService is IService {

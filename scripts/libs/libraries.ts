@@ -141,7 +141,13 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
 
     const { address: contractLibAddress } = await deployContract(
         "ContractLib",
-        owner);
+        owner,
+        undefined,
+        {
+            libraries: {
+                NftIdLib: nftIdLibAddress,
+            }
+        });
     LIBRARY_ADDRESSES.set("ContractLib", contractLibAddress);
 
     const { address: secondsLibAddress } = await deployContract(

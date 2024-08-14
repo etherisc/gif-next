@@ -1,5 +1,8 @@
 import { AddressLike, Signer, ethers, resolveAddress } from "ethers";
-import { BundleSet, RiskSet, IInstance__factory, Instance, InstanceAdmin, InstanceAuthorizationV3, InstanceReader, InstanceService__factory, InstanceStore } from "../../typechain-types";
+import { 
+    Instance, InstanceReader, InstanceStore, BundleSet, RiskSet, InstanceAdmin, InstanceAuthorizationV3, IInstance__factory, 
+    InstanceService__factory,
+} from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
@@ -168,7 +171,7 @@ export async function deployAndRegisterMasterInstance(
             masterInstanceAddress, 
             getTxOpts()),
             "masterInstance setAndRegisterMasterInstance",
-            [IInstanceService__factory.createInterface()]
+            [InstanceService__factory.createInterface()]
         );
 
     // this extracts the ObjectInfo struct from the LogRegistration event
@@ -213,7 +216,7 @@ export async function cloneInstance(masterInstance: InstanceAddresses, libraries
         async () => await instanceServiceAsClonedInstanceOwner.createInstance(
             getTxOpts()),
         "instanceService createInstance",
-        [IInstanceService__factory.createInterface()]
+        [InstanceService__factory.createInterface()]
     );
 
     const clonedInstanceAddress = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "instance");

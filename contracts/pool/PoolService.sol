@@ -15,21 +15,21 @@ import {IStaking} from "../staking/IStaking.sol";
 
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {ClaimId} from "../type/ClaimId.sol";
+import {ContractLib} from "../shared/ContractLib.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType, POOL, BUNDLE, PRODUCT, POLICY, COMPONENT} from "../type/ObjectType.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
 import {KEEP_STATE} from "../type/StateId.sol";
-import {Seconds} from "../type/Seconds.sol";
 import {UFixed} from "../type/UFixed.sol";
-import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
+import {Service} from "../shared/Service.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
 
 string constant POOL_SERVICE_NAME = "PoolService";
 
 contract PoolService is 
-    ComponentVerifyingService, 
+    Service, 
     IPoolService 
 {
     IBundleService internal _bundleService;
@@ -64,7 +64,7 @@ contract PoolService is
         external
         virtual
     {
-        (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
+        (NftId poolNftId, IInstance instance) = _getAndVerifyActivePool();
         InstanceReader instanceReader = instance.getInstanceReader();
         IComponents.PoolInfo memory poolInfo = instanceReader.getPoolInfo(poolNftId);
 
@@ -82,7 +82,7 @@ contract PoolService is
     {
         _checkNftType(bundleNftId, BUNDLE());
 
-        (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
+        (NftId poolNftId, IInstance instance) = _getAndVerifyActivePool();
 
         // TODO get performance fee for pool (#477)
 
@@ -118,9 +118,9 @@ contract PoolService is
     {
         _checkNftType(policyNftId, POLICY());
 
-        (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
+        (NftId poolNftId, IInstance instance) = _getAndVerifyActivePool();
         InstanceReader instanceReader = instance.getInstanceReader();
-        NftId productNftId = _getProductNftId(poolNftId);
+        NftId productNftId = getRegistry().getObjectInfo(poolNftId).parentNftId;
 
         // check policy matches with calling pool
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
@@ -150,7 +150,7 @@ contract PoolService is
     {
         _checkNftType(bundleNftId, BUNDLE());
 
-        (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
+        (NftId poolNftId, IInstance instance) = _getAndVerifyActivePool();
         InstanceReader instanceReader = instance.getInstanceReader();
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
         IComponents.PoolInfo memory poolInfo = instanceReader.getPoolInfo(poolNftId);
@@ -215,7 +215,7 @@ contract PoolService is
     {
         _checkNftType(bundleNftId, BUNDLE());
 
-        (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
+        (NftId poolNftId, IInstance instance) = _getAndVerifyActivePool();
         InstanceReader instanceReader = instance.getInstanceReader();
         InstanceStore instanceStore = instance.getInstanceStore();
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
@@ -263,9 +263,9 @@ contract PoolService is
         // restricted()
     {
         (
-            NftId poolNftId,,
+            NftId poolNftId,
             IInstance instance
-        ) = _getAndVerifyActiveComponent(POOL());
+        ) = _getAndVerifyActivePool();
 
         // check that pool is externally managed
         InstanceReader reader = instance.getInstanceReader();
@@ -290,9 +290,9 @@ contract PoolService is
         // restricted()
     {
         (
-            NftId poolNftId,,
+            NftId poolNftId,
             IInstance instance
-        ) = _getAndVerifyActiveComponent(POOL());
+        ) = _getAndVerifyActivePool();
 
         // check that pool is externally managed
         InstanceReader reader = instance.getInstanceReader();
@@ -323,9 +323,8 @@ contract PoolService is
 
         IRegistry registry = getRegistry();
         NftId poolNftId = registry.getObjectInfo(bundleNftId).parentNftId;
-        IInstance instance = _getInstanceForComponent(
-            registry, 
-            registry.getObjectInfo(poolNftId).parentNftId);
+        (, address instanceAddress) = ContractLib.getInfoAndInstance(registry, poolNftId, true);
+        IInstance instance = IInstance(instanceAddress);
 
         Amount poolFeeAmount = premium.poolFeeFixAmount + premium.poolFeeVarAmount;
         Amount bundleFeeAmount = premium.bundleFeeFixAmount + premium.bundleFeeVarAmount;
@@ -581,6 +580,29 @@ contract PoolService is
             info.tokenHandler.getWallet(), 
             to, 
             amount);
+    }
+
+
+    function _getAndVerifyActivePool()
+        internal
+        virtual
+        view
+        returns (
+            NftId poolNftId,
+            IInstance instance
+        )
+    {
+        (
+            IRegistry.ObjectInfo memory info, 
+            address instanceAddress
+        ) = ContractLib.getAndVerifyComponent(
+            getRegistry(), 
+            msg.sender,
+            POOL(),
+            true); // only active pools
+
+        poolNftId = info.nftId;
+        instance = IInstance(instanceAddress);
     }
 
 
