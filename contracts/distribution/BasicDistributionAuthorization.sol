@@ -37,7 +37,7 @@ contract BasicDistributionAuthorization
           _authorize(functions, BasicDistribution.setFees.selector, "setFees");
           _authorize(functions, BasicDistribution.createDistributorType.selector, "createDistributorType");
           _authorize(functions, BasicDistribution.createDistributor.selector, "createDistributor");
-          _authorize(functions, BasicDistribution.updateDistributorType.selector, "updateDistributorType");
+          _authorize(functions, BasicDistribution.changeDistributorType.selector, "changeDistributorType");
           _authorize(functions, BasicDistribution.createReferral.selector, "createReferral");
           
           _authorize(functions, IInstanceLinkedComponent.withdrawFees.selector, "withdrawFees");

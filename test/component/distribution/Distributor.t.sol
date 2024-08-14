@@ -19,6 +19,7 @@ import {UFixed, UFixedLib} from "../../../contracts/type/UFixed.sol";
 contract DistributorTest is GifTest {
 
     DistributorType public distributorType;
+    DistributorType public distributorType2;
     string public name;
     UFixed public minDiscountPercentage;
     UFixed public maxDiscountPercentage;
@@ -209,6 +210,31 @@ contract DistributorTest is GifTest {
     }
 
     function test_DistributorCreateHappyCase() public {
+        // GIVEN
+        _createDistributorType();
+        _createDistributorType2();
+        _createDistributor();
+
+        assertTrue(distributorNftId.gtz(), "distributor nft zero");
+
+        IDistribution.DistributorInfo memory distributorInfo = instanceReader.getDistributorInfo(distributorNftId);
+        assertEq(DistributorType.unwrap(distributorInfo.distributorType), DistributorType.unwrap(distributorType), "unexpected distributor type");
+        assertEq(keccak256(distributorInfo.data), keccak256(distributorData), "unexpected distributor data");
+
+        vm.startPrank(distributionOwner);
+
+        // WHEN
+        distribution.changeDistributorType(
+            distributorNftId,
+            distributorType2,
+            "");
+        
+        // THEN
+        IDistribution.DistributorInfo memory distributorInfoAfter = instanceReader.getDistributorInfo(distributorNftId);
+        assertEq(DistributorType.unwrap(distributorInfoAfter.distributorType), DistributorType.unwrap(distributorType2), "unexpected distributor type after");
+    }
+
+    function test_changeDistributorType() public {
 
         _createDistributorType();
         _createDistributor();
@@ -277,6 +303,31 @@ contract DistributorTest is GifTest {
 
         vm.startPrank(distributionOwner);
         distributorType = distribution.createDistributorType(
+            name,
+            minDiscountPercentage,
+            maxDiscountPercentage,
+            commissionPercentage,
+            maxReferralCount,
+            maxReferralLifetime,
+            allowSelfReferrals,
+            allowRenewals,
+            data);
+        vm.stopPrank();
+    }
+
+    function _createDistributorType2() internal {
+        name = "Silver";
+        minDiscountPercentage = instanceReader.toUFixed(5, -2);
+        maxDiscountPercentage = instanceReader.toUFixed(75, -3);
+        commissionPercentage = instanceReader.toUFixed(5, -2);
+        maxReferralCount = 50;
+        maxReferralLifetime = 30 * 24 * 3600;
+        allowSelfReferrals = true;
+        allowRenewals = true;
+        data = ".";
+
+        vm.startPrank(distributionOwner);
+        distributorType2 = distribution.createDistributorType(
             name,
             minDiscountPercentage,
             maxDiscountPercentage,

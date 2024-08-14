@@ -74,7 +74,7 @@ contract BasicDistribution is
         return _createDistributor(distributor, distributorType, data);
     }
 
-    function updateDistributorType(
+    function changeDistributorType(
         NftId distributorNftId,
         DistributorType distributorType,
         bytes memory data
@@ -85,7 +85,7 @@ contract BasicDistribution is
         onlyNftOfType(distributorNftId, DISTRIBUTOR())
         restricted()
     {
-        _updateDistributorType(distributorNftId, distributorType, data);
+        _changeDistributorType(distributorNftId, distributorType, data);
     }
 
     /**

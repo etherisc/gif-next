@@ -223,7 +223,7 @@ abstract contract Distribution is
     }
 
     /// @dev Uptates the distributor type for the specified distributor.
-    function _updateDistributorType(
+    function _changeDistributorType(
         NftId distributorNftId,
         DistributorType distributorType,
         bytes memory data
@@ -232,11 +232,10 @@ abstract contract Distribution is
         virtual
     {
         DistributionStorage storage $ = _getDistributionStorage();
-        // TODO re-enable once implemented
-        // $._distributionService.updateDistributorType(
-        //     distributorNftId,
-        //     distributorType,
-        //     data);
+        $._distributionService.changeDistributorType(
+            distributorNftId,
+            distributorType,
+            data);
     }
 
     /// @dev Create a new referral code for the provided distributor.
