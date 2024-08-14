@@ -136,21 +136,20 @@ contract DistributionService is
         instance.getInstanceStore().createDistributor(distributorNftId, info);
     }
 
-    // function updateDistributorType(
-    //     NftId distributorNftId,
-    //     DistributorType distributorType,
-    //     bytes memory data
-    // )
-    //     external
-    //     virtual
-    // {
-    //     (, IInstance instance) = _getAndVerifyCallingDistribution();
-    //     InstanceReader instanceReader = instance.getInstanceReader();
-    //     IDistribution.DistributorInfo memory distributorInfo = instanceReader.getDistributorInfo(distributorNftId);
-    //     distributorInfo.distributorType = distributorType;
-    //     distributorInfo.data = data;
-    //     instance.updateDistributor(distributorNftId, distributorInfo, KEEP_STATE());
-    // }
+    function changeDistributorType(
+        NftId distributorNftId,
+        DistributorType distributorType,
+        bytes memory data
+    )
+        external
+        virtual
+    {
+        (,, IInstance instance) = _getAndVerifyActiveComponent(DISTRIBUTION());
+        IDistribution.DistributorInfo memory distributorInfo = instance.getInstanceReader().getDistributorInfo(distributorNftId);
+        distributorInfo.distributorType = distributorType;
+        distributorInfo.data = data;
+        instance.getInstanceStore().updateDistributor(distributorNftId, distributorInfo, KEEP_STATE());
+    }
 
 
     function createReferral(
