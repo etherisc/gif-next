@@ -5,12 +5,14 @@ import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165C
 import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 
 import {IPolicyHolder} from "./IPolicyHolder.sol";
+import {IRegistry} from "../registry/IRegistry.sol";
 
 library ContractLib {
 
     function isPolicyHolder(address target) external view returns (bool) {
         return ERC165Checker.supportsInterface(target, type(IPolicyHolder).interfaceId);
     }
+
 
     function isAccessManaged(address target) external view returns (bool) {
         if (!isContract(target)) {
@@ -24,7 +26,21 @@ library ContractLib {
         return success;
     }
 
+
+    function isRegistry(address registry) public view returns (bool) {
+        if (!isContract(registry)) {
+            return false;
+        }
+
+        return supportsInterface(registry, type(IRegistry).interfaceId);
+    }
+
+
     function isContract(address target) public view returns (bool) {
+        if (target == address(0)) {
+            return false;
+        }
+
         uint256 size;
         assembly {
             size := extcodesize(target)
@@ -32,7 +48,7 @@ library ContractLib {
         return size > 0;
     }
 
-    function supportsInterface(address target, bytes4 interfaceId)  external view returns (bool) {
+    function supportsInterface(address target, bytes4 interfaceId)  public view returns (bool) {
         return ERC165Checker.supportsInterface(target, interfaceId);
     }
 }

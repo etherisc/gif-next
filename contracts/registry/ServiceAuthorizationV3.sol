@@ -184,10 +184,19 @@ contract ServiceAuthorizationV3
           IAccess.FunctionInfo[] storage functions;
 
           functions = _authorizeForService(BUNDLE(), POOL());
-          _authorize(functions, IBundleService.create.selector, "create");
+          _authorize(functions, IBundleService.stake.selector, "stake");
+          _authorize(functions, IBundleService.unstake.selector, "unstake");
           _authorize(functions, IBundleService.close.selector, "close");
           _authorize(functions, IBundleService.lockCollateral.selector, "lockCollateral");
           _authorize(functions, IBundleService.releaseCollateral.selector, "releaseCollateral");
+
+          functions = _authorizeForService(BUNDLE(), ALL());
+          _authorize(functions, IBundleService.create.selector, "create");
+          _authorize(functions, IBundleService.extend.selector, "extend");
+          _authorize(functions, IBundleService.lock.selector, "lock");
+          _authorize(functions, IBundleService.unlock.selector, "unlock");
+          _authorize(functions, IBundleService.setFee.selector, "setFee");
+          _authorize(functions, IBundleService.withdrawBundleFees.selector, "withdrawBundleFees");
      }
 }
 

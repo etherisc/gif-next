@@ -49,7 +49,7 @@ contract TestProduct is GifTest {
         // check token handler
         IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(productNftId);
         assertTrue(address(componentInfo.tokenHandler) != address(0), "token handler zero");
-        assertEq(address(componentInfo.tokenHandler.getToken()), address(token), "unexpected token for token handler");
+        assertEq(address(componentInfo.tokenHandler.TOKEN()), address(token), "unexpected token for token handler");
 
         // check nft id links (product -> components)
         IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
@@ -962,7 +962,7 @@ contract TestProduct is GifTest {
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
         assertTrue(policyInfo.closedAt.gtz(), "expiredAt not set");
         
-        assertEq(token.balanceOf(address(pool)) - pb[address(pool)], 120, "pool balance not 10120"); // 100 (netPremium) + 10 (poolFee) + 10 (bundleFee)
+        assertEq(token.balanceOf(pool.getWallet()) - pb[pool.getWallet()], 120, "pool balance not 120"); // 100 (netPremium) + 10 (poolFee) + 10 (bundleFee)
 
         assertEq(instanceBundleSet.activePolicies(bundleNftId), 0, "expected no active policy");
     }

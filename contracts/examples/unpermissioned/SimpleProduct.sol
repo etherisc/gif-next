@@ -5,6 +5,7 @@ import {Amount, AmountLib} from "../../type/Amount.sol";
 import {BasicProduct} from "../../product/BasicProduct.sol";
 import {ClaimId} from "../../type/ClaimId.sol";
 import {IAuthorization} from "../../authorization/IAuthorization.sol";
+import {IComponents} from "../../instance/module/IComponents.sol";
 import {IOracleService} from "../../oracle/IOracleService.sol";
 import {ORACLE} from "../../type/ObjectType.sol";
 import {NftId} from "../../type/NftId.sol";
@@ -33,37 +34,32 @@ contract SimpleProduct is
     constructor(
         address registry,
         NftId instanceNftId,
-        IAuthorization authorization,
-        address initialOwner,
+        string memory name,
         address token,
-        bool isInterceptor,
-        bool hasDistribution,
-        uint8 numberOfOracles
+        IComponents.ProductInfo memory productInfo,
+        IAuthorization authorization,
+        address initialOwner
     )
     {
         initialize(
             registry,
             instanceNftId,
-            authorization,
-            initialOwner,
-            "SimpleProduct",
+            name,
             token,
-            isInterceptor,
-            hasDistribution,
-            numberOfOracles); 
+            productInfo,
+            authorization,
+            initialOwner); 
     }
 
 
     function initialize(
         address registry,
         NftId instanceNftid,
-        IAuthorization authorization,
-        address initialOwner,
         string memory name,
         address token,
-        bool isInterceptor,
-        bool hasDistribution,
-        uint8 numberOfOracles
+        IComponents.ProductInfo memory productInfo,
+        IAuthorization authorization,
+        address initialOwner
     )
         public
         virtual
@@ -72,13 +68,11 @@ contract SimpleProduct is
         _initializeBasicProduct(
             registry,
             instanceNftid,
-            authorization,
-            initialOwner,
             name,
             token,
-            isInterceptor,
-            hasDistribution,
-            numberOfOracles); 
+            productInfo,
+            authorization,
+            initialOwner); 
 
         _oracleService = IOracleService(_getServiceAddress(ORACLE()));
     }

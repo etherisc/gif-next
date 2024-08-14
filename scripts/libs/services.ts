@@ -116,6 +116,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             release.salt
         ],
         { libraries: { 
+                ContractLib: libraries.contractLibAddress,
                 NftIdLib: libraries.nftIdLibAddress, 
                 RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
@@ -157,6 +158,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         ],
         { libraries: {
             AmountLib: libraries.amountLibAddress,
+            ContractLib: libraries.contractLibAddress,
             NftIdLib: libraries.nftIdLibAddress,
             RoleIdLib: libraries.roleIdLibAddress,
             TimestampLib: libraries.timestampLibAddress,
@@ -197,6 +199,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             release.salt
         ],
         { libraries: { 
+            ContractLib: libraries.contractLibAddress,
             NftIdLib: libraries.nftIdLibAddress, 
             TimestampLib: libraries.timestampLibAddress,
             VersionLib: libraries.versionLibAddress,
@@ -279,9 +282,9 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         ],
         { libraries: {
                 AmountLib: libraries.amountLibAddress,
+                ContractLib: libraries.contractLibAddress,
                 DistributorTypeLib: libraries.distributorTypeLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
-                // ObjectTypeLib: libraries.objectTypeLibAddress, 
                 ReferralLib: libraries.referralLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
@@ -323,8 +326,8 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             release.salt
         ],
         { libraries: {
+                ContractLib: libraries.contractLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
-                // ObjectTypeLib: libraries.objectTypeLibAddress, 
                 RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
                 VersionLib: libraries.versionLibAddress, 
@@ -366,6 +369,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         ],
         { libraries: {
                 AmountLib: libraries.amountLibAddress,
+                ContractLib: libraries.contractLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
                 SecondsLib: libraries.secondsLibAddress,
@@ -408,6 +412,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         ],
         { libraries: {
                 AmountLib: libraries.amountLibAddress,
+                ContractLib: libraries.contractLibAddress,
                 FeeLib: libraries.feeLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
                 // ObjectTypeLib: libraries.objectTypeLibAddress, 
@@ -451,7 +456,8 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             release.salt
         ],
         { libraries: {
-                NftIdLib: libraries.nftIdLibAddress,
+            ContractLib: libraries.contractLibAddress,
+            NftIdLib: libraries.nftIdLibAddress,
                 // ObjectTypeLib: libraries.objectTypeLibAddress, 
                 RequestIdLib: libraries.requestIdLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
@@ -493,13 +499,13 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             release.salt
         ],
         { libraries: {
-                NftIdLib: libraries.nftIdLibAddress,
-                // ObjectTypeLib: libraries.objectTypeLibAddress, 
-                RoleIdLib: libraries.roleIdLibAddress,
-                TimestampLib: libraries.timestampLibAddress,
-                VersionLib: libraries.versionLibAddress, 
-                VersionPartLib: libraries.versionPartLibAddress, 
-            }});
+            ContractLib: libraries.contractLibAddress,
+            NftIdLib: libraries.nftIdLibAddress,
+            RoleIdLib: libraries.roleIdLibAddress,
+            TimestampLib: libraries.timestampLibAddress,
+            VersionLib: libraries.versionLibAddress, 
+            VersionPartLib: libraries.versionPartLibAddress, 
+        }});
 
     const riskServiceManager = riskServiceManagerBaseContract as RiskServiceManager;
     const riskServiceAddress = await riskServiceManager.getRiskService();
@@ -582,7 +588,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
                 ContractLib: libraries.contractLibAddress,
                 FeeLib: libraries.feeLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
-                // ObjectTypeLib: libraries.objectTypeLibAddress, 
                 RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
                 PayoutIdLib: libraries.payoutIdLibAddress,
@@ -624,8 +629,8 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         ],
         { libraries: {
             AmountLib: libraries.amountLibAddress,
+            ContractLib: libraries.contractLibAddress,
             NftIdLib: libraries.nftIdLibAddress,
-            // ObjectTypeLib: libraries.objectTypeLibAddress, 
             RoleIdLib: libraries.roleIdLibAddress,
             TimestampLib: libraries.timestampLibAddress,
             VersionLib: libraries.versionLibAddress, 
@@ -659,8 +664,9 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
 
     logger.info("======== Activating release ========");
     await executeTx(
-        async () => await releaseRegistry.activateNextRelease(),
-        "releaseRegistry.activateNextRelease"
+        async () => await releaseRegistry.activateNextRelease(getTxOpts()),
+        "releaseRegistry.activateNextRelease",
+        [releaseRegistry.interface]
     );
     logger.info("======== release activated ========");
 

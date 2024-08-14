@@ -6,11 +6,13 @@ import {Amount, AmountLib} from "../../type/Amount.sol";
 import {BasicProduct} from "../../product/BasicProduct.sol";
 import {ClaimId} from "../../type/ClaimId.sol";
 import {DamageLevel, DAMAGE_SMALL, DAMAGE_MEDIUM, DAMAGE_LARGE} from "./DamageLevel.sol";
+import {FeeLib} from "../../type/Fee.sol";
 import {IAuthorization} from "../../authorization/IAuthorization.sol";
+import {IComponents} from "../../instance/module/IComponents.sol";
 import {IPolicy} from "../../instance/module/IPolicy.sol";
-import {NftId} from "../../type/NftId.sol";
+import {NftId, NftIdLib} from "../../type/NftId.sol";
 import {PayoutId} from "../../type/PayoutId.sol";
-import {POLICY} from "../../type/ObjectType.sol";
+import {POLICY, BUNDLE} from "../../type/ObjectType.sol";
 import {ReferralLib} from "../../type/Referral.sol";
 import {RiskId, RiskIdLib} from "../../type/RiskId.sol";
 import {Seconds} from "../../type/Seconds.sol";
@@ -65,7 +67,6 @@ contract FireProduct is
         NftId instanceNftid,
         string memory componentName,
         address token,
-        address pool,
         IAuthorization authorization
     )
     {
@@ -76,17 +77,15 @@ contract FireProduct is
             instanceNftid,
             componentName,
             token,
-            pool,
             authorization,
             initialOwner);
     }
 
     function _initialize(
         address registry,
-        NftId instanceNftid,
+        NftId instanceNftId,
         string memory componentName,
         address token,
-        address pool,
         IAuthorization authorization,
         address initialOwner
     )
@@ -95,14 +94,28 @@ contract FireProduct is
     {
         _initializeBasicProduct(
             registry,
-            instanceNftid,
-            authorization,
-            initialOwner,
+            instanceNftId,
             componentName,
             token,
-            false, // is interceptor
-            false, // has distribution
-            0);  // number of oracles
+            IComponents.ProductInfo({
+                isProcessingFundedClaims: false,
+                isInterceptingPolicyTransfers: false,
+                hasDistribution: false,
+                expectedNumberOfOracles: 0,
+                numberOfOracles: 0,
+                poolNftId: NftIdLib.zero(),
+                distributionNftId: NftIdLib.zero(),
+                oracleNftId: new NftId[](0),
+                productFee: FeeLib.zero(),
+                processingFee: FeeLib.zero(),
+                distributionFee: FeeLib.zero(),
+                minDistributionOwnerFee: FeeLib.zero(),
+                poolFee: FeeLib.zero(),
+                stakingFee: FeeLib.zero(),
+                performanceFee: FeeLib.zero()
+            }),
+            authorization,
+            initialOwner);  // number of oracles
     }
     
     function cities() public view returns (uint256) {
@@ -157,6 +170,7 @@ contract FireProduct is
     ) 
         public
         view
+        onlyNftOfType(bundleNftId, BUNDLE())
         returns (Amount premiumAmount)
     {
         RiskId risk = _riskMapping[cityName];
@@ -198,6 +212,7 @@ contract FireProduct is
     )
         public
         restricted()
+        onlyNftOfType(bundleNftId, BUNDLE())
         returns (NftId policyNftId)
     {
         address applicationOwner = msg.sender;
@@ -247,6 +262,7 @@ contract FireProduct is
         public 
         restricted()
         onlyOwner()
+        onlyNftOfType(policyNftId, POLICY())
     {
         _createPolicy(policyNftId, activateAt);
         _collectPremium(policyNftId, activateAt);
@@ -259,6 +275,7 @@ contract FireProduct is
         public 
         restricted()
         onlyOwner()
+        onlyNftOfType(policyNftId, POLICY())
     {
         _decline(policyNftId);
     }
@@ -270,6 +287,7 @@ contract FireProduct is
         public 
         restricted()
         onlyOwner()
+        onlyNftOfType(policyNftId, POLICY())
         returns (Timestamp)
     {
         return _expire(policyNftId, expireAt);
@@ -281,6 +299,7 @@ contract FireProduct is
         public 
         restricted()
         onlyOwner()
+        onlyNftOfType(policyNftId, POLICY())
     {
         _close(policyNftId);
     }

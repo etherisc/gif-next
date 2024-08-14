@@ -62,11 +62,11 @@ contract RegisterableMock is InitializableERC165, IRegisterable, MockInterceptor
         return _info;
     }
 
-    function nftTransferFrom(address from, address to, uint256 tokenId) public override {
+    function nftTransferFrom(address from, address to, uint256 tokenId, address operator) public override {
         if(!_info.isInterceptor) {
             revert ErrorRegisterableMockIsNotInterceptor(address(this));
         }
-        super.nftTransferFrom(from, to, tokenId);
+        super.nftTransferFrom(from, to, tokenId, operator);
     }
 
     // from INftOwnable

@@ -11,12 +11,13 @@ import {IPoolService} from "./IPoolService.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {IComponentService} from "../shared/IComponentService.sol";
 import {InstanceLinkedComponent} from "../shared/InstanceLinkedComponent.sol";
+import {InstanceReader} from "../instance/InstanceReader.sol";
 import {Fee} from "../type/Fee.sol";
 import {NftId} from "../type/NftId.sol";
 import {RoleId, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {Timestamp} from "../type/Timestamp.sol";
-import {UFixedLib} from "../type/UFixed.sol";
+import {UFixed} from "../type/UFixed.sol";
 
 abstract contract Pool is
     InstanceLinkedComponent, 
@@ -26,6 +27,7 @@ abstract contract Pool is
     bytes32 public constant POOL_STORAGE_LOCATION_V1 = 0x25e3e51823fbfffb988e0a2744bb93722d9f3e906c07cc0a9e77884c46c58300;
 
     struct PoolStorage {
+        IComponents.PoolInfo _poolInfo;
         IComponentService _componentService;
         IPoolService _poolService;
         IBundleService _bundleService;
@@ -40,12 +42,16 @@ abstract contract Pool is
     }
 
 
+    // TODO remove function once this is no longer used to produce contract locations on the fly ...
+    function getContractLocation(bytes memory name) external pure returns (bytes32 hash) {
+        return keccak256(abi.encode(uint256(keccak256(name)) - 1)) & ~bytes32(uint256(0xff));
+    }
+
+
     /// @dev see {IPoolComponent.verifyApplication}
     function verifyApplication(
         NftId applicationNftId, 
-        bytes memory applicationData,
         NftId bundleNftId, 
-        bytes memory bundleFilter,
         Amount collateralizationAmount
     )
         public
@@ -53,11 +59,12 @@ abstract contract Pool is
         restricted()
         onlyNftOfType(applicationNftId, POLICY())
     {
+        InstanceReader reader = _getInstanceReader();
         if(!applicationMatchesBundle(
             applicationNftId,
-            applicationData, 
+            reader.getPolicyInfo(applicationNftId).applicationData, 
             bundleNftId, 
-            bundleFilter,
+            reader.getBundleInfo(bundleNftId).filter,
             collateralizationAmount)
         )
         {
@@ -84,8 +91,9 @@ abstract contract Pool is
 
 
     /// @dev see {IPoolComponent.applicationMatchesBundle}
-    /// Override this function to implement any custom application verification 
-    /// Default implementation always returns true
+    /// Default implementation always returns true.
+    /// Override this function to implement any custom application verification.
+    /// Calling super.applicationMatchesBundle will ensure validation of application and bundle nft ids.
     function applicationMatchesBundle(
         NftId applicationNftId, 
         bytes memory applicationData,
@@ -103,18 +111,6 @@ abstract contract Pool is
         return true;
     }
 
-    /// @inheritdoc IPoolComponent
-    function withdrawBundleFees(NftId bundleNftId, Amount amount) 
-        external 
-        virtual
-        restricted()
-        onlyBundleOwner(bundleNftId)
-        onlyNftOfType(bundleNftId, BUNDLE())
-        returns (Amount withdrawnAmount) 
-    {
-        return _withdrawBundleFees(bundleNftId, amount);
-    }
-
 
     function getInitialPoolInfo()
         public 
@@ -122,16 +118,7 @@ abstract contract Pool is
         view 
         returns (IComponents.PoolInfo memory poolInfo)
     {
-        return IComponents.PoolInfo({
-            maxBalanceAmount: AmountLib.max(),
-            bundleOwnerRole: PUBLIC_ROLE(), 
-            isInterceptingBundleTransfers: isNftInterceptor(),
-            isProcessingConfirmedClaims: false,
-            isExternallyManaged: false,
-            isVerifyingApplications: false,
-            collateralizationLevel: UFixedLib.toUFixed(1),
-            retentionLevel: UFixedLib.toUFixed(1)
-        });
+        return _getPoolStorage()._poolInfo;
     }
 
     // Internals
@@ -141,8 +128,8 @@ abstract contract Pool is
         NftId productNftId,
         string memory name,
         address token,
+        IComponents.PoolInfo memory poolInfo,
         IAuthorization authorization,
-        bool isInterceptingNftTransfers,
         address initialOwner,
         bytes memory componentData // component specifidc data 
     )
@@ -157,17 +144,110 @@ abstract contract Pool is
             token, 
             POOL(), 
             authorization, 
-            isInterceptingNftTransfers, 
+            poolInfo.isInterceptingBundleTransfers, 
             initialOwner, 
             componentData);
 
         PoolStorage storage $ = _getPoolStorage();
+
+        $._poolInfo = poolInfo;
         $._poolService = IPoolService(_getServiceAddress(POOL())); 
         $._bundleService = IBundleService(_getServiceAddress(BUNDLE()));
         $._componentService = IComponentService(_getServiceAddress(COMPONENT())); 
 
         _registerInterface(type(IPoolComponent).interfaceId);
     }
+
+
+    /// @dev Update pool fees to the specified values.
+    /// Pool fee: are deducted from the premium amount and goes to the pool owner.
+    /// Staking fee: are deducted from the staked tokens by a bundle owner and goes to the pool owner.
+    /// Performance fee: when a bundle is closed a bundle specific profit is calculated.
+    /// The performance fee is deducted from this profit and goes to the pool owner.
+    function _setPoolFees(
+        Fee memory poolFee,
+        Fee memory stakingFee,
+        Fee memory performanceFee
+    )
+        internal
+        virtual
+    {
+        _getPoolStorage()._componentService.setPoolFees(poolFee, stakingFee, performanceFee);
+    }
+
+
+    /// @dev Sets the maximum balance amound held by this pool.
+    /// Function may only be called by pool owner.
+    function _setMaxBalanceAmount(Amount maxBalanceAmount)
+        internal
+        virtual
+    {
+        _getPoolStorage()._poolService.setMaxBalanceAmount(maxBalanceAmount);
+    }
+
+
+    /// @dev Fund the pool wallet with the specified amount.
+    /// Function is only available for externally managed pools.
+    function _fundPoolWallet(Amount amount)
+        internal
+        virtual
+    {
+        _getPoolStorage()._poolService.fundPoolWallet(amount);
+    }
+
+
+    /// @dev Withdraw the specified amount from the pool wallet.
+    /// Function is only available for externally managed pools.
+    function _defundPoolWallet(Amount amount)
+        internal
+        virtual
+    {
+        _getPoolStorage()._poolService.defundPoolWallet(amount);
+    }
+
+
+    /// @dev Creates a new empty bundle using the provided parameter values.
+    function _createBundle(
+        address bundleOwner,
+        Fee memory fee,
+        Seconds lifetime, 
+        bytes memory filter
+    )
+        internal
+        returns(NftId bundleNftId)
+    {
+        bundleNftId = _getPoolStorage()._bundleService.create(
+            bundleOwner,
+            fee,
+            lifetime,
+            filter);
+
+        // TODO add logging
+    }
+
+
+    /// @dev Sets the fee for the specified bundle.
+    /// The fee is added on top of the poolFee and deducted from the premium amounts
+    /// Via these fees individual bundler owner may earn income per policy in the context of peer to peer pools.
+    function _setBundleFee(
+        NftId bundleNftId, 
+        Fee memory fee
+    )
+        internal
+        virtual
+    {
+        _getPoolStorage()._bundleService.setFee(bundleNftId, fee);
+    }
+
+
+    /// @dev Withdraws the specified amount of fees from the bundle.
+    function _withdrawBundleFees(NftId bundleNftId, Amount amount) 
+        internal
+        returns (Amount withdrawnAmount) 
+    {
+        return _getPoolStorage()._bundleService.withdrawBundleFees(bundleNftId, amount);
+    }
+
 
     /// @dev increases the staked tokens by the specified amount
     /// bundle MUST be in active or locked state
@@ -245,77 +325,6 @@ abstract contract Pool is
     }
 
 
-    /// @dev Sets the fee for the specified bundle.
-    /// The fee is added on top of the poolFee and deducted from the premium amounts
-    /// Via these fees individual bundler owner may earn income per policy in the context of peer to peer pools.
-    function _setBundleFee(
-        NftId bundleNftId, 
-        Fee memory fee
-    )
-        internal
-        virtual
-    {
-        _getPoolStorage()._bundleService.setFee(bundleNftId, fee);
-    }
-
-
-    /// @dev Sets the maximum balance amound held by this pool.
-    /// Function may only be called by pool owner.
-    function _setMaxBalanceAmount(Amount maxBalanceAmount)
-        internal
-        virtual
-    {
-        _getPoolStorage()._poolService.setMaxBalanceAmount(maxBalanceAmount);
-    }
-
-
-    /// @dev Update pool fees to the specified values.
-    /// Pool fee: are deducted from the premium amount and goes to the pool owner.
-    /// Staking fee: are deducted from the staked tokens by a bundle owner and goes to the pool owner.
-    /// Performance fee: when a bundle is closed a bundle specific profit is calculated.
-    /// The performance fee is deducted from this profit and goes to the pool owner.
-    function _setPoolFees(
-        Fee memory poolFee,
-        Fee memory stakingFee,
-        Fee memory performanceFee
-    )
-        internal
-        virtual
-    {
-        _getPoolStorage()._componentService.setPoolFees(poolFee, stakingFee, performanceFee);
-    }
-
-    /// @dev Creates a new empty bundle using the provided parameter values.
-    function _createBundle(
-        address bundleOwner,
-        Fee memory fee,
-        Seconds lifetime, 
-        bytes memory filter
-    )
-        internal
-        returns(NftId bundleNftId)
-    {
-        bundleNftId = _getPoolStorage()._poolService.createBundle(
-            bundleOwner,
-            fee,
-            lifetime,
-            filter);
-
-        // TODO add logging
-    }
-
-    // TODO remove function once this is no longer used to produce contract locations on the fly ...
-    function getContractLocation(bytes memory name) external pure returns (bytes32 hash) {
-        return keccak256(abi.encode(uint256(keccak256(name)) - 1)) & ~bytes32(uint256(0xff));
-    }
-
-    function _withdrawBundleFees(NftId bundleNftId, Amount amount) 
-        internal
-        returns (Amount withdrawnAmount) 
-    {
-        return _getPoolStorage()._bundleService.withdrawBundleFees(bundleNftId, amount);
-    }
-
     function _processFundedClaim(
         NftId policyNftId, 
         ClaimId claimId, 
@@ -326,6 +335,7 @@ abstract contract Pool is
         _getPoolStorage()._poolService.processFundedClaim(
             policyNftId, claimId, availableAmount);
     }
+
 
     function _getPoolStorage() private pure returns (PoolStorage storage $) {
         assembly {

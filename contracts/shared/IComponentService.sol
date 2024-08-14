@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {Amount} from "../type/Amount.sol";
 import {Fee} from "../type/Fee.sol";
@@ -43,6 +44,7 @@ interface IComponentService is
 
     event LogComponentServiceRegistered(NftId instanceNftId, NftId componentNftId, ObjectType componentType, address component, address token, address initialOwner); 
     event LogComponentServiceWalletAddressChanged(NftId componentNftId, address currentWallet, address newWallet);
+    event LogComponentServiceWalletTokensTransferred(NftId componentNftId, address currentWallet, address newWallet, uint256 currentBalance);
     event LogComponentServiceComponentFeesWithdrawn(NftId componentNftId, address recipient, address token, Amount withdrawnAmount);
     event LogComponentServiceProductFeesUpdated(NftId productNftId);
     event LogComponentServiceDistributionFeesUpdated(NftId distributionNftId);
@@ -58,13 +60,21 @@ interface IComponentService is
 
     //-------- component ----------------------------------------------------//
 
-    /// @dev sets the components associated wallet address
+    /// @dev Approves the callers token handler to spend up to the specified amount of tokens.
+    /// Reverts if the component's token handler wallet is not the token handler itself.
+    function approveTokenHandler(IERC20Metadata token, Amount amount) external;
+
+    /// @dev Approves the staking token handler.
+    /// Reverts if the staking token handler wallet is not the token handler itself.
+    function approveStakingTokenHandler(IERC20Metadata token, Amount amount) external;
+
+    /// @dev Sets the components associated wallet address
     function setWallet(address newWallet) external;
 
-    /// @dev locks the component associated with the caller
+    /// @dev Locks the component associated with the caller
     function lock() external;
 
-    /// @dev unlocks the component associated with the caller
+    /// @dev Unlocks the component associated with the caller
     function unlock() external;
 
     /// @dev Withdraw fees from the distribution component. Only component owner is allowed to withdraw fees.

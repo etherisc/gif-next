@@ -15,7 +15,7 @@ import {Amount, AmountLib} from "../type/Amount.sol";
 import {Timestamp, TimestampLib, zeroTimestamp} from "../type/Timestamp.sol";
 import {ObjectType, APPLICATION, COMPONENT, DISTRIBUTION, PRODUCT, POOL, POLICY, BUNDLE, CLAIM, PRICE} from "../type/ObjectType.sol";
 import {APPLIED, COLLATERALIZED, KEEP_STATE, CLOSED, DECLINED, PAID} from "../type/StateId.sol";
-import {NftId, NftIdLib} from "../type/NftId.sol";
+import {NftId} from "../type/NftId.sol";
 import {ReferralId} from "../type/Referral.sol";
 import {RiskId} from "../type/RiskId.sol";
 import {StateId} from "../type/StateId.sol";
@@ -39,10 +39,7 @@ contract PolicyService is
     ComponentVerifyingService, 
     IPolicyService
 {
-    IApplicationService internal _applicationService;
     IComponentService internal _componentService;
-    IBundleService internal _bundleService;
-    IClaimService internal _claimService;
     IDistributionService internal _distributionService;
     IPoolService internal _poolService;
     IPricingService internal _pricingService;
@@ -63,10 +60,7 @@ contract PolicyService is
         _initializeService(registryAddress, authority, owner);
 
         VersionPart majorVersion = getVersion().toMajorPart();
-        _applicationService = IApplicationService(getRegistry().getServiceAddress(APPLICATION(), majorVersion));
-        _bundleService = IBundleService(getRegistry().getServiceAddress(BUNDLE(), majorVersion));
         _componentService = IComponentService(getRegistry().getServiceAddress(COMPONENT(), majorVersion));
-        _claimService = IClaimService(getRegistry().getServiceAddress(CLAIM(), majorVersion));
         _poolService = IPoolService(getRegistry().getServiceAddress(POOL(), majorVersion));
         _distributionService = IDistributionService(getRegistry().getServiceAddress(DISTRIBUTION(), majorVersion));
         _pricingService = IPricingService(getRegistry().getServiceAddress(PRICE(), majorVersion));
@@ -82,6 +76,8 @@ contract PolicyService is
         virtual
         nonReentrant()
     {
+        _checkNftType(applicationNftId, POLICY());
+
         (NftId productNftId,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
         InstanceReader instanceReader = instance.getInstanceReader();
 
@@ -117,7 +113,10 @@ contract PolicyService is
         external 
         virtual
         nonReentrant()
+        returns (Amount premiumAmount)
     {
+        _checkNftType(applicationNftId, POLICY());
+
         // check caller is registered product
         (NftId productNftId,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
         InstanceReader instanceReader = instance.getInstanceReader();
@@ -176,6 +175,8 @@ contract PolicyService is
             applicationNftId,
             premium);
 
+        premiumAmount = premium.fullPremiumAmount;
+
         // update referral counter 
         {
             IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
@@ -195,8 +196,6 @@ contract PolicyService is
         // log policy creation before interactions with token and policy holder
         emit LogPolicyServicePolicyCreated(applicationNftId, premium.premiumAmount, activateAt);
 
-        // TODO add calling pool contract if it needs to validate application
-
         // callback to policy holder if applicable
         _policyHolderPolicyActivated(applicationNftId, activateAt);
     }
@@ -211,6 +210,8 @@ contract PolicyService is
         virtual
         nonReentrant()
     {
+        _checkNftType(policyNftId, POLICY());
+
         // check caller is registered product
         (,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
         InstanceReader instanceReader = instance.getInstanceReader();
@@ -255,6 +256,8 @@ contract PolicyService is
         virtual
         nonReentrant()
     {
+        _checkNftType(policyNftId, POLICY());
+
         // check caller is registered product
         (,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
         InstanceReader instanceReader = instance.getInstanceReader();
@@ -282,6 +285,8 @@ contract PolicyService is
         nonReentrant()
         returns (Timestamp expiredAt)
     {
+        _checkNftType(policyNftId, POLICY());
+
         (NftId productNftId,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
         
         // check policy matches with calling product
@@ -311,6 +316,8 @@ contract PolicyService is
         nonReentrant()
         returns (Timestamp expiredAt)
     {
+        _checkNftType(policyNftId, POLICY());
+
         return _expire(
             instance,
             policyNftId,
@@ -370,6 +377,8 @@ contract PolicyService is
         virtual
         nonReentrant()
     {
+        _checkNftType(policyNftId, POLICY());
+        
         (,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
         InstanceReader instanceReader = instance.getInstanceReader();
 
@@ -457,7 +466,7 @@ contract PolicyService is
             address policyHolder = getRegistry().ownerOf(applicationNftId);
         
             _checkPremiumBalanceAndAllowance(
-                tokenHandler.getToken(), 
+                tokenHandler.TOKEN(), 
                 address(tokenHandler),
                 policyHolder, 
                 premium.premiumAmount);
@@ -697,10 +706,13 @@ contract PolicyService is
         )
     {
         IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
-        distributionNftId = productInfo.distributionNftId;
-        distributionWallet = instanceReader.getComponentInfo(distributionNftId).wallet;
-        poolWallet = instanceReader.getComponentInfo(productInfo.poolNftId).wallet;
-        productWallet = instanceReader.getComponentInfo(productNftId).wallet;
+        productWallet = instanceReader.getComponentInfo(productNftId).tokenHandler.getWallet();
+        poolWallet = instanceReader.getComponentInfo(productInfo.poolNftId).tokenHandler.getWallet();
+
+        if (productInfo.hasDistribution) {
+            distributionNftId = productInfo.distributionNftId;
+            distributionWallet = instanceReader.getComponentInfo(distributionNftId).tokenHandler.getWallet();
+        }
     }
 
 

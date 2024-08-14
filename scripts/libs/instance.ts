@@ -136,17 +136,13 @@ export async function deployAndRegisterMasterInstance(
     );
     const masterInstanceReader = masterInstanceReaderContract as InstanceReader;
 
-    // await executeTx(
-    //     () => masterInstanceReader.initialize(masterInstanceReaderAddress, getTxOpts()),
-    //     "masterInstance instanceReader.initialize"
-    // );
-
     const { address: masterInstanceAddress, contract: masterInstanceBaseContract } = await deployContract(
         "Instance",
         owner,
         undefined,
         { 
             libraries: {
+                ContractLib: libraries.contractLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
                 VersionPartLib: libraries.versionPartLibAddress,
             }
@@ -164,13 +160,15 @@ export async function deployAndRegisterMasterInstance(
             registry.registryAddress, 
             resolveAddress(owner),
             getTxOpts()),
-        "masterInstance initialize");
+        "masterInstance initialize",
+        [IInstance__factory.createInterface()]);
 
     const rcpt = await executeTx(
         () => services.instanceService.setAndRegisterMasterInstance(
             masterInstanceAddress, 
             getTxOpts()),
-            "masterInstance setAndRegisterMasterInstance"
+            "masterInstance setAndRegisterMasterInstance",
+            [IInstanceService__factory.createInterface()]
         );
 
     // this extracts the ObjectInfo struct from the LogRegistration event
@@ -184,7 +182,8 @@ export async function deployAndRegisterMasterInstance(
             MASTER_INSTANCE_OWNER,
             BigInt(masterInstanceNfdId as string), 
             getTxOpts()),
-        "masterInstance transfer ownership nft"
+        "masterInstance transfer ownership nft",
+        [registry.chainNft.interface]
     );
 
     logger.info(`master instance registered - masterInstanceNftId: ${masterInstanceNfdId}`);
@@ -213,7 +212,8 @@ export async function cloneInstance(masterInstance: InstanceAddresses, libraries
     const cloneTx = await executeTx(
         async () => await instanceServiceAsClonedInstanceOwner.createInstance(
             getTxOpts()),
-        "instanceService createInstance"
+        "instanceService createInstance",
+        [IInstanceService__factory.createInterface()]
     );
 
     const clonedInstanceAddress = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "instance");

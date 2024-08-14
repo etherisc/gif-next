@@ -5,6 +5,7 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
+import {AmountLib} from "../../contracts/type/Amount.sol";
 import {ObjectType, ObjectTypeLib} from "../../contracts/type/ObjectType.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {ProxyManager} from "../../contracts/upgradeability/ProxyManager.sol";

@@ -2,6 +2,8 @@
 pragma solidity ^0.8.20;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol"; 
+
+import {ContractLib} from "../shared/ContractLib.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegistryLinked} from "./IRegistryLinked.sol";
 
@@ -16,25 +18,17 @@ contract RegistryLinked is
     /// @dev initialization for upgradable contracts
     // used in _initializeRegisterable
     function _initializeRegistryLinked(
-        address registryAddress
+        address registry
     )
         internal
         virtual
         onlyInitializing()
     {
-        if (registryAddress.code.length == 0) {
-            revert ErrorNotRegistry(registryAddress);
+        if (!ContractLib.isRegistry(registry)) {
+            revert ErrorNotRegistry(registry);
         }
 
-        _registry = IRegistry(registryAddress);
-
-        try _registry.supportsInterface(type(IRegistry).interfaceId) returns (bool isRegistry) {
-            if (!isRegistry) {
-                revert ErrorNotRegistry(registryAddress);
-            }
-        } catch {
-            revert ErrorNotRegistry(registryAddress);
-        }
+        _registry = IRegistry(registry);
     }
 
 

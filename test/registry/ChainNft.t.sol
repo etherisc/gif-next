@@ -326,7 +326,7 @@ contract ChainNftTest is Test {
     }
 
     // IMPORTANT needs to exactly match with event defined in MockInterceptor
-    event LogNftTransferIntercepted(address from, address to, uint256 tokenId);
+    event LogNftTransferIntercepted(address from, address to, uint256 tokenId, address operator);
 
     function test_chainNftTransferWithInterceptorHappyCase() public {
         vm.prank(registry);
@@ -340,7 +340,7 @@ contract ChainNftTest is Test {
         emit Transfer(outsider, outsider2, tokenId);
 
         vm.expectEmit(address(interceptor));
-        emit LogNftTransferIntercepted(outsider, outsider2, tokenId);
+        emit LogNftTransferIntercepted(outsider, outsider2, tokenId, outsider);
 
         vm.recordLogs();
 

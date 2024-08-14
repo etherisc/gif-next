@@ -54,7 +54,9 @@ interface IPolicyService is IService {
     function createPolicy(
         NftId applicationNftId,
         Timestamp activateAt
-    ) external;
+    )
+        external
+        returns (Amount premiumAmount);
 
     /// @dev declines an application represented by {policyNftId}
     /// an application can only be declined in applied state

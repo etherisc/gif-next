@@ -58,8 +58,7 @@ interface IInstanceService is IService {
     function createInstance()
         external 
         returns (
-            // TODO check if Instance can be changed to IInstance
-            Instance clonedInstance,
+            IInstance instance,
             NftId instanceNftId
         );
 

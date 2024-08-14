@@ -29,6 +29,7 @@ contract TestPoolService is GifTest {
             address(registry),
             testProdNftId,
             address(token),
+            _getDefaultSimplePoolInfo(),
             new BasicPoolAuthorization("SimplePool"),
             outsider
         );

@@ -306,8 +306,11 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         {
             libraries: {
                 AmountLib: amountLibAddress,
+                ContractLib: contractLibAddress,
+                NftIdLib: nftIdLibAddress,
             }
         });
+    LIBRARY_ADDRESSES.set("TokenHandlerDeployerLib", tokenHandlerDeployerLibAddress);
         
     logger.info("======== Finished deployment of libraries ========");
 

@@ -130,7 +130,7 @@ contract ReferralTest is ReferralTestBase {
         assertTrue(instanceReader.getPolicyState(policyNftId) == COLLATERALIZED(), "policy state not COLLATERALIZED");
 
         uint256 netPremium = 100;
-        uint256 expectedPremium = netPremium + 17; // 100 (net premium) + 14 (distribution fee 3 + pool fee 3 + 11 distributor commission)
+        uint256 expectedPremium = netPremium + 17; // 100 (net premium) + 17 (distribution fee 3 + pool fee 3 + 11 distributor commission)
         assertEq(token.balanceOf(address(customer)), initialCustomerBalance - expectedPremium, "customer balance not 883");
 
         {

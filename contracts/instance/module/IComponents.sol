@@ -16,12 +16,12 @@ interface IComponents {
         string name; // component name (needs to be unique per instance)
         IERC20Metadata token;
         TokenHandler tokenHandler;
-        address wallet;
         bytes data; // will hold component type specific additional info (eg encoded pool info)
     }
 
     struct ProductInfo {
         bool isProcessingFundedClaims; // custom logic to react to pool events for funded claims
+        bool isInterceptingPolicyTransfers; // custom logic for policy nft transfers
         bool hasDistribution; // flag to indicate if distribution is enabled
         uint8 expectedNumberOfOracles; // expected number of oracles
         uint8 numberOfOracles; // actual number of oracles
@@ -40,7 +40,6 @@ interface IComponents {
 
     struct PoolInfo {
         Amount maxBalanceAmount; // max balance amount allowed for pool
-        RoleId bundleOwnerRole; // the required role for bundle owners
         bool isInterceptingBundleTransfers; // custom logic for bundle nft transfers
         bool isProcessingConfirmedClaims; // custom logic for claims confirmation
         bool isExternallyManaged; // funding bundles is restricted to book keeping, actual funds may be provided as needed to support payouts

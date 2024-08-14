@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {Amount} from "../type/Amount.sol";
 import {Fee} from "../type/Fee.sol";
 import {IAuthorization} from "../authorization/IAuthorization.sol";
+import {IComponents} from "../instance/module/IComponents.sol";
 import {NftId} from "../type/NftId.sol";
 import {BUNDLE} from "../type/ObjectType.sol";
 import {RoleId} from "../type/RoleId.sol";
@@ -19,9 +20,10 @@ abstract contract BasicPool is
     function _initializeBasicPool(
         address registry,
         NftId productNftId,
-        IAuthorization authorization,
-        address token,
         string memory name,
+        address token,
+        IComponents.PoolInfo memory poolInfo,
+        IAuthorization authorization,
         address initialOwner
     )
         internal
@@ -33,8 +35,8 @@ abstract contract BasicPool is
             productNftId, 
             name, 
             token, 
+            poolInfo, 
             authorization,
-            false, // isInterceptingNftTransfers, 
             initialOwner, 
             ""); // componentData
     }
@@ -115,6 +117,9 @@ abstract contract BasicPool is
     }
 
 
+    /// @dev Updates the bundle feeds to the specified values.
+    /// @param bundleNftId the bundle Nft Id
+    /// @param fee the new fee values
     function setBundleFee(
         NftId bundleNftId, 
         Fee memory fee
@@ -126,6 +131,22 @@ abstract contract BasicPool is
         onlyNftOfType(bundleNftId, BUNDLE())
     {
         _setBundleFee(bundleNftId, fee);
+    }
+
+
+    /// @dev Withdraw bundle feeds for the given bundle.
+    /// @param bundleNftId the bundle Nft Id
+    /// @param amount the amount to withdraw. If set to AMOUNT_MAX, the full commission available is withdrawn
+    /// @return withdrawnAmount the effective withdrawn amount
+    function withdrawBundleFees(NftId bundleNftId, Amount amount) 
+        external 
+        virtual
+        restricted()
+        onlyBundleOwner(bundleNftId)
+        onlyNftOfType(bundleNftId, BUNDLE())
+        returns (Amount withdrawnAmount) 
+    {
+        return _withdrawBundleFees(bundleNftId, amount);
     }
 
 

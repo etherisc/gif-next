@@ -43,6 +43,7 @@ interface IPolicy {
 
     /// @dev policy data for the full policy lifecycle
     struct PolicyInfo {
+        // application data, no changes after applying for a policy
         NftId productNftId;
         NftId bundleNftId;
         ReferralId referralId;
@@ -50,8 +51,8 @@ interface IPolicy {
         Amount sumInsuredAmount;
         Amount premiumAmount; // expected premium at application time
         Seconds lifetime;
-        // policy application data, no changes after applying for a policy
         bytes applicationData;
+        // policy data that may change during the lifecycle
         bytes processData;
         uint16 claimsCount;
         uint16 openClaimsCount;

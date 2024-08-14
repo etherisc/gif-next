@@ -322,7 +322,7 @@ contract InstanceReader {
 
         if (data.length > 0) {
             IComponents.ComponentInfo memory info = abi.decode(data, (IComponents.ComponentInfo));
-            return info.wallet;
+            return info.tokenHandler.getWallet();
         }
     }
 

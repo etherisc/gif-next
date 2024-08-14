@@ -58,6 +58,7 @@ contract StakingService is
         virtual
         restricted()
     {
+        _checkNftType(instanceNftId, INSTANCE());
         _getStakingServiceStorage()._staking.setLockingPeriod(
             instanceNftId, 
             lockingPeriod);
@@ -69,6 +70,7 @@ contract StakingService is
         virtual
         restricted()
     {
+        _checkNftType(instanceNftId, INSTANCE());
         _getStakingServiceStorage()._staking.setRewardRate(
             instanceNftId, 
             rewardRate);
@@ -81,6 +83,7 @@ contract StakingService is
         restricted()
         returns (Amount newBalance)
     {
+        _checkNftType(instanceNftId, INSTANCE());
         return _refillRewardReserves(instanceNftId, rewardProvider, dipAmount);
     }
 
@@ -102,6 +105,7 @@ contract StakingService is
         restricted()
         returns (Amount newBalance)
     {
+        _checkNftType(instanceNftId, INSTANCE());
         // update reward reserve book keeping
         StakingServiceStorage storage $ = _getStakingServiceStorage();
         newBalance = $._staking.withdrawRewardReserves(instanceNftId, dipAmount);
@@ -109,7 +113,8 @@ contract StakingService is
         // transfer withdrawal amount to target owner
         address instanceOwner = getRegistry().ownerOf(instanceNftId);
         emit LogStakingServiceRewardReservesDecreased(instanceNftId, instanceOwner, dipAmount, newBalance);
-        $._staking.transferDipAmount(
+        _distributeToken(
+            $._staking.getTokenHandler(),
             instanceOwner,
             dipAmount);
     }
@@ -157,9 +162,44 @@ contract StakingService is
         emit LogStakingServiceStakeCreated(stakeNftId, targetNftId, stakeOwner, dipAmount);
 
         // collect staked dip by staking
-        $._staking.collectDipAmount(
-            stakeOwner,
+        _collectToken(
+            $._staking.getTokenHandler(),
+            stakeOwner, 
             dipAmount);
+
+        // TODO cleanup
+        // TokenHandler tokenHandler = $._staking.getTokenHandler();
+        // tokenHandler.collectTokens(
+        //     stakeOwner, 
+        //     tokenHandler.getWallet(), 
+        //     dipAmount);
+    }
+
+    function _collectToken(
+        TokenHandler tokenHandler,
+        address from,
+        Amount amount
+    )
+        internal
+        virtual
+    {
+        tokenHandler.collectTokens(
+            from, 
+            amount);
+    }
+
+    function _distributeToken(
+        TokenHandler tokenHandler,
+        address to,
+        Amount amount
+    )
+        internal
+        virtual
+    {
+        tokenHandler.distributeTokens(
+            tokenHandler.getWallet(), 
+            to, 
+            amount);
     }
 
 
@@ -172,6 +212,8 @@ contract StakingService is
         restricted()
         onlyNftOwner(stakeNftId)
     {
+        _checkNftType(stakeNftId, STAKE());
+
         StakingServiceStorage storage $ = _getStakingServiceStorage();
         address stakeOwner = msg.sender;
 
@@ -183,7 +225,8 @@ contract StakingService is
         // collect staked dip by staking
         if (dipAmount.gtz()) {
             emit LogStakingServiceStakeIncreased(stakeNftId, stakeOwner, dipAmount, stakeBalance);
-            $._staking.collectDipAmount(
+            _collectToken(
+                $._staking.getTokenHandler(),
                 stakeOwner,
                 dipAmount);
         }
@@ -202,6 +245,8 @@ contract StakingService is
             NftId newStakeNftId
         )
     {
+        _checkNftType(stakeNftId, STAKE());
+
         StakingServiceStorage storage $ = _getStakingServiceStorage();
         // TODO implement
     } 
@@ -214,6 +259,8 @@ contract StakingService is
         virtual
         restricted()
     {
+        _checkNftType(stakeNftId, STAKE());
+
         StakingServiceStorage storage $ = _getStakingServiceStorage();
         $._staking.updateRewards(stakeNftId);
 
@@ -227,12 +274,15 @@ contract StakingService is
         restricted()
         onlyNftOwner(stakeNftId)
     {
+        _checkNftType(stakeNftId, STAKE());
+
         StakingServiceStorage storage $ = _getStakingServiceStorage();
         address stakeOwner = msg.sender;
 
         Amount rewardsClaimedAmount = $._staking.claimRewards(stakeNftId);
         emit LogStakingServiceRewardsClaimed(stakeNftId, stakeOwner, rewardsClaimedAmount);
-        $._staking.transferDipAmount(
+        _distributeToken(
+            $._staking.getTokenHandler(),
             stakeOwner,
             rewardsClaimedAmount);
     }
@@ -244,6 +294,8 @@ contract StakingService is
         restricted()
         onlyNftOwner(stakeNftId)
     {
+        _checkNftType(stakeNftId, STAKE());
+        
         StakingServiceStorage storage $ = _getStakingServiceStorage();
         address stakeOwner = msg.sender;
 
@@ -254,9 +306,16 @@ contract StakingService is
 
         Amount totalAmount = unstakedAmount + rewardsClaimedAmount;
         emit LogStakingServiceUnstaked(stakeNftId, stakeOwner, totalAmount);
-        $._staking.transferDipAmount(
-            stakeOwner,
+
+        $._staking.getTokenHandler().pushToken(
+            stakeOwner, 
             totalAmount);
+
+        // TODO cleanup
+        // _distributeToken(
+        //     $._staking.getTokenHandler(),
+        //     stakeOwner,
+        //     totalAmount);
     }
 
 
@@ -374,7 +433,8 @@ contract StakingService is
         emit LogStakingServiceRewardReservesIncreased(targetNftId, rewardProvider, dipAmount, newBalance);
 
         // collect reward dip from provider
-        $._staking.collectDipAmount(
+        _collectToken(
+            $._staking.getTokenHandler(),
             rewardProvider,
             dipAmount);
     }

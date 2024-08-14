@@ -6,6 +6,7 @@ import {BasicPool} from "../../pool/BasicPool.sol";
 import {BasicPoolAuthorization} from "../../pool/BasicPoolAuthorization.sol";
 import {Fee} from "../../type/Fee.sol";
 import {IAuthorization} from "../../authorization/IAuthorization.sol";
+import {IComponents} from "../../instance/module/IComponents.sol";
 import {NftId} from "../../type/NftId.sol";
 import {Seconds} from "../../type/Timestamp.sol";
 import {UFixed} from "../../type/UFixed.sol";
@@ -18,6 +19,7 @@ contract SimplePool is
         address registry,
         NftId productNftId,
         address token,
+        IComponents.PoolInfo memory poolInfo,
         IAuthorization authorization,
         address initialOwner
     ) 
@@ -26,15 +28,18 @@ contract SimplePool is
             registry,
             productNftId,
             token,
+            poolInfo,
             authorization,
             initialOwner
         );
     }
 
+
     function initialize(
         address registry,
         NftId productNftId,
         address token,
+        IComponents.PoolInfo memory poolInfo,
         IAuthorization authorization,
         address initialOwner
     )
@@ -45,11 +50,21 @@ contract SimplePool is
         _initializeBasicPool(
             registry,
             productNftId,
-            authorization,
-            token,
             "SimplePool",
+            token,
+            poolInfo,
+            authorization,
             initialOwner);
     }
+
+
+    function setWallet(address newWallet)
+        external
+        onlyOwner()
+    {
+        _setWallet(newWallet);
+    }
+
 
     function createBundle(
         Fee memory fee,
@@ -73,4 +88,21 @@ contract SimplePool is
         netStakedAmountInt = netStakedAmount.toInt();
     }
 
+
+    function fundPoolWallet(
+        Amount amount
+    )
+        external
+    {
+        _fundPoolWallet(amount);
+    }
+
+
+    function defundPoolWallet(
+        Amount amount
+    )
+        external
+    {
+        _defundPoolWallet(amount);
+    }
 }

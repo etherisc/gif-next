@@ -44,11 +44,11 @@ contract InstanceAdmin is
     /// @dev Only used for master instance admin.
     /// Contracts created via constructor come with disabled initializers.
     constructor(
-        IAuthorization instanceAuthorization
+        address instanceAuthorization
     )
         AccessAdmin()
     {
-        _instanceAuthorization = instanceAuthorization;
+        _instanceAuthorization = IAuthorization(instanceAuthorization);
     }
 
     /// @dev Initializes this instance admin with the provided instances authorization specification.
@@ -57,7 +57,7 @@ contract InstanceAdmin is
     /// Important: Initialization of this instance admin is only complete after calling function initializeInstance. 
     function initialize(
         AccessManagerCloneable accessManager,
-        IAuthorization instanceAuthorization
+        address instanceAuthorization
     )
         external
         initializer() 

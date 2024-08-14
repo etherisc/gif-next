@@ -4,120 +4,165 @@ pragma solidity ^0.8.20;
 import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
 
 import {Amount, AmountLib} from "../../contracts/type/Amount.sol";
+import {ComponentService} from "../../contracts/shared/ComponentService.sol";
 import {Dip} from "../../contracts/mock/Dip.sol";
-import {Test} from "../../lib/forge-std/src/Test.sol";
-import {TokenHandler} from "../../contracts/shared/TokenHandler.sol";
+import {GifTest} from "../base/GifTest.sol";
+import {IVersionable} from "../../contracts/upgradeability/IVersionable.sol";
+import {Service} from "../../contracts/shared/Service.sol";
+import {TokenHandler, TokenHandlerBase} from "../../contracts/shared/TokenHandler.sol";
+import {Version, VersionLib} from "../../contracts/type/Version.sol";
 
+contract TokenHandlerEx is TokenHandlerBase {
 
-contract TokenHandlerTest is Test {
-    Dip public dip;
-    TokenHandler public tokenHandler;
-    AccessManager public accessManager;
+    constructor(
+        address registry,
+        address staking,
+        address token
+    )
+        TokenHandlerBase(registry, staking, token)
+    { }
 
-    function setUp() public {
-        dip = new Dip();        
-        accessManager = new AccessManager(address(this));
-        tokenHandler = new TokenHandler(address(dip), address(accessManager));
-
-        // configure rights for tokenHandler (all public for test)
-        bytes4[] memory selectors = new bytes4[](3);
-        selectors[0] = TokenHandler.collectTokens.selector;
-        selectors[1] = TokenHandler.collectTokensToThreeRecipients.selector;
-        selectors[2] = TokenHandler.distributeTokens.selector;
-        accessManager.setTargetFunctionRole(address(tokenHandler), selectors, type(uint64).max);
+    function approveMax() external {
+        _approve(TOKEN, AmountLib.max());
     }
 
-    function test_TokenHandler_getToken() public view {
-        assertEq(address(dip), address(tokenHandler.getToken()));
+    function approve(Amount amount) external {
+        _approve(TOKEN, amount);
     }
 
-    function test_TokenHandler_collectTokens() public {
+    function setWallet(address newWallet) external {
+        _setWallet(newWallet);
+    }
+
+    function pullAndPushToken(address from, Amount pullAmount, address to1, Amount pushAmount1, address to2, Amount pushAmount2) external {
+        _pullAndPushToken(from, pullAmount, to1, pushAmount1, to2, pushAmount2);
+    }
+
+    function pullToken(address from, Amount amount) external {
+        _pullToken(from, amount);
+    }
+
+    function pushToken(address to, Amount amount) external {
+        _pushToken(to, amount);
+    }
+}
+
+
+contract TokenHandlerTest is GifTest {
+
+    TokenHandlerEx public tokenHandlerEx;
+    Amount public amountZero = AmountLib.zero();
+
+    function setUp() public override {
+        super.setUp();
+
+        tokenHandlerEx = new TokenHandlerEx(
+            address(registry),
+            address(staking),
+            address(dip)
+        );
+
+        tokenHandlerEx.approveMax();
+    }
+
+    function test_tokenHandlerSetUp() public {
+
+        assertEq(tokenHandlerEx.getWallet(), address(tokenHandlerEx), "unexpected staking wallet");
+        assertEq(address(tokenHandlerEx.TOKEN()), address(dip), "staking token not dip");
+        // assertEq(tokenHandlerEx.TOKEN().allowance(address(tokenHandlerEx), address(tokenHandlerEx)), type(uint256).max, "unexpected approval");
+    }
+
+    function test_tokenHandlerCollectTokenHappyCase() public {
         // GIVEN
         uint256 amountInt = 100;
         Amount amount = AmountLib.toAmount(amountInt);
         address sender = _makeAddrWithFunds("sender", amountInt);
-        address recipient = _makeAddrWithFunds("recipient", 0);
-        _approveTokenHandler(sender, amountInt);
+        address tokenHandlerWallet = tokenHandlerEx.getWallet();
+        _approveTokenHandlerFor(sender, amountInt);
         
         // THEN
         vm.expectEmit();
-        emit TokenHandler.LogTokenHandlerTokenTransfer(address(dip), sender, recipient, amountInt);
+        emit TokenHandlerBase.LogTokenHandlerTokenTransfer(
+            address(dip), 
+            sender, 
+            tokenHandlerWallet, 
+            amount);
 
         // WHEN
-        tokenHandler.collectTokens(sender, recipient, amount);
+        tokenHandlerEx.pullToken(sender, amount);
         
         // THEN
         assertEq(dip.balanceOf(sender), 0);
-        assertEq(dip.balanceOf(recipient), amountInt);
+        assertEq(dip.balanceOf(tokenHandlerWallet), amountInt);
     }
 
-    function test_TokenHandler_collectTokens2() public {
+    function test_tokenHandlerCollectTokens2() public {
         // GIVEN
         uint256 amountInt = 1;
         Amount amount = AmountLib.toAmount(amountInt);
         address sender = _makeAddrWithFunds("sender", amountInt);
-        address recipient = _makeAddrWithFunds("recipient", 0);
-        _approveTokenHandler(sender, amountInt);
+        address tokenHandlerWallet = tokenHandlerEx.getWallet();
+        _approveTokenHandlerFor(sender, amountInt);
         
         // THEN
         vm.expectEmit();
-        emit TokenHandler.LogTokenHandlerTokenTransfer(address(dip), sender, recipient, amountInt);
+        emit TokenHandlerBase.LogTokenHandlerTokenTransfer(address(dip), sender, tokenHandlerWallet, amount);
 
         // WHEN
-        tokenHandler.collectTokens(sender, recipient, amount);
+        tokenHandlerEx.pullToken(sender, amount);
         
         // THEN
         assertEq(dip.balanceOf(sender), 0);
-        assertEq(dip.balanceOf(recipient), amountInt);
+        assertEq(dip.balanceOf(tokenHandlerWallet), amountInt);
     }
 
-    function test_TokenHandler_collectTokens3() public {
+    function test_tokenHandlerCollectTokens3() public {
         // GIVEN
         uint256 amountInt = 100;
         Amount amount = AmountLib.toAmount(amountInt);
         address sender = _makeAddrWithFunds("sender", amountInt);
         _fundAddr(sender, 100);
-        address recipient = _makeAddrWithFunds("recipient", 0);
-        _approveTokenHandler(sender, amountInt);
+        address tokenHandlerWallet = tokenHandlerEx.getWallet();
+        _approveTokenHandlerFor(sender, amountInt);
         
         // THEN
         vm.expectEmit();
-        emit TokenHandler.LogTokenHandlerTokenTransfer(address(dip), sender, recipient, amountInt);
+        emit TokenHandlerBase.LogTokenHandlerTokenTransfer(address(dip), sender, tokenHandlerWallet, amount);
 
         // WHEN
-        tokenHandler.collectTokens(sender, recipient, amount);
+        tokenHandlerEx.pullToken(sender, amount);
         
         // THEN
         assertEq(dip.balanceOf(sender), 100);
-        assertEq(dip.balanceOf(recipient), amountInt);
+        assertEq(dip.balanceOf(tokenHandlerWallet), amountInt);
     }
 
-    function test_TokenHandler_amountIsZero() public {
+    function test_tokenHandlerAmountIsZero() public {
         // GIVEN
         uint256 amountInt = 0;
         Amount amount = AmountLib.toAmount(amountInt);
         address sender = _makeAddrWithFunds("sender", amountInt);
-        address recipient = _makeAddrWithFunds("recipient", 0);
-        _approveTokenHandler(sender, amountInt);
+        _approveTokenHandlerFor(sender, amountInt);
         
         // THEN
-        vm.expectRevert(abi.encodeWithSelector(TokenHandler.ErrorTokenHandlerAmountIsZero.selector));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                TokenHandlerBase.ErrorTokenHandlerAmountIsZero.selector));
 
         // WHEN
-        tokenHandler.collectTokens(sender, recipient, amount);
+        tokenHandlerEx.pullToken(sender, amount);
     }
 
-    function test_TokenHandler_balanceIsZero() public {
+    function test_tokenHandlerBalanceIsZero() public {
         // GIVEN
         uint256 amountInt = 100;
         Amount amount = AmountLib.toAmount(amountInt);
         address sender = _makeAddrWithFunds("sender", 0);
-        address recipient = _makeAddrWithFunds("recipient", 0);
-        _approveTokenHandler(sender, 100);
+        _approveTokenHandlerFor(sender, 100);
         
         // THEN
         vm.expectRevert(abi.encodeWithSelector(
-            TokenHandler.ErrorTokenHandlerBalanceTooLow.selector,
+            TokenHandlerBase.ErrorTokenHandlerBalanceTooLow.selector,
             address(dip), 
             sender,
             0,
@@ -125,20 +170,19 @@ contract TokenHandlerTest is Test {
             ));
 
         // WHEN
-        tokenHandler.collectTokens(sender, recipient, amount);
+        tokenHandlerEx.pullToken(sender, amount);
     }
 
-    function test_TokenHandler_balanceTooLow() public {
+    function test_tokenHandlerBalanceTooLow() public {
         // GIVEN
         uint256 amountInt = 100;
         Amount amount = AmountLib.toAmount(amountInt);
         address sender = _makeAddrWithFunds("sender", 99);
-        address recipient = _makeAddrWithFunds("recipient", 0);
-        _approveTokenHandler(sender, 100);
+        _approveTokenHandlerFor(sender, 100);
         
         // THEN
         vm.expectRevert(abi.encodeWithSelector(
-            TokenHandler.ErrorTokenHandlerBalanceTooLow.selector,
+            TokenHandlerBase.ErrorTokenHandlerBalanceTooLow.selector,
             address(dip), 
             sender,
             99,
@@ -146,268 +190,329 @@ contract TokenHandlerTest is Test {
             ));
 
         // WHEN
-        tokenHandler.collectTokens(sender, recipient, amount);
+        tokenHandlerEx.pullToken(sender, amount);
     }
 
-    function test_TokenHandler_allowanceIsZero() public {
+    function test_tokenHandlerAllowanceIsZero() public {
         // GIVEN
         uint256 amountInt = 100;
         Amount amount = AmountLib.toAmount(amountInt);
         address sender = _makeAddrWithFunds("sender", 100);
-        address recipient = _makeAddrWithFunds("recipient", 0);
-        
+        _approveTokenHandlerFor(sender, 0);
+
         // THEN
         vm.expectRevert(abi.encodeWithSelector(
-            TokenHandler.ErrorTokenHandlerAllowanceTooSmall.selector,
+            TokenHandlerBase.ErrorTokenHandlerAllowanceTooSmall.selector,
             address(dip), 
             sender,
-            address(tokenHandler),
+            address(tokenHandlerEx),
             0,
             100
             ));
 
         // WHEN
-        tokenHandler.collectTokens(sender, recipient, amount);
+        tokenHandlerEx.pullToken(sender, amount);
     }
 
-    function test_TokenHandler_collectTokens_3rcpt() public {
-        // GIVEN
-        uint256 amountInt = 100;
-        Amount amount = AmountLib.toAmount(amountInt);
-        address sender = _makeAddrWithFunds("sender", amountInt * 3);
-        address recipient1 = _makeAddrWithFunds("recipient1", 0);
-        address recipient2 = _makeAddrWithFunds("recipient2", 0);
-        address recipient3 = _makeAddrWithFunds("recipient3", 0);
-
-        _approveTokenHandler(sender, amountInt * 3);
-        
-        // THEN
-        vm.expectEmit();
-        emit TokenHandler.LogTokenHandlerTokenTransfer(address(dip), sender, recipient1, amountInt);
-        vm.expectEmit();
-        emit TokenHandler.LogTokenHandlerTokenTransfer(address(dip), sender, recipient2, amountInt);
-        vm.expectEmit();
-        emit TokenHandler.LogTokenHandlerTokenTransfer(address(dip), sender, recipient3, amountInt);
-
-        // WHEN
-        tokenHandler.collectTokensToThreeRecipients(sender, recipient1, amount, recipient2, amount, recipient3, amount);
-        
-        // THEN
-        assertEq(dip.balanceOf(sender), 0);
-        assertEq(dip.balanceOf(recipient1), amountInt);
-        assertEq(dip.balanceOf(recipient2), amountInt);
-        assertEq(dip.balanceOf(recipient3), amountInt);
-    }
-
-    function test_TokenHandler_collectTokens_3rcpt_amt1IsZero() public {
-        // GIVEN
-        uint256 amountInt = 100;
-        Amount amount = AmountLib.toAmount(amountInt);
-        address sender = _makeAddrWithFunds("sender", amountInt * 3);
-        address recipient1 = _makeAddrWithFunds("recipient1", 0);
-        address recipient2 = _makeAddrWithFunds("recipient2", 0);
-        address recipient3 = _makeAddrWithFunds("recipient3", 0);
-
-        _approveTokenHandler(sender, amountInt * 3);
-        
-        // WHEN
-        tokenHandler.collectTokensToThreeRecipients(sender, recipient1, AmountLib.zero(), recipient2, amount, recipient3, amount);
-        
-        // THEN
-        assertEq(dip.balanceOf(sender), 100);
-        assertEq(dip.balanceOf(recipient1), 0);
-        assertEq(dip.balanceOf(recipient2), amountInt);
-        assertEq(dip.balanceOf(recipient3), amountInt);
-    }
-
-
-    function test_TokenHandler_collectTokens_3rcpt_amt2IsZero() public {
-        // GIVEN
-        uint256 amountInt = 100;
-        Amount amount = AmountLib.toAmount(amountInt);
-        address sender = _makeAddrWithFunds("sender", amountInt * 3);
-        address recipient1 = _makeAddrWithFunds("recipient1", 0);
-        address recipient2 = _makeAddrWithFunds("recipient2", 0);
-        address recipient3 = _makeAddrWithFunds("recipient3", 0);
-
-        _approveTokenHandler(sender, amountInt * 3);
-        
-        // WHEN
-        tokenHandler.collectTokensToThreeRecipients(sender, recipient1, amount, recipient2, AmountLib.zero(), recipient3, amount);
-        
-        // THEN
-        assertEq(dip.balanceOf(sender), 100);
-        assertEq(dip.balanceOf(recipient1), amountInt);
-        assertEq(dip.balanceOf(recipient2), 0);
-        assertEq(dip.balanceOf(recipient3), amountInt);
-    }
-
-    function test_TokenHandler_collectTokens_3rcpt_amt3IsZero() public {
-        // GIVEN
-        uint256 amountInt = 100;
-        Amount amount = AmountLib.toAmount(amountInt);
-        address sender = _makeAddrWithFunds("sender", amountInt * 3);
-        address recipient1 = _makeAddrWithFunds("recipient1", 0);
-        address recipient2 = _makeAddrWithFunds("recipient2", 0);
-        address recipient3 = _makeAddrWithFunds("recipient3", 0);
-
-        _approveTokenHandler(sender, amountInt * 3);
-        
-        // WHEN
-        tokenHandler.collectTokensToThreeRecipients(sender, recipient1, amount, recipient2, amount, recipient3, AmountLib.zero());
-        
-        // THEN
-        assertEq(dip.balanceOf(sender), 100);
-        assertEq(dip.balanceOf(recipient1), amountInt);
-        assertEq(dip.balanceOf(recipient2), amountInt);
-        assertEq(dip.balanceOf(recipient3), 0);
-    }
-
-    function test_TokenHandler_collectTokens_3rcpt_allowanceTooSmall() public {
-        // GIVEN
-        uint256 amountInt = 100;
-        Amount amount = AmountLib.toAmount(amountInt);
-        address sender = _makeAddrWithFunds("sender", amountInt * 3);
-        address recipient1 = _makeAddrWithFunds("recipient1", 0);
-        address recipient2 = _makeAddrWithFunds("recipient2", 0);
-        address recipient3 = _makeAddrWithFunds("recipient3", 0);
-
-        _approveTokenHandler(sender, amountInt * 2);
-        
-        vm.expectRevert(abi.encodeWithSelector(
-            TokenHandler.ErrorTokenHandlerAllowanceTooSmall.selector,
-            address(dip), 
-            sender,
-            address(tokenHandler),
-            200,
-            300
-            ));
-
-        // WHEN
-        tokenHandler.collectTokensToThreeRecipients(sender, recipient1, amount, recipient2, amount, recipient3, amount);
-    }
-
-    function test_TokenHandler_collectTokens_3rcpt_rcptEqual1() public {
-        // GIVEN
-        uint256 amountInt = 100;
-        Amount amount = AmountLib.toAmount(amountInt);
-        address sender = _makeAddrWithFunds("sender", amountInt * 3);
-        address recipient1 = _makeAddrWithFunds("recipient1", 0);
-        address recipient2 = _makeAddrWithFunds("recipient2", 0);
-        address recipient3 = _makeAddrWithFunds("recipient3", 0);
-
-        _approveTokenHandler(sender, amountInt * 3);
-        
-        vm.expectRevert(abi.encodeWithSelector(
-            TokenHandler.ErrorTokenHandlerRecipientWalletsMustBeDistinct.selector,
-            recipient1,
-            recipient1,
-            recipient3
-            ));
-
-        // WHEN
-        tokenHandler.collectTokensToThreeRecipients(sender, recipient1, amount, recipient1, amount, recipient3, amount);
-    }
-
-        function test_TokenHandler_collectTokens_3rcpt_rcptEqual2() public {
-        // GIVEN
-        uint256 amountInt = 100;
-        Amount amount = AmountLib.toAmount(amountInt);
-        address sender = _makeAddrWithFunds("sender", amountInt * 3);
-        address recipient1 = _makeAddrWithFunds("recipient1", 0);
-        address recipient2 = _makeAddrWithFunds("recipient2", 0);
-        address recipient3 = _makeAddrWithFunds("recipient3", 0);
-
-        _approveTokenHandler(sender, amountInt * 3);
-        
-        vm.expectRevert(abi.encodeWithSelector(
-            TokenHandler.ErrorTokenHandlerRecipientWalletsMustBeDistinct.selector,
-            recipient1,
-            recipient2,
-            recipient1
-            ));
-
-        // WHEN
-        tokenHandler.collectTokensToThreeRecipients(sender, recipient1, amount, recipient2, amount, recipient1, amount);
-    }
-
-        function test_TokenHandler_collectTokens_3rcpt_rcptEqual3() public {
-        // GIVEN
-        uint256 amountInt = 100;
-        Amount amount = AmountLib.toAmount(amountInt);
-        address sender = _makeAddrWithFunds("sender", amountInt * 3);
-        address recipient1 = _makeAddrWithFunds("recipient1", 0);
-        address recipient2 = _makeAddrWithFunds("recipient2", 0);
-        address recipient3 = _makeAddrWithFunds("recipient3", 0);
-
-        _approveTokenHandler(sender, amountInt * 3);
-        
-        vm.expectRevert(abi.encodeWithSelector(
-            TokenHandler.ErrorTokenHandlerRecipientWalletsMustBeDistinct.selector,
-            recipient1,
-            recipient2,
-            recipient2
-            ));
-
-        // WHEN
-        tokenHandler.collectTokensToThreeRecipients(sender, recipient1, amount, recipient2, amount, recipient2, amount);
-    }
-
-    function test_TokenHandler_allowanceTooSmall() public {
+    function test_tokenHandlerAllowanceTooLow() public {
         // GIVEN
         uint256 amountInt = 100;
         Amount amount = AmountLib.toAmount(amountInt);
         address sender = _makeAddrWithFunds("sender", 100);
-        address recipient = _makeAddrWithFunds("recipient", 0);
-        _approveTokenHandler(sender, 50);
-        
+        _approveTokenHandlerFor(sender, 99);
+
         // THEN
         vm.expectRevert(abi.encodeWithSelector(
-            TokenHandler.ErrorTokenHandlerAllowanceTooSmall.selector,
+            TokenHandlerBase.ErrorTokenHandlerAllowanceTooSmall.selector,
             address(dip), 
             sender,
-            address(tokenHandler),
-            50,
+            address(tokenHandlerEx),
+            99,
             100
             ));
 
         // WHEN
-        tokenHandler.collectTokens(sender, recipient, amount);
+        tokenHandlerEx.pullToken(sender, amount);
     }
 
-    function test_TokenHandler_distributeTokens() public {
+    function test_tokenHandlerPullAndPushHappyCase() public {
         // GIVEN
         uint256 amountInt = 100;
-        Amount amount = AmountLib.toAmount(amountInt);
-        address sender = _makeAddrWithFunds("sender", amountInt);
-        address recipient = _makeAddrWithFunds("recipient", 0);
-        _approveTokenHandler(sender, amountInt);
+        (
+            Amount pullAmount,
+            Amount amount,
+            address sender, 
+            address wallet, 
+            address recipient1, 
+            address recipient2
+        ) = _preparePullAndPushTokenTest(amountInt);
         
         // THEN
         vm.expectEmit();
-        emit TokenHandler.LogTokenHandlerTokenTransfer(address(dip), sender, recipient, amountInt);
+        emit TokenHandlerBase.LogTokenHandlerTokenTransfer(address(dip), sender, wallet, pullAmount);
+        emit TokenHandlerBase.LogTokenHandlerTokenTransfer(address(dip), wallet, recipient1, amount);
+        emit TokenHandlerBase.LogTokenHandlerTokenTransfer(address(dip), wallet, recipient2, amount);
 
         // WHEN
-        tokenHandler.distributeTokens(sender, recipient, amount);
+        tokenHandlerEx.pullAndPushToken(sender, pullAmount, recipient1, amount, recipient2, amount);
+        
+        // THEN
+        assertEq(dip.balanceOf(sender), 0, "unexpected sender balance"  );
+        assertEq(dip.balanceOf(wallet), amountInt, "unexpected wallet balance");
+        assertEq(dip.balanceOf(recipient1), amountInt, "unexpected recipient1 balance");
+        assertEq(dip.balanceOf(recipient2), amountInt, "unexpected recipient2 balance");
+    }
+
+    function test_tokenHandlerPullAndPushRecipient1Zero() public {
+        uint256 amountInt = 100;
+        (
+            Amount pullAmount,
+            Amount amount,
+            address sender, 
+            address wallet, 
+            address recipient1, 
+            address recipient2
+        ) = _preparePullAndPushTokenTest(amountInt);
+        
+        // THEN
+        vm.expectEmit();
+        emit TokenHandlerBase.LogTokenHandlerTokenTransfer(address(dip), sender, wallet, pullAmount);
+        emit TokenHandlerBase.LogTokenHandlerTokenTransfer(address(dip), wallet, recipient2, amount);
+
+        // WHEN
+        tokenHandlerEx.pullAndPushToken(sender, pullAmount, recipient1, amountZero, recipient2, amount);
+        
+        // THEN
+        assertEq(dip.balanceOf(sender), 0, "unexpected sender balance"  );
+        assertEq(dip.balanceOf(wallet), 2 * amountInt, "unexpected wallet balance");
+        assertEq(dip.balanceOf(recipient1), 0, "unexpected recipient1 balance");
+        assertEq(dip.balanceOf(recipient2), amountInt, "unexpected recipient2 balance");
+    }
+
+
+    function test_tokenHandlerPullAndPushRecipient2Zero() public {
+        // GIVEN
+        uint256 amountInt = 100;
+        (
+            Amount pullAmount,
+            Amount amount,
+            address sender, 
+            address wallet, 
+            address recipient1, 
+            address recipient2
+        ) = _preparePullAndPushTokenTest(amountInt);
+        
+        // THEN
+        vm.expectEmit();
+        emit TokenHandlerBase.LogTokenHandlerTokenTransfer(address(dip), sender, wallet, pullAmount);
+        emit TokenHandlerBase.LogTokenHandlerTokenTransfer(address(dip), wallet, recipient1, amount);
+
+        // WHEN
+        tokenHandlerEx.pullAndPushToken(sender, pullAmount, recipient1, amount, recipient2, amountZero);
+        
+        // THEN
+        assertEq(dip.balanceOf(sender), 0, "unexpected sender balance"  );
+        assertEq(dip.balanceOf(wallet), 2 * amountInt, "unexpected wallet balance");
+        assertEq(dip.balanceOf(recipient1), amountInt, "unexpected recipient1 balance");
+        assertEq(dip.balanceOf(recipient2), 0, "unexpected recipient2 balance");
+    }
+
+    function test_tokenHandlerPullAndPushWalletZero() public {
+        // GIVEN
+        uint256 amountInt = 100;
+        Amount amount1 = AmountLib.toAmount(2 * amountInt);
+        (
+            Amount pullAmount,
+            Amount amount,
+            address sender, 
+            address wallet, 
+            address recipient1, 
+            address recipient2
+        ) = _preparePullAndPushTokenTest(amountInt);
+        
+        // THEN
+        vm.expectEmit();
+        emit TokenHandlerBase.LogTokenHandlerTokenTransfer(address(dip), sender, wallet, pullAmount);
+        emit TokenHandlerBase.LogTokenHandlerTokenTransfer(address(dip), wallet, recipient1, amount1);
+        emit TokenHandlerBase.LogTokenHandlerTokenTransfer(address(dip), wallet, recipient2, amount);
+
+        // WHEN
+        tokenHandlerEx.pullAndPushToken(sender, pullAmount, recipient1, amount1, recipient2, amount);
+        
+        // THEN
+        assertEq(dip.balanceOf(sender), 0, "unexpected sender balance"  );
+        assertEq(dip.balanceOf(wallet), 0, "unexpected wallet balance");
+        assertEq(dip.balanceOf(recipient1), 2 * amountInt, "unexpected recipient1 balance");
+        assertEq(dip.balanceOf(recipient2), amountInt, "unexpected recipient2 balance");
+    }
+
+    function test_tokenHandlerPullAndPushWalletAllowanceTooSmall() public {
+        // GIVEN
+        uint256 amountInt = 100;
+        (
+            Amount pullAmount,
+            Amount amount,
+            address sender, 
+            address wallet, 
+            address recipient1, 
+            address recipient2
+        ) = _preparePullAndPushTokenTest(amountInt);
+
+        _approveTokenHandlerFor(sender, amountInt * 2);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                TokenHandlerBase.ErrorTokenHandlerAllowanceTooSmall.selector,
+                address(dip), 
+                sender,
+                address(tokenHandlerEx),
+                200,
+                300));
+
+        // WHEN
+        tokenHandlerEx.pullAndPushToken(sender, pullAmount, recipient1, amount, recipient2, amount);
+    }
+
+    function test_tokenHandlerPullAndPushWalletWalletsNotSame() public {
+        // GIVEN
+        uint256 amountInt = 100;
+        (
+            Amount pullAmount,
+            Amount amount,
+            address sender, 
+            address wallet, 
+            address recipient1, 
+            address recipient2
+        ) = _preparePullAndPushTokenTest(amountInt);
+
+        // WHEN + THEN 1
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                TokenHandlerBase.ErrorTokenHandlerWalletsNotDistinct.selector,
+                wallet,
+                wallet,
+                recipient2));
+
+        tokenHandlerEx.pullAndPushToken(sender, pullAmount, wallet, amount, recipient2, amount);
+
+        // WHEN + THEN 2
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                TokenHandlerBase.ErrorTokenHandlerWalletsNotDistinct.selector,
+                wallet,
+                recipient1,
+                recipient1));
+
+        tokenHandlerEx.pullAndPushToken(sender, pullAmount, recipient1, amount, recipient1, amount);
+
+        // WHEN + THEN 3
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                TokenHandlerBase.ErrorTokenHandlerWalletsNotDistinct.selector,
+                wallet,
+                recipient2,
+                recipient2));
+
+        tokenHandlerEx.pullAndPushToken(sender, pullAmount, recipient2, amount, recipient2, amount);
+    }
+
+    function test_tokenHandlerPullAndPushPushAmountTooLarge() public {
+        // GIVEN
+        uint256 amountInt = 100;
+        Amount amountTooLarge = AmountLib.toAmount(3 * amountInt);
+        Amount pushAmount = AmountLib.toAmount(4 * amountInt);
+        (
+            Amount pullAmount,
+            Amount amount,
+            address sender, 
+            address wallet, 
+            address recipient1, 
+            address recipient2
+        ) = _preparePullAndPushTokenTest(amountInt);
+
+        _approveTokenHandlerFor(sender, amountInt * 2);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                TokenHandlerBase.ErrorTokenHandlerPushAmountsTooLarge.selector,
+                pushAmount,
+                pullAmount));
+
+        // WHEN
+        tokenHandlerEx.pullAndPushToken(sender, pullAmount, recipient1, amountTooLarge, recipient2, amount);
+    }
+
+    function test_tokenHandlerPushToken() public {
+        // GIVEN
+        uint256 amountInt = 100;
+        Amount amount = AmountLib.toAmount(amountInt);
+        address sender = tokenHandlerEx.getWallet();
+        address recipient = _makeAddrWithFunds("recipient", 0);
+        _fundAndApprove(tokenHandlerEx, sender, amount, amount);
+
+        // THEN
+        vm.expectEmit();
+        emit TokenHandlerBase.LogTokenHandlerTokenTransfer(address(dip), sender, recipient, amount);
+
+        // WHEN
+        tokenHandlerEx.pushToken(recipient, amount);
         
         // THEN
         assertEq(dip.balanceOf(sender), 0);
         assertEq(dip.balanceOf(recipient), amountInt);
     }
 
-    function _makeAddrWithFunds(string memory name, uint256 amount) internal returns (address) {
-        address addr = makeAddr(name);
+    function _preparePullAndPushTokenTest(uint256 amountInt)
+        internal 
+        returns (
+            Amount pullAmount,
+            Amount amount,
+            address sender, 
+            address wallet, 
+            address recipient1, 
+            address recipient2
+        )
+    {
+        uint256 pullAmountInt = 3 * amountInt;
+        pullAmount = AmountLib.toAmount(pullAmountInt);
+        amount = AmountLib.toAmount(amountInt);
+
+        sender = _makeAddrWithFunds("sender", pullAmountInt);
+        wallet = tokenHandlerEx.getWallet();
+        recipient1 = _makeAddrWithFunds("recipient1", 0);
+        recipient2 = _makeAddrWithFunds("recipient2", 0);
+
+        _approveTokenHandlerFor(sender, pullAmountInt);
+    }
+
+    function _fundAndApprove(TokenHandlerEx th, address sender, Amount amount, Amount approval) internal {
+
+        vm.startPrank(registryOwner);
+        dip.transfer(sender, amount.toInt());
+        vm.stopPrank();
+
+        vm.startPrank(sender);
+        dip.approve(address(th), approval.toInt());
+        vm.stopPrank();
+    }
+
+    function _makeAddrWithFunds(string memory name, uint256 amount) internal returns (address addr) {
+        addr = makeAddr(name);
+
+        vm.startPrank(registryOwner);
         dip.transfer(addr, amount);
-        return addr;
+        vm.stopPrank();
     }
 
     function _fundAddr(address addr, uint256 amount) internal {
+        vm.startPrank(registryOwner);
         dip.transfer(addr, amount);
+        vm.stopPrank();
     }
 
-    function _approveTokenHandler(address from, uint256 amount) internal {
+    function _approveTokenHandlerFor(address from, uint256 amount) internal {
         vm.startPrank(from);
-        dip.approve(address(tokenHandler), amount);
+        dip.approve(address(tokenHandlerEx), amount);
         vm.stopPrank();
     }
 }

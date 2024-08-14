@@ -154,7 +154,7 @@ jobs:
     permissions:
         contents: read
         # id-token: write
-    needs: [build_hardhat, build_foundry, test_foundry]
+    needs: [build_hardhat, build_foundry]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -175,8 +175,7 @@ jobs:
           npm install -g hardhat-shorthand
           npm install
       
-      - name: Run deployment script
-        env:
-          SKIP_VERIFICATION: true
-        run: hh run scripts/deploy_all.ts 
-        
+      - name: Run deployment script for gif and fire components
+        run: |
+          hh run scripts/deploy_all.ts 
+
