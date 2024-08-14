@@ -75,32 +75,6 @@ contract PoolService is
         emit LogPoolServiceMaxBalanceAmountUpdated(poolNftId, previousMaxBalanceAmount, maxBalanceAmount);
     }
 
-    // TODO cleanup
-    // /// @inheritdoc IPoolService
-    // function createBundle(
-    //     address bundleOwner, // initial bundle owner
-    //     Fee memory fee, // fees deducted from premium that go to bundle owner
-    //     Seconds lifetime, // initial duration for which new policies are covered
-    //     bytes calldata filter // optional use case specific criteria that define if a policy may be covered by this bundle
-    // )
-    //     external 
-    //     virtual
-    //     returns(NftId bundleNftId)
-    // {
-    //     (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
-
-    //     // create the empty bundle
-    //     bundleNftId = _bundleService.create(
-    //         instance,
-    //         poolNftId,
-    //         bundleOwner,
-    //         fee,
-    //         lifetime,
-    //         filter);
-
-    //     emit LogPoolServiceBundleCreated(instance.getNftId(), poolNftId, bundleNftId);
-    // }
-
 
     function closeBundle(NftId bundleNftId)
         external
@@ -497,11 +471,6 @@ contract PoolService is
             policyNftId, 
             policyInfo.bundleNftId, 
             remainingCollateralAmount);
-
-        // TODO cleanup
-        // _bundleService.unlinkPolicy(
-        //     instance, 
-        //     policyNftId);
 
         // update value locked with staking service
         _staking.decreaseTotalValueLocked(

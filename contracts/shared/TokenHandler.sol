@@ -262,16 +262,8 @@ contract TokenHandler is
     // onlyService
     error ErrorTokenHandlerNotService(address service);
 
-
+    // TODO delete
     error ErrorTokenHandlerRecipientWalletsMustBeDistinct(address to, address to2, address to3);
-
-    // TODO cleanup
-    // IRegistry public immutable REGISTRY;
-    // IERC20Metadata public immutable TOKEN;
-    // address public immutable COMPONENT;
-    // NftId public immutable NFT_ID;
-
-    // address private _wallet;
 
     modifier onlyService() {
         if (!REGISTRY.isObjectType(msg.sender, SERVICE())) {

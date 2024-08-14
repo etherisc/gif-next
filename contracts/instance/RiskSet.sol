@@ -29,12 +29,7 @@ contract RiskSet is
     mapping(RiskId riskId => LibNftIdSet.Set policies) internal _activePolicies;
 
     /// @dev links a policy to its bundle
-    // to link a policy it MUST NOT yet have been linked
     function linkPolicy(NftId productNftId, RiskId riskId, NftId policyNftId) external restricted() {
-        // TODO cleanup
-        // IPolicy.PolicyInfo memory policyInfo = _instance.getInstanceReader().getPolicyInfo(policyNftId);
-        // RiskId riskId = policyInfo.riskId;
-        // NftId productNftId = policyInfo.productNftId;
 
         // ensure risk is active (in active set) and registered with this instance
         if (!_isActive(productNftId, riskId.toKey32())) {
@@ -47,10 +42,6 @@ contract RiskSet is
 
     /// @dev Unlinks a policy from its risk.
     function unlinkPolicy(NftId productNftId, RiskId riskId, NftId policyNftId) external restricted() {
-        // TODO cleanup
-        // IPolicy.PolicyInfo memory policyInfo = _instance.getInstanceReader().getPolicyInfo(policyNftId);
-        // RiskId riskId = policyInfo.riskId;
-        // NftId productNftId = policyInfo.productNftId;
 
         // ensure risk is registered with this instance
         if (!_contains(productNftId, riskId.toKey32())) {

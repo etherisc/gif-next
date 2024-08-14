@@ -274,18 +274,6 @@ contract OracleService is
     }
 
 
-    // TODO cleanup
-    // function _getInstanceForComponent(NftId componentNftId)
-    //     internal
-    //     view
-    //     returns(IInstance instance)
-    // {
-    //     NftId instanceNftId = getRegistry().getObjectInfo(componentNftId).parentNftId;
-    //     address instanceAddress = getRegistry().getObjectAddress(instanceNftId);
-    //     return IInstance(instanceAddress);
-    // }
-
-
     function _getDomain() internal pure override returns(ObjectType) {
         return ORACLE();
     }

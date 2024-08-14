@@ -32,12 +32,7 @@ contract BundleSet is
     mapping(NftId bundleNftId => LibNftIdSet.Set policies) internal _activePolicies;
 
     /// @dev links a policy to its bundle
-    // to link a policy it MUST NOT yet have been linked
     function linkPolicy(NftId poolNftId, NftId bundleNftId, NftId policyNftId) external restricted() {
-        // TODO cleanup
-        // NftId bundleNftId = _instance.getInstanceReader().getPolicyInfo(policyNftId).bundleNftId;
-        // decision will likely depend on the decision what to check here and what in the service
-        // NftId poolNftId = _instance.getInstanceReader().getBundleInfo(bundleNftId).poolNftId;
 
         // ensure bundle is unlocked (in active set) and registered with this instance
         if (!_isActive(poolNftId, _toBundleKey32(bundleNftId))) {
@@ -50,16 +45,7 @@ contract BundleSet is
 
 
     /// @dev unlinks a policy from its bundle
-    // to unlink a policy it must closable, ie. meet one of the following criterias
-    // - the policy MUST be past its expiry period and it MUST NOT have any open claims
-    // - the policy's payoutAmount MUST be equal to its sumInsuredAmount and MUST NOT have any open claims
     function unlinkPolicy(NftId poolNftId, NftId bundleNftId, NftId policyNftId) external restricted() {
-        // TODO cleanup
-        // IPolicy.PolicyInfo memory policyInfo = _instance.getInstanceReader().getPolicyInfo(policyNftId);
-
-        // NftId bundleNftId = policyInfo.bundleNftId;
-        // // decision will likely depend on the decision what to check here and what in the service
-        // NftId poolNftId = _instance.getInstanceReader().getBundleInfo(bundleNftId).poolNftId;
 
         // ensure bundle is registered with this instance
         if (!_contains(poolNftId, _toBundleKey32(bundleNftId))) {

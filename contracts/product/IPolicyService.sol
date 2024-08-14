@@ -30,11 +30,8 @@ interface IPolicyService is IService {
     error ErrorPolicyServiceInsufficientAllowance(address customer, address tokenHandlerAddress, uint256 amount);
     error ErrorPolicyServicePremiumAlreadyPaid(NftId policyNftId);
 
-    error  ErrorPolicyServicePolicyNotCloseable(NftId policyNftId);
+    error ErrorPolicyServicePolicyNotCloseable(NftId policyNftId);
 
-    // TODO cleanup
-    // error ErrorPolicyServicePolicyNotActivated(NftId policyNftId);
-    // error ErrorPolicyServicePolicyAlreadyClosed(NftId policyNftId);
     error ErrorPolicyServicePolicyNotActive(NftId policyNftId, StateId state);
     error ErrorPolicyServicePremiumNotPaid(NftId policyNftId, Amount premiumAmount);
     error ErrorPolicyServiceOpenClaims(NftId policyNftId, uint16 openClaimsCount);
