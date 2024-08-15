@@ -28,6 +28,7 @@ interface IClaimService is
 
     event LogClaimServicePayoutCreated(NftId policyNftId, PayoutId payoutId, Amount amount, address beneficiary);
     event LogClaimServicePayoutProcessed(NftId policyNftId, PayoutId payoutId, Amount amount, address beneficiary, Amount netAmount, Amount processingFeeAmount);
+    event LogClaimServicePayoutCancelled(NftId policyNftId, PayoutId payoutId);
     error ErrorClaimServiceBeneficiarySet(NftId policyNftId, PayoutId payoutId, address beneficiary);
 
     error ErrorClaimServicePolicyProductMismatch(NftId policyNftId, NftId expectedProduct, NftId actualProduct);
@@ -117,6 +118,12 @@ interface IClaimService is
     /// this includes moving the payout token to the beneficiary (default: policy holder)
     /// function can only be called by product, policy needs to match with calling product
     function processPayout(
+        NftId policyNftId, 
+        PayoutId payoutId
+    ) external;
+
+    /// @dev cancels the specified payout. no tokens are moved, payout is set to cancelled. 
+    function cancelPayout(
         NftId policyNftId, 
         PayoutId payoutId
     ) external;

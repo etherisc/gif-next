@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {TimestampLib} from "../type/Timestamp.sol";
 import {ObjectType, CLAIM, POLICY, POOL, PRODUCT} from "../type/ObjectType.sol";
-import {SUBMITTED, KEEP_STATE, DECLINED, REVOKED, CONFIRMED, CLOSED, PAID} from "../type/StateId.sol";
+import {SUBMITTED, KEEP_STATE, DECLINED, REVOKED, CANCELLED, CONFIRMED, CLOSED, PAID} from "../type/StateId.sol";
 import {NftId} from "../type/NftId.sol";
 import {FeeLib} from "../type/Fee.sol";
 import {StateId} from "../type/StateId.sol";
@@ -400,8 +400,37 @@ contract ClaimService is
         }
     }
 
-    // internal functions
+    function cancelPayout(
+        NftId policyNftId, 
+        PayoutId payoutId
+    )
+        external
+        virtual
+    {
+        _checkNftType(policyNftId, POLICY());
+        
+        (
+            ,
+            IInstance instance,
+            InstanceReader instanceReader,
+            InstanceStore instanceStore,
+            IPolicy.PolicyInfo memory policyInfo
+        ) = _verifyCallerWithPolicy(policyNftId);
 
+        // update and save payout info with instance
+        instanceStore.updatePayoutState(policyNftId, payoutId, CANCELLED());
+
+        {
+            ClaimId claimId = payoutId.toClaimId();
+            IPolicy.ClaimInfo memory claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
+            claimInfo.openPayoutsCount -= 1;
+            instanceStore.updateClaim(policyNftId, claimId, claimInfo, KEEP_STATE());
+        }
+
+        emit LogClaimServicePayoutCancelled(policyNftId, payoutId);
+    }
+
+    // internal functions
 
     function _createPayout(
         NftId policyNftId, 
@@ -423,7 +452,7 @@ contract ClaimService is
         ) = _verifyCallerWithPolicy(policyNftId);
 
         IPolicy.ClaimInfo memory claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
-        StateId claimState = instanceReader.getClaimState(policyNftId, claimId);
+        // StateId claimState = instanceReader.getClaimState(policyNftId, claimId);
 
         // TODO add checks
         // claim needs to be open
