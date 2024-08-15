@@ -181,12 +181,7 @@ contract ComponentService is
         virtual
         onlyComponent(msg.sender)
     {
-        // FIXME: needs to work with locked components
-        // (, IInstance instance) = _getAndVerifyComponentInfo(
-        //     getRegistry().getNftIdForAddress(msg.sender), 
-        //     COMPONENT(),
-        //     false); // only active
-        (, IInstance instance) = _getAndVerifyActiveComponent(COMPONENT());
+        (, IInstance instance) = _getAndVerifyComponent(COMPONENT(), false);
         _setLocked(instance.getInstanceAdmin(), componentAddress, locked);
     }
 
@@ -830,6 +825,17 @@ contract ComponentService is
             IInstance instance
         )
     {
+        return _getAndVerifyComponent(expectedType, true); // only active
+    }
+
+    function _getAndVerifyComponent(ObjectType expectedType, bool isActive) 
+        internal 
+        view 
+        returns (
+            NftId componentNftId,
+            IInstance instance
+        )
+    {
         IRegistry.ObjectInfo memory info;
         address instanceAddress;
 
@@ -838,12 +844,12 @@ contract ComponentService is
                 getRegistry(),
                 msg.sender, // caller
                 expectedType,
-                true); // only active
+                isActive); 
         } else {
             (info, instanceAddress) = ContractLib.getAndVerifyAnyComponent(
                 getRegistry(),
                 msg.sender,
-                true); // only active
+                isActive); 
         }
 
         // get component nft id and instance
