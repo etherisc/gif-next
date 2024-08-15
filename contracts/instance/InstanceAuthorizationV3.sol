@@ -134,8 +134,9 @@ contract InstanceAuthorizationV3
           functions = _authorizeForTarget(INSTANCE_ADMIN_TARGET_NAME, _toTargetRoleId(INSTANCE()));
           _authorize(functions, InstanceAdmin.grantRole.selector, "grantRole");
 
-          // authorize instance service role
-          // functions = _authorizeForTarget(INSTANCE_ADMIN_TARGET_NAME, getServiceRole(INSTANCE()));
+          // authorize component service role
+          functions = _authorizeForTarget(INSTANCE_ADMIN_TARGET_NAME, getServiceRole(COMPONENT()));
+          _authorize(functions, InstanceAdmin.setTargetLocked.selector, "setTargetLocked");
      }
 
 
