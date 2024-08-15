@@ -120,6 +120,12 @@ function STAKE() pure returns (ObjectType) {
     return ObjectType.wrap(33);
 }
 
+// TODO: change id for accounting
+function ACCOUNTING() pure returns (ObjectType) {
+    return ObjectType.wrap(34);
+}
+
+
 /// @dev Object type that includes any other object type.
 /// Note that eq()/'==' does not take this property into account.
 function ALL() pure returns (ObjectType) {
@@ -204,6 +210,8 @@ library ObjectTypeLib {
             return "Bundle";
         } else if (objectType == RISK()) {
             return "Risk";
+        } else if (objectType == ACCOUNTING()) {
+            return "Accounting";
         }
 
         // fallback: ObjectType<obect-type-int>
