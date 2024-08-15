@@ -1,18 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IPolicy} from "../instance/module/IPolicy.sol";
 import {Key32} from "../type/Key32.sol";
 import {LibNftIdSet} from "../type/NftIdSet.sol";
 import {NftId} from "../type/NftId.sol";
+import {ObjectSet} from "./base/ObjectSet.sol";
 import {RiskIdLib, RiskId} from "../type/RiskId.sol";
 
-import {ObjectSet} from "./base/ObjectSet.sol";
-
-contract RiskSet is 
+/// @dev RiskSet manages the risks and its active policies per product.
+contract RiskSet is
     ObjectSet
 {
-    using LibNftIdSet for LibNftIdSet.Set;
 
     event LogRiskSetPolicyLinked(RiskId riskId, NftId policyNftId);
     event LogRiskSetPolicyUnlinked(RiskId riskId, NftId policyNftId);
@@ -36,7 +34,7 @@ contract RiskSet is
             revert ErrorRiskSetRiskLocked(riskId, policyNftId);
         }
 
-        _activePolicies[riskId].add(policyNftId);
+        LibNftIdSet.add(_activePolicies[riskId], policyNftId);
         emit LogRiskSetPolicyLinked(riskId, policyNftId);
     }
 
@@ -48,7 +46,7 @@ contract RiskSet is
             revert ErrorRiskSetRiskUnknown(riskId);
         }
 
-        _activePolicies[riskId].remove(policyNftId);
+        LibNftIdSet.remove(_activePolicies[riskId], policyNftId);
         emit LogRiskSetPolicyUnlinked(riskId, policyNftId);
     }
 
@@ -110,10 +108,10 @@ contract RiskSet is
     }
 
     function linkedPolicies(RiskId riskId) external view returns(uint256) {
-        return _activePolicies[riskId].size();
+        return LibNftIdSet.size(_activePolicies[riskId]);
     }
 
     function getLinkedPolicyNftId(RiskId riskId, uint256 idx) external view returns(NftId policyNftId) {
-        return _activePolicies[riskId].getElementAt(idx);
+        return LibNftIdSet.getElementAt(_activePolicies[riskId], idx);
     }
 }

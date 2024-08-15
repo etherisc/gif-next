@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
+import {IAccessManager} from "@openzeppelin/contracts/access/manager/IAccessManager.sol";
 import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
@@ -12,11 +13,14 @@ import {AccessManagerCloneable} from "../../contracts/authorization/AccessManage
 import {AccessManagedMock} from "../mock/AccessManagedMock.sol";
 import {IAccess} from "../../contracts/authorization/IAccess.sol";
 import {IAccessAdmin} from "../../contracts/authorization/IAccessAdmin.sol";
+import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
+import {Registry} from "../../contracts/registry/Registry.sol";
 import {RoleId, RoleIdLib} from "../../contracts/type/RoleId.sol";
 import {Str, StrLib} from "../../contracts/type/String.sol";
 import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
+import {VersionPart, VersionPartLib} from "../../contracts/type/Version.sol";
 
-/*
+
 contract AccessAdminForTesting is AccessAdmin {
 
     uint64 public constant MANAGER_ROLE = type(uint64).min + 1;
@@ -25,18 +29,26 @@ contract AccessAdminForTesting is AccessAdmin {
     /// @dev required role for state changes to this contract
     RoleId internal _managerRoleId;
 
-    // FIXME can not create targets in constructor -> isAccessManaged() will revert because of zero code size
-    constructor() AccessAdmin() {
-        _createAdminAndPublicRoles();
-        _initializeAccessAdminForTesting();
+    // constructor as in registry admin
+    constructor() {
+        initialize(new AccessManagerCloneable());
     }
 
-    function _initializeAccessAdminForTesting() internal {
+    function completeSetup(
+        address registry,
+        VersionPart release
+    )
+        public
+        reinitializer(type(uint8).max)
+        onlyDeployer()
+    {
+        // link access manager to registry and release
+        AccessManagerCloneable(authority()).completeSetup(
+            registry, 
+            release);
 
-        FunctionInfo[] memory functions;
-
-        // create targets
-        _createTarget(address(this), "AccessAdminForTesting", false, true);
+        // create targets for testing
+        _createTarget(address(this), "AccessAdmin", false, true);
 
         // setup manager role
         _managerRoleId = RoleIdLib.toRoleId(MANAGER_ROLE);
@@ -49,10 +61,12 @@ contract AccessAdminForTesting is AccessAdmin {
                 MANAGER_ROLE_NAME)); 
 
         // grant public role access to grant and revoke, renounce
-        functions = new FunctionInfo[](3);
-        functions[0] = toFunction(AccessAdminForTesting.grantRole.selector, "grantRole");
-        functions[1] = toFunction(AccessAdminForTesting.revokeRole.selector, "revokeRole");
-        functions[2] = toFunction(AccessAdminForTesting.renounceRole.selector, "renounceRole");
+        FunctionInfo[] memory functions;
+        functions = new FunctionInfo[](4);
+        functions[0] = toFunction(AccessAdminForTesting.grantManagerRole.selector, "grantManagerRole");
+        functions[1] = toFunction(AccessAdminForTesting.grantRole.selector, "grantRole");
+        functions[2] = toFunction(AccessAdminForTesting.revokeRole.selector, "revokeRole");
+        functions[3] = toFunction(AccessAdminForTesting.renounceRole.selector, "renounceRole");
         _authorizeTargetFunctions(address(this), getPublicRole(), functions);
 
         // grant manager role access to the specified functions 
@@ -69,6 +83,14 @@ contract AccessAdminForTesting is AccessAdmin {
     }
 
     //--- role management functions -----------------------------------------//
+
+    function grantManagerRole(address account)
+        external
+        restricted()
+        onlyDeployer()
+    {
+        _grantRoleToAccount(_managerRoleId, account);
+    }
 
     function createRole(
         RoleId roleId, 
@@ -203,47 +225,41 @@ contract AccessAdminForTesting is AccessAdmin {
 
 }
 
-contract AccessAdminCloneable is AccessAdminForTesting {
-
-    error ErrorAccessAdminCloneableAdminRoleMissing();
-
-    function initialize(AccessManagerCloneable accessManager) public initializer() {
-        _checkAccessManager(accessManager);
-        _initialize(accessManager);
-    }
-
-    /// @dev shared code for both initializer methods.
-    function _initialize(AccessManagerCloneable accessManager) internal {
-        _initializeAuthority(accessManager);
-        _createAdminAndPublicRoles();
-        _initializeAccessAdminForTesting();
-    }
-
-    function _checkAccessManager(AccessManagerCloneable accessManager) internal view {
-        (bool hasAdminRole, ) = accessManager.hasRole(accessManager.ADMIN_ROLE(), address(this));
-        if (!hasAdminRole) {
-            revert ErrorAccessAdminCloneableAdminRoleMissing();
-        }
-    }
-}
-
 contract AccessAdminTest is Test {
 
     address public accessAdminDeployer = makeAddr("accessAdminDeployer");
-    address public accessAdminCloner = makeAddr("accessAdminCloner");
+    address public globalRegistry = makeAddr("globalRegistry");
+    address public admin = makeAddr("admin");
     address public outsider = makeAddr("outsider");
     address public outsider2 = makeAddr("outsider2");
 
+    RegistryAdmin public registryAdmin;
+    Registry public registry;
+    VersionPart release;
+    AccessManagerCloneable public accessManager;
     AccessAdminForTesting public accessAdmin;
-    AccessAdminCloneable aaMaster;
+
+    AccessManagedMock public accessManaged;
 
 
     function setUp() public {
-        vm.startPrank(accessAdminDeployer);
-        accessAdmin = new AccessAdminForTesting();
-        accessAdmin.createTarget(address(accessAdmin), "AccessAdmin");
 
-        aaMaster = new AccessAdminCloneable();
+        vm.startPrank(accessAdminDeployer);
+
+        // create access admin for testing
+        accessAdmin = new AccessAdminForTesting();
+
+        // create registry and release version
+        registryAdmin = new RegistryAdmin();
+        registry = new Registry(registryAdmin, globalRegistry);
+        VersionPart release = VersionPartLib.toVersionPart(3);
+
+        // complete setup (which links internal acccess manager to registry and release)
+        // and grants manager role to deployer
+        accessAdmin.completeSetup(
+            address(registry), 
+            release);
+
         vm.stopPrank();
     }
 
@@ -1051,7 +1067,8 @@ contract AccessAdminTest is Test {
         // admin role
         vm.startPrank(address(accessAdmin));
 
-        // attempt to grant admin role
+        // solhint-disable next-line
+        console.log("attempt to grant admin role");
         vm.expectRevert(
             abi.encodeWithSelector(
                 IAccessAdmin.ErrorRoleIsLocked.selector,
@@ -1059,7 +1076,8 @@ contract AccessAdminTest is Test {
 
         accessAdmin.grantRole(outsider, adminRole);
 
-        // attempt to revoke admin role
+        // solhint-disable next-line
+        console.log("attempt to revoke admin role");
         vm.expectRevert(
             abi.encodeWithSelector(
                 IAccessAdmin.ErrorRoleIsLocked.selector,
@@ -1067,7 +1085,8 @@ contract AccessAdminTest is Test {
 
         accessAdmin.revokeRole(outsider, adminRole);
 
-        // attempt to renounce admin role
+        // solhint-disable next-line
+        console.log("attempt to renounce admin role");
         vm.expectRevert(
             abi.encodeWithSelector(
                 IAccessAdmin.ErrorRoleIsLocked.selector,
@@ -1078,86 +1097,32 @@ contract AccessAdminTest is Test {
         // public role
         vm.startPrank(address(accessAdmin));
 
-        // attempt to grant admin role
+        // solhint-disable next-line
+        console.log("attempt to grant public role");
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessAdmin.ErrorRoleIsLocked.selector,
+                IAccessManager.AccessManagerLockedRole.selector,
                 publicRole));
 
         accessAdmin.grantRole(outsider, publicRole);
 
-        // attempt to revoke admin role
+        // solhint-disable next-line
+        console.log("attempt to revoke public role");
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessAdmin.ErrorRoleIsLocked.selector,
+                IAccessManager.AccessManagerLockedRole.selector,
                 publicRole));
 
         accessAdmin.revokeRole(outsider, publicRole);
 
-        // attempt to renounce admin role
+        // solhint-disable next-line
+        console.log("attempt to renounce public role");
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessAdmin.ErrorRoleIsLocked.selector,
+                IAccessManager.AccessManagerLockedRole.selector,
                 publicRole));
 
         accessAdmin.renounceRole(publicRole);
-
-        vm.stopPrank();
-    }
-
-
-    /// @dev test creating a new access admin via constructor
-    function test_accessAdminConstructorHappyCase() public {
-        // GIVEN (just setup)
-        // WHEN
-        vm.startPrank(accessAdminDeployer);
-        AccessAdminForTesting aat = new AccessAdminForTesting();
-        vm.stopPrank();
-
-        // THEN
-        _checkAccessAdmin(aat, accessAdminDeployer);
-    }
-
-
-    /// @dev test creating a new access admin via cloning a deployed access admin and initilizing the clone
-    function test_accessAdminClonedHappyCase() public {
-        // GIVEN (just setup)
-        vm.startPrank(accessAdminCloner);
-
-        // WHEN
-        // create cloned access manager
-        AccessAdminCloneable aa = AccessAdminCloneable(
-            Clones.clone(
-                address(aaMaster)));
-
-        // initialize aa with newly created access manager
-        AccessManagerCloneable am = new AccessManagerCloneable();
-        aa.initialize(am);
-        vm.stopPrank();
-
-        // THEN
-        _checkAccessAdmin(aa, accessAdminCloner);
-    }
-
-
-    /// @dev test that a cloned access admin can only be initialized once
-    function test_accessAdminClonedFailingToInitializeTwice1stVersion() public {
-        // GIVEN
-        vm.startPrank(accessAdminCloner);
-
-        // create cloned access manager
-        AccessAdminCloneable aa = AccessAdminCloneable(
-            Clones.clone(
-                address(aaMaster)));
-        
-        // initialize aa with newly created access manager
-        AccessManagerCloneable am = new AccessManagerCloneable();
-        aa.initialize(am);
-
-        // WHEN + THEN
-        // attempt to initialize 2nd time
-        vm.expectRevert(Initializable.InvalidInitialization.selector);
-        aa.initialize(am);
 
         vm.stopPrank();
     }
@@ -1407,5 +1372,3 @@ contract AccessAdminTest is Test {
     }
 
 }
-
-*/

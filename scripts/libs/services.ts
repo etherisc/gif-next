@@ -3,9 +3,7 @@ import { getImplementationAddress } from '@openzeppelin/upgrades-core';
 import { AddressLike, BytesLike, Signer, id } from "ethers";
 import { ethers as hhEthers } from "hardhat";
 import {
-    AccountingService,
-    AccountingServiceManager,
-    AccountingService__factory,
+    AccountingService, AccountingServiceManager, AccountingService__factory,
     ApplicationService, ApplicationServiceManager, ApplicationService__factory,
     BundleService, BundleServiceManager, BundleService__factory,
     ClaimService, ClaimServiceManager, ClaimService__factory,
@@ -269,7 +267,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         undefined);
     
     const rcptAcct = await executeTx(
-        async () => await releaseRegistry.registerService(accountingServiceAddress, getTxOpts()),
+        async () => await registry.releaseRegistry.registerService(accountingServiceAddress, getTxOpts()),
         "registerService - accountingService"
     );
     const logRegistrationInfoAcct = getFieldFromTxRcptLogs(rcptAcct!, registry.registry.interface, "LogRegistration", "nftId");

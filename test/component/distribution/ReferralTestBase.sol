@@ -6,7 +6,7 @@ import {GifTest} from "../../base/GifTest.sol";
 import {NftId} from "../../../contracts/type/NftId.sol";
 import {DistributorType} from "../../../contracts/type/DistributorType.sol";
 import {ReferralId} from "../../../contracts/type/Referral.sol";
-import {Timestamp, toTimestamp} from "../../../contracts/type/Timestamp.sol";
+import {Timestamp, TimestampLib} from "../../../contracts/type/Timestamp.sol";
 import {UFixed, UFixedLib} from "../../../contracts/type/UFixed.sol";
 import {SimpleDistribution} from "../../../contracts/examples/unpermissioned/SimpleDistribution.sol";
 import {FeeLib} from "../../../contracts/type/Fee.sol";
@@ -56,7 +56,7 @@ contract ReferralTestBase is GifTest {
         referralCode = "SAVE!!!";
         discountPercentage = instanceReader.toUFixed(5, -2);
         maxReferrals = 10;
-        expiryAt = toTimestamp(block.timestamp + 7 * 24 * 3600);
+        expiryAt = TimestampLib.toTimestamp(block.timestamp + 7 * 24 * 3600);
         referralData = "...";
 
         vm.startPrank(distributionOwner);

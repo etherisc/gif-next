@@ -210,10 +210,7 @@ contract StakingTargetManagementTest is GifTest {
         // GIVEN
         address stakingWallet = staking.getWallet();
         uint256 refillAmountFullDips = 500;
-        (
-            TokenHandler tokenHandler,
-            Amount refillAmount
-        ) = _addRewardReserves(instanceNftId, instanceOwner, refillAmountFullDips);
+        (, Amount refillAmount) = _addRewardReserves(instanceNftId, instanceOwner, refillAmountFullDips);
 
         // WHEN / THEN (withdraw some reserves as outsider)
         Amount withdrawAmount = AmountLib.toAmount(refillAmount.toInt() / 2);

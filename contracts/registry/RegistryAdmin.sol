@@ -73,12 +73,15 @@ contract RegistryAdmin is
         address gifAdmin, 
         address gifManager
     )
-        external
+        public
+        virtual
         reinitializer(type(uint8).max)
         onlyDeployer()
     {
         AccessManagerCloneable accessManager = AccessManagerCloneable(authority());
-        accessManager.completeSetup(address(registry), VersionPartLib.toVersionPart(type(uint8).max)); 
+        accessManager.completeSetup(
+            address(registry), 
+            VersionPartLib.toVersionPart(type(uint8).max)); 
 
         _registry = address(registry);
         _releaseRegistry = registry.getReleaseRegistryAddress();

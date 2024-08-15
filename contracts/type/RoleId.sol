@@ -96,7 +96,7 @@ library RoleIdLib {
     uint64 public constant ALL_VERSIONS = 99;
     uint64 public constant SERVICE_DOMAIN_ROLE_FACTOR = 100;
     uint64 public constant COMPONENT_ROLE_FACTOR = 100;
-    uint64 public constant CUSTOM_ROLE_MIN = 1000000;
+    uint64 public constant CUSTOM_ROLE_MIN_INT = 1000000;
 
     /// @dev Converts the RoleId to a uint.
     function zero() public pure returns (RoleId) {
@@ -115,7 +115,7 @@ library RoleIdLib {
 
     /// @dev Converts an uint into a custom role id.
     function toCustomRoleId(uint64 index) public pure returns (RoleId) {
-        return toRoleId(CUSTOM_ROLE_MIN + index);
+        return toRoleId(CUSTOM_ROLE_MIN_INT + index);
     }
 
     /// @dev Converts the role id to a uint.

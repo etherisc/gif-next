@@ -110,26 +110,30 @@ contract AccessAdmin is
 
     //-------------- initialization functions ------------------------------//
 
+    // event LogAccessAdminDebug(string message);
+
     /// @dev Initializes this admin with the provided accessManager (and authorization specification).
     /// Internally initializes access manager with this admin and creates basic role setup.
     function initialize(
         AccessManagerCloneable authority 
-        //,IAuthorization authorization
     )
         public
-        virtual
-        initializer
+        initializer()
         onlyDeployer() // initializes deployer if not initialized yet
     {
-        // set and initialize access manager for this admin
-        // admin role is granted before it is created
+        authority.initialize(address(this));
+
+        // set and initialize this access manager contract as
+        // the admin (ADMIN_ROLE) of the provided authority
         _initializeAuthority(authority);
 
-        // create basic admin independent setup
+        // create admin and public roles
         _initializeAdminAndPublicRoles();
 
-        //_authorization = authorization;
+        // additional use case specific initialization
+        _initializeCustom();
     }
+
 
     function _initializeAuthority(
         AccessManagerCloneable authority
@@ -139,10 +143,12 @@ contract AccessAdmin is
         onlyInitializing()
     {
         _authority = authority;
-        _authority.initialize(address(this));
 
+        // this access admin contract is an access managed contract
+        // that is managed by the provided authority
         __AccessManaged_init(address(_authority));
     }
+
 
     function _initializeAdminAndPublicRoles()
         internal
@@ -172,6 +178,13 @@ contract AccessAdmin is
                 maxMemberCount: type(uint32).max,
                 name: PUBLIC_ROLE_NAME}));
     }
+
+
+    function _initializeCustom()
+        internal
+        virtual
+        onlyInitializing()
+    { }
 
     //--- view functions for roles ------------------------------------------//
 

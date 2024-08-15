@@ -43,7 +43,7 @@ contract StakingTest is GifTest {
     function test_stakingStakeCreateProtocolStake() public {
 
         NftId protocolNftId = stakingReader.getTargetNftId(0);
-        (TokenHandler tokenHandler, Amount dipAmount) = _prepareAccount(staker, 5000);
+        (, Amount dipAmount) = _prepareAccount(staker, 5000);
 
         // check balances before staking
         assertTrue(staker != staking.getWallet(), "staker and staking wallet the same");
@@ -94,7 +94,7 @@ contract StakingTest is GifTest {
 
     function test_stakingStakeCreateInstanceStake() public {
 
-        (TokenHandler tokenHandler, Amount dipAmount) = _prepareAccount(staker2, 3000);
+        (, Amount dipAmount) = _prepareAccount(staker2, 3000);
 
         // check balances after staking
         assertEq(dip.balanceOf(staker2), dipAmount.toInt(), "staker2: unexpected dip balance (before staking)");

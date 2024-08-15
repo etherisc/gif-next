@@ -51,7 +51,7 @@ contract AccessManagerCloneableTest is Test {
         accessManager.grantRole(1, accessManagedCaller, 0);
     }
 
-    function test_accessManagerCloneable_lockRelease_byUnauthorizedCaller() public {
+    function test_accessManagerCloneableLockReleaseByUnauthorizedCaller() public {
         assertFalse(accessManager.isLocked(), "Release should be unlocked");
 
         vm.expectRevert(abi.encodeWithSelector(AccessManagerCloneable.ErrorAccessManagerCallerNotAdmin.selector, accessManagedCaller));
@@ -64,7 +64,7 @@ contract AccessManagerCloneableTest is Test {
         accessManager.setLocked(true);
     }
 
-    function test_accessManagerCloneable_unlockRelease_byUnauthorizedCaller() public {
+    function test_accessManagerCloneableUnlockReleaseByUnauthorizedCaller() public {
         assertFalse(accessManager.isLocked(), "Release should be unlocked");
 
         vm.expectRevert(abi.encodeWithSelector(AccessManagerCloneable.ErrorAccessManagerCallerNotAdmin.selector, accessManagedCaller));
@@ -76,16 +76,24 @@ contract AccessManagerCloneableTest is Test {
         accessManager.setLocked(false);
     }
 
-    function test_accessManagerCloneable_lockRelease_whenReleaseUnlockedHappyCase() public {
+    function test_accessManagerCloneableLockReleaseWhenReleaseUnlockedHappyCase() public {
         assertFalse(accessManager.isLocked(), "Release should be unlocked");
 
         vm.prank(admin);
         accessManager.setLocked(true);
 
         assertTrue(accessManager.isLocked(), "Release should be locked");
+
+        assertEq(accessManaged.counter1(), 0, "unexpected counter value (before)");
+
+        vm.expectRevert(abi.encodeWithSelector(IAccessManaged.AccessManagedUnauthorized.selector, accessManagedCaller));
+        vm.prank(accessManagedCaller);
+        accessManaged.increaseCounter1();
+
+        assertEq(accessManaged.counter1(), 0, "unexpected counter value (after)");
     }
 
-    function test_accessManagerCloneable_lockRelease_whenReleaseLockedHappyCase() public {
+    function test_accessManagerCloneableLockReleaseWhenReleaseLockedHappyCase() public {
         assertFalse(accessManager.isLocked(), "Release should be unlocked");
 
         // first lock
@@ -106,7 +114,7 @@ contract AccessManagerCloneableTest is Test {
         accessManaged.increaseCounter1();
     }
 
-    function test_accessManagerCloneable_unlockRelease_whenReleaseLockedHappyCase() public {
+    function test_accessManagerCloneableUnlockReleaseWhenReleaseLockedHappyCase() public {
         assertFalse(accessManager.isLocked(), "Release should be unlocked");
 
         // lock
@@ -127,7 +135,7 @@ contract AccessManagerCloneableTest is Test {
         assertEq(accessManaged.counter1(), 1);
     }
 
-    function test_accessManagerCloneable_unlockRelease_whenReleaseUnlockedHappyCase() public {
+    function test_accessManagerCloneableUnlockReleaseWhenReleaseUnlockedHappyCase() public {
         assertFalse(accessManager.isLocked(), "Release should be unlocked");
 
         // lock
@@ -150,7 +158,7 @@ contract AccessManagerCloneableTest is Test {
         assertEq(accessManaged.counter1(), 1);
     }
 
-    function test_accessManagerCloneable_callAccessManaged_whenReleaseUnlockedHappyCase() public {
+    function test_accessManagerCloneableCallAccessManagedWhenReleaseUnlockedHappyCase() public {
         assertFalse(accessManager.isLocked(), "Release should be unlocked");
 
         vm.prank(accessManagedCaller);
@@ -158,24 +166,32 @@ contract AccessManagerCloneableTest is Test {
         assertEq(accessManaged.counter1(), 1);
     }
 
-    function test_accessManagerCloneable_callAccessManaged_whenReleaseLocked() public {
+    function test_accessManagerCloneableCallAccessManagedWhenReleaseLocked() public {
         assertFalse(accessManager.isLocked(), "Release should be unlocked");
+
+        assertEq(accessManaged.counter1(), 0, "unexpected counter value (before)");
 
         // call before lock
         vm.prank(accessManagedCaller);
         accessManaged.increaseCounter1();
+
+        assertEq(accessManaged.counter1(), 1, "unexpected counter value (after)");
 
         // lock
         vm.prank(admin);
         accessManager.setLocked(true);
 
         // call after lock
-        vm.expectRevert(abi.encodeWithSelector(IAccessManaged.AccessManagedUnauthorized.selector, accessManagedCaller));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessManaged.AccessManagedUnauthorized.selector, 
+                accessManagedCaller));
+
         vm.prank(accessManagedCaller);
         accessManaged.increaseCounter1();
     }
 
-    function test_accessManagerCloneable_callAccessManaged_whenReleaseUnlocked_byUnauthorizedCaller() public {
+    function test_accessManagerCloneableCallAccessManagedWhenReleaseUnlocked_byUnauthorizedCaller() public {
         assertFalse(accessManager.isLocked(), "Release should be unlocked");
 
         vm.prank(admin);

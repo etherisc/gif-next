@@ -4,13 +4,14 @@ pragma solidity ^0.8.20;
 import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 import {AccessManagerUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagerUpgradeable.sol";
 
+import {IRegistry} from "../registry/IRegistry.sol";
+import {RegistryLinked} from "../shared/RegistryLinked.sol";
 import {VersionPart} from "../type/Version.sol";
 
-import {RegistryLinked} from "../shared/RegistryLinked.sol";
 
-import {IRegistry} from "../registry/IRegistry.sol";
-
-// cloned by upon release preparation and instance cloning
+/// @dev An AccessManager based on OpenZeppelin that is cloneable and has a central lock property.
+/// The lock property allows to lock all services of a release in a central place.
+/// Cloned by upon release preparation and instance cloning.
 contract AccessManagerCloneable is
     AccessManagerUpgradeable,
     RegistryLinked
@@ -37,16 +38,19 @@ contract AccessManagerCloneable is
         __AccessManager_init(admin);
     }
 
-    function completeSetup(address registry, VersionPart version)
+
+    function completeSetup(
+        address registry, 
+        VersionPart release
+    )
         public
         onlyAdminRole
-        reinitializer(uint64(version.toInt()))
+        reinitializer(uint64(release.toInt()))
     {
-        address setRegistry = address(getRegistry());
-
-        if(setRegistry != address(0)) {
-            revert ErrorAccessManagerRegistryAlreadySet(setRegistry);
+        if(address(getRegistry()) != address(0)) {
+            revert ErrorAccessManagerRegistryAlreadySet(address(getRegistry()) );
         }
+
         _initializeRegistryLinked(registry);
     }
 

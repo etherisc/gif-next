@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {Test} from "../../lib/forge-std/src/Test.sol";
-import {Timestamp, TimestampLib, gteTimestamp, gtTimestamp, lteTimestamp, ltTimestamp, eqTimestamp, neTimestamp, toTimestamp, zeroTimestamp} from "../../contracts/type/Timestamp.sol";
+import {Timestamp, TimestampLib, gteTimestamp, gtTimestamp, lteTimestamp, ltTimestamp, eqTimestamp, neTimestamp, zeroTimestamp} from "../../contracts/type/Timestamp.sol";
 
 contract TimestampTest is Test {
     
@@ -11,14 +11,14 @@ contract TimestampTest is Test {
     Timestamp ts3;
 
     function setUp() public {
-        ts1 = toTimestamp(1691321541); // before ts2
-        ts2 = toTimestamp(1696321541); // after ts1 and before ts3
-        ts3 = toTimestamp(1699321541); // after ts2
+        ts1 = TimestampLib.toTimestamp(1691321541); // before ts2
+        ts2 = TimestampLib.toTimestamp(1696321541); // after ts1 and before ts3
+        ts3 = TimestampLib.toTimestamp(1699321541); // after ts2
     }
 
     function test_toTimestamp_toInt() public {
         uint40 ts = 1691321541;
-        assertEq(toTimestamp(ts).toInt(), ts);
+        assertEq(TimestampLib.toTimestamp(ts).toInt(), ts);
     }
 
     function test_zeroTimestamp() public {

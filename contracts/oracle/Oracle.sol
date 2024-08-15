@@ -69,7 +69,7 @@ abstract contract Oracle is
         override(IInstanceLinkedComponent, InstanceLinkedComponent)
         onlyOwner()
         restricted()
-        returns (Amount withdrawnAmount)
+        returns (Amount)
     {
         revert ErrorOracleNotImplemented("withdrawFees");
     }
