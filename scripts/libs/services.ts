@@ -3,6 +3,9 @@ import { getImplementationAddress } from '@openzeppelin/upgrades-core';
 import { AddressLike, BytesLike, Signer, id } from "ethers";
 import { ethers as hhEthers } from "hardhat";
 import {
+    AccountingService,
+    AccountingServiceManager,
+    AccountingService__factory,
     ApplicationService, ApplicationServiceManager, ApplicationService__factory,
     BundleService, BundleServiceManager, BundleService__factory,
     ClaimService, ClaimServiceManager, ClaimService__factory,
@@ -13,10 +16,10 @@ import {
     PolicyService, PolicyServiceManager, PolicyService__factory,
     PoolService, PoolServiceManager, PoolService__factory,
     PricingService, PricingServiceManager, PricingService__factory,
-    RiskService, RiskServiceManager, RiskService__factory,
     RegistryService,
     RegistryServiceManager,
     RegistryService__factory,
+    RiskService, RiskServiceManager, RiskService__factory,
     StakingService, StakingServiceManager, StakingService__factory
 } from "../../typechain-types";
 import { logger } from "../logger";
@@ -38,6 +41,11 @@ export type ServiceAddresses = {
     instanceServiceAddress: AddressLike,
     instanceService: InstanceService,
     instanceServiceManagerAddress: AddressLike,
+
+    accountingServiceNftId: string,
+    accountingServiceAddress: AddressLike,
+    accountingService: AccountingService,
+    accountingServiceManagerAddress: AddressLike,
 
     componentServiceNftId: string,
     componentServiceAddress: AddressLike,
@@ -115,6 +123,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             release.salt
         ],
         { libraries: { 
+                ContractLib: libraries.contractLibAddress,
                 NftIdLib: libraries.nftIdLibAddress, 
                 RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
@@ -156,6 +165,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         ],
         { libraries: {
             AmountLib: libraries.amountLibAddress,
+            ContractLib: libraries.contractLibAddress,
             NftIdLib: libraries.nftIdLibAddress,
             RoleIdLib: libraries.roleIdLibAddress,
             TimestampLib: libraries.timestampLibAddress,
@@ -196,6 +206,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             release.salt
         ],
         { libraries: { 
+            ContractLib: libraries.contractLibAddress,
             NftIdLib: libraries.nftIdLibAddress, 
             TimestampLib: libraries.timestampLibAddress,
             VersionLib: libraries.versionLibAddress,
@@ -226,6 +237,48 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         "linkToProxy - instanceService"
     );
     logger.info(`instanceServiceManager deployed - instanceServiceAddress: ${instanceServiceAddress} instanceServiceManagerAddress: ${instanceServiceManagerAddress} nftId: ${instanceServiceNfdId}`);
+
+    logger.info("-------- accounting service --------");
+    const { address: accountingServiceManagerAddress, contract: accountingServiceManagerBaseContract, } = await deployContract(
+        "AccountingServiceManager",
+        owner,
+        [
+            authority,
+            registry.registryAddress,
+            release.salt
+        ],
+        { libraries: { 
+            AmountLib: libraries.amountLibAddress,
+            ContractLib: libraries.contractLibAddress,
+            NftIdLib: libraries.nftIdLibAddress, 
+            RoleIdLib: libraries.roleIdLibAddress,
+            TimestampLib: libraries.timestampLibAddress,
+            VersionLib: libraries.versionLibAddress,
+            VersionPartLib: libraries.versionPartLibAddress,
+        }});
+    
+    const accountingServiceManager = accountingServiceManagerBaseContract as AccountingServiceManager;
+    const accountingServiceAddress = await accountingServiceManager.getAccountingService();
+    const accountingService = AccountingService__factory.connect(accountingServiceAddress, owner);
+
+    // verify service implementation
+    prepareVerificationData(
+        "AccountingService", 
+        await getImplementationAddress(hhEthers.provider, await accountingServiceManager.getProxy()), 
+        [], 
+        undefined);
+    
+    const rcptAcct = await executeTx(
+        async () => await releaseRegistry.registerService(accountingServiceAddress, getTxOpts()),
+        "registerService - accountingService"
+    );
+    const logRegistrationInfoAcct = getFieldFromTxRcptLogs(rcptAcct!, registry.registry.interface, "LogRegistration", "nftId");
+    const accountingServiceNfdId = (logRegistrationInfoAcct as unknown);
+    await executeTx(
+        async () => await accountingServiceManager.linkToProxy(getTxOpts()),
+        "linkToProxy - accountingService"
+    );
+    logger.info(`accountingServiceManager deployed - accountingServiceAddress: ${accountingServiceAddress} accountingServiceManagerAddress: ${accountingServiceManagerAddress} nftId: ${accountingServiceNfdId}`);
 
     logger.info("-------- component service --------");
     const { address: componentServiceManagerAddress, contract: componentServiceManagerBaseContract, } = await deployContract(
@@ -278,9 +331,9 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         ],
         { libraries: {
                 AmountLib: libraries.amountLibAddress,
+                ContractLib: libraries.contractLibAddress,
                 DistributorTypeLib: libraries.distributorTypeLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
-                // ObjectTypeLib: libraries.objectTypeLibAddress, 
                 ReferralLib: libraries.referralLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
@@ -322,8 +375,8 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             release.salt
         ],
         { libraries: {
+                ContractLib: libraries.contractLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
-                // ObjectTypeLib: libraries.objectTypeLibAddress, 
                 RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
                 VersionLib: libraries.versionLibAddress, 
@@ -365,6 +418,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         ],
         { libraries: {
                 AmountLib: libraries.amountLibAddress,
+                ContractLib: libraries.contractLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
                 SecondsLib: libraries.secondsLibAddress,
@@ -407,6 +461,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         ],
         { libraries: {
                 AmountLib: libraries.amountLibAddress,
+                ContractLib: libraries.contractLibAddress,
                 FeeLib: libraries.feeLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
                 // ObjectTypeLib: libraries.objectTypeLibAddress, 
@@ -450,7 +505,8 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             release.salt
         ],
         { libraries: {
-                NftIdLib: libraries.nftIdLibAddress,
+            ContractLib: libraries.contractLibAddress,
+            NftIdLib: libraries.nftIdLibAddress,
                 // ObjectTypeLib: libraries.objectTypeLibAddress, 
                 RequestIdLib: libraries.requestIdLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
@@ -492,13 +548,13 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             release.salt
         ],
         { libraries: {
-                NftIdLib: libraries.nftIdLibAddress,
-                // ObjectTypeLib: libraries.objectTypeLibAddress, 
-                RoleIdLib: libraries.roleIdLibAddress,
-                TimestampLib: libraries.timestampLibAddress,
-                VersionLib: libraries.versionLibAddress, 
-                VersionPartLib: libraries.versionPartLibAddress, 
-            }});
+            ContractLib: libraries.contractLibAddress,
+            NftIdLib: libraries.nftIdLibAddress,
+            RoleIdLib: libraries.roleIdLibAddress,
+            TimestampLib: libraries.timestampLibAddress,
+            VersionLib: libraries.versionLibAddress, 
+            VersionPartLib: libraries.versionPartLibAddress, 
+        }});
 
     const riskServiceManager = riskServiceManagerBaseContract as RiskServiceManager;
     const riskServiceAddress = await riskServiceManager.getRiskService();
@@ -537,7 +593,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             ContractLib: libraries.contractLibAddress,
             NftIdLib: libraries.nftIdLibAddress,
             RoleIdLib: libraries.roleIdLibAddress,
-            StateIdLib: libraries.stateIdLibAddress,
             TimestampLib: libraries.timestampLibAddress,
             VersionLib: libraries.versionLibAddress, 
             VersionPartLib: libraries.versionPartLibAddress, 
@@ -581,7 +636,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
                 ContractLib: libraries.contractLibAddress,
                 FeeLib: libraries.feeLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
-                // ObjectTypeLib: libraries.objectTypeLibAddress, 
                 RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
                 PayoutIdLib: libraries.payoutIdLibAddress,
@@ -623,8 +677,8 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         ],
         { libraries: {
             AmountLib: libraries.amountLibAddress,
+            ContractLib: libraries.contractLibAddress,
             NftIdLib: libraries.nftIdLibAddress,
-            // ObjectTypeLib: libraries.objectTypeLibAddress, 
             RoleIdLib: libraries.roleIdLibAddress,
             TimestampLib: libraries.timestampLibAddress,
             VersionLib: libraries.versionLibAddress, 
@@ -658,8 +712,9 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
 
     logger.info("======== Activating release ========");
     await executeTx(
-        async () => await registry.releaseRegistry.activateNextRelease(),
-        "releaseRegistry.activateNextRelease"
+        async () => await registry.releaseRegistry.activateNextRelease(getTxOpts()),
+        "releaseRegistry.activateNextRelease",
+        [registry.releaseRegistry.interface]
     );
     logger.info("======== release activated ========");
 
@@ -673,6 +728,11 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         instanceServiceAddress: instanceServiceAddress,
         instanceService: instanceService,
         instanceServiceManagerAddress: instanceServiceManagerAddress,
+
+        accountingServiceNftId: accountingServiceNfdId as string,
+        accountingServiceAddress: accountingServiceAddress,
+        accountingService: accountingService,
+        accountingServiceManagerAddress: accountingServiceManagerAddress,
 
         componentServiceNftId: componentServiceNftId as string,
         componentServiceAddress: componentServiceAddress,

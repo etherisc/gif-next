@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+
 import {Amount, AmountLib} from "../../type/Amount.sol";
 import {BasicPool} from "../../pool/BasicPool.sol";
 import {BasicPoolAuthorization} from "../../pool/BasicPoolAuthorization.sol";
 import {Fee} from "../../type/Fee.sol";
 import {IAuthorization} from "../../authorization/IAuthorization.sol";
+import {IComponents} from "../../instance/module/IComponents.sol";
 import {NftId} from "../../type/NftId.sol";
 import {Seconds} from "../../type/Timestamp.sol";
 import {UFixed} from "../../type/UFixed.sol";
@@ -18,6 +21,7 @@ contract SimplePool is
         address registry,
         NftId productNftId,
         address token,
+        IComponents.PoolInfo memory poolInfo,
         IAuthorization authorization,
         address initialOwner
     ) 
@@ -26,15 +30,18 @@ contract SimplePool is
             registry,
             productNftId,
             token,
+            poolInfo,
             authorization,
             initialOwner
         );
     }
 
+
     function initialize(
         address registry,
         NftId productNftId,
         address token,
+        IComponents.PoolInfo memory poolInfo,
         IAuthorization authorization,
         address initialOwner
     )
@@ -45,11 +52,13 @@ contract SimplePool is
         _initializeBasicPool(
             registry,
             productNftId,
-            authorization,
-            token,
             "SimplePool",
+            token,
+            poolInfo,
+            authorization,
             initialOwner);
     }
+
 
     function createBundle(
         Fee memory fee,
@@ -73,4 +82,26 @@ contract SimplePool is
         netStakedAmountInt = netStakedAmount.toInt();
     }
 
+
+    function fundPoolWallet(
+        Amount amount
+    )
+        external
+    {
+        _fundPoolWallet(amount);
+    }
+
+
+    function defundPoolWallet(
+        Amount amount
+    )
+        external
+    {
+        _defundPoolWallet(amount);
+    }
+
+
+    function approveTokenHandler(IERC20Metadata token, Amount amount) external restricted() onlyOwner() { _approveTokenHandler(token, amount); }
+    function setLocked(bool locked) external onlyOwner() { _setLocked(locked); }
+    function setWallet(address newWallet) external restricted() onlyOwner() { _setWallet(newWallet); }
 }

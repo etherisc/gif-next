@@ -46,6 +46,15 @@ contract PoolWithReinsurance is
             registry,
             instanceNftId,
             token,
+            IComponents.PoolInfo({
+                maxBalanceAmount: AmountLib.max(),
+                isInterceptingBundleTransfers: false,
+                isProcessingConfirmedClaims: true,
+                isExternallyManaged: false,
+                isVerifyingApplications: false,
+                collateralizationLevel: UFixedLib.one(),
+                retentionLevel: UFixedLib.toUFixed(2, -1)
+            }),
             authorization,
             initialOwner
         )
@@ -63,7 +72,6 @@ contract PoolWithReinsurance is
     {
         _initializePolicyHolder(registry);
     }
-
 
     function createReinsurance(
         SimpleProduct product, // product that provides reinsurance
@@ -210,24 +218,4 @@ contract PoolWithReinsurance is
     {
         return abi.decode(claimData, (NftId, ClaimId));
     }
-
-
-    function getInitialPoolInfo()
-        public 
-        virtual override
-        view 
-        returns (IComponents.PoolInfo memory poolInfo)
-    {
-        return IComponents.PoolInfo({
-            maxBalanceAmount: AmountLib.max(),
-            bundleOwnerRole: PUBLIC_ROLE(), 
-            isInterceptingBundleTransfers: isNftInterceptor(),
-            isProcessingConfirmedClaims: true,
-            isExternallyManaged: false,
-            isVerifyingApplications: false,
-            collateralizationLevel: UFixedLib.one(),
-            retentionLevel: retentionLevel
-        });
-    }
-
 }

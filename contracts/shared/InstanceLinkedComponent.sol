@@ -40,20 +40,12 @@ abstract contract InstanceLinkedComponent is
         IComponentService _componentService;
     }
 
-    function lock() external onlyOwner {
-        IInstanceService(_getServiceAddress(INSTANCE())).setComponentLocked(true);
-    }
-    
-    function unlock() external onlyOwner {
-        IInstanceService(_getServiceAddress(INSTANCE())).setComponentLocked(false);
-    }
-
     /// @inheritdoc IInstanceLinkedComponent
     function withdrawFees(Amount amount)
         external
         virtual
-        onlyOwner()
         restricted()
+        onlyOwner()
         returns (Amount withdrawnAmount)
     {
         return _withdrawFees(amount);
@@ -181,7 +173,7 @@ abstract contract InstanceLinkedComponent is
             info = _getInstanceReader().getComponentInfo(getNftId());
 
             // check if also registered with instance
-            if (info.wallet != address(0)) {
+            if (address(info.tokenHandler) != address(0)) {
                 return info;
             }
         }
@@ -201,13 +193,5 @@ abstract contract InstanceLinkedComponent is
         returns (Amount withdrawnAmount)
     {
         return _getInstanceLinkedComponentStorage()._componentService.withdrawFees(amount);
-    }
-
-
-    /// @dev returns the service address for the specified domain
-    /// gets address via lookup from registry using the major version form the linked instance
-    function _getServiceAddress(ObjectType domain) internal view returns (address service) {
-        VersionPart release = _getInstanceLinkedComponentStorage()._instance.getRelease();
-        return getRegistry().getServiceAddress(domain, release);
     }
 }

@@ -1,0 +1,8 @@
+= Accounting
+
+Contains contracts related to accounting and financial operations.
+
+== Contracts
+
+{{AccountingService}}
+{{AccountingServiceManager}}

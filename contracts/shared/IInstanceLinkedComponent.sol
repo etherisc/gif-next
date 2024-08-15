@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-
 import {Amount} from "../type/Amount.sol";
 import {IComponent} from "../shared/IComponent.sol";
 import {IAuthorization} from "../authorization/IAuthorization.sol";
@@ -18,14 +15,6 @@ interface IInstanceLinkedComponent is
 {
     error ErrorInstanceLinkedComponentTypeMismatch(ObjectType requiredType, ObjectType objectType);
     error ErrorInstanceLinkedComponentNotProduct(NftId nftId, ObjectType objectType);
-
-    /// @dev locks component to disable functions that may change state related to this component, the only exception is function "unlock"
-    /// only component owner (nft holder) is authorizes to call this function
-    function lock() external;
-
-    /// @dev unlocks component to (re-)enable functions that may change state related to this component
-    /// only component owner (nft holder) is authorizes to call this function
-    function unlock() external;
 
     /// @dev Withdraw fees from the distribution component. Only component owner is allowed to withdraw fees.
     /// @param amount the amount to withdraw

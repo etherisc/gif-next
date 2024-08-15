@@ -140,12 +140,10 @@ contract TestProductRegistration is GifTest {
         SimpleProduct myProductV4 = new SimpleProductV4(
             address(registry),
             instanceNftId, 
-            new BasicProductAuthorization("MyProductV4"),
-            myProductOwner,
             address(token),
-            false, // is interceptor
-            false, // has distribution
-            0);
+            _getSimpleProductInfo(),
+            new BasicProductAuthorization("MyProductV4"),
+            myProductOwner);
 
         assertEq(myProductV4.getRelease().toInt(), 4, "unexpected product release");
 
@@ -200,14 +198,6 @@ contract TestProductRegistration is GifTest {
         vm.stopPrank();
     }
 
-    // TODO cleanup
-    // error ErrorComponentServiceNotComponent(address component);
-    // error ErrorComponentServiceReleaseMismatch(address component, VersionPart componentRelease, VersionPart parentRelease);
-    // error ErrorComponentServiceSenderNotComponentParent(NftId senderNftId, NftId compnentParentNftId);
-    // error ErrorComponentServiceParentNotInstance(NftId nftId, ObjectType objectType);
-    // error ErrorComponentServiceParentNotProduct(NftId nftId, ObjectType objectType);
-
-
     function _deployProductDefault(string memory name) internal returns(SimpleProduct) {
         return _deployProduct(name, myProductOwner, false, 0);
     }
@@ -222,15 +212,18 @@ contract TestProductRegistration is GifTest {
         internal
         returns(SimpleProduct)
     {
+        IComponents.ProductInfo memory productInfo = _getSimpleProductInfo();
+        productInfo.hasDistribution = hasDistribution;
+        productInfo.expectedNumberOfOracles = oracleCount;
+
         return new SimpleProduct(
             address(registry),
             instanceNftId, 
-            new BasicProductAuthorization(name),
-            owner,
+            name,
             address(token),
-            false, // is interceptor
-            hasDistribution,
-            oracleCount);
+            productInfo,
+            new BasicProductAuthorization(name),
+            owner);
     }
 
     function _deployPool(
@@ -245,6 +238,7 @@ contract TestProductRegistration is GifTest {
             address(registry),
             productNftId,
             address(token),
+            _getDefaultSimplePoolInfo(),
             new BasicPoolAuthorization(name),
             owner);
     }
@@ -258,22 +252,19 @@ contract SimpleProductV4 is SimpleProduct {
     constructor(
         address registry,
         NftId instanceNftId,
-        IAuthorization authorization,
-        address initialOwner,
         address token,
-        bool isInterceptor,
-        bool hasDistribution,
-        uint8 numberOfOracles
+        IComponents.ProductInfo memory productInfo,
+        IAuthorization authorization,
+        address initialOwner
     )
         SimpleProduct(
             registry,
             instanceNftId,
-            authorization,
-            initialOwner,
+            "SimpleProductV4",
             token,
-            isInterceptor,
-            hasDistribution,
-            numberOfOracles
+            productInfo,
+            authorization,
+            initialOwner
         )
     { }
 

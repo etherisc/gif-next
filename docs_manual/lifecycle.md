@@ -80,7 +80,9 @@ stateDiagram-v2
 stateDiagram-v2
     [*] --> EXPECTED
     EXPECTED --> PAID
+    EXPECTED --> CANCELLED
     PAID --> [*]
+    CANCELLED --> [*]
 ```
 
 # Risk lifecycle

@@ -28,8 +28,8 @@ library Key32Lib {
 
     uint8 public constant TYPE_SHIFT = 31 * 8;
     uint8 public constant ID_SHIFT = uint8(32 * 8 - TYPE_SHIFT);
-    bytes32 public constant TYPE_MASK = bytes32(bytes1(type(uint8).max)); // first byte in bytes32
-    bytes32 public constant ID_MASK = bytes32(~TYPE_MASK); // remaining bytes in bytes32
+    bytes32 public constant TYPE_MASK = bytes32(bytes1(type(uint8).max)); // [32] byte in bytes32
+    bytes32 public constant ID_MASK = bytes32(~TYPE_MASK); // [0..31] bytes in bytes32
 
     function toKey32(ObjectType objectType, KeyId id) public pure returns (Key32) {
         uint256 uintObjectType = ObjectType.unwrap(objectType);

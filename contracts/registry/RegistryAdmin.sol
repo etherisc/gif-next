@@ -11,6 +11,7 @@ import {IStaking} from "../staking/IStaking.sol";
 import {ObjectType, ObjectTypeLib, ALL, REGISTRY, STAKING, POOL, RELEASE} from "../type/ObjectType.sol";
 import {ReleaseRegistry} from "./ReleaseRegistry.sol";
 import {RoleId, RoleIdLib, ADMIN_ROLE, GIF_MANAGER_ROLE, GIF_ADMIN_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
+import {Staking} from "../staking/Staking.sol";
 import {StakingStore} from "../staking/StakingStore.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {TokenRegistry} from "./TokenRegistry.sol";
@@ -50,6 +51,7 @@ contract RegistryAdmin is
     string public constant REGISTRY_TARGET_NAME = "Registry";
     string public constant RELEASE_REGISTRY_TARGET_NAME = "ReleaseRegistry";
     string public constant STAKING_TARGET_NAME = "Staking";
+    string public constant STAKING_TH_TARGET_NAME = "StakingTH";
     string public constant STAKING_STORE_TARGET_NAME = "StakingStore";
     string public constant TOKEN_REGISTRY_TARGET_NAME = "TokenRegistry";
     string public constant TOKEN_HANDLER_TARGET_NAME = "TokenHandler";

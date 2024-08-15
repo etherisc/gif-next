@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IAccountingService} from "../accounting/IAccountingService.sol";
 import {IBundle} from "../instance/module/IBundle.sol";
 import {IBundleService} from "./IBundleService.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
@@ -9,7 +10,6 @@ import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegistryService} from "../registry/IRegistryService.sol";
 import {IInstance} from "../instance/IInstance.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
-import {IPolicy} from "../instance/module/IPolicy.sol";
 
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {BundleSet} from "../instance/BundleSet.sol";
@@ -17,7 +17,7 @@ import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol
 import {Fee} from "../type/Fee.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
-import {ObjectType, COMPONENT, POOL, BUNDLE, POLICY, REGISTRY} from "../type/ObjectType.sol";
+import {ObjectType, ACCOUNTING, COMPONENT, POOL, BUNDLE, POLICY, REGISTRY} from "../type/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED, CLOSED, KEEP_STATE} from "../type/StateId.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {Timestamp, TimestampLib, zeroTimestamp} from "../type/Timestamp.sol";
@@ -33,6 +33,7 @@ contract BundleService is
 
     address private _registryAddress;
     IRegistryService private _registryService;
+    IAccountingService private _accountingService;
     IComponentService private _componentService;
 
     function _initialize(
@@ -51,6 +52,7 @@ contract BundleService is
         _initializeService(registryAddress, authority, owner);
 
         _registryService = IRegistryService(_getServiceAddress(REGISTRY()));
+        _accountingService = IAccountingService(_getServiceAddress(ACCOUNTING()));
         _componentService = IComponentService(_getServiceAddress(COMPONENT()));
 
         _registerInterface(type(IBundleService).interfaceId);
@@ -63,6 +65,7 @@ contract BundleService is
     )
         external
         virtual
+        restricted()
     {
         _checkNftType(bundleNftId, BUNDLE());
 
@@ -83,20 +86,17 @@ contract BundleService is
 
 
     function create(
-        IInstance instance,
-        NftId poolNftId,
         address owner, 
         Fee memory bundleFee, 
-        Amount stakingAmount, 
         Seconds lifetime, 
         bytes calldata filter
     )
         external
-        override
-        restricted
+        virtual
+        restricted()
         returns(NftId bundleNftId)
     {
-        _checkNftType(poolNftId, POOL());
+        (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
 
         // register bundle with registry
         bundleNftId = _registryService.registerBundle(
@@ -125,19 +125,11 @@ contract BundleService is
             })
         );
 
-        if (stakingAmount.gtz()) {
-            // bundle book keeping
-            _componentService.increaseBundleBalance(
-                instanceStore, 
-                bundleNftId, 
-                stakingAmount, 
-                AmountLib.zero()); // fee amount
-        }
-
         // put bundle under bundle managemet
         BundleSet bundleManager = instance.getBundleSet();
         bundleManager.add(bundleNftId);
-        // TODO add logging
+
+        emit LogBundleServiceBundleCreated(bundleNftId, poolNftId);
     }
 
 
@@ -185,15 +177,13 @@ contract BundleService is
 
         // updated locked amount
         instanceStore.increaseLocked(bundleNftId, collateralAmount);
-        
-        // link policy to bundle in bundle manger
-        _linkPolicy(instance, policyNftId);
     }
 
 
     function lock(NftId bundleNftId) 
         external
         virtual
+        restricted()
     {
         _checkNftType(bundleNftId, BUNDLE());
 
@@ -213,6 +203,7 @@ contract BundleService is
     function unlock(NftId bundleNftId) 
         external
         virtual
+        restricted()
     {
         _checkNftType(bundleNftId, BUNDLE());
 
@@ -235,7 +226,7 @@ contract BundleService is
     ) 
         external
         virtual
-        restricted
+        restricted()
         returns (Amount unstakedAmount, Amount feeAmount)
     {
         _checkNftType(bundleNftId, BUNDLE());
@@ -259,7 +250,7 @@ contract BundleService is
             Amount balanceAmountWithFees = instanceReader.getBalanceAmount(bundleNftId);
             feeAmount = instanceReader.getFeeAmount(bundleNftId);
             unstakedAmount = balanceAmountWithFees - feeAmount;
-            _componentService.decreaseBundleBalance(instanceStore, bundleNftId, unstakedAmount, feeAmount);
+            _accountingService.decreaseBundleBalance(instanceStore, bundleNftId, unstakedAmount, feeAmount);
         }
     }
 
@@ -271,7 +262,7 @@ contract BundleService is
     ) 
         external 
         virtual
-        // TODO: restricted() (once #462 is done)
+        restricted()
     {
         _checkNftType(bundleNftId, BUNDLE());
 
@@ -284,7 +275,7 @@ contract BundleService is
             revert ErrorBundleServiceBundleNotOpen(bundleNftId, bundleState, bundleInfo.expiredAt);
         }
 
-        _componentService.increaseBundleBalance(
+        _accountingService.increaseBundleBalance(
             instance.getInstanceStore(), 
             bundleNftId, 
             amount, 
@@ -299,7 +290,7 @@ contract BundleService is
     ) 
         external 
         virtual
-        // TODO: restricted() (once #462 is done)
+        restricted()
         returns (Amount unstakedAmount)
     {
         _checkNftType(bundleNftId, BUNDLE());
@@ -324,7 +315,7 @@ contract BundleService is
             revert ErrorBundleServiceUnstakeAmountExceedsLimit(amount, availableAmount);
         }
 
-        _componentService.decreaseBundleBalance(
+        _accountingService.decreaseBundleBalance(
             instanceStore, 
             bundleNftId, 
             unstakedAmount, 
@@ -335,7 +326,7 @@ contract BundleService is
     function extend(NftId bundleNftId, Seconds lifetimeExtension) 
         external 
         virtual
-        // TODO: restricted() (once #462 is done)
+        restricted()
         returns (Timestamp extendedExpiredAt) 
     {
         _checkNftType(bundleNftId, BUNDLE());
@@ -383,30 +374,12 @@ contract BundleService is
         instance.getInstanceStore().decreaseLocked(bundleNftId, collateralAmount);
     }
 
-    /// @dev unlinks policy from bundle
-    function unlinkPolicy(
-        IInstance instance, 
-        NftId policyNftId
-    ) 
-        external
-        virtual
-        restricted
-    {
-        _checkNftType(policyNftId, POLICY());
-
-        // ensure policy is closeable
-        if (!policyIsCloseable(instance, policyNftId)) {
-            revert ErrorBundleServicePolicyNotCloseable(policyNftId);
-        }
-
-        instance.getBundleSet().unlinkPolicy(policyNftId);
-    }
 
     /// @inheritdoc IBundleService
     function withdrawBundleFees(NftId bundleNftId, Amount amount) 
         public 
         virtual
-        // TODO: restricted() (once #462 is done)
+        restricted()
         returns (Amount withdrawnAmount) 
     {
         _checkNftType(bundleNftId, BUNDLE());
@@ -415,7 +388,7 @@ contract BundleService is
         InstanceReader reader = instance.getInstanceReader();
         
         IComponents.ComponentInfo memory poolInfo = reader.getComponentInfo(poolNftId);
-        address poolWallet = poolInfo.wallet;
+        address poolWallet = poolInfo.tokenHandler.getWallet();
         
         // IBundle.BundleInfo memory bundleInfo = reader.getBundleInfo(bundleNftId);
         
@@ -433,9 +406,9 @@ contract BundleService is
         {
             InstanceStore store = instance.getInstanceStore();
             // decrease fee amount of the bundle
-            _componentService.decreaseBundleBalance(store, bundleNftId, AmountLib.zero(), withdrawnAmount);
+            _accountingService.decreaseBundleBalance(store, bundleNftId, AmountLib.zero(), withdrawnAmount);
             // decrease pool balance 
-            _componentService.decreasePoolBalance(store, poolNftId, withdrawnAmount, AmountLib.zero());
+            _accountingService.decreasePoolBalance(store, poolNftId, withdrawnAmount, AmountLib.zero());
         }
 
         // transfer amount to bundle owner
@@ -444,47 +417,6 @@ contract BundleService is
             emit LogBundleServiceFeesWithdrawn(bundleNftId, owner, address(poolInfo.token), withdrawnAmount);
             poolInfo.tokenHandler.distributeTokens(poolWallet, owner, withdrawnAmount);
         }
-    }
-
-    /// @inheritdoc IBundleService
-    function policyIsCloseable(IInstance instance, NftId policyNftId)
-        public
-        view
-        returns (bool isCloseable)
-    {
-        _checkNftType(policyNftId, POLICY());
-
-        IPolicy.PolicyInfo memory info = instance.getInstanceReader().getPolicyInfo(policyNftId);
-        
-        if (info.productNftId.eqz()) { return false; } // not closeable: policy does not exist (or does not belong to this instance)
-        if (info.activatedAt.eqz()) { return false; } // not closeable: not yet activated
-        if (info.closedAt.gtz()) { return false; } // not closeable: already closed
-        if (info.openClaimsCount > 0) { return false; } // not closeable: has open claims
-
-        // closeable: if sum of claims matches sum insured a policy may be closed prior to the expiry date
-        if (info.claimAmount == info.sumInsuredAmount) { return true; }
-
-        // not closeable: not yet expired
-        if (TimestampLib.blockTimestamp() < info.expiredAt) { return false; }
-
-        // all conditionsl to close the policy are met
-        return true; 
-    }
-
-    /// @dev links policy to bundle
-    function _linkPolicy(IInstance instance, NftId policyNftId) 
-        internal
-    {
-        InstanceReader instanceReader = instance.getInstanceReader();
-        IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
-
-        // ensure policy has not yet been activated in a previous tx already
-        if (policyInfo.activatedAt.gtz() && policyInfo.activatedAt < TimestampLib.blockTimestamp()) {
-            revert BundleSet.ErrorBundleSetPolicyAlreadyActivated(policyNftId);
-        }
-        
-        BundleSet bundleManager = instance.getBundleSet();
-        bundleManager.linkPolicy(policyNftId);
     }
 
     function _getDomain() internal pure override returns(ObjectType) {

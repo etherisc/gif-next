@@ -204,6 +204,7 @@ contract TestPoolRegistration is GifTest {
 
 
     // check that pool cannot be directly registerd with instance
+    // TODO re-enable/fix
     function test_poolRegisterAttemptPool() public {
         // GIVEN
         // SimpleProduct myProduct = _deployPool("MyPool", myProduct1NftId, myPoolOwner);
@@ -227,13 +228,6 @@ contract TestPoolRegistration is GifTest {
         // vm.stopPrank();
     }
 
-    // TODO cleanup
-    // error ErrorComponentServiceNotComponent(address component);
-    // error ErrorComponentServiceReleaseMismatch(address component, VersionPart componentRelease, VersionPart parentRelease);
-    // error ErrorComponentServiceSenderNotComponentParent(NftId senderNftId, NftId compnentParentNftId);
-    // error ErrorComponentServiceParentNotInstance(NftId nftId, ObjectType objectType);
-    // error ErrorComponentServiceParentNotProduct(NftId nftId, ObjectType objectType);
-
 
     function _deployProductDefault(string memory name) internal returns(SimpleProduct) {
         return _deployProduct(name, myProductOwner, false, 0);
@@ -252,12 +246,11 @@ contract TestPoolRegistration is GifTest {
         return new SimpleProduct(
             address(registry),
             instanceNftId, 
-            new BasicProductAuthorization(name),
-            owner,
+            "SimpleProduct",
             address(token),
-            false, // is interceptor
-            hasDistribution,
-            oracleCount);
+            _getSimpleProductInfo(),
+            new BasicProductAuthorization(name),
+            owner);
     }
 
     function _deployPool(
@@ -272,6 +265,7 @@ contract TestPoolRegistration is GifTest {
             address(registry),
             productNftId,
             address(token),
+            _getDefaultSimplePoolInfo(),
             new BasicPoolAuthorization(name),
             owner);
     }
@@ -283,22 +277,19 @@ contract SimpleProductV4 is SimpleProduct {
     constructor(
         address registry,
         NftId instanceNftId,
-        IAuthorization authorization,
-        address initialOwner,
         address token,
-        bool isInterceptor,
-        bool hasDistribution,
-        uint8 numberOfOracles
+        IComponents.ProductInfo memory productInfo,
+        IAuthorization authorization,
+        address initialOwner
     )
         SimpleProduct(
             registry,
             instanceNftId,
-            authorization,
-            initialOwner,
+            "SimpleProductV4",
             token,
-            isInterceptor,
-            hasDistribution,
-            numberOfOracles
+            productInfo,
+            authorization,
+            initialOwner
         )
     { }
 

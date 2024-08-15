@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
+import {ContractLib} from "../shared/ContractLib.sol";
 import {IComponent} from "../shared/IComponent.sol";
 import {IInstance} from "../instance/IInstance.sol";
 import {IInstanceService} from "../instance/IInstanceService.sol";
@@ -13,12 +13,13 @@ import {IRegistry} from "../registry/IRegistry.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType, COMPONENT, ORACLE, PRODUCT} from "../type/ObjectType.sol";
 import {RequestId} from "../type/RequestId.sol";
+import {Service} from "../shared/Service.sol";
 import {StateId, ACTIVE, KEEP_STATE, FULFILLED, FAILED, CANCELLED} from "../type/StateId.sol";
 import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
 
 
 contract OracleService is
-    ComponentVerifyingService,
+    Service,
     IOracleService
 {
 
@@ -49,51 +50,27 @@ contract OracleService is
         virtual 
         // restricted() // add authz
         onlyNftOfType(oracleNftId, ORACLE())
-        returns (
-            RequestId requestId
-        ) 
+        returns (RequestId requestId) 
     {
+        // IRegistry registry = getRegistry();
+
+        // get and check active caller
         (
-            NftId componentNftId,
-            IRegistry.ObjectInfo memory componentInfo, 
-            IInstance instance
-        ) = _getAndVerifyActiveComponent(COMPONENT());
+            IRegistry.ObjectInfo memory info, 
+            address instance
+        ) = ContractLib.getAndVerifyAnyComponent(
+            getRegistry(), msg.sender, true);
 
-        // oracleNftId exists and is active oracle
         (
-            IRegistry.ObjectInfo memory oracleInfo, 
-        ) = _getAndVerifyComponentInfo(
-            oracleNftId, 
-            ORACLE(), 
-            true); // only active
-
-        {
-            // check that requester and oracle share same product cluster
-            if (componentInfo.objectType == PRODUCT()) {
-                if (oracleInfo.parentNftId != componentInfo.nftId) {
-                    revert ErrorOracleServiceProductMismatch(componentInfo.objectType, componentInfo.nftId, oracleInfo.parentNftId);
-                }
-            } else {
-                if (oracleInfo.parentNftId != componentInfo.parentNftId) {
-                    revert ErrorOracleServiceProductMismatch(componentInfo.objectType, componentInfo.parentNftId, oracleInfo.parentNftId);
-                }
-            }
-
-            // check expiriyAt >= now
-            if (expiryAt < TimestampLib.blockTimestamp()) {
-                revert ErrorOracleServiceExpiryInThePast(TimestampLib.blockTimestamp(), expiryAt);
-            }
-
-            // check callbackMethodName.length > 0
-            if (bytes(callbackMethodName).length == 0) {
-                revert ErrorOracleServiceCallbackMethodNameEmpty();
-            }
-        }
+            NftId requesterNftId,
+            IOracleComponent oracle
+        ) = _checkRequestParams(
+            getRegistry(), oracleNftId, info, expiryAt, callbackMethodName);
 
         {
             // create request info
             IOracle.RequestInfo memory request = IOracle.RequestInfo({
-                requesterNftId: componentNftId,
+                requesterNftId: requesterNftId,
                 callbackMethodName: callbackMethodName,
                 oracleNftId: oracleNftId,
                 requestData: requestData,
@@ -104,17 +81,17 @@ contract OracleService is
             });
 
             // store request with instance
-            requestId = instance.getInstanceStore().createRequest(request);
+            requestId = IInstance(instance).getInstanceStore().createRequest(request);
         }
 
-        // call oracle component
-        IOracleComponent(oracleInfo.objectAddress).request(
+        // callback to oracle component
+        oracle.request(
             requestId, 
-            componentNftId, 
+            requesterNftId, 
             requestData, 
             expiryAt);
 
-        emit LogOracleServiceRequestCreated(requestId, componentNftId, oracleNftId, expiryAt);
+        emit LogOracleServiceRequestCreated(requestId, requesterNftId, oracleNftId, expiryAt);
     }
 
 
@@ -130,11 +107,13 @@ contract OracleService is
         returns (bool success)
     {
         (
-            NftId oracleNftId,
-            IRegistry.ObjectInfo memory componentInfo, 
-            IInstance instance
-        ) = _getAndVerifyActiveComponent(ORACLE());
+            IRegistry.ObjectInfo memory info, 
+            address instanceAddress
+        ) = ContractLib.getAndVerifyComponent(
+            getRegistry(), msg.sender, ORACLE(), true);
 
+        NftId oracleNftId = info.nftId;
+        IInstance instance = IInstance(instanceAddress);
         bool callerIsOracle = true;
         IOracle.RequestInfo memory request = _checkAndGetRequestInfo(instance, requestId, oracleNftId, callerIsOracle);
         request.responseData = responseData;
@@ -176,11 +155,13 @@ contract OracleService is
         // restricted() // add authz
     {
         (
-            NftId requesterNftId,
-            IRegistry.ObjectInfo memory requesterInfo, 
-            IInstance instance
-        ) = _getAndVerifyActiveComponent(COMPONENT());
+            IRegistry.ObjectInfo memory info, 
+            address instanceAddress
+        ) = ContractLib.getAndVerifyAnyComponent(
+            getRegistry(), msg.sender, true);
 
+        NftId requesterNftId = info.nftId;
+        IInstance instance = IInstance(instanceAddress);
         bool callerIsOracle = false;
         IOracle.RequestInfo memory request = _checkAndGetRequestInfo(instance, requestId, requesterNftId, callerIsOracle);
 
@@ -191,7 +172,7 @@ contract OracleService is
                 "(uint64,bytes)"
             ));
 
-        (bool success, bytes memory returnData) = requesterInfo.objectAddress.call(
+        (bool success, bytes memory returnData) = info.objectAddress.call(
             abi.encodeWithSignature(
                 functionSignature, 
                 requestId,
@@ -202,7 +183,7 @@ contract OracleService is
             instance.getInstanceStore().updateRequestState(requestId, FULFILLED());
             emit LogOracleServiceResponseResent(requestId, requesterNftId);
         } else {
-            emit LogOracleServiceDeliveryFailed(requestId, requesterInfo.objectAddress, functionSignature);
+            emit LogOracleServiceDeliveryFailed(requestId, info.objectAddress, functionSignature);
         }
     }
 
@@ -213,11 +194,13 @@ contract OracleService is
         // restricted() // add authz
     {
         (
-            NftId requesterNftId,
-            IRegistry.ObjectInfo memory componentInfo, 
-            IInstance instance
-        ) = _getAndVerifyActiveComponent(COMPONENT());
+            IRegistry.ObjectInfo memory info, 
+            address instanceAddress
+        ) = ContractLib.getAndVerifyAnyComponent(
+            getRegistry(), msg.sender, true);
 
+        NftId requesterNftId = info.nftId;
+        IInstance instance = IInstance(instanceAddress);
         bool callerIsOracle = false;
         // TODO property isCancelled and state update to CANCELLED are redundant, get rid of isCancelled
         IOracle.RequestInfo memory request = _checkAndGetRequestInfo(instance, requestId, requesterNftId, callerIsOracle);
@@ -231,6 +214,52 @@ contract OracleService is
         IOracleComponent(oracleAddress).cancel(requestId);
 
         emit LogOracleServiceRequestCancelled(requestId, requesterNftId);
+    }
+
+
+    function _checkRequestParams(
+        IRegistry registry,
+        NftId oracleNftId,
+        IRegistry.ObjectInfo memory info,
+        Timestamp expiryAt,
+        string memory callbackMethodName
+    )
+        internal
+        virtual
+        view
+        returns (
+            NftId requesterNftId,
+            IOracleComponent oracle
+        )
+    {
+        // get oracle info
+        (IRegistry.ObjectInfo memory oracleInfo,) = ContractLib.getInfoAndInstance(
+            registry, oracleNftId, true);
+
+        // obtain return values
+        requesterNftId = info.nftId;
+        oracle = IOracleComponent(oracleInfo.objectAddress);
+
+        // check that requester and oracle share same product cluster
+        if (info.objectType == PRODUCT()) {
+            if (oracleInfo.parentNftId != requesterNftId) {
+                revert ErrorOracleServiceProductMismatch(info.objectType, requesterNftId, oracleInfo.parentNftId);
+            }
+        } else {
+            if (oracleInfo.parentNftId != info.parentNftId) {
+                revert ErrorOracleServiceProductMismatch(info.objectType, info.parentNftId, oracleInfo.parentNftId);
+            }
+        }
+
+        // check expiriyAt >= now
+        if (expiryAt < TimestampLib.blockTimestamp()) {
+            revert ErrorOracleServiceExpiryInThePast(TimestampLib.blockTimestamp(), expiryAt);
+        }
+
+        // check callbackMethodName.length > 0
+        if (bytes(callbackMethodName).length == 0) {
+            revert ErrorOracleServiceCallbackMethodNameEmpty();
+        }
     }
 
 
@@ -271,17 +300,6 @@ contract OracleService is
         if (info.expiredAt < TimestampLib.blockTimestamp()) {
             revert ErrorOracleServiceRequestExpired(requestId, info.expiredAt);
         }
-    }
-
-
-    function _getInstanceForComponent(NftId componentNftId)
-        internal
-        view
-        returns(IInstance instance)
-    {
-        NftId instanceNftId = getRegistry().getObjectInfo(componentNftId).parentNftId;
-        address instanceAddress = getRegistry().getObjectAddress(instanceNftId);
-        return IInstance(instanceAddress);
     }
 
 

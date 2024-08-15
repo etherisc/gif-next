@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegistryService} from "../registry/IRegistryService.sol";
 import {IStaking} from "./IStaking.sol";
@@ -9,8 +11,9 @@ import {IVersionable} from "../upgradeability/IVersionable.sol";
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {Component} from "../shared/Component.sol";
 import {IComponent} from "../shared/IComponent.sol";
+import {IComponentService} from "../shared/IComponentService.sol";
 import {NftId} from "../type/NftId.sol";
-import {ObjectType, STAKING} from "../type/ObjectType.sol";
+import {ObjectType, COMPONENT, STAKING} from "../type/ObjectType.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {StakeManagerLib} from "./StakeManagerLib.sol";
 import {StakingReader} from "./StakingReader.sol";
@@ -58,6 +61,31 @@ contract Staking is
         }
         _;
     }
+
+    function initializeTokenHandler()
+        external
+    {
+        if (msg.sender != address(getRegistry())) {
+            revert ErrorStakingNotRegistry(msg.sender);
+        }
+
+        StakingStorage storage $ = _getStakingStorage();
+        $._tokenHandler = TokenHandlerDeployerLib.deployTokenHandler(
+            address(getRegistry()),
+            address(this),
+            address(getToken()), 
+            getRegistry().getAuthority());
+    }
+
+
+    function approveTokenHandler(IERC20Metadata token, Amount amount)
+        public
+        restricted()
+        onlyOwner()
+    {
+        _approveTokenHandler(token, amount);
+    }
+
 
     // set/update staking reader
     function setStakingReader(StakingReader stakingReader)
@@ -371,25 +399,6 @@ contract Staking is
     }
 
 
-
-    //--- other functions ---------------------------------------------------//
-
-    function collectDipAmount(address from, Amount dipAmount)
-        external
-        restricted() // only staking service
-    {
-        getTokenHandler().collectTokens(from, getWallet(), dipAmount);
-    }
-
-
-    function transferDipAmount(address to, Amount dipAmount)
-        external
-        restricted() // only staking service
-    {
-        getTokenHandler().distributeTokens(getWallet(), to, dipAmount);
-    }
-
-
     //--- view functions ----------------------------------------------------//
 
     function getStakingReader() public view returns (StakingReader reader) {
@@ -444,6 +453,16 @@ contract Staking is
     }
 
 
+    function _approveTokenHandler(IERC20Metadata token, Amount amount)
+        internal
+        virtual override
+    {
+        IComponentService(_getServiceAddress(COMPONENT())).approveStakingTokenHandler(
+            token, 
+            amount);
+    }
+
+
     function _initialize(
         address owner, 
         bytes memory data
@@ -483,7 +502,6 @@ contract Staking is
         $._store = StakingStore(stakingStoreAddress);
         $._reader = StakingStore(stakingStoreAddress).getStakingReader();
         $._tokenRegistry = TokenRegistry(tokenRegistryAddress);
-        $._tokenHandler = TokenHandlerDeployerLib.deployTokenHandler(dipTokenAddress, authority);
 
         _registerInterface(type(IStaking).interfaceId);
     }

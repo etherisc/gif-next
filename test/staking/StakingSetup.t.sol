@@ -40,7 +40,7 @@ contract StakingSetupTest is GifTest {
 
         console.log("staking wallet:", staking.getWallet());
         console.log("staking token handler:", address(staking.getTokenHandler()));
-        console.log("staking token handler token:", address(staking.getTokenHandler().getToken()));
+        console.log("staking token handler token:", address(staking.getTokenHandler().TOKEN()));
 
         console.log("staking token address:", address(staking.getToken()));
         console.log("staking token symbol:", staking.getToken().symbol());
@@ -108,9 +108,9 @@ contract StakingSetupTest is GifTest {
         assertEq(patch.toInt(), 0, "unexpected staking patch version");
 
         // check wallet and (dip) token handler
-        assertEq(staking.getWallet(), address(staking), "unexpected staking wallet");
+        assertEq(staking.getWallet(), address(staking.getTokenHandler()), "unexpected staking wallet");
         assertEq(address(staking.getToken()), address(dip), "unexpected staking token");
-        assertEq(address(staking.getTokenHandler().getToken()), address(dip), "unexpected staking token handler token");
+        assertEq(address(staking.getTokenHandler().TOKEN()), address(dip), "unexpected staking token handler token");
     }
 
 

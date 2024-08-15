@@ -6,7 +6,7 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
 import {Amount, AmountLib} from "../../contracts/type/Amount.sol";
-import {NftId} from "../../contracts/type/NftId.sol";
+import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {SecondsLib} from "../../contracts/type/Seconds.sol";
 import {Fee, FeeLib} from "../../contracts/type/Fee.sol";
 import {UFixed, UFixedLib} from "../../contracts/type/UFixed.sol";
@@ -17,11 +17,10 @@ import {Timestamp} from "../../contracts/type/Timestamp.sol";
 import {IAccess} from "../../contracts/authorization/IAccess.sol";
 import {IAccessAdmin} from "../../contracts/authorization/IAccessAdmin.sol";
 
-import {BasicDistributionAuthorization} from "../../contracts/distribution/BasicDistributionAuthorization.sol";
+import {SimpleDistributionAuthorization} from "../../contracts/examples/unpermissioned/SimpleDistributionAuthorization.sol";
 import {BasicOracleAuthorization} from "../../contracts/oracle/BasicOracleAuthorization.sol";
-import {BasicPoolAuthorization} from "../../contracts/pool/BasicPoolAuthorization.sol";
-import {BasicProductAuthorization} from "../../contracts/product/BasicProductAuthorization.sol";
-
+import {SimplePoolAuthorization} from "../../contracts/examples/unpermissioned/SimplePoolAuthorization.sol";
+import {SimpleProductAuthorization} from "../../contracts/examples/unpermissioned/SimpleProductAuthorization.sol";
 import {IServiceAuthorization} from "../../contracts/authorization/IServiceAuthorization.sol";
 import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
 import {ReleaseRegistry} from "../../contracts/registry/ReleaseRegistry.sol";
@@ -38,11 +37,13 @@ import {StakingReader} from "../../contracts/staking/StakingReader.sol";
 import {StakingManager} from "../../contracts/staking/StakingManager.sol";
 
 import {AccessManagerCloneable} from "../../contracts/authorization/AccessManagerCloneable.sol";
+import {IInstance} from "../../contracts/instance/IInstance.sol";
 import {InstanceAdmin} from "../../contracts/instance/InstanceAdmin.sol";
 import {InstanceAuthorizationV3} from "../../contracts/instance/InstanceAuthorizationV3.sol";
 import {Instance} from "../../contracts/instance/Instance.sol";
 import {InstanceReader} from "../../contracts/instance/InstanceReader.sol";
 import {BundleSet} from "../../contracts/instance/BundleSet.sol";
+import {RiskSet} from "../../contracts/instance/RiskSet.sol";
 import {InstanceStore} from "../../contracts/instance/InstanceStore.sol";
 
 import {Usdc} from "../mock/Usdc.sol";
@@ -84,6 +85,7 @@ contract GifTest is GifDeployer {
     InstanceAdmin public masterInstanceAdmin;
     address public instanceAuthorizationV3;
     BundleSet public masterBundleSet;
+    RiskSet public masterRiskSet;
     InstanceStore public masterInstanceStore;
     Instance public masterInstance;
     NftId public masterInstanceNftId;
@@ -91,8 +93,9 @@ contract GifTest is GifDeployer {
 
     InstanceAdmin public instanceAdmin;
     BundleSet public instanceBundleSet;
+    RiskSet public instanceRiskSet;
     InstanceStore public instanceStore;
-    Instance public instance;
+    IInstance public instance;
     NftId public instanceNftId;
     InstanceReader public instanceReader;
 
@@ -304,6 +307,7 @@ contract GifTest is GifDeployer {
         masterInstanceAdmin = new InstanceAdmin(instanceAuthorizationV3);
         masterInstanceStore = new InstanceStore();
         masterBundleSet = new BundleSet();
+        masterRiskSet = new RiskSet();
         masterInstanceReader = new InstanceReader();
 
         // crate instance
@@ -312,6 +316,7 @@ contract GifTest is GifDeployer {
             masterInstanceAdmin,
             masterInstanceStore,
             masterBundleSet,
+            masterRiskSet,
             masterInstanceReader,
             registry,
             registryOwner);
@@ -337,7 +342,8 @@ contract GifTest is GifDeployer {
         console.log("master oz access manager deployed at", address(masterInstance.authority()));
         console.log("master instance access manager deployed at", address(masterInstanceAdmin));
         console.log("master instance reader deployed at", address(masterInstanceReader));
-        console.log("master bundle manager deployed at", address(masterBundleSet));
+        console.log("master bundle set deployed at", address(masterBundleSet));
+        console.log("master risk set deployed at", address(masterRiskSet));
         console.log("master instance store deployed at", address(masterInstanceStore));
         // solhint-enable
     }
@@ -353,6 +359,7 @@ contract GifTest is GifDeployer {
         instanceReader = instance.getInstanceReader();
         instanceStore = instance.getInstanceStore();
         instanceBundleSet = instance.getBundleSet();
+        instanceRiskSet = instance.getRiskSet();
         instanceStore = instance.getInstanceStore();
         
         // solhint-disable
@@ -360,7 +367,8 @@ contract GifTest is GifDeployer {
         console.log("cloned instance nft id", instanceNftId.toInt());
         console.log("cloned oz access manager deployed at", instance.authority());
         console.log("cloned instance reader deployed at", address(instanceReader));
-        console.log("cloned bundle manager deployed at", address(instanceBundleSet));
+        console.log("cloned bundle set deployed at", address(instanceBundleSet));
+        console.log("cloned risk set deployed at", address(instanceRiskSet));
         console.log("cloned instance store deployed at", address(instanceStore));
         // solhint-enable
     }
@@ -387,17 +395,36 @@ contract GifTest is GifDeployer {
     }
 
     function _prepareProduct() internal {
-        _prepareProduct(true);
-        _printAuthz(instanceAdmin, "instanceWithProduct");
+        _prepareProductWithParams(
+            "SimpleProduct",
+            _getSimpleProductInfo(),
+            true, // create bundle
+            false); // print authz
     }
 
 
     function _prepareProduct(bool createBundle) internal {
+        _prepareProductWithParams(
+            "SimpleProduct",
+            _getSimpleProductInfo(),
+            createBundle,
+            false); // print authz
+    }
+
+
+    function _prepareProductWithParams(
+        string memory name,
+        IComponents.ProductInfo memory productInfo,
+        bool createBundle,
+        bool printAuthz
+    )
+        internal
+    {
 
         (
             product, 
             productNftId
-        ) = _deployAndRegisterNewSimpleProduct("SimpleProduct");
+        ) = _deployAndRegisterNewSimpleProduct(name);
 
         _preparePool();
         _prepareDistribution();
@@ -435,8 +462,11 @@ contract GifTest is GifDeployer {
             );
             vm.stopPrank();
         }
-    }
 
+        if (printAuthz) {
+            _printAuthz(instance.getInstanceAdmin(), "instance");
+        }
+    }
 
     function _deployAndRegisterNewSimpleProduct(string memory name)
         internal
@@ -453,12 +483,11 @@ contract GifTest is GifDeployer {
         newProduct = new SimpleProduct(
             address(registry),
             instanceNftId,
-            new BasicProductAuthorization(name),
-            productOwner, // initial owner
+            "SimpleProduct",
             address(token),
-            false, // is interceptor
-            true, // has distribution
-            1 // number of oracles in product cluster
+            _getSimpleProductInfo(),
+            new SimpleProductAuthorization(name),
+            productOwner // initial owner
         );
         vm.stopPrank();
 
@@ -472,12 +501,38 @@ contract GifTest is GifDeployer {
 
         // token handler only becomes available after registration
         vm.startPrank(productOwner);
-        newProduct.approveTokenHandler(AmountLib.max());
+        newProduct.approveTokenHandler(token, AmountLib.max());
         vm.stopPrank();
 
         // solhint-disable-next-line
         console.log("product nft id", newNftId.toInt());
     }
+
+
+    function _getSimpleProductInfo()
+        internal
+        view
+        returns (IComponents.ProductInfo memory productInfo)
+    {
+        return IComponents.ProductInfo({
+            isProcessingFundedClaims: false,
+            isInterceptingPolicyTransfers: false,
+            hasDistribution: true,
+            expectedNumberOfOracles: 1,
+            numberOfOracles: 0,
+            poolNftId: NftIdLib.zero(),
+            distributionNftId: NftIdLib.zero(),
+            oracleNftId: new NftId[](1),
+            productFee: FeeLib.zero(),
+            processingFee: FeeLib.zero(),
+            distributionFee: FeeLib.zero(),
+            minDistributionOwnerFee: FeeLib.zero(),
+            poolFee: FeeLib.zero(),
+            stakingFee: FeeLib.zero(),
+            performanceFee: FeeLib.zero()
+        });
+    }
+
 
     function _preparePool() internal {
 
@@ -489,7 +544,8 @@ contract GifTest is GifDeployer {
             address(registry),
             productNftId,
             address(token),
-            new BasicPoolAuthorization("SimplePool"),
+            _getDefaultSimplePoolInfo(),
+            new SimplePoolAuthorization("SimplePool"),
             poolOwner
         );
         vm.stopPrank();
@@ -498,10 +554,20 @@ contract GifTest is GifDeployer {
 
         // token handler only becomes available after registration
         vm.startPrank(poolOwner);
-        pool.approveTokenHandler(AmountLib.max());
+        pool.approveTokenHandler(token, AmountLib.max());
         vm.stopPrank();
     }
 
+    function _getDefaultSimplePoolInfo() internal view returns (IComponents.PoolInfo memory) {
+        return IComponents.PoolInfo({
+            maxBalanceAmount: AmountLib.max(),
+            isInterceptingBundleTransfers: false,
+            isProcessingConfirmedClaims: false,
+            isExternallyManaged: false,
+            isVerifyingApplications: false,
+            collateralizationLevel: UFixedLib.one(),
+            retentionLevel: UFixedLib.one()});
+    }
 
     function _prepareDistribution() internal {
 
@@ -512,7 +578,7 @@ contract GifTest is GifDeployer {
         distribution = new SimpleDistribution(
             address(registry),
             productNftId,
-            new BasicDistributionAuthorization("SimpleDistribution"),
+            new SimpleDistributionAuthorization("SimpleDistribution"),
             distributionOwner,
             address(token));
         vm.stopPrank();
@@ -521,7 +587,7 @@ contract GifTest is GifDeployer {
 
         // token handler only becomes available after registration
         vm.startPrank(distributionOwner);
-        distribution.approveTokenHandler(AmountLib.max());
+        distribution.approveTokenHandler(token, AmountLib.max());
         vm.stopPrank();
     }
 

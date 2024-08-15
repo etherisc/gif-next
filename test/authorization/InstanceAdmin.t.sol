@@ -41,7 +41,10 @@ contract TestInstanceAdmin is
         assertTrue(true, "something is wrong");
     }
 
-    function _cloneNewInstanceAdmin() internal returns (InstanceAdmin clonedInstanceAdmin) {
+    function _cloneNewInstanceAdmin()
+        internal 
+        returns (InstanceAdmin clonedInstanceAdmin)
+    {
         clonedInstanceAdmin = InstanceAdmin(
             Clones.clone(
                 address(someInstanceAdminMaster)));

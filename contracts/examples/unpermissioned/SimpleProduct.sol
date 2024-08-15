@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+
 import {Amount, AmountLib} from "../../type/Amount.sol";
 import {BasicProduct} from "../../product/BasicProduct.sol";
 import {ClaimId} from "../../type/ClaimId.sol";
 import {IAuthorization} from "../../authorization/IAuthorization.sol";
+import {IComponents} from "../../instance/module/IComponents.sol";
 import {IOracleService} from "../../oracle/IOracleService.sol";
 import {ORACLE} from "../../type/ObjectType.sol";
 import {NftId} from "../../type/NftId.sol";
@@ -33,37 +36,32 @@ contract SimpleProduct is
     constructor(
         address registry,
         NftId instanceNftId,
-        IAuthorization authorization,
-        address initialOwner,
+        string memory name,
         address token,
-        bool isInterceptor,
-        bool hasDistribution,
-        uint8 numberOfOracles
+        IComponents.ProductInfo memory productInfo,
+        IAuthorization authorization,
+        address initialOwner
     )
     {
         initialize(
             registry,
             instanceNftId,
-            authorization,
-            initialOwner,
-            "SimpleProduct",
+            name,
             token,
-            isInterceptor,
-            hasDistribution,
-            numberOfOracles); 
+            productInfo,
+            authorization,
+            initialOwner); 
     }
 
 
     function initialize(
         address registry,
         NftId instanceNftid,
-        IAuthorization authorization,
-        address initialOwner,
         string memory name,
         address token,
-        bool isInterceptor,
-        bool hasDistribution,
-        uint8 numberOfOracles
+        IComponents.ProductInfo memory productInfo,
+        IAuthorization authorization,
+        address initialOwner
     )
         public
         virtual
@@ -72,16 +70,15 @@ contract SimpleProduct is
         _initializeBasicProduct(
             registry,
             instanceNftid,
-            authorization,
-            initialOwner,
             name,
             token,
-            isInterceptor,
-            hasDistribution,
-            numberOfOracles); 
+            productInfo,
+            authorization,
+            initialOwner); 
 
         _oracleService = IOracleService(_getServiceAddress(ORACLE()));
     }
+
 
     function createRisk(
         RiskId id,
@@ -201,6 +198,13 @@ contract SimpleProduct is
         return _submitClaim(policyNftId, claimAmount, submissionData);
     }
 
+    function revokeClaim(
+        NftId policyNftId,
+        ClaimId claimId
+    ) public {
+        _revokeClaim(policyNftId, claimId);
+    }
+
     function confirmClaim(
         NftId policyNftId,
         ClaimId claimId,
@@ -232,6 +236,13 @@ contract SimpleProduct is
         bytes memory data
     ) public returns (PayoutId) {
         return _createPayout(policyNftId, claimId, amount, data);
+    }
+
+    function cancelPayout(
+        NftId policyNftId,
+        PayoutId payoutId
+    ) public {
+        _cancelPayout(policyNftId, payoutId);
     }
 
     // TODO add test
@@ -348,4 +359,8 @@ contract SimpleProduct is
     function getOracleService() public view returns (IOracleService) {
         return _oracleService;
     }
+
+    function approveTokenHandler(IERC20Metadata token, Amount amount) external restricted() onlyOwner() { _approveTokenHandler(token, amount); }
+    function setLocked(bool locked) external onlyOwner() { _setLocked(locked); }
+    function setWallet(address newWallet) external restricted() onlyOwner() { _setWallet(newWallet); }
 }

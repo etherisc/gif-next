@@ -13,6 +13,9 @@ import {Selector, SelectorLib, SelectorSetLib} from "../type/Selector.sol";
 import {Str, StrLib} from "../type/String.sol";
 import {TimestampLib} from "../type/Timestamp.sol";
 
+interface IAccessManagedChecker {
+    function authority() external view returns (address);
+}
 
 /**
  * @dev A generic access amin contract that implements role based access control based on OpenZeppelin's AccessManager contract.
@@ -497,7 +500,6 @@ contract AccessAdmin is
         bool custom
     )
         internal
-        nonReentrant() // TODO no state changing calls in this function -> impossible to reenter
     {
         // check target does not yet exist
         if(targetExists(target)) {
@@ -521,7 +523,7 @@ contract AccessAdmin is
         }
 
         // check target is an access managed contract
-        if (!ContractLib.isAccessManaged(target)) {
+        if (!_isAccessManaged(target)) {
             revert ErrorTargetNotAccessManaged(target);
         }
 
@@ -547,6 +549,23 @@ contract AccessAdmin is
         _targets.push(target);
 
         emit LogTargetCreated(target, targetName);
+    }
+
+
+    function _isAccessManaged(address target)
+        internal
+        view
+        returns (bool)
+    {
+        if (!ContractLib.isContract(target)) {
+            return false;
+        }
+
+        (bool success, ) = target.staticcall(
+            abi.encodeWithSelector(
+                IAccessManagedChecker.authority.selector));
+
+        return success;
     }
 
 

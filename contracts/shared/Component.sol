@@ -4,16 +4,15 @@ pragma solidity ^0.8.20;
 import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {Amount, AmountLib} from "../type/Amount.sol";
+import {Amount} from "../type/Amount.sol";
 import {IComponent} from "./IComponent.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
-import {NftId, NftIdLib} from "../type/NftId.sol";
-import {ObjectType, PRODUCT} from "../type/ObjectType.sol";
+import {IComponentService} from "./IComponentService.sol";
+import {NftId} from "../type/NftId.sol";
+import {ObjectType, COMPONENT} from "../type/ObjectType.sol";
 import {Registerable} from "../shared/Registerable.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
-import {VersionPartLib} from "../type/Version.sol";
 
 abstract contract Component is
     AccessManagedUpgradeable,
@@ -26,9 +25,9 @@ abstract contract Component is
     struct ComponentStorage {
         string _name; // unique (per instance) component name
         IERC20Metadata _token; // token for this component
-        address _wallet;
         bool _isInterceptor;
         bytes _data;
+        IComponentService _componentService;
     }
 
 
@@ -39,11 +38,13 @@ abstract contract Component is
         _;
     }
 
+
     function _getComponentStorage() private pure returns (ComponentStorage storage $) {
         assembly {
             $.slot := COMPONENT_LOCATION_V1
         }
     }
+
 
     function _initializeComponent(
         address authority,
@@ -83,74 +84,23 @@ abstract contract Component is
         ComponentStorage storage $ = _getComponentStorage();
         $._name = name;
         $._token = IERC20Metadata(token);
-        $._wallet = address(this);
         $._isInterceptor = isInterceptor;
         $._data = componentData;
+        $._componentService = IComponentService(_getServiceAddress(COMPONENT()));
 
         _registerInterface(type(IAccessManaged).interfaceId);
         _registerInterface(type(IComponent).interfaceId);
     }
 
 
-    function approveTokenHandler(Amount spendingLimitAmount)
-        external
-        virtual
-        onlyOwner
-    {
-        approveTokenHandler(address(getToken()), spendingLimitAmount);
-    }
-
-    /// @dev Approves the component's token hander to spend tokens up to the specified limit.
-    /// When the spending limit amount equals AmountLib.max it is set to type(uint256).max.
-    function approveTokenHandler(address token, Amount spendingLimitAmount)
-        public
-        virtual
-        onlyOwner
-    {
-        if(getWallet() != address(this)) {
-            revert ErrorComponentWalletNotComponent();
-        }
-
-        uint256 spendingLimit = spendingLimitAmount.toInt();
-        bool isMaxAmount = false;
-        if (spendingLimitAmount == AmountLib.max()) {
-            spendingLimit = type(uint256).max;
-            isMaxAmount = true;
-        }
-
-        emit LogComponentTokenHandlerApproved(address(getTokenHandler()), spendingLimitAmount, isMaxAmount);
-
-        IERC20Metadata(token).approve(
-            address(getTokenHandler()),
-            spendingLimit);
-    }
-
-    function setWallet(address newWallet)
-        external
-        virtual
-        override
-        onlyOwner
-    {
-        // checks
-        address currentWallet = getWallet();
-        uint256 currentBalance = getToken().balanceOf(currentWallet);
-
-        // effects
-        _setWallet(newWallet);
-
-        // interactions
-        if (currentBalance > 0) {
-            // move tokens from old to new wallet 
-            emit LogComponentWalletTokensTransferred(currentWallet, newWallet, currentBalance);
-
-            if (currentWallet == address(this)) {
-                // transfer from the component requires an allowance
-                getTokenHandler().distributeTokens(currentWallet, newWallet, AmountLib.toAmount(currentBalance));
-            } else {
-                getTokenHandler().collectTokens(currentWallet, newWallet, AmountLib.toAmount(currentBalance));
-            }
-        }
-    }
+    // function setWallet(address newWallet)
+    //     external
+    //     virtual
+    //     override
+    //     onlyOwner
+    // {
+    //     _setWallet(newWallet);
+    // }
 
     /// @dev callback function for nft transfers
     /// may only be called by chain nft contract.
@@ -164,7 +114,7 @@ abstract contract Component is
 
 
     function getWallet() public view virtual returns (address walletAddress) {
-        return getComponentInfo().wallet;
+        return getTokenHandler().getWallet();
     }
 
     function getTokenHandler() public virtual view returns (TokenHandler tokenHandler) {
@@ -208,12 +158,18 @@ abstract contract Component is
     }
 
 
-    /// @dev internal function for nft transfers.
-    /// handling logic that deals with nft transfers need to overwrite this function
-    function _nftMint(address to, uint256 tokenId)
+    /// @dev Approves token hanlder to spend up to the specified amount of tokens.
+    /// Reverts if component wallet is not token handler itself.
+    /// Only component owner (nft holder) is authorizes to call this function.
+    function _approveTokenHandler(IERC20Metadata token, Amount amount)
         internal
         virtual
-    { }
+    {
+        _getComponentStorage()._componentService.approveTokenHandler(
+            token, 
+            amount);
+    }
+
 
     /// @dev internal function for nft transfers.
     /// handling logic that deals with nft transfers need to overwrite this function
@@ -225,21 +181,20 @@ abstract contract Component is
 
     /// @dev depending on the source of the component information this function needs to be overwritten. 
     /// eg for instance linked components that externally store this information with the instance store contract
-    function _setWallet(address newWallet) internal virtual {
-        ComponentStorage storage $ = _getComponentStorage();
-        address currentWallet = $._wallet;
+    function _setWallet(
+        address newWallet
+    )
+        internal
+        virtual
+    {
+        _getComponentStorage()._componentService.setWallet(newWallet);
+    }
 
-        if (newWallet == address(0)) {
-            revert ErrorComponentWalletAddressZero();
-        }
-
-        if (newWallet == currentWallet) {
-            revert ErrorComponentWalletAddressIsSameAsCurrent();
-        }
-
-        $._wallet = newWallet;
-        emit LogComponentWalletAddressChanged(currentWallet, newWallet);
-
+    function _setLocked(bool locked)
+        internal
+        virtual
+    {
+        _getComponentStorage()._componentService.setLockedFromComponent(address(this), locked);
     }
 
 
@@ -252,14 +207,13 @@ abstract contract Component is
             name: $._name,
             token: $._token,
             tokenHandler: TokenHandler(address(0)),
-            wallet: $._wallet, // initial wallet address
             data: $._data // user specific component data
         });
     }
 
-    function _approveTokenHandler(uint256 amount) internal {
-        ComponentStorage storage $ = _getComponentStorage();
-        $._token.approve(address(getComponentInfo().tokenHandler), amount);
+    /// @dev returns the service address for the specified domain
+    /// gets address via lookup from registry using the major version form the linked instance
+    function _getServiceAddress(ObjectType domain) internal view returns (address) {
+        return getRegistry().getServiceAddress(domain, getRelease());
     }
-
 }

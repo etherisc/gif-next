@@ -1,19 +1,16 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
 
 import {AccessAdmin} from "../authorization/AccessAdmin.sol";
 import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
-import {IAccessAdmin} from "../authorization/IAccessAdmin.sol";
 import {IAuthorization} from "../authorization/IAuthorization.sol";
 import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
 import {IAuthorization} from "../authorization/IAuthorization.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IInstance} from "./IInstance.sol";
-import {IService} from "../shared/IService.sol";
-import {ObjectType, ObjectTypeLib, ALL, POOL, RELEASE} from "../type/ObjectType.sol";
-import {RoleId, RoleIdLib, ADMIN_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
+import {ObjectType} from "../type/ObjectType.sol";
+import {RoleId, RoleIdLib} from "../type/RoleId.sol";
 import {Str, StrLib} from "../type/String.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {VersionPart, VersionPartLib} from "../type/Version.sol";
@@ -26,6 +23,7 @@ contract InstanceAdmin is
     string public constant INSTANCE_STORE_TARGET_NAME = "InstanceStore";
     string public constant INSTANCE_ADMIN_TARGET_NAME = "InstanceAdmin";
     string public constant BUNDLE_SET_TARGET_NAME = "BundleSet";
+    string public constant RISK_SET_TAGET_NAME = "RiskSet";
 
     uint64 public constant CUSTOM_ROLE_ID_MIN = 10000; // MUST be even
 
@@ -36,11 +34,11 @@ contract InstanceAdmin is
     error ErrorInstanceAdminReleaseMismatch();
     error ErrorInstanceAdminExpectedTargetMissing(string targetName);
 
-    IInstance _instance;
+    IInstance internal _instance;
     IRegistry internal _registry;
-    uint64 _idNext;
+    uint64 internal _idNext;
 
-    IAuthorization _instanceAuthorization;
+    IAuthorization internal _instanceAuthorization;
 
 
     modifier onlyInstanceOwner() {        
@@ -109,6 +107,9 @@ contract InstanceAdmin is
 
         // get authorization specification
         IAuthorization authorization = component.getAuthorization();
+        string memory targetName = authorization.getTargetName();
+        _checkTargetIsReadyForAuthorization(address(component));
+
 
         // create roles
         _createRoles(authorization);
@@ -116,13 +117,13 @@ contract InstanceAdmin is
         // create component target
         _createTarget(
             address(component), 
-            authorization.getTargetName(), 
+            targetName, 
             true, // checkAuthority
             false); // custom
 
         _createTarget(
             address(component.getTokenHandler()), 
-            string(abi.encodePacked(authorization.getTargetName(), "TH")), 
+            string(abi.encodePacked(targetName, "TH")), 
             true, 
             false);
         
@@ -177,6 +178,15 @@ contract InstanceAdmin is
         accessManager.setLocked(locked);
     }
 
+    function setTargetLocked(address target, bool locked) 
+        external 
+        restricted()
+    {
+        _setTargetClosed(target, locked);
+    }
+
+
+
     /// @dev Returns the instance authorization specification used to set up this instance admin.
     function getInstanceAuthorization()
         external
@@ -200,6 +210,20 @@ contract InstanceAdmin is
             revert ErrorInstanceAdminTargetAlreadyAuthorized(target);
         }
     }
+
+    function _checkTargetIsReadyForAuthorization(address target)
+        internal
+        view
+    {
+        if (address(_registry) != address(0) && !_registry.isRegistered(target)) {
+            revert ErrorInstanceAdminNotRegistered(target);
+        }
+
+        if (targetExists(target)) {
+            revert ErrorInstanceAdminAlreadyAuthorized(target);
+        }
+    }
+
 
     function _createRoles(IAuthorization authorization)
         internal
@@ -260,7 +284,7 @@ contract InstanceAdmin is
         _createTarget(
             target, 
             targetName, 
-            false, // check authority TODO check normal targets, don't check service targets (they share authority with registry admin)
+            false, // check authority TODO check normal targets, don't check service targets (they share authority with release admin)
             false);
 
         // assign target role if defined
@@ -278,6 +302,7 @@ contract InstanceAdmin is
         _checkAndCreateTargetWithRole(address(_instance.getInstanceStore()), INSTANCE_STORE_TARGET_NAME);
         _checkAndCreateTargetWithRole(address(_instance.getInstanceAdmin()), INSTANCE_ADMIN_TARGET_NAME);
         _checkAndCreateTargetWithRole(address(_instance.getBundleSet()), BUNDLE_SET_TARGET_NAME);
+        _checkAndCreateTargetWithRole(address(_instance.getRiskSet()), RISK_SET_TAGET_NAME);
 
         // create targets for services that need to access the module targets
         ObjectType[] memory serviceDomains = _instanceAuthorization.getServiceDomains();

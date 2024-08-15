@@ -25,20 +25,20 @@ contract ProductWithReinsurance is
 
     constructor(
         address registry,
-        NftId instanceNftid,
+        NftId instanceNftId,
+        address token,
+        IComponents.ProductInfo memory productInfo,
         IAuthorization authorization,
-        address initialOwner,
-        address token
+        address initialOwner
     )
         SimpleProduct(
             registry,
-            instanceNftid,
-            authorization,
-            initialOwner,
+            instanceNftId,
+            "ProductWithReinsurance", 
             token,
-            false, // isInterceptor
-            false, // has distribution
-            0 // number of oracles
+            productInfo,
+            authorization,
+            initialOwner
         )
     {
         isAutoPayout = false;

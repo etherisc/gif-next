@@ -131,6 +131,8 @@ interface IRegistry is IERC165 {
 
     function isObjectType(NftId nftId, ObjectType expectedObjectType) external view returns (bool);
 
+    function isObjectType(address contractAddress, ObjectType expectedObjectType) external view returns (bool);
+
     function getObjectAddress(NftId nftId) external view returns (address objectAddress);
 
     /// @dev Returns the object info for the specified object address.

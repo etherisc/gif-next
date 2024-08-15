@@ -64,21 +64,21 @@ Install the dependencies before running the script below for the first time.
 npm install
 ```
 
-The deploy script will deploy all required contracts and create a test instance with a test product and a test pool. 
+The deploy script will deploy all required contracts for gif and create a test instance. 
 
 ```bash
 # run deployment on a locally created ganache instance
-hh run scripts/deploy_all.ts
+hh run scripts/deploy_gif.ts
 ```
 
 ```bash
 # set appropriate values vor env variables (see below)
 
 # run deployment on another network
-hh run --network <networkname> scripts/deploy_all.ts
+hh run --network <networkname> scripts/deploy_gif.ts
 ```
 
-The deployment will persist deployment information into the files `deployment_state_<chainid>.json`, `libraries_<chainid>.json` and `verification_log_<chainid>.json`. 
+The deployment will persist deployment information into the files `deployments/<chainid>/deployment_state.json`, `deployments/<chainid>/libraries.json` and `deployments/<chainid>/verification_log.json`. 
 This data can then be used for verification of the deployed contracts on etherscan/polygonscan.
 
 For the verification of the contracts on etherscan/polygonscan the above files (created by previous deployment) are required and then the following command can be used:
@@ -89,9 +89,31 @@ hh run --network <networkname> scripts/verify_deployment.ts
 
 Environment variables:
 
-- `WEB3_INFURA_PROJECT_ID` set to infura project id (required for mumbai and mainnet)
+- `WRITE_ADDRESSES_TO_FILE` set to `true` to write the addresses of the deployed contracts to a file (default: `false`)
+- `RESUMEABLE_DEPLOYMENT` set to `true` to have all (deployment) transactions written to a state file so the script can be resumed after a failure (or after a manual stop) (default: `false`)
+- `GAS_PRICE` set to the gas price to use for deployment (default: `undefined`)
 - `WALLET_MNEMONIC` the mnemonic of the wallet to use for deployment (required for mumbai and mainnet)
+
+- `WEB3_INFURA_PROJECT_ID` set to infura project id (required for mumbai and mainnet)
 - `ETHERSCAN_API_KEY` `POLYGONSCAN_API_KEY` the api key for etherscan/polygonscan (required for mumbai and mainnet)
+
+### Deploy full protocol with fire example components
+
+```bash
+hh run scripts/deploy_all.ts
+```
+
+Like before, use the `--network` option to deploy on a different network.
+
+### Deploy only the fire example components
+
+```bash
+hh run scripts/deploy_fire_components.ts
+```
+
+Ensure that the deployment runs on a chain where a compatible version of the GIF is already deployed. Then ensure the correct environment variables are set. An up to date list of required environment variables can be found in the `deploy_fire_components.ts` script in the main method (just check the lines that contain a `process.env` statement). To be safe, set the environment variable `WRITE_ADDRESSES_TO_FILE` to `true` when deploying the gif and then copy all values from the generated `deployment.env` file to the `.env` file in the root directory of the repository before running the fire example deployment. 
+
+Like before, use the `--network` option to deploy on a different network.
 
 ### Create a new instance
 
@@ -111,7 +133,6 @@ Environment variables:
 - `WEB3_INFURA_PROJECT_ID` set to infura project id (required for mumbai and mainnet)
 - `WALLET_MNEMONIC` the mnemonic of the wallet to use for deployment (required for mumbai and mainnet)
 - `REGISTRY_ADDRESS` the address of the registry that is already deployed and configured and has a valid master instance
-
 
 ### Console
 

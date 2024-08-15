@@ -188,174 +188,14 @@ export async function computeReleaseAddresses(/*owner: Signer, registry: Registr
 }
 
 
-export async function getReleaseConfig(/*owner: Signer, registry: RegistryAddresses, libraries: LibraryAddresses, salt: BytesLike*/): Promise<ReleaseConfig>
-{
-    const serviceAddresses = await computeReleaseAddresses(/*owner, registry, libraries, salt*/);
-
-    // prepare config
-    const config: ReleaseConfig =
-    {
-        addresses: [
-            serviceAddresses.policyServiceAddress,
-            serviceAddresses.applicationServiceAddress,
-            serviceAddresses.claimServiceAddress,
-            serviceAddresses.productServiceAddress,
-            serviceAddresses.poolServiceAddress,
-            serviceAddresses.bundleServiceAddress,
-            serviceAddresses.pricingServiceAddress,
-            serviceAddresses.distributionServiceAddress,
-            serviceAddresses.oracleServiceAddress,
-            serviceAddresses.componentServiceAddress,
-            serviceAddresses.instanceServiceAddress,
-            serviceAddresses.stakingServiceAddress,
-            serviceAddresses.registryServiceAddress
-        ],
-        names: [
-            serviceNames.POLICY_SERVICE_NAME,
-            serviceNames.APPLICATION_SERVICE_NAME,
-            serviceNames.CLAIM_SERVICE_NAME,
-            serviceNames.PRODUCT_SERVICE_NAME,
-            serviceNames.POOL_SERVICE_NAME,
-            serviceNames.BUNDLE_SERVICE_NAME,
-            serviceNames.PRICING_SERVICE_NAME,
-            serviceNames.DISTRIBUTION_SERVICE_NAME,
-            serviceNames.ORACLE_SERVICE_NAME,
-            serviceNames.COMPONENT_SERVICE_NAME,
-            serviceNames.INSTANCE_SERVICE_NAME,
-            serviceNames.STAKING_SERVICE_NAME,
-            serviceNames.REGISTRY_SERVICE_NAME
-        ],
-        serviceRoles: [
-            [roles.POLICY_SERVICE_ROLE],
-            [roles.APPLICATION_SERVICE_ROLE],
-            [roles.CLAIM_SERVICE_ROLE],
-            [roles.PRODUCT_SERVICE_ROLE, roles.CAN_CREATE_GIF_TARGET_ROLE],
-            [roles.POOL_SERVICE_ROLE, roles.CAN_CREATE_GIF_TARGET_ROLE],
-            [roles.BUNDLE_SERVICE_ROLE, roles.CAN_CREATE_GIF_TARGET_ROLE],
-            [roles.PRICING_SERVICE_ROLE],
-            [roles.DISTRIBUTION_SERVICE_ROLE, roles.CAN_CREATE_GIF_TARGET_ROLE],
-            [roles.ORACLE_SERVICE_ROLE],
-            [roles.COMPONENT_SERVICE_ROLE],
-            [roles.INSTANCE_SERVICE_ROLE],
-            [roles.STAKING_SERVICE_ROLE],
-            [roles.REGISTRY_SERVICE_ROLE]
-        ],
-        serviceRoleNames: [
-            [roleNames.POLICY_SERVICE_ROLE_NAME],
-            [roleNames.APPLICATION_SERVICE_ROLE_NAME],
-            [roleNames.CLAIM_SERVICE_ROLE_NAME],
-            [roleNames.PRODUCT_SERVICE_ROLE_NAME, roleNames.CAN_CREATE_GIF_TARGET_ROLE_NAME],
-            [roleNames.POOL_SERVICE_ROLE_NAME, roleNames.CAN_CREATE_GIF_TARGET_ROLE_NAME],
-            [roleNames.BUNDLE_SERVICE_ROLE_NAME, roleNames.CAN_CREATE_GIF_TARGET_ROLE_NAME],
-            [roleNames.PRICING_SERVICE_ROLE_NAME],
-            [roleNames.DISTRIBUTION_SERVICE_ROLE_NAME, roleNames.CAN_CREATE_GIF_TARGET_ROLE_NAME],
-            [roleNames.ORACLE_SERVICE_ROLE_NAME],
-            [roleNames.COMPONENT_SERVICE_ROLE_NAME],
-            [roleNames.INSTANCE_SERVICE_ROLE_NAME],
-            [roleNames.STAKING_SERVICE_ROLE_NAME],
-            [roleNames.REGISTRY_SERVICE_ROLE_NAME]
-        ],
-        functionRoles: [
-            [],  // policy
-            [],  // application
-            [],  // claim
-            [],  // product
-            [roles.POLICY_SERVICE_ROLE, roles.CLAIM_SERVICE_ROLE], // pool
-            [roles.POLICY_SERVICE_ROLE, roles.POOL_SERVICE_ROLE],  // bundle
-            [], // pricing
-            [roles.POLICY_SERVICE_ROLE], // distribution
-            [], // oracle
-            [], // component
-            [roles.CAN_CREATE_GIF_TARGET_ROLE], // instance
-            [],  // staking
-            [ // registry
-                roles.APPLICATION_SERVICE_ROLE,
-                roles.PRODUCT_SERVICE_ROLE,
-                roles.POOL_SERVICE_ROLE,
-                roles.BUNDLE_SERVICE_ROLE,
-                roles.DISTRIBUTION_SERVICE_ROLE,
-                roles.COMPONENT_SERVICE_ROLE,
-                roles.INSTANCE_SERVICE_ROLE,
-                roles.STAKING_SERVICE_ROLE
-            ] 
-        ],
-        functionRoleNames: [
-            [], // policy
-            [], // application
-            [], // claim
-            [], // product
-            [roleNames.POLICY_SERVICE_ROLE_NAME, roleNames.CLAIM_SERVICE_ROLE_NAME], // pool
-            [roleNames.POLICY_SERVICE_ROLE_NAME, roleNames.POOL_SERVICE_ROLE_NAME], // bundle
-            [], // pricing
-            [roleNames.POLICY_SERVICE_ROLE_NAME], // distribution
-            [], // oracle
-            [], // component
-            [roleNames.CAN_CREATE_GIF_TARGET_ROLE_NAME], // instance
-            [], // staking
-            [ // registry
-                roleNames.APPLICATION_SERVICE_ROLE_NAME,
-                roleNames.PRODUCT_SERVICE_ROLE_NAME,
-                roleNames.POOL_SERVICE_ROLE_NAME,
-                roleNames.BUNDLE_SERVICE_ROLE_NAME,
-                roleNames.DISTRIBUTION_SERVICE_ROLE_NAME,
-                roleNames.COMPONENT_SERVICE_ROLE_NAME,
-                roleNames.INSTANCE_SERVICE_ROLE_NAME,
-                roleNames.STAKING_SERVICE_ROLE_NAME,
-            ]
-        ],
-        selectors: [
-            [], // policy
-            [], // application
-            [], // claim
-            [], // product
-            [ 
-                [
-                    PoolService__factory.createInterface().getFunction("lockCollateral").selector,
-                    PoolService__factory.createInterface().getFunction("releaseCollateral").selector,
-                    PoolService__factory.createInterface().getFunction("processSale").selector
-                ],
-                [PoolService__factory.createInterface().getFunction("processSale").selector]
-            ],
-            [
-                [],//[BundleService__factory.createInterface().getFunction("increaseBalance").selector],
-                [
-                    BundleService__factory.createInterface().getFunction("create").selector,
-                    BundleService__factory.createInterface().getFunction("lockCollateral").selector,
-                    BundleService__factory.createInterface().getFunction("close").selector,
-                    BundleService__factory.createInterface().getFunction("releaseCollateral").selector,
-                    BundleService__factory.createInterface().getFunction("unlinkPolicy").selector
-                ]
-            ],
-            [], // pricing
-            [
-                [DistributionService__factory.createInterface().getFunction("processSale").selector]
-            ],
-            [], // oracle
-            [], // component
-            [
-                [InstanceService__factory.createInterface().getFunction("createGifTarget").selector]
-            ],
-            [], // staking
-            [
-                [RegistryService__factory.createInterface().getFunction("registerPolicy").selector],
-                [RegistryService__factory.createInterface().getFunction("registerBundle").selector],
-                [RegistryService__factory.createInterface().getFunction("registerComponent").selector],                
-                [RegistryService__factory.createInterface().getFunction("registerInstance").selector],
-                [RegistryService__factory.createInterface().getFunction("registerStaking").selector]
-            ]
-        ]
-    };
-
-    return config;
-}
-
 export async function createRelease(owner: Signer, registry: RegistryAddresses, salt: BytesLike): Promise<Release>
 {
     const releaseRegistry = registry.releaseRegistry.connect(owner);
     
     await executeTx(
         async () => await releaseRegistry.createNextRelease(getTxOpts()),
-        "releaseRegistry.createNextRelease"
+        "releaseRegistry.createNextRelease",
+        [releaseRegistry.interface]
     );
 
 
@@ -365,7 +205,8 @@ export async function createRelease(owner: Signer, registry: RegistryAddresses, 
             salt,
             getTxOpts()
         ),
-        "releaseRegistry.prepareNextRelease");
+        "releaseRegistry.prepareNextRelease",
+        [releaseRegistry.interface]);
 
     let logCreationInfo = getFieldFromTxRcptLogs(rcpt!, registry.releaseRegistry.interface, "LogReleaseCreation", "admin");
     const releaseAdminAddress = (logCreationInfo as AddressLike);

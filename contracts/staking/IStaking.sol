@@ -30,6 +30,9 @@ interface IStaking is
     error ErrorStakingNotStakingOwner();
     error ErrorStakingNotNftOwner(NftId nftId);
 
+    // initializeTokenHandler
+    error ErrorStakingNotRegistry(address registry);
+
     // staking rate
     error ErrorStakingTokenNotRegistered(uint256 chainId, address token);
 
@@ -63,6 +66,8 @@ interface IStaking is
         Seconds lockingPeriod;
         UFixed rewardRate;
     }
+
+    function initializeTokenHandler() external;
 
     // staking rate management 
 
@@ -155,11 +160,11 @@ interface IStaking is
 
     //--- helper functions --------------------------------------------------//
 
-    /// @dev transfers the specified amount of dips from the from address to the staking wallet.
-    function collectDipAmount(address from, Amount dipAmount) external;
+    // /// @dev transfers the specified amount of dips from the from address to the staking wallet.
+    // function collectDipAmount(address from, Amount dipAmount) external;
 
-    /// @dev transfers the specified amount of dips from the staking wallet to the to addess.
-    function transferDipAmount(address to, Amount dipAmount) external;
+    // /// @dev transfers the specified amount of dips from the staking wallet to the to addess.
+    // function transferDipAmount(address to, Amount dipAmount) external;
 
     //--- view and pure functions -------------------------------------------//
 

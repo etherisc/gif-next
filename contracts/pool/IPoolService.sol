@@ -3,32 +3,28 @@ pragma solidity ^0.8.20;
 
 import {Amount} from "../type/Amount.sol";
 import {ClaimId} from "../type/ClaimId.sol";
-import {Fee} from "../type/Fee.sol";
-import {IBundle} from "../instance/module/IBundle.sol";
 import {IInstance} from "../instance/IInstance.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
 import {IService} from "../shared/IService.sol";
 import {NftId} from "../type/NftId.sol";
-import {PayoutId} from "../type/PayoutId.sol";
-import {RoleId} from "../type/RoleId.sol";
-import {Seconds} from "../type/Seconds.sol";
-import {StateId} from "../type/StateId.sol";
 import {UFixed} from "../type/UFixed.sol";
 
 interface IPoolService is IService {
 
     event LogPoolServiceMaxBalanceAmountUpdated(NftId poolNftId, Amount previousMaxCapitalAmount, Amount currentMaxCapitalAmount);
-    event LogPoolServiceBundleOwnerRoleSet(NftId poolNftId, RoleId bundleOwnerRole);
+    event LogPoolServiceWalletFunded(NftId poolNftId, address poolOwner, Amount amount);
+    event LogPoolServiceWalletDefunded(NftId poolNftId, address poolOwner, Amount amount);
 
     event LogPoolServiceBundleCreated(NftId instanceNftId, NftId poolNftId, NftId bundleNftId);
     event LogPoolServiceBundleClosed(NftId instanceNftId, NftId poolNftId, NftId bundleNftId);
 
     event LogPoolServiceBundleStaked(NftId instanceNftId, NftId poolNftId, NftId bundleNftId, Amount amount, Amount netAmount);
-    event LogPoolServiceBundleUnstaked(NftId instanceNftId, NftId poolNftId, NftId bundleNftId, Amount amount);
+    event LogPoolServiceBundleUnstaked(NftId instanceNftId, NftId poolNftId, NftId bundleNftId, Amount amount, Amount netAmount);
 
     event LogPoolServiceProcessFundedClaim(NftId policyNftId, ClaimId claimId, Amount availableAmount);
 
+    error ErrorPoolServicePoolNotExternallyManaged(NftId poolNftId);
     error ErrorPoolServicePolicyPoolMismatch(NftId policyNftId, NftId productNftId, NftId expectedProductNftId);
     error ErrorPoolServiceBundleOwnerRoleAlreadySet(NftId poolNftId);
     error ErrorPoolServiceInvalidTransferAmount(Amount expectedAmount, Amount actualAmount);
@@ -80,18 +76,6 @@ interface IPoolService is IService {
     ) external;
 
 
-    /// @dev create a new empty bundle with the provided parameters
-    /// may only be called by registered and unlocked pool components.
-    function createBundle(
-        address owner, // initial bundle owner
-        Fee memory fee, // fees deducted from premium that go to bundle owner
-        Seconds lifetime, // initial duration for which new policies are covered
-        bytes calldata filter // optional use case specific criteria that define if a policy may be covered by this bundle
-    )
-        external 
-        returns(NftId bundleNftId); // the nft id of the newly created bundle
-
-
     /// @dev increase stakes for bundle
     /// staking fees will be deducted by the pool service from the staking amount
     /// may only be called by registered and unlocked pool components
@@ -117,18 +101,18 @@ interface IPoolService is IService {
     function processFundedClaim(NftId policyNftId, ClaimId claimId, Amount availableAmount) external;
 
 
-    /// @dev Fund the specified pool wallet with the provided amount.
-    /// This function will collect the amount from the sender address and transfers it to the pool wallet.
+    /// @dev Fund the pool wallet with the provided amount.
+    /// This function will collect the amount from the pool owner and transfers it to the pool wallet.
     /// The function will not update balance amounts managed by the framework.
     /// Only available for externally managed pools.
-    function fundPoolWallet(NftId poolNftId, Amount amount) external;
+    function fundPoolWallet(Amount amount) external;
 
 
     /// @dev Defund the specified pool wallet with the provided amount.
-    /// This function will transfer the amount from the pool wallet to the sender address.
+    /// This function will transfer the amount from the pool wallet to the pool owner.
     /// The function will not update balance amounts managed by the framework.
     /// Only available for externally managed pools.
-    function defundPoolWallet(NftId poolNftId, Amount amount) external;
+    function defundPoolWallet(Amount amount) external;
 
 
     /// @dev processes the sale of a bundle and track the pool fee and bundle fee amounts
@@ -144,8 +128,10 @@ interface IPoolService is IService {
         external
         view 
         returns(
+            NftId poolNftId,
             Amount totalCollateralAmount,
-            Amount localCollateralAmount
+            Amount localCollateralAmount,
+            bool poolIsVerifyingApplications
         );
 
 

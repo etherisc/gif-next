@@ -2,33 +2,26 @@
 pragma solidity ^0.8.20;
 
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
-import {ShortString, ShortStrings} from "@openzeppelin/contracts/utils/ShortStrings.sol";
 
 import {IAuthorization} from "../authorization/IAuthorization.sol";
 import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
 import {Amount} from "../type/Amount.sol";
 import {BundleSet} from "./BundleSet.sol";
+import {RiskSet} from "./RiskSet.sol";
 import {ChainNft} from "../registry/ChainNft.sol";
 import {NftId} from "../type/NftId.sol";
 import {RoleId} from "../type/RoleId.sol";
-import {SecondsLib} from "../type/Seconds.sol";
-import {UFixed, UFixedLib} from "../type/UFixed.sol";
-import {ADMIN_ROLE} from "../type/RoleId.sol";
-import {ObjectType, INSTANCE, BUNDLE, APPLICATION, CLAIM, DISTRIBUTION, INSTANCE, POLICY, POOL, PRODUCT, REGISTRY, STAKING} from "../type/ObjectType.sol";
+import {UFixed} from "../type/UFixed.sol";
+import {ObjectType, INSTANCE, COMPONENT, INSTANCE, REGISTRY, STAKING} from "../type/ObjectType.sol";
 
 import {Service} from "../shared/Service.sol";
-import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
-import {IService} from "../shared/IService.sol";
-
-import {IDistributionComponent} from "../distribution/IDistributionComponent.sol";
-import {IPoolComponent} from "../pool/IPoolComponent.sol";
-import {IProductComponent} from "../product/IProductComponent.sol";
 
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegistryService} from "../registry/IRegistryService.sol";
 import {IStakingService} from "../staking/IStakingService.sol";
 import {TargetManagerLib} from "../staking/TargetManagerLib.sol";
 
+import {IComponentService} from "../shared/IComponentService.sol";
 import {Instance} from "./Instance.sol";
 import {IInstance} from "./IInstance.sol";
 import {InstanceAdmin} from "./InstanceAdmin.sol";
@@ -36,7 +29,7 @@ import {IInstanceService} from "./IInstanceService.sol";
 import {InstanceReader} from "./InstanceReader.sol";
 import {InstanceStore} from "./InstanceStore.sol";
 import {Seconds} from "../type/Seconds.sol";
-import {VersionPart, VersionPartLib} from "../type/Version.sol";
+import {VersionPart} from "../type/Version.sol";
 
 
 contract InstanceService is
@@ -49,12 +42,14 @@ contract InstanceService is
 
     IRegistryService internal _registryService;
     IStakingService internal _stakingService;
+    IComponentService internal _componentService;
 
     address internal _masterAccessManager;
     address internal _masterInstanceAdmin;
     address internal _masterInstance;
     address internal _masterInstanceReader;
     address internal _masterInstanceBundleSet;
+    address internal _masterInstanceRiskSet;
     address internal _masterInstanceStore;
 
 
@@ -97,8 +92,8 @@ contract InstanceService is
     function createInstance()
         external 
         returns (
-            Instance clonedInstance,
-            NftId clonedInstanceNftId
+            IInstance instance,
+            NftId instanceNftId
         )
     {
         // tx sender will become instance owner
@@ -106,15 +101,15 @@ contract InstanceService is
 
         // create instance admin and instance
         InstanceAdmin instanceAdmin = _createInstanceAdmin();
-        clonedInstance = _createInstance(instanceAdmin, instanceOwner);
+        instance = _createInstance(instanceAdmin, instanceOwner);
 
         // register cloned instance with registry
-        clonedInstanceNftId = _registryService.registerInstance(
-            clonedInstance, instanceOwner).nftId;
+        instanceNftId = _registryService.registerInstance(
+            instance, instanceOwner).nftId;
 
         // register cloned instance as staking target
         _stakingService.createInstanceTarget(
-            clonedInstanceNftId,
+            instanceNftId,
             TargetManagerLib.getDefaultLockingPeriod(),
             TargetManagerLib.getDefaultRewardRate());
 
@@ -126,8 +121,8 @@ contract InstanceService is
             getVersion().toMajorPart());
 
         emit LogInstanceCloned(
-            clonedInstanceNftId,
-            address(clonedInstance));
+            instanceNftId,
+            address(instance));
     }
 
 
@@ -180,33 +175,6 @@ contract InstanceService is
             dipAmount);
     }
 
-
-    function setComponentLocked(bool locked)
-        external
-        virtual
-        onlyComponent()
-    {
-        // checks
-        address componentAddress = msg.sender;
-
-        if (!IInstanceLinkedComponent(componentAddress).supportsInterface(type(IInstanceLinkedComponent).interfaceId)) {
-            revert ErrorInstanceServiceComponentNotInstanceLinked(componentAddress);
-        }
-
-        IRegistry registry = getRegistry();
-        NftId instanceNftId = registry.getObjectInfo(componentAddress).parentNftId;
-
-        IInstance instance = IInstance(
-            registry.getObjectAddress(instanceNftId));
-
-        // no revert in case already locked
-        // TODO refactor/implement
-        // instance.getInstanceAdmin().setTargetLockedByService(
-        //     componentAddress, 
-        //     locked);
-    }
-
-
     function getMasterInstanceReader() external view returns (address) {
         return _masterInstanceReader;
     }
@@ -219,7 +187,7 @@ contract InstanceService is
         if(_masterInstance != address(0)) { revert ErrorInstanceServiceMasterInstanceAlreadySet(); }
         if(_masterInstanceAdmin != address(0)) { revert ErrorInstanceServiceMasterInstanceAdminAlreadySet(); }
         if(_masterInstanceBundleSet != address(0)) { revert ErrorInstanceServiceMasterBundleSetAlreadySet(); }
-
+        if(_masterInstanceRiskSet != address(0)) { revert ErrorInstanceServiceMasterRiskSetAlreadySet(); }
         if(instanceAddress == address(0)) { revert ErrorInstanceServiceInstanceAddressZero(); }
 
         IInstance instance = IInstance(instanceAddress);
@@ -228,28 +196,34 @@ contract InstanceService is
         address instanceAdminAddress = address(instanceAdmin);
         InstanceReader instanceReader = instance.getInstanceReader();
         address instanceReaderAddress = address(instanceReader);
-        BundleSet bundleManager = instance.getBundleSet();
-        address bundleManagerAddress = address(bundleManager);
+        BundleSet bundleSet = instance.getBundleSet();
+        address bundleSetAddress = address(bundleSet);
+        RiskSet riskSet = instance.getRiskSet();
+        address riskSetAddress = address(riskSet);
         InstanceStore instanceStore = instance.getInstanceStore();
         address instanceStoreAddress = address(instanceStore);
 
         if(accessManagerAddress == address(0)) { revert ErrorInstanceServiceAccessManagerZero(); }
         if(instanceAdminAddress == address(0)) { revert ErrorInstanceServiceInstanceAdminZero(); }
         if(instanceReaderAddress == address(0)) { revert ErrorInstanceServiceInstanceReaderZero(); }
-        if(bundleManagerAddress == address(0)) { revert ErrorInstanceServiceBundleSetZero(); }
+        if(bundleSetAddress == address(0)) { revert ErrorInstanceServiceBundleSetZero(); }
+        if(riskSetAddress == address(0)) { revert ErrorInstanceServiceRiskSetZero(); }
         if(instanceStoreAddress == address(0)) { revert ErrorInstanceServiceInstanceStoreZero(); }
         
         if(instance.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceInstanceAuthorityMismatch(); }
-        if(bundleManager.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceBundleSetAuthorityMismatch(); }
+        if(bundleSet.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceBundleSetAuthorityMismatch(); }
+        if(riskSet.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceRiskSetAuthorityMismatch(); }
         if(instanceStore.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceInstanceStoreAuthorityMismatch(); }
-        if(bundleManager.getInstance() != instance) { revert ErrorInstanceServiceBundleMangerInstanceMismatch(); }
+        if(bundleSet.getInstance() != instance) { revert ErrorInstanceServiceBundleSetInstanceMismatch(); }
+        if(riskSet.getInstance() != instance) { revert ErrorInstanceServiceRiskSetInstanceMismatch(); }
         if(instanceReader.getInstance() != instance) { revert ErrorInstanceServiceInstanceReaderInstanceMismatch2(); }
 
         _masterAccessManager = accessManagerAddress;
         _masterInstanceAdmin = instanceAdminAddress;
         _masterInstance = instanceAddress;
         _masterInstanceReader = instanceReaderAddress;
-        _masterInstanceBundleSet = bundleManagerAddress;
+        _masterInstanceBundleSet = bundleSetAddress;
+        _masterInstanceRiskSet = riskSetAddress;
         _masterInstanceStore = instanceStoreAddress;
         
         IInstance masterInstance = IInstance(_masterInstance);
@@ -270,6 +244,7 @@ contract InstanceService is
 
     function upgradeInstanceReader(NftId instanceNftId) 
         external 
+        nonReentrant()
         onlyInstanceOwner(instanceNftId) 
         onlyNftOfType(instanceNftId, INSTANCE())
     {
@@ -308,21 +283,24 @@ contract InstanceService is
     )
         internal
         virtual
-        returns (Instance clonedInstance)
+        returns (IInstance)
     {
         InstanceStore clonedInstanceStore = InstanceStore(Clones.clone(address(_masterInstanceStore)));
         BundleSet clonedBundleSet = BundleSet(Clones.clone(_masterInstanceBundleSet));
+        RiskSet clonedRiskSet = RiskSet(Clones.clone(_masterInstanceRiskSet));
         InstanceReader clonedInstanceReader = InstanceReader(Clones.clone(address(_masterInstanceReader)));
 
         // clone instance
-        clonedInstance = Instance(Clones.clone(_masterInstance));
+        Instance clonedInstance = Instance(Clones.clone(_masterInstance));
         clonedInstance.initialize(
             instanceAdmin,
             clonedInstanceStore,
             clonedBundleSet,
+            clonedRiskSet,
             clonedInstanceReader,
             getRegistry(),
             instanceOwner);
+        return clonedInstance;
     }
 
 
@@ -373,6 +351,7 @@ contract InstanceService is
 
         _registryService = IRegistryService(_getServiceAddress(REGISTRY()));
         _stakingService = IStakingService(_getServiceAddress(STAKING()));
+        _componentService = IComponentService(_getServiceAddress(COMPONENT()));
 
         _registerInterface(type(IInstanceService).interfaceId);
     }

@@ -56,12 +56,11 @@ interface IDistributionService is IService {
         bytes memory data
     ) external returns (NftId distributorNftId);
 
-    // TODO re-enable and reorganize (service contract too large)
-    // function updateDistributorType(
-    //     NftId distributorNftId,
-    //     DistributorType distributorType,
-    //     bytes memory data
-    // ) external;
+    function changeDistributorType(
+        NftId distributorNftId,
+        DistributorType distributorType,
+        bytes memory data
+    ) external;
 
     function createReferral(
         NftId distributorNftId,

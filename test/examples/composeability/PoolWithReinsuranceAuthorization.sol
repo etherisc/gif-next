@@ -6,6 +6,7 @@ import {IAccess} from "../../../contracts/authorization/IAccess.sol";
 import {IInstanceLinkedComponent} from "../../../contracts/shared/IInstanceLinkedComponent.sol";
 import {IPolicyHolder} from "../../../contracts/shared/IPolicyHolder.sol";
 import {BasicPool} from "../../../contracts/pool/BasicPool.sol";
+import {SimplePool} from "../../../contracts/examples/unpermissioned/SimplePool.sol";
 import {IPoolComponent} from "../../../contracts/pool/IPoolComponent.sol";
 import {CLAIM, POOL, POLICY} from "../../../contracts/type/ObjectType.sol";
 import {PUBLIC_ROLE} from "../../../contracts/type/RoleId.sol";
@@ -49,8 +50,9 @@ contract PoolWithReinsuranceAuthorization
           _authorize(functions, BasicPool.stake.selector, "stake");
           _authorize(functions, BasicPool.unstake.selector, "unstake");
           _authorize(functions, BasicPool.extend.selector, "extend");
+          _authorize(functions, BasicPool.withdrawBundleFees.selector, "withdrawBundleFees");
+          _authorize(functions, SimplePool.approveTokenHandler.selector, "approveTokenHandler");
           _authorize(functions, IInstanceLinkedComponent.withdrawFees.selector, "withdrawFees");
-          _authorize(functions, IPoolComponent.withdrawBundleFees.selector, "withdrawBundleFees");
 
           // authorize claim service for callback
           functions = _authorizeForTarget(getTargetName(), getServiceRole(CLAIM()));

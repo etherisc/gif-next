@@ -4,9 +4,10 @@ pragma solidity ^0.8.20;
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {Amount, AmountLib} from "../type/Amount.sol";
-import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
 import {ContractLib} from "../shared/ContractLib.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
+import {IAccountingService} from "../accounting/IAccountingService.sol";
+import {IComponent} from "../shared/IComponent.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {IComponentService} from "./IComponentService.sol";
 import {IInstance} from "../instance/IInstance.sol";
@@ -15,32 +16,56 @@ import {InstanceAdmin} from "../instance/InstanceAdmin.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
 import {IInstanceService} from "../instance/IInstanceService.sol";
-import {IRegisterable} from "../shared/IRegisterable.sol";
 import {IPoolComponent} from "../pool/IPoolComponent.sol";
 import {IProductComponent} from "../product/IProductComponent.sol";
+import {IRegisterable} from "../shared/IRegisterable.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegistryService} from "../registry/IRegistryService.sol";
+
+import {Amount, AmountLib} from "../type/Amount.sol";
+import {ContractLib} from "../shared/ContractLib.sol";
+import {Fee, FeeLib} from "../type/Fee.sol";
 import {KEEP_STATE} from "../type/StateId.sol";
 import {NftId} from "../type/NftId.sol";
-import {ObjectType, REGISTRY, BUNDLE, COMPONENT, DISTRIBUTION, DISTRIBUTOR, INSTANCE, ORACLE, POOL, PRODUCT} from "../type/ObjectType.sol";
-import {RoleId} from "../type/RoleId.sol";
+import {ObjectType, ACCOUNTING, REGISTRY, COMPONENT, DISTRIBUTION, INSTANCE, ORACLE, POOL, PRODUCT} from "../type/ObjectType.sol";
+import {Service} from "../shared/Service.sol";
+import {TokenHandler} from "../shared/TokenHandler.sol";
 import {TokenHandlerDeployerLib} from "../shared/TokenHandlerDeployerLib.sol";
+import {VersionPart} from "../type/Version.sol";
+
 
 contract ComponentService is
-    ComponentVerifyingService,
+    Service,
     IComponentService
 {
-
     bool private constant INCREASE = true;
     bool private constant DECREASE = false;
 
+    IAccountingService private _accountingService;
     IRegistryService private _registryService;
     IInstanceService private _instanceService;
 
     modifier onlyComponent(address component) {
-        if (!ContractLib.supportsInterface(component, type(IInstanceLinkedComponent).interfaceId)) {
-            revert ErrorComponentServiceNotInstanceLinkedComponent(component);
+        _checkSupportsInterface(component);
+        _;
+    }
+
+    modifier onlyInstance() {        
+        NftId instanceNftId = getRegistry().getNftIdForAddress(msg.sender);
+        if (instanceNftId.eqz()) {
+            revert ErrorComponentServiceNotRegistered(msg.sender);
         }
+
+        ObjectType objectType = getRegistry().getObjectInfo(instanceNftId).objectType;
+        if (objectType != INSTANCE()) {
+            revert ErrorComponentServiceNotInstance(msg.sender, objectType);
+        }
+
+        VersionPart instanceVersion = IInstance(msg.sender).getRelease();
+        if (instanceVersion != getVersion().toMajorPart()) {
+            revert ErrorComponentServiceInstanceVersionMismatch(msg.sender, instanceVersion);
+        }
+
         _;
     }
 
@@ -60,6 +85,7 @@ contract ComponentService is
 
         _initializeService(registryAddress, authority, owner);
 
+        _accountingService = IAccountingService(_getServiceAddress(ACCOUNTING()));
         _registryService = IRegistryService(_getServiceAddress(REGISTRY()));
         _instanceService = IInstanceService(_getServiceAddress(INSTANCE()));
 
@@ -90,43 +116,84 @@ contract ComponentService is
         revert ErrorComponentServiceTypeNotSupported(component, componentType);
     }
 
+    function approveTokenHandler(
+        IERC20Metadata token,
+        Amount amount
+    )
+        external
+        virtual
+    {
+        // checks
+        (NftId componentNftId, IInstance instance) = _getAndVerifyActiveComponent(COMPONENT());
+        TokenHandler tokenHandler = instance.getInstanceReader().getComponentInfo(
+            componentNftId).tokenHandler;
 
-    function setWallet(address newWallet) external virtual {
-        (NftId componentNftId,, IInstance instance) = _getAndVerifyActiveComponent(COMPONENT());
-        IComponents.ComponentInfo memory info = instance.getInstanceReader().getComponentInfo(componentNftId);
-        address currentWallet = info.wallet;
-
-        if (newWallet == address(0)) {
-            revert ErrorComponentServiceNewWalletAddressZero();
-        }
-
-        if (currentWallet == address(0)) {
-            revert ErrorComponentServiceWalletAddressZero();
-        }
-
-        if (newWallet == currentWallet) {
-            revert ErrorComponentServiceWalletAddressIsSameAsCurrent();
-        }
-
-        info.wallet = newWallet;
-        instance.getInstanceStore().updateComponent(componentNftId, info, KEEP_STATE());
-        emit LogComponentServiceWalletAddressChanged(componentNftId, currentWallet, newWallet);
+        // effects
+        tokenHandler.approve(token, amount);
     }
 
-    // TODO implement
-    function lock() external virtual {}
 
-    // TODO implement
-    function unlock() external virtual {}
+    function approveStakingTokenHandler(
+        IERC20Metadata token,
+        Amount amount
+    )
+        external
+        virtual
+    {
+        // checks
+        ContractLib.getAndVerifyStaking(
+            getRegistry(),
+            msg.sender); // only active
+
+        // effects
+        TokenHandler tokenHandler = IComponent(msg.sender).getTokenHandler();
+        tokenHandler.approve(token, amount);
+    }
+
+
+    function setWallet(address newWallet)
+        external
+        virtual
+    {
+        // checks
+        (NftId componentNftId, IInstance instance) = _getAndVerifyActiveComponent(COMPONENT());
+        TokenHandler tokenHandler = instance.getInstanceReader().getComponentInfo(
+            componentNftId).tokenHandler;
+
+        // effects
+        tokenHandler.setWallet(newWallet);
+    }
+
+    /// @inheritdoc IComponentService
+    function setLockedFromInstance(address componentAddress, bool locked) 
+        external 
+        virtual
+        onlyInstance()
+    {
+        address instanceAddress = msg.sender;
+        // NftId instanceNftId = getRegistry().getNftIdForAddress(msg.sender);
+        IInstance instance = IInstance(instanceAddress);
+        _setLocked(instance.getInstanceAdmin(), componentAddress, locked);
+    }
+
+    /// @inheritdoc IComponentService
+    function setLockedFromComponent(address componentAddress, bool locked) 
+        external
+        virtual
+        onlyComponent(msg.sender)
+    {
+        (, IInstance instance) = _getAndVerifyComponent(COMPONENT(), false);
+        _setLocked(instance.getInstanceAdmin(), componentAddress, locked);
+    }
 
     function withdrawFees(Amount amount)
         external
         virtual
         returns (Amount withdrawnAmount)
     {
-        (NftId componentNftId,, IInstance instance) = _getAndVerifyActiveComponent(COMPONENT());
+        (NftId componentNftId, IInstance instance) = _getAndVerifyActiveComponent(COMPONENT());
         IComponents.ComponentInfo memory info = instance.getInstanceReader().getComponentInfo(componentNftId);
-        address componentWallet = info.wallet;
+        address componentWallet = info.tokenHandler.getWallet();
 
         // determine withdrawn amount
         withdrawnAmount = amount;
@@ -142,7 +209,7 @@ contract ComponentService is
         }
 
         // decrease fee counters by withdrawnAmount
-        _changeTargetBalance(DECREASE, instance.getInstanceStore(), componentNftId, AmountLib.zero(), withdrawnAmount);
+        _accountingService.decreaseComponentFees(instance.getInstanceStore(), componentNftId, withdrawnAmount);
         
         // transfer amount to component owner
         address componentOwner = getRegistry().ownerOf(componentNftId);
@@ -156,6 +223,7 @@ contract ComponentService is
     function registerProduct(address productAddress)
         external
         virtual
+        nonReentrant()
         onlyComponent(productAddress)
         returns (NftId productNftId)
     {
@@ -185,8 +253,9 @@ contract ComponentService is
     )
         external
         virtual
+        nonReentrant()
     {
-        (NftId productNftId,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
+        (NftId productNftId, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
         IComponents.ProductInfo memory productInfo = instance.getInstanceReader().getProductInfo(productNftId);
         bool feesChanged = false;
 
@@ -210,37 +279,13 @@ contract ComponentService is
         }
     }
 
-    function increaseProductFees(
-        InstanceStore instanceStore,
-        NftId productNftId, 
-        Amount feeAmount
-    ) 
-        external 
-        virtual 
-        // TODO re-enable once role granting is stable and fixed
-        // restricted()
-    {
-        _checkNftType(productNftId, PRODUCT());
-        _changeTargetBalance(INCREASE, instanceStore, productNftId, AmountLib.zero(), feeAmount);
-    }
-
-
-    function decreaseProductFees(InstanceStore instanceStore, NftId productNftId, Amount feeAmount)
-        external 
-        virtual 
-        // TODO re-enable once role granting is stable and fixed
-        // restricted()
-    {
-        _checkNftType(productNftId, PRODUCT());
-        _changeTargetBalance(DECREASE, instanceStore, productNftId, AmountLib.zero(), feeAmount);
-    }
-
     //-------- distribution -------------------------------------------------//
 
     /// @dev registers the sending component as a distribution component
     function _registerDistribution(address distributioAddress)
         internal
         virtual
+        nonReentrant()
         returns (NftId distributionNftId)
     {
         // register/create component info
@@ -278,7 +323,7 @@ contract ComponentService is
         external
         virtual
     {
-        (NftId distributionNftId,, IInstance instance) = _getAndVerifyActiveComponent(DISTRIBUTION());
+        (NftId distributionNftId, IInstance instance) = _getAndVerifyActiveComponent(DISTRIBUTION());
         (NftId productNftId, IComponents.ProductInfo memory productInfo) = _getLinkedProductInfo(
             instance.getInstanceReader(), distributionNftId);
         bool feesChanged = false;
@@ -303,69 +348,6 @@ contract ComponentService is
         }
     }
 
-    function increaseDistributionBalance(
-        InstanceStore instanceStore, 
-        NftId distributionNftId, 
-        Amount amount,
-        Amount feeAmount
-    )
-        external
-        virtual
-        // TODO re-enable once role granting is stable and fixed
-        // restricted()
-    {
-        _checkNftType(distributionNftId, DISTRIBUTION());
-        _changeTargetBalance(INCREASE, instanceStore, distributionNftId, amount, feeAmount);
-    }
-
-
-    function decreaseDistributionBalance(
-        InstanceStore instanceStore, 
-        NftId distributionNftId, 
-        Amount amount,
-        Amount feeAmount
-    )
-        external
-        virtual
-        // TODO re-enable once role granting is stable and fixed
-        // restricted()
-    {
-        _checkNftType(distributionNftId, DISTRIBUTION());
-        _changeTargetBalance(DECREASE, instanceStore, distributionNftId, amount, feeAmount);
-    }
-
-    //-------- distributor -------------------------------------------------------//
-
-    function increaseDistributorBalance(
-        InstanceStore instanceStore, 
-        NftId distributorNftId, 
-        Amount amount, 
-        Amount feeAmount
-    )
-        external
-        virtual
-        // TODO re-enable once role granting is stable and fixed
-        // restricted()
-    {
-        _checkNftType(distributorNftId, DISTRIBUTOR());
-        _changeTargetBalance(INCREASE, instanceStore, distributorNftId, amount, feeAmount);
-    }
-
-    function decreaseDistributorBalance(
-        InstanceStore instanceStore, 
-        NftId distributorNftId, 
-        Amount amount, 
-        Amount feeAmount
-    )
-        external
-        virtual
-        // TODO re-enable once role granting is stable and fixed
-        // restricted()
-    {
-        _checkNftType(distributorNftId, DISTRIBUTOR());
-        _changeTargetBalance(DECREASE, instanceStore, distributorNftId, amount, feeAmount);
-    }
-
     //-------- oracle -------------------------------------------------------//
 
     function _registerOracle(address oracleAddress)
@@ -379,7 +361,7 @@ contract ComponentService is
         InstanceStore instanceStore;
         NftId productNftId;
 
-        (instanceReader, instanceAdmin, instanceStore, productNftId, oracleNftId) =_register(
+        (instanceReader, instanceAdmin, instanceStore, productNftId, oracleNftId) = _register(
             oracleAddress,
             ORACLE());
 
@@ -415,7 +397,7 @@ contract ComponentService is
         InstanceStore instanceStore;
         NftId productNftId;
 
-        (instanceReader, instanceAdmin, instanceStore, productNftId, poolNftId) =_register(
+        (instanceReader, instanceAdmin, instanceStore, productNftId, poolNftId) = _register(
             poolAddress,
             POOL());
 
@@ -448,7 +430,8 @@ contract ComponentService is
         external
         virtual
     {
-        (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
+        (NftId poolNftId, IInstance instance) = _getAndVerifyActiveComponent(POOL());
+
         (NftId productNftId, IComponents.ProductInfo memory productInfo) = _getLinkedProductInfo(
             instance.getInstanceReader(), poolNftId);
         bool feesChanged = false;
@@ -477,92 +460,6 @@ contract ComponentService is
         if(feesChanged) {
             instance.getInstanceStore().updateProduct(productNftId, productInfo, KEEP_STATE());
             emit LogComponentServicePoolFeesUpdated(poolNftId);
-        }
-    }
-
-    function increasePoolBalance(
-        InstanceStore instanceStore, 
-        NftId poolNftId, 
-        Amount amount, 
-        Amount feeAmount
-    )
-        public 
-        virtual 
-        // TODO re-enable once role granting is stable and fixed
-        // restricted()
-    {
-        _checkNftType(poolNftId, POOL());
-        _changeTargetBalance(INCREASE, instanceStore, poolNftId, amount, feeAmount);
-    }
-
-    function decreasePoolBalance(
-        InstanceStore instanceStore, 
-        NftId poolNftId, 
-        Amount amount, 
-        Amount feeAmount
-    )
-        public 
-        virtual 
-        // TODO re-enable once role granting is stable and fixed
-        // restricted()
-    {
-        _checkNftType(poolNftId, POOL());
-        _changeTargetBalance(DECREASE, instanceStore, poolNftId, amount, feeAmount);
-    }
-
-    //-------- bundle -------------------------------------------------------//
-
-    function increaseBundleBalance(
-        InstanceStore instanceStore, 
-        NftId bundleNftId, 
-        Amount amount, 
-        Amount feeAmount
-    )
-        external
-        virtual
-        // TODO re-enable once role granting is stable and fixed
-        // restricted()
-    {
-        _checkNftType(bundleNftId, BUNDLE());
-        _changeTargetBalance(INCREASE, instanceStore, bundleNftId, amount, feeAmount);
-    }
-
-    function decreaseBundleBalance(
-        InstanceStore instanceStore, 
-        NftId bundleNftId, 
-        Amount amount, 
-        Amount feeAmount
-    )
-        external
-        virtual
-        // TODO re-enable once role granting is stable and fixed
-        // restricted()
-    {
-        _checkNftType(bundleNftId, BUNDLE());
-        _changeTargetBalance(DECREASE, instanceStore, bundleNftId, amount, feeAmount);
-    }
-
-
-    //-------- internal functions ------------------------------------------//
-
-    function _changeTargetBalance(
-        bool increase,
-        InstanceStore instanceStore, 
-        NftId targetNftId, 
-        Amount amount, 
-        Amount feeAmount
-    )
-        internal
-        virtual
-    {
-        Amount totalAmount = amount + feeAmount;
-
-        if(increase) {
-            if(totalAmount.gtz()) { instanceStore.increaseBalance(targetNftId, totalAmount); }
-            if(feeAmount.gtz()) { instanceStore.increaseFees(targetNftId, feeAmount); }
-        } else {
-            if(totalAmount.gtz()) { instanceStore.decreaseBalance(targetNftId, totalAmount); }
-            if(feeAmount.gtz()) { instanceStore.decreaseFees(targetNftId, feeAmount); }
         }
     }
 
@@ -615,8 +512,13 @@ contract ComponentService is
         IComponents.ComponentInfo memory componentInfo = component.getInitialComponentInfo();
         IERC20Metadata token = componentInfo.token;
         componentInfo.tokenHandler = TokenHandlerDeployerLib.deployTokenHandler(
+            address(getRegistry()),
+            address(component), // initially, component is its own wallet
             address(token), 
             address(instanceAdmin.authority()));
+        
+        // set token handler allowance to max
+        // componentInfo.tokenHandler.approve(token, AmountLib.max());
 
         // register component with instance
         instanceStore.createComponent(
@@ -656,7 +558,7 @@ contract ComponentService is
             IComponents.ProductInfo memory info
         )
     {
-        productNftId = _getProductNftId(componentNftId);
+        productNftId = getRegistry().getObjectInfo(componentNftId).parentNftId;
         info = instanceReader.getProductInfo(productNftId);
     }
 
@@ -735,11 +637,60 @@ contract ComponentService is
 
         // get initial owner and instance
         initialOwner = info.initialOwner;
-        instance = _getInstance(registry, instanceNftId);
+        instance = IInstance(registry.getObjectAddress(instanceNftId));
     }
 
+    function _setLocked(InstanceAdmin instanceAdmin, address componentAddress, bool locked) internal {
+        instanceAdmin.setTargetLocked(componentAddress, locked);
+    }
+
+    function _getAndVerifyActiveComponent(ObjectType expectedType) 
+        internal 
+        view 
+        returns (
+            NftId componentNftId,
+            IInstance instance
+        )
+    {
+        return _getAndVerifyComponent(expectedType, true); // only active
+    }
+
+    function _getAndVerifyComponent(ObjectType expectedType, bool isActive) 
+        internal 
+        view 
+        returns (
+            NftId componentNftId,
+            IInstance instance
+        )
+    {
+        IRegistry.ObjectInfo memory info;
+        address instanceAddress;
+
+        if (expectedType != COMPONENT()) {
+            (info, instanceAddress) = ContractLib.getAndVerifyComponent(
+                getRegistry(),
+                msg.sender, // caller
+                expectedType,
+                isActive); 
+        } else {
+            (info, instanceAddress) = ContractLib.getAndVerifyAnyComponent(
+                getRegistry(),
+                msg.sender,
+                isActive); 
+        }
+
+        // get component nft id and instance
+        componentNftId = info.nftId;
+        instance = IInstance(instanceAddress);
+    }
 
     function _getDomain() internal pure virtual override returns(ObjectType) {
         return COMPONENT();
+    }
+
+    function _checkSupportsInterface(address component) internal view {
+        if (!ContractLib.supportsInterface(component, type(IInstanceLinkedComponent).interfaceId)) {
+            revert ErrorComponentServiceNotInstanceLinkedComponent(component);
+        }
     }
 }

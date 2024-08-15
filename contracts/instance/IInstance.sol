@@ -5,6 +5,7 @@ import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessMana
 
 import {Amount} from "../type/Amount.sol";
 import {BundleSet} from "./BundleSet.sol";
+import {RiskSet} from "./RiskSet.sol";
 import {InstanceAdmin} from "./InstanceAdmin.sol";
 import {InstanceReader} from "./InstanceReader.sol";
 import {InstanceStore} from "./InstanceStore.sol";
@@ -14,7 +15,6 @@ import {NftId} from "../type/NftId.sol";
 import {RoleId} from "../type/RoleId.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {UFixed} from "../type/UFixed.sol";
-import {VersionPart} from "../type/Version.sol";
 
 
 interface IInstance is 
@@ -29,6 +29,10 @@ interface IInstance is
     error ErrorInstanceBundleSetAlreadySet(address instanceBundleSet);
     error ErrorInstanceBundleSetInstanceMismatch(address instance);
     error ErrorInstanceBundleSetAuthorityMismatch(address instanceAuthority);
+
+    error ErrorInstanceRiskSetAlreadySet(address instanceRiskSet);
+    error ErrorInstanceRiskSetInstanceMismatch(address instance);
+    error ErrorInstanceRiskSetAuthorityMismatch(address instanceAuthority);
 
     error ErrorInstanceInstanceReaderInstanceMismatch(address instanceAuthority);
 
@@ -48,7 +52,7 @@ interface IInstance is
 
     function createTarget(address target, string memory name) external;
     function setTargetFunctionRole(string memory targetName, bytes4[] calldata selectors, RoleId roleId) external;
-    function setTargetLocked(address target, bool locked) external;
+    function setLocked(address target, bool locked) external;
 
     function setStakingLockingPeriod(Seconds stakeLockingPeriod) external;
     function setStakingRewardRate(UFixed rewardRate) external;
@@ -61,6 +65,7 @@ interface IInstance is
     // get instance release and supporting contracts
     function getInstanceReader() external view returns (InstanceReader);
     function getBundleSet() external view returns (BundleSet);
+    function getRiskSet() external view returns (RiskSet);
     function getInstanceAdmin() external view returns (InstanceAdmin);
     function getInstanceStore() external view returns (InstanceStore);
 }
