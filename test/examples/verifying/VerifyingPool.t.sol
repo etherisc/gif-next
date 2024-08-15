@@ -64,8 +64,8 @@ contract VerifyingPoolTest is GifTest {
         NftId bundle2NftId = vPool.bundleTwoNftId();
 
         Amount expectedCollateralizationAmount = AmountLib.toAmount(1000);
-        NftId expectedPolicy1NftId = NftIdLib.toNftId(233133705);
-        NftId expectedPolicy2NftId = NftIdLib.toNftId(243133705);
+        NftId expectedPolicy1NftId = NftIdLib.toNftId(243133705);
+        NftId expectedPolicy2NftId = NftIdLib.toNftId(253133705);
 
         // WHEN just setUp
         vm.startPrank(customer);
@@ -95,7 +95,7 @@ contract VerifyingPoolTest is GifTest {
         // GIVEN 
         NftId bundle1NftId = vPool.bundleOneNftId();
         NftId bundle2NftId = vPool.bundleTwoNftId();
-        NftId expectedPolicyNftId = NftIdLib.toNftId(233133705);
+        NftId expectedPolicyNftId = NftIdLib.toNftId(243133705);
 
         // WHEN + THEN
         vm.startPrank(customer);

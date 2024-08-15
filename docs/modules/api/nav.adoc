@@ -1,4 +1,5 @@
 .Contracts
+* xref:accounting.adoc[accounting]
 * xref:authorization.adoc[authorization]
 * xref:distribution.adoc[distribution]
 * xref:instance.adoc[instance]

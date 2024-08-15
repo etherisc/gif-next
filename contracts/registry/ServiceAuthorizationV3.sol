@@ -2,14 +2,12 @@
 pragma solidity ^0.8.20;
 
 import {
-     ALL, REGISTRY, RISK, ORACLE, POOL, INSTANCE, COMPONENT, DISTRIBUTION, DISTRIBUTOR, APPLICATION, POLICY, CLAIM, BUNDLE, STAKING, PRICE
+     ALL, ACCOUNTING, REGISTRY, RISK, ORACLE, POOL, INSTANCE, COMPONENT, DISTRIBUTION, APPLICATION, POLICY, CLAIM, BUNDLE, STAKING, PRICE
 } from "../../contracts/type/ObjectType.sol";
 
 import {IAccess} from "../authorization/IAccess.sol";
 import {IBundleService} from "../pool/IBundleService.sol";
 import {IDistributionService} from "../distribution/IDistributionService.sol";
-import {IInstanceService} from "../instance/IInstanceService.sol";
-import {InstanceAdmin} from "../instance/InstanceAdmin.sol";
 import {IPoolService} from "../pool/IPoolService.sol";
 import {IStakingService} from "../staking/IStakingService.sol";
 import {IRegistryService} from "./IRegistryService.sol";
@@ -31,16 +29,17 @@ contract ServiceAuthorizationV3
           _authorizeDomain(REGISTRY(), address(1));
           _authorizeDomain(STAKING(), address(2));
           _authorizeDomain(INSTANCE(), address(3));
-          _authorizeDomain(COMPONENT(), address(4));
-          _authorizeDomain(DISTRIBUTION(), address(5));
-          _authorizeDomain(PRICE(), address(6));
-          _authorizeDomain(BUNDLE(), address(7));
-          _authorizeDomain(POOL(), address(8));
-          _authorizeDomain(ORACLE(), address(9));
-          _authorizeDomain(RISK(), address(10));
-          _authorizeDomain(POLICY(), address(11));
-          _authorizeDomain(CLAIM(), address(12));
-          _authorizeDomain(APPLICATION(), address(13));
+          _authorizeDomain(ACCOUNTING(), address(4));
+          _authorizeDomain(COMPONENT(), address(5));
+          _authorizeDomain(DISTRIBUTION(), address(6));
+          _authorizeDomain(PRICE(), address(7));
+          _authorizeDomain(BUNDLE(), address(8));
+          _authorizeDomain(POOL(), address(9));
+          _authorizeDomain(ORACLE(), address(10));
+          _authorizeDomain(RISK(), address(11));
+          _authorizeDomain(POLICY(), address(12));
+          _authorizeDomain(CLAIM(), address(13));
+          _authorizeDomain(APPLICATION(), address(14));
      }
 
 

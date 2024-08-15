@@ -180,6 +180,10 @@ function printAddresses(
     addresses += `INSTANCE_SERVICE_ADDRESS=${services.instanceServiceAddress}\n`;
     addresses += `INSTANCE_SERVICE_NFT_ID=${services.instanceServiceNftId}\n`;
 
+    addresses += `ACCOUNTING_SERVICE_MANAGER_ADDRESS=${services.accountingServiceManagerAddress}\n`;
+    addresses += `ACCOUNTING_SERVICE_ADDRESS=${services.accountingServiceAddress}\n`;
+    addresses += `ACCOUNTING_SERVICE_NFT_ID=${services.accountingServiceNftId}\n`;
+
     addresses += `COMPONENT_SERVICE_MANAGER_ADDRESS=${services.componentServiceManagerAddress}\n`;
     addresses += `COMPONENT_SERVICE_ADDRESS=${services.componentServiceAddress}\n`;
     addresses += `COMPONENT_SERVICE_NFT_ID=${services.componentServiceNftId}\n`;
