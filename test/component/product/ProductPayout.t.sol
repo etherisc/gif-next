@@ -11,6 +11,7 @@ import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
 import {ClaimId} from "../../../contracts/type/ClaimId.sol";
 import {SimpleProduct} from "../../../contracts/examples/unpermissioned/SimpleProduct.sol";
 import {SimplePool} from "../../../contracts/examples/unpermissioned/SimplePool.sol";
+import {IClaimService} from "../../../contracts/product/IClaimService.sol";
 import {IComponents} from "../../../contracts/instance/module/IComponents.sol";
 import {ILifecycle} from "../../../contracts/shared/ILifecycle.sol";
 import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
@@ -94,10 +95,10 @@ contract TestProductClaim is GifTest {
 
         // THEN
         // checking last of 4 logs
-        assertEq(entries.length, 4, "unexpected number of logs");
-        assertEq(entries[3].emitter, address(claimService), "unexpected emitter");
-        assertEq(entries[3].topics[0], keccak256("LogClaimServicePayoutCreated(uint96,uint40,uint96,address)"), "unexpected log signature");
-        (uint96 nftIdInt ,uint40 payoutIdInt, uint96 payoutAmountInt, address beneficiary) = abi.decode(entries[3].data, (uint96,uint40,uint96, address));
+        assertEq(entries.length, 3, "unexpected number of logs");
+        assertEq(entries[2].emitter, address(claimService), "unexpected emitter");
+        assertEq(entries[2].topics[0], keccak256("LogClaimServicePayoutCreated(uint96,uint40,uint96,address)"), "unexpected log signature");
+        (uint96 nftIdInt ,uint40 payoutIdInt, uint96 payoutAmountInt, address beneficiary) = abi.decode(entries[2].data, (uint96,uint40,uint96, address));
 
         assertEq(nftIdInt, policyNftId.toInt(), "unexpected policy nft id");
         assertEq(payoutIdInt, payoutId.toInt(), "unexpected payout id");
@@ -460,7 +461,129 @@ contract TestProductClaim is GifTest {
         }
     }
 
-    function test_productClaimPayoutMultiple() public {
+
+    function test_productClaimPayoutPaidAmountUpdatedAfterProcessPayout() public {
+        // GIVEN
+        address newCustomer = makeAddr("customer_test_productClaimPayoutSimple");
+        uint256 sumInsuredAmountInt = 20000;
+        uint256 lifetimeInt = 365 * 24 * 3600;
+        uint256 claimAmountInt = 5000;
+        uint256 payoutAmountInt = 1000;
+
+        // implicit assigning of policy nft id
+        (
+            ClaimId claimId,
+            StateId claimState,
+            PayoutId payoutId,
+            StateId payoutState
+        ) = _createPolicyWithClaimAndPayout(
+            newCustomer,
+            sumInsuredAmountInt,
+            lifetimeInt,
+            claimAmountInt,
+            payoutAmountInt, 
+            false); // don't process payout
+
+        IPolicy.ClaimInfo memory claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
+        assertEq(claimInfo.payoutsCount, 1, "unexpected payouts count (1)");
+        assertEq(claimInfo.claimAmount.toInt(), claimAmountInt, "unexpected claim amount (1)");
+        // check that paid amount is still 0
+        assertEq(claimInfo.paidAmount.toInt(), 0, "unexpected paid amount (1)");
+
+        // WHEN
+        product.processPayout(policyNftId, payoutId);
+
+        // THEN
+        claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
+        assertEq(claimInfo.payoutsCount, 1, "unexpected payouts count (2)");
+        assertEq(claimInfo.claimAmount.toInt(), claimAmountInt, "unexpected claim amount (1)");
+        // check that paid amount has been updated
+        assertEq(claimInfo.paidAmount.toInt(), payoutAmountInt, "unexpected paid amount (2)");
+    }
+
+
+    function test_productClaimPayoutAmountLimit() public {
+        // GIVEN
+        address newCustomer = makeAddr("customer_test_productClaimPayoutSimple");
+        uint256 sumInsuredAmountInt = 20000;
+        uint256 lifetimeInt = 365 * 24 * 3600;
+        uint256 claimAmountInt = 5000;
+        uint256 payoutAmountInt = 1000;
+
+        // implicit assigning of policy nft id
+        (
+            ClaimId claimId,
+            StateId claimState,
+            PayoutId payoutId,
+            StateId payoutState
+        ) = _createPolicyWithClaimAndPayout(
+            newCustomer,
+            sumInsuredAmountInt,
+            lifetimeInt,
+            claimAmountInt,
+            payoutAmountInt, 
+            false); // don't process payout
+
+        // WHEN
+        Amount okPayoutAmount = AmountLib.toAmount(4500);
+        PayoutId secondPayoutId = product.createPayout(policyNftId, claimId, okPayoutAmount, "");
+
+        // THEN
+        IPolicy.ClaimInfo memory claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
+        assertEq(claimInfo.payoutsCount, 2, "unexpected payouts count (1)");
+        assertEq(claimInfo.claimAmount.toInt(), claimAmountInt, "unexpected claim amount (1)");
+        // check that paid amount is still 0
+        assertEq(claimInfo.paidAmount.toInt(), 0, "unexpected paid amount (1)");
+
+        // WHEN + THEN
+        Amount nokPayoutAmount = AmountLib.toAmount(5500);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IClaimService.ErrorClaimServicePayoutExceedsClaimAmount.selector, 
+                policyNftId,
+                claimId,
+                claimAmountInt,
+                nokPayoutAmount));
+
+        product.createPayout(policyNftId, claimId, nokPayoutAmount, "");
+
+        claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
+        assertEq(claimInfo.payoutsCount, 2, "unexpected payouts count (2)");
+        assertEq(claimInfo.claimAmount.toInt(), claimAmountInt, "unexpected claim amount (2)");
+        // check that paid amount is still 0
+        assertEq(claimInfo.paidAmount.toInt(), 0, "unexpected paid amount (2)");
+
+        // WHEN
+        product.processPayout(policyNftId, payoutId);
+
+        // THEN
+        claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
+        assertEq(claimInfo.payoutsCount, 2, "unexpected payouts count (3)");
+        assertEq(claimInfo.claimAmount.toInt(), claimAmountInt, "unexpected claim amount (3)");
+        assertEq(claimInfo.paidAmount.toInt(), payoutAmountInt, "unexpected paid amount (3)");
+
+        // WHEN + THEN
+        Amount exceedingAmount = claimInfo.paidAmount + okPayoutAmount;
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IClaimService.ErrorClaimServicePayoutExceedsClaimAmount.selector, 
+                policyNftId,
+                claimId,
+                claimAmountInt,
+                exceedingAmount));
+
+        product.processPayout(policyNftId, secondPayoutId);
+
+        // THEN
+        claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
+        assertEq(claimInfo.payoutsCount, 2, "unexpected payouts count (4)");
+        assertEq(claimInfo.claimAmount.toInt(), claimAmountInt, "unexpected claim amount (4)");
+        assertEq(claimInfo.paidAmount.toInt(), payoutAmountInt, "unexpected paid amount (4)");
+
+    }
+
+
+    function test_productClaimPayoutMultiplePaid() public {
         address newCustomer = makeAddr("customer_test_productClaimPayoutSimple");
         uint256 sumInsuredAmountInt = 20000;
         uint256 lifetimeInt = 365 * 24 * 3600;
@@ -702,7 +825,43 @@ contract TestProductClaim is GifTest {
 
     }
 
-    function test_productPayout_cancelPayout() public {
+
+    function test_productPayoutProcessTwice() public {
+        // GIVEN
+        _approve();
+        _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
+
+        uint256 claimAmountInt = 500;
+        uint256 payoutAmountInt = 300;
+        bytes memory payoutData = "some sample payout data";
+
+        // WHEN
+        (
+            IPolicy.PolicyInfo memory policyInfo,
+            ClaimId claimId,
+            StateId claimState,
+            IPolicy.ClaimInfo memory claimInfo,
+            PayoutId payoutId,
+            StateId payoutState,
+            IPolicy.PayoutInfo memory payoutInfo
+        ) = _createClaimAndPayout(policyNftId, claimAmountInt, payoutAmountInt, payoutData, true);
+
+        // THEN
+        assertEq(payoutState.toInt(), PAID().toInt(), "unexpected payout state");
+
+        // WHEN + THEN
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IClaimService.ErrorClaimServicePayoutNotExpected.selector, 
+                policyNftId,
+                payoutId,
+                payoutState));
+
+        product.processPayout(policyNftId, payoutId);
+    }
+
+
+    function test_productPayoutCancelPayout() public {
         // GIVEN
         _approve();
         _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
@@ -725,7 +884,7 @@ contract TestProductClaim is GifTest {
         assertEq(policyInfo.claimsCount, 1, "claims count not 1");
         assertEq(policyInfo.openClaimsCount, 1, "open claims count not 1");
         assertEq(policyInfo.claimAmount.toInt(), claimAmountInt, "unexpected claim amount");
-        assertEq(policyInfo.payoutAmount.toInt(), 0, "payout amount not 0");
+        assertEq(policyInfo.payoutAmount.toInt(), 0, "payout amount not 0 (before)");
 
         // check claim state and info
         assertEq(claimState.toInt(), CONFIRMED().toInt(), "unexpected claim state");
@@ -766,7 +925,8 @@ contract TestProductClaim is GifTest {
         assertEq(claimInfo.closedAt.toInt(), 0, "unexpected closed at");
 
         // check payout state and info
-        assertEq(CANCELLED().toInt(), instanceReader.getPayoutState(policyNftId, payoutId).toInt(), "unexpected payout state");
+        payoutState = instanceReader.getPayoutState(policyNftId, payoutId);
+        assertEq(payoutState.toInt(), CANCELLED().toInt(), "unexpected payout state");
 
         payoutInfo = instanceReader.getPayoutInfo(policyNftId, payoutId);
         assertEq(payoutInfo.claimId.toInt(), claimId.toInt(), "unexpected claim id");
@@ -774,6 +934,50 @@ contract TestProductClaim is GifTest {
         assertEq(keccak256(payoutInfo.data), keccak256(payoutData), "unexpected payout data");
         assertEq(payoutInfo.paidAt.toInt(), 0, "unexpected payout paid at");
 
+        // WHEN (try to process payout)
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IClaimService.ErrorClaimServicePayoutNotExpected.selector, 
+                policyNftId,
+                payoutId,
+                payoutState));
+
+        product.processPayout(policyNftId, payoutId);
+    }
+
+
+    function test_productPayoutCancelPaidOutPayout() public {
+        // GIVEN
+        _approve();
+        _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
+
+        uint256 claimAmountInt = 500;
+        uint256 payoutAmountInt = 300;
+        bytes memory payoutData = "some sample payout data";
+
+        // WHEN
+        (
+            IPolicy.PolicyInfo memory policyInfo,
+            ClaimId claimId,
+            StateId claimState,
+            IPolicy.ClaimInfo memory claimInfo,
+            PayoutId payoutId,
+            StateId payoutState,
+            IPolicy.PayoutInfo memory payoutInfo
+        ) = _createClaimAndPayout(policyNftId, claimAmountInt, payoutAmountInt, payoutData, true);
+
+        // THEN
+        assertEq(payoutState.toInt(), PAID().toInt(), "unexpected payout state");
+
+        // WHEN + THEN
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IClaimService.ErrorClaimServicePayoutNotExpected.selector, 
+                policyNftId,
+                payoutId,
+                payoutState));
+
+        product.cancelPayout(policyNftId, payoutId);
     }
 
     function _createPolicyWithClaimAndPayout(

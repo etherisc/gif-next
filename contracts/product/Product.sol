@@ -325,6 +325,18 @@ abstract contract Product is
             claimData);
     }
 
+    function _revokeClaim(
+        NftId policyNftId,
+        ClaimId claimId
+    )
+        internal
+        virtual
+    {
+        _getProductStorage()._claimService.revoke(
+            policyNftId,
+            claimId);
+    }
+
     function _confirmClaim(
         NftId policyNftId,
         ClaimId claimId,

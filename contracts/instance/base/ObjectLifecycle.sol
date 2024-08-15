@@ -65,6 +65,7 @@ contract ObjectLifecycle is
 
     function _setupClaimLifecycle() private {
         setInitialState(CLAIM(), SUBMITTED());
+        setStateTransition(CLAIM(), SUBMITTED(), REVOKED());
         setStateTransition(CLAIM(), SUBMITTED(), CONFIRMED());
         setStateTransition(CLAIM(), SUBMITTED(), DECLINED());
         setStateTransition(CLAIM(), CONFIRMED(), CLOSED());

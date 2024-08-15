@@ -29,10 +29,12 @@ interface IClaimService is
     event LogClaimServicePayoutCreated(NftId policyNftId, PayoutId payoutId, Amount amount, address beneficiary);
     event LogClaimServicePayoutProcessed(NftId policyNftId, PayoutId payoutId, Amount amount, address beneficiary, Amount netAmount, Amount processingFeeAmount);
     event LogClaimServicePayoutCancelled(NftId policyNftId, PayoutId payoutId);
+
     error ErrorClaimServiceBeneficiarySet(NftId policyNftId, PayoutId payoutId, address beneficiary);
 
     error ErrorClaimServicePolicyProductMismatch(NftId policyNftId, NftId expectedProduct, NftId actualProduct);
     error ErrorClaimServicePolicyNotOpen(NftId policyNftId);
+    error ErrorClaimServiceClaimAmountIsZero(NftId policyNftId);
     error ErrorClaimServiceClaimExceedsSumInsured(NftId policyNftId, Amount sumInsured, Amount payoutsIncludingClaimAmount);
     error ErrorClaimServiceBeneficiaryIsZero(NftId policyNftId, ClaimId claimId);
     error ErrorClaimsServicePayoutAmountIsZero(NftId policyNftId, PayoutId payoutId);
@@ -40,6 +42,10 @@ interface IClaimService is
     error ErrorClaimServiceClaimWithOpenPayouts(NftId policyNftId, ClaimId claimId, uint24 openPayouts);
     error ErrorClaimServiceClaimWithMissingPayouts(NftId policyNftId, ClaimId claimId, Amount claimAmount, Amount paidAmount);
     error ErrorClaimServiceClaimNotInExpectedState(NftId policyNftId, ClaimId claimId, StateId expectedState, StateId actualState);
+
+    error ErrorClaimServiceClaimNotConfirmed(NftId policyNftId, ClaimId claimId, StateId actualState);
+    error ErrorClaimServicePayoutExceedsClaimAmount(NftId policyNftId, ClaimId claimId, Amount claimAmount, Amount totalPayoutAmount);
+    error ErrorClaimServicePayoutNotExpected(NftId policyNftId, PayoutId payoutId, StateId actualState);
 
     /// @dev create a new claim for the specified policy
     /// returns the id of the newly created claim

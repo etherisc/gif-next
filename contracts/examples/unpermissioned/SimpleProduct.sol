@@ -195,6 +195,13 @@ contract SimpleProduct is
         return _submitClaim(policyNftId, claimAmount, submissionData);
     }
 
+    function revokeClaim(
+        NftId policyNftId,
+        ClaimId claimId
+    ) public {
+        _revokeClaim(policyNftId, claimId);
+    }
+
     function confirmClaim(
         NftId policyNftId,
         ClaimId claimId,
