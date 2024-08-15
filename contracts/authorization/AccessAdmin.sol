@@ -495,7 +495,6 @@ contract AccessAdmin is
         bool custom
     )
         internal
-        nonReentrant()
     {
         // check target does not yet exist
         if(targetExists(target)) {

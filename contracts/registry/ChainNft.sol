@@ -62,6 +62,7 @@ contract ChainNft is ERC721Enumerable {
         // 3 -> staking
         // >= 4 -> all other objects
         _idNext = 4;
+        _totalMinted = 0;
     }
 
     /**
@@ -108,10 +109,11 @@ contract ChainNft is ERC721Enumerable {
 
 
     /**
-     * @dev amend the open zeppelin transferFrom function by an interceptor call if such an interceptor is defined for the nft token id
-     * this allows distribution, product and pool components to be notified when distributors, policies and bundles are transferred.
+     * @dev Amend the open zeppelin transferFrom function by an interceptor call if such an interceptor is defined for the nft token id.
+     * This allows distribution, product and pool components to be notified when distributors, policies and bundles are transferred.
      */
     function transferFrom(address from, address to, uint256 tokenId) public override (IERC721, ERC721) {
+        // default open zeppelin implementation of transferFrom
         super.transferFrom(from, to, tokenId);
 
         if (_interceptor[tokenId] != address(0)) {

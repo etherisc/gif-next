@@ -273,6 +273,7 @@ contract InstanceService is
 
     function upgradeInstanceReader(NftId instanceNftId) 
         external 
+        nonReentrant()
         onlyInstanceOwner(instanceNftId) 
         onlyNftOfType(instanceNftId, INSTANCE())
     {

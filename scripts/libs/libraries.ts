@@ -127,12 +127,11 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
     LIBRARY_ADDRESSES.set("PayoutIdLib", payoutIdLibAddress);
 
     const { address: mathLibAddress } = await deployContract(
-        "MathLib",
+        "Math",
         owner,
         undefined,
-        {},
-        "contracts/type/UFixed.sol:MathLib");
-    LIBRARY_ADDRESSES.set("MathLib", mathLibAddress);
+        {});
+    LIBRARY_ADDRESSES.set("Math", mathLibAddress);
 
     const { address: blockNumberLibAddress } = await deployContract(
         "BlocknumberLib",

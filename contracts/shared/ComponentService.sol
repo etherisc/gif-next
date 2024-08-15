@@ -183,6 +183,7 @@ contract ComponentService is
     function registerProduct(address productAddress)
         external
         virtual
+        nonReentrant()
         onlyComponent(productAddress)
         returns (NftId productNftId)
     {
@@ -212,6 +213,7 @@ contract ComponentService is
     )
         external
         virtual
+        nonReentrant()
     {
         (NftId productNftId, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
         IComponents.ProductInfo memory productInfo = instance.getInstanceReader().getProductInfo(productNftId);
@@ -268,6 +270,7 @@ contract ComponentService is
     function _registerDistribution(address distributioAddress)
         internal
         virtual
+        nonReentrant()
         returns (NftId distributionNftId)
     {
         // register/create component info

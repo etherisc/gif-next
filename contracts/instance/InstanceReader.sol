@@ -52,7 +52,9 @@ contract InstanceReader {
     }
 
     /// @dev This initializer needs to be called from the instance itself.
-    function initializeWithInstance(address instanceAddress) public {
+    function initializeWithInstance(address instanceAddress)
+        public
+    {
         if(_initialized) {
             revert ErrorInstanceReaderAlreadyInitialized();
         }

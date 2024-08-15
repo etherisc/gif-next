@@ -14,10 +14,8 @@ import {
     PoolService, PoolServiceManager, PoolService__factory,
     PricingService, PricingServiceManager, PricingService__factory,
     RiskService, RiskServiceManager, RiskService__factory,
-    RegistryService,
-    RegistryServiceManager,
-    RegistryService__factory,
-    StakingService, StakingServiceManager, StakingService__factory
+    RegistryService, RegistryServiceManager, RegistryService__factory,
+    StakingService, StakingServiceManager, StakingService__factory,
 } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract } from "./deployment";

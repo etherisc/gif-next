@@ -11,9 +11,8 @@ contract ObjectCounter {
     // TODO refactor risk id
     // mapping(NftId productNftId => uint64 risks) private _riskCounter;
 
-    uint256 private _requestCounter;
+    uint256 private _requestCounter = 0;
 
-    // TODO introduce RequestId (uint64)
     function _createNextRequestId() internal returns (RequestId requestId) {
         _requestCounter++;
         requestId = RequestIdLib.toRequestId(_requestCounter);

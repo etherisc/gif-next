@@ -71,8 +71,9 @@ contract ReleaseRegistry is
     VersionPart internal _latest; // latest active version
     VersionPart internal _next; // version to create and activate 
 
-    uint256 internal _registeredServices;
-    uint256 internal _servicesToRegister;
+    // counters per release
+    uint256 internal _registeredServices = 0;
+    uint256 internal _servicesToRegister = 0;
 
     constructor(Registry registry)
         AccessManaged(msg.sender)

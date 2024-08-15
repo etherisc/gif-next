@@ -59,7 +59,7 @@ contract InstanceAdmin is
         address instanceAuthorization
     )
         external
-        initializer() 
+        initializer()
     {
         // create new access manager for this instance admin
         _initializeAuthority(address(accessManager));
@@ -69,19 +69,6 @@ contract InstanceAdmin is
 
         // store instance authorization specification
         _instanceAuthorization = IAuthorization(instanceAuthorization);
-    }
-
-    function _checkTargetIsReadyForAuthorization(address target)
-        internal
-        view
-    {
-        if (address(_registry) != address(0) && !_registry.isRegistered(target)) {
-            revert ErrorInstanceAdminNotRegistered(target);
-        }
-
-        if (targetExists(target)) {
-            revert ErrorInstanceAdminAlreadyAuthorized(target);
-        }
     }
 
     /// @dev Completes the initialization of this instance admin using the provided instance.
@@ -114,10 +101,12 @@ contract InstanceAdmin is
     )
         external
     {
-        _checkTargetIsReadyForAuthorization(address(component));
-
+        // checks
         // get authorization specification
         IAuthorization authorization = component.getAuthorization();
+        string memory targetName = authorization.getTargetName();
+        _checkTargetIsReadyForAuthorization(address(component));
+
 
         // create roles
         _createRoles(authorization);
@@ -125,13 +114,13 @@ contract InstanceAdmin is
         // create component target
         _createTarget(
             address(component), 
-            authorization.getTargetName(), 
+            targetName, 
             true, // checkAuthority
             false); // custom
 
         _createTarget(
             address(component.getTokenHandler()), 
-            string(abi.encodePacked(authorization.getTargetName(), "TH")), 
+            string(abi.encodePacked(targetName, "TH")), 
             true, 
             false);
         
@@ -180,6 +169,20 @@ contract InstanceAdmin is
         returns (IAuthorization instanceAuthorizaion)
     {
         return _instanceAuthorization;
+    }
+
+
+    function _checkTargetIsReadyForAuthorization(address target)
+        internal
+        view
+    {
+        if (address(_registry) != address(0) && !_registry.isRegistered(target)) {
+            revert ErrorInstanceAdminNotRegistered(target);
+        }
+
+        if (targetExists(target)) {
+            revert ErrorInstanceAdminAlreadyAuthorized(target);
+        }
     }
 
 

@@ -63,7 +63,7 @@ contract RegistryAdmin is
         address gifManager
     )
         external
-        initializer
+        initializer()
         onlyDeployer()
     {
         _registry = address(registry);

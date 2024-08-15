@@ -6,7 +6,7 @@ import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManage
 abstract contract ReleaseAccessManager is
     AccessManager
 {
-    bool private _releaseIsLocked;
+    bool private _releaseIsLocked = false;
 
     function setReleaseLocked(bool locked)
         external
