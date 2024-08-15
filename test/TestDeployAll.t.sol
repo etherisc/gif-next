@@ -69,7 +69,7 @@ contract TestDeployAll is GifTest {
 
 
     function test_deployServicesOverview() public {
-        assertEq(registry.getObjectCount(), 24, "invalid object count for base setup");
+        assertEq(registry.getObjectCount(), 25, "invalid object count for base setup");
 
         // validate registry service
         assertTrue(registry.getNftIdForAddress(address(registryService)).eq(registryServiceNftId), "registry service nft does not match");
@@ -78,6 +78,10 @@ contract TestDeployAll is GifTest {
         // validate staking service
         assertTrue(registry.getNftIdForAddress(address(stakingService)).eq(stakingServiceNftId), "staking service nft does not match");
         assertTrue(address(stakingServiceManager) != address(0), "staking service manager is zero address");
+
+        // validate accounting service
+        assertTrue(registry.getNftIdForAddress(address(accountingService)).eq(accountingServiceNftId), "accounting service nft does not match");
+        assertTrue(address(accountingServiceManager) != address(0), "accounting service manager is zero address");
 
         // validate instance service
         assertTrue(registry.getNftIdForAddress(address(instanceService)).eq(instanceServiceNftId), "instance service nft does not match");

@@ -37,6 +37,32 @@ abstract contract Distribution is
     }
 
 
+    function processRenewal(
+        ReferralId referralId,
+        uint256 feeAmount
+    )
+        external
+        virtual
+        restricted()
+    {
+        // default is no action
+    }
+
+
+    /// @inheritdoc IDistributionComponent
+    function withdrawCommission(NftId distributorNftId, Amount amount) 
+        external 
+        virtual
+        restricted()
+        onlyDistributor()
+        onlyNftOfType(distributorNftId, DISTRIBUTOR())
+        onlyNftOwner(distributorNftId)
+        returns (Amount withdrawnAmount) 
+    {
+        return _withdrawCommission(distributorNftId, amount);
+    }
+
+
     function isDistributor(address candidate)
         public
         view
@@ -97,35 +123,12 @@ abstract contract Distribution is
     }
 
 
-    function processRenewal(
-        ReferralId referralId,
-        uint256 feeAmount
-    )
-        external
-        virtual
-        restricted()
-    {
-        // default is no action
-    }
-
     /// @dev Returns true iff the component needs to be called when selling/renewing policis
     function isVerifying() external pure returns (bool verifying) {
         return true;
     }
 
-    /// @inheritdoc IDistributionComponent
-    function withdrawCommission(NftId distributorNftId, Amount amount) 
-        external 
-        virtual
-        restricted()
-        onlyDistributor()
-        onlyNftOfType(distributorNftId, DISTRIBUTOR())
-        onlyNftOwner(distributorNftId)
-        returns (Amount withdrawnAmount) 
-    {
-        return _withdrawCommission(distributorNftId, amount);
-    }
-        
+
     function _initializeDistribution(
         address registry,
         NftId productNftId,

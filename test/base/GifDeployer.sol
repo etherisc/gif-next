@@ -29,6 +29,8 @@ import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
 
 // service and proxy contracts
 import {IService} from "../../contracts/shared/IService.sol";
+import {AccountingService} from "../../contracts/accounting/AccountingService.sol";
+import {AccountingServiceManager} from "../../contracts/accounting/AccountingServiceManager.sol";
 import {ApplicationService} from "../../contracts/product/ApplicationService.sol";
 import {ApplicationServiceManager} from "../../contracts/product/ApplicationServiceManager.sol";
 import {BundleService} from "../../contracts/pool/BundleService.sol";
@@ -115,6 +117,10 @@ contract GifDeployer is Test {
     PolicyServiceManager public policyServiceManager;
     PolicyService public policyService;
     NftId public policyServiceNftId;
+
+    AccountingServiceManager public accountingServiceManager;
+    AccountingService public accountingService;
+    NftId public accountingServiceNftId;
 
     mapping(ObjectType domain => DeployedServiceInfo info) public serviceForDomain;
 
@@ -311,6 +317,10 @@ contract GifDeployer is Test {
         instanceServiceManager = new InstanceServiceManager{salt: salt}(authority, registryAddress, salt);
         instanceService = instanceServiceManager.getInstanceService();
         instanceServiceNftId = _registerService(releaseRegistry, instanceServiceManager, instanceService);
+
+        accountingServiceManager = new AccountingServiceManager{salt: salt}(authority, registryAddress, salt);
+        accountingService = accountingServiceManager.getAccountingService();
+        accountingServiceNftId = _registerService(releaseRegistry, accountingServiceManager, accountingService);
 
         componentServiceManager = new ComponentServiceManager{salt: salt}(authority, registryAddress, salt);
         componentService = componentServiceManager.getComponentService();

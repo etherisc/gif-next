@@ -5,7 +5,6 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 
 import {Amount} from "../type/Amount.sol";
 import {Fee} from "../type/Fee.sol";
-import {InstanceStore} from "../instance/InstanceStore.sol";
 import {IService} from "../shared/IService.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType} from "../type/ObjectType.sol";
@@ -28,6 +27,10 @@ interface IComponentService is
     error ErrorComponentServiceParentNotInstance(NftId nftId, ObjectType objectType);
     error ErrorComponentServiceParentNotProduct(NftId nftId, ObjectType objectType);
 
+    error ErrorComponentServiceNotRegistered(address instanceAddress);
+    error ErrorComponentServiceNotInstance(address instanceAddress, ObjectType objectType);
+    error ErrorComponentServiceInstanceVersionMismatch(address instanceAddress, VersionPart instanceVersion);
+    
     error ErrorProductServiceNoDistributionExpected(NftId productNftId);
     error ErrorProductServiceDistributionAlreadyRegistered(NftId productNftId, NftId distributionNftId);
     error ErrorProductServiceNoOraclesExpected(NftId productNftId);
@@ -57,7 +60,7 @@ interface IComponentService is
         UFixed newFractionalFee, 
         uint256 newFixedFee
     );
-
+    
     //-------- component ----------------------------------------------------//
 
     /// @dev Approves the callers token handler to spend up to the specified amount of tokens.
@@ -71,11 +74,11 @@ interface IComponentService is
     /// @dev Sets the components associated wallet address
     function setWallet(address newWallet) external;
 
-    /// @dev Locks the component associated with the caller
-    function lock() external;
+    /// @dev Locks/Unlocks the given component - call from instanceService
+    function setLockedFromInstance(address componentAddress, bool locked) external;
 
-    /// @dev Unlocks the component associated with the caller
-    function unlock() external;
+    /// @dev Locks/Unlocks the given component - call from component
+    function setLockedFromComponent(address componentAddress, bool locked) external;
 
     /// @dev Withdraw fees from the distribution component. Only component owner is allowed to withdraw fees.
     /// @param withdrawAmount the amount to withdraw
@@ -95,22 +98,12 @@ interface IComponentService is
         Fee memory processingFee // product fee on payout amounts        
     ) external;
 
-    function increaseProductFees(InstanceStore instanceStore, NftId productNftId, Amount feeAmount) external;
-    function decreaseProductFees(InstanceStore instanceStore, NftId productNftId, Amount feeAmount) external;
-
     //-------- distribution -------------------------------------------------//
 
     function setDistributionFees(
         Fee memory distributionFee, // distribution fee for sales that do not include commissions
         Fee memory minDistributionOwnerFee // min fee required by distribution owner (not including commissions for distributors)
     ) external;
-
-    function increaseDistributionBalance(InstanceStore instanceStore, NftId distributionNftId, Amount amount, Amount feeAmount) external;
-    function decreaseDistributionBalance(InstanceStore instanceStore, NftId distributionNftId, Amount amount, Amount feeAmount) external;
-
-    //-------- distributor --------------------------------------------------//
-    function increaseDistributorBalance(InstanceStore instanceStore, NftId distributorNftId, Amount amount, Amount feeAmount) external;
-    function decreaseDistributorBalance(InstanceStore instanceStore, NftId distributorNftId, Amount amount, Amount feeAmount) external;
 
     //-------- pool ---------------------------------------------------------//
 
@@ -119,12 +112,5 @@ interface IComponentService is
         Fee memory stakingFee, // pool fee on staked capital from investor
         Fee memory performanceFee // pool fee on profits from capital investors
     ) external;
-
-    function increasePoolBalance(InstanceStore instanceStore, NftId poolNftId, Amount amount, Amount feeAmount) external;
-    function decreasePoolBalance(InstanceStore instanceStore, NftId poolNftId, Amount amount, Amount feeAmount) external;
-
-    //-------- bundle -------------------------------------------------------//
-    function increaseBundleBalance(InstanceStore instanceStore, NftId bundleNftId, Amount amount, Amount feeAmount) external;
-    function decreaseBundleBalance(InstanceStore instanceStore, NftId bundleNftId, Amount amount, Amount feeAmount) external;
 
 }

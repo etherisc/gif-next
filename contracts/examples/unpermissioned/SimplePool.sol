@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+
 import {Amount, AmountLib} from "../../type/Amount.sol";
 import {BasicPool} from "../../pool/BasicPool.sol";
 import {BasicPoolAuthorization} from "../../pool/BasicPoolAuthorization.sol";
@@ -58,14 +60,6 @@ contract SimplePool is
     }
 
 
-    function setWallet(address newWallet)
-        external
-        onlyOwner()
-    {
-        _setWallet(newWallet);
-    }
-
-
     function createBundle(
         Fee memory fee,
         uint256 initialAmount,
@@ -105,4 +99,9 @@ contract SimplePool is
     {
         _defundPoolWallet(amount);
     }
+
+
+    function approveTokenHandler(IERC20Metadata token, Amount amount) external restricted() onlyOwner() { _approveTokenHandler(token, amount); }
+    function setLocked(bool locked) external onlyOwner() { _setLocked(locked); }
+    function setWallet(address newWallet) external restricted() onlyOwner() { _setWallet(newWallet); }
 }

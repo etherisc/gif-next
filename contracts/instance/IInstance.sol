@@ -15,7 +15,6 @@ import {NftId} from "../type/NftId.sol";
 import {RoleId} from "../type/RoleId.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {UFixed} from "../type/UFixed.sol";
-import {VersionPart} from "../type/Version.sol";
 
 
 interface IInstance is 
@@ -53,7 +52,7 @@ interface IInstance is
 
     function createTarget(address target, string memory name) external;
     function setTargetFunctionRole(string memory targetName, bytes4[] calldata selectors, RoleId roleId) external;
-    function setTargetLocked(address target, bool locked) external;
+    function setLocked(address target, bool locked) external;
 
     function setStakingLockingPeriod(Seconds stakeLockingPeriod) external;
     function setStakingRewardRate(UFixed rewardRate) external;

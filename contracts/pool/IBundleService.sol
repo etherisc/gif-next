@@ -5,7 +5,6 @@ import {Amount} from "../type/Amount.sol";
 import {NftId} from "../type/NftId.sol";
 import {Fee} from "../type/Fee.sol";
 import {IService} from "../shared/IService.sol";
-import {IBundle} from "../instance/module/IBundle.sol";
 import {IInstance} from "../instance/IInstance.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {StateId} from "../type/StateId.sol";

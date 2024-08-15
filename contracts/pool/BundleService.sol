@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IAccountingService} from "../accounting/IAccountingService.sol";
 import {IBundle} from "../instance/module/IBundle.sol";
 import {IBundleService} from "./IBundleService.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
@@ -9,7 +10,6 @@ import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegistryService} from "../registry/IRegistryService.sol";
 import {IInstance} from "../instance/IInstance.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
-import {IPolicy} from "../instance/module/IPolicy.sol";
 
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {BundleSet} from "../instance/BundleSet.sol";
@@ -17,7 +17,7 @@ import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol
 import {Fee} from "../type/Fee.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
-import {ObjectType, COMPONENT, POOL, BUNDLE, POLICY, REGISTRY} from "../type/ObjectType.sol";
+import {ObjectType, ACCOUNTING, COMPONENT, POOL, BUNDLE, POLICY, REGISTRY} from "../type/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED, CLOSED, KEEP_STATE} from "../type/StateId.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {Timestamp, TimestampLib, zeroTimestamp} from "../type/Timestamp.sol";
@@ -33,6 +33,7 @@ contract BundleService is
 
     address private _registryAddress;
     IRegistryService private _registryService;
+    IAccountingService private _accountingService;
     IComponentService private _componentService;
 
     function _initialize(
@@ -51,6 +52,7 @@ contract BundleService is
         _initializeService(registryAddress, authority, owner);
 
         _registryService = IRegistryService(_getServiceAddress(REGISTRY()));
+        _accountingService = IAccountingService(_getServiceAddress(ACCOUNTING()));
         _componentService = IComponentService(_getServiceAddress(COMPONENT()));
 
         _registerInterface(type(IBundleService).interfaceId);
@@ -248,7 +250,7 @@ contract BundleService is
             Amount balanceAmountWithFees = instanceReader.getBalanceAmount(bundleNftId);
             feeAmount = instanceReader.getFeeAmount(bundleNftId);
             unstakedAmount = balanceAmountWithFees - feeAmount;
-            _componentService.decreaseBundleBalance(instanceStore, bundleNftId, unstakedAmount, feeAmount);
+            _accountingService.decreaseBundleBalance(instanceStore, bundleNftId, unstakedAmount, feeAmount);
         }
     }
 
@@ -273,7 +275,7 @@ contract BundleService is
             revert ErrorBundleServiceBundleNotOpen(bundleNftId, bundleState, bundleInfo.expiredAt);
         }
 
-        _componentService.increaseBundleBalance(
+        _accountingService.increaseBundleBalance(
             instance.getInstanceStore(), 
             bundleNftId, 
             amount, 
@@ -313,7 +315,7 @@ contract BundleService is
             revert ErrorBundleServiceUnstakeAmountExceedsLimit(amount, availableAmount);
         }
 
-        _componentService.decreaseBundleBalance(
+        _accountingService.decreaseBundleBalance(
             instanceStore, 
             bundleNftId, 
             unstakedAmount, 
@@ -404,9 +406,9 @@ contract BundleService is
         {
             InstanceStore store = instance.getInstanceStore();
             // decrease fee amount of the bundle
-            _componentService.decreaseBundleBalance(store, bundleNftId, AmountLib.zero(), withdrawnAmount);
+            _accountingService.decreaseBundleBalance(store, bundleNftId, AmountLib.zero(), withdrawnAmount);
             // decrease pool balance 
-            _componentService.decreasePoolBalance(store, poolNftId, withdrawnAmount, AmountLib.zero());
+            _accountingService.decreasePoolBalance(store, poolNftId, withdrawnAmount, AmountLib.zero());
         }
 
         // transfer amount to bundle owner

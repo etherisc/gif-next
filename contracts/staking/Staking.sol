@@ -77,6 +77,16 @@ contract Staking is
             getRegistry().getAuthority());
     }
 
+
+    function approveTokenHandler(IERC20Metadata token, Amount amount)
+        public
+        restricted()
+        onlyOwner()
+    {
+        _approveTokenHandler(token, amount);
+    }
+
+
     // set/update staking reader
     function setStakingReader(StakingReader stakingReader)
         external

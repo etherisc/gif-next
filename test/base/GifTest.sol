@@ -17,11 +17,10 @@ import {Timestamp} from "../../contracts/type/Timestamp.sol";
 import {IAccess} from "../../contracts/authorization/IAccess.sol";
 import {IAccessAdmin} from "../../contracts/authorization/IAccessAdmin.sol";
 
-import {BasicDistributionAuthorization} from "../../contracts/distribution/BasicDistributionAuthorization.sol";
+import {SimpleDistributionAuthorization} from "../../contracts/examples/unpermissioned/SimpleDistributionAuthorization.sol";
 import {BasicOracleAuthorization} from "../../contracts/oracle/BasicOracleAuthorization.sol";
-import {BasicPoolAuthorization} from "../../contracts/pool/BasicPoolAuthorization.sol";
-import {BasicProductAuthorization} from "../../contracts/product/BasicProductAuthorization.sol";
-
+import {SimplePoolAuthorization} from "../../contracts/examples/unpermissioned/SimplePoolAuthorization.sol";
+import {SimpleProductAuthorization} from "../../contracts/examples/unpermissioned/SimpleProductAuthorization.sol";
 import {IServiceAuthorization} from "../../contracts/authorization/IServiceAuthorization.sol";
 import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
 import {ReleaseRegistry} from "../../contracts/registry/ReleaseRegistry.sol";
@@ -486,7 +485,7 @@ contract GifTest is GifDeployer {
             "SimpleProduct",
             address(token),
             _getSimpleProductInfo(),
-            new BasicProductAuthorization(name),
+            new SimpleProductAuthorization(name),
             productOwner // initial owner
         );
         vm.stopPrank();
@@ -545,7 +544,7 @@ contract GifTest is GifDeployer {
             productNftId,
             address(token),
             _getDefaultSimplePoolInfo(),
-            new BasicPoolAuthorization("SimplePool"),
+            new SimplePoolAuthorization("SimplePool"),
             poolOwner
         );
         vm.stopPrank();
@@ -578,7 +577,7 @@ contract GifTest is GifDeployer {
         distribution = new SimpleDistribution(
             address(registry),
             productNftId,
-            new BasicDistributionAuthorization("SimpleDistribution"),
+            new SimpleDistributionAuthorization("SimpleDistribution"),
             distributionOwner,
             address(token));
         vm.stopPrank();

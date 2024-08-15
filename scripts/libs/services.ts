@@ -3,6 +3,9 @@ import { getImplementationAddress } from '@openzeppelin/upgrades-core';
 import { AddressLike, BytesLike, Signer, id } from "ethers";
 import { ethers as hhEthers } from "hardhat";
 import {
+    AccountingService,
+    AccountingServiceManager,
+    AccountingService__factory,
     ApplicationService, ApplicationServiceManager, ApplicationService__factory,
     BundleService, BundleServiceManager, BundleService__factory,
     ClaimService, ClaimServiceManager, ClaimService__factory,
@@ -13,9 +16,11 @@ import {
     PolicyService, PolicyServiceManager, PolicyService__factory,
     PoolService, PoolServiceManager, PoolService__factory,
     PricingService, PricingServiceManager, PricingService__factory,
+    RegistryService,
+    RegistryServiceManager,
+    RegistryService__factory,
     RiskService, RiskServiceManager, RiskService__factory,
-    RegistryService, RegistryServiceManager, RegistryService__factory,
-    StakingService, StakingServiceManager, StakingService__factory,
+    StakingService, StakingServiceManager, StakingService__factory
 } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
@@ -36,6 +41,11 @@ export type ServiceAddresses = {
     instanceServiceAddress: AddressLike,
     instanceService: InstanceService,
     instanceServiceManagerAddress: AddressLike,
+
+    accountingServiceNftId: string,
+    accountingServiceAddress: AddressLike,
+    accountingService: AccountingService,
+    accountingServiceManagerAddress: AddressLike,
 
     componentServiceNftId: string,
     componentServiceAddress: AddressLike,
@@ -228,6 +238,48 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         "linkToProxy - instanceService"
     );
     logger.info(`instanceServiceManager deployed - instanceServiceAddress: ${instanceServiceAddress} instanceServiceManagerAddress: ${instanceServiceManagerAddress} nftId: ${instanceServiceNfdId}`);
+
+    logger.info("-------- accounting service --------");
+    const { address: accountingServiceManagerAddress, contract: accountingServiceManagerBaseContract, } = await deployContract(
+        "AccountingServiceManager",
+        owner,
+        [
+            authority,
+            registry.registryAddress,
+            release.salt
+        ],
+        { libraries: { 
+            AmountLib: libraries.amountLibAddress,
+            ContractLib: libraries.contractLibAddress,
+            NftIdLib: libraries.nftIdLibAddress, 
+            RoleIdLib: libraries.roleIdLibAddress,
+            TimestampLib: libraries.timestampLibAddress,
+            VersionLib: libraries.versionLibAddress,
+            VersionPartLib: libraries.versionPartLibAddress,
+        }});
+    
+    const accountingServiceManager = accountingServiceManagerBaseContract as AccountingServiceManager;
+    const accountingServiceAddress = await accountingServiceManager.getAccountingService();
+    const accountingService = AccountingService__factory.connect(accountingServiceAddress, owner);
+
+    // verify service implementation
+    prepareVerificationData(
+        "AccountingService", 
+        await getImplementationAddress(hhEthers.provider, await accountingServiceManager.getProxy()), 
+        [], 
+        undefined);
+    
+    const rcptAcct = await executeTx(
+        async () => await releaseRegistry.registerService(accountingServiceAddress, getTxOpts()),
+        "registerService - accountingService"
+    );
+    const logRegistrationInfoAcct = getFieldFromTxRcptLogs(rcptAcct!, registry.registry.interface, "LogRegistration", "nftId");
+    const accountingServiceNfdId = (logRegistrationInfoAcct as unknown);
+    await executeTx(
+        async () => await accountingServiceManager.linkToProxy(getTxOpts()),
+        "linkToProxy - accountingService"
+    );
+    logger.info(`accountingServiceManager deployed - accountingServiceAddress: ${accountingServiceAddress} accountingServiceManagerAddress: ${accountingServiceManagerAddress} nftId: ${accountingServiceNfdId}`);
 
     logger.info("-------- component service --------");
     const { address: componentServiceManagerAddress, contract: componentServiceManagerBaseContract, } = await deployContract(
@@ -677,6 +729,11 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         instanceServiceAddress: instanceServiceAddress,
         instanceService: instanceService,
         instanceServiceManagerAddress: instanceServiceManagerAddress,
+
+        accountingServiceNftId: accountingServiceNfdId as string,
+        accountingServiceAddress: accountingServiceAddress,
+        accountingService: accountingService,
+        accountingServiceManagerAddress: accountingServiceManagerAddress,
 
         componentServiceNftId: componentServiceNftId as string,
         componentServiceAddress: componentServiceAddress,
