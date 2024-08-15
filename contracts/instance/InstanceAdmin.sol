@@ -173,7 +173,7 @@ contract InstanceAdmin is
 
     function setTargetLocked(address target, bool locked) 
         external 
-        // FIXME: restricted()
+        restricted()
     {
         _setTargetClosed(target, locked);
     }
