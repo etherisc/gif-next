@@ -5,7 +5,6 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 
 import {Amount} from "../type/Amount.sol";
 import {Fee} from "../type/Fee.sol";
-import {InstanceStore} from "../instance/InstanceStore.sol";
 import {IService} from "../shared/IService.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType} from "../type/ObjectType.sol";
@@ -61,7 +60,7 @@ interface IComponentService is
         UFixed newFractionalFee, 
         uint256 newFixedFee
     );
-
+    
     //-------- component ----------------------------------------------------//
 
     /// @dev Approves the callers token handler to spend up to the specified amount of tokens.
@@ -99,22 +98,12 @@ interface IComponentService is
         Fee memory processingFee // product fee on payout amounts        
     ) external;
 
-    function increaseProductFees(InstanceStore instanceStore, NftId productNftId, Amount feeAmount) external;
-    function decreaseProductFees(InstanceStore instanceStore, NftId productNftId, Amount feeAmount) external;
-
     //-------- distribution -------------------------------------------------//
 
     function setDistributionFees(
         Fee memory distributionFee, // distribution fee for sales that do not include commissions
         Fee memory minDistributionOwnerFee // min fee required by distribution owner (not including commissions for distributors)
     ) external;
-
-    function increaseDistributionBalance(InstanceStore instanceStore, NftId distributionNftId, Amount amount, Amount feeAmount) external;
-    function decreaseDistributionBalance(InstanceStore instanceStore, NftId distributionNftId, Amount amount, Amount feeAmount) external;
-
-    //-------- distributor --------------------------------------------------//
-    function increaseDistributorBalance(InstanceStore instanceStore, NftId distributorNftId, Amount amount, Amount feeAmount) external;
-    function decreaseDistributorBalance(InstanceStore instanceStore, NftId distributorNftId, Amount amount, Amount feeAmount) external;
 
     //-------- pool ---------------------------------------------------------//
 
@@ -123,12 +112,5 @@ interface IComponentService is
         Fee memory stakingFee, // pool fee on staked capital from investor
         Fee memory performanceFee // pool fee on profits from capital investors
     ) external;
-
-    function increasePoolBalance(InstanceStore instanceStore, NftId poolNftId, Amount amount, Amount feeAmount) external;
-    function decreasePoolBalance(InstanceStore instanceStore, NftId poolNftId, Amount amount, Amount feeAmount) external;
-
-    //-------- bundle -------------------------------------------------------//
-    function increaseBundleBalance(InstanceStore instanceStore, NftId bundleNftId, Amount amount, Amount feeAmount) external;
-    function decreaseBundleBalance(InstanceStore instanceStore, NftId bundleNftId, Amount amount, Amount feeAmount) external;
 
 }

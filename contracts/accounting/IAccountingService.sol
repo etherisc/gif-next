@@ -22,6 +22,8 @@ interface IAccountingService is
         uint256 newFixedFee
     );
 
+    function decreaseComponentFees(InstanceStore instanceStore, NftId componentNftId, Amount feeAmount) external;
+
     function increaseProductFees(InstanceStore instanceStore, NftId productNftId, Amount feeAmount) external;
     function decreaseProductFees(InstanceStore instanceStore, NftId productNftId, Amount feeAmount) external;
 

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {
-     PRODUCT, ORACLE, POOL, INSTANCE, COMPONENT, DISTRIBUTION, APPLICATION, POLICY, CLAIM, BUNDLE, RISK
+     ACCOUNTING, ORACLE, POOL, INSTANCE, COMPONENT, DISTRIBUTION, APPLICATION, POLICY, CLAIM, BUNDLE, RISK
 } from "../../contracts/type/ObjectType.sol";
 
 import {BundleSet} from "../instance/BundleSet.sol";
@@ -55,6 +55,7 @@ contract InstanceAuthorizationV3
 
           // service targets relevant to instance
           _addServiceTargetWithRole(INSTANCE());
+          _addServiceTargetWithRole(ACCOUNTING());
           _addServiceTargetWithRole(COMPONENT());
           _addServiceTargetWithRole(DISTRIBUTION());
           _addServiceTargetWithRole(ORACLE());
@@ -145,6 +146,13 @@ contract InstanceAuthorizationV3
      {
           IAccess.FunctionInfo[] storage functions;
 
+          // authorize accounting service role
+          functions = _authorizeForTarget(INSTANCE_STORE_TARGET_NAME, getServiceRole(ACCOUNTING()));
+          _authorize(functions, InstanceStore.increaseBalance.selector, "increaseBalance");
+          _authorize(functions, InstanceStore.decreaseBalance.selector, "decreaseBalance");
+          _authorize(functions, InstanceStore.increaseFees.selector, "increaseFees");
+          _authorize(functions, InstanceStore.decreaseFees.selector, "decreaseFees");
+
           // authorize component service role
           functions = _authorizeForTarget(INSTANCE_STORE_TARGET_NAME, getServiceRole(COMPONENT()));
           _authorize(functions, InstanceStore.createComponent.selector, "createComponent");
@@ -152,11 +160,7 @@ contract InstanceAuthorizationV3
           _authorize(functions, InstanceStore.createPool.selector, "createPool");
           _authorize(functions, InstanceStore.createProduct.selector, "createProduct");
           _authorize(functions, InstanceStore.updateProduct.selector, "updateProduct");
-          _authorize(functions, InstanceStore.increaseBalance.selector, "increaseBalance");
-          _authorize(functions, InstanceStore.decreaseBalance.selector, "decreaseBalance");
-          _authorize(functions, InstanceStore.increaseFees.selector, "increaseFees");
-          _authorize(functions, InstanceStore.decreaseFees.selector, "decreaseFees");
-
+          
           // authorize distribution service role
           functions = _authorizeForTarget(INSTANCE_STORE_TARGET_NAME, getServiceRole(DISTRIBUTION()));
           _authorize(functions, InstanceStore.createDistributorType.selector, "createDistributorType");

@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
+import {IAccountingService} from "../accounting/IAccountingService.sol";
 import {IComponentService} from "../shared/IComponentService.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {IDistributionService} from "../distribution/IDistributionService.sol";
@@ -20,7 +21,7 @@ import {Amount} from "../type/Amount.sol";
 import {APPLIED, COLLATERALIZED, KEEP_STATE, CLOSED, DECLINED, PAID} from "../type/StateId.sol";
 import {ContractLib} from "../shared/ContractLib.sol";
 import {NftId} from "../type/NftId.sol";
-import {ObjectType, COMPONENT, DISTRIBUTION, PRODUCT, POOL, POLICY, PRICE} from "../type/ObjectType.sol";
+import {ObjectType, ACCOUNTING, COMPONENT, DISTRIBUTION, PRODUCT, POOL, POLICY, PRICE} from "../type/ObjectType.sol";
 import {ReferralId} from "../type/Referral.sol";
 import {RiskId} from "../type/RiskId.sol";
 import {Service} from "../shared/Service.sol";
@@ -34,6 +35,7 @@ contract PolicyService is
     Service, 
     IPolicyService
 {
+    IAccountingService private _accountingService;
     IComponentService internal _componentService;
     IDistributionService internal _distributionService;
     IPoolService internal _poolService;
@@ -55,6 +57,7 @@ contract PolicyService is
         _initializeService(registryAddress, authority, owner);
 
         VersionPart majorVersion = getVersion().toMajorPart();
+        _accountingService = IAccountingService(getRegistry().getServiceAddress(ACCOUNTING(), majorVersion));
         _componentService = IComponentService(getRegistry().getServiceAddress(COMPONENT(), majorVersion));
         _poolService = IPoolService(getRegistry().getServiceAddress(POOL(), majorVersion));
         _distributionService = IDistributionService(getRegistry().getServiceAddress(DISTRIBUTION(), majorVersion));
@@ -504,7 +507,7 @@ contract PolicyService is
             productNftId);
 
         // update product fees, distribution and pool fees 
-        _componentService.increaseProductFees(
+        _accountingService.increaseProductFees(
             instanceStore, 
             productNftId, 
             premium.productFeeVarAmount + premium.productFeeFixAmount);
