@@ -25,7 +25,7 @@ import {PayoutId, PayoutIdLib} from "../../../contracts/type/PayoutId.sol";
 import {POLICY} from "../../../contracts/type/ObjectType.sol";
 import {RiskId, RiskIdLib, eqRiskId} from "../../../contracts/type/RiskId.sol";
 import {ReferralLib} from "../../../contracts/type/Referral.sol";
-import {SUBMITTED, COLLATERALIZED, CONFIRMED, DECLINED, CLOSED, EXPECTED, PAID} from "../../../contracts/type/StateId.sol";
+import {SUBMITTED, CANCELLED, COLLATERALIZED, CONFIRMED, DECLINED, CLOSED, EXPECTED, PAID} from "../../../contracts/type/StateId.sol";
 import {StateId} from "../../../contracts/type/StateId.sol";
 
 contract TestProductClaim is GifTest {
@@ -699,6 +699,80 @@ contract TestProductClaim is GifTest {
             assertEq(payoutInfo.amount.toInt(), 300, "unexpected amount (payout 3)");
             assertEq(payoutInfo.paidAt.toInt(), 0, "unexpected paid at");
         }
+
+    }
+
+    function test_productPayout_cancelPayout() public {
+        // GIVEN
+        _approve();
+        _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
+
+        uint256 claimAmountInt = 500;
+        uint256 payoutAmountInt = 300;
+        bytes memory payoutData = "some sample payout data";
+
+        (
+            IPolicy.PolicyInfo memory policyInfo,
+            ClaimId claimId,
+            StateId claimState,
+            IPolicy.ClaimInfo memory claimInfo,
+            PayoutId payoutId,
+            StateId payoutState,
+            IPolicy.PayoutInfo memory payoutInfo
+        ) = _createClaimAndPayout(policyNftId, claimAmountInt, payoutAmountInt, payoutData, false);
+
+        // check policy info
+        assertEq(policyInfo.claimsCount, 1, "claims count not 1");
+        assertEq(policyInfo.openClaimsCount, 1, "open claims count not 1");
+        assertEq(policyInfo.claimAmount.toInt(), claimAmountInt, "unexpected claim amount");
+        assertEq(policyInfo.payoutAmount.toInt(), 0, "payout amount not 0");
+
+        // check claim state and info
+        assertEq(claimState.toInt(), CONFIRMED().toInt(), "unexpected claim state");
+
+        assertEq(claimInfo.claimAmount.toInt(), claimAmountInt, "unexpected claim amount");
+        assertEq(claimInfo.paidAmount.toInt(), 0, "paid amount not 0");
+        assertEq(claimInfo.payoutsCount, 1, "payouts count not 1");
+        assertEq(claimInfo.openPayoutsCount, 1, "open payouts count not 1");
+        assertEq(claimInfo.closedAt.toInt(), 0, "unexpected closed at");
+
+        // check payout state and info
+        assertEq(payoutState.toInt(), EXPECTED().toInt(), "unexpected payout state");
+
+        assertEq(payoutInfo.claimId.toInt(), claimId.toInt(), "unexpected claim id");
+        assertEq(payoutInfo.amount.toInt(), payoutAmountInt, "unexpected payout amount");
+        assertEq(keccak256(payoutInfo.data), keccak256(payoutData), "unexpected payout data");
+        assertEq(payoutInfo.paidAt.toInt(), 0, "unexpected payout paid at");
+
+        // WHEN
+        product.cancelPayout(policyNftId, payoutId);
+
+        // THEN
+        // check policy info
+        policyInfo = instanceReader.getPolicyInfo(policyNftId);
+        assertEq(policyInfo.claimsCount, 1, "claims count not 1");
+        assertEq(policyInfo.openClaimsCount, 1, "open claims count not 1");
+        assertEq(policyInfo.claimAmount.toInt(), claimAmountInt, "unexpected claim amount");
+        assertEq(policyInfo.payoutAmount.toInt(), 0, "payout amount not 0");
+
+        // check claim state and info
+        assertEq(CONFIRMED().toInt(), instanceReader.getClaimState(policyNftId, claimId).toInt(), "unexpected claim state");
+
+        claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
+        assertEq(claimInfo.claimAmount.toInt(), claimAmountInt, "unexpected claim amount");
+        assertEq(claimInfo.paidAmount.toInt(), 0, "paid amount not 0");
+        assertEq(claimInfo.payoutsCount, 1, "payouts count not 1");
+        assertEq(claimInfo.openPayoutsCount, 0, "open payouts count not 0");
+        assertEq(claimInfo.closedAt.toInt(), 0, "unexpected closed at");
+
+        // check payout state and info
+        assertEq(CANCELLED().toInt(), instanceReader.getPayoutState(policyNftId, payoutId).toInt(), "unexpected payout state");
+
+        payoutInfo = instanceReader.getPayoutInfo(policyNftId, payoutId);
+        assertEq(payoutInfo.claimId.toInt(), claimId.toInt(), "unexpected claim id");
+        assertEq(payoutInfo.amount.toInt(), payoutAmountInt, "unexpected payout amount");
+        assertEq(keccak256(payoutInfo.data), keccak256(payoutData), "unexpected payout data");
+        assertEq(payoutInfo.paidAt.toInt(), 0, "unexpected payout paid at");
 
     }
 
