@@ -415,6 +415,18 @@ abstract contract Product is
             payoutId);
     }
 
+    function _cancelPayout(
+        NftId policyNftId,
+        PayoutId payoutId
+    )
+        internal
+        virtual
+    {
+        _getProductStorage()._claimService.cancelPayout(
+            policyNftId,
+            payoutId);
+    }
+
     function _toRiskId(string memory riskName) internal virtual pure returns (RiskId riskId) {
         return RiskIdLib.toRiskId(riskName);
     }
