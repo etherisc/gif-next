@@ -181,11 +181,12 @@ contract ComponentService is
         virtual
         onlyComponent(msg.sender)
     {
-        (, IInstance instance) = _getAndVerifyComponentInfo(
-            getRegistry().getNftIdForAddress(msg.sender), 
-            COMPONENT(),
-            false); // only active
-
+        // FIXME: needs to work with locked components
+        // (, IInstance instance) = _getAndVerifyComponentInfo(
+        //     getRegistry().getNftIdForAddress(msg.sender), 
+        //     COMPONENT(),
+        //     false); // only active
+        (, IInstance instance) = _getAndVerifyActiveComponent(COMPONENT());
         _setLocked(instance.getInstanceAdmin(), componentAddress, locked);
     }
 
