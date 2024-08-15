@@ -23,7 +23,7 @@ import {PayoutId, PayoutIdLib} from "../../../contracts/type/PayoutId.sol";
 import {POLICY} from "../../../contracts/type/ObjectType.sol";
 import {RiskId, RiskIdLib, eqRiskId} from "../../../contracts/type/RiskId.sol";
 import {ReferralLib} from "../../../contracts/type/Referral.sol";
-import {SUBMITTED, ACTIVE, COLLATERALIZED, CONFIRMED, DECLINED, CLOSED} from "../../../contracts/type/StateId.sol";
+import {SUBMITTED, ACTIVE, COLLATERALIZED, CONFIRMED, DECLINED, CLOSED, REVOKED} from "../../../contracts/type/StateId.sol";
 import {StateId} from "../../../contracts/type/StateId.sol";
 
 contract TestProductClaim is GifTest {
@@ -157,6 +157,51 @@ contract TestProductClaim is GifTest {
         assertEq(claimInfo.paidAmount.toInt(), 0, "paid amount not 0");
         assertEq(claimInfo.payoutsCount, 0, "payouts count not 0");
         assertEq(keccak256(claimInfo.processData), keccak256(bytes(processData)), "unexpected claim process data");
+    }
+
+
+    function test_ProductClaimRevokeHappyCase() public {
+        // GIVEN
+        _approve();
+        _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
+        Amount claimAmount = AmountLib.toAmount(499);
+        ClaimId claimId = product.submitClaim(policyNftId, claimAmount, ""); 
+
+        IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
+        assertEq(policyInfo.claimsCount, 1, "claims count not 1 (before)");
+        assertEq(policyInfo.openClaimsCount, 1, "open claims count not 1 (before)");
+        assertEq(policyInfo.payoutAmount.toInt(), 0, "payout amount not 0 (before)");
+
+        // WHEN
+        // emit LogPolicyServiceClaimDeclined(policyNftId, ClaimId.wrap(1));
+        vm.recordLogs();
+        string memory processData = "claim invalid";
+        product.revokeClaim(policyNftId, claimId); 
+        Vm.Log[] memory entries = vm.getRecordedLogs();
+
+        // THEN
+        // checking last of 4 logs
+        assertEq(entries.length, 4, "unexpected number of logs");
+        assertEq(entries[3].emitter, address(claimService), "unexpected emitter");
+        assertEq(entries[3].topics[0], keccak256("LogClaimServiceClaimRevoked(uint96,uint16)"), "unexpected log signature");
+        (uint96 nftIdInt ,uint24 claimIdInt) = abi.decode(entries[3].data, (uint96,uint16));
+        assertEq(nftIdInt, policyNftId.toInt(), "unexpected policy nft id");
+        assertEq(claimIdInt, claimId.toInt(), "unexpected claim id");
+
+        policyInfo = instanceReader.getPolicyInfo(policyNftId);
+        assertEq(policyInfo.claimsCount, 1, "claims count not 1");
+        assertEq(policyInfo.openClaimsCount, 0, "open claims count not 0");
+        assertEq(policyInfo.payoutAmount.toInt(), 0, "payout amount not 0");
+
+        // check claim state and info
+        assertEq(instanceReader.getClaimState(policyNftId, claimId).toInt(), REVOKED().toInt(), "unexpected claim state");
+
+        IPolicy.ClaimInfo memory claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
+        assertEq(claimInfo.claimAmount.toInt(), claimAmount.toInt(), "unexpected claim amount");
+        assertEq(claimInfo.paidAmount.toInt(), 0, "paid amount not 0");
+        assertEq(claimInfo.payoutsCount, 0, "payouts count not 0");
+        assertEq(claimInfo.openPayoutsCount, 0, "open payouts count not 0");
+        assertEq(claimInfo.closedAt.toInt(), block.timestamp, "unexpected closed at");
     }
 
 

@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {TimestampLib} from "../type/Timestamp.sol";
 import {ObjectType, CLAIM, POLICY, POOL, PRODUCT} from "../type/ObjectType.sol";
-import {SUBMITTED, KEEP_STATE, DECLINED, REVOKED, CONFIRMED, CLOSED, PAID} from "../type/StateId.sol";
+import {SUBMITTED, KEEP_STATE, DECLINED, REVOKED, CANCELLED, CONFIRMED, CLOSED, EXPECTED, PAID} from "../type/StateId.sol";
 import {NftId} from "../type/NftId.sol";
 import {FeeLib} from "../type/Fee.sol";
 import {StateId} from "../type/StateId.sol";
@@ -53,6 +53,28 @@ contract ClaimService is
         _registerInterface(type(IClaimService).interfaceId);
     }
 
+    function _checkClaimAmount(
+        NftId policyNftId,
+        IPolicy.PolicyInfo memory policyInfo,
+        Amount claimAmount
+    )
+        internal
+        pure
+    {
+        // check claim amount > 0
+        if (claimAmount.eqz()) {
+            revert ErrorClaimServiceClaimAmountIsZero(policyNftId);
+        }
+
+        // check policy including this claim is still within sum insured
+        if(policyInfo.claimAmount + claimAmount > policyInfo.sumInsuredAmount) {
+            revert ErrorClaimServiceClaimExceedsSumInsured(
+                policyNftId, 
+                policyInfo.sumInsuredAmount,
+                policyInfo.payoutAmount + claimAmount);
+        }
+    }
+
     function submit(
         NftId policyNftId, 
         Amount claimAmount,
@@ -63,8 +85,7 @@ contract ClaimService is
         // nonReentrant() // prevents creating a reinsurance claim in a single tx
         returns (ClaimId claimId)
     {
-        _checkNftType(policyNftId, POLICY());
-
+        // checks
         (
             ,
             IInstance instance,,
@@ -77,15 +98,9 @@ contract ClaimService is
             revert ErrorClaimServicePolicyNotOpen(policyNftId);
         }
 
-        // TODO check claim amount > 0
-        // check policy including this claim is still within sum insured
-        if(policyInfo.payoutAmount + claimAmount > policyInfo.sumInsuredAmount) {
-            revert ErrorClaimServiceClaimExceedsSumInsured(
-                policyNftId, 
-                policyInfo.sumInsuredAmount,
-                AmountLib.toAmount(policyInfo.payoutAmount.toInt() + claimAmount.toInt()));
-        }
+        _checkClaimAmount(policyNftId, policyInfo, claimAmount);
 
+        // effects
         // create new claim
         claimId = ClaimIdLib.toClaimId(policyInfo.claimsCount + 1);
         instanceStore.createClaim(
@@ -120,6 +135,7 @@ contract ClaimService is
         virtual
         // nonReentrant() // prevents creating a reinsurance claim in a single tx
     {
+        // checks
         _checkNftType(policyNftId, POLICY());
 
         (
@@ -130,8 +146,9 @@ contract ClaimService is
             IPolicy.PolicyInfo memory policyInfo
         ) = _verifyCallerWithPolicy(policyNftId);
 
-        // TODO add check for confirmedAmount > 0 and does not lead to exceeding sum insured
+        _checkClaimAmount(policyNftId, policyInfo, confirmedAmount);
 
+        // effects
         // check/update claim info
         IPolicy.ClaimInfo memory claimInfo = _verifyClaim(instanceReader, policyNftId, claimId, SUBMITTED());
         claimInfo.claimAmount = confirmedAmount;
@@ -149,6 +166,7 @@ contract ClaimService is
 
         emit LogClaimServiceClaimConfirmed(policyNftId, claimId, confirmedAmount);
 
+        // interactions
         // callback to pool if applicable
         _processConfirmedClaimByPool(instanceReader, productNftId, policyNftId, claimId, confirmedAmount);
 
@@ -190,7 +208,6 @@ contract ClaimService is
     }
 
 
-    // TODO add test case
     function revoke(
         NftId policyNftId, 
         ClaimId claimId
@@ -198,9 +215,7 @@ contract ClaimService is
         external
         virtual
         // nonReentrant() // prevents creating a reinsurance claim in a single tx
-    {
-        _checkNftType(policyNftId, POLICY());
-        
+    {        
         (
             ,
             IInstance instance,
@@ -277,8 +292,6 @@ contract ClaimService is
         // nonReentrant() // prevents creating a reinsurance claim in a single tx
         returns (PayoutId payoutId)
     {
-        _checkNftType(policyNftId, POLICY());
-        
         if (beneficiary == address(0)) {
             revert ErrorClaimServiceBeneficiaryIsZero(policyNftId, claimId);
         }
@@ -322,8 +335,7 @@ contract ClaimService is
         virtual
         // nonReentrant() // prevents creating a reinsurance payout in a single tx
     {
-        _checkNftType(policyNftId, POLICY());
-        
+        // checks
         (
             ,
             IInstance instance,
@@ -332,9 +344,24 @@ contract ClaimService is
             IPolicy.PolicyInfo memory policyInfo
         ) = _verifyCallerWithPolicy(policyNftId);
 
-        // TODO add check that payout exists and is open
+        // check that payout exists and is open
         IPolicy.PayoutInfo memory payoutInfo = instanceReader.getPayoutInfo(policyNftId, payoutId);
+        StateId payoutState = instanceReader.getPayoutState(policyNftId, payoutId);
+        if(payoutState != EXPECTED()) {
+            revert ErrorClaimServicePayoutNotExpected(policyNftId, payoutId, payoutState);
+        }
 
+        // check that payout amount does not violate claim amount
+        IPolicy.ClaimInfo memory claimInfo = instanceReader.getClaimInfo(policyNftId, payoutId.toClaimId());
+        if(claimInfo.paidAmount + payoutInfo.amount > claimInfo.claimAmount) {
+            revert ErrorClaimServicePayoutExceedsClaimAmount(
+                policyNftId, 
+                payoutId.toClaimId(), 
+                claimInfo.claimAmount, 
+                claimInfo.paidAmount + payoutInfo.amount);
+        }
+
+        // effects
         // update and save payout info with instance
         payoutInfo.paidAt = TimestampLib.blockTimestamp();
         instanceStore.updatePayout(policyNftId, payoutId, payoutInfo, PAID());
@@ -360,7 +387,7 @@ contract ClaimService is
         }
 
         // update and save policy info with instance
-        policyInfo.payoutAmount = policyInfo.payoutAmount.add(payoutAmount);
+        policyInfo.payoutAmount = policyInfo.payoutAmount + payoutAmount;
         instanceStore.updatePolicyClaims(policyNftId, policyInfo, KEEP_STATE());
 
         // inform pool about payout
@@ -400,8 +427,42 @@ contract ClaimService is
         }
     }
 
-    // internal functions
+    function cancelPayout(
+        NftId policyNftId, 
+        PayoutId payoutId
+    )
+        external
+        virtual
+    {
+        // checks
+        (
+            ,
+            IInstance instance,
+            InstanceReader instanceReader,
+            InstanceStore instanceStore,
+            IPolicy.PolicyInfo memory policyInfo
+        ) = _verifyCallerWithPolicy(policyNftId);
 
+        StateId payoutState = instanceReader.getPayoutState(policyNftId, payoutId);
+        if (payoutState != EXPECTED()) {
+            revert ErrorClaimServicePayoutNotExpected(policyNftId, payoutId, payoutState);
+        }
+
+        // effects
+        // update and save payout info with instance
+        instanceStore.updatePayoutState(policyNftId, payoutId, CANCELLED());
+
+        {
+            ClaimId claimId = payoutId.toClaimId();
+            IPolicy.ClaimInfo memory claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
+            claimInfo.openPayoutsCount -= 1;
+            instanceStore.updateClaim(policyNftId, claimId, claimInfo, KEEP_STATE());
+        }
+
+        emit LogClaimServicePayoutCancelled(policyNftId, payoutId);
+    }
+
+    // internal functions
 
     function _createPayout(
         NftId policyNftId, 
@@ -414,6 +475,7 @@ contract ClaimService is
         virtual
         returns (PayoutId payoutId)
     {
+        // checks
         (
             ,
             ,
@@ -423,13 +485,23 @@ contract ClaimService is
         ) = _verifyCallerWithPolicy(policyNftId);
 
         IPolicy.ClaimInfo memory claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
-        StateId claimState = instanceReader.getClaimState(policyNftId, claimId);
 
-        // TODO add checks
-        // claim needs to be open
-        // claim.paidAmount + amount <= claim.claimAmount
+        {
+            // check claim state
+            StateId claimState = instanceReader.getClaimState(policyNftId, claimId);
+            if (claimState != CONFIRMED()) {
+                revert ErrorClaimServiceClaimNotConfirmed(policyNftId, claimId, claimState);
+            }
 
-        // check/update claim info
+            // check total payout amount remains within claim limit
+            Amount newPaidAmount = claimInfo.paidAmount + amount;
+            if (newPaidAmount > claimInfo.claimAmount) {
+                revert ErrorClaimServicePayoutExceedsClaimAmount(
+                    policyNftId, claimId, claimInfo.claimAmount, newPaidAmount);
+            }
+        }
+
+        // effects
         // create payout info with instance
         uint24 payoutNo = claimInfo.payoutsCount + 1;
         payoutId = PayoutIdLib.toPayoutId(claimId, payoutNo);
@@ -452,10 +524,6 @@ contract ClaimService is
         claimInfo.openPayoutsCount += 1;
         instanceStore.updateClaim(policyNftId, claimId, claimInfo, KEEP_STATE());
 
-        // update and save policy info with instance
-        policyInfo.payoutAmount.add(amount);
-        instanceStore.updatePolicyClaims(policyNftId, policyInfo, KEEP_STATE());
-
         emit LogClaimServicePayoutCreated(policyNftId, payoutId, amount, beneficiary);
     }
 
@@ -467,6 +535,7 @@ contract ClaimService is
         IPolicy.PayoutInfo memory payoutInfo
     )
         internal
+        view
         returns (
             Amount netPayoutAmount,
             Amount processingFeeAmount,

@@ -198,6 +198,13 @@ contract SimpleProduct is
         return _submitClaim(policyNftId, claimAmount, submissionData);
     }
 
+    function revokeClaim(
+        NftId policyNftId,
+        ClaimId claimId
+    ) public {
+        _revokeClaim(policyNftId, claimId);
+    }
+
     function confirmClaim(
         NftId policyNftId,
         ClaimId claimId,
@@ -229,6 +236,13 @@ contract SimpleProduct is
         bytes memory data
     ) public returns (PayoutId) {
         return _createPayout(policyNftId, claimId, amount, data);
+    }
+
+    function cancelPayout(
+        NftId policyNftId,
+        PayoutId payoutId
+    ) public {
+        _cancelPayout(policyNftId, payoutId);
     }
 
     // TODO add test

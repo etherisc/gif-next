@@ -217,6 +217,7 @@ contract InstanceAuthorizationV3
           _authorize(functions, InstanceStore.updateClaim.selector, "updateClaim");
           _authorize(functions, InstanceStore.createPayout.selector, "createPayout");
           _authorize(functions, InstanceStore.updatePayout.selector, "updatePayout");
+          _authorize(functions, InstanceStore.updatePayoutState.selector, "updatePayoutState");
      }
 }
 
