@@ -38,6 +38,19 @@ contract AccountingService is
         _registerInterface(type(IAccountingService).interfaceId);
     }
 
+    function decreaseComponentFees(
+        InstanceStore instanceStore, 
+        NftId componentNftId, 
+        Amount feeAmount
+    ) 
+        external
+        virtual
+    {
+        // TODO: validate that the nft belongs to a component
+        _changeTargetBalance(DECREASE, instanceStore, componentNftId, AmountLib.zero(), feeAmount);    
+    }
+
+
     function increaseProductFees(
         InstanceStore instanceStore,
         NftId productNftId, 

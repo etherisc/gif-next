@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IAccountingService} from "../accounting/IAccountingService.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IInstance} from "../instance/IInstance.sol";
 import {IComponentService} from "../shared/IComponentService.sol";
@@ -13,7 +14,7 @@ import {IPolicy} from "../instance/module/IPolicy.sol";
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
 import {KEEP_STATE} from "../type/StateId.sol";
-import {ObjectType, COMPONENT, DISTRIBUTION, INSTANCE, DISTRIBUTION, DISTRIBUTOR, REGISTRY} from "../type/ObjectType.sol";
+import {ObjectType, ACCOUNTING, COMPONENT, DISTRIBUTION, INSTANCE, DISTRIBUTION, DISTRIBUTOR, REGISTRY} from "../type/ObjectType.sol";
 import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
 import {IDistributionService} from "./IDistributionService.sol";
 import {UFixed} from "../type/UFixed.sol";
@@ -28,6 +29,7 @@ contract DistributionService is
     ComponentVerifyingService,
     IDistributionService
 {
+    IAccountingService private _accountingService;
     IComponentService private _componentService;
     IInstanceService private _instanceService;
     IRegistryService private _registryService;
@@ -47,6 +49,7 @@ contract DistributionService is
 
         _initializeService(registryAddress, authority, owner);
 
+        _accountingService = IAccountingService(_getServiceAddress(ACCOUNTING()));
         _componentService = IComponentService(_getServiceAddress(COMPONENT()));
         _instanceService = IInstanceService(_getServiceAddress(INSTANCE()));
         _registryService = IRegistryService(_getServiceAddress(REGISTRY()));
@@ -70,7 +73,7 @@ contract DistributionService is
         returns (DistributorType distributorType)
     {
         (NftId distributionNftId,, IInstance instance) = _getAndVerifyActiveComponent(DISTRIBUTION());
-        InstanceReader instanceReader = instance.getInstanceReader();
+        // InstanceReader instanceReader = instance.getInstanceReader();
 
         {
             NftId productNftId = _getProductNftId(distributionNftId);
@@ -255,12 +258,12 @@ contract DistributionService is
 
             // increase distribution balance by commission amount and distribution owner fee
             Amount commissionAmount = premium.commissionAmount;
-            _componentService.increaseDistributionBalance(store, distributionNftId, commissionAmount, distributionOwnerFee);
+            _accountingService.increaseDistributionBalance(store, distributionNftId, commissionAmount, distributionOwnerFee);
 
             // update book keeping for referral info
             IDistribution.ReferralInfo memory referralInfo = reader.getReferralInfo(referralId);
 
-            _componentService.increaseDistributorBalance(store, referralInfo.distributorNftId, AmountLib.zero(), commissionAmount);
+            _accountingService.increaseDistributorBalance(store, referralInfo.distributorNftId, AmountLib.zero(), commissionAmount);
 
             // update book keeping for distributor info
             IDistribution.DistributorInfo memory distributorInfo = reader.getDistributorInfo(referralInfo.distributorNftId);
@@ -268,7 +271,7 @@ contract DistributionService is
             store.updateDistributor(referralInfo.distributorNftId, distributorInfo, KEEP_STATE());
         } else {
             // increase distribution balance by distribution owner fee
-            _componentService.increaseDistributionBalance(store, distributionNftId, AmountLib.zero(), distributionOwnerFee);
+            _accountingService.increaseDistributionBalance(store, distributionNftId, AmountLib.zero(), distributionOwnerFee);
         }
     }
 
@@ -302,9 +305,9 @@ contract DistributionService is
         {
             InstanceStore store = instance.getInstanceStore();
             // decrease fee counter for distribution balance
-            _componentService.decreaseDistributionBalance(store, distributionNftId, withdrawnAmount, AmountLib.zero());
+            _accountingService.decreaseDistributionBalance(store, distributionNftId, withdrawnAmount, AmountLib.zero());
             // decrease fee counter for distributor fee
-            _componentService.decreaseDistributorBalance(store, distributorNftId, AmountLib.zero(), withdrawnAmount);
+            _accountingService.decreaseDistributorBalance(store, distributorNftId, AmountLib.zero(), withdrawnAmount);
         }
 
         // transfer amount to distributor

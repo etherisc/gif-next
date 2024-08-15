@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IAccountingService} from "../accounting/IAccountingService.sol";
 import {IBundle} from "../instance/module/IBundle.sol";
 import {IBundleService} from "./IBundleService.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
@@ -18,7 +19,7 @@ import {ClaimId} from "../type/ClaimId.sol";
 import {ContractLib} from "../shared/ContractLib.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
 import {NftId} from "../type/NftId.sol";
-import {ObjectType, POOL, BUNDLE, PRODUCT, POLICY, COMPONENT} from "../type/ObjectType.sol";
+import {ObjectType, ACCOUNTING, POOL, BUNDLE, PRODUCT, POLICY, COMPONENT} from "../type/ObjectType.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
 import {KEEP_STATE} from "../type/StateId.sol";
 import {UFixed} from "../type/UFixed.sol";
@@ -32,6 +33,7 @@ contract PoolService is
     Service, 
     IPoolService 
 {
+    IAccountingService private _accountingService;
     IBundleService internal _bundleService;
     IComponentService internal _componentService;
     IStaking private _staking;
@@ -51,6 +53,7 @@ contract PoolService is
 
         _initializeService(registryAddress, authority, owner);
 
+        _accountingService = IAccountingService(_getServiceAddress(ACCOUNTING()));
         _bundleService = IBundleService(_getServiceAddress(BUNDLE()));
         _componentService = IComponentService(_getServiceAddress(COMPONENT()));
         _staking = IStaking(getRegistry().getStakingAddress());
@@ -89,7 +92,7 @@ contract PoolService is
         // releasing collateral in bundle
         (Amount unstakedAmount, Amount feeAmount) = _bundleService.close(instance, bundleNftId);
 
-        _componentService.decreasePoolBalance(
+        _accountingService.decreasePoolBalance(
             instance.getInstanceStore(), 
             poolNftId, 
             unstakedAmount +  feeAmount, 
@@ -182,7 +185,7 @@ contract PoolService is
         }
 
         // do all the book keeping
-        _componentService.increasePoolBalance(
+        _accountingService.increasePoolBalance(
             instance.getInstanceStore(), 
             poolNftId, 
             netAmount, 
@@ -234,7 +237,7 @@ contract PoolService is
         netAmount = unstakedAmount;
 
         // update pool bookkeeping - performance fees stay in the pool, but as fees 
-        _componentService.decreasePoolBalance(
+        _accountingService.decreasePoolBalance(
             instanceStore, 
             poolNftId, 
             unstakedAmount, 
@@ -331,13 +334,13 @@ contract PoolService is
         Amount bundleNetAmount = premium.netPremiumAmount;
 
         InstanceStore instanceStore = instance.getInstanceStore();
-        _componentService.increasePoolBalance(
+        _accountingService.increasePoolBalance(
             instanceStore,
             poolNftId,
             bundleNetAmount + bundleFeeAmount, 
             poolFeeAmount);
 
-        _componentService.increaseBundleBalance(
+        _accountingService.increaseBundleBalance(
             instanceStore,
             bundleNftId,
             bundleNetAmount, 
@@ -423,13 +426,13 @@ contract PoolService is
         NftId poolNftId = getRegistry().getObjectInfo(bundleNftId).parentNftId;
         InstanceStore instanceStore = instance.getInstanceStore();
         
-        _componentService.decreasePoolBalance(
+        _accountingService.decreasePoolBalance(
             instanceStore,
             poolNftId,
             payoutAmount, 
             AmountLib.zero());
 
-        _componentService.decreaseBundleBalance(
+        _accountingService.decreaseBundleBalance(
             instanceStore,
             bundleNftId,
             payoutAmount, 
