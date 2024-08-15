@@ -1,39 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-
-import {AccessAdmin} from "../authorization/AccessAdmin.sol";
 import {Amount, AmountLib} from "../type/Amount.sol";
-import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
-import {ContractLib} from "../shared/ContractLib.sol";
-import {Fee, FeeLib} from "../type/Fee.sol";
+import {Fee} from "../type/Fee.sol";
 import {IAccountingService} from "./IAccountingService.sol";
-import {IComponent} from "../shared/IComponent.sol";
-import {IComponents} from "../instance/module/IComponents.sol";
-import {IComponentService} from "./IComponentService.sol";
-import {IInstance} from "../instance/IInstance.sol";
-import {IInstanceLinkedComponent} from "./IInstanceLinkedComponent.sol";
-import {InstanceAdmin} from "../instance/InstanceAdmin.sol";
-import {InstanceReader} from "../instance/InstanceReader.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
-import {IInstanceService} from "../instance/IInstanceService.sol";
-import {IPoolComponent} from "../pool/IPoolComponent.sol";
-import {IProductComponent} from "../product/IProductComponent.sol";
-import {IRegisterable} from "../shared/IRegisterable.sol";
-import {IRegistry} from "../registry/IRegistry.sol";
-import {IRegistryService} from "../registry/IRegistryService.sol";
 
 import {Amount, AmountLib} from "../type/Amount.sol";
-import {ContractLib} from "../shared/ContractLib.sol";
-import {Fee, FeeLib} from "../type/Fee.sol";
-import {KEEP_STATE} from "../type/StateId.sol";
+import {Fee} from "../type/Fee.sol";
 import {NftId} from "../type/NftId.sol";
-import {ObjectType, REGISTRY, ACCOUNTING, BUNDLE, COMPONENT, DISTRIBUTION, DISTRIBUTOR, INSTANCE, ORACLE, POOL, PRODUCT, STAKING} from "../type/ObjectType.sol";
+import {ObjectType, ACCOUNTING, BUNDLE, DISTRIBUTION, DISTRIBUTOR, POOL, PRODUCT} from "../type/ObjectType.sol";
 import {Service} from "../shared/Service.sol";
-import {TokenHandler} from "../shared/TokenHandler.sol";
-import {TokenHandlerDeployerLib} from "../shared/TokenHandlerDeployerLib.sol";
-import {VersionPart} from "../type/Version.sol";
 
 
 contract AccountingService is
