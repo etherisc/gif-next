@@ -259,32 +259,42 @@ contract TestComponent is GifTest {
         assertEq(token.balanceOf(externallyOwnedWallet2), INITIAL_BALANCE, "externally owned wallet 2 balance not 100000");
     }
 
-    function test_component_lock() public {
+    function test_componentSetLockedTrue() public {
         // GIVEN - just setUp
         Fee memory newDistributionFee = FeeLib.toFee(UFixedLib.toUFixed(123,0), 456);
         Fee memory newMinDistributionOwnerFee = FeeLib.toFee(UFixedLib.toUFixed(124,0), 457);
 
-        vm.startPrank(distributionOwner);
+        assertFalse(instanceReader.isLocked(address(distribution)), "distribution locked");
 
         // WHEN
+        vm.startPrank(distributionOwner);
         distribution.setLocked(true);
 
+        assertTrue(instanceReader.isLocked(address(distribution)), "distribution not locked");
+
         // THEN
-        vm.expectRevert(abi.encodeWithSelector(IAccessManaged.AccessManagedUnauthorized.selector, address(distributionOwner)));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessManaged.AccessManagedUnauthorized.selector, 
+                address(distributionOwner)));
+
         distribution.setFees(newMinDistributionOwnerFee, newDistributionFee);
     }
 
-    function test_component_unlock() public {
+    function test_componentSetLockedFalse() public {
         // GIVEN - just setUp
         Fee memory newDistributionFee = FeeLib.toFee(UFixedLib.toUFixed(123,0), 456);
         Fee memory newMinDistributionOwnerFee = FeeLib.toFee(UFixedLib.toUFixed(124,0), 457);
         
         vm.startPrank(distributionOwner);
-
         distribution.setLocked(true);
-        
+
+        assertTrue(instanceReader.isLocked(address(distribution)), "distribution not locked");
+
         // WHEN
         distribution.setLocked(false);
+
+        assertFalse(instanceReader.isLocked(address(distribution)), "distribution not locked");
 
         // THEN
         distribution.setFees(newMinDistributionOwnerFee, newDistributionFee);

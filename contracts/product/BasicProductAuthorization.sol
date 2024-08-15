@@ -6,8 +6,7 @@ import {BasicProduct} from "./BasicProduct.sol";
 import {PRODUCT} from "../type/ObjectType.sol";
 import {IAccess} from "../authorization/IAccess.sol";
 import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
-import {PUBLIC_ROLE} from "../../contracts/type/RoleId.sol";
-import {RoleId} from "../type/RoleId.sol";
+import {RoleId, PUBLIC_ROLE} from "../type/RoleId.sol";
 
 
 contract BasicProductAuthorization

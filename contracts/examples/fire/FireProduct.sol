@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+
 import {ACTIVE, PAUSED} from "../../type/StateId.sol";
 import {Amount, AmountLib} from "../../type/Amount.sol";
 import {BasicProduct} from "../../product/BasicProduct.sol";
@@ -428,4 +430,7 @@ contract FireProduct is
         }
     }
 
+    function approveTokenHandler(IERC20Metadata token, Amount amount) external restricted() onlyOwner() { _approveTokenHandler(token, amount); }
+    function setLocked(bool locked) external onlyOwner() { _setLocked(locked); }
+    function setWallet(address newWallet) external restricted() onlyOwner() { _setWallet(newWallet); }
 }

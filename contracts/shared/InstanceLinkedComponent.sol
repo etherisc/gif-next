@@ -44,8 +44,8 @@ abstract contract InstanceLinkedComponent is
     function withdrawFees(Amount amount)
         external
         virtual
-        onlyOwner()
         restricted()
+        onlyOwner()
         returns (Amount withdrawnAmount)
     {
         return _withdrawFees(amount);

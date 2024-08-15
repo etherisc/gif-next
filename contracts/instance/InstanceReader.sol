@@ -518,7 +518,7 @@ contract InstanceReader {
     }
 
 
-    function isTargetLocked(address target) public view returns (bool) {
+    function isLocked(address target) public view returns (bool) {
         return _instance.getInstanceAdmin().isTargetLocked(target);
     }
 
