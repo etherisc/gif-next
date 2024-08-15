@@ -6,6 +6,7 @@ import {
 } from "../../contracts/type/ObjectType.sol";
 
 import {IAccess} from "../authorization/IAccess.sol";
+import {IAccountingService} from "../accounting/IAccountingService.sol";
 import {IBundleService} from "../pool/IBundleService.sol";
 import {IDistributionService} from "../distribution/IDistributionService.sol";
 import {IPoolService} from "../pool/IPoolService.sol";
@@ -50,6 +51,7 @@ contract ServiceAuthorizationV3
           _setupIRegistryServiceAuthorization();
           _setupStakingServiceAuthorization();
           _setupInstanceServiceAuthorization();
+          _setupAccountingServiceAuthorization();
           _setupComponentServiceAuthorization();
           _setupDistributionServiceAuthorization();
           _setupPoolServiceAuthorization();
@@ -113,6 +115,36 @@ contract ServiceAuthorizationV3
      function _setupInstanceServiceAuthorization()
           internal
      {
+     }
+
+     /// @dev Accounting service function authorization.
+     function _setupAccountingServiceAuthorization()
+          internal
+     {
+          IAccess.FunctionInfo[] storage functions;
+
+          functions = _authorizeForService(ACCOUNTING(), BUNDLE());
+          _authorize(functions, IAccountingService.increaseBundleBalance.selector, "increaseBundleBalance");
+          _authorize(functions, IAccountingService.decreaseBundleBalance.selector, "decreaseBundleBalance");
+
+          functions = _authorizeForService(ACCOUNTING(), COMPONENT());
+          _authorize(functions, IAccountingService.decreaseComponentFees.selector, "decreaseComponentFees");
+
+          functions = _authorizeForService(ACCOUNTING(), DISTRIBUTION());
+          _authorize(functions, IAccountingService.increaseDistributionBalance.selector, "increaseDistributionBalance");
+          _authorize(functions, IAccountingService.decreaseDistributionBalance.selector, "decreaseDistributionBalance");
+          _authorize(functions, IAccountingService.increaseDistributorBalance.selector, "increaseDistributorBalance");
+          _authorize(functions, IAccountingService.decreaseDistributorBalance.selector, "decreaseDistributorBalance");
+
+          functions = _authorizeForService(ACCOUNTING(), POLICY());
+          _authorize(functions, IAccountingService.increaseProductFees.selector, "increaseProductFees");
+          
+          functions = _authorizeForService(ACCOUNTING(), POOL());
+          _authorize(functions, IAccountingService.increasePoolBalance.selector, "increasePoolBalance");
+          _authorize(functions, IAccountingService.decreasePoolBalance.selector, "decreasePoolBalance");
+          _authorize(functions, IAccountingService.increaseBundleBalanceForPool.selector, "increaseBundleBalanceForPool");
+          _authorize(functions, IAccountingService.decreaseBundleBalanceForPool.selector, "decreaseBundleBalanceForPool");
+
      }
 
 

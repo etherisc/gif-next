@@ -39,4 +39,7 @@ interface IAccountingService is
     function increaseBundleBalance(InstanceStore instanceStore, NftId bundleNftId, Amount amount, Amount feeAmount) external;
     function decreaseBundleBalance(InstanceStore instanceStore, NftId bundleNftId, Amount amount, Amount feeAmount) external;
 
+    function increaseBundleBalanceForPool(InstanceStore instanceStore, NftId bundleNftId, Amount amount, Amount feeAmount) external;
+    function decreaseBundleBalanceForPool(InstanceStore instanceStore, NftId bundleNftId, Amount amount, Amount feeAmount) external;
+
 }
