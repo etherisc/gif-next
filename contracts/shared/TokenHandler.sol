@@ -328,14 +328,14 @@ contract TokenHandler is
     /// @dev Collect tokens from outside of GIF and transfer them to the wallet.
     /// This method also checks balance and allowance and makes sure the amount is greater than zero.
     function pushToken(
-        address from,
+        address to,
         Amount amount
     )
         external
         // restricted() // TODO re-activate
         onlyService()
     {
-        _pushToken(from, amount);
+        _pushToken(to, amount);
     }
 
 

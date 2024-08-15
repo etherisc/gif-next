@@ -29,8 +29,8 @@ contract InstanceAdmin is
 
     error ErrorInstanceAdminCallerNotInstanceOwner(address caller);
     error ErrorInstanceAdminInstanceAlreadyLocked();
-    error ErrorInstanceAdminTargetNotRegistered(address target);
-    error ErrorInstanceAdminTargetAlreadyAuthorized(address target);
+    error ErrorInstanceAdminNotRegistered(address target);
+    error ErrorInstanceAdminAlreadyAuthorized(address target);
     error ErrorInstanceAdminReleaseMismatch();
     error ErrorInstanceAdminExpectedTargetMissing(string targetName);
 
@@ -203,19 +203,6 @@ contract InstanceAdmin is
         view
     {
         if (!_registry.isRegistered(target)) {
-            revert ErrorInstanceAdminTargetNotRegistered(target);
-        }
-
-        if (targetExists(target)) {
-            revert ErrorInstanceAdminTargetAlreadyAuthorized(target);
-        }
-    }
-
-    function _checkTargetIsReadyForAuthorization(address target)
-        internal
-        view
-    {
-        if (address(_registry) != address(0) && !_registry.isRegistered(target)) {
             revert ErrorInstanceAdminNotRegistered(target);
         }
 

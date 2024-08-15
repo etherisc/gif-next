@@ -189,8 +189,7 @@ contract StakingService is
         internal
         virtual
     {
-        tokenHandler.distributeTokens(
-            tokenHandler.getWallet(), 
+        tokenHandler.pushToken(
             to, 
             amount);
     }

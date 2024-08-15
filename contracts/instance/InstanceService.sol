@@ -116,7 +116,7 @@ contract InstanceService is
         // MUST be set after instance is set up and registered
         IAuthorization instanceAuthorization = InstanceAdmin(_masterInstanceAdmin).getInstanceAuthorization();
         instanceAdmin.completeSetup(
-            address(clonedInstance),
+            address(instance),
             address(instanceAuthorization),
             getVersion().toMajorPart());
 
