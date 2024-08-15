@@ -185,8 +185,6 @@ contract AccessAdminForTesting is AccessAdmin {
     )
         external
         virtual
-        onlyExistingRole(roleId, false)
-        onlyExistingTarget(target)
         restricted()
     {
         _authorizeTargetFunctions(target, roleId, functions);
@@ -212,8 +210,6 @@ contract AccessAdminForTesting is AccessAdmin {
         virtual
         restricted()
     {
-        // TODO figure out if it important to call directlly
-        //_authority.setTargetClosed(target, locked);
         _setTargetClosed(target, locked);
 
         // implizit logging: rely on OpenZeppelin log TargetClosed
@@ -224,8 +220,7 @@ contract AccessAdminForTesting is AccessAdmin {
     }
 
 }
-
-contract AccessAdminTest is Test {
+contract AccessAdminBaseTest is Test {
 
     address public accessAdminDeployer = makeAddr("accessAdminDeployer");
     address public globalRegistry = makeAddr("globalRegistry");
@@ -242,7 +237,7 @@ contract AccessAdminTest is Test {
     AccessManagedMock public accessManaged;
 
 
-    function setUp() public {
+    function setUp() public virtual {
 
         vm.startPrank(accessAdminDeployer);
 
@@ -262,6 +257,10 @@ contract AccessAdminTest is Test {
 
         vm.stopPrank();
     }
+}
+
+
+contract AccessAdminTest is AccessAdminBaseTest {
 
 
     function test_accessAdminSetup() public {

@@ -98,8 +98,15 @@ contract AccessAdmin is
         _;
     }
 
-    modifier onlyExistingRole(RoleId roleId, bool onlyActiveRole) {
-        _checkRoleExists(roleId, onlyActiveRole);
+    modifier onlyExistingRole(
+        RoleId roleId, 
+        bool onlyActiveRole,
+        bool allowLockedRoles
+    )
+    {
+        if (!allowLockedRoles) {
+            _checkRoleExists(roleId, onlyActiveRole);
+        }
         _;
     }
 
@@ -333,7 +340,11 @@ contract AccessAdmin is
         bytes4[] memory functionSelectors = _processFunctionSelectors(target, functions, addFunctions);
 
         // apply authz via access manager
-        _grantRoleAccessToFunctions(target, roleId, functionSelectors);
+        _grantRoleAccessToFunctions(
+            target, 
+            roleId, 
+            functionSelectors, 
+            false); // allowLockedRoles
     }
 
     function _unauthorizeTargetFunctions(
@@ -344,7 +355,12 @@ contract AccessAdmin is
     {
         bool addFunctions = false;
         bytes4[] memory functionSelectors = _processFunctionSelectors(target, functions, addFunctions);
-        _grantRoleAccessToFunctions(target, getAdminRole(), functionSelectors);
+
+        _grantRoleAccessToFunctions(
+            target, 
+            getAdminRole(), 
+            functionSelectors, 
+            true); // allowLockedRoles
     }
 
     function _processFunctionSelectors(
@@ -383,11 +399,12 @@ contract AccessAdmin is
     function _grantRoleAccessToFunctions(
         address target,
         RoleId roleId, 
-        bytes4[] memory functionSelectors
+        bytes4[] memory functionSelectors,
+        bool allowLockedRoles // admin and public roles are locked
     )
         internal
         onlyExistingTarget(target)
-        onlyExistingRole(roleId, true)
+        onlyExistingRole(roleId, true, allowLockedRoles)
     {
         _authority.setTargetFunctionRole(
             target,
@@ -401,7 +418,7 @@ contract AccessAdmin is
     /// @dev grant the specified role to the provided account
     function _grantRoleToAccount(RoleId roleId, address account)
         internal
-        onlyExistingRole(roleId, true)
+        onlyExistingRole(roleId, true, false)
     {
         // check max role members will not be exceeded
         if (_roleMembers[roleId].length() >= _roleInfo[roleId].maxMemberCount) {
@@ -429,7 +446,7 @@ contract AccessAdmin is
     /// @dev revoke the specified role from the provided account
     function _revokeRoleFromAccount(RoleId roleId, address account)
         internal
-        onlyExistingRole(roleId, false)
+        onlyExistingRole(roleId, false, false)
     {
 
         // check role removal is permitted
@@ -609,6 +626,7 @@ contract AccessAdmin is
 
         uint64 roleIdInt = RoleId.unwrap(roleId);
         if (roleIdInt == _authority.ADMIN_ROLE())
+        // TODO cleanup
             //|| roleIdInt == _authority.PUBLIC_ROLE()) prevents granting of public role
         {
             revert ErrorRoleIsLocked(roleId);

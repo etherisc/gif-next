@@ -8,7 +8,7 @@ import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.s
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
 import {AccessAdmin} from "../../contracts/authorization/AccessAdmin.sol";
-//import {AccessAdminForTesting} from "./AccessAdmin.t.sol";
+import {AccessAdminForTesting} from "./AccessAdmin.t.sol";
 import {AccessManagedMock} from "../mock/AccessManagedMock.sol";
 import {IAccess} from "../../contracts/authorization/IAccess.sol";
 import {IAccessAdmin} from "../../contracts/authorization/IAccessAdmin.sol";
@@ -16,30 +16,23 @@ import {RoleId, RoleIdLib} from "../../contracts/type/RoleId.sol";
 import {Selector, SelectorLib} from "../../contracts/type/Selector.sol";
 import {Str, StrLib} from "../../contracts/type/String.sol";
 import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
+import {AccessAdminBaseTest} from "./AccessAdmin.t.sol";
 
-/*
-contract AccessAdminManageMockTest is Test {
+contract AccessAdminManageMockTest is AccessAdminBaseTest {
 
-    address public accessAdminDeployer = makeAddr("accessAdminDeployer");
-    address public outsider = makeAddr("outsider");
-    address public outsider2 = makeAddr("outsider2");
-
-    AccessAdminForTesting public accessAdmin;
     AccessManagedMock public managedMock;
     address target;
 
+    function setUp() public override {
+        super.setUp();
 
-    function setUp() public {
         vm.startPrank(accessAdminDeployer);
-        // deploy access admin
-        accessAdmin = new AccessAdminForTesting();
 
         // deploy access managed mock using authority of access admin
         managedMock = new AccessManagedMock(accessAdmin.authority());
         target = address(managedMock);
 
-        // register targets
-        accessAdmin.createTarget(address(accessAdmin), "AccessAdmin");
+        // register new target
         accessAdmin.createTarget(target, "AccessManagedMock");
         vm.stopPrank();
     }
@@ -164,8 +157,8 @@ contract AccessAdminManageMockTest is Test {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessAdmin.ErrorRoleIsLocked.selector,
-                adminRole));
+                IAccessAdmin.ErrorAuthorizeForAdminRoleInvalid.selector,
+                target));
 
         vm.startPrank(accessAdminDeployer);
         accessAdmin.authorizeFunctions(target, adminRole, functions);
@@ -442,4 +435,3 @@ contract AccessAdminManageMockTest is Test {
     }
 
 }
-*/
