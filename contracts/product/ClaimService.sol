@@ -490,8 +490,8 @@ contract ClaimService is
                 beneficiary = payoutInfo.beneficiary;
             }
 
-            IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
-            if(FeeLib.gtz(productInfo.processingFee)) {
+            IComponents.FeeInfo memory feeInfo = instanceReader.getFeeInfo(productNftId);
+            if(FeeLib.gtz(feeInfo.processingFee)) {
                 // TODO calculate and set net payout and processing fees
             }
         }

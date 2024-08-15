@@ -77,10 +77,10 @@ contract DistributionService is
 
         {
             NftId productNftId = _getProductNftId(distributionNftId);
-            IComponents.ProductInfo memory productInfo = instance.getInstanceReader().getProductInfo(productNftId);
+            IComponents.FeeInfo memory feeInfo = instance.getInstanceReader().getFeeInfo(productNftId);
 
-            UFixed variableDistributionFees = productInfo.distributionFee.fractionalFee;
-            UFixed variableFeesPartsTotal = productInfo.minDistributionOwnerFee.fractionalFee + commissionPercentage;
+            UFixed variableDistributionFees = feeInfo.distributionFee.fractionalFee;
+            UFixed variableFeesPartsTotal = feeInfo.minDistributionOwnerFee.fractionalFee + commissionPercentage;
 
             if (variableFeesPartsTotal > variableDistributionFees) {
                 revert ErrorDistributionServiceVariableFeesTooHight(variableDistributionFees.toInt1000(), variableFeesPartsTotal.toInt1000());

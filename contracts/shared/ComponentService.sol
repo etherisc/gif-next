@@ -256,25 +256,25 @@ contract ComponentService is
         nonReentrant()
     {
         (NftId productNftId, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
-        IComponents.ProductInfo memory productInfo = instance.getInstanceReader().getProductInfo(productNftId);
+        IComponents.FeeInfo memory feeInfo = instance.getInstanceReader().getFeeInfo(productNftId);
         bool feesChanged = false;
 
         // update product fee if required
-        if(!FeeLib.eq(productInfo.productFee, productFee)) {
-            _logUpdateFee(productNftId, "ProductFee", productInfo.productFee, productFee);
-            productInfo.productFee = productFee;
+        if(!FeeLib.eq(feeInfo.productFee, productFee)) {
+            _logUpdateFee(productNftId, "ProductFee", feeInfo.productFee, productFee);
+            feeInfo.productFee = productFee;
             feesChanged = true;
         }
 
         // update processing fee if required
-        if(!FeeLib.eq(productInfo.processingFee, processingFee)) {
-            _logUpdateFee(productNftId, "ProcessingFee", productInfo.processingFee, processingFee);
-            productInfo.processingFee = processingFee;
+        if(!FeeLib.eq(feeInfo.processingFee, processingFee)) {
+            _logUpdateFee(productNftId, "ProcessingFee", feeInfo.processingFee, processingFee);
+            feeInfo.processingFee = processingFee;
             feesChanged = true;
         }
         
         if(feesChanged) {
-            instance.getInstanceStore().updateProduct(productNftId, productInfo, KEEP_STATE());
+            instance.getInstanceStore().updateFee(productNftId, feeInfo);
             emit LogComponentServiceProductFeesUpdated(productNftId);
         }
     }
@@ -324,26 +324,26 @@ contract ComponentService is
         virtual
     {
         (NftId distributionNftId, IInstance instance) = _getAndVerifyActiveComponent(DISTRIBUTION());
-        (NftId productNftId, IComponents.ProductInfo memory productInfo) = _getLinkedProductInfo(
+        (NftId productNftId, IComponents.FeeInfo memory feeInfo) = _getLinkedFeeInfo(
             instance.getInstanceReader(), distributionNftId);
         bool feesChanged = false;
 
         // update distributino fee if required
-        if(!FeeLib.eq(productInfo.distributionFee, distributionFee)) {
-            _logUpdateFee(productNftId, "DistributionFee", productInfo.distributionFee, distributionFee);
-            productInfo.distributionFee = distributionFee;
+        if(!FeeLib.eq(feeInfo.distributionFee, distributionFee)) {
+            _logUpdateFee(productNftId, "DistributionFee", feeInfo.distributionFee, distributionFee);
+            feeInfo.distributionFee = distributionFee;
             feesChanged = true;
         }
 
         // update min distribution owner fee if required
-        if(!FeeLib.eq(productInfo.minDistributionOwnerFee, minDistributionOwnerFee)) {
-            _logUpdateFee(productNftId, "MinDistributionOwnerFee", productInfo.minDistributionOwnerFee, minDistributionOwnerFee);
-            productInfo.minDistributionOwnerFee = minDistributionOwnerFee;
+        if(!FeeLib.eq(feeInfo.minDistributionOwnerFee, minDistributionOwnerFee)) {
+            _logUpdateFee(productNftId, "MinDistributionOwnerFee", feeInfo.minDistributionOwnerFee, minDistributionOwnerFee);
+            feeInfo.minDistributionOwnerFee = minDistributionOwnerFee;
             feesChanged = true;
         }
         
         if(feesChanged) {
-            instance.getInstanceStore().updateProduct(productNftId, productInfo, KEEP_STATE());
+            instance.getInstanceStore().updateFee(productNftId, feeInfo);
             emit LogComponentServiceDistributionFeesUpdated(distributionNftId);
         }
     }
@@ -432,33 +432,33 @@ contract ComponentService is
     {
         (NftId poolNftId, IInstance instance) = _getAndVerifyActiveComponent(POOL());
 
-        (NftId productNftId, IComponents.ProductInfo memory productInfo) = _getLinkedProductInfo(
+        (NftId productNftId, IComponents.FeeInfo memory feeInfo) = _getLinkedFeeInfo(
             instance.getInstanceReader(), poolNftId);
         bool feesChanged = false;
 
         // update pool fee if required
-        if(!FeeLib.eq(productInfo.poolFee, poolFee)) {
-            _logUpdateFee(productNftId, "PoolFee", productInfo.poolFee, poolFee);
-            productInfo.poolFee = poolFee;
+        if(!FeeLib.eq(feeInfo.poolFee, poolFee)) {
+            _logUpdateFee(productNftId, "PoolFee", feeInfo.poolFee, poolFee);
+            feeInfo.poolFee = poolFee;
             feesChanged = true;
         }
 
         // update staking fee if required
-        if(!FeeLib.eq(productInfo.stakingFee, stakingFee)) {
-            _logUpdateFee(productNftId, "StakingFee", productInfo.stakingFee, stakingFee);
-            productInfo.stakingFee = stakingFee;
+        if(!FeeLib.eq(feeInfo.stakingFee, stakingFee)) {
+            _logUpdateFee(productNftId, "StakingFee", feeInfo.stakingFee, stakingFee);
+            feeInfo.stakingFee = stakingFee;
             feesChanged = true;
         }
 
         // update performance fee if required
-        if(!FeeLib.eq(productInfo.performanceFee, performanceFee)) {
-            _logUpdateFee(productNftId, "PerformanceFee", productInfo.performanceFee, performanceFee);
-            productInfo.performanceFee = performanceFee;
+        if(!FeeLib.eq(feeInfo.performanceFee, performanceFee)) {
+            _logUpdateFee(productNftId, "PerformanceFee", feeInfo.performanceFee, performanceFee);
+            feeInfo.performanceFee = performanceFee;
             feesChanged = true;
         }
         
         if(feesChanged) {
-            instance.getInstanceStore().updateProduct(productNftId, productInfo, KEEP_STATE());
+            instance.getInstanceStore().updateFee(productNftId, feeInfo);
             emit LogComponentServicePoolFeesUpdated(poolNftId);
         }
     }
@@ -547,7 +547,7 @@ contract ComponentService is
     }
 
 
-    function _getLinkedProductInfo(
+    function _getLinkedFeeInfo(
         InstanceReader instanceReader, 
         NftId componentNftId
     )
@@ -555,11 +555,11 @@ contract ComponentService is
         view 
         returns(
             NftId productNftId, 
-            IComponents.ProductInfo memory info
+            IComponents.FeeInfo memory info
         )
     {
         productNftId = getRegistry().getObjectInfo(componentNftId).parentNftId;
-        info = instanceReader.getProductInfo(productNftId);
+        info = instanceReader.getFeeInfo(productNftId);
     }
 
 

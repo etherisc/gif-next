@@ -41,6 +41,7 @@ abstract contract Product is
 
     struct ProductStorage {
         IComponents.ProductInfo _productInfo;
+        IComponents.FeeInfo _feeInfo;
         IComponentService _componentService;
         IRiskService _riskService;
         IApplicationService _applicationService;
@@ -126,6 +127,15 @@ abstract contract Product is
         return _getProductStorage()._productInfo;
     }
 
+    function getInitialFeeInfo()
+        public 
+        virtual 
+        view 
+        returns (IComponents.FeeInfo memory feeInfo)
+    {
+        return _getProductStorage()._feeInfo;
+    }
+
 
     function _initializeProduct(
         address registry,
@@ -133,6 +143,7 @@ abstract contract Product is
         string memory name,
         address token,
         IComponents.ProductInfo memory productInfo,
+        IComponents.FeeInfo memory feeInfo,
         IAuthorization authorization,
         address initialOwner,
         bytes memory componentData // writeonly data that will saved in the object info record of the registry
@@ -154,6 +165,7 @@ abstract contract Product is
 
         ProductStorage storage $ = _getProductStorage();
         $._productInfo = productInfo;
+        $._feeInfo = feeInfo;
         $._riskService = IRiskService(_getServiceAddress(RISK())); 
         $._applicationService = IApplicationService(_getServiceAddress(APPLICATION())); 
         $._policyService = IPolicyService(_getServiceAddress(POLICY())); 

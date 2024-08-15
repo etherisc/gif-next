@@ -27,14 +27,6 @@ interface IComponents {
         NftId poolNftId; // mandatory
         NftId distributionNftId; // 0..1 (optional)
         NftId [] oracleNftId; // 0..n (optional)
-        // TODO: remove those fields
-        Fee productFee; // product fee on net premium
-        Fee processingFee; // product fee on payout amounts        
-        Fee distributionFee; // distribution fee for sales that do not include commissions
-        Fee minDistributionOwnerFee; // min fee required by distribution owner (not including commissions for distributors)
-        Fee poolFee; // pool fee on net premium
-        Fee stakingFee; // pool fee on staked capital from investor
-        Fee performanceFee; // pool fee on profits from capital investors
     }
 
     struct FeeInfo {
