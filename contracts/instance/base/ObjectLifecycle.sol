@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol"; 
 
-import {COMPONENT, BUNDLE, POLICY, REQUEST, RISK, CLAIM, PAYOUT, POOL, PREMIUM, PRODUCT, DISTRIBUTION, DISTRIBUTOR, DISTRIBUTOR_TYPE, REFERRAL} from "../../type/ObjectType.sol";
+import {COMPONENT, BUNDLE, POLICY, REQUEST, RISK, CLAIM, PAYOUT, POOL, PREMIUM, PRODUCT, DISTRIBUTION, DISTRIBUTOR, DISTRIBUTOR_TYPE, REFERRAL, FEE} from "../../type/ObjectType.sol";
 import {ACTIVE, PAUSED, ARCHIVED, CLOSED, APPLIED, COLLATERALIZED, REVOKED, SUBMITTED, CONFIRMED, DECLINED, EXPECTED, PAID, FULFILLED, FAILED, CANCELLED} from "../../type/StateId.sol";
 import {Lifecycle} from "../../shared/Lifecycle.sol";
 
@@ -99,6 +99,7 @@ contract ObjectLifecycle is
     // dummy lifecycle only
     function _setUpProductLifecycle() private {
         setInitialState(PRODUCT(), ACTIVE());
+        setInitialState(FEE(), ACTIVE());
     }
 
     // dummy lifecycles only

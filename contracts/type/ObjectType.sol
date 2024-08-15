@@ -125,6 +125,9 @@ function ACCOUNTING() pure returns (ObjectType) {
     return ObjectType.wrap(34);
 }
 
+function FEE() pure returns (ObjectType) {
+    return ObjectType.wrap(35);
+}
 
 /// @dev Object type that includes any other object type.
 /// Note that eq()/'==' does not take this property into account.
