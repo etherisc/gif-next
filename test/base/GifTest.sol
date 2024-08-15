@@ -485,6 +485,7 @@ contract GifTest is GifDeployer {
             "SimpleProduct",
             address(token),
             _getSimpleProductInfo(),
+            _getSimpleFeeInfo(),
             new SimpleProductAuthorization(name),
             productOwner // initial owner
         );
@@ -521,7 +522,16 @@ contract GifTest is GifDeployer {
             numberOfOracles: 0,
             poolNftId: NftIdLib.zero(),
             distributionNftId: NftIdLib.zero(),
-            oracleNftId: new NftId[](1),
+            oracleNftId: new NftId[](1)
+        });
+    }
+
+    function _getSimpleFeeInfo()
+        internal
+        view
+        returns (IComponents.FeeInfo memory feeInfo)
+    {
+        return IComponents.FeeInfo({
             productFee: FeeLib.zero(),
             processingFee: FeeLib.zero(),
             distributionFee: FeeLib.zero(),

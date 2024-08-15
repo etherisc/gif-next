@@ -249,6 +249,7 @@ contract TestPoolRegistration is GifTest {
             "SimpleProduct",
             address(token),
             _getSimpleProductInfo(),
+            _getSimpleFeeInfo(),
             new BasicProductAuthorization(name),
             owner);
     }
@@ -279,6 +280,7 @@ contract SimpleProductV4 is SimpleProduct {
         NftId instanceNftId,
         address token,
         IComponents.ProductInfo memory productInfo,
+        IComponents.FeeInfo memory feeInfo,
         IAuthorization authorization,
         address initialOwner
     )
@@ -288,6 +290,7 @@ contract SimpleProductV4 is SimpleProduct {
             "SimpleProductV4",
             token,
             productInfo,
+            feeInfo,
             authorization,
             initialOwner
         )

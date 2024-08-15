@@ -241,6 +241,9 @@ contract ComponentService is
         instanceStore.createProduct(
             productNftId, 
             product.getInitialProductInfo());
+        instanceStore.createFee(
+            productNftId, 
+            product.getInitialFeeInfo());
 
         // authorize
         instanceAdmin.initializeComponentAuthorization(product);

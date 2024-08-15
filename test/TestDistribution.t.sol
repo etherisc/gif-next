@@ -29,13 +29,13 @@ contract TestDistribution is GifTest {
     function test_distributionSetFees() public {
         // GIVEN - just setUp
 
-        IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
+        IComponents.FeeInfo memory feeInfo = instanceReader.getFeeInfo(productNftId);
 
-        Fee memory distributionFee = productInfo.distributionFee;
+        Fee memory distributionFee = feeInfo.distributionFee;
         assertEq(distributionFee.fractionalFee.toInt(), 0, "distribution fee not 0 (fractional)");
         assertEq(distributionFee.fixedFee, 0, "distribution fee not 0 (fixed)");
 
-        Fee memory minDistributionOwnerFee = productInfo.minDistributionOwnerFee;
+        Fee memory minDistributionOwnerFee = feeInfo.minDistributionOwnerFee;
         assertEq(minDistributionOwnerFee.fractionalFee.toInt(), 0, "min distribution owner fee not 0 (fractional)");
         assertEq(minDistributionOwnerFee.fixedFee, 0, "min distribution owner fee fee not 0 (fixed)");
         
@@ -48,12 +48,12 @@ contract TestDistribution is GifTest {
         vm.stopPrank();
 
         // THEN
-        productInfo = instanceReader.getProductInfo(productNftId);
-        distributionFee = productInfo.distributionFee;
+        feeInfo = instanceReader.getFeeInfo(productNftId);
+        distributionFee = feeInfo.distributionFee;
         assertEq(distributionFee.fractionalFee.toInt(), 123, "unexpected distribution fee (fractional))");
         assertEq(distributionFee.fixedFee, 456, "unexpected distribution fee not (fixed)");
 
-        minDistributionOwnerFee = productInfo.minDistributionOwnerFee;
+        minDistributionOwnerFee = feeInfo.minDistributionOwnerFee;
         assertEq(minDistributionOwnerFee.fractionalFee.toInt(), 12, "unexpected min distribution owner fee (fractional)");
         assertEq(minDistributionOwnerFee.fixedFee, 34, "unexpected min distribution owner fee not 0 (fixed)");
     }

@@ -412,12 +412,14 @@ contract ExternallyManagedPoolTest is GifTest {
         IComponents.ProductInfo memory productInfo = _getSimpleProductInfo();
         productInfo.hasDistribution = false;
         productInfo.expectedNumberOfOracles = 0;
+        IComponents.FeeInfo memory feeInfo = _getSimpleFeeInfo();
 
         emProduct = new ExternallyManagedProduct(
             address(registry),
             instanceNftId,
             address(token),
             productInfo,
+            feeInfo,
             productOwner
         );
     }

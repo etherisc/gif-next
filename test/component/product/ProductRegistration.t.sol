@@ -142,6 +142,7 @@ contract TestProductRegistration is GifTest {
             instanceNftId, 
             address(token),
             _getSimpleProductInfo(),
+            _getSimpleFeeInfo(),
             new BasicProductAuthorization("MyProductV4"),
             myProductOwner);
 
@@ -215,6 +216,7 @@ contract TestProductRegistration is GifTest {
         IComponents.ProductInfo memory productInfo = _getSimpleProductInfo();
         productInfo.hasDistribution = hasDistribution;
         productInfo.expectedNumberOfOracles = oracleCount;
+        IComponents.FeeInfo memory feeInfo = _getSimpleFeeInfo();
 
         return new SimpleProduct(
             address(registry),
@@ -222,6 +224,7 @@ contract TestProductRegistration is GifTest {
             name,
             address(token),
             productInfo,
+            feeInfo,
             new BasicProductAuthorization(name),
             owner);
     }
@@ -254,6 +257,7 @@ contract SimpleProductV4 is SimpleProduct {
         NftId instanceNftId,
         address token,
         IComponents.ProductInfo memory productInfo,
+        IComponents.FeeInfo memory feeInfo,
         IAuthorization authorization,
         address initialOwner
     )
@@ -263,6 +267,7 @@ contract SimpleProductV4 is SimpleProduct {
             "SimpleProductV4",
             token,
             productInfo,
+            feeInfo,
             authorization,
             initialOwner
         )
