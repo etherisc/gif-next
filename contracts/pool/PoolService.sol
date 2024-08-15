@@ -340,7 +340,7 @@ contract PoolService is
             bundleNetAmount + bundleFeeAmount, 
             poolFeeAmount);
 
-        _accountingService.increaseBundleBalance(
+        _accountingService.increaseBundleBalanceForPool(
             instanceStore,
             bundleNftId,
             bundleNetAmount, 
@@ -432,7 +432,7 @@ contract PoolService is
             payoutAmount, 
             AmountLib.zero());
 
-        _accountingService.decreaseBundleBalance(
+        _accountingService.decreaseBundleBalanceForPool(
             instanceStore,
             bundleNftId,
             payoutAmount, 

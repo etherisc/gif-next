@@ -45,8 +45,8 @@ contract AccountingService is
     ) 
         external
         virtual
+        restricted()
     {
-        // TODO: validate that the nft belongs to a component
         _changeTargetBalance(DECREASE, instanceStore, componentNftId, AmountLib.zero(), feeAmount);    
     }
 
@@ -58,8 +58,7 @@ contract AccountingService is
     ) 
         external 
         virtual 
-        // TODO re-enable once role granting is stable and fixed
-        // restricted()
+        restricted()
     {
         _checkNftType(productNftId, PRODUCT());
         _changeTargetBalance(INCREASE, instanceStore, productNftId, AmountLib.zero(), feeAmount);
@@ -69,8 +68,7 @@ contract AccountingService is
     function decreaseProductFees(InstanceStore instanceStore, NftId productNftId, Amount feeAmount)
         external 
         virtual 
-        // TODO re-enable once role granting is stable and fixed
-        // restricted()
+        restricted()
     {
         _checkNftType(productNftId, PRODUCT());
         _changeTargetBalance(DECREASE, instanceStore, productNftId, AmountLib.zero(), feeAmount);
@@ -84,8 +82,7 @@ contract AccountingService is
     )
         external
         virtual
-        // TODO re-enable once role granting is stable and fixed
-        // restricted()
+        restricted()
     {
         _checkNftType(distributionNftId, DISTRIBUTION());
         _changeTargetBalance(INCREASE, instanceStore, distributionNftId, amount, feeAmount);
@@ -100,8 +97,7 @@ contract AccountingService is
     )
         external
         virtual
-        // TODO re-enable once role granting is stable and fixed
-        // restricted()
+        restricted()
     {
         _checkNftType(distributionNftId, DISTRIBUTION());
         _changeTargetBalance(DECREASE, instanceStore, distributionNftId, amount, feeAmount);
@@ -115,8 +111,7 @@ contract AccountingService is
     )
         external
         virtual
-        // TODO re-enable once role granting is stable and fixed
-        // restricted()
+        restricted()
     {
         _checkNftType(distributorNftId, DISTRIBUTOR());
         _changeTargetBalance(INCREASE, instanceStore, distributorNftId, amount, feeAmount);
@@ -130,8 +125,7 @@ contract AccountingService is
     )
         external
         virtual
-        // TODO re-enable once role granting is stable and fixed
-        // restricted()
+        restricted()
     {
         _checkNftType(distributorNftId, DISTRIBUTOR());
         _changeTargetBalance(DECREASE, instanceStore, distributorNftId, amount, feeAmount);
@@ -145,8 +139,7 @@ contract AccountingService is
     )
         public 
         virtual 
-        // TODO re-enable once role granting is stable and fixed
-        // restricted()
+        restricted()
     {
         _checkNftType(poolNftId, POOL());
         _changeTargetBalance(INCREASE, instanceStore, poolNftId, amount, feeAmount);
@@ -175,8 +168,7 @@ contract AccountingService is
     )
         external
         virtual
-        // TODO re-enable once role granting is stable and fixed
-        // restricted()
+        restricted()
     {
         _checkNftType(bundleNftId, BUNDLE());
         _changeTargetBalance(INCREASE, instanceStore, bundleNftId, amount, feeAmount);
@@ -190,8 +182,35 @@ contract AccountingService is
     )
         external
         virtual
-        // TODO re-enable once role granting is stable and fixed
-        // restricted()
+        restricted()
+    {
+        _checkNftType(bundleNftId, BUNDLE());
+        _changeTargetBalance(DECREASE, instanceStore, bundleNftId, amount, feeAmount);
+    }
+
+    function increaseBundleBalanceForPool(
+        InstanceStore instanceStore, 
+        NftId bundleNftId, 
+        Amount amount, 
+        Amount feeAmount
+    )
+        external
+        virtual
+        restricted()
+    {
+        _checkNftType(bundleNftId, BUNDLE());
+        _changeTargetBalance(INCREASE, instanceStore, bundleNftId, amount, feeAmount);
+    }
+
+    function decreaseBundleBalanceForPool(
+        InstanceStore instanceStore, 
+        NftId bundleNftId, 
+        Amount amount, 
+        Amount feeAmount
+    )
+        external
+        virtual
+        restricted()
     {
         _checkNftType(bundleNftId, BUNDLE());
         _changeTargetBalance(DECREASE, instanceStore, bundleNftId, amount, feeAmount);
