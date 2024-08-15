@@ -10,6 +10,7 @@ import {IStaking} from "../staking/IStaking.sol";
 import {ObjectType, ObjectTypeLib, ALL, REGISTRY, STAKING, POOL, RELEASE} from "../type/ObjectType.sol";
 import {ReleaseRegistry} from "./ReleaseRegistry.sol";
 import {RoleId, RoleIdLib, ADMIN_ROLE, GIF_MANAGER_ROLE, GIF_ADMIN_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
+import {Staking} from "../staking/Staking.sol";
 import {StakingStore} from "../staking/StakingStore.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {TokenRegistry} from "./TokenRegistry.sol";
@@ -367,6 +368,12 @@ contract RegistryAdmin is
         _createTarget(address(IStaking(_staking).getTokenHandler()), STAKING_TH_TARGET_NAME, true, false);
         _createTarget(_stakingStore, STAKING_STORE_TARGET_NAME, true, false);
 
+        // staking function authorization for public role
+        FunctionInfo[] memory functions;
+        functions = new FunctionInfo[](1);
+        functions[0] = toFunction(Staking.approveTokenHandler.selector, "approveTokenHandler");
+        _authorizeTargetFunctions(_staking, PUBLIC_ROLE(), functions); // only owner protected
+
         // staking function authorization for staking service
         RoleId stakingServiceRoleId = RoleIdLib.roleForTypeAndAllVersions(STAKING());
         _createRole(
@@ -377,7 +384,6 @@ contract RegistryAdmin is
                 maxMemberCount: MAX_NUM_RELEASES,
                 name: STAKING_SERVICE_ROLE_NAME}));
 
-        FunctionInfo[] memory functions;
         functions = new FunctionInfo[](12);
         functions[0] = toFunction(IStaking.registerTarget.selector, "registerTarget");
         functions[1] = toFunction(IStaking.setLockingPeriod.selector, "setLockingPeriod");

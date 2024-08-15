@@ -38,11 +38,13 @@ abstract contract Component is
         _;
     }
 
+
     function _getComponentStorage() private pure returns (ComponentStorage storage $) {
         assembly {
             $.slot := COMPONENT_LOCATION_V1
         }
     }
+
 
     function _initializeComponent(
         address authority,
@@ -88,14 +90,6 @@ abstract contract Component is
 
         _registerInterface(type(IAccessManaged).interfaceId);
         _registerInterface(type(IComponent).interfaceId);
-    }
-
-
-    function approveTokenHandler(IERC20Metadata token, Amount amount)
-        public
-        onlyOwner()
-    {
-        _approveTokenHandler(token, amount);
     }
 
 
@@ -164,6 +158,9 @@ abstract contract Component is
     }
 
 
+    /// @dev Approves token hanlder to spend up to the specified amount of tokens.
+    /// Reverts if component wallet is not token handler itself.
+    /// Only component owner (nft holder) is authorizes to call this function.
     function _approveTokenHandler(IERC20Metadata token, Amount amount)
         internal
         virtual

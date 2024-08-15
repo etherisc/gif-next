@@ -73,7 +73,6 @@ contract PoolWithReinsurance is
         _initializePolicyHolder(registry);
     }
 
-
     function createReinsurance(
         SimpleProduct product, // product that provides reinsurance
         uint256 sumInsured // sum insured for reinsurance

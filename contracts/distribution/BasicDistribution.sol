@@ -44,8 +44,8 @@ contract BasicDistribution is
     )
         external
         virtual
-        onlyOwner()
         restricted()
+        onlyOwner()
         returns (DistributorType distributorType)
     {
         return _createDistributorType(
@@ -67,8 +67,8 @@ contract BasicDistribution is
     )
         external
         virtual
-        onlyOwner()
         restricted()
+        onlyOwner()
         returns(NftId distributorNftId)
     {
         return _createDistributor(distributor, distributorType, data);
@@ -81,9 +81,9 @@ contract BasicDistribution is
     )
         external
         virtual
+        restricted()
         onlyOwner()
         onlyNftOfType(distributorNftId, DISTRIBUTOR())
-        restricted()
     {
         _changeDistributorType(distributorNftId, distributorType, data);
     }
@@ -101,8 +101,8 @@ contract BasicDistribution is
     )
         external
         virtual
-        onlyDistributor()
         restricted()
+        onlyDistributor()
         returns (ReferralId referralId)
     {
         NftId distributorNftId = getDistributorNftId(msg.sender);
