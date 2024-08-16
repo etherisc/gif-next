@@ -26,7 +26,7 @@ import {Amount, AmountLib} from "../type/Amount.sol";
 import {ContractLib} from "../shared/ContractLib.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
 import {KEEP_STATE} from "../type/StateId.sol";
-import {NftId} from "../type/NftId.sol";
+import {NftId, NftIdLib} from "../type/NftId.sol";
 import {ObjectType, ACCOUNTING, REGISTRY, COMPONENT, DISTRIBUTION, INSTANCE, ORACLE, POOL, PRODUCT} from "../type/ObjectType.sol";
 import {Service} from "../shared/Service.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
@@ -236,11 +236,18 @@ contract ComponentService is
 
         // get product
         IProductComponent product = IProductComponent(productAddress);
+        
+        IComponents.ProductInfo memory initialProductInfo = product.getInitialProductInfo();
+        // force initialization of linked components with empty values to 
+        // ensure no components are linked upon initialization of the product
+        initialProductInfo.poolNftId = NftIdLib.zero();
+        initialProductInfo.distributionNftId = NftIdLib.zero();
+        initialProductInfo.oracleNftId = new NftId[](0);
 
         // create info
         instanceStore.createProduct(
             productNftId, 
-            product.getInitialProductInfo());
+            initialProductInfo);
         instanceStore.createFee(
             productNftId, 
             product.getInitialFeeInfo());
