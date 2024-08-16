@@ -18,6 +18,7 @@ import {UFixed} from "../type/UFixed.sol";
 contract StakingReader is
     IRegistryLinked,
     Initializable
+    
 {
 
     error ErrorStakingReaderUnauthorizedCaler();

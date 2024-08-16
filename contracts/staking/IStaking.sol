@@ -13,8 +13,9 @@ import {Timestamp} from "../type/Timestamp.sol";
 import {UFixed} from "../type/UFixed.sol";
 
 interface IStaking is 
-    IComponent,
-    IVersionable
+    IVersionable,
+    IComponent
+    
 {
     // staking rate
     event LogStakingStakingRateSet(uint256 chainId, address token, UFixed oldStakingRate, UFixed newStakingRate);

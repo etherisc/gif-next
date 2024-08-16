@@ -9,9 +9,11 @@ import {ObjectType} from "../type/ObjectType.sol";
 import {RoleId} from "../type/RoleId.sol";
 
 interface IService is 
-    IRegisterable,
     IVersionable,
-    IAccessManaged
+    IAccessManaged,
+    IRegisterable
+    
+    
 {
     error ErrorServiceNotImplemented();
 
