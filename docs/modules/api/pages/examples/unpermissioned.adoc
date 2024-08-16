@@ -1,0 +1,1258 @@
+:github-icon: pass:[<svg class="icon"><use href="#github-icon"/></svg>]
+
+= Unpermissioned example components
+
+This directory contains a set of unpermissioned example compoents that are mainly used for testing purposes.
+The expose all the available functions of the component without requiring any permissions (and thereby setup) to use them. 
+
+Components that are built in such a way should never be used in production, as they expose functions that can move tokens or other assets without any authorization. 
+
+== Contracts
+
+:constructor: pass:normal[xref:#SimpleDistribution-constructor-address-NftId-contract-IAuthorization-address-address-[`++constructor++`]]
+:initialize: pass:normal[xref:#SimpleDistribution-initialize-address-NftId-contract-IAuthorization-address-string-address-[`++initialize++`]]
+:approveTokenHandler: pass:normal[xref:#SimpleDistribution-approveTokenHandler-contract-IERC20Metadata-Amount-[`++approveTokenHandler++`]]
+:setLocked: pass:normal[xref:#SimpleDistribution-setLocked-bool-[`++setLocked++`]]
+:setWallet: pass:normal[xref:#SimpleDistribution-setWallet-address-[`++setWallet++`]]
+
+[.contract]
+[[SimpleDistribution]]
+=== `++SimpleDistribution++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/examples/unpermissioned/SimpleDistribution.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/examples/unpermissioned/SimpleDistribution.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++constructor(registry, productNftId, authorization, initialOwner, token)++`]
+* [`++initialize(registry, productNftId, authorization, initialOwner, name, token)++`]
+* [`++approveTokenHandler(token, amount)++`]
+* [`++setLocked(locked)++`]
+* [`++setWallet(newWallet)++`]
+
+[.contract-subindex-inherited]
+.BasicDistribution
+* [`++setFees(distributionFee, minDistributionOwnerFee)++`]
+* [`++createDistributorType(name, minDiscountPercentage, maxDiscountPercentage, commissionPercentage, maxReferralCount, maxReferralLifetime, allowSelfReferrals, allowRenewals, data)++`]
+* [`++createDistributor(distributor, distributorType, data)++`]
+* [`++changeDistributorType(distributorNftId, distributorType, data)++`]
+* [`++createReferral(code, discountPercentage, maxReferrals, expiryAt, data)++`]
+* [`++_initializeBasicDistribution(registry, instanceNftId, authorization, initialOwner, name, token)++`]
+
+[.contract-subindex-inherited]
+.Distribution
+* [`++processRenewal(referralId, feeAmount)++`]
+* [`++withdrawCommission(distributorNftId, amount)++`]
+* [`++isDistributor(candidate)++`]
+* [`++getDistributorNftId(distributor)++`]
+* [`++getDiscountPercentage(referralCode)++`]
+* [`++getReferralId(referralCode)++`]
+* [`++calculateRenewalFeeAmount(referralId, netPremiumAmount)++`]
+* [`++isVerifying()++`]
+* [`++_initializeDistribution(registry, productNftId, authorization, initialOwner, name, token, componentData)++`]
+* [`++_setFees(distributionFee, minDistributionOwnerFee)++`]
+* [`++_createDistributorType(name, minDiscountPercentage, maxDiscountPercentage, commissionPercentage, maxReferralCount, maxReferralLifetime, allowSelfReferrals, allowRenewals, data)++`]
+* [`++_createDistributor(distributor, distributorType, data)++`]
+* [`++_changeDistributorType(distributorNftId, distributorType, data)++`]
+* [`++_createReferral(distributorNftId, code, discountPercentage, maxReferrals, expiryAt, data)++`]
+* [`++_withdrawCommission(distributorNftId, amount)++`]
+* [`++_nftTransferFrom(from, to, tokenId, operator)++`]
+
+[.contract-subindex-inherited]
+.IDistributionComponent
+
+[.contract-subindex-inherited]
+.InstanceLinkedComponent
+* [`++withdrawFees(amount)++`]
+* [`++getInstance()++`]
+* [`++getAuthorization()++`]
+* [`++_initializeInstanceLinkedComponent(registry, parentNftId, name, token, componentType, authorization, isInterceptor, initialOwner, componentData)++`]
+* [`++_checkAndGetInstanceNftId(registryAddress, parentNftId, componentType)++`]
+* [`++_checkAndGetRegistry(registryAddress, objectNftId, requiredType)++`]
+* [`++_setWallet(newWallet)++`]
+* [`++_getComponentInfo()++`]
+* [`++_getInstanceReader()++`]
+* [`++_withdrawFees(amount)++`]
+
+[.contract-subindex-inherited]
+.IInstanceLinkedComponent
+
+[.contract-subindex-inherited]
+.Component
+* [`++_initializeComponent(authority, registry, parentNftId, name, token, componentType, isInterceptor, initialOwner, registryData, componentData)++`]
+* [`++nftTransferFrom(from, to, tokenId, operator)++`]
+* [`++getWallet()++`]
+* [`++getTokenHandler()++`]
+* [`++getToken()++`]
+* [`++getName()++`]
+* [`++getComponentInfo()++`]
+* [`++getInitialComponentInfo()++`]
+* [`++isNftInterceptor()++`]
+* [`++isRegistered()++`]
+* [`++_approveTokenHandler(token, amount)++`]
+* [`++_setLocked(locked)++`]
+* [`++_getServiceAddress(domain)++`]
+
+[.contract-subindex-inherited]
+.IComponent
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+* [`++__AccessManaged_init(initialAuthority)++`]
+* [`++__AccessManaged_init_unchained(initialAuthority)++`]
+* [`++authority()++`]
+* [`++setAuthority(newAuthority)++`]
+* [`++isConsumingScheduledOp()++`]
+* [`++_setAuthority(newAuthority)++`]
+* [`++_checkCanCall(caller, data)++`]
+
+[.contract-subindex-inherited]
+.Registerable
+* [`++_initializeRegisterable(registry, parentNftId, objectType, isInterceptor, initialOwner, data)++`]
+* [`++getRelease()++`]
+* [`++getInitialInfo()++`]
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.NftOwnable
+* [`++_checkNftType(nftId, expectedObjectType)++`]
+* [`++_initializeNftOwnable(registry, initialOwner)++`]
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+* [`++_linkToNftOwnable(nftOwnableAddress)++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+* [`++_initializeRegistryLinked(registry)++`]
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+* [`++_initializeERC165()++`]
+* [`++_registerInterface(interfaceId)++`]
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.ITransferInterceptor
+
+[.contract-subindex-inherited]
+.IAccessManaged
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+* [`++__Context_init()++`]
+* [`++__Context_init_unchained()++`]
+* [`++_msgSender()++`]
+* [`++_msgData()++`]
+* [`++_contextSuffixLength()++`]
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.BasicDistribution
+
+[.contract-subindex-inherited]
+.Distribution
+
+[.contract-subindex-inherited]
+.IDistributionComponent
+* [`++LogDistributorUpdated(to, operator)++`]
+
+[.contract-subindex-inherited]
+.InstanceLinkedComponent
+
+[.contract-subindex-inherited]
+.IInstanceLinkedComponent
+
+[.contract-subindex-inherited]
+.Component
+
+[.contract-subindex-inherited]
+.IComponent
+* [`++LogComponentWalletAddressChanged(oldWallet, newWallet)++`]
+* [`++LogComponentWalletTokensTransferred(from, to, amount)++`]
+* [`++LogComponentTokenHandlerApproved(tokenHandler, token, limit, isMaxAmount)++`]
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+
+[.contract-subindex-inherited]
+.Registerable
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.NftOwnable
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.ITransferInterceptor
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[SimpleDistribution-constructor-address-NftId-contract-IAuthorization-address-address-]]
+==== `[.contract-item-name]#++constructor++#++(address registry, NftId productNftId, contract IAuthorization authorization, address initialOwner, address token)++` [.item-kind]#public#
+
+[.contract-item]
+[[SimpleDistribution-initialize-address-NftId-contract-IAuthorization-address-string-address-]]
+==== `[.contract-item-name]#++initialize++#++(address registry, NftId productNftId, contract IAuthorization authorization, address initialOwner, string name, address token)++` [.item-kind]#public#
+
+[.contract-item]
+[[SimpleDistribution-approveTokenHandler-contract-IERC20Metadata-Amount-]]
+==== `[.contract-item-name]#++approveTokenHandler++#++(contract IERC20Metadata token, Amount amount)++` [.item-kind]#external#
+
+[.contract-item]
+[[SimpleDistribution-setLocked-bool-]]
+==== `[.contract-item-name]#++setLocked++#++(bool locked)++` [.item-kind]#external#
+
+[.contract-item]
+[[SimpleDistribution-setWallet-address-]]
+==== `[.contract-item-name]#++setWallet++#++(address newWallet)++` [.item-kind]#external#
+
+:ANSWER_SYNC: pass:normal[xref:#SimpleOracle-ANSWER_SYNC-string[`++ANSWER_SYNC++`]]
+:SimpleRequest: pass:normal[xref:#SimpleOracle-SimpleRequest[`++SimpleRequest++`]]
+:SimpleResponse: pass:normal[xref:#SimpleOracle-SimpleResponse[`++SimpleResponse++`]]
+:LogSimpleOracleRequestReceived: pass:normal[xref:#SimpleOracle-LogSimpleOracleRequestReceived-RequestId-NftId-bool-string-[`++LogSimpleOracleRequestReceived++`]]
+:LogSimpleOracleCancellingReceived: pass:normal[xref:#SimpleOracle-LogSimpleOracleCancellingReceived-RequestId-[`++LogSimpleOracleCancellingReceived++`]]
+:LogSimpleOracleAsyncResponseSent: pass:normal[xref:#SimpleOracle-LogSimpleOracleAsyncResponseSent-RequestId-string-[`++LogSimpleOracleAsyncResponseSent++`]]
+:LogSimpleOracleSyncResponseSent: pass:normal[xref:#SimpleOracle-LogSimpleOracleSyncResponseSent-RequestId-string-[`++LogSimpleOracleSyncResponseSent++`]]
+:constructor: pass:normal[xref:#SimpleOracle-constructor-address-NftId-contract-IAuthorization-address-address-[`++constructor++`]]
+:initialize: pass:normal[xref:#SimpleOracle-initialize-address-NftId-contract-IAuthorization-address-string-address-[`++initialize++`]]
+:_request: pass:normal[xref:#SimpleOracle-_request-RequestId-NftId-bytes-Timestamp-[`++_request++`]]
+:_cancel: pass:normal[xref:#SimpleOracle-_cancel-RequestId-[`++_cancel++`]]
+:respondAsync: pass:normal[xref:#SimpleOracle-respondAsync-RequestId-string-bool-Timestamp-[`++respondAsync++`]]
+:_respondSync: pass:normal[xref:#SimpleOracle-_respondSync-RequestId-[`++_respondSync++`]]
+
+[.contract]
+[[SimpleOracle]]
+=== `++SimpleOracle++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/examples/unpermissioned/SimpleOracle.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/examples/unpermissioned/SimpleOracle.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++constructor(registry, productNftId, authorization, initialOwner, token)++`]
+* [`++initialize(registry, productNftId, authorization, initialOwner, name, token)++`]
+* [`++_request(requestId, requesterId, requestData, expiryAt)++`]
+* [`++_cancel(requestId)++`]
+* [`++respondAsync(requestId, responseText, revertInCall, revertUntil)++`]
+* [`++_respondSync(requestId)++`]
+
+[.contract-subindex-inherited]
+.BasicOracle
+* [`++respond(requestId, responseData)++`]
+* [`++_initializeBasicOracle(registry, instanceNftId, authorization, initialOwner, name, token)++`]
+
+[.contract-subindex-inherited]
+.Oracle
+* [`++request(requestId, requesterId, requestData, expiryAt)++`]
+* [`++cancel(requestId)++`]
+* [`++isVerifying()++`]
+* [`++withdrawFees(amount)++`]
+* [`++_initializeOracle(registry, productNftId, authorization, initialOwner, name, token, componentData)++`]
+* [`++_respond(requestId, responseData)++`]
+
+[.contract-subindex-inherited]
+.IOracleComponent
+
+[.contract-subindex-inherited]
+.InstanceLinkedComponent
+* [`++getInstance()++`]
+* [`++getAuthorization()++`]
+* [`++_initializeInstanceLinkedComponent(registry, parentNftId, name, token, componentType, authorization, isInterceptor, initialOwner, componentData)++`]
+* [`++_checkAndGetInstanceNftId(registryAddress, parentNftId, componentType)++`]
+* [`++_checkAndGetRegistry(registryAddress, objectNftId, requiredType)++`]
+* [`++_setWallet(newWallet)++`]
+* [`++_getComponentInfo()++`]
+* [`++_getInstanceReader()++`]
+* [`++_withdrawFees(amount)++`]
+
+[.contract-subindex-inherited]
+.IInstanceLinkedComponent
+
+[.contract-subindex-inherited]
+.Component
+* [`++_initializeComponent(authority, registry, parentNftId, name, token, componentType, isInterceptor, initialOwner, registryData, componentData)++`]
+* [`++nftTransferFrom(from, to, tokenId, operator)++`]
+* [`++getWallet()++`]
+* [`++getTokenHandler()++`]
+* [`++getToken()++`]
+* [`++getName()++`]
+* [`++getComponentInfo()++`]
+* [`++getInitialComponentInfo()++`]
+* [`++isNftInterceptor()++`]
+* [`++isRegistered()++`]
+* [`++_approveTokenHandler(token, amount)++`]
+* [`++_nftTransferFrom(from, to, tokenId, operator)++`]
+* [`++_setLocked(locked)++`]
+* [`++_getServiceAddress(domain)++`]
+
+[.contract-subindex-inherited]
+.IComponent
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+* [`++__AccessManaged_init(initialAuthority)++`]
+* [`++__AccessManaged_init_unchained(initialAuthority)++`]
+* [`++authority()++`]
+* [`++setAuthority(newAuthority)++`]
+* [`++isConsumingScheduledOp()++`]
+* [`++_setAuthority(newAuthority)++`]
+* [`++_checkCanCall(caller, data)++`]
+
+[.contract-subindex-inherited]
+.Registerable
+* [`++_initializeRegisterable(registry, parentNftId, objectType, isInterceptor, initialOwner, data)++`]
+* [`++getRelease()++`]
+* [`++getInitialInfo()++`]
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.NftOwnable
+* [`++_checkNftType(nftId, expectedObjectType)++`]
+* [`++_initializeNftOwnable(registry, initialOwner)++`]
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+* [`++_linkToNftOwnable(nftOwnableAddress)++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+* [`++_initializeRegistryLinked(registry)++`]
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+* [`++_initializeERC165()++`]
+* [`++_registerInterface(interfaceId)++`]
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.ITransferInterceptor
+
+[.contract-subindex-inherited]
+.IAccessManaged
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+* [`++__Context_init()++`]
+* [`++__Context_init_unchained()++`]
+* [`++_msgSender()++`]
+* [`++_msgData()++`]
+* [`++_contextSuffixLength()++`]
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+* [`++LogSimpleOracleRequestReceived(requestId, requesterId, synchronous, requestText)++`]
+* [`++LogSimpleOracleCancellingReceived(requestId)++`]
+* [`++LogSimpleOracleAsyncResponseSent(requestId, responseText)++`]
+* [`++LogSimpleOracleSyncResponseSent(requestId, responseText)++`]
+
+[.contract-subindex-inherited]
+.BasicOracle
+
+[.contract-subindex-inherited]
+.Oracle
+
+[.contract-subindex-inherited]
+.IOracleComponent
+
+[.contract-subindex-inherited]
+.InstanceLinkedComponent
+
+[.contract-subindex-inherited]
+.IInstanceLinkedComponent
+
+[.contract-subindex-inherited]
+.Component
+
+[.contract-subindex-inherited]
+.IComponent
+* [`++LogComponentWalletAddressChanged(oldWallet, newWallet)++`]
+* [`++LogComponentWalletTokensTransferred(from, to, amount)++`]
+* [`++LogComponentTokenHandlerApproved(tokenHandler, token, limit, isMaxAmount)++`]
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+
+[.contract-subindex-inherited]
+.Registerable
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.NftOwnable
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.ITransferInterceptor
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[SimpleOracle-constructor-address-NftId-contract-IAuthorization-address-address-]]
+==== `[.contract-item-name]#++constructor++#++(address registry, NftId productNftId, contract IAuthorization authorization, address initialOwner, address token)++` [.item-kind]#public#
+
+[.contract-item]
+[[SimpleOracle-initialize-address-NftId-contract-IAuthorization-address-string-address-]]
+==== `[.contract-item-name]#++initialize++#++(address registry, NftId productNftId, contract IAuthorization authorization, address initialOwner, string name, address token)++` [.item-kind]#public#
+
+[.contract-item]
+[[SimpleOracle-_request-RequestId-NftId-bytes-Timestamp-]]
+==== `[.contract-item-name]#++_request++#++(RequestId requestId, NftId requesterId, bytes requestData, Timestamp expiryAt)++` [.item-kind]#internal#
+
+use case specific handling of oracle requests
+for now only log is emitted to verify that request has been received by oracle component
+
+[.contract-item]
+[[SimpleOracle-_cancel-RequestId-]]
+==== `[.contract-item-name]#++_cancel++#++(RequestId requestId)++` [.item-kind]#internal#
+
+use case specific handling of oracle requests
+for now only log is emitted to verify that cancelling has been received by oracle component
+
+[.contract-item]
+[[SimpleOracle-respondAsync-RequestId-string-bool-Timestamp-]]
+==== `[.contract-item-name]#++respondAsync++#++(RequestId requestId, string responseText, bool revertInCall, Timestamp revertUntil)++` [.item-kind]#external#
+
+[.contract-item]
+[[SimpleOracle-_respondSync-RequestId-]]
+==== `[.contract-item-name]#++_respondSync++#++(RequestId requestId)++` [.item-kind]#internal#
+
+[.contract-item]
+[[SimpleOracle-LogSimpleOracleRequestReceived-RequestId-NftId-bool-string-]]
+==== `[.contract-item-name]#++LogSimpleOracleRequestReceived++#++(RequestId requestId, NftId requesterId, bool synchronous, string requestText)++` [.item-kind]#event#
+
+[.contract-item]
+[[SimpleOracle-LogSimpleOracleCancellingReceived-RequestId-]]
+==== `[.contract-item-name]#++LogSimpleOracleCancellingReceived++#++(RequestId requestId)++` [.item-kind]#event#
+
+[.contract-item]
+[[SimpleOracle-LogSimpleOracleAsyncResponseSent-RequestId-string-]]
+==== `[.contract-item-name]#++LogSimpleOracleAsyncResponseSent++#++(RequestId requestId, string responseText)++` [.item-kind]#event#
+
+[.contract-item]
+[[SimpleOracle-LogSimpleOracleSyncResponseSent-RequestId-string-]]
+==== `[.contract-item-name]#++LogSimpleOracleSyncResponseSent++#++(RequestId requestId, string responseText)++` [.item-kind]#event#
+
+:constructor: pass:normal[xref:#SimplePool-constructor-address-NftId-address-struct-IComponents-PoolInfo-contract-IAuthorization-address-[`++constructor++`]]
+:initialize: pass:normal[xref:#SimplePool-initialize-address-NftId-address-struct-IComponents-PoolInfo-contract-IAuthorization-address-[`++initialize++`]]
+:createBundle: pass:normal[xref:#SimplePool-createBundle-struct-Fee-uint256-Seconds-bytes-[`++createBundle++`]]
+:fundPoolWallet: pass:normal[xref:#SimplePool-fundPoolWallet-Amount-[`++fundPoolWallet++`]]
+:defundPoolWallet: pass:normal[xref:#SimplePool-defundPoolWallet-Amount-[`++defundPoolWallet++`]]
+:approveTokenHandler: pass:normal[xref:#SimplePool-approveTokenHandler-contract-IERC20Metadata-Amount-[`++approveTokenHandler++`]]
+:setLocked: pass:normal[xref:#SimplePool-setLocked-bool-[`++setLocked++`]]
+:setWallet: pass:normal[xref:#SimplePool-setWallet-address-[`++setWallet++`]]
+
+[.contract]
+[[SimplePool]]
+=== `++SimplePool++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/examples/unpermissioned/SimplePool.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/examples/unpermissioned/SimplePool.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++constructor(registry, productNftId, token, poolInfo, authorization, initialOwner)++`]
+* [`++initialize(registry, productNftId, token, poolInfo, authorization, initialOwner)++`]
+* [`++createBundle(fee, initialAmount, lifetime, filter)++`]
+* [`++fundPoolWallet(amount)++`]
+* [`++defundPoolWallet(amount)++`]
+* [`++approveTokenHandler(token, amount)++`]
+* [`++setLocked(locked)++`]
+* [`++setWallet(newWallet)++`]
+
+[.contract-subindex-inherited]
+.BasicPool
+* [`++_initializeBasicPool(registry, productNftId, name, token, poolInfo, authorization, initialOwner)++`]
+* [`++stake(bundleNftId, amount)++`]
+* [`++unstake(bundleNftId, amount)++`]
+* [`++extend(bundleNftId, lifetimeExtension)++`]
+* [`++lockBundle(bundleNftId)++`]
+* [`++unlockBundle(bundleNftId)++`]
+* [`++closeBundle(bundleNftId)++`]
+* [`++setBundleFee(bundleNftId, fee)++`]
+* [`++withdrawBundleFees(bundleNftId, amount)++`]
+* [`++setMaxBalanceAmount(maxBalanceAmount)++`]
+* [`++setFees(poolFee, stakingFee, performanceFee)++`]
+
+[.contract-subindex-inherited]
+.Pool
+* [`++getContractLocation(name)++`]
+* [`++verifyApplication(applicationNftId, bundleNftId, collateralizationAmount)++`]
+* [`++processConfirmedClaim(policyNftId, claimId, amount)++`]
+* [`++applicationMatchesBundle(applicationNftId, applicationData, bundleNftId, bundleFilter, collateralizationAmount)++`]
+* [`++getInitialPoolInfo()++`]
+* [`++_initializePool(registry, productNftId, name, token, poolInfo, authorization, initialOwner, componentData)++`]
+* [`++_setPoolFees(poolFee, stakingFee, performanceFee)++`]
+* [`++_setMaxBalanceAmount(maxBalanceAmount)++`]
+* [`++_fundPoolWallet(amount)++`]
+* [`++_defundPoolWallet(amount)++`]
+* [`++_createBundle(bundleOwner, fee, lifetime, filter)++`]
+* [`++_setBundleFee(bundleNftId, fee)++`]
+* [`++_withdrawBundleFees(bundleNftId, amount)++`]
+* [`++_stake(bundleNftId, amount)++`]
+* [`++_unstake(bundleNftId, amount)++`]
+* [`++_extend(bundleNftId, lifetimeExtension)++`]
+* [`++_lockBundle(bundleNftId)++`]
+* [`++_unlockBundle(bundleNftId)++`]
+* [`++_closeBundle(bundleNftId)++`]
+* [`++_processFundedClaim(policyNftId, claimId, availableAmount)++`]
+
+[.contract-subindex-inherited]
+.IPoolComponent
+
+[.contract-subindex-inherited]
+.InstanceLinkedComponent
+* [`++withdrawFees(amount)++`]
+* [`++getInstance()++`]
+* [`++getAuthorization()++`]
+* [`++_initializeInstanceLinkedComponent(registry, parentNftId, name, token, componentType, authorization, isInterceptor, initialOwner, componentData)++`]
+* [`++_checkAndGetInstanceNftId(registryAddress, parentNftId, componentType)++`]
+* [`++_checkAndGetRegistry(registryAddress, objectNftId, requiredType)++`]
+* [`++_setWallet(newWallet)++`]
+* [`++_getComponentInfo()++`]
+* [`++_getInstanceReader()++`]
+* [`++_withdrawFees(amount)++`]
+
+[.contract-subindex-inherited]
+.IInstanceLinkedComponent
+
+[.contract-subindex-inherited]
+.Component
+* [`++_initializeComponent(authority, registry, parentNftId, name, token, componentType, isInterceptor, initialOwner, registryData, componentData)++`]
+* [`++nftTransferFrom(from, to, tokenId, operator)++`]
+* [`++getWallet()++`]
+* [`++getTokenHandler()++`]
+* [`++getToken()++`]
+* [`++getName()++`]
+* [`++getComponentInfo()++`]
+* [`++getInitialComponentInfo()++`]
+* [`++isNftInterceptor()++`]
+* [`++isRegistered()++`]
+* [`++_approveTokenHandler(token, amount)++`]
+* [`++_nftTransferFrom(from, to, tokenId, operator)++`]
+* [`++_setLocked(locked)++`]
+* [`++_getServiceAddress(domain)++`]
+
+[.contract-subindex-inherited]
+.IComponent
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+* [`++__AccessManaged_init(initialAuthority)++`]
+* [`++__AccessManaged_init_unchained(initialAuthority)++`]
+* [`++authority()++`]
+* [`++setAuthority(newAuthority)++`]
+* [`++isConsumingScheduledOp()++`]
+* [`++_setAuthority(newAuthority)++`]
+* [`++_checkCanCall(caller, data)++`]
+
+[.contract-subindex-inherited]
+.Registerable
+* [`++_initializeRegisterable(registry, parentNftId, objectType, isInterceptor, initialOwner, data)++`]
+* [`++getRelease()++`]
+* [`++getInitialInfo()++`]
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.NftOwnable
+* [`++_checkNftType(nftId, expectedObjectType)++`]
+* [`++_initializeNftOwnable(registry, initialOwner)++`]
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+* [`++_linkToNftOwnable(nftOwnableAddress)++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+* [`++_initializeRegistryLinked(registry)++`]
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+* [`++_initializeERC165()++`]
+* [`++_registerInterface(interfaceId)++`]
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.ITransferInterceptor
+
+[.contract-subindex-inherited]
+.IAccessManaged
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+* [`++__Context_init()++`]
+* [`++__Context_init_unchained()++`]
+* [`++_msgSender()++`]
+* [`++_msgData()++`]
+* [`++_contextSuffixLength()++`]
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.BasicPool
+
+[.contract-subindex-inherited]
+.Pool
+
+[.contract-subindex-inherited]
+.IPoolComponent
+* [`++LogPoolVerifiedByPool(pool, applicationNftId, collateralizationAmount)++`]
+
+[.contract-subindex-inherited]
+.InstanceLinkedComponent
+
+[.contract-subindex-inherited]
+.IInstanceLinkedComponent
+
+[.contract-subindex-inherited]
+.Component
+
+[.contract-subindex-inherited]
+.IComponent
+* [`++LogComponentWalletAddressChanged(oldWallet, newWallet)++`]
+* [`++LogComponentWalletTokensTransferred(from, to, amount)++`]
+* [`++LogComponentTokenHandlerApproved(tokenHandler, token, limit, isMaxAmount)++`]
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+
+[.contract-subindex-inherited]
+.Registerable
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.NftOwnable
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.ITransferInterceptor
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[SimplePool-constructor-address-NftId-address-struct-IComponents-PoolInfo-contract-IAuthorization-address-]]
+==== `[.contract-item-name]#++constructor++#++(address registry, NftId productNftId, address token, struct IComponents.PoolInfo poolInfo, contract IAuthorization authorization, address initialOwner)++` [.item-kind]#public#
+
+[.contract-item]
+[[SimplePool-initialize-address-NftId-address-struct-IComponents-PoolInfo-contract-IAuthorization-address-]]
+==== `[.contract-item-name]#++initialize++#++(address registry, NftId productNftId, address token, struct IComponents.PoolInfo poolInfo, contract IAuthorization authorization, address initialOwner)++` [.item-kind]#public#
+
+[.contract-item]
+[[SimplePool-createBundle-struct-Fee-uint256-Seconds-bytes-]]
+==== `[.contract-item-name]#++createBundle++#++(struct Fee fee, uint256 initialAmount, Seconds lifetime, bytes filter) → NftId bundleNftId, uint256 netStakedAmountInt++` [.item-kind]#external#
+
+[.contract-item]
+[[SimplePool-fundPoolWallet-Amount-]]
+==== `[.contract-item-name]#++fundPoolWallet++#++(Amount amount)++` [.item-kind]#external#
+
+[.contract-item]
+[[SimplePool-defundPoolWallet-Amount-]]
+==== `[.contract-item-name]#++defundPoolWallet++#++(Amount amount)++` [.item-kind]#external#
+
+[.contract-item]
+[[SimplePool-approveTokenHandler-contract-IERC20Metadata-Amount-]]
+==== `[.contract-item-name]#++approveTokenHandler++#++(contract IERC20Metadata token, Amount amount)++` [.item-kind]#external#
+
+[.contract-item]
+[[SimplePool-setLocked-bool-]]
+==== `[.contract-item-name]#++setLocked++#++(bool locked)++` [.item-kind]#external#
+
+[.contract-item]
+[[SimplePool-setWallet-address-]]
+==== `[.contract-item-name]#++setWallet++#++(address newWallet)++` [.item-kind]#external#
+
+:LogSimpleProductRequestAsyncFulfilled: pass:normal[xref:#SimpleProduct-LogSimpleProductRequestAsyncFulfilled-RequestId-string-uint256-[`++LogSimpleProductRequestAsyncFulfilled++`]]
+:LogSimpleProductRequestSyncFulfilled: pass:normal[xref:#SimpleProduct-LogSimpleProductRequestSyncFulfilled-RequestId-string-uint256-[`++LogSimpleProductRequestSyncFulfilled++`]]
+:ErrorSimpleProductRevertedWhileProcessingResponse: pass:normal[xref:#SimpleProduct-ErrorSimpleProductRevertedWhileProcessingResponse-RequestId-[`++ErrorSimpleProductRevertedWhileProcessingResponse++`]]
+:constructor: pass:normal[xref:#SimpleProduct-constructor-address-NftId-string-address-struct-IComponents-ProductInfo-contract-IAuthorization-address-[`++constructor++`]]
+:initialize: pass:normal[xref:#SimpleProduct-initialize-address-NftId-string-address-struct-IComponents-ProductInfo-contract-IAuthorization-address-[`++initialize++`]]
+:createRisk: pass:normal[xref:#SimpleProduct-createRisk-RiskId-bytes-[`++createRisk++`]]
+:updateRisk: pass:normal[xref:#SimpleProduct-updateRisk-RiskId-bytes-[`++updateRisk++`]]
+:updateRiskState: pass:normal[xref:#SimpleProduct-updateRiskState-RiskId-StateId-[`++updateRiskState++`]]
+:createApplication: pass:normal[xref:#SimpleProduct-createApplication-address-RiskId-uint256-Seconds-bytes-NftId-ReferralId-[`++createApplication++`]]
+:createPolicy: pass:normal[xref:#SimpleProduct-createPolicy-NftId-bool-Timestamp-[`++createPolicy++`]]
+:decline: pass:normal[xref:#SimpleProduct-decline-NftId-[`++decline++`]]
+:expire: pass:normal[xref:#SimpleProduct-expire-NftId-Timestamp-[`++expire++`]]
+:collectPremium: pass:normal[xref:#SimpleProduct-collectPremium-NftId-Timestamp-[`++collectPremium++`]]
+:activate: pass:normal[xref:#SimpleProduct-activate-NftId-Timestamp-[`++activate++`]]
+:close: pass:normal[xref:#SimpleProduct-close-NftId-[`++close++`]]
+:submitClaim: pass:normal[xref:#SimpleProduct-submitClaim-NftId-Amount-bytes-[`++submitClaim++`]]
+:revokeClaim: pass:normal[xref:#SimpleProduct-revokeClaim-NftId-ClaimId-[`++revokeClaim++`]]
+:confirmClaim: pass:normal[xref:#SimpleProduct-confirmClaim-NftId-ClaimId-Amount-bytes-[`++confirmClaim++`]]
+:declineClaim: pass:normal[xref:#SimpleProduct-declineClaim-NftId-ClaimId-bytes-[`++declineClaim++`]]
+:closeClaim: pass:normal[xref:#SimpleProduct-closeClaim-NftId-ClaimId-[`++closeClaim++`]]
+:createPayout: pass:normal[xref:#SimpleProduct-createPayout-NftId-ClaimId-Amount-bytes-[`++createPayout++`]]
+:cancelPayout: pass:normal[xref:#SimpleProduct-cancelPayout-NftId-PayoutId-[`++cancelPayout++`]]
+:createPayoutForBeneficiary: pass:normal[xref:#SimpleProduct-createPayoutForBeneficiary-NftId-ClaimId-Amount-address-bytes-[`++createPayoutForBeneficiary++`]]
+:processPayout: pass:normal[xref:#SimpleProduct-processPayout-NftId-PayoutId-[`++processPayout++`]]
+:createOracleRequest: pass:normal[xref:#SimpleProduct-createOracleRequest-NftId-string-Timestamp-bool-[`++createOracleRequest++`]]
+:cancelOracleRequest: pass:normal[xref:#SimpleProduct-cancelOracleRequest-RequestId-[`++cancelOracleRequest++`]]
+:fulfillOracleRequestSync: pass:normal[xref:#SimpleProduct-fulfillOracleRequestSync-RequestId-bytes-[`++fulfillOracleRequestSync++`]]
+:fulfillOracleRequestAsync: pass:normal[xref:#SimpleProduct-fulfillOracleRequestAsync-RequestId-bytes-[`++fulfillOracleRequestAsync++`]]
+:resend: pass:normal[xref:#SimpleProduct-resend-RequestId-[`++resend++`]]
+:doSomethingSpecial: pass:normal[xref:#SimpleProduct-doSomethingSpecial--[`++doSomethingSpecial++`]]
+:doWhenNotLocked: pass:normal[xref:#SimpleProduct-doWhenNotLocked--[`++doWhenNotLocked++`]]
+:getOracleService: pass:normal[xref:#SimpleProduct-getOracleService--[`++getOracleService++`]]
+:approveTokenHandler: pass:normal[xref:#SimpleProduct-approveTokenHandler-contract-IERC20Metadata-Amount-[`++approveTokenHandler++`]]
+:setLocked: pass:normal[xref:#SimpleProduct-setLocked-bool-[`++setLocked++`]]
+:setWallet: pass:normal[xref:#SimpleProduct-setWallet-address-[`++setWallet++`]]
+
+[.contract]
+[[SimpleProduct]]
+=== `++SimpleProduct++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/examples/unpermissioned/SimpleProduct.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/examples/unpermissioned/SimpleProduct.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++constructor(registry, instanceNftId, name, token, productInfo, authorization, initialOwner)++`]
+* [`++initialize(registry, instanceNftid, name, token, productInfo, authorization, initialOwner)++`]
+* [`++createRisk(id, data)++`]
+* [`++updateRisk(id, data)++`]
+* [`++updateRiskState(id, state)++`]
+* [`++createApplication(applicationOwner, riskId, sumInsured, lifetime, applicationData, bundleNftId, referralId)++`]
+* [`++createPolicy(applicationNftId, requirePremiumPayment, activateAt)++`]
+* [`++decline(policyNftId)++`]
+* [`++expire(policyNftId, expireAt)++`]
+* [`++collectPremium(policyNftId, activateAt)++`]
+* [`++activate(policyNftId, activateAt)++`]
+* [`++close(policyNftId)++`]
+* [`++submitClaim(policyNftId, claimAmount, submissionData)++`]
+* [`++revokeClaim(policyNftId, claimId)++`]
+* [`++confirmClaim(policyNftId, claimId, confirmedAmount, processData)++`]
+* [`++declineClaim(policyNftId, claimId, processData)++`]
+* [`++closeClaim(policyNftId, claimId)++`]
+* [`++createPayout(policyNftId, claimId, amount, data)++`]
+* [`++cancelPayout(policyNftId, payoutId)++`]
+* [`++createPayoutForBeneficiary(policyNftId, claimId, amount, beneficiary, data)++`]
+* [`++processPayout(policyNftId, payoutId)++`]
+* [`++createOracleRequest(oracleNftId, requestText, expiryAt, synchronous)++`]
+* [`++cancelOracleRequest(requestId)++`]
+* [`++fulfillOracleRequestSync(requestId, responseData)++`]
+* [`++fulfillOracleRequestAsync(requestId, responseData)++`]
+* [`++resend(requestId)++`]
+* [`++doSomethingSpecial()++`]
+* [`++doWhenNotLocked()++`]
+* [`++getOracleService()++`]
+* [`++approveTokenHandler(token, amount)++`]
+* [`++setLocked(locked)++`]
+* [`++setWallet(newWallet)++`]
+
+[.contract-subindex-inherited]
+.BasicProduct
+* [`++setFees(productFee, processingFee)++`]
+* [`++_initializeBasicProduct(registry, instanceNftId, name, token, productInfo, authorization, initialOwner)++`]
+
+[.contract-subindex-inherited]
+.Product
+* [`++registerComponent(component)++`]
+* [`++processFundedClaim(policyNftId, claimId, availableAmount)++`]
+* [`++calculatePremium(sumInsuredAmount, riskId, lifetime, applicationData, bundleNftId, referralId)++`]
+* [`++calculateNetPremium(sumInsuredAmount, , , )++`]
+* [`++getInitialProductInfo()++`]
+* [`++_initializeProduct(registry, instanceNftId, name, token, productInfo, authorization, initialOwner, componentData)++`]
+* [`++_setFees(productFee, processingFee)++`]
+* [`++_createRisk(id, data)++`]
+* [`++_updateRisk(id, data)++`]
+* [`++_updateRiskState(id, state)++`]
+* [`++_createApplication(applicationOwner, riskId, sumInsuredAmount, premiumAmount, lifetime, bundleNftId, referralId, applicationData)++`]
+* [`++_createPolicy(applicationNftId, activateAt)++`]
+* [`++_decline(policyNftId)++`]
+* [`++_expire(policyNftId, expireAt)++`]
+* [`++_collectPremium(policyNftId, activateAt)++`]
+* [`++_activate(policyNftId, activateAt)++`]
+* [`++_close(policyNftId)++`]
+* [`++_submitClaim(policyNftId, claimAmount, claimData)++`]
+* [`++_revokeClaim(policyNftId, claimId)++`]
+* [`++_confirmClaim(policyNftId, claimId, confirmedAmount, data)++`]
+* [`++_declineClaim(policyNftId, claimId, data)++`]
+* [`++_closeClaim(policyNftId, claimId)++`]
+* [`++_createPayout(policyNftId, claimId, amount, data)++`]
+* [`++_createPayoutForBeneficiary(policyNftId, claimId, amount, beneficiary, data)++`]
+* [`++_processPayout(policyNftId, payoutId)++`]
+* [`++_cancelPayout(policyNftId, payoutId)++`]
+* [`++_toRiskId(riskName)++`]
+* [`++_getProductStorage()++`]
+
+[.contract-subindex-inherited]
+.IProductComponent
+
+[.contract-subindex-inherited]
+.InstanceLinkedComponent
+* [`++withdrawFees(amount)++`]
+* [`++getInstance()++`]
+* [`++getAuthorization()++`]
+* [`++_initializeInstanceLinkedComponent(registry, parentNftId, name, token, componentType, authorization, isInterceptor, initialOwner, componentData)++`]
+* [`++_checkAndGetInstanceNftId(registryAddress, parentNftId, componentType)++`]
+* [`++_checkAndGetRegistry(registryAddress, objectNftId, requiredType)++`]
+* [`++_setWallet(newWallet)++`]
+* [`++_getComponentInfo()++`]
+* [`++_getInstanceReader()++`]
+* [`++_withdrawFees(amount)++`]
+
+[.contract-subindex-inherited]
+.IInstanceLinkedComponent
+
+[.contract-subindex-inherited]
+.Component
+* [`++_initializeComponent(authority, registry, parentNftId, name, token, componentType, isInterceptor, initialOwner, registryData, componentData)++`]
+* [`++nftTransferFrom(from, to, tokenId, operator)++`]
+* [`++getWallet()++`]
+* [`++getTokenHandler()++`]
+* [`++getToken()++`]
+* [`++getName()++`]
+* [`++getComponentInfo()++`]
+* [`++getInitialComponentInfo()++`]
+* [`++isNftInterceptor()++`]
+* [`++isRegistered()++`]
+* [`++_approveTokenHandler(token, amount)++`]
+* [`++_nftTransferFrom(from, to, tokenId, operator)++`]
+* [`++_setLocked(locked)++`]
+* [`++_getServiceAddress(domain)++`]
+
+[.contract-subindex-inherited]
+.IComponent
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+* [`++__AccessManaged_init(initialAuthority)++`]
+* [`++__AccessManaged_init_unchained(initialAuthority)++`]
+* [`++authority()++`]
+* [`++setAuthority(newAuthority)++`]
+* [`++isConsumingScheduledOp()++`]
+* [`++_setAuthority(newAuthority)++`]
+* [`++_checkCanCall(caller, data)++`]
+
+[.contract-subindex-inherited]
+.Registerable
+* [`++_initializeRegisterable(registry, parentNftId, objectType, isInterceptor, initialOwner, data)++`]
+* [`++getRelease()++`]
+* [`++getInitialInfo()++`]
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.NftOwnable
+* [`++_checkNftType(nftId, expectedObjectType)++`]
+* [`++_initializeNftOwnable(registry, initialOwner)++`]
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+* [`++_linkToNftOwnable(nftOwnableAddress)++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+* [`++_initializeRegistryLinked(registry)++`]
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+* [`++_initializeERC165()++`]
+* [`++_registerInterface(interfaceId)++`]
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.ITransferInterceptor
+
+[.contract-subindex-inherited]
+.IAccessManaged
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+* [`++__Context_init()++`]
+* [`++__Context_init_unchained()++`]
+* [`++_msgSender()++`]
+* [`++_msgData()++`]
+* [`++_contextSuffixLength()++`]
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+* [`++LogSimpleProductRequestAsyncFulfilled(requestId, responseText, responseDataLength)++`]
+* [`++LogSimpleProductRequestSyncFulfilled(requestId, responseText, responseDataLength)++`]
+
+[.contract-subindex-inherited]
+.BasicProduct
+
+[.contract-subindex-inherited]
+.Product
+
+[.contract-subindex-inherited]
+.IProductComponent
+
+[.contract-subindex-inherited]
+.InstanceLinkedComponent
+
+[.contract-subindex-inherited]
+.IInstanceLinkedComponent
+
+[.contract-subindex-inherited]
+.Component
+
+[.contract-subindex-inherited]
+.IComponent
+* [`++LogComponentWalletAddressChanged(oldWallet, newWallet)++`]
+* [`++LogComponentWalletTokensTransferred(from, to, amount)++`]
+* [`++LogComponentTokenHandlerApproved(tokenHandler, token, limit, isMaxAmount)++`]
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+
+[.contract-subindex-inherited]
+.Registerable
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.NftOwnable
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.ITransferInterceptor
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[SimpleProduct-constructor-address-NftId-string-address-struct-IComponents-ProductInfo-contract-IAuthorization-address-]]
+==== `[.contract-item-name]#++constructor++#++(address registry, NftId instanceNftId, string name, address token, struct IComponents.ProductInfo productInfo, contract IAuthorization authorization, address initialOwner)++` [.item-kind]#public#
+
+[.contract-item]
+[[SimpleProduct-initialize-address-NftId-string-address-struct-IComponents-ProductInfo-contract-IAuthorization-address-]]
+==== `[.contract-item-name]#++initialize++#++(address registry, NftId instanceNftid, string name, address token, struct IComponents.ProductInfo productInfo, contract IAuthorization authorization, address initialOwner)++` [.item-kind]#public#
+
+[.contract-item]
+[[SimpleProduct-createRisk-RiskId-bytes-]]
+==== `[.contract-item-name]#++createRisk++#++(RiskId id, bytes data)++` [.item-kind]#public#
+
+[.contract-item]
+[[SimpleProduct-updateRisk-RiskId-bytes-]]
+==== `[.contract-item-name]#++updateRisk++#++(RiskId id, bytes data)++` [.item-kind]#public#
+
+[.contract-item]
+[[SimpleProduct-updateRiskState-RiskId-StateId-]]
+==== `[.contract-item-name]#++updateRiskState++#++(RiskId id, StateId state)++` [.item-kind]#public#
+
+[.contract-item]
+[[SimpleProduct-createApplication-address-RiskId-uint256-Seconds-bytes-NftId-ReferralId-]]
+==== `[.contract-item-name]#++createApplication++#++(address applicationOwner, RiskId riskId, uint256 sumInsured, Seconds lifetime, bytes applicationData, NftId bundleNftId, ReferralId referralId) → NftId nftId++` [.item-kind]#public#
+
+[.contract-item]
+[[SimpleProduct-createPolicy-NftId-bool-Timestamp-]]
+==== `[.contract-item-name]#++createPolicy++#++(NftId applicationNftId, bool requirePremiumPayment, Timestamp activateAt)++` [.item-kind]#public#
+
+[.contract-item]
+[[SimpleProduct-decline-NftId-]]
+==== `[.contract-item-name]#++decline++#++(NftId policyNftId)++` [.item-kind]#public#
+
+[.contract-item]
+[[SimpleProduct-expire-NftId-Timestamp-]]
+==== `[.contract-item-name]#++expire++#++(NftId policyNftId, Timestamp expireAt) → Timestamp++` [.item-kind]#public#
+
+[.contract-item]
+[[SimpleProduct-collectPremium-NftId-Timestamp-]]
+==== `[.contract-item-name]#++collectPremium++#++(NftId policyNftId, Timestamp activateAt)++` [.item-kind]#public#
+
+[.contract-item]
+[[SimpleProduct-activate-NftId-Timestamp-]]
+==== `[.contract-item-name]#++activate++#++(NftId policyNftId, Timestamp activateAt)++` [.item-kind]#public#
+
+[.contract-item]
+[[SimpleProduct-close-NftId-]]
+==== `[.contract-item-name]#++close++#++(NftId policyNftId)++` [.item-kind]#public#
+
+[.contract-item]
+[[SimpleProduct-submitClaim-NftId-Amount-bytes-]]
+==== `[.contract-item-name]#++submitClaim++#++(NftId policyNftId, Amount claimAmount, bytes submissionData) → ClaimId++` [.item-kind]#public#
+
+[.contract-item]
+[[SimpleProduct-revokeClaim-NftId-ClaimId-]]
+==== `[.contract-item-name]#++revokeClaim++#++(NftId policyNftId, ClaimId claimId)++` [.item-kind]#public#
+
+[.contract-item]
+[[SimpleProduct-confirmClaim-NftId-ClaimId-Amount-bytes-]]
+==== `[.contract-item-name]#++confirmClaim++#++(NftId policyNftId, ClaimId claimId, Amount confirmedAmount, bytes processData)++` [.item-kind]#public#
+
+[.contract-item]
+[[SimpleProduct-declineClaim-NftId-ClaimId-bytes-]]
+==== `[.contract-item-name]#++declineClaim++#++(NftId policyNftId, ClaimId claimId, bytes processData)++` [.item-kind]#public#
+
+[.contract-item]
+[[SimpleProduct-closeClaim-NftId-ClaimId-]]
+==== `[.contract-item-name]#++closeClaim++#++(NftId policyNftId, ClaimId claimId)++` [.item-kind]#public#
+
+[.contract-item]
+[[SimpleProduct-createPayout-NftId-ClaimId-Amount-bytes-]]
+==== `[.contract-item-name]#++createPayout++#++(NftId policyNftId, ClaimId claimId, Amount amount, bytes data) → PayoutId++` [.item-kind]#public#
+
+[.contract-item]
+[[SimpleProduct-cancelPayout-NftId-PayoutId-]]
+==== `[.contract-item-name]#++cancelPayout++#++(NftId policyNftId, PayoutId payoutId)++` [.item-kind]#public#
+
+[.contract-item]
+[[SimpleProduct-createPayoutForBeneficiary-NftId-ClaimId-Amount-address-bytes-]]
+==== `[.contract-item-name]#++createPayoutForBeneficiary++#++(NftId policyNftId, ClaimId claimId, Amount amount, address beneficiary, bytes data) → PayoutId++` [.item-kind]#public#
+
+[.contract-item]
+[[SimpleProduct-processPayout-NftId-PayoutId-]]
+==== `[.contract-item-name]#++processPayout++#++(NftId policyNftId, PayoutId payoutId)++` [.item-kind]#public#
+
+[.contract-item]
+[[SimpleProduct-createOracleRequest-NftId-string-Timestamp-bool-]]
+==== `[.contract-item-name]#++createOracleRequest++#++(NftId oracleNftId, string requestText, Timestamp expiryAt, bool synchronous) → RequestId++` [.item-kind]#public#
+
+[.contract-item]
+[[SimpleProduct-cancelOracleRequest-RequestId-]]
+==== `[.contract-item-name]#++cancelOracleRequest++#++(RequestId requestId)++` [.item-kind]#public#
+
+[.contract-item]
+[[SimpleProduct-fulfillOracleRequestSync-RequestId-bytes-]]
+==== `[.contract-item-name]#++fulfillOracleRequestSync++#++(RequestId requestId, bytes responseData)++` [.item-kind]#public#
+
+[.contract-item]
+[[SimpleProduct-fulfillOracleRequestAsync-RequestId-bytes-]]
+==== `[.contract-item-name]#++fulfillOracleRequestAsync++#++(RequestId requestId, bytes responseData)++` [.item-kind]#public#
+
+[.contract-item]
+[[SimpleProduct-resend-RequestId-]]
+==== `[.contract-item-name]#++resend++#++(RequestId requestId)++` [.item-kind]#public#
+
+[.contract-item]
+[[SimpleProduct-doSomethingSpecial--]]
+==== `[.contract-item-name]#++doSomethingSpecial++#++() → bool++` [.item-kind]#public#
+
+[.contract-item]
+[[SimpleProduct-doWhenNotLocked--]]
+==== `[.contract-item-name]#++doWhenNotLocked++#++() → bool++` [.item-kind]#public#
+
+[.contract-item]
+[[SimpleProduct-getOracleService--]]
+==== `[.contract-item-name]#++getOracleService++#++() → contract IOracleService++` [.item-kind]#public#
+
+[.contract-item]
+[[SimpleProduct-approveTokenHandler-contract-IERC20Metadata-Amount-]]
+==== `[.contract-item-name]#++approveTokenHandler++#++(contract IERC20Metadata token, Amount amount)++` [.item-kind]#external#
+
+[.contract-item]
+[[SimpleProduct-setLocked-bool-]]
+==== `[.contract-item-name]#++setLocked++#++(bool locked)++` [.item-kind]#external#
+
+[.contract-item]
+[[SimpleProduct-setWallet-address-]]
+==== `[.contract-item-name]#++setWallet++#++(address newWallet)++` [.item-kind]#external#
+
+[.contract-item]
+[[SimpleProduct-LogSimpleProductRequestAsyncFulfilled-RequestId-string-uint256-]]
+==== `[.contract-item-name]#++LogSimpleProductRequestAsyncFulfilled++#++(RequestId requestId, string responseText, uint256 responseDataLength)++` [.item-kind]#event#
+
+[.contract-item]
+[[SimpleProduct-LogSimpleProductRequestSyncFulfilled-RequestId-string-uint256-]]
+==== `[.contract-item-name]#++LogSimpleProductRequestSyncFulfilled++#++(RequestId requestId, string responseText, uint256 responseDataLength)++` [.item-kind]#event#
+
