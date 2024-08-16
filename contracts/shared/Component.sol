@@ -17,8 +17,8 @@ import {TokenHandler} from "../shared/TokenHandler.sol";
 import {VersionPartLib} from "../type/Version.sol";
 
 abstract contract Component is
-    AccessManagedUpgradeable,
     Registerable,
+    AccessManagedUpgradeable,
     IComponent
 {
     // keccak256(abi.encode(uint256(keccak256("gif-next.contracts.component.Component.sol")) - 1)) & ~bytes32(uint256(0xff));

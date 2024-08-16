@@ -14,8 +14,9 @@ import {TokenHandler} from "../shared/TokenHandler.sol";
 /// component examples are staking, product, distribution, pool and oracle
 interface IComponent is 
     IAccessManaged,
-    IRegisterable,
-    ITransferInterceptor
+    ITransferInterceptor,
+    IRegisterable
+    
 {
     error ErrorComponentProductNftIdZero();
     error ErrorComponentProductNftIdNonzero();
