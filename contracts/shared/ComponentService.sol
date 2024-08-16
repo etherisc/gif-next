@@ -242,7 +242,7 @@ contract ComponentService is
         // ensure no components are linked upon initialization of the product
         initialProductInfo.poolNftId = NftIdLib.zero();
         initialProductInfo.distributionNftId = NftIdLib.zero();
-        initialProductInfo.oracleNftId = new NftId[](0);
+        initialProductInfo.oracleNftId = new NftId[](initialProductInfo.expectedNumberOfOracles);
 
         // create info
         instanceStore.createProduct(
