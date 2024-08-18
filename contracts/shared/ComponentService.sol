@@ -3,9 +3,6 @@ pragma solidity ^0.8.20;
 
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import {Amount, AmountLib} from "../type/Amount.sol";
-import {ContractLib} from "../shared/ContractLib.sol";
-import {Fee, FeeLib} from "../type/Fee.sol";
 import {IAccountingService} from "../accounting/IAccountingService.sol";
 import {IComponent} from "../shared/IComponent.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
@@ -79,11 +76,11 @@ contract ComponentService is
         initializer()
     {
         (
-            address registryAddress,
-            address authority
+            address authority,
+            address registry
         ) = abi.decode(data, (address, address));
 
-        _initializeService(registryAddress, authority, owner);
+        __Service_init(authority, registry, owner);
 
         _accountingService = IAccountingService(_getServiceAddress(ACCOUNTING()));
         _registryService = IRegistryService(_getServiceAddress(REGISTRY()));
@@ -517,9 +514,6 @@ contract ComponentService is
             address(token), 
             address(instanceAdmin.authority()));
         
-        // set token handler allowance to max
-        // componentInfo.tokenHandler.approve(token, AmountLib.max());
-
         // register component with instance
         instanceStore.createComponent(
             componentNftId, 

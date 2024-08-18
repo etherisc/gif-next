@@ -2,22 +2,26 @@
 pragma solidity ^0.8.20;
 
 import {AccessAdmin} from "../authorization/AccessAdmin.sol";
+import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
 import {IAccess} from "../authorization/IAccess.sol";
-import {IAccessAdmin} from "../authorization/IAccessAdmin.sol";
 import {IService} from "../shared/IService.sol";
 import {IServiceAuthorization} from "../authorization/IServiceAuthorization.sol";
-import {ObjectType, ObjectTypeLib, ALL, RELEASE} from "../type/ObjectType.sol";
+import {ObjectType, ObjectTypeLib, ALL} from "../type/ObjectType.sol";
 import {RoleId, RoleIdLib, ADMIN_ROLE, RELEASE_REGISTRY_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
-import {VersionPart, VersionPartLib} from "../type/Version.sol";
-import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
+import {VersionPart} from "../type/Version.sol";
 
-
+/// @dev The ReleaseAdmin contract implements the central authorization for the services of a specific release.
+/// There is one ReleaseAdmin contract per major GIF release.
+/// Locking/unlocking of all services of a release is implemented in function setReleaseLocked.
 contract ReleaseAdmin is
     AccessAdmin
 {
+    event LogReleaseAdminReleaseLockChanged(VersionPart release, bool locked);
+    event LogReleaseAdminServiceLockChanged(VersionPart release, address service, bool locked);
+
     error ErrorReleaseAdminCallerNotReleaseRegistry(address caller);
     error ErrorReleaseAdminNotService(address notService);
-    error ErrorReleaseAdminReleaseAlreadyLocked();
+    error ErrorReleaseAdminReleaseLockAlreadySetTo(bool locked);
 
     /// @dev release core roles
     string public constant RELEASE_REGISTRY_ROLE_NAME = "ReleaseRegistryRole";
@@ -33,6 +37,7 @@ contract ReleaseAdmin is
         }
         _;
     }
+
     /// @dev Only used for master release admin.
     /// Contracts created via constructor come with disabled initializers.
     constructor() {
@@ -41,15 +46,17 @@ contract ReleaseAdmin is
     }
 
     function completeSetup(
-        address registry, 
+        address registry,
         address releaseRegistry,
-        VersionPart releaseVersion
+        VersionPart release
     )
         external
-        reinitializer(uint64(releaseVersion.toInt()))
+        reinitializer(uint64(release.toInt()))
     {
-        AccessManagerCloneable accessManager = AccessManagerCloneable(authority());
-        accessManager.completeSetup(registry, releaseVersion); 
+        AccessManagerCloneable(
+            authority()).completeSetup(
+                registry, 
+                release); 
 
         _setupReleaseRegistry(releaseRegistry);
     }
@@ -78,7 +85,16 @@ contract ReleaseAdmin is
         external
         onlyReleaseRegistry()
     {
-        _setReleaseLocked(locked);
+        // checks
+        AccessManagerCloneable accessManager = AccessManagerCloneable(authority());
+        if(accessManager.isLocked() == locked) {
+            revert ErrorReleaseAdminReleaseLockAlreadySetTo(locked);
+        }
+
+        // effects
+        accessManager.setLocked(locked);
+
+        emit LogReleaseAdminReleaseLockChanged(getRelease(), locked);
     }
 
     /// @dev Lock/unlock specific service of release.
@@ -94,17 +110,12 @@ contract ReleaseAdmin is
         }
 
         _setTargetClosed(address(service), locked);
+
+        emit LogReleaseAdminServiceLockChanged(service.getRelease(), address(service), locked);
     }
 
-    /*function transferAdmin(address to)
-        external
-        restricted // only with GIF_ADMIN_ROLE or nft owner
-    {
-        _accessManager.revoke(GIF_ADMIN_ROLE, );
-        _accesssManager.grant(GIF_ADMIN_ROLE, to, 0);
-    }*/
-
     //--- view functions ----------------------------------------------------//
+
 /*
     function getReleaseAdminRole() external view returns (RoleId) {
         return GIF_ADMIN_ROLE();
@@ -207,17 +218,6 @@ contract ReleaseAdmin is
         }
     }
 
-    function _setReleaseLocked(bool locked)
-        private
-    {
-        AccessManagerCloneable accessManager = AccessManagerCloneable(authority());
-        if(accessManager.isLocked() == locked) {
-            revert ErrorReleaseAdminReleaseAlreadyLocked();
-        }
-
-        accessManager.setLocked(locked);
-    }
-
     //--- private initialization functions -------------------------------------------//
 
     function _setupReleaseRegistry(address releaseRegistry)
@@ -226,11 +226,8 @@ contract ReleaseAdmin is
     {
         _createTarget(address(this), RELEASE_ADMIN_TARGET_NAME, false, false);
 
-        // TODO why release registry role is calculated?
-        //RoleId releaseRegistryRoleId = RoleIdLib.roleForType(RELEASE());
-        RoleId releaseRegistryRoleId = RELEASE_REGISTRY_ROLE();
         _createRole(
-            releaseRegistryRoleId, 
+            RELEASE_REGISTRY_ROLE(), 
             toRole({
                 adminRoleId: ADMIN_ROLE(),
                 roleType: RoleType.Contract,
@@ -241,8 +238,8 @@ contract ReleaseAdmin is
         functions = new FunctionInfo[](2);
         functions[0] = toFunction(ReleaseAdmin.authorizeService.selector, "authorizeService");
         functions[1] = toFunction(ReleaseAdmin.setServiceLocked.selector, "setServiceLocked");
-        _authorizeTargetFunctions(address(this), releaseRegistryRoleId, functions);
+        _authorizeTargetFunctions(address(this), RELEASE_REGISTRY_ROLE(), functions);
 
-        _grantRoleToAccount(releaseRegistryRoleId, releaseRegistry);
+        _grantRoleToAccount(RELEASE_REGISTRY_ROLE(), releaseRegistry);
     }
 }

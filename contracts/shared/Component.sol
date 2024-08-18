@@ -1,21 +1,24 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {Amount} from "../type/Amount.sol";
+import {ContractLib} from "./ContractLib.sol";
 import {IComponent} from "./IComponent.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {IComponentService} from "./IComponentService.sol";
+import {IRegistry} from "../registry/IRegistry.sol";
+import {IRelease} from "../registry/IRelease.sol";
 import {NftId} from "../type/NftId.sol";
-import {ObjectType, COMPONENT} from "../type/ObjectType.sol";
+import {ObjectType, COMPONENT, STAKING} from "../type/ObjectType.sol";
 import {Registerable} from "../shared/Registerable.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
+import {Version, VersionLib, VersionPart} from "../type/Version.sol";
+
 
 abstract contract Component is
-    AccessManagedUpgradeable,
     Registerable,
     IComponent
 {
@@ -62,23 +65,32 @@ abstract contract Component is
         virtual
         onlyInitializing()
     {
-        if (token == address(0)) {
-            revert ErrorComponentTokenAddressZero();
+        address tokenRegistry = IRegistry(registry).getTokenRegistryAddress();
+        VersionPart release = IRelease(authority).getRelease();
+
+        // special case for staking: component intitialization happens before
+        // GIF core contract setup is complete. at that time token registry 
+        // is not yet available. therefore we skip the check for staking.
+        if (componentType != STAKING()) {
+
+            // check if provided token is whitelisted and active
+            if (!ContractLib.isActiveToken(tokenRegistry, token, block.chainid, release)) {
+                revert ErrorComponentTokenInvalid(token);
+            }
         }
 
         if (bytes(name).length == 0) {
             revert ErrorComponentNameLengthZero();
         }
 
-        _initializeRegisterable(
+        __Registerable_init(
+            authority,
             registry, 
             parentNftId, 
             componentType, 
             isInterceptor, 
             initialOwner, 
             registryData);
-
-        __AccessManaged_init(authority);
 
         // set component state
         ComponentStorage storage $ = _getComponentStorage();
@@ -92,15 +104,6 @@ abstract contract Component is
         _registerInterface(type(IComponent).interfaceId);
     }
 
-
-    // function setWallet(address newWallet)
-    //     external
-    //     virtual
-    //     override
-    //     onlyOwner
-    // {
-    //     _setWallet(newWallet);
-    // }
 
     /// @dev callback function for nft transfers
     /// may only be called by chain nft contract.
@@ -127,6 +130,10 @@ abstract contract Component is
 
     function getName() public view override returns(string memory name) {
         return getComponentInfo().name;
+    }
+
+    function getVersion() public view virtual returns (Version version) {
+        return VersionLib.toVersion(1, 0, 0);
     }
 
     function getComponentInfo() public virtual view returns (IComponents.ComponentInfo memory info) {

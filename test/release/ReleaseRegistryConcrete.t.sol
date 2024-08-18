@@ -24,6 +24,7 @@ import {AccessManagerCloneable} from "../../contracts/authorization/AccessManage
 import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
 import {ReleaseAdmin} from "../../contracts/registry/ReleaseAdmin.sol";
 import {IRegistry} from "../../contracts/registry/Registry.sol";
+import {IRelease} from "../../contracts/registry/IRelease.sol";
 import {ReleaseRegistry} from "../../contracts/registry/ReleaseRegistry.sol";
 import {ChainNft} from "../../contracts/registry/ChainNft.sol";
 
@@ -104,7 +105,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
         }
     }
 
-    function _checkReleaseInfo(IRegistry.ReleaseInfo memory info) public view 
+    function _checkReleaseInfo(IRelease.ReleaseInfo memory info) public view 
     {
         if(info.state == SCHEDULED()) {
             assertTrue(info.version.toInt() >= 3, "Test error: unexpected version #1");
@@ -127,7 +128,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
             assertTrue(info.auth.getRelease() == info.version, "Test error: unexpected auth version #2");
             assertTrue(info.auth.getServiceDomains().length > 0, "Test error: unexpected auth domain num #2");
             assertTrue(gteTimestamp(TimestampLib.blockTimestamp(), info.activatedAt), "Test error: unexpected activatedAt #3");
-            assertTrue(info.disabledAt.eqz(), "Test error: unexpected disabledAt #3");
+            assertTrue(info.disabledAt == TimestampLib.max(), "Test error: unexpected disabledAt #3");
         } else if (info.state == PAUSED()) {
             assertTrue(info.version.toInt() >= 3, "Test error: unexpected version #4");
             assertTrue(info.salt != bytes32(0), "Test error: unexpected salt #4");
@@ -159,11 +160,11 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
     }
 
     // assert by version getters
-    function _assert_releaseRegistry_getters(VersionPart version, IRegistry.ReleaseInfo memory info) public view
+    function _assert_releaseRegistry_getters(VersionPart version, IRelease.ReleaseInfo memory info) public view
     {
         _checkReleaseInfo(info);
 
-        assertEq(releaseRegistry.isActiveRelease(version), (info.activatedAt.gtz() && info.disabledAt.eqz()), "isActiveRelease() return unxpected value");
+        assertEq(releaseRegistry.isActiveRelease(version), (info.activatedAt.gtz() && info.disabledAt > TimestampLib.blockTimestamp()), "isActiveRelease() return unxpected value");
         assertTrue(eqReleaseInfo(releaseRegistry.getReleaseInfo(version), info), "getReleaseInfo() return unxpected value");  
         assertEq(releaseRegistry.getState(version).toInt(), info.state.toInt(), "getState() return unexpected value #1");
         assertEq(address(releaseRegistry.getServiceAuthorization(version)), address(info.auth), "getServiceAuthorization() return unexpected value #1");    
@@ -224,15 +225,16 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
 
         _assert_releaseRegistry_getters(
             newReleaseVersion,
-            IRegistry.ReleaseInfo(
-                    SCHEDULED(),
-                    newReleaseVersion,
-                    bytes32(0),
-                    IServiceAuthorization(address(0)),
-                    IAccessAdmin(address(0)),
-                    TimestampLib.zero(),
-                    TimestampLib.zero()
-                ));
+            IRelease.ReleaseInfo({
+                state: SCHEDULED(),
+                version: newReleaseVersion,
+                salt: bytes32(0),
+                auth: IServiceAuthorization(address(0)),
+                releaseAdmin: address(0),
+                activatedAt: TimestampLib.zero(),
+                disabledAt: TimestampLib.zero()
+            }));
+
         _assert_releaseRegistry_getters(previousReleaseVersion, zeroReleaseInfo());
         
         assertEq(releaseRegistry.releases(), 1, "releases() return unexpected value #2");
@@ -249,8 +251,8 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
     {
         VersionPart nextVersion = VersionPartLib.toVersionPart(releaseRegistry.INITIAL_GIF_VERSION());
         VersionPart prevVersion = VersionPartLib.toVersionPart(releaseRegistry.INITIAL_GIF_VERSION() - 1);
-        IRegistry.ReleaseInfo memory nextReleaseInfo;
-        IRegistry.ReleaseInfo memory prevReleaseInfo;
+        IRelease.ReleaseInfo memory nextReleaseInfo;
+        IRelease.ReleaseInfo memory prevReleaseInfo;
 
         for(uint i = 0; i <= 10; i++) 
         {
@@ -290,8 +292,8 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
     {
         VersionPart nextVersion = VersionPartLib.toVersionPart(releaseRegistry.INITIAL_GIF_VERSION());
         VersionPart prevVersion = VersionPartLib.toVersionPart(releaseRegistry.INITIAL_GIF_VERSION() - 1);
-        IRegistry.ReleaseInfo memory nextReleaseInfo;
-        IRegistry.ReleaseInfo memory prevReleaseInfo;
+        IRelease.ReleaseInfo memory nextReleaseInfo;
+        IRelease.ReleaseInfo memory prevReleaseInfo;
 
         for(uint i = 0; i <= 10; i++) 
         {
@@ -305,7 +307,11 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 if(i > 0) {
                     prevReleaseInfo.state = SKIPPED();
 
-                    assertTrue(AccessManagerCloneable(prevReleaseInfo.admin.authority()).isLocked(), "isLocked() return unexpected value");
+                    assertTrue(
+                        AccessManagerCloneable(
+                            ReleaseAdmin(
+                                prevReleaseInfo.releaseAdmin).authority()).isLocked(), 
+                        "isLocked() return unexpected value");
                 }
 
                 // check create
@@ -335,7 +341,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
 
                 vm.prank(gifManager);
                 (
-                    IAccessAdmin preparedAdmin, 
+                    ReleaseAdmin preparedAdmin, 
                     VersionPart preparedVersion, 
                     bytes32 preparedSalt
                 ) = releaseRegistry.prepareNextRelease(nextAuthMock, nextSalt);
@@ -343,7 +349,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 nextReleaseInfo.state = DEPLOYING();
                 nextReleaseInfo.salt = nextSalt;
                 nextReleaseInfo.auth = nextAuthMock;
-                nextReleaseInfo.admin = preparedAdmin;
+                nextReleaseInfo.releaseAdmin = address(preparedAdmin);
 
                 // check prepare
                 // TODO more release admin checks
@@ -351,9 +357,18 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 // precalculate and compare release access manager from prepared address
                 assertEq(preparedVersion.toInt(), nextVersion.toInt(), "prepareNextRelease() return unexpected releaseVersion");
                 assertEq(preparedSalt, nextSalt, "prepareNextRelease() return unexpected releaseSalt");
-                assertTrue(AccessManagerCloneable(nextReleaseInfo.admin.authority()).isLocked(), "isLocked() return unexpected value");
+                assertTrue(
+                    AccessManagerCloneable(
+                        ReleaseAdmin(
+                            nextReleaseInfo.releaseAdmin).authority()).isLocked(),
+                    "isLocked() return unexpected value");
+
                 if(i > 0) {
-                    assertTrue(AccessManagerCloneable(prevReleaseInfo.admin.authority()).isLocked(), "isLocked() return unexpected value");
+                assertTrue(
+                    AccessManagerCloneable(
+                        ReleaseAdmin(
+                            nextReleaseInfo.releaseAdmin).authority()).isLocked(),
+                    "isLocked() return unexpected value");
                 }
 
                 _assert_releaseRegistry_getters(nextVersion, nextReleaseInfo);
@@ -380,8 +395,8 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
     {
         VersionPart nextVersion = VersionPartLib.toVersionPart(releaseRegistry.INITIAL_GIF_VERSION());
         VersionPart prevVersion = VersionPartLib.toVersionPart(releaseRegistry.INITIAL_GIF_VERSION() - 1);
-        IRegistry.ReleaseInfo memory nextReleaseInfo;
-        IRegistry.ReleaseInfo memory prevReleaseInfo;
+        IRelease.ReleaseInfo memory nextReleaseInfo;
+        IRelease.ReleaseInfo memory prevReleaseInfo;
 
         IService service;
 
@@ -397,13 +412,21 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 if(i > 0) {
                     prevReleaseInfo.state = SKIPPED();
 
-                    assertTrue(AccessManagerCloneable(prevReleaseInfo.admin.authority()).isLocked(), "isLocked() return unexpected value");
+                assertTrue(
+                    AccessManagerCloneable(
+                        ReleaseAdmin(
+                            prevReleaseInfo.releaseAdmin).authority()).isLocked(),
+                    "isLocked() return unexpected value");
                 }
 
                 // check create
                 assertEq(createdVersion.toInt(), nextVersion.toInt(), "createNextRelease() return unexpected value");
                 if(i > 0) {
-                    assertTrue(AccessManagerCloneable(prevReleaseInfo.admin.authority()).isLocked(), "isLocked() return unexpected value");
+                    assertTrue(
+                        AccessManagerCloneable(
+                            ReleaseAdmin(
+                                prevReleaseInfo.releaseAdmin).authority()).isLocked(),
+                        "isLocked() return unexpected value");
                 }
 
                 _assert_releaseRegistry_getters(nextVersion, nextReleaseInfo);
@@ -426,7 +449,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
 
                 vm.prank(gifManager);
                 (
-                    IAccessAdmin preparedAdmin, 
+                    ReleaseAdmin preparedAdmin, 
                     VersionPart preparedVersion, 
                     bytes32 preparedSalt
                 ) = releaseRegistry.prepareNextRelease(nextAuthMock, nextSalt);
@@ -434,14 +457,22 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 nextReleaseInfo.state = DEPLOYING();
                 nextReleaseInfo.salt = nextSalt;
                 nextReleaseInfo.auth = nextAuthMock;
-                nextReleaseInfo.admin = preparedAdmin;
+                nextReleaseInfo.releaseAdmin = address(preparedAdmin);
 
                 // check prepare
                 assertEq(preparedVersion.toInt(), nextVersion.toInt(), "prepareNextRelease() return unexpected releaseVersion");
                 assertEq(preparedSalt, nextSalt, "prepareNextRelease() return unexpected releaseSalt");
-                assertTrue(AccessManagerCloneable(nextReleaseInfo.admin.authority()).isLocked(), "isLocked() return unexpected value");
+                assertTrue(
+                    AccessManagerCloneable(
+                        ReleaseAdmin(
+                            nextReleaseInfo.releaseAdmin).authority()).isLocked(),
+                    "isLocked() return unexpected value");
                 if(i > 0) {
-                    assertTrue(AccessManagerCloneable(prevReleaseInfo.admin.authority()).isLocked(), "isLocked() return unexpected value");
+                    assertTrue(
+                        AccessManagerCloneable(
+                            ReleaseAdmin(
+                                prevReleaseInfo.releaseAdmin).authority()).isLocked(),
+                        "isLocked() return unexpected value");
                 }
 
                 _assert_releaseRegistry_getters(nextVersion, nextReleaseInfo);
@@ -459,7 +490,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
 
             {
                 // deploy (register all(1) services)
-                service = _prepareServiceWithRegistryDomain(nextReleaseInfo.version, ReleaseAdmin(address(nextReleaseInfo.admin)));
+                service = _prepareServiceWithRegistryDomain(nextReleaseInfo.version, ReleaseAdmin(nextReleaseInfo.releaseAdmin));
                 assertFalse(registry.isRegisteredService(address(service)), "isRegisteredService() return unexpected value #1");
 
                 uint256 expectedNftId = chainNft.getNextTokenId();
@@ -476,9 +507,11 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
 
                 // check registration
                 assertEq(serviceNftId.toInt(), expectedNftId, "registerService() return unexpected value");
-                assertTrue(AccessManagerCloneable(nextReleaseInfo.admin.authority()).isLocked(), "isLocked() return unexpected value");
-                assertTrue(nextReleaseInfo.admin.hasRole(address(service), expectedServiceRoleId), "hasRole() return unexpected value");
-                assertTrue(nextReleaseInfo.admin.targetExists(address(service)), "targetExists() return unexpected value");
+                assertTrue(
+                    AccessManagerCloneable(
+                        ReleaseAdmin(
+                            nextReleaseInfo.releaseAdmin).authority()).isLocked(),
+                    "isLocked() return unexpected value");
                 assertTrue(registry.isRegisteredService(address(service)), "isRegisteredService() return unexpected value #2");
                 assertFalse(registryAdmin.targetExists(address(service)), "targetExists() return unexpected value");
 
@@ -506,8 +539,8 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
     {
         VersionPart nextVersion = VersionPartLib.toVersionPart(releaseRegistry.INITIAL_GIF_VERSION());
         VersionPart prevVersion = VersionPartLib.toVersionPart(releaseRegistry.INITIAL_GIF_VERSION() - 1);
-        IRegistry.ReleaseInfo memory nextReleaseInfo;
-        IRegistry.ReleaseInfo memory prevReleaseInfo;
+        IRelease.ReleaseInfo memory nextReleaseInfo;
+        IRelease.ReleaseInfo memory prevReleaseInfo;
 
         IService service;
 
@@ -517,6 +550,9 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
             VersionPart createdVersion = releaseRegistry.createNextRelease();
 
             {
+                // solhint-disable-next-line
+                console.log("scheduling release", i);
+
                  // create - skip
                 nextReleaseInfo.state = SCHEDULED();
                 nextReleaseInfo.version = nextVersion;
@@ -524,7 +560,11 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 // check create
                 assertEq(createdVersion.toInt(), nextVersion.toInt(), "createNextRelease() return unexpected value");
                 if(i > 0) {
-                    assertFalse(AccessManagerCloneable(prevReleaseInfo.admin.authority()).isLocked(), "isLocked() return unexpected value");
+                    assertFalse(
+                        AccessManagerCloneable(
+                            ReleaseAdmin(
+                                prevReleaseInfo.releaseAdmin).authority()).isLocked(),
+                        "isLocked() return unexpected value");
                 }
 
                 _assert_releaseRegistry_getters(nextVersion, nextReleaseInfo);
@@ -533,16 +573,22 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 assertEq(releaseRegistry.releases(), i + 1, "releases() return unexpected value #1");
                 assertEq(releaseRegistry.getNextVersion().toInt(), nextReleaseInfo.version.toInt(), "getNextVersion() return unexpected value #1");
                 assertEq(releaseRegistry.getLatestVersion().toInt(), prevReleaseInfo.version.toInt(), "getLatestVersion() return unexpected value #1");
+
+                // solhint-disable-next-line
+                console.log("scheduled release", i);
             }
 
             {
+                // solhint-disable-next-line
+                console.log("deploying release", i);
+
                 // prepare
                 IServiceAuthorization nextAuthMock = new ServiceAuthorizationMockWithRegistryService(nextVersion);
                 bytes32 nextSalt = bytes32(randomNumber(type(uint256).max)); 
 
                 vm.prank(gifManager);
                 (
-                    IAccessAdmin preparedAdmin, 
+                    ReleaseAdmin preparedAdmin, 
                     VersionPart preparedVersion, 
                     bytes32 preparedSalt
                 ) = releaseRegistry.prepareNextRelease(nextAuthMock, nextSalt);
@@ -550,14 +596,22 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 nextReleaseInfo.state = DEPLOYING();
                 nextReleaseInfo.salt = nextSalt;
                 nextReleaseInfo.auth = nextAuthMock;
-                nextReleaseInfo.admin = preparedAdmin;
+                nextReleaseInfo.releaseAdmin = address(preparedAdmin);
 
                 // check prepare
                 assertEq(preparedVersion.toInt(), nextVersion.toInt(), "prepareNextRelease() return unexpected releaseVersion");
                 assertEq(preparedSalt, nextSalt, "prepareNextRelease() return unexpected releaseSalt");
-                assertTrue(AccessManagerCloneable(nextReleaseInfo.admin.authority()).isLocked(), "isLocked() return unexpected value");
+                assertTrue(
+                    AccessManagerCloneable(
+                        ReleaseAdmin(
+                            nextReleaseInfo.releaseAdmin).authority()).isLocked(),
+                    "isLocked() return unexpected value");
                 if(i > 0) {
-                    assertFalse(AccessManagerCloneable(prevReleaseInfo.admin.authority()).isLocked(), "isLocked() return unexpected value");
+                    assertFalse(
+                        AccessManagerCloneable(
+                            ReleaseAdmin(
+                                prevReleaseInfo.releaseAdmin).authority()).isLocked(),
+                        "isLocked() return unexpected value");
                 }
 
                 _assert_releaseRegistry_getters(nextVersion, nextReleaseInfo);
@@ -566,11 +620,17 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 assertEq(releaseRegistry.releases(), i + 1, "releases() return unexpected value #2");
                 assertEq(releaseRegistry.getNextVersion().toInt(), nextReleaseInfo.version.toInt(), "getNextVersion() return unexpected value #2");
                 assertEq(releaseRegistry.getLatestVersion().toInt(), prevReleaseInfo.version.toInt(), "getLatestVersion() return unexpected value #2");
+
+                // solhint-disable-next-line
+                console.log("deployed release", i);
             }
 
             {
+                // solhint-disable-next-line
+                console.log("registering services", i);
+
                 // deploy (register all(1) services)
-                service = _prepareServiceWithRegistryDomain(nextReleaseInfo.version, ReleaseAdmin(address(nextReleaseInfo.admin)));
+                service = _prepareServiceWithRegistryDomain(nextReleaseInfo.version, ReleaseAdmin(nextReleaseInfo.releaseAdmin));
                 assertFalse(registry.isRegisteredService(address(service)), "isRegisteredService() return unexpected value #1");
 
                 uint256 expectedNftId = chainNft.getNextTokenId();
@@ -587,9 +647,10 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
 
                 // check registration
                 assertEq(serviceNftId.toInt(), expectedNftId, "registerService() return unexpected value");
-                assertTrue(AccessManagerCloneable(nextReleaseInfo.admin.authority()).isLocked(), "isLocked() return unexpected value");
-                assertTrue(nextReleaseInfo.admin.hasRole(address(service), expectedServiceRoleId), "hasRole() return unexpected value");
-                assertTrue(nextReleaseInfo.admin.targetExists(address(service)), "targetExists() return unexpected value");
+                ReleaseAdmin releaseAdmin = ReleaseAdmin(nextReleaseInfo.releaseAdmin);
+                assertTrue(AccessManagerCloneable(releaseAdmin.authority()).isLocked(), "isLocked() return unexpected value");
+                assertTrue(releaseAdmin.hasRole(address(service), expectedServiceRoleId), "hasRole() return unexpected value");
+                assertTrue(releaseAdmin.targetExists(address(service)), "targetExists() return unexpected value");
                 assertTrue(registry.isRegisteredService(address(service)), "isRegisteredService() return unexpected value #2");
                 assertFalse(registryAdmin.targetExists(address(service)), "targetExists() return unexpected value");
 
@@ -599,9 +660,15 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 assertEq(releaseRegistry.releases(), i + 1, "releases() return unexpected value #3");
                 assertEq(releaseRegistry.getNextVersion().toInt(), nextReleaseInfo.version.toInt(), "getNextVersion() return unexpected value #3");
                 assertEq(releaseRegistry.getLatestVersion().toInt(), prevReleaseInfo.version.toInt(), "getLatestVersion() return unexpected value #3");
+
+                // solhint-disable-next-line
+                console.log("registered services", i);
             }
 
             {
+                // solhint-disable-next-line
+                console.log("activating release", i);
+
                 // activate
                 vm.expectEmit(address(releaseRegistry));
                 emit LogReleaseActivation(nextVersion);
@@ -613,10 +680,14 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
 
                 nextReleaseInfo.state = ACTIVE();
                 nextReleaseInfo.activatedAt = TimestampLib.blockTimestamp();
+                nextReleaseInfo.disabledAt = TimestampLib.max();
                 RoleId expectedServiceRoleIdForAllVersions = RoleIdLib.roleForTypeAndAllVersions(REGISTRY());
 
                 // check activation
-                assertFalse(AccessManagerCloneable(nextReleaseInfo.admin.authority()).isLocked(), "isLocked() return unexpected value");
+                assertFalse(AccessManagerCloneable(
+                    ReleaseAdmin(
+                        nextReleaseInfo.releaseAdmin).authority()).isLocked(), 
+                    "isLocked() return unexpected value");
                 assertTrue(registryAdmin.hasRole(address(service), expectedServiceRoleIdForAllVersions), "hasRole() return unexpected value");
 
                 _assert_releaseRegistry_getters(nextVersion, nextReleaseInfo);
@@ -630,6 +701,9 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 assertEq(createdVersion.toInt(), releaseRegistry.getVersion(i).toInt(), "getReleaseVersion() return unexpected value");
                 assertEq(releaseRegistry.getReleaseInfo(createdVersion).state.toInt(), ACTIVE().toInt(), "getReleaseInfo() not ACTIVE");
                 assertEq(releaseRegistry.isActiveRelease(createdVersion), true, "isActiveRelease() returned unexpected value");
+
+                // solhint-disable-next-line
+                console.log("activated release", i);
             }
 
             prevVersion = nextVersion;
@@ -643,8 +717,8 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
     {
         VersionPart nextVersion = VersionPartLib.toVersionPart(releaseRegistry.INITIAL_GIF_VERSION());
         VersionPart prevVersion = VersionPartLib.toVersionPart(releaseRegistry.INITIAL_GIF_VERSION() - 1);
-        IRegistry.ReleaseInfo memory nextReleaseInfo;
-        IRegistry.ReleaseInfo memory prevReleaseInfo;
+        IRelease.ReleaseInfo memory nextReleaseInfo;
+        IRelease.ReleaseInfo memory prevReleaseInfo;
 
         IService service;
 
@@ -661,7 +735,10 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 // check create
                 assertEq(createdVersion.toInt(), nextVersion.toInt(), "createNextRelease() return unexpected value");
                 if(i > 0) {
-                    assertTrue(AccessManagerCloneable(prevReleaseInfo.admin.authority()).isLocked(), "isLocked() return unexpected value");
+                    assertTrue(AccessManagerCloneable(
+                        ReleaseAdmin(
+                            prevReleaseInfo.releaseAdmin).authority()).isLocked(), 
+                        "isLocked() return unexpected value");
                 }
 
                 _assert_releaseRegistry_getters(nextVersion, nextReleaseInfo);
@@ -679,7 +756,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
 
                 vm.prank(gifManager);
                 (
-                    IAccessAdmin preparedAdmin, 
+                    ReleaseAdmin preparedAdmin, 
                     VersionPart preparedVersion, 
                     bytes32 preparedSalt
                 ) = releaseRegistry.prepareNextRelease(nextAuthMock, nextSalt);
@@ -687,14 +764,20 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 nextReleaseInfo.state = DEPLOYING();
                 nextReleaseInfo.salt = nextSalt;
                 nextReleaseInfo.auth = nextAuthMock;
-                nextReleaseInfo.admin = preparedAdmin;
+                nextReleaseInfo.releaseAdmin = address(preparedAdmin);
 
                 // check prepare
                 assertEq(preparedVersion.toInt(), nextVersion.toInt(), "prepareNextRelease() return unexpected releaseVersion");
                 assertEq(preparedSalt, nextSalt, "prepareNextRelease() return unexpected releaseSalt");
-                assertTrue(AccessManagerCloneable(nextReleaseInfo.admin.authority()).isLocked(), "isLocked() return unexpected value");
+                assertTrue(AccessManagerCloneable(
+                    ReleaseAdmin(
+                        nextReleaseInfo.releaseAdmin).authority()).isLocked(), 
+                    "isLocked() return unexpected value");
                 if(i > 0) {
-                    assertTrue(AccessManagerCloneable(prevReleaseInfo.admin.authority()).isLocked(), "isLocked() return unexpected value");
+                    assertTrue(AccessManagerCloneable(
+                        ReleaseAdmin(
+                            nextReleaseInfo.releaseAdmin).authority()).isLocked(), 
+                        "isLocked() return unexpected value");
                 }
 
                 _assert_releaseRegistry_getters(nextVersion, nextReleaseInfo);
@@ -707,7 +790,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
 
             {
                 // deploy (register all(1) services)
-                service = _prepareServiceWithRegistryDomain(nextReleaseInfo.version, ReleaseAdmin(address(nextReleaseInfo.admin)));
+                service = _prepareServiceWithRegistryDomain(nextReleaseInfo.version, ReleaseAdmin(nextReleaseInfo.releaseAdmin));
                 assertFalse(registry.isRegisteredService(address(service)), "isRegisteredService() return unexpected value #1");
 
                 uint256 expectedNftId = chainNft.getNextTokenId();
@@ -724,9 +807,11 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
 
                 // check registration
                 assertEq(serviceNftId.toInt(), expectedNftId, "registerService() return unexpected value");
-                assertTrue(AccessManagerCloneable(nextReleaseInfo.admin.authority()).isLocked(), "isLocked() return unexpected value");
-                assertTrue(nextReleaseInfo.admin.hasRole(address(service), expectedServiceRoleId), "hasRole() return unexpected value");   
-                assertTrue(nextReleaseInfo.admin.targetExists(address(service)), "targetExists() return unexpected value");
+                ReleaseAdmin releaseAdmin = ReleaseAdmin(nextReleaseInfo.releaseAdmin);
+                assertTrue(AccessManagerCloneable(releaseAdmin.authority()).isLocked(), 
+                    "isLocked() return unexpected value");
+                assertTrue(releaseAdmin.hasRole(address(service), expectedServiceRoleId), "hasRole() return unexpected value");   
+                assertTrue(releaseAdmin.targetExists(address(service)), "targetExists() return unexpected value");
                 assertTrue(registry.isRegisteredService(address(service)), "isRegisteredService() return unexpected value #2");
                 assertFalse(registryAdmin.targetExists(address(service)), "targetExists() return unexpected value");
 
@@ -750,10 +835,12 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
 
                 nextReleaseInfo.state = ACTIVE();
                 nextReleaseInfo.activatedAt = TimestampLib.blockTimestamp();
+                nextReleaseInfo.disabledAt = TimestampLib.max();
                 RoleId expectedServiceRoleIdForAllVersions = RoleIdLib.roleForTypeAndAllVersions(REGISTRY());
 
                 // check activation 
-                assertFalse(AccessManagerCloneable(nextReleaseInfo.admin.authority()).isLocked(), "isLocked() return unexpected value");
+                assertFalse(AccessManagerCloneable(ReleaseAdmin(nextReleaseInfo.releaseAdmin)
+                    .authority()).isLocked(), "isLocked() return unexpected value");
                 assertTrue(registryAdmin.hasRole(address(service), expectedServiceRoleIdForAllVersions), "hasRole() return unexpected value");
                 
                 _assert_releaseRegistry_getters(nextVersion, nextReleaseInfo);
@@ -776,7 +863,10 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 nextReleaseInfo.disabledAt = TimestampLib.blockTimestamp();
 
                 // check pause
-                assertTrue(AccessManagerCloneable(nextReleaseInfo.admin.authority()).isLocked(), "isLocked() return unexpected value");
+                assertTrue(AccessManagerCloneable(
+                    ReleaseAdmin(
+                        nextReleaseInfo.releaseAdmin).authority()).isLocked(),
+                    "isLocked() return unexpected value");
                 assertTrue(gteTimestamp(nextReleaseInfo.disabledAt, prevReleaseInfo.disabledAt), "Test error: nextPauseTimestamp <= prevPauseTimestamp");
 
                 _assert_releaseRegistry_getters(nextVersion, nextReleaseInfo);
@@ -798,8 +888,8 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
     {
         VersionPart nextVersion = VersionPartLib.toVersionPart(releaseRegistry.INITIAL_GIF_VERSION());
         VersionPart prevVersion = VersionPartLib.toVersionPart(releaseRegistry.INITIAL_GIF_VERSION() - 1);
-        IRegistry.ReleaseInfo memory nextReleaseInfo;
-        IRegistry.ReleaseInfo memory prevReleaseInfo;
+        IRelease.ReleaseInfo memory nextReleaseInfo;
+        IRelease.ReleaseInfo memory prevReleaseInfo;
 
         IService service;
 
@@ -816,7 +906,8 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 // check create
                 assertEq(createdVersion.toInt(), nextVersion.toInt(), "createNextRelease() return unexpected value");
                 if(i > 0) {
-                    assertFalse(AccessManagerCloneable(prevReleaseInfo.admin.authority()).isLocked(), "isLocked() return unexpected value");
+                    assertFalse(AccessManagerCloneable(ReleaseAdmin(prevReleaseInfo.releaseAdmin)
+                    .authority()).isLocked(), "isLocked() return unexpected value");
                 }
 
                 _assert_releaseRegistry_getters(nextVersion, nextReleaseInfo);
@@ -834,7 +925,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
 
                 vm.prank(gifManager);
                 (
-                    IAccessAdmin preparedAdmin, 
+                    ReleaseAdmin preparedAdmin, 
                     VersionPart preparedVersion, 
                     bytes32 preparedSalt
                 ) = releaseRegistry.prepareNextRelease(nextAuthMock, nextSalt);
@@ -842,14 +933,16 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 nextReleaseInfo.state = DEPLOYING();
                 nextReleaseInfo.salt = nextSalt;
                 nextReleaseInfo.auth = nextAuthMock;
-                nextReleaseInfo.admin = preparedAdmin;
+                nextReleaseInfo.releaseAdmin = address(preparedAdmin);
 
                 // check prepare
                 assertEq(preparedVersion.toInt(), nextVersion.toInt(), "prepareNextRelease() return unexpected releaseVersion");
                 assertEq(preparedSalt, nextSalt, "prepareNextRelease() return unexpected releaseSalt");
-                assertTrue(AccessManagerCloneable(nextReleaseInfo.admin.authority()).isLocked(), "isLocked() return unexpected value");
+                assertTrue(AccessManagerCloneable(ReleaseAdmin(nextReleaseInfo.releaseAdmin)
+                    .authority()).isLocked(), "isLocked() return unexpected value");
                 if(i > 0) {
-                    assertFalse(AccessManagerCloneable(prevReleaseInfo.admin.authority()).isLocked(), "isLocked() return unexpected value");
+                    assertFalse(AccessManagerCloneable(ReleaseAdmin(prevReleaseInfo.releaseAdmin)
+                    .authority()).isLocked(), "isLocked() return unexpected value");
                 }
 
                 _assert_releaseRegistry_getters(nextVersion, nextReleaseInfo);
@@ -862,7 +955,8 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
 
             {
                 // deploy (register all(1) services)
-                service = _prepareServiceWithRegistryDomain(nextReleaseInfo.version, ReleaseAdmin(address(nextReleaseInfo.admin)));
+                service = _prepareServiceWithRegistryDomain(nextReleaseInfo.version, ReleaseAdmin(address(ReleaseAdmin(nextReleaseInfo.releaseAdmin)
+                    )));
                 assertFalse(registry.isRegisteredService(address(service)), "isRegisteredService() return unexpected value #1");
 
                 uint256 expectedNftId = chainNft.getNextTokenId();
@@ -879,9 +973,12 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
 
                 // check registration
                 assertEq(serviceNftId.toInt(), expectedNftId, "registerService() return unexpected value");
-                assertTrue(AccessManagerCloneable(nextReleaseInfo.admin.authority()).isLocked(), "isLocked() return unexpected value");
-                assertTrue(nextReleaseInfo.admin.hasRole(address(service), expectedServiceRoleId), "hasRole() return unexpected value");   
-                assertTrue(nextReleaseInfo.admin.targetExists(address(service)), "targetExists() return unexpected value");
+                assertTrue(AccessManagerCloneable(ReleaseAdmin(nextReleaseInfo.releaseAdmin)
+                    .authority()).isLocked(), "isLocked() return unexpected value");
+                assertTrue(ReleaseAdmin(nextReleaseInfo.releaseAdmin)
+                    .hasRole(address(service), expectedServiceRoleId), "hasRole() return unexpected value");   
+                assertTrue(ReleaseAdmin(nextReleaseInfo.releaseAdmin)
+                    .targetExists(address(service)), "targetExists() return unexpected value");
                 assertTrue(registry.isRegisteredService(address(service)), "isRegisteredService() return unexpected value #2");
                 assertFalse(registryAdmin.targetExists(address(service)), "targetExists() return unexpected value");
 
@@ -905,10 +1002,12 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
 
                 nextReleaseInfo.state = ACTIVE();
                 nextReleaseInfo.activatedAt = TimestampLib.blockTimestamp();
+                nextReleaseInfo.disabledAt = TimestampLib.max();
                 RoleId expectedServiceRoleIdForAllVersions = RoleIdLib.roleForTypeAndAllVersions(REGISTRY());
 
                 // check activation 
-                assertFalse(AccessManagerCloneable(nextReleaseInfo.admin.authority()).isLocked(), "isLocked() return unexpected value");
+                assertFalse(AccessManagerCloneable(ReleaseAdmin(nextReleaseInfo.releaseAdmin)
+                    .authority()).isLocked(), "isLocked() return unexpected value");
                 assertTrue(registryAdmin.hasRole(address(service), expectedServiceRoleIdForAllVersions), "hasRole() return unexpected value");
                 
                 _assert_releaseRegistry_getters(nextVersion, nextReleaseInfo);
@@ -931,8 +1030,8 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 nextReleaseInfo.disabledAt = TimestampLib.blockTimestamp();
 
                 // check pause
-                assertTrue(AccessManagerCloneable(nextReleaseInfo.admin.authority()).isLocked(), "isLocked() return unexpected value");
-                assertTrue(gteTimestamp(nextReleaseInfo.disabledAt, prevReleaseInfo.disabledAt), "Test error: nextPauseTimestamp <= prevPauseTimestamp");
+                assertTrue(AccessManagerCloneable(ReleaseAdmin(nextReleaseInfo.releaseAdmin)
+                    .authority()).isLocked(), "isLocked() return unexpected value");
 
                 _assert_releaseRegistry_getters(nextVersion, nextReleaseInfo);
                 _assert_releaseRegistry_getters(prevVersion, prevReleaseInfo);
@@ -951,10 +1050,11 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 releaseRegistry.setActive(nextVersion, true);
 
                 nextReleaseInfo.state = ACTIVE();
-                nextReleaseInfo.disabledAt = TimestampLib.zero();
+                nextReleaseInfo.disabledAt = TimestampLib.max(); // 
 
                 // check unpause
-                assertFalse(AccessManagerCloneable(nextReleaseInfo.admin.authority()).isLocked(), "isLocked() return unexpected value");
+                assertFalse(AccessManagerCloneable(ReleaseAdmin(nextReleaseInfo.releaseAdmin)
+                    .authority()).isLocked(), "isLocked() return unexpected value");
 
                 _assert_releaseRegistry_getters(nextVersion, nextReleaseInfo);
                 _assert_releaseRegistry_getters(prevVersion, prevReleaseInfo);
@@ -1026,7 +1126,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
 
         vm.prank(gifManager);
         (
-            IAccessAdmin preparedAdmin, 
+            ReleaseAdmin preparedAdmin, 
             VersionPart preparedVersion, 
             bytes32 preparedSalt
         ) = releaseRegistry.prepareNextRelease(serviceAuth, salt);
@@ -1038,12 +1138,12 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
 
         _assert_releaseRegistry_getters(
             expectedVersion,
-            IRegistry.ReleaseInfo(
+            IRelease.ReleaseInfo(
                     DEPLOYING(),
                     preparedVersion,
                     preparedSalt,
                     serviceAuth,
-                    preparedAdmin,
+                    address(preparedAdmin),
                     TimestampLib.zero(),
                     TimestampLib.zero()
                 ));
@@ -1447,7 +1547,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
         // check DEPLOYED after the last registration
     }
 
-    function test_releaserRegistry_registerService_whenReleaseDeploying_withServiceVersionTooSmall() public
+    function test_releaseRegistry_registerService_whenReleaseDeploying_withServiceVersionTooSmall() public
     {
         uint initialVersionInt = releaseRegistry.INITIAL_GIF_VERSION();
 

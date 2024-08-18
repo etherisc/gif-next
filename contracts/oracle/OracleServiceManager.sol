@@ -17,7 +17,7 @@ contract OracleServiceManager is ProxyManager {
     ) 
     {
         OracleService svc = new OracleService{salt: salt}();
-        bytes memory data = abi.encode(registry, authority);
+        bytes memory data = abi.encode(authority, registry);
         IVersionable versionable = initialize(
             registry,
             address(svc), 

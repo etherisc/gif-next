@@ -8,10 +8,12 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/ut
 import {AccessManagerCloneable} from "./AccessManagerCloneable.sol";
 import {ContractLib} from "../shared/ContractLib.sol";
 import {IAccessAdmin} from "./IAccessAdmin.sol";
+import {IRegistry} from "../registry/IRegistry.sol";
 import {RoleId, RoleIdLib, ADMIN_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {Selector, SelectorLib, SelectorSetLib} from "../type/Selector.sol";
 import {Str, StrLib} from "../type/String.sol";
 import {TimestampLib} from "../type/Timestamp.sol";
+import {VersionPart} from "../type/Version.sol";
 
 interface IAccessManagedChecker {
     function authority() external view returns (address);
@@ -71,7 +73,7 @@ contract AccessAdmin is
 
     modifier onlyDeployer() {
         // special case for cloned AccessAdmin contracts
-        // IMPORTANT cloning and _initializeAuthority needs to be done in a single transaction
+        // IMPORTANT cloning and initialize authority needs to be done in a single transaction
         if (_deployer == address(0)) {
             _deployer = msg.sender;
         }
@@ -126,13 +128,24 @@ contract AccessAdmin is
     )
         public
         initializer()
+    {
+        __AccessAdmin_init(authority);
+    }
+
+
+    function __AccessAdmin_init(
+        AccessManagerCloneable authority 
+    )
+        internal
+        onlyInitializing()
         onlyDeployer() // initializes deployer if not initialized yet
     {
         authority.initialize(address(this));
 
         // set and initialize this access manager contract as
         // the admin (ADMIN_ROLE) of the provided authority
-        _initializeAuthority(authority);
+        __AccessManaged_init(address(authority));
+        _authority = authority;
 
         // create admin and public roles
         _initializeAdminAndPublicRoles();
@@ -142,18 +155,13 @@ contract AccessAdmin is
     }
 
 
-    function _initializeAuthority(
-        AccessManagerCloneable authority
-    )
-        internal
-        virtual
-        onlyInitializing()
-    {
-        _authority = authority;
+    function getRegistry() public view returns (IRegistry registry) {
+        return _authority.getRegistry();
+    }
 
-        // this access admin contract is an access managed contract
-        // that is managed by the provided authority
-        __AccessManaged_init(address(_authority));
+
+    function getRelease() public view returns (VersionPart release) {
+        return _authority.getRelease();
     }
 
 

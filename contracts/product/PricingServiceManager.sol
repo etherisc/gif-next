@@ -12,14 +12,14 @@ contract PricingServiceManager is ProxyManager {
     /// @dev initializes proxy manager with pricing service implementation and deploys instance
     constructor(
         address authority, 
-        address registryAddress,
+        address registry,
         bytes32 salt
     )
     {
         PricingService pricingSrv = new PricingService{salt: salt}();
-        bytes memory data = abi.encode(registryAddress, authority);
+        bytes memory data = abi.encode(authority, registry);
         IVersionable versionable = initialize(
-            registryAddress,
+            registry,
             address(pricingSrv), 
             data,
             salt);

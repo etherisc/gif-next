@@ -2,12 +2,14 @@
 pragma solidity ^0.8.20;
 
 import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
+import {IAccessManager} from "@openzeppelin/contracts/access/manager/IAccessManager.sol";
 
 // import {InstanceAdmin} from "../instance/InstanceAdmin.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IPolicyHolder} from "../shared/IPolicyHolder.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType, PRODUCT, DISTRIBUTION, ORACLE, POOL, STAKING} from "../type/ObjectType.sol";
+import {VersionPart} from "../type/Version.sol";
 
 interface ITargetHelper {
     function isTargetLocked(address target) external view returns (bool);
@@ -17,6 +19,10 @@ interface IInstanceAdminHelper {
     function getInstanceAdmin() external view returns (ITargetHelper);
 }
 
+interface ITokenRegistryHelper {
+    function isActive(uint256 chainId, address token, VersionPart release) external view returns (bool);
+}
+
 library ContractLib {
 
     error ErrorContractLibNotRegistered(address target);
@@ -24,7 +30,6 @@ library ContractLib {
     error ErrorContractLibNotStaking(NftId componentNftId, ObjectType objectType);
     error ErrorContractLibComponentTypeMismatch(NftId componentNftId, ObjectType expectedType, ObjectType actualType);
     error ErrorContractLibComponentInactive(NftId componentNftId);
-
 
     function getAndVerifyComponent(
         IRegistry registry, 
@@ -135,9 +140,32 @@ library ContractLib {
         return registry.getObjectInfo(instanceNftId).objectAddress;
     }
 
+    function isActiveToken(
+        address tokenRegistryAddress,
+        address token,
+        uint256 chainId, 
+        VersionPart release
+    )
+        external 
+        view 
+        returns (bool)
+    {
+        return ITokenRegistryHelper(
+            tokenRegistryAddress).isActive(
+                chainId, token, release);
+    }
 
     function isPolicyHolder(address target) external view returns (bool) {
         return ERC165Checker.supportsInterface(target, type(IPolicyHolder).interfaceId);
+    }
+
+
+    function isAuthority(address authority) public view returns (bool) {
+        if (!isContract(authority)) {
+            return false;
+        }
+
+        return supportsInterface(authority, type(IAccessManager).interfaceId);
     }
 
 

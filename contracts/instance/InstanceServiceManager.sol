@@ -17,7 +17,7 @@ contract InstanceServiceManager is ProxyManager {
     ) 
     {
         InstanceService svc = new InstanceService{salt: salt}();
-        bytes memory data = abi.encode(registry, authority);
+        bytes memory data = abi.encode(authority, registry);
         IVersionable versionable = initialize(
             registry,
             address(svc), 

@@ -12,6 +12,7 @@ import {ObjectType, ObjectTypeLib, PROTOCOL, REGISTRY, SERVICE, INSTANCE, STAKE,
 
 import {ChainNft} from "./ChainNft.sol";
 import {IRegistry} from "./IRegistry.sol";
+import {IRelease} from "./IRelease.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
 import {IStaking} from "../staking/IStaking.sol";
 import {ReleaseRegistry} from "./ReleaseRegistry.sol";
@@ -307,8 +308,8 @@ contract Registry is
         return _releaseRegistry.getLatestVersion();
     }
 
-    function getReleaseInfo(VersionPart version) external view returns (ReleaseInfo memory) {
-        return _releaseRegistry.getReleaseInfo(version);
+    function getReleaseInfo(VersionPart release) external view returns (IRelease.ReleaseInfo memory) {
+        return _releaseRegistry.getReleaseInfo(release);
     }
 
     function chainIds() public view returns (uint256) {

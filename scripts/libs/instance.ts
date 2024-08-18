@@ -148,7 +148,6 @@ export async function deployAndRegisterMasterInstance(
             libraries: {
                 ContractLib: libraries.contractLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
-                VersionPartLib: libraries.versionPartLibAddress,
             }
         }
     );

@@ -17,7 +17,7 @@ contract PoolServiceManager is ProxyManager {
     ) 
     {
         PoolService poolSrv = new PoolService{salt: salt}();
-        bytes memory data = abi.encode(registry, authority);
+        bytes memory data = abi.encode(authority, registry);
         IVersionable versionable = initialize(
             registry,
             address(poolSrv), 

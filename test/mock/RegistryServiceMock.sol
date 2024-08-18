@@ -5,6 +5,8 @@ import {ObjectType, REGISTRY} from "../../contracts/type/ObjectType.sol";
 
 import {Version, VersionLib} from "../../contracts/type/Version.sol";
 import {Service} from "../../contracts/shared/Service.sol";
+import {IVersionable} from "../../contracts/upgradeability/IVersionable.sol";
+import {Versionable} from "../../contracts/upgradeability/Versionable.sol";
 
 /*
 contract RegistryServiceMock is Versionable {
@@ -50,7 +52,7 @@ contract RegistryServiceMock is Service {
     function getVersion()
         public
         pure
-        virtual override
+        virtual override 
         returns(Version)
     {
         return VersionLib.toVersion(3, 0, 1);

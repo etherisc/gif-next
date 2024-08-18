@@ -19,10 +19,12 @@ import {IAccessAdmin} from "../../contracts/authorization/IAccessAdmin.sol";
 // core contracts
 import {Dip} from "../../contracts/mock/Dip.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
+import {IRelease} from "../../contracts/registry/IRelease.sol";
 import {IServiceAuthorization} from "../../contracts/authorization/IServiceAuthorization.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
 import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
 import {ReleaseRegistry} from "../../contracts/registry/ReleaseRegistry.sol";
+import {ReleaseAdmin} from "../../contracts/registry/ReleaseAdmin.sol";
 import {Staking} from "../../contracts/staking/Staking.sol";
 import {StakingManager} from "../../contracts/staking/StakingManager.sol";
 import {StakingReader} from "../../contracts/staking/StakingReader.sol";
@@ -446,7 +448,7 @@ contract GifDeployer is Test {
         }
     }
 
-    function eqReleaseInfo(IRegistry.ReleaseInfo memory release_1, IRegistry.ReleaseInfo memory release_2) public pure returns (bool isSame) {
+    function eqReleaseInfo(IRelease.ReleaseInfo memory release_1, IRelease.ReleaseInfo memory release_2) public pure returns (bool isSame) {
 
         assertEq(release_1.state.toInt(), release_2.state.toInt(), "getReleaseInfo(version).state returned unexpected value");
         assertEq(release_1.version.toInt(), release_2.version.toInt(), "getReleaseInfo(version).version returned unexpected value");
@@ -465,17 +467,17 @@ contract GifDeployer is Test {
         );
     }
 
-    function zeroReleaseInfo() public pure returns (IRegistry.ReleaseInfo memory) {
+    function zeroReleaseInfo() public pure returns (IRelease.ReleaseInfo memory) {
         return (
-            IRegistry.ReleaseInfo(
-                StateIdLib.zero(),
-                VersionPartLib.toVersionPart(0),
-                bytes32(0),
-                IServiceAuthorization(address(0)),
-                IAccessAdmin(address(0)),
-                TimestampLib.zero(),
-                TimestampLib.zero()
-            )
+            IRelease.ReleaseInfo({
+                state: StateIdLib.zero(),
+                version: VersionPartLib.toVersionPart(0),
+                salt: bytes32(0),
+                auth: IServiceAuthorization(address(0)),
+                releaseAdmin: address(0),
+                activatedAt: TimestampLib.zero(),
+                disabledAt: TimestampLib.zero()
+            })
         );
     }
 }

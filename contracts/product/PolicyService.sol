@@ -50,11 +50,11 @@ contract PolicyService is
         initializer
     {
         (
-            address registryAddress,
-            address authority
+            address authority,
+            address registry
         ) = abi.decode(data, (address, address));
 
-        _initializeService(registryAddress, authority, owner);
+        __Service_init(authority, registry, owner);
 
         VersionPart majorVersion = getVersion().toMajorPart();
         _accountingService = IAccountingService(getRegistry().getServiceAddress(ACCOUNTING(), majorVersion));

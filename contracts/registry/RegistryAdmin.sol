@@ -31,7 +31,9 @@ import {VersionPart, VersionPartLib} from "../type/Version.sol";
         - responsible for creation, activation and locking/unlocking of releases
 */
 
-/// @dev IMPORTANT: MUST not use authority().setLocked() 
+/// @dev The RegistryAdmin contract implements the central authorization for the GIF core contracts.
+/// These are the release independent registry and staking contracts and their respective helper contracts.
+/// The RegistryAdmin also manages the access from service contracts to the GIF core contracts
 contract RegistryAdmin is
     AccessAdmin
 {
@@ -81,7 +83,8 @@ contract RegistryAdmin is
         AccessManagerCloneable accessManager = AccessManagerCloneable(authority());
         accessManager.completeSetup(
             address(registry), 
-            VersionPartLib.toVersionPart(type(uint8).max)); 
+            VersionPartLib.toVersionPart(type(uint8).max),
+            false); 
 
         _registry = address(registry);
         _releaseRegistry = registry.getReleaseRegistryAddress();

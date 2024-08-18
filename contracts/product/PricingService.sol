@@ -42,14 +42,15 @@ contract PricingService is
         initializer()
     {
         (
-            address registryAddress, 
-            address authority
+            address authority,
+            address registry
         ) = abi.decode(data, (address, address));
 
-        _initializeService(registryAddress, authority, owner);
-        _registerInterface(type(IPricingService).interfaceId);
+        __Service_init(authority, registry, owner);
 
         _distributionService = IDistributionService(_getServiceAddress(DISTRIBUTION()));
+
+        _registerInterface(type(IPricingService).interfaceId);
     }
 
     /// @dev calculates the premium amount for the specified attributes

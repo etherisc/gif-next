@@ -32,11 +32,11 @@ contract OracleService is
         initializer()
     {
         (
-            address registryAddress,
-            address authority
+            address authority,
+            address registry
         ) = abi.decode(data, (address, address));
 
-        _initializeService(registryAddress, authority, owner);
+        __Service_init(authority, registry, owner);
         _registerInterface(type(IOracleService).interfaceId);
     }
 

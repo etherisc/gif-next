@@ -9,6 +9,7 @@ import {FireProduct} from "../../../contracts/examples/fire/FireProduct.sol";
 import {FireProductAuthorization} from "../../../contracts/examples/fire/FireProductAuthorization.sol";
 import {GifTest} from "../../base/GifTest.sol";
 import {NftId} from "../../../contracts/type/NftId.sol";
+import {VersionPartLib} from "../../../contracts/type/Version.sol";
 
 contract FireTestBase is GifTest {
 
@@ -31,8 +32,19 @@ contract FireTestBase is GifTest {
     }
 
     function _deployFireUSD() internal {
+        // deploy fire token
         vm.startPrank(fireProductOwner);
         fireUSD = new FireUSD();
+        vm.stopPrank();
+
+        // whitelist fire token and make it active for release 3
+        vm.startPrank(registryOwner);
+        tokenRegistry.registerToken(address(fireUSD));
+        tokenRegistry.setActiveForVersion(
+            block.chainid, 
+            address(fireUSD), 
+            VersionPartLib.toVersionPart(3),
+            true);
         vm.stopPrank();
     }
 

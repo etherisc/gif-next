@@ -8,15 +8,13 @@ import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165C
 import {REGISTRY} from "../type/ObjectType.sol";
 import {VersionPart} from "../type/Version.sol";
 
-import {IRegisterable} from "../shared/IRegisterable.sol";
-
 import {IRegistry} from "./IRegistry.sol";
 import {IRegistryLinked} from "../shared/IRegistryLinked.sol";
 import {ReleaseRegistry} from "./ReleaseRegistry.sol";
 import {RegistryAdmin} from "./RegistryAdmin.sol";
 
-
-/// @title contract to register token per GIF major release.
+/// @dev The TokenRegistry contract is used to whitelist/manage ERC-20 of tokens per major release.
+/// Only whitelisted tokens can be used as default tokens for products, distribution and pools components.
 contract TokenRegistry is
     AccessManaged,
     IRegistryLinked
@@ -212,13 +210,13 @@ contract TokenRegistry is
         return _tokenInfo[chainId][token].chainId > 0;
     }
 
-    /// @dev returns true iff both the token is active for the specfied version and the global token state is active
-    function isActive(uint256 chainId, address token, VersionPart majorVersion) external view returns (bool) {
+    /// @dev returns true iff both the token is active for the specfied release and the global token state is active
+    function isActive(uint256 chainId, address token, VersionPart release) external view returns (bool) {
         if(!_tokenInfo[chainId][token].active) {
             return false;
         }
 
-        return _active[chainId][token][majorVersion];
+        return _active[chainId][token][release];
     }
 
     function getDipTokenAddress() external view returns (address) {

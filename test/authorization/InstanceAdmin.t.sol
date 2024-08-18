@@ -50,12 +50,15 @@ contract TestInstanceAdmin is
                 address(someInstanceAdminMaster)));
 
         // create AccessManager and assign admin role to clonedInstanceAdmin
-        AccessManagerCloneable accessMananger = new AccessManagerCloneable();
+        AccessManagerCloneable clonedAccessMananger = new AccessManagerCloneable();
 
-        clonedInstanceAdmin.initialize(accessMananger);
+        clonedInstanceAdmin.initialize(
+            clonedAccessMananger,
+            registry,
+            VersionPartLib.toVersionPart(3));
+
         clonedInstanceAdmin.completeSetup(
             address(instance),
-            someInstanceAuthz,
-            VersionPartLib.toVersionPart(3));
+            someInstanceAuthz);
     }
 }

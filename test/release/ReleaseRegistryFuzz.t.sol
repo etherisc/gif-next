@@ -19,7 +19,8 @@ import {IService} from "../../contracts/shared/IService.sol";
 import {IServiceAuthorization} from "../../contracts/authorization/IServiceAuthorization.sol";
 
 import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
-import {IRegistry} from "../../contracts/registry/Registry.sol";
+import {IRegistry} from "../../contracts/registry/IRegistry.sol";
+import {IRelease} from "../../contracts/registry/IRelease.sol";
 import {ReleaseRegistry} from "../../contracts/registry/ReleaseRegistry.sol";
 import {ChainNft} from "../../contracts/registry/ChainNft.sol";
 
@@ -151,7 +152,7 @@ contract ReleaseRegistryTest is GifDeployer, FoundryRandom {
             expectRevert = true;
         }
     }
-    function _checkReleaseInfo(IRegistry.ReleaseInfo memory info) public view 
+    function _checkReleaseInfo(IRelease.ReleaseInfo memory info) public view 
     {
         if(info.state == SCHEDULED()) {
             assertTrue(info.version.toInt() >= 3, "Test error: unexpected version #1");
@@ -206,7 +207,7 @@ contract ReleaseRegistryTest is GifDeployer, FoundryRandom {
     }
 
     // assert by version getters
-    function _assert_releaseRegistry_getters(VersionPart version, IRegistry.ReleaseInfo memory info) public view
+    function _assert_releaseRegistry_getters(VersionPart version, IRelease.ReleaseInfo memory info) public view
     {
         _checkReleaseInfo(info);
 

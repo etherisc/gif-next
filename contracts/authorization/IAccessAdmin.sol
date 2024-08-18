@@ -4,14 +4,16 @@ pragma solidity ^0.8.20;
 import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 
 import {IAccess} from "./IAccess.sol";
+import {IRegistryLinked} from "../shared/IRegistryLinked.sol";
 import {RoleId} from "../type/RoleId.sol";
 import {Selector} from "../type/Selector.sol";
 import {Str} from "../type/String.sol";
-import {Timestamp} from "../type/Timestamp.sol";
+import {VersionPart} from "../type/Version.sol";
 
 interface IAccessAdmin is 
     IAccessManaged,
-    IAccess
+    IAccess,
+    IRegistryLinked
 {
 
     // roles
@@ -104,6 +106,8 @@ interface IAccessAdmin is
     // function unauthorizeFunctions(address target, FunctionInfo[] memory functions) external;
 
     //--- view functions ----------------------------------------------------//
+
+    function getRelease() external view returns (VersionPart release);
 
     function roles() external view returns (uint256 numberOfRoles);
     function getRoleId(uint256 idx) external view returns (RoleId roleId);

@@ -60,30 +60,49 @@ contract InstanceAdmin is
         _disableInitializers();
     }
 
+
+    function initialize(
+        AccessManagerCloneable clonedAccessManager,
+        IRegistry registry,
+        VersionPart release
+    )
+        external
+        initializer()
+    {
+        __AccessAdmin_init(clonedAccessManager);
+
+        clonedAccessManager.completeSetup(
+            address(registry), 
+            release); 
+
+        _registry = registry;
+    }
+
+
     /// @dev Completes the initialization of this instance admin using the provided instance, registry and version.
     /// Important: Initialization of instance admin is only complete after calling this function. 
     /// Important: The instance MUST be registered and all instance supporting contracts must be wired to this instance.
     function completeSetup(
-        address instanceAddress,
-        address instanceAuthorization,
-        VersionPart releaseVersion
+        address instance,
+        address authorization
     )
         external
-        reinitializer(uint64(releaseVersion.toInt()))
+        reinitializer(uint64(getRelease().toInt()))
         onlyDeployer()
     {
         _idNext = CUSTOM_ROLE_ID_MIN;
-        _instance = IInstance(instanceAddress);
-        _registry = IRegistry(_instance.getRegistry());
-        _instanceAuthorization = IAuthorization(instanceAuthorization);
+        _instance = IInstance(instance);
+        _instanceAuthorization = IAuthorization(authorization);
 
-        AccessManagerCloneable accessManager = AccessManagerCloneable(authority());
-        accessManager.completeSetup(address(_registry), VersionPartLib.toVersionPart(type(uint8).max)); 
+        // AccessManagerCloneable accessManager = AccessManagerCloneable(authority());
+        // accessManager.completeSetup(
+        //     address(_registry), 
+        //     release); 
 
-        _checkTargetIsReadyForAuthorization(instanceAddress);
+        _checkTargetIsReadyForAuthorization(instance);
 
         // check matching releases
-        if (_instanceAuthorization.getRelease() != _instance.getRelease()) {
+        if (_instanceAuthorization.getRelease() != getRelease()) {
             revert ErrorInstanceAdminReleaseMismatch();
         }
 
