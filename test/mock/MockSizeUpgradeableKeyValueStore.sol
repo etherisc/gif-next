@@ -17,7 +17,7 @@ contract MockSizeUpgradeableKeyValueStore is
     function getVersion()
         public 
         pure 
-        virtual override
+        virtual override (Versionable, Component)
         returns(Version)
     {
         return VersionLib.toVersion(3,0,0);

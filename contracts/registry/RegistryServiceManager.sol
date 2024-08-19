@@ -31,7 +31,7 @@ contract RegistryServiceManager is
         }
         
         RegistryService srv = new RegistryService{ salt: salt }();
-        bytes memory data = abi.encode(registry, authority);
+        bytes memory data = abi.encode(authority, registry);
         IVersionable versionable = initialize(
             registry,
             address(srv), 

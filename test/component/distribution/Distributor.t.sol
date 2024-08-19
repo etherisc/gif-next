@@ -5,7 +5,6 @@ import {console} from "../../../lib/forge-std/src/Test.sol";
 import {GifTest} from "../../base/GifTest.sol";
 
 import {DistributorType} from "../../../contracts/type/DistributorType.sol";
-import {Distribution} from "../../../contracts/distribution/Distribution.sol";
 import {FeeLib} from "../../../contracts/type/Fee.sol";
 import {IDistribution} from "../../../contracts/instance/module/IDistribution.sol";
 import {IDistributionComponent} from "../../../contracts/distribution/IDistributionComponent.sol";
@@ -13,7 +12,7 @@ import {NftId} from "../../../contracts/type/NftId.sol";
 import {ReferralId, ReferralStatus, ReferralLib, REFERRAL_OK, REFERRAL_ERROR_UNKNOWN} from "../../../contracts/type/Referral.sol";
 import {Seconds, SecondsLib} from "../../../contracts/type/Seconds.sol";
 import {SimpleDistribution} from "../../../contracts/examples/unpermissioned/SimpleDistribution.sol";
-import {Timestamp, toTimestamp, TimestampLib} from "../../../contracts/type/Timestamp.sol";
+import {Timestamp, TimestampLib} from "../../../contracts/type/Timestamp.sol";
 import {UFixed, UFixedLib} from "../../../contracts/type/UFixed.sol";
 
 contract DistributorTest is GifTest {
@@ -356,7 +355,7 @@ contract DistributorTest is GifTest {
         referralCode = "SAVE!!!";
         discountPercentage = instanceReader.toUFixed(55, -3);
         maxReferrals = 10;
-        expiryAt = toTimestamp(block.timestamp + 7 * 24 * 3600);
+        expiryAt = TimestampLib.toTimestamp(block.timestamp + 7 * 24 * 3600);
         referralData = "...";
 
         if (createDistributor) {

@@ -189,8 +189,7 @@ contract StakingService is
         internal
         virtual
     {
-        tokenHandler.distributeTokens(
-            tokenHandler.getWallet(), 
+        tokenHandler.pushToken(
             to, 
             amount);
     }
@@ -363,7 +362,7 @@ contract StakingService is
             address stakingAddress
         ) = abi.decode(data, (address, address, address));
 
-        _initializeService(registryAddress, authority, owner);
+        __Service_init(authority, registryAddress, owner);
 
         StakingServiceStorage storage $ = _getStakingServiceStorage();
         $._registryService = RegistryService(_getServiceAddress(REGISTRY()));

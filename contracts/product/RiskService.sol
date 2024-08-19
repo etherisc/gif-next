@@ -4,26 +4,26 @@ pragma solidity ^0.8.20;
 import {IInstance} from "../instance/IInstance.sol";
 import {IInstanceService} from "../instance/IInstanceService.sol";
 import {IPoolService} from "../pool/PoolService.sol";
-import {IRiskService} from "./IRiskService.sol";
+import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegistryService} from "../registry/IRegistryService.sol";
 import {IRisk} from "../instance/module/IRisk.sol";
+import {IRiskService} from "./IRiskService.sol";
 
+import {ContractLib} from "../shared/ContractLib.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
-import {ObjectType, INSTANCE, PRODUCT, POOL, POLICY, REGISTRY, RISK} from "../type/ObjectType.sol";
+import {ObjectType, COMPONENT, INSTANCE, PRODUCT, POOL, POLICY, REGISTRY, RISK} from "../type/ObjectType.sol";
 import {ACTIVE, PAUSED, KEEP_STATE} from "../type/StateId.sol";
 import {NftId} from "../type/NftId.sol";
 import {RiskId} from "../type/RiskId.sol";
 import {StateId} from "../type/StateId.sol";
 import {RiskSet} from "../instance/RiskSet.sol";
-import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
+import {Service} from "../shared/Service.sol";
+import {TimestampLib} from "../type/Timestamp.sol";
 
 contract RiskService is
-    ComponentVerifyingService,
+    Service,
     IRiskService 
 {
-    IInstanceService private _instanceService;
-    IPoolService internal _poolService;
-    IRegistryService private _registryService;
 
     function _initialize(
         address owner, 
@@ -34,15 +34,16 @@ contract RiskService is
         virtual override
     {
         (
-            address registryAddress,
-            address authority
+            address authority,
+            address registry
         ) = abi.decode(data, (address, address));
 
-        _initializeService(registryAddress, authority, owner);
+        __Service_init(authority, registry, owner);
 
-        _instanceService = IInstanceService(_getServiceAddress(INSTANCE()));
-        _poolService = IPoolService(getRegistry().getServiceAddress(POOL(), getVersion().toMajorPart()));
-        _registryService = IRegistryService(_getServiceAddress(REGISTRY()));
+        // TODO cleanup
+        // _instanceService = IInstanceService(_getServiceAddress(INSTANCE()));
+        // _poolService = IPoolService(getRegistry().getServiceAddress(POOL(), getVersion().toMajorPart()));
+        // _registryService = IRegistryService(_getServiceAddress(REGISTRY()));
 
         _registerInterface(type(IRiskService).interfaceId);
     }
@@ -53,10 +54,16 @@ contract RiskService is
         bytes memory data
     )
         external 
-        override
+        restricted()
     {
-        (NftId productNftId,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
-        IRisk.RiskInfo memory riskInfo = IRisk.RiskInfo(productNftId, data);
+        // checks
+        (NftId productNftId, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
+
+        // effects
+        IRisk.RiskInfo memory riskInfo = IRisk.RiskInfo({
+            productNftId: productNftId, 
+            createdAt: TimestampLib.blockTimestamp(),
+            data: data});
 
         instance.getInstanceStore().createRisk(
             riskId,
@@ -73,11 +80,14 @@ contract RiskService is
         RiskId riskId,
         bytes memory data
     )
-        external
+        external 
+        restricted()
     {
-        (,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
-        InstanceReader instanceReader = instance.getInstanceReader();
+        // checks
+        (NftId productNftId, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
 
+        // effects
+        InstanceReader instanceReader = instance.getInstanceReader();
         IRisk.RiskInfo memory riskInfo = instanceReader.getRiskInfo(riskId);
         riskInfo.data = data;
         instance.getInstanceStore().updateRisk(riskId, riskInfo, KEEP_STATE());
@@ -88,9 +98,13 @@ contract RiskService is
         RiskId riskId,
         StateId state
     )
-        external
+        external 
+        restricted()
     {
-        (,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
+        // checks
+        (NftId productNftId, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
+
+        // effects
         instance.getInstanceStore().updateRiskState(riskId, state);
 
         if (state == ACTIVE()) {
@@ -98,6 +112,36 @@ contract RiskService is
         } else if (state == PAUSED()) {
             instance.getRiskSet().pause(riskId);
         }
+    }
+
+    function _getAndVerifyActiveComponent(ObjectType expectedType) 
+        internal 
+        view 
+        returns (
+            NftId componentNftId,
+            IInstance instance
+        )
+    {
+        IRegistry.ObjectInfo memory info;
+        address instanceAddress;
+        bool isActive = true;
+
+        if (expectedType != COMPONENT()) {
+            (info, instanceAddress) = ContractLib.getAndVerifyComponent(
+                getRegistry(),
+                msg.sender, // caller
+                expectedType,
+                isActive); 
+        } else {
+            (info, instanceAddress) = ContractLib.getAndVerifyAnyComponent(
+                getRegistry(),
+                msg.sender,
+                isActive); 
+        }
+
+        // get component nft id and instance
+        componentNftId = info.nftId;
+        instance = IInstance(instanceAddress);
     }
 
 

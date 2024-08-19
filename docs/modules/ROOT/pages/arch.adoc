@@ -420,7 +420,7 @@ Components are are always linked to a specific instance.
 The term "component" covers four distinct types of components that together implement the actual use case specific business logic of a concrete use case.
 
 The diagram below shows the architecture of an exemplary "My Product" use case.
-TODO remove module packages in diagram
+TODO remove or update module packages in diagram
 
 image::{imgbase}component-modules.png[Component Modules]
 

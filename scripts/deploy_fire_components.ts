@@ -1,5 +1,5 @@
 import { resolveAddress, Signer } from "ethers";
-import { FirePool, FireProduct, FireProduct__factory, IInstance__factory, IInstanceService__factory } from "../typechain-types";
+import { FirePool, FireProduct, FireProduct__factory, IInstance__factory, IInstanceService__factory, IRegistry__factory, TokenRegistry__factory } from "../typechain-types";
 import { getNamedAccounts } from "./libs/accounts";
 import { deployContract } from "./libs/deployment";
 import { LibraryAddresses } from "./libs/libraries";
@@ -11,7 +11,7 @@ import { logger } from "./logger";
 async function main() {
     loadVerificationQueueState();
 
-    const { productOwner: fireOwner } = await getNamedAccounts();
+    const { protocolOwner, productOwner: fireOwner } = await getNamedAccounts();
 
     await deployFireComponentContracts(
         {
@@ -28,17 +28,19 @@ async function main() {
             strLibAddress: process.env.STRLIB_ADDRESS!,
             timestampLibAddress: process.env.TIMESTAMPLIB_ADDRESS!,
             uFixedLibAddress: process.env.UFIXEDLIB_ADDRESS!,
+            versionLibAddress: process.env.VERSIONLIB_ADDRESS!,
             versionPartLibAddress: process.env.VERSIONPARTLIB_ADDRESS!,
         } as LibraryAddresses,
         {
             instanceServiceAddress: process.env.INSTANCE_SERVICE_ADDRESS!,
         } as ServiceAddresses,
-        fireOwner
+        fireOwner,
+        protocolOwner,
     );
 }
 
 
-export async function deployFireComponentContracts(libraries: LibraryAddresses, services: ServiceAddresses, fireOwner: Signer) {
+export async function deployFireComponentContracts(libraries: LibraryAddresses, services: ServiceAddresses, fireOwner: Signer, registryOwner: Signer) {
     logger.info("===== deploying fire insurance components ...");
     
     const amountLibAddress = libraries.amountLibAddress;
@@ -54,6 +56,7 @@ export async function deployFireComponentContracts(libraries: LibraryAddresses, 
     const strLibAddress = libraries.strLibAddress;
     const timestampLibAddress = libraries.timestampLibAddress;
     const ufixedLibAddress = libraries.uFixedLibAddress;
+    const versionLibAddress = libraries.versionLibAddress;
     const versionPartLibAddress = libraries.versionPartLibAddress;
         
     const instanceServiceAddress = services.instanceServiceAddress;
@@ -96,6 +99,27 @@ export async function deployFireComponentContracts(libraries: LibraryAddresses, 
         },
         "contracts/examples/fire/FireProductAuthorization.sol:FireProductAuthorization");
 
+    logger.info(`registering FireUSD on TokenRegistry`);    
+
+    const registry = IRegistry__factory.connect(await instance.getRegistry(), registryOwner);
+    const tokenRegistry = TokenRegistry__factory.connect(await registry.getTokenRegistryAddress(), registryOwner);
+    await executeTx(async () =>
+        await tokenRegistry.registerToken(fireUsdAddress, getTxOpts()),
+        "fire ex - registerToken",
+        [TokenRegistry__factory.createInterface()]
+    );
+
+    await executeTx(async () =>
+        await tokenRegistry.setActiveForVersion(
+            (await tokenRegistry.runner?.provider?.getNetwork())?.chainId || 1, 
+            fireUsdAddress, 
+            3, 
+            true,
+            getTxOpts()),
+        "fire ex - setActiveForVersion",
+        [TokenRegistry__factory.createInterface()]
+    );
+
     const { address: fireProductAddress, contract: fireProductBaseContract } = await deployContract(
         "FireProduct",
         fireOwner,
@@ -117,7 +141,7 @@ export async function deployFireComponentContracts(libraries: LibraryAddresses, 
                 SecondsLib: secondsLibAddress,
                 TimestampLib: timestampLibAddress,
                 UFixedLib: ufixedLibAddress,
-                VersionPartLib: versionPartLibAddress,
+                VersionLib: versionLibAddress,
             }
         });
     const fireProduct = fireProductBaseContract as FireProduct;
@@ -163,7 +187,7 @@ export async function deployFireComponentContracts(libraries: LibraryAddresses, 
                 ContractLib: contractLibAddress,
                 NftIdLib: nftIdLibAddress,
                 UFixedLib: ufixedLibAddress,
-                VersionPartLib: versionPartLibAddress,
+                VersionLib: versionLibAddress,
             }
         });
     const firePool = firePoolBaseContract as FirePool;

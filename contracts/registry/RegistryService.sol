@@ -33,11 +33,11 @@ contract RegistryService is
         initializer()
     {
         (
-            address registryAddress,
-            address initialAuthority
+            address authority,
+            address registry
         ) = abi.decode(data, (address, address));
 
-        _initializeService(registryAddress, initialAuthority, owner);
+        __Service_init(authority, registry, owner);
         _registerInterface(type(IRegistryService).interfaceId);
     }
 

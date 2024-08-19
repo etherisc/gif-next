@@ -33,7 +33,7 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
                 address(162012514),
                 ""                
             ),
-            VersionLib.toVersionPart(22),
+            VersionPartLib.toVersionPart(22),
             ObjectTypeLib.toObjectType(244)
         );
 
@@ -54,7 +54,7 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
                 address(2072),
                 ""                
             ),
-            VersionLib.toVersionPart(98),
+            VersionPartLib.toVersionPart(98),
             ObjectTypeLib.toObjectType(22)
         );
 
@@ -75,7 +75,7 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
                 address(0x00000000000000000000000000000000000000000000000000000000fdd9ec7e),
                 ""                
             ),
-            VersionLib.toVersionPart(172),
+            VersionPartLib.toVersionPart(172),
             ObjectTypeLib.toObjectType(185)
         );
 
@@ -96,7 +96,7 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
                 address(0x0000000000000000000000000000000000000000000000000000000000002181),
                 ""                
             ),
-            VersionLib.toVersionPart(178),
+            VersionPartLib.toVersionPart(178),
             ObjectTypeLib.toObjectType(44)
         );
 
@@ -117,7 +117,7 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
                 address(0x000000000000000000000000000000000000000000000000000000000000441c),
                 ""                
             ),
-            VersionLib.toVersionPart(63),
+            VersionPartLib.toVersionPart(63),
             ObjectTypeLib.toObjectType(99)
         );
 
@@ -139,7 +139,7 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
             address(0x000000000000000000000000000000007e273289),
             EnumerableSet.at(_addresses, 804448731 % EnumerableSet.length(_addresses)),
             "0x00000000000000000000000000000000000000000000000000000000000026a3"),
-            VersionLib.toVersionPart(115),
+            VersionPartLib.toVersionPart(115),
             ObjectTypeLib.toObjectType(250)
         );
 
@@ -161,7 +161,7 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
             "0x000000000000000000000000000000000000000000000000000000000000285d"
         );
 
-        VersionPart version = VersionLib.toVersionPart(115);
+        VersionPart version = VersionPartLib.toVersionPart(115);
         ObjectType domain = ObjectTypeLib.toObjectType(250);
         address sender = address(0x000000000000000000000000000000005FA4428e);
 
@@ -183,7 +183,7 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
             "0x0a24f63bcf984404134eb0867bed5c4b0a1675ba2da124de18a0897e460b5c22b635957e19b24af75a006242e9aeff5144f9cc9ec2f04a17278dafa058e2086f3d1e9ca393607a2b6632ec055e3db2"
         );
 
-        VersionPart version = VersionLib.toVersionPart(8);
+        VersionPart version = VersionPartLib.toVersionPart(8);
         ObjectType domain = ObjectTypeLib.toObjectType(254);
         address sender = address(0x4Dc593023536B7b8c4f254893f3bCA460c45EF8B);
 
@@ -212,7 +212,7 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
             "0x000000000000000000000000000000000000000000000000000000002255341b"
         );
 
-        VersionPart version = VersionLib.toVersionPart(224);
+        VersionPart version = VersionPartLib.toVersionPart(224);
         ObjectType domain = ObjectTypeLib.toObjectType(27);
 
         _startPrank(address(releaseRegistry));
@@ -246,7 +246,7 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
             ""
         );
 
-        VersionPart version = VersionLib.toVersionPart(22);
+        VersionPart version = VersionPartLib.toVersionPart(22);
         ObjectType domain = ObjectTypeLib.toObjectType(244);
 
         _startPrank(address(releaseRegistry));
@@ -290,8 +290,8 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
 
         for(uint8 majorVersion = 0; majorVersion < GIF_VERSION; majorVersion++)
         {
-            info.data = abi.encode("SomeTestName", VersionLib.toVersionPart(majorVersion));
-            _assert_register(info, true, abi.encodeWithSelector(IRegistry.InvalidServiceVersion.selector, VersionLib.toVersionPart(majorVersion)));
+            info.data = abi.encode("SomeTestName", VersionPartLib.toVersionPart(majorVersion));
+            _assert_register(info, true, abi.encodeWithSelector(IRegistry.InvalidServiceVersion.selector, VersionPartLib.toVersionPart(majorVersion)));
         }
 
         _stopPrank();
@@ -336,7 +336,7 @@ contract RegisterServiceConcreteTestL2 is RegisterServiceConcreteTest
 //             "0xd65a6b878facf5db1fb422199394c9190a24f63bcf984404134eb0867bed5c4b0a1675ba2da124de18a0897e460b5c22b635957e19b24af75a006242e9aeff5144f9cc9ec2f04a17278dafa058"
 //         );
 
-//         VersionPart version = VersionLib.toVersionPart(13);
+//         VersionPart version = VersionPartLib.toVersionPart(13);
 //         ObjectType domain = ObjectTypeLib.toObjectType(8);
 //         address sender = address(0x4Dc593023536B7b8c4f254893f3bCA460c45EF8B);
 

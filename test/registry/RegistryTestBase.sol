@@ -15,6 +15,8 @@ import {VersionPart} from "../../contracts/type/Version.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {ObjectType, ObjectTypeLib, PROTOCOL, REGISTRY, STAKING, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, DISTRIBUTOR, BUNDLE, POLICY, STAKE, STAKING} from "../../contracts/type/ObjectType.sol";
 
+import {IAccessAdmin} from "../../contracts/authorization/IAccessAdmin.sol";
+
 import {ChainNft} from "../../contracts/registry/ChainNft.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
@@ -188,7 +190,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
 
             // TODO do we need preparation phase now?
             (
-                address releaseAccessManager,
+                IAccessAdmin releaseAdmin,
                 VersionPart releaseVersion,
                 bytes32 releaseSalt
             ) = releaseRegistry.prepareNextRelease(
@@ -196,7 +198,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
                 salt);
 
             registryServiceManagerMock = new RegistryServiceManagerMock{salt: releaseSalt}(
-                releaseAccessManager, 
+                releaseAdmin.authority(), 
                 address(registry), 
                 releaseSalt);
         }

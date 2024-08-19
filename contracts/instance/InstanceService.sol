@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 
+import {IAuthorization} from "../authorization/IAuthorization.sol";
 import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
 import {Amount} from "../type/Amount.sol";
 import {BundleSet} from "./BundleSet.sol";
@@ -80,6 +81,7 @@ contract InstanceService is
         _;
     }
 
+
     // TODO check component - service - instance version match
     modifier onlyComponent() {
         if (! getRegistry().isRegisteredComponent(msg.sender)) {
@@ -90,6 +92,7 @@ contract InstanceService is
 
     function createInstance()
         external 
+        restricted()
         returns (
             IInstance instance,
             NftId instanceNftId
@@ -113,7 +116,11 @@ contract InstanceService is
             TargetManagerLib.getDefaultRewardRate());
 
         // MUST be set after instance is set up and registered
-        instanceAdmin.initializeInstanceAuthorization(address(instance));
+        IAuthorization instanceAuthorization = InstanceAdmin(_masterInstanceAdmin).getInstanceAuthorization();
+        VersionPart release = AccessManagerCloneable(authority()).getRelease();
+        instanceAdmin.completeSetup(
+            address(instance),
+            address(instanceAuthorization));
 
         emit LogInstanceCloned(
             instanceNftId,
@@ -124,6 +131,7 @@ contract InstanceService is
     function setStakingLockingPeriod(Seconds stakeLockingPeriod)
         external
         virtual
+        restricted()
         onlyInstance()
     {
         NftId instanceNftId = getRegistry().getNftIdForAddress(msg.sender);
@@ -136,6 +144,7 @@ contract InstanceService is
     function setStakingRewardRate(UFixed rewardRate)
         external
         virtual
+        restricted()
         onlyInstance()
     {
         NftId instanceNftId = getRegistry().getNftIdForAddress(msg.sender);
@@ -148,6 +157,7 @@ contract InstanceService is
     function refillStakingRewardReserves(address rewardProvider, Amount dipAmount)
         external
         virtual
+        restricted()
         onlyInstance()
     {
         NftId instanceNftId = getRegistry().getNftIdForAddress(msg.sender);
@@ -161,6 +171,7 @@ contract InstanceService is
     function withdrawStakingRewardReserves(Amount dipAmount)
         external
         virtual
+        restricted()
         onlyInstance()
         returns (Amount newBalance)
     {
@@ -170,14 +181,26 @@ contract InstanceService is
             dipAmount);
     }
 
-    function getMasterInstanceReader() external view returns (address) {
-        return _masterInstanceReader;
+    function upgradeInstanceReader(NftId instanceNftId) 
+        external 
+        nonReentrant()
+        restricted()
+        onlyInstanceOwner(instanceNftId) 
+        onlyNftOfType(instanceNftId, INSTANCE())
+    {
+        IRegistry registry = getRegistry();
+        IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(instanceNftId);
+        Instance instance = Instance(instanceInfo.objectAddress);
+        
+        InstanceReader upgradedInstanceReaderClone = InstanceReader(Clones.clone(address(_masterInstanceReader)));
+        upgradedInstanceReaderClone.initializeWithInstance(address(instance));
+        instance.setInstanceReader(upgradedInstanceReaderClone);
     }
 
     function setAndRegisterMasterInstance(address instanceAddress)
-            external 
-            onlyOwner 
-            returns(NftId masterInstanceNftId)
+        external 
+        onlyOwner()
+        returns(NftId masterInstanceNftId)
     {
         if(_masterInstance != address(0)) { revert ErrorInstanceServiceMasterInstanceAlreadySet(); }
         if(_masterInstanceAdmin != address(0)) { revert ErrorInstanceServiceMasterInstanceAdminAlreadySet(); }
@@ -226,7 +249,10 @@ contract InstanceService is
         masterInstanceNftId = info.nftId;
     }
 
-    function upgradeMasterInstanceReader(address instanceReaderAddress) external onlyOwner {
+    function upgradeMasterInstanceReader(address instanceReaderAddress)
+        external
+        onlyOwner
+    {
         if(_masterInstanceReader == address(0)) { revert ErrorInstanceServiceMasterInstanceReaderNotSet(); }
         if(instanceReaderAddress == address(0)) { revert ErrorInstanceServiceInstanceReaderAddressZero(); }
         if(instanceReaderAddress == _masterInstanceReader) { revert ErrorInstanceServiceInstanceReaderSameAsMasterInstanceReader(); }
@@ -237,19 +263,8 @@ contract InstanceService is
         _masterInstanceReader = instanceReaderAddress;
     }
 
-    function upgradeInstanceReader(NftId instanceNftId) 
-        external 
-        nonReentrant()
-        onlyInstanceOwner(instanceNftId) 
-        onlyNftOfType(instanceNftId, INSTANCE())
-    {
-        IRegistry registry = getRegistry();
-        IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(instanceNftId);
-        Instance instance = Instance(instanceInfo.objectAddress);
-        
-        InstanceReader upgradedInstanceReaderClone = InstanceReader(Clones.clone(address(_masterInstanceReader)));
-        upgradedInstanceReaderClone.initializeWithInstance(address(instance));
-        instance.setInstanceReader(upgradedInstanceReaderClone);
+    function getMasterInstanceReader() external view returns (address) {
+        return _masterInstanceReader;
     }
 
     /// @dev create new cloned instance admin
@@ -260,19 +275,16 @@ contract InstanceService is
         returns (InstanceAdmin clonedInstanceAdmin)
     {
         // start with setting up a new OZ access manager
+        // TODO consider _masterInstanceAdmin.authority() instead of _masterAccessManager
         AccessManagerCloneable clonedAccessManager = AccessManagerCloneable(
             Clones.clone(_masterAccessManager));
         
         // set up the instance admin
         clonedInstanceAdmin = InstanceAdmin(Clones.clone(_masterInstanceAdmin));
-        clonedAccessManager.initialize(
-            address(clonedInstanceAdmin)); // grant ADMIN_ROLE to instance admin
-
-        address authorization = address(
-            InstanceAdmin(_masterInstanceAdmin).getInstanceAuthorization());
         clonedInstanceAdmin.initialize(
             clonedAccessManager,
-            authorization);
+            getRegistry(),
+            getRelease());
     }
 
 
@@ -344,11 +356,11 @@ contract InstanceService is
         initializer()
     {
         (
-            address registryAddress,
-            address authority
+            address authority,
+            address registry
         ) = abi.decode(data, (address, address));
 
-        _initializeService(registryAddress, authority, owner);
+        __Service_init(authority, registry, owner);
 
         _registryService = IRegistryService(_getServiceAddress(REGISTRY()));
         _stakingService = IStakingService(_getServiceAddress(STAKING()));

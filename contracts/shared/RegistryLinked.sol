@@ -17,7 +17,7 @@ contract RegistryLinked is
 
     /// @dev initialization for upgradable contracts
     // used in _initializeRegisterable
-    function _initializeRegistryLinked(
+    function __RegistryLinked_init(
         address registry
     )
         internal

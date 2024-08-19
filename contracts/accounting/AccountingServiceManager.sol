@@ -17,7 +17,7 @@ contract AccountingServiceManager is ProxyManager {
     )
     {
         AccountingService svc = new AccountingService();
-        bytes memory data = abi.encode(registry, authority);
+        bytes memory data = abi.encode(authority, registry);
         IVersionable versionable = initialize(
             registry,
             address(svc), 

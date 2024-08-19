@@ -3,13 +3,11 @@ pragma solidity ^0.8.20;
 
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
+import {IRelease} from "./IRelease.sol";
+
 import {NftId} from "../type/NftId.sol";
 import {ObjectType} from "../type/ObjectType.sol";
 import {VersionPart} from "../type/Version.sol";
-import {Timestamp} from "../type/Timestamp.sol";
-import {StateId} from "../type/StateId.sol";
-
-import {IServiceAuthorization} from "../authorization/IServiceAuthorization.sol";
 
 /// @title Chain Registry interface.
 /// A chain registry holds all protocol relevant objects with basic metadata.
@@ -17,7 +15,9 @@ import {IServiceAuthorization} from "../authorization/IServiceAuthorization.sol"
 /// Registered objects are represented by NFTs.
 /// When on mainnet registry is global and keeps arbitrary number of chain registries residing on different chain ids.
 /// When not on mainnet registry keeps the only object residing on different chain id (on mainnet) - global registry.
-interface IRegistry is IERC165 {
+interface IRegistry is
+    IERC165
+{
 
     event LogRegistration(NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, address objectAddress, address initialOwner);
     event LogServiceRegistration(VersionPart majorVersion, ObjectType domain);
@@ -61,15 +61,6 @@ interface IRegistry is IERC165 {
         bytes data;
     }
 
-    struct ReleaseInfo {
-        StateId state;
-        VersionPart version;
-        bytes32 salt;
-        IServiceAuthorization auth;
-        Timestamp activatedAt;
-        Timestamp disabledAt;
-    }
-
     /// @dev Registers a registry contract for a specified chain.
     /// Only one chain registry may be registered per chain
     function registerRegistry(
@@ -104,7 +95,7 @@ interface IRegistry is IERC165 {
 
     function getLatestVersion() external view returns (VersionPart);
 
-    function getReleaseInfo(VersionPart version) external view returns (ReleaseInfo memory);
+    function getReleaseInfo(VersionPart release) external view returns (IRelease.ReleaseInfo memory);
 
     /// @dev Returns the number of supported chains.
     function chainIds() external view returns (uint256);

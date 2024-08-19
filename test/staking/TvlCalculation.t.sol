@@ -203,7 +203,7 @@ contract TvlCalculation is GifTest {
         Amount sumInsuredAmount = AmountLib.toAmount(sumInsuredAmountInt);
 
         // WHEN creating 2 policies
-        NftId policyNftId1 = _createPolicy(customer, sumInsuredAmount);
+        _createPolicy(customer, sumInsuredAmount);
         NftId policyNftId2 = _createPolicy(customer, sumInsuredAmount);
 
         // THEN
@@ -227,7 +227,7 @@ contract TvlCalculation is GifTest {
             "unexpected required stake balance (after collateralization)");
 
         // WHEN add a new policy
-        NftId policyNftId3 = _createPolicy(customer, sumInsuredAmount);
+        _createPolicy(customer, sumInsuredAmount);
 
         // THEN
         // check total value locked after 3 policies
@@ -283,7 +283,7 @@ contract TvlCalculation is GifTest {
         ClaimId claimId = _createClaim(policyNftId, claimAmount);
 
         // only create payout don't process it
-        PayoutId payoutId = _createPayout(policyNftId, claimId, claimAmount, false);
+        PayoutId payoutId = _createPayout(policyNftId, claimId, claimAmount);
 
         // THEN
         assertEq(
@@ -360,8 +360,7 @@ contract TvlCalculation is GifTest {
     function _createPayout(
         NftId nftId, // policy nft id
         ClaimId claimId,
-        Amount payoutAmount,
-        bool processPayout
+        Amount payoutAmount
     )
         internal
         returns (

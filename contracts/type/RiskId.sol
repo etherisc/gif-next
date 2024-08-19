@@ -12,6 +12,7 @@ using {
     neRiskId as !=,
     RiskIdLib.eq,
     RiskIdLib.eqz,
+    RiskIdLib.gtz,
     RiskIdLib.toInt,
     RiskIdLib.toKeyId,
     RiskIdLib.toKey32
@@ -65,5 +66,9 @@ library RiskIdLib {
 
     function eqz(RiskId a) public pure returns (bool isZero) {
         return eqRiskId(a, zero());
+    }
+
+    function gtz(RiskId a) public pure returns (bool isZero) {
+        return uint64(RiskId.unwrap(a)) > 0;
     }
 }

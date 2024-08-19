@@ -8,14 +8,16 @@ import {NftId} from "../../contracts/type/NftId.sol";
 import {Version, VersionPart, VersionLib, VersionPartLib} from "../../contracts/type/Version.sol";
 import {ObjectType, ObjectTypeLib, REGISTRY, SERVICE, PRODUCT, POOL, ORACLE, DISTRIBUTION} from "../../contracts/type/ObjectType.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
+import {IRelease} from "../../contracts/registry/IRelease.sol";
 import {IService} from "../../contracts/shared/IService.sol";
-import {RegisterableMock} from "./RegisterableMock.sol";
+import {RegisterableMockWithAuthority} from "./RegisterableMock.sol";
 import {RoleId, RoleIdLib} from "../../contracts/type/RoleId.sol";
 
-contract ServiceMock is RegisterableMock, AccessManagedUpgradeable, IService {
+contract ServiceMock is RegisterableMockWithAuthority, IService {
 
     constructor(NftId nftId, NftId registryNftId, bool isInterceptor, address initialOwner, address initialAuthority)
-        RegisterableMock(
+        RegisterableMockWithAuthority(
+            initialAuthority,
             nftId,
             registryNftId,
             SERVICE(),
@@ -28,7 +30,6 @@ contract ServiceMock is RegisterableMock, AccessManagedUpgradeable, IService {
     }
 
     function initialize(address initialAuthority) internal initializer() {
-        __AccessManaged_init(initialAuthority);
         _registerInterface(type(IService).interfaceId);
     }
 
@@ -159,7 +160,7 @@ contract ServiceMockOldVersion is ServiceMock {
         return RoleIdLib.roleForTypeAndVersion(getDomain(), VersionPartLib.toVersionPart(2));
     }
 
-    function getRelease() public pure override(IRegisterable, RegisterableMock) returns(VersionPart) {
+    function getRelease() public pure override(IRelease, RegisterableMockWithAuthority) returns(VersionPart) {
         return VersionPartLib.toVersionPart(2);
     }
 
@@ -185,10 +186,6 @@ contract ServiceMockNewVersion is ServiceMock {
 
     function getRoleId() external virtual override pure returns(RoleId serviceRoleId) {
         return RoleIdLib.roleForTypeAndVersion(getDomain(), VersionPartLib.toVersionPart(4));
-    }
-
-    function getRelease() public pure override(IRegisterable, RegisterableMock) returns(VersionPart) {
-        return VersionPartLib.toVersionPart(4);
     }
 
     function getVersion() public pure override returns(Version) {

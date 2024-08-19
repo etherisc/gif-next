@@ -10,7 +10,7 @@ async function main() {
     loadVerificationQueueState();
     
     const {services, libraries } = await deployGifContracts(protocolOwner, masterInstanceOwner, instanceOwner);
-    await deployFireComponentContracts(libraries, services, fireOwner);
+    await deployFireComponentContracts(libraries, services, fireOwner, protocolOwner);
 }
 
 if (require.main === module) {

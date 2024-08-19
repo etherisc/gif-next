@@ -5,6 +5,7 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegistryService} from "../registry/IRegistryService.sol";
+import {IRelease} from "../registry/IRelease.sol";
 import {IStaking} from "./IStaking.sol";
 import {IVersionable} from "../upgradeability/IVersionable.sol";
 
@@ -15,6 +16,7 @@ import {IComponentService} from "../shared/IComponentService.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType, COMPONENT, STAKING} from "../type/ObjectType.sol";
 import {Seconds} from "../type/Seconds.sol";
+import {Registerable} from "../shared/Registerable.sol";
 import {StakeManagerLib} from "./StakeManagerLib.sol";
 import {StakingReader} from "./StakingReader.sol";
 import {StakingStore} from "./StakingStore.sol";
@@ -24,7 +26,7 @@ import {TokenHandler} from "../shared/TokenHandler.sol";
 import {TokenHandlerDeployerLib} from "../shared/TokenHandlerDeployerLib.sol";
 import {TokenRegistry} from "../registry/TokenRegistry.sol";
 import {UFixed} from "../type/UFixed.sol";
-import {Version, VersionLib} from "../type/Version.sol";
+import {Version, VersionLib, VersionPart, VersionPartLib} from "../type/Version.sol";
 import {Versionable} from "../upgradeability/Versionable.sol";
 
 contract Staking is 
@@ -38,7 +40,6 @@ contract Staking is
     bytes32 public constant STAKING_LOCATION_V1 = 0xafe8d4462b2ed26a47154f4b8f6d1497d2f772496965791d25bd456e342b7f00;
 
     struct StakingStorage {
-        IRegistryService _registryService;
         TokenRegistry _tokenRegistry;
         TokenHandler _tokenHandler;
         StakingStore _store;
@@ -417,14 +418,24 @@ contract Staking is
         return _getStakingStorage()._tokenHandler;
     }
 
-    // from Versionable
+    // from IRegisterable
+    function getRelease()
+        public 
+        pure 
+        virtual override (IRelease, Registerable)
+        returns(VersionPart)
+    {
+        return VersionPartLib.toVersionPart(3);
+    }
+
+    // from IVersionable
     function getVersion()
         public 
         pure 
-        virtual override (IVersionable, Versionable)
+        virtual override (Component, IVersionable, Versionable)
         returns(Version)
     {
-        return VersionLib.toVersion(GIF_RELEASE,0,0);
+        return VersionLib.toVersion(3,0,0);
     }
 
     //--- internal functions ------------------------------------------------//
@@ -484,6 +495,13 @@ contract Staking is
         TokenRegistry tokenRegistry = TokenRegistry(tokenRegistryAddress);
         address dipTokenAddress = tokenRegistry.getDipTokenAddress();
 
+        // wiring to external contracts
+        StakingStorage storage $ = _getStakingStorage();
+        $._protocolNftId = registry.getProtocolNftId();
+        $._store = StakingStore(stakingStoreAddress);
+        $._reader = StakingStore(stakingStoreAddress).getStakingReader();
+        $._tokenRegistry = TokenRegistry(tokenRegistryAddress);
+
         _initializeComponent(
             authority,
             registryAddress, 
@@ -495,13 +513,6 @@ contract Staking is
             stakingOwner, 
             "", // registry data
             ""); // component data
-
-        // wiring to external contracts
-        StakingStorage storage $ = _getStakingStorage();
-        $._protocolNftId = getRegistry().getProtocolNftId();
-        $._store = StakingStore(stakingStoreAddress);
-        $._reader = StakingStore(stakingStoreAddress).getStakingReader();
-        $._tokenRegistry = TokenRegistry(tokenRegistryAddress);
 
         _registerInterface(type(IStaking).interfaceId);
     }

@@ -59,6 +59,7 @@ export async function deployAndRegisterMasterInstance(
                 SelectorSetLib: libraries.selectorSetLibAddress,
                 StrLib: libraries.strLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
+                VersionPartLib: libraries.versionPartLibAddress
             }
         }
     );
@@ -147,7 +148,6 @@ export async function deployAndRegisterMasterInstance(
             libraries: {
                 ContractLib: libraries.contractLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
-                VersionPartLib: libraries.versionPartLibAddress,
             }
         }
     );

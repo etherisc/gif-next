@@ -8,7 +8,8 @@ using {
     versionPartEq as ==,
     versionPartNe as !=,
     VersionPartLib.eqz,
-    VersionPartLib.toInt
+    VersionPartLib.toInt,
+    VersionPartLib.isValidRelease
 }
     for VersionPart global;
 
@@ -17,9 +18,17 @@ function versionPartEq(VersionPart a, VersionPart b) pure returns(bool isSame) {
 function versionPartNe(VersionPart a, VersionPart b) pure returns(bool isSame) { return VersionPart.unwrap(a) != VersionPart.unwrap(b); }
 
 library VersionPartLib {
+    function releaseMin() public pure returns (VersionPart) { return toVersionPart(3); }
+    function releaseMax() public pure returns (VersionPart) { return toVersionPart(99); }
+
+    function isValidRelease(VersionPart release) external pure returns(bool) { 
+        uint256 releaseInt = VersionPart.unwrap(release);
+        return 3 <= releaseInt && releaseInt <= 99; 
+    } 
+
     function eqz(VersionPart a) external pure returns(bool) { return VersionPart.unwrap(a) == 0; }
     function toInt(VersionPart a) external pure returns(uint256) { return VersionPart.unwrap(a); }
-    function toVersionPart(uint256 a) external pure returns(VersionPart) { return VersionPart.wrap(uint8(a)); }
+    function toVersionPart(uint256 a) public pure returns(VersionPart) { return VersionPart.wrap(uint8(a)); }
 }
 
 type Version is uint24; // contains major,minor,patch version parts
@@ -38,6 +47,7 @@ function versionGt(Version a, Version b) pure returns(bool isGreaterThan) { retu
 function versionEq(Version a, Version b) pure returns(bool isSame) { return Version.unwrap(a) == Version.unwrap(b); }
 
 library VersionLib {
+
     function toInt(Version version) external pure returns(uint) { return Version.unwrap(version); }
 
     function toUint64(Version version) external pure returns(uint64) { return Version.unwrap(version); }
@@ -75,9 +85,9 @@ library VersionLib {
         );
     }
 
-    function toVersionPart(uint256 versionPart) external pure returns(VersionPart) { 
-        return VersionPart.wrap(uint8(versionPart)); 
-    }
+    // function toVersionPart(uint256 versionPart) public pure returns(VersionPart) { 
+    //     return VersionPart.wrap(uint8(versionPart)); 
+    // }
 
     function toVersion(
         uint256 major,

@@ -47,9 +47,9 @@ contract NftOwnable is
     }
 
 
-    /// @dev initialization for upgradable contracts
-    // used in _initializeRegisterable
-    function _initializeNftOwnable(
+    /// @dev Initialization for upgradable contracts.
+    // used in __Registerable_init, ProxyManager._preDeployChecksAndSetup
+    function __NftOwnable_init(
         address registry,
         address initialOwner
     )
@@ -57,7 +57,7 @@ contract NftOwnable is
         virtual
         onlyInitializing()
     {
-        _initializeRegistryLinked(registry);
+        __RegistryLinked_init(registry);
         _initializeERC165();
 
         if(initialOwner == address(0)) {

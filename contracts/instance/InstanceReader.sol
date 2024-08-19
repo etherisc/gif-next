@@ -110,7 +110,7 @@ contract InstanceReader {
     function bundles(NftId poolNftId)
         public
         view
-        returns (uint256 bundles)
+        returns (uint256 bundleCount)
     {
         return _bundleSet.bundles(poolNftId);
     }
@@ -118,7 +118,7 @@ contract InstanceReader {
     function activeBundles(NftId poolNftId)
         public
         view
-        returns (uint256 bundles)
+        returns (uint256 bundleCount)
     {
         return _bundleSet.activeBundles(poolNftId);
     }
@@ -166,7 +166,7 @@ contract InstanceReader {
     function claims(NftId policyNftId)
         public
         view
-        returns (uint16 claims)
+        returns (uint16 claimCount)
     {
         return getPolicyInfo(policyNftId).claimsCount;
     }
@@ -204,7 +204,7 @@ contract InstanceReader {
     function payouts(NftId policyNftId, ClaimId claimId)
         public
         view
-        returns (uint24 payouts)
+        returns (uint24 payoutCount)
     {
         return getClaimInfo(policyNftId, claimId).payoutsCount;
     }
@@ -250,7 +250,7 @@ contract InstanceReader {
     function risks(NftId productNftId)
         public
         view
-        returns (uint256 activeRisks)
+        returns (uint256 riskCount)
     {
         return _riskSet.risks(productNftId);
     }
@@ -266,7 +266,7 @@ contract InstanceReader {
     function activeRisks(NftId productNftId)
         public
         view
-        returns (uint256 activeRisks)
+        returns (uint256 activeRiskCount)
     {
         return _riskSet.activeRisks(productNftId);
     }

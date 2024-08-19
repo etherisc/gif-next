@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
-
 import {Amount} from "../type/Amount.sol";
 import {BundleSet} from "./BundleSet.sol";
 import {RiskSet} from "./RiskSet.sol";
@@ -22,7 +20,6 @@ import {UFixed} from "../type/UFixed.sol";
 
 contract Instance is
     IInstance,
-    AccessManagedUpgradeable,
     Registerable
 {
     bool private _initialized;
@@ -54,16 +51,15 @@ contract Instance is
         external 
         initializer()
     {
-        _instanceAdmin = instanceAdmin;
-        if(_instanceAdmin.authority() == address(0)) {
+        if(address(instanceAdmin) == address(0)) {
             revert ErrorInstanceInstanceAdminZero();
         }
 
-        // set authority to instance admin authority
-        __AccessManaged_init(_instanceAdmin.authority());
+        _instanceAdmin = instanceAdmin;
 
         // setup instance object info
-        _initializeRegisterable(
+        __Registerable_init(
+            instanceAdmin.authority(),
             address(registry), 
             registry.getNftId(), 
             INSTANCE(), 

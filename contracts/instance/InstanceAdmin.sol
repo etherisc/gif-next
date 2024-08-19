@@ -13,7 +13,7 @@ import {ObjectType} from "../type/ObjectType.sol";
 import {RoleId, RoleIdLib} from "../type/RoleId.sol";
 import {Str, StrLib} from "../type/String.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
-import {VersionPart} from "../type/Version.sol";
+import {VersionPart, VersionPartLib} from "../type/Version.sol";
 
 
 contract InstanceAdmin is
@@ -27,6 +27,8 @@ contract InstanceAdmin is
 
     uint64 public constant CUSTOM_ROLE_ID_MIN = 10000; // MUST be even
 
+    error ErrorInstanceAdminCallerNotInstanceOwner(address caller);
+    error ErrorInstanceAdminInstanceAlreadyLocked();
     error ErrorInstanceAdminNotRegistered(address target);
     error ErrorInstanceAdminAlreadyAuthorized(address target);
     error ErrorInstanceAdminReleaseMismatch();
@@ -38,50 +40,69 @@ contract InstanceAdmin is
 
     IAuthorization internal _instanceAuthorization;
 
+
+    modifier onlyInstanceOwner() {        
+        if(msg.sender != _registry.ownerOf(address(_instance))) {
+            revert ErrorInstanceAdminCallerNotInstanceOwner(msg.sender);
+        }
+        _;
+    }
+
     /// @dev Only used for master instance admin.
     /// Contracts created via constructor come with disabled initializers.
     constructor(
         address instanceAuthorization
-    )
-        AccessAdmin()
-    {
+    ) {
+        initialize(new AccessManagerCloneable());
+
         _instanceAuthorization = IAuthorization(instanceAuthorization);
+
+        _disableInitializers();
     }
 
-    /// @dev Initializes this instance admin with the provided instances authorization specification.
-    /// Internally the function creates an instance specific OpenZeppelin AccessManager that is used as the authority
-    /// for the inststance authorizatios.
-    /// Important: Initialization of this instance admin is only complete after calling function initializeInstance. 
+
     function initialize(
-        AccessManagerCloneable accessManager,
-        address instanceAuthorization
+        AccessManagerCloneable clonedAccessManager,
+        IRegistry registry,
+        VersionPart release
     )
         external
         initializer()
     {
-        // create new access manager for this instance admin
-        _initializeAuthority(address(accessManager));
+        __AccessAdmin_init(clonedAccessManager);
 
-        // create basic instance independent setup
-        _createAdminAndPublicRoles();
+        clonedAccessManager.completeSetup(
+            address(registry), 
+            release); 
 
-        // store instance authorization specification
-        _instanceAuthorization = IAuthorization(instanceAuthorization);
+        _registry = registry;
     }
 
-    /// @dev Completes the initialization of this instance admin using the provided instance.
-    /// Important: The instance MUST be registered and all instance supporting contracts must be wired to this instance.
-    function initializeInstanceAuthorization(address instanceAddress)
-        external
-    {
-        _checkTargetIsReadyForAuthorization(instanceAddress);
 
+    /// @dev Completes the initialization of this instance admin using the provided instance, registry and version.
+    /// Important: Initialization of instance admin is only complete after calling this function. 
+    /// Important: The instance MUST be registered and all instance supporting contracts must be wired to this instance.
+    function completeSetup(
+        address instance,
+        address authorization
+    )
+        external
+        reinitializer(uint64(getRelease().toInt()))
+        onlyDeployer()
+    {
         _idNext = CUSTOM_ROLE_ID_MIN;
-        _instance = IInstance(instanceAddress);
-        _registry = _instance.getRegistry();
+        _instance = IInstance(instance);
+        _instanceAuthorization = IAuthorization(authorization);
+
+        // AccessManagerCloneable accessManager = AccessManagerCloneable(authority());
+        // accessManager.completeSetup(
+        //     address(_registry), 
+        //     release); 
+
+        _checkTargetIsReadyForAuthorization(instance);
 
         // check matching releases
-        if (_instanceAuthorization.getRelease() != _instance.getRelease()) {
+        if (_instanceAuthorization.getRelease() != getRelease()) {
             revert ErrorInstanceAdminReleaseMismatch();
         }
 
@@ -99,7 +120,10 @@ contract InstanceAdmin is
     )
         external
     {
-        // checks
+        // !!! TODO add caller restrictions?
+
+        _checkTargetIsReadyForAuthorization(address(component));
+
         // get authorization specification
         IAuthorization authorization = component.getAuthorization();
         string memory targetName = authorization.getTargetName();
@@ -160,6 +184,19 @@ contract InstanceAdmin is
         _grantRoleToAccount(roleId, account);
     }
 
+
+    function setInstanceLocked(bool locked)
+        external
+        onlyInstanceOwner()
+    {
+        AccessManagerCloneable accessManager = AccessManagerCloneable(authority());
+
+        if(accessManager.isLocked() == locked) {
+            revert ErrorInstanceAdminInstanceAlreadyLocked();
+        }
+        accessManager.setLocked(locked);
+    }
+
     function setTargetLocked(address target, bool locked) 
         external 
         restricted()
@@ -178,12 +215,13 @@ contract InstanceAdmin is
         return _instanceAuthorization;
     }
 
+    // ------------------- Internal functions ------------------- //
 
     function _checkTargetIsReadyForAuthorization(address target)
         internal
         view
     {
-        if (address(_registry) != address(0) && !_registry.isRegistered(target)) {
+        if (!_registry.isRegistered(target)) {
             revert ErrorInstanceAdminNotRegistered(target);
         }
 

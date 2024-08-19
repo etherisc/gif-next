@@ -868,7 +868,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
         }
 
         while(version.toInt() <= VERSION.toInt()) { // already registered service version
-            version = VersionLib.toVersionPart(version.toInt() + 1);
+            version = VersionPartLib.toVersionPart(version.toInt() + 1);
         }
 
         _startPrank(address(releaseRegistry));
@@ -979,7 +979,7 @@ contract RegisterServiceWithPresetFuzzTest is RegistryTestBaseWithPreset, Regist
         }
 
         while(version_1.toInt() <= VERSION.toInt()) { // already registered service version
-            version_1 = VersionLib.toVersionPart(version_1.toInt() + 1);
+            version_1 = VersionPartLib.toVersionPart(version_1.toInt() + 1);
         }
 
         while(domain_2.eqz() || domain_2.toInt() == REGISTRY().toInt() || domain_2.toInt() == domain_1.toInt()) {
@@ -987,7 +987,7 @@ contract RegisterServiceWithPresetFuzzTest is RegistryTestBaseWithPreset, Regist
         }
 
         while(version_2.toInt() <= VERSION.toInt() || version_2.toInt() == version_1.toInt()) {
-            version_2 = VersionLib.toVersionPart(version_2.toInt() + 1);
+            version_2 = VersionPartLib.toVersionPart(version_2.toInt() + 1);
         }
 
         _startPrank(address(releaseRegistry));

@@ -3,9 +3,7 @@ import { getImplementationAddress } from '@openzeppelin/upgrades-core';
 import { AddressLike, BytesLike, Signer, id } from "ethers";
 import { ethers as hhEthers } from "hardhat";
 import {
-    AccountingService,
-    AccountingServiceManager,
-    AccountingService__factory,
+    AccountingService, AccountingServiceManager, AccountingService__factory,
     ApplicationService, ApplicationServiceManager, ApplicationService__factory,
     BundleService, BundleServiceManager, BundleService__factory,
     ClaimService, ClaimServiceManager, ClaimService__factory,
@@ -109,12 +107,11 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     //const salt = zeroPadBytes("0x03", 32);
     const salt: BytesLike = id(`0x5678`);
     const release = await createRelease(owner, registry, salt);
-    logger.info(`Release created - version: ${release.version} salt: ${release.salt} access manager: ${release.accessManager}`);
+    logger.info(`Release created - version: ${release.version} salt: ${release.salt} admin: ${release.adminAddress}`);
 
     logger.info("======== Starting deployment of services ========");
-    const releaseRegistry = await registry.releaseRegistry.connect(owner);
     logger.info("-------- registry service --------");
-    const authority = await registry.registryAdmin.authority();
+    const authority = await release.admin.authority();
     const { address: registryServiceManagerAddress, contract: registryServiceManagerBaseContract } = await deployContract(
         "RegistryServiceManager",
         owner,
@@ -129,7 +126,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
                 RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
                 VersionLib: libraries.versionLibAddress,
-                VersionPartLib: libraries.versionPartLibAddress,
             }});
 
     const registryServiceManager = registryServiceManagerBaseContract as RegistryServiceManager;
@@ -144,7 +140,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         undefined);
 
     const rcptRs = await executeTx(
-        async () => await releaseRegistry.registerService(registryServiceAddress, getTxOpts()),
+        async () => await registry.releaseRegistry.registerService(registryServiceAddress, getTxOpts()),
         "registerService - registryService"
     );
     const logRegistrationInfoRs = getFieldFromTxRcptLogs(rcptRs!, registry.registry.interface, "LogRegistration", "nftId");
@@ -171,7 +167,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             RoleIdLib: libraries.roleIdLibAddress,
             TimestampLib: libraries.timestampLibAddress,
             VersionLib: libraries.versionLibAddress, 
-            VersionPartLib: libraries.versionPartLibAddress,
         }});
 
     const stakingServiceManager = stakingServiceManagerBaseContract as StakingServiceManager;
@@ -186,7 +181,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         undefined);
 
     const rcptStk = await executeTx(
-        async () => await releaseRegistry.registerService(stakingServiceAddress, getTxOpts()),
+        async () => await registry.releaseRegistry.registerService(stakingServiceAddress, getTxOpts()),
         "registerService - stakingService"
     );
     const logRegistrationInfoStk = getFieldFromTxRcptLogs(rcptStk!, registry.registry.interface, "LogRegistration", "nftId");
@@ -209,11 +204,10 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         { libraries: { 
             ContractLib: libraries.contractLibAddress,
             NftIdLib: libraries.nftIdLibAddress, 
-            TimestampLib: libraries.timestampLibAddress,
-            VersionLib: libraries.versionLibAddress,
-            VersionPartLib: libraries.versionPartLibAddress,
             RoleIdLib: libraries.roleIdLibAddress,
             TargetManagerLib: libraries.targetManagerLibAddress,
+            TimestampLib: libraries.timestampLibAddress,
+            VersionLib: libraries.versionLibAddress,
         }});
 
     const instanceServiceManager = instanceServiceManagerBaseContract as InstanceServiceManager;
@@ -228,7 +222,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         undefined);
 
     const rcptInst = await executeTx(
-        async () => await releaseRegistry.registerService(instanceServiceAddress, getTxOpts()),
+        async () => await registry.releaseRegistry.registerService(instanceServiceAddress, getTxOpts()),
         "registerService - instanceService"
     );
     const logRegistrationInfoInst = getFieldFromTxRcptLogs(rcptInst!, registry.registry.interface, "LogRegistration", "nftId");
@@ -255,7 +249,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             RoleIdLib: libraries.roleIdLibAddress,
             TimestampLib: libraries.timestampLibAddress,
             VersionLib: libraries.versionLibAddress,
-            VersionPartLib: libraries.versionPartLibAddress,
         }});
     
     const accountingServiceManager = accountingServiceManagerBaseContract as AccountingServiceManager;
@@ -270,7 +263,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         undefined);
     
     const rcptAcct = await executeTx(
-        async () => await releaseRegistry.registerService(accountingServiceAddress, getTxOpts()),
+        async () => await registry.releaseRegistry.registerService(accountingServiceAddress, getTxOpts()),
         "registerService - accountingService"
     );
     const logRegistrationInfoAcct = getFieldFromTxRcptLogs(rcptAcct!, registry.registry.interface, "LogRegistration", "nftId");
@@ -299,7 +292,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             TimestampLib: libraries.timestampLibAddress,
             TokenHandlerDeployerLib: libraries.tokenHandlerDeployerLibAddress,
             VersionLib: libraries.versionLibAddress,
-            VersionPartLib: libraries.versionPartLibAddress,
         }});
 
     const componentServiceManager = componentServiceManagerBaseContract as ComponentServiceManager;
@@ -314,7 +306,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         undefined);
 
     const rcptCmpt = await executeTx(
-        async () => await releaseRegistry.registerService(componentServiceAddress, getTxOpts()),
+        async () => await registry.releaseRegistry.registerService(componentServiceAddress, getTxOpts()),
         "registerService - componentService"
     );
     const logRegistrationInfoCmpt = getFieldFromTxRcptLogs(rcptCmpt!, registry.registry.interface, "LogRegistration", "nftId");
@@ -340,7 +332,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
                 TimestampLib: libraries.timestampLibAddress,
                 UFixedLib: libraries.uFixedLibAddress,
                 VersionLib: libraries.versionLibAddress, 
-                VersionPartLib: libraries.versionPartLibAddress, 
             }});
     
     const distributionServiceManager = distributionServiceManagerBaseContract as DistributionServiceManager;
@@ -355,7 +346,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         undefined);
 
     const rcptDs = await executeTx(
-        async () => await releaseRegistry.registerService(distributionServiceAddress, getTxOpts()),
+        async () => await registry.releaseRegistry.registerService(distributionServiceAddress, getTxOpts()),
         "registerService - distributionService"
     );
     const logRegistrationInfoDs = getFieldFromTxRcptLogs(rcptDs!, registry.registry.interface, "LogRegistration", "nftId");
@@ -376,14 +367,13 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             release.salt
         ],
         { libraries: {
-                ContractLib: libraries.contractLibAddress,
-                NftIdLib: libraries.nftIdLibAddress,
-                RoleIdLib: libraries.roleIdLibAddress,
-                TimestampLib: libraries.timestampLibAddress,
-                VersionLib: libraries.versionLibAddress, 
-                VersionPartLib: libraries.versionPartLibAddress,
-                AmountLib: libraries.amountLibAddress
-            }});
+            AmountLib: libraries.amountLibAddress,
+            ContractLib: libraries.contractLibAddress,
+            NftIdLib: libraries.nftIdLibAddress,
+            RoleIdLib: libraries.roleIdLibAddress,
+            TimestampLib: libraries.timestampLibAddress,
+            VersionLib: libraries.versionLibAddress, 
+        }});
     
     const pricingServiceManager = pricingServiceManagerBaseContract as PricingServiceManager;
     const pricingServiceAddress = await pricingServiceManager.getPricingService();
@@ -397,7 +387,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         undefined);
 
     const rcptPrs = await executeTx(
-        async () => await releaseRegistry.registerService(pricingServiceAddress, getTxOpts()),
+        async () => await registry.releaseRegistry.registerService(pricingServiceAddress, getTxOpts()),
         "registerService - pricingService"
     );
     const logRegistrationInfoPrs = getFieldFromTxRcptLogs(rcptPrs!, registry.registry.interface, "LogRegistration", "nftId");
@@ -425,7 +415,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
                 SecondsLib: libraries.secondsLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
                 VersionLib: libraries.versionLibAddress, 
-                VersionPartLib: libraries.versionPartLibAddress, 
             }});
 
     const bundleServiceManager = bundleServiceManagerBaseContract as BundleServiceManager;
@@ -440,7 +429,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         undefined);
 
     const rcptBdl = await executeTx(
-        async () => await releaseRegistry.registerService(bundleServiceAddress, getTxOpts()),
+        async () => await registry.releaseRegistry.registerService(bundleServiceAddress, getTxOpts()),
         "registerService - bundleService"
     );
     const logRegistrationInfoBdl = getFieldFromTxRcptLogs(rcptBdl!, registry.registry.interface, "LogRegistration", "nftId");
@@ -465,12 +454,10 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
                 ContractLib: libraries.contractLibAddress,
                 FeeLib: libraries.feeLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
-                // ObjectTypeLib: libraries.objectTypeLibAddress, 
                 RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
                 UFixedLib: libraries.uFixedLibAddress,
                 VersionLib: libraries.versionLibAddress, 
-                VersionPartLib: libraries.versionPartLibAddress, 
             }});
     
     const poolServiceManager = poolServiceManagerBaseContract as PoolServiceManager;
@@ -485,7 +472,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         undefined);
 
     const rcptPs = await executeTx(
-        async () => await releaseRegistry.registerService(poolServiceAddress, getTxOpts()),
+        async () => await registry.releaseRegistry.registerService(poolServiceAddress, getTxOpts()),
         "registerService - poolService"
     );
     const logRegistrationInfoPs = getFieldFromTxRcptLogs(rcptPs!, registry.registry.interface, "LogRegistration", "nftId");
@@ -508,12 +495,10 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         { libraries: {
             ContractLib: libraries.contractLibAddress,
             NftIdLib: libraries.nftIdLibAddress,
-                // ObjectTypeLib: libraries.objectTypeLibAddress, 
                 RequestIdLib: libraries.requestIdLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
                 VersionLib: libraries.versionLibAddress, 
-                VersionPartLib: libraries.versionPartLibAddress,
             }});
     
     const oracleServiceManager = oracleServiceManagerBaseContract as OracleServiceManager;
@@ -528,7 +513,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         undefined);
 
     const orclPrs = await executeTx(
-        async () => await releaseRegistry.registerService(oracleServiceAddress, getTxOpts()),
+        async () => await registry.releaseRegistry.registerService(oracleServiceAddress, getTxOpts()),
         "registerService - oracleService"
     );
     const logRegistrationInfoOrc = getFieldFromTxRcptLogs(orclPrs!, registry.registry.interface, "LogRegistration", "nftId");
@@ -554,7 +539,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             RoleIdLib: libraries.roleIdLibAddress,
             TimestampLib: libraries.timestampLibAddress,
             VersionLib: libraries.versionLibAddress, 
-            VersionPartLib: libraries.versionPartLibAddress, 
         }});
 
     const riskServiceManager = riskServiceManagerBaseContract as RiskServiceManager;
@@ -569,7 +553,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         undefined);
 
     const rcptPrd = await executeTx(
-        async () => await releaseRegistry.registerService(riskServiceAddress, getTxOpts()),
+        async () => await registry.releaseRegistry.registerService(riskServiceAddress, getTxOpts()),
         "registerService - riskService"
     );
     const logRegistrationInfoPrd = getFieldFromTxRcptLogs(rcptPrd!, registry.registry.interface, "LogRegistration", "nftId");
@@ -596,7 +580,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             RoleIdLib: libraries.roleIdLibAddress,
             TimestampLib: libraries.timestampLibAddress,
             VersionLib: libraries.versionLibAddress, 
-            VersionPartLib: libraries.versionPartLibAddress, 
         }});
 
     const policyServiceManager = policyServiceManagerBaseContract as PolicyServiceManager;
@@ -611,7 +594,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         undefined);
 
     const rcptPol = await executeTx(
-        async () => await releaseRegistry.registerService(policyServiceAddress, getTxOpts()),
+        async () => await registry.releaseRegistry.registerService(policyServiceAddress, getTxOpts()),
         "registerService - policyService"
     );
     const logRegistrationInfoPol = getFieldFromTxRcptLogs(rcptPol!, registry.registry.interface, "LogRegistration", "nftId");
@@ -641,7 +624,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
                 TimestampLib: libraries.timestampLibAddress,
                 PayoutIdLib: libraries.payoutIdLibAddress,
                 VersionLib: libraries.versionLibAddress, 
-                VersionPartLib: libraries.versionPartLibAddress, 
             }});
 
     const claimServiceManager = claimServiceManagerBaseContract as ClaimServiceManager;
@@ -656,7 +638,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         undefined);
 
     const rcptClm = await executeTx(
-        async () => await releaseRegistry.registerService(claimServiceAddress, getTxOpts()),
+        async () => await registry.releaseRegistry.registerService(claimServiceAddress, getTxOpts()),
         "registerService - claimService"
     );
     const logRegistrationInfoClm = getFieldFromTxRcptLogs(rcptClm!, registry.registry.interface, "LogRegistration", "nftId");
@@ -683,7 +665,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             RoleIdLib: libraries.roleIdLibAddress,
             TimestampLib: libraries.timestampLibAddress,
             VersionLib: libraries.versionLibAddress, 
-            VersionPartLib: libraries.versionPartLibAddress, 
         }});
 
     const applicationServiceManager = applicationServiceManagerBaseContract as ApplicationServiceManager;
@@ -698,7 +679,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         undefined);
     
     const rcptAppl = await executeTx(
-        async () => await releaseRegistry.registerService(applicationServiceAddress, getTxOpts()),
+        async () => await registry.releaseRegistry.registerService(applicationServiceAddress, getTxOpts()),
         "registerService - applicationService"
     );
     const logRegistrationInfoAppl = getFieldFromTxRcptLogs(rcptAppl!, registry.registry.interface, "LogRegistration", "nftId");
@@ -713,9 +694,9 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
 
     logger.info("======== Activating release ========");
     await executeTx(
-        async () => await releaseRegistry.activateNextRelease(getTxOpts()),
+        async () => await registry.releaseRegistry.activateNextRelease(getTxOpts()),
         "releaseRegistry.activateNextRelease",
-        [releaseRegistry.interface]
+        [registry.releaseRegistry.interface]
     );
     logger.info("======== release activated ========");
 

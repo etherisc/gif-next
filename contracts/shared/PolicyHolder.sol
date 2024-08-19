@@ -29,7 +29,7 @@ contract PolicyHolder is
         virtual
         onlyInitializing()
     {
-        _initializeRegistryLinked(registryAddress);
+        __RegistryLinked_init(registryAddress);
         _initializeERC165();
         _registerInterface(type(IPolicyHolder).interfaceId);
     }

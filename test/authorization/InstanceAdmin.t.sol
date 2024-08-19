@@ -14,6 +14,7 @@ import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {ObjectType} from "../../contracts/type/ObjectType.sol";
 import {BUNDLE, COMPONENT, DISTRIBUTION, ORACLE, POOL, PRODUCT, POLICY, RISK, REQUEST, SERVICE, STAKING} from "../../contracts/type/ObjectType.sol";
 import {RoleId} from "../../contracts/type/RoleId.sol";
+import {VersionPartLib} from "../../contracts/type/Version.sol";
 
 contract TestInstanceAdmin is
     GifTest
@@ -48,15 +49,16 @@ contract TestInstanceAdmin is
             Clones.clone(
                 address(someInstanceAdminMaster)));
 
-        // create OZ AccessManager and assign admin role to clonedInstanceAdmin
-        AccessManagerCloneable ozAccessManager = new AccessManagerCloneable();
-        ozAccessManager.initialize(address(clonedInstanceAdmin));
+        // create AccessManager and assign admin role to clonedInstanceAdmin
+        AccessManagerCloneable clonedAccessMananger = new AccessManagerCloneable();
 
         clonedInstanceAdmin.initialize(
-            ozAccessManager,
-            someInstanceAuthz);
+            clonedAccessMananger,
+            registry,
+            VersionPartLib.toVersionPart(3));
 
-        clonedInstanceAdmin.initializeInstanceAuthorization(
-            address(instance));
+        clonedInstanceAdmin.completeSetup(
+            address(instance),
+            someInstanceAuthz);
     }
 }

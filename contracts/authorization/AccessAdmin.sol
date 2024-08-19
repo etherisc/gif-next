@@ -8,10 +8,12 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/ut
 import {AccessManagerCloneable} from "./AccessManagerCloneable.sol";
 import {ContractLib} from "../shared/ContractLib.sol";
 import {IAccessAdmin} from "./IAccessAdmin.sol";
+import {IRegistry} from "../registry/IRegistry.sol";
 import {RoleId, RoleIdLib, ADMIN_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {Selector, SelectorLib, SelectorSetLib} from "../type/Selector.sol";
 import {Str, StrLib} from "../type/String.sol";
 import {TimestampLib} from "../type/Timestamp.sol";
+import {VersionPart} from "../type/Version.sol";
 
 interface IAccessManagedChecker {
     function authority() external view returns (address);
@@ -71,7 +73,7 @@ contract AccessAdmin is
 
     modifier onlyDeployer() {
         // special case for cloned AccessAdmin contracts
-        // IMPORTANT cloning and _initializeAuthority needs to be done in a single transaction
+        // IMPORTANT cloning and initialize authority needs to be done in a single transaction
         if (_deployer == address(0)) {
             _deployer = msg.sender;
         }
@@ -98,8 +100,15 @@ contract AccessAdmin is
         _;
     }
 
-    modifier onlyExistingRole(RoleId roleId, bool onlyActiveRole) {
-        _checkRoleExists(roleId, onlyActiveRole);
+    modifier onlyExistingRole(
+        RoleId roleId, 
+        bool onlyActiveRole,
+        bool allowLockedRoles
+    )
+    {
+        if (!allowLockedRoles) {
+            _checkRoleExists(roleId, onlyActiveRole);
+        }
         _;
     }
 
@@ -108,14 +117,89 @@ contract AccessAdmin is
         _;
     }
 
-    constructor() {
-        _deployer = msg.sender;
-        _authority = new AccessManagerCloneable();
-        _authority.initialize(address(this));
+    //-------------- initialization functions ------------------------------//
 
-        _setAuthority(address(_authority)); // set authority for oz access managed
-        _createAdminAndPublicRoles();
+    // event LogAccessAdminDebug(string message);
+
+    /// @dev Initializes this admin with the provided accessManager (and authorization specification).
+    /// Internally initializes access manager with this admin and creates basic role setup.
+    function initialize(
+        AccessManagerCloneable authority 
+    )
+        public
+        initializer()
+    {
+        __AccessAdmin_init(authority);
     }
+
+
+    function __AccessAdmin_init(
+        AccessManagerCloneable authority 
+    )
+        internal
+        onlyInitializing()
+        onlyDeployer() // initializes deployer if not initialized yet
+    {
+        authority.initialize(address(this));
+
+        // set and initialize this access manager contract as
+        // the admin (ADMIN_ROLE) of the provided authority
+        __AccessManaged_init(address(authority));
+        _authority = authority;
+
+        // create admin and public roles
+        _initializeAdminAndPublicRoles();
+
+        // additional use case specific initialization
+        _initializeCustom();
+    }
+
+
+    function getRegistry() public view returns (IRegistry registry) {
+        return _authority.getRegistry();
+    }
+
+
+    function getRelease() public view returns (VersionPart release) {
+        return _authority.getRelease();
+    }
+
+
+    function _initializeAdminAndPublicRoles()
+        internal
+        virtual
+        onlyInitializing()
+    {
+        RoleId adminRoleId = RoleIdLib.toRoleId(_authority.ADMIN_ROLE());
+
+        // setup admin role
+        _createRoleUnchecked(
+            ADMIN_ROLE(),
+            toRole({
+                adminRoleId: ADMIN_ROLE(),
+                roleType: RoleType.Contract,
+                maxMemberCount: 1,
+                name: ADMIN_ROLE_NAME}));
+
+        // add this contract as admin role member
+        _roleMembers[adminRoleId].add(address(this));
+
+        // setup public role
+        _createRoleUnchecked(
+            PUBLIC_ROLE(),
+            toRole({
+                adminRoleId: ADMIN_ROLE(),
+                roleType: RoleType.Gif,
+                maxMemberCount: type(uint32).max,
+                name: PUBLIC_ROLE_NAME}));
+    }
+
+
+    function _initializeCustom()
+        internal
+        virtual
+        onlyInitializing()
+    { }
 
     //--- view functions for roles ------------------------------------------//
 
@@ -155,6 +239,7 @@ contract AccessAdmin is
         return _roleMembers[roleId].at(idx);
     }
 
+    // TODO false because not role member or because role not exists?
     function hasRole(address account, RoleId roleId) public view returns (bool) {
         (bool isMember, ) = _authority.hasRole(
             RoleId.unwrap(roleId), 
@@ -263,7 +348,11 @@ contract AccessAdmin is
         bytes4[] memory functionSelectors = _processFunctionSelectors(target, functions, addFunctions);
 
         // apply authz via access manager
-        _grantRoleAccessToFunctions(target, roleId, functionSelectors);
+        _grantRoleAccessToFunctions(
+            target, 
+            roleId, 
+            functionSelectors, 
+            false); // allowLockedRoles
     }
 
     function _unauthorizeTargetFunctions(
@@ -274,7 +363,12 @@ contract AccessAdmin is
     {
         bool addFunctions = false;
         bytes4[] memory functionSelectors = _processFunctionSelectors(target, functions, addFunctions);
-        _grantRoleAccessToFunctions(target, getAdminRole(), functionSelectors);
+
+        _grantRoleAccessToFunctions(
+            target, 
+            getAdminRole(), 
+            functionSelectors, 
+            true); // allowLockedRoles
     }
 
     function _processFunctionSelectors(
@@ -283,6 +377,7 @@ contract AccessAdmin is
         bool addFunctions
     )
         internal
+        onlyExistingTarget(target)
         returns (
             bytes4[] memory functionSelectors
         )
@@ -308,68 +403,16 @@ contract AccessAdmin is
         }
     }
 
-    function _initializeAuthority(
-        address authorityAddress
-    )
-        internal
-        virtual
-        onlyInitializing()
-        onlyDeployer()
-    {
-        if (authority() != address(0)) {
-            revert ErrorAuthorityAlreadySet();
-        }
-
-        _authority = AccessManagerCloneable(authorityAddress);
-        __AccessManaged_init(address(_authority));
-    }
-
-
-    function _initializeAdminAndPublicRoles()
-        internal
-        virtual
-        onlyInitializing()
-    {
-        _createAdminAndPublicRoles();
-    }
-
-
-    /// @dev internal setup function that can be used in both constructor and initializer.
-    function _createAdminAndPublicRoles()
-        internal
-    {
-        RoleId adminRoleId = RoleIdLib.toRoleId(_authority.ADMIN_ROLE());
-
-        // setup admin role
-        _createRoleUnchecked(
-            ADMIN_ROLE(),
-            toRole({
-                adminRoleId: ADMIN_ROLE(),
-                roleType: RoleType.Contract,
-                maxMemberCount: 1,
-                name: ADMIN_ROLE_NAME}));
-
-        // add this contract as admin role member
-        _roleMembers[adminRoleId].add(address(this));
-
-        // setup public role
-        _createRoleUnchecked(
-            PUBLIC_ROLE(),
-            toRole({
-                adminRoleId: ADMIN_ROLE(),
-                roleType: RoleType.Gif,
-                maxMemberCount: type(uint32).max,
-                name: PUBLIC_ROLE_NAME}));
-    }
-
-
     /// @dev grant the specified role access to all functions in the provided selector list
     function _grantRoleAccessToFunctions(
         address target,
         RoleId roleId, 
-        bytes4[] memory functionSelectors
+        bytes4[] memory functionSelectors,
+        bool allowLockedRoles // admin and public roles are locked
     )
         internal
+        onlyExistingTarget(target)
+        onlyExistingRole(roleId, true, allowLockedRoles)
     {
         _authority.setTargetFunctionRole(
             target,
@@ -383,7 +426,7 @@ contract AccessAdmin is
     /// @dev grant the specified role to the provided account
     function _grantRoleToAccount(RoleId roleId, address account)
         internal
-        onlyExistingRole(roleId, true)
+        onlyExistingRole(roleId, true, false)
     {
         // check max role members will not be exceeded
         if (_roleMembers[roleId].length() >= _roleInfo[roleId].maxMemberCount) {
@@ -411,7 +454,7 @@ contract AccessAdmin is
     /// @dev revoke the specified role from the provided account
     function _revokeRoleFromAccount(RoleId roleId, address account)
         internal
-        onlyExistingRole(roleId, false)
+        onlyExistingRole(roleId, false, false)
     {
 
         // check role removal is permitted
@@ -590,8 +633,9 @@ contract AccessAdmin is
         }
 
         uint64 roleIdInt = RoleId.unwrap(roleId);
-        if (roleIdInt == _authority.ADMIN_ROLE()
-            || roleIdInt == _authority.PUBLIC_ROLE())
+        if (roleIdInt == _authority.ADMIN_ROLE())
+        // TODO cleanup
+            //|| roleIdInt == _authority.PUBLIC_ROLE()) prevents granting of public role
         {
             revert ErrorRoleIsLocked(roleId);
         }

@@ -54,11 +54,6 @@ function neTimestamp(Timestamp a, Timestamp b) pure returns (bool) {
     return Timestamp.unwrap(a) != Timestamp.unwrap(b);
 }
 
-/// @dev Converts the uint256 to a Timestamp.
-function toTimestamp(uint256 timestamp) pure returns (Timestamp) {
-    return TimestampLib.toTimestamp(timestamp);
-}
-
 // TODO move to TimestampLib and rename to zero()
 /// @dev Return the Timestamp zero (0)
 function zeroTimestamp() pure returns (Timestamp) {

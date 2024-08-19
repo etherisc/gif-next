@@ -9,17 +9,15 @@ import {ObjectType} from "../type/ObjectType.sol";
 import {RoleId} from "../type/RoleId.sol";
 
 interface IService is 
+    IAccessManaged,
     IRegisterable,
-    IVersionable,
-    IAccessManaged
+    IVersionable
 {
-    error ErrorServiceNotImplemented();
-
     /// @dev returns the domain for this service.
     /// In any GIF release only one service for any given domain may be deployed.
     function getDomain() external pure returns(ObjectType serviceDomain);
 
     /// @dev returns the GIF release specific role id.
     /// These role ids are used to authorize service to service communication.
-    function getRoleId() external pure returns(RoleId serviceRoleId);
+    function getRoleId() external view returns(RoleId serviceRoleId);
 }

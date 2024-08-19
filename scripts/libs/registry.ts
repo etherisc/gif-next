@@ -87,7 +87,6 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         {
             libraries: {
                 ContractLib: libraries.contractLibAddress,
-                ObjectTypeLib: libraries.objectTypeLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
                 SelectorLib: libraries.selectorLibAddress,
                 SelectorSetLib: libraries.selectorSetLibAddress,
@@ -133,6 +132,11 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
                 TimestampLib: libraries.timestampLibAddress,
                 VersionLib: libraries.versionLibAddress,
                 VersionPartLib: libraries.versionPartLibAddress,
+                ObjectTypeLib: libraries.objectTypeLibAddress,
+                RoleIdLib: libraries.roleIdLibAddress,
+                SelectorLib: libraries.selectorLibAddress,
+                SelectorSetLib: libraries.selectorSetLibAddress,
+                StrLib: libraries.strLibAddress,
             }
         });
 

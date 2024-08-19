@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
+
 import {INftOwnable} from "./INftOwnable.sol";
+import {IRelease} from "../registry/IRelease.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {VersionPart} from "../type/Version.sol";
 
@@ -9,11 +12,19 @@ import {VersionPart} from "../type/Version.sol";
 /// @dev Marks contracts that are intended to be registered in the registry.
 /// 
 interface IRegisterable is
-    INftOwnable
+    IAccessManaged,
+    INftOwnable,
+    IRelease
 {
-    /// @dev retuns the GIF release version for this contract.
-    /// This 
-    function getRelease() external pure returns (VersionPart release);
+    // __Registerable_init
+    error ErrorAuthorityInvalid(address authority);
+
+    // onlyActive()
+    error ErrorRegisterableNotActive();
+
+    /// @dev Returns true iff this contract managed by its authority is active.
+    /// Queries the IAccessManaged.authority().
+    function isActive() external view returns (bool active);
 
     /// @dev retuns the object info relevant for registering for this contract 
     /// IMPORTANT information returned by this function may only be used

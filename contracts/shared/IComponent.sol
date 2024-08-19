@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {Amount} from "../type/Amount.sol";
@@ -13,18 +12,18 @@ import {TokenHandler} from "../shared/TokenHandler.sol";
 /// @dev component base class
 /// component examples are staking, product, distribution, pool and oracle
 interface IComponent is 
-    IAccessManaged,
     IRegisterable,
     ITransferInterceptor
 {
+
+    error ErrorComponentTokenInvalid(address token);
+
     error ErrorComponentProductNftIdZero();
     error ErrorComponentProductNftIdNonzero();
     error ErrorComponentNameLengthZero();
 
     error ErrorComponentNotChainNft(address caller);
 
-    error ErrorComponentTokenAddressNonzero();
-    error ErrorComponentTokenAddressZero();
     error ErrorComponentWalletAddressZero();
     error ErrorComponentWalletAddressIsSameAsCurrent();
     error ErrorComponentWalletNotComponent();

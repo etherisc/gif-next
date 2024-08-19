@@ -18,6 +18,7 @@ import {IComponents} from "../../../contracts/instance/module/IComponents.sol";
 import {IComponentService} from "../../../contracts/shared/IComponentService.sol";
 import {Registerable} from "../../../contracts/shared/Registerable.sol";
 import {IRegisterable} from "../../../contracts/shared/IRegisterable.sol";
+import {IRelease} from "../../../contracts/registry/IRelease.sol";
 import {IInstanceLinkedComponent} from "../../../contracts/shared/IInstanceLinkedComponent.sol";
 import {ILifecycle} from "../../../contracts/shared/ILifecycle.sol";
 import {INftOwnable} from "../../../contracts/shared/INftOwnable.sol";
@@ -268,7 +269,7 @@ contract SimpleProductV4 is SimpleProduct {
         )
     { }
 
-    function getRelease() public override(IRegisterable, Registerable) pure returns (VersionPart release) {
+    function getRelease() public override(IRelease, Registerable) pure returns (VersionPart release) {
         return VersionPartLib.toVersionPart(4);
     }
 }

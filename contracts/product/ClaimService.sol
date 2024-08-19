@@ -1,19 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Amount, AmountLib} from "../type/Amount.sol";
-import {TimestampLib} from "../type/Timestamp.sol";
-import {ObjectType, CLAIM, POLICY, POOL, PRODUCT} from "../type/ObjectType.sol";
-import {SUBMITTED, KEEP_STATE, DECLINED, REVOKED, CANCELLED, CONFIRMED, CLOSED, EXPECTED, PAID} from "../type/StateId.sol";
-import {NftId} from "../type/NftId.sol";
-import {FeeLib} from "../type/Fee.sol";
-import {StateId} from "../type/StateId.sol";
-import {ClaimId, ClaimIdLib} from "../type/ClaimId.sol";
-import {PayoutId, PayoutIdLib} from "../type/PayoutId.sol";
-import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
-import {ContractLib} from "../shared/ContractLib.sol";
-import {InstanceReader} from "../instance/InstanceReader.sol";
-import {InstanceStore} from "../instance/InstanceStore.sol";
 import {IClaimService} from "./IClaimService.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {IInstance} from "../instance/IInstance.sol";
@@ -22,10 +9,25 @@ import {IPolicyHolder} from "../shared/IPolicyHolder.sol";
 import {IPoolComponent} from "../pool/IPoolComponent.sol";
 import {IPolicyService} from "../product/IPolicyService.sol";
 import {IPoolService} from "../pool/IPoolService.sol";
+import {IRegistry} from "../registry/IRegistry.sol";
+
+import {Amount, AmountLib} from "../type/Amount.sol";
+import {ClaimId, ClaimIdLib} from "../type/ClaimId.sol";
+import {ContractLib} from "../shared/ContractLib.sol";
+import {FeeLib} from "../type/Fee.sol";
+import {InstanceReader} from "../instance/InstanceReader.sol";
+import {InstanceStore} from "../instance/InstanceStore.sol";
+import {NftId} from "../type/NftId.sol";
+import {ObjectType, COMPONENT, CLAIM, POLICY, POOL, PRODUCT} from "../type/ObjectType.sol";
+import {PayoutId, PayoutIdLib} from "../type/PayoutId.sol";
+import {Service} from "../shared/Service.sol";
+import {StateId} from "../type/StateId.sol";
+import {SUBMITTED, KEEP_STATE, DECLINED, REVOKED, CANCELLED, CONFIRMED, CLOSED, EXPECTED, PAID} from "../type/StateId.sol";
+import {TimestampLib} from "../type/Timestamp.sol";
 
 
 contract ClaimService is 
-    ComponentVerifyingService, 
+    Service, 
     IClaimService
 {
 
@@ -41,38 +43,16 @@ contract ClaimService is
         initializer()
     {
         (
-            address registryAddress,
-            address authority
+            address authority,
+            address registry
         ) = abi.decode(data, (address, address));
 
-        _initializeService(registryAddress, authority, owner);
+        __Service_init(authority, registry, owner);
 
         _policyService = IPolicyService(getRegistry().getServiceAddress(POLICY(), getVersion().toMajorPart()));
         _poolService = IPoolService(getRegistry().getServiceAddress(POOL(), getVersion().toMajorPart()));
 
         _registerInterface(type(IClaimService).interfaceId);
-    }
-
-    function _checkClaimAmount(
-        NftId policyNftId,
-        IPolicy.PolicyInfo memory policyInfo,
-        Amount claimAmount
-    )
-        internal
-        pure
-    {
-        // check claim amount > 0
-        if (claimAmount.eqz()) {
-            revert ErrorClaimServiceClaimAmountIsZero(policyNftId);
-        }
-
-        // check policy including this claim is still within sum insured
-        if(policyInfo.claimAmount + claimAmount > policyInfo.sumInsuredAmount) {
-            revert ErrorClaimServiceClaimExceedsSumInsured(
-                policyNftId, 
-                policyInfo.sumInsuredAmount,
-                policyInfo.payoutAmount + claimAmount);
-        }
     }
 
     function submit(
@@ -83,6 +63,7 @@ contract ClaimService is
         external
         virtual
         // nonReentrant() // prevents creating a reinsurance claim in a single tx
+        restricted()
         returns (ClaimId claimId)
     {
         // checks
@@ -464,6 +445,28 @@ contract ClaimService is
 
     // internal functions
 
+    function _checkClaimAmount(
+        NftId policyNftId,
+        IPolicy.PolicyInfo memory policyInfo,
+        Amount claimAmount
+    )
+        internal
+        pure
+    {
+        // check claim amount > 0
+        if (claimAmount.eqz()) {
+            revert ErrorClaimServiceClaimAmountIsZero(policyNftId);
+        }
+
+        // check policy including this claim is still within sum insured
+        if(policyInfo.claimAmount + claimAmount > policyInfo.sumInsuredAmount) {
+            revert ErrorClaimServiceClaimExceedsSumInsured(
+                policyNftId, 
+                policyInfo.sumInsuredAmount,
+                policyInfo.payoutAmount + claimAmount);
+        }
+    }
+
     function _createPayout(
         NftId policyNftId, 
         ClaimId claimId,
@@ -581,7 +584,7 @@ contract ClaimService is
             IPolicy.PolicyInfo memory policyInfo
         )
     {
-        (productNftId,, instance) = _getAndVerifyActiveComponent(PRODUCT());
+        (productNftId, instance) = _getAndVerifyActiveComponent(PRODUCT());
         instanceReader = instance.getInstanceReader();
         instanceStore = instance.getInstanceStore();
 
@@ -592,6 +595,28 @@ contract ClaimService is
             policyInfo.productNftId, 
             productNftId);
         }
+    }
+
+    function _getAndVerifyActiveComponent(ObjectType expectedType) 
+        internal 
+        view 
+        returns (
+            NftId productNftId,
+            IInstance instance
+        )
+    {
+        (
+            IRegistry.ObjectInfo memory info,
+            address instanceAddress
+        ) = ContractLib.getAndVerifyComponent(
+            getRegistry(),
+            msg.sender, // caller
+            PRODUCT(),
+            true); // isActive 
+
+        // get component nft id and instance
+        productNftId = info.nftId;
+        instance = IInstance(instanceAddress);
     }
 
     function _verifyClaim(

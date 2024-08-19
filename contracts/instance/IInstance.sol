@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
-
 import {Amount} from "../type/Amount.sol";
 import {BundleSet} from "./BundleSet.sol";
 import {RiskSet} from "./RiskSet.sol";
@@ -10,7 +8,6 @@ import {InstanceAdmin} from "./InstanceAdmin.sol";
 import {InstanceReader} from "./InstanceReader.sol";
 import {InstanceStore} from "./InstanceStore.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
-import {ITransferInterceptor} from "../registry/ITransferInterceptor.sol";
 import {NftId} from "../type/NftId.sol";
 import {RoleId} from "../type/RoleId.sol";
 import {Seconds} from "../type/Seconds.sol";
@@ -18,9 +15,7 @@ import {UFixed} from "../type/UFixed.sol";
 
 
 interface IInstance is 
-    IRegisterable, 
-    ITransferInterceptor, 
-    IAccessManaged
+    IRegisterable
 {
     error ErrorInstanceInstanceAdminZero();
     error ErrorInstanceInstanceAdminAlreadySet(address InstanceAdmin);

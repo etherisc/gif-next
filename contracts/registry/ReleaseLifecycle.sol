@@ -5,6 +5,8 @@ import {RELEASE} from "../type/ObjectType.sol";
 import {SCHEDULED, DEPLOYING, DEPLOYED, SKIPPED, ACTIVE, PAUSED, CLOSED} from "../type/StateId.sol";
 import {Lifecycle} from "../shared/Lifecycle.sol";
 
+/// @dev Release lifeycle state machine.
+/// Helper contract for ReleaseRegistry.
 contract ReleaseLifecycle is
     Lifecycle
 {

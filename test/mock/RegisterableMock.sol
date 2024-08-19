@@ -13,19 +13,22 @@ import {ObjectType} from "../../contracts/type/ObjectType.sol";
 import {VersionPart, VersionPartLib} from "../../contracts/type/Version.sol";
 
 
-contract RegisterableMock is InitializableERC165, IRegisterable, MockInterceptor {
+contract RegisterableMockWithAuthority is InitializableERC165, IRegisterable, MockInterceptor, AccessManaged {
 
     error ErrorRegisterableMockIsNotInterceptor(address registerable);
 
     IRegistry.ObjectInfo internal _info;
 
     constructor(
+        address authority,
         NftId nftId,
         NftId parentNftId,
         ObjectType objectType,
         bool isInterceptor,
         address initialOwner,
-        bytes memory data)
+        bytes memory data
+    )
+        AccessManaged(authority)
     {
         _info = IRegistry.ObjectInfo(
             nftId,
@@ -47,6 +50,8 @@ contract RegisterableMock is InitializableERC165, IRegisterable, MockInterceptor
         _initializeERC165();
         _registerInterface(type(IRegisterable).interfaceId);       
     }
+
+    function isActive() external view returns (bool active) { return true; }
 
     // from IRegisterable
     function getRelease() public virtual pure returns (VersionPart release) {
@@ -79,24 +84,31 @@ contract RegisterableMock is InitializableERC165, IRegisterable, MockInterceptor
     function getOwner() external view returns (address) { revert(); }
 }
 
-contract SelfOwnedRegisterableMock is RegisterableMock {
+
+contract RegisterableMock is RegisterableMockWithAuthority {
+
+    address internal constant AUTHORITY = address(123);
 
     constructor(
         NftId nftId,
         NftId parentNftId,
         ObjectType objectType,
         bool isInterceptor,
+        address initialOwner,
         bytes memory data
     )
-        RegisterableMock(
+        RegisterableMockWithAuthority(
+            address(AUTHORITY),
             nftId,
             parentNftId,
             objectType,
             isInterceptor,
-            address(this),
-            data)
+            initialOwner,
+            data
+        )
     {}
 }
+
 
 contract RegisterableMockWithInvalidAddress is RegisterableMock {
 
@@ -125,9 +137,9 @@ contract RegisterableMockWithInvalidAddress is RegisterableMock {
     }
 }
 
-contract SimpleAccessManagedRegisterableMock is RegisterableMock, AccessManaged {
+
+contract SimpleAccessManagedRegisterableMock is RegisterableMock {
     constructor(NftId parentNftId, ObjectType objectType, address authority)
-        AccessManaged(authority)
         RegisterableMock(
             NftIdLib.zero(),
             parentNftId,
@@ -137,5 +149,25 @@ contract SimpleAccessManagedRegisterableMock is RegisterableMock, AccessManaged 
             ""
         )
     // solhint-disable-next-line no-empty-blocks
+    {}
+}
+
+
+contract SelfOwnedRegisterableMock is RegisterableMock {
+
+    constructor(
+        NftId nftId,
+        NftId parentNftId,
+        ObjectType objectType,
+        bool isInterceptor,
+        bytes memory data
+    )
+        RegisterableMock(
+            nftId,
+            parentNftId,
+            objectType,
+            isInterceptor,
+            address(this),
+            data)
     {}
 }

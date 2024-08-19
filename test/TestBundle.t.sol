@@ -23,7 +23,7 @@ import {RiskId, RiskIdLib} from "../contracts/type/RiskId.sol";
 import {Seconds, SecondsLib} from "../contracts/type/Seconds.sol";
 import {SimplePool} from "../contracts/examples/unpermissioned/SimplePool.sol";
 import {StateId, ACTIVE, PAUSED, CLOSED} from "../contracts/type/StateId.sol";
-import {Timestamp, TimestampLib, toTimestamp} from "../contracts/type/Timestamp.sol";
+import {Timestamp, TimestampLib} from "../contracts/type/Timestamp.sol";
 import {TokenHandler, TokenHandlerBase} from "../contracts/shared/TokenHandler.sol";
 import {GifTest} from "./base/GifTest.sol";
 import {UFixedLib} from "../contracts/type/UFixed.sol";

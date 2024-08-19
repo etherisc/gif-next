@@ -193,7 +193,7 @@ contract ProxyManager is
         }
 
         address initialOwner = msg.sender;
-        _initializeNftOwnable(registry, initialOwner);
+        __NftOwnable_init(registry, initialOwner);
 
         currentProxyOwner = getOwner(); // used by implementation
         initialProxyAdminOwner = address(this); // used by proxy

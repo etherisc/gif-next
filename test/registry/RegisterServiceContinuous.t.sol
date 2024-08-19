@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 import {Test, Vm, console} from "../../lib/forge-std/src/Test.sol";
-import {VersionLib, Version, VersionPart} from "../../contracts/type/Version.sol";
+import {VersionLib, Version, VersionPart, VersionPartLib} from "../../contracts/type/Version.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {ObjectType, ObjectTypeLib, PROTOCOL, REGISTRY, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, BUNDLE, POLICY, STAKE} from "../../contracts/type/ObjectType.sol";
 
@@ -67,7 +67,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
                     address(uint160(randomNumber(type(uint160).max))),
                     ""                  
                 ),
-                VersionLib.toVersionPart(randomNumber(type(uint8).max)),
+                VersionPartLib.toVersionPart(randomNumber(type(uint8).max)),
                 ObjectTypeLib.toObjectType(randomNumber(type(uint8).max)),
                 bytes32(randomNumber(type(uint256).max)) // salt
             );
@@ -97,7 +97,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
                     _getAddressAtIndex(randomNumber(type(uint256).max)),
                     ""                  
                 ),
-                VersionLib.toVersionPart(randomNumber(type(uint8).max)),
+                VersionPartLib.toVersionPart(randomNumber(type(uint8).max)),
                 ObjectTypeLib.toObjectType(randomNumber(type(uint8).max)),
                 bytes32(randomNumber(type(uint256).max))
             );
@@ -119,7 +119,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
                     address(uint160(randomNumber(type(uint160).max))),
                     ""                  
                 ),
-                VersionLib.toVersionPart(randomNumber(type(uint8).max)),
+                VersionPartLib.toVersionPart(randomNumber(type(uint8).max)),
                 ObjectTypeLib.toObjectType(randomNumber(type(uint8).max))
             );
         }
@@ -140,7 +140,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
                     _getAddressAtIndex(randomNumber(type(uint256).max)),
                     ""                  
                 ),
-                VersionLib.toVersionPart(randomNumber(type(uint8).max)),
+                VersionPartLib.toVersionPart(randomNumber(type(uint8).max)),
                 ObjectTypeLib.toObjectType(randomNumber(type(uint8).max))
             );
         }
@@ -161,7 +161,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
                     address(uint160(randomNumber(type(uint160).max))),
                     ""                  
                 ),
-                VersionLib.toVersionPart(randomNumber(type(uint8).max)),
+                VersionPartLib.toVersionPart(randomNumber(type(uint8).max)),
                 ObjectTypeLib.toObjectType(randomNumber(type(uint8).max)),
                 bytes32(randomNumber(type(uint256).max))
             );
@@ -183,7 +183,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
                     _getAddressAtIndex(randomNumber(type(uint256).max)),
                     ""                  
                 ),
-                VersionLib.toVersionPart(randomNumber(type(uint8).max)),
+                VersionPartLib.toVersionPart(randomNumber(type(uint8).max)),
                 ObjectTypeLib.toObjectType(randomNumber(type(uint8).max)),
                 bytes32(randomNumber(type(uint256).max))
             );
@@ -205,7 +205,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
                     address(uint160(randomNumber(type(uint160).max))),
                     ""                  
                 ),
-                VersionLib.toVersionPart(randomNumber(type(uint8).max)),
+                VersionPartLib.toVersionPart(randomNumber(type(uint8).max)),
                 ObjectTypeLib.toObjectType(randomNumber(type(uint8).max))
             );
         }
@@ -226,7 +226,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
                     _getAddressAtIndex(randomNumber(type(uint256).max)),
                     ""                  
                 ),
-                VersionLib.toVersionPart(randomNumber(type(uint8).max)),
+                VersionPartLib.toVersionPart(randomNumber(type(uint8).max)),
                 ObjectTypeLib.toObjectType(randomNumber(type(uint8).max))
             );
         }
@@ -247,7 +247,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
                     address(uint160(randomNumber(type(uint160).max))),
                     ""                  
                 ),
-                VersionLib.toVersionPart(randomNumber(type(uint8).max)),
+                VersionPartLib.toVersionPart(randomNumber(type(uint8).max)),
                 ObjectTypeLib.toObjectType(randomNumber(type(uint8).max)),
                 bytes32(randomNumber(type(uint256).max))
             );
@@ -269,7 +269,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
                     _getAddressAtIndex(randomNumber(type(uint256).max)),
                     ""                  
                 ),
-                VersionLib.toVersionPart(randomNumber(type(uint8).max)),
+                VersionPartLib.toVersionPart(randomNumber(type(uint8).max)),
                 ObjectTypeLib.toObjectType(randomNumber(type(uint8).max)),
                 bytes32(randomNumber(type(uint256).max))
             );
@@ -291,7 +291,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
                     address(uint160(randomNumber(type(uint160).max))),
                     ""                
                 ),
-                VersionLib.toVersionPart(randomNumber(type(uint8).max)),
+                VersionPartLib.toVersionPart(randomNumber(type(uint8).max)),
                 ObjectTypeLib.toObjectType(randomNumber(type(uint8).max))
             );
         }
@@ -312,7 +312,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
                     _getAddressAtIndex(randomNumber(type(uint256).max)),
                     ""                
                 ),
-                VersionLib.toVersionPart(randomNumber(type(uint8).max)),
+                VersionPartLib.toVersionPart(randomNumber(type(uint8).max)),
                 ObjectTypeLib.toObjectType(randomNumber(type(uint8).max))
             );
         }
@@ -333,7 +333,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
                     address(uint160(randomNumber(type(uint160).max))),
                     ""                  
                 ),
-                VersionLib.toVersionPart(randomNumber(type(uint8).max)),
+                VersionPartLib.toVersionPart(randomNumber(type(uint8).max)),
                 ObjectTypeLib.toObjectType(randomNumber(type(uint8).max)),
                 bytes32(randomNumber(type(uint256).max))
             );
@@ -355,7 +355,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
                     _getAddressAtIndex(randomNumber(type(uint256).max)),
                     ""                  
                 ),
-                VersionLib.toVersionPart(randomNumber(type(uint8).max)),
+                VersionPartLib.toVersionPart(randomNumber(type(uint8).max)),
                 ObjectTypeLib.toObjectType(randomNumber(type(uint8).max)),
                 bytes32(randomNumber(type(uint256).max))
             );
@@ -377,7 +377,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
                     address(uint160(randomNumber(type(uint160).max))),
                     ""           
                 ),
-                VersionLib.toVersionPart(randomNumber(type(uint8).max)),
+                VersionPartLib.toVersionPart(randomNumber(type(uint8).max)),
                 ObjectTypeLib.toObjectType(randomNumber(type(uint8).max))
             );
         }
@@ -398,7 +398,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
                     _getAddressAtIndex(randomNumber(type(uint256).max)),
                     ""                  
                 ),
-                VersionLib.toVersionPart(randomNumber(type(uint8).max)),
+                VersionPartLib.toVersionPart(randomNumber(type(uint8).max)),
                 ObjectTypeLib.toObjectType(randomNumber(type(uint8).max))
             );
         }
@@ -419,7 +419,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
                     address(uint160(randomNumber(type(uint160).max))),
                     ""                  
                 ),
-                VersionLib.toVersionPart(randomNumber(type(uint8).max)),
+                VersionPartLib.toVersionPart(randomNumber(type(uint8).max)),
                 ObjectTypeLib.toObjectType(randomNumber(type(uint8).max)),
                 bytes32(randomNumber(type(uint256).max))
             );
@@ -441,7 +441,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
                     _getAddressAtIndex(randomNumber(type(uint256).max)),
                     ""                  
                 ),
-                VersionLib.toVersionPart(randomNumber(type(uint8).max)),
+                VersionPartLib.toVersionPart(randomNumber(type(uint8).max)),
                 ObjectTypeLib.toObjectType(randomNumber(type(uint8).max)),
                 bytes32(randomNumber(type(uint256).max))
             );
@@ -463,7 +463,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
                     address(uint160(randomNumber(type(uint160).max))),
                     ""                  
                 ),
-                VersionLib.toVersionPart(randomNumber(type(uint8).max)),
+                VersionPartLib.toVersionPart(randomNumber(type(uint8).max)),
                 ObjectTypeLib.toObjectType(randomNumber(type(uint8).max))
             );
         }
@@ -484,7 +484,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
                     _getAddressAtIndex(randomNumber(type(uint256).max)),
                     ""                  
                 ),
-                VersionLib.toVersionPart(randomNumber(type(uint8).max)),
+                VersionPartLib.toVersionPart(randomNumber(type(uint8).max)),
                 ObjectTypeLib.toObjectType(randomNumber(type(uint8).max))
             );
         }
@@ -505,7 +505,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
                     address(uint160(randomNumber(type(uint160).max))),
                     ""                  
                 ),
-                VersionLib.toVersionPart(randomNumber(type(uint8).max)),
+                VersionPartLib.toVersionPart(randomNumber(type(uint8).max)),
                 ObjectTypeLib.toObjectType(randomNumber(type(uint8).max)),
                 bytes32(randomNumber(type(uint256).max))
             );
@@ -527,7 +527,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
                     _getAddressAtIndex(randomNumber(type(uint256).max)),
                     ""                  
                 ),
-                VersionLib.toVersionPart(randomNumber(type(uint8).max)),
+                VersionPartLib.toVersionPart(randomNumber(type(uint8).max)),
                 ObjectTypeLib.toObjectType(randomNumber(type(uint8).max)),
                 bytes32(randomNumber(type(uint256).max))
             );
@@ -549,7 +549,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
                     address(uint160(randomNumber(type(uint160).max))),
                     ""                  
                 ),
-                VersionLib.toVersionPart(randomNumber(type(uint8).max)),
+                VersionPartLib.toVersionPart(randomNumber(type(uint8).max)),
                 ObjectTypeLib.toObjectType(randomNumber(type(uint8).max))
             );
         }
@@ -570,7 +570,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
                     _getAddressAtIndex(randomNumber(type(uint256).max)),
                     ""                  
                 ),
-                VersionLib.toVersionPart(randomNumber(type(uint8).max)),
+                VersionPartLib.toVersionPart(randomNumber(type(uint8).max)),
                 ObjectTypeLib.toObjectType(randomNumber(type(uint8).max))
             );
         }
@@ -609,26 +609,26 @@ contract RegisterServiceContinuousTests is RegistryTestBase
 
             _assert_registerService(
                 info,
-                VersionLib.toVersionPart(type(uint8).max - version),// try register incredibly new version 
+                VersionPartLib.toVersionPart(type(uint8).max - version),// try register incredibly new version 
                 domain, 
                 true, // expectRevert
                 abi.encodeWithSelector(
                     IRegistry.InvalidServiceVersion.selector, 
-                    VersionLib.toVersionPart(type(uint8).max - majorVersion))
+                    VersionPartLib.toVersionPart(type(uint8).max - majorVersion))
             );
 
 
             _assert_registerService(
                 info,
-                VersionLib.toVersionPart(majorVersion + 1),// try register next version 
+                VersionPartLib.toVersionPart(majorVersion + 1),// try register next version 
                 domain,
                 true, // expectRevert
                 abi.encodeWithSelector(
                     IRegistry.InvalidServiceVersion.selector, 
-                    VersionLib.toVersionPart(majorVersion + 1))
+                    VersionPartLib.toVersionPart(majorVersion + 1))
             );
 
-            info.data = abi.encode(serviceName, VersionLib.toVersionPart(majorVersion - 1));
+            info.data = abi.encode(serviceName, VersionPartLib.toVersionPart(majorVersion - 1));
 
             // try to register previous version
             _assert_register(
@@ -636,11 +636,11 @@ contract RegisterServiceContinuousTests is RegistryTestBase
                 true, // expectRevert
                 abi.encodeWithSelector(
                     IRegistry.InvalidServiceVersion.selector, 
-                    VersionLib.toVersionPart(majorVersion - 1))
+                    VersionPartLib.toVersionPart(majorVersion - 1))
             );
 
             // register with current GIF major version 
-            info.data = abi.encode(serviceName, VersionLib.toVersionPart(majorVersion));
+            info.data = abi.encode(serviceName, VersionPartLib.toVersionPart(majorVersion));
 
             _assert_register(info, false, "");
 
@@ -649,7 +649,7 @@ contract RegisterServiceContinuousTests is RegistryTestBase
 
             // increase GIF major version
             majorVersion++;
-            registry.setMajorVersion(VersionLib.toVersionPart(majorVersion));
+            registry.setMajorVersion(VersionPartLib.toVersionPart(majorVersion));
             
 
             _stopPrank();
@@ -707,7 +707,7 @@ contract RegisterServiceWithPresetContinuousTests is RegistryTestBaseWithPreset,
                     address(uint160(randomNumber(type(uint160).max))),
                     ""                  
                 ),
-                VersionLib.toVersionPart(randomNumber(type(uint8).max)),
+                VersionPartLib.toVersionPart(randomNumber(type(uint8).max)),
                 ObjectTypeLib.toObjectType(randomNumber(type(uint8).max)),
                 bytes32(randomNumber(type(uint256).max))
             );
@@ -729,7 +729,7 @@ contract RegisterServiceWithPresetContinuousTests is RegistryTestBaseWithPreset,
                     _getAddressAtIndex(randomNumber(type(uint256).max)),
                     ""                  
                 ),
-                VersionLib.toVersionPart(randomNumber(type(uint8).max)),
+                VersionPartLib.toVersionPart(randomNumber(type(uint8).max)),
                 ObjectTypeLib.toObjectType(randomNumber(type(uint8).max))
             );
         }

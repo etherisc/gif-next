@@ -47,11 +47,11 @@ contract PoolService is
         initializer()
     {
         (
-            address registryAddress,
-            address authority
+            address authority,
+            address registry
         ) = abi.decode(data, (address, address));
 
-        _initializeService(registryAddress, authority, owner);
+        __Service_init(authority, registry, owner);
 
         _accountingService = IAccountingService(_getServiceAddress(ACCOUNTING()));
         _bundleService = IBundleService(_getServiceAddress(BUNDLE()));

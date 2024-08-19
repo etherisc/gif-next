@@ -60,6 +60,8 @@ interface IInstanceService is IService {
             NftId instanceNftId
         );
 
+    function upgradeInstanceReader(NftId instanceNftId) external;
+    function upgradeMasterInstanceReader(address instanceReaderAddress) external;
 
     function setStakingLockingPeriod(Seconds stakeLockingPeriod) external;
     function setStakingRewardRate(UFixed rewardRate) external;

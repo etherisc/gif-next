@@ -8,10 +8,13 @@ import {
 import {IAccess} from "../authorization/IAccess.sol";
 import {IAccountingService} from "../accounting/IAccountingService.sol";
 import {IBundleService} from "../pool/IBundleService.sol";
+import {IClaimService} from "../product/IClaimService.sol";
 import {IDistributionService} from "../distribution/IDistributionService.sol";
+import {IInstanceService} from "../instance/IInstanceService.sol";
 import {IPoolService} from "../pool/IPoolService.sol";
 import {IStakingService} from "../staking/IStakingService.sol";
 import {IRegistryService} from "./IRegistryService.sol";
+import {IRiskService} from "../product/IRiskService.sol";
 import {ServiceAuthorization} from "../authorization/ServiceAuthorization.sol";
 
 
@@ -51,8 +54,11 @@ contract ServiceAuthorizationV3
           _setupIRegistryServiceAuthorization();
           _setupStakingServiceAuthorization();
           _setupInstanceServiceAuthorization();
+          _setupInstanceServiceAuthorization();
           _setupAccountingServiceAuthorization();
           _setupComponentServiceAuthorization();
+          _setupClaimServiceAuthorization();
+          _setupRiskServiceAuthorization();
           _setupDistributionServiceAuthorization();
           _setupPoolServiceAuthorization();
           _setupBundleServiceAuthorization();
@@ -115,6 +121,16 @@ contract ServiceAuthorizationV3
      function _setupInstanceServiceAuthorization()
           internal
      {
+          IAccess.FunctionInfo[] storage functions;
+          functions = _authorizeForService(INSTANCE(), ALL());
+          _authorize(functions, IInstanceService.createInstance.selector, "createInstance");
+          _authorize(functions, IInstanceService.upgradeInstanceReader.selector, "upgradeInstanceReader");
+          _authorize(functions, IInstanceService.upgradeMasterInstanceReader.selector, "upgradeMasterInstanceReader");
+
+          _authorize(functions, IInstanceService.setStakingLockingPeriod.selector, "setStakingLockingPeriod");
+          _authorize(functions, IInstanceService.setStakingRewardRate.selector, "setStakingRewardRate");
+          _authorize(functions, IInstanceService.refillStakingRewardReserves.selector, "refillStakingRewardReserves");
+          _authorize(functions, IInstanceService.withdrawStakingRewardReserves.selector, "withdrawStakingRewardReserves");
      }
 
      /// @dev Accounting service function authorization.
@@ -155,11 +171,30 @@ contract ServiceAuthorizationV3
      }
 
      /// @dev Distribution service function authorization.
+     function _setupRiskServiceAuthorization()
+          internal
+     {
+          IAccess.FunctionInfo[] storage functions;
+          functions = _authorizeForService(RISK(), ALL());
+          _authorize(functions, IRiskService.createRisk.selector, "createRisk");
+          _authorize(functions, IRiskService.updateRisk.selector, "updateRisk");
+          _authorize(functions, IRiskService.updateRiskState.selector, "updateRiskState");
+     }
+
+     /// @dev Distribution service function authorization.
+     function _setupClaimServiceAuthorization()
+          internal
+     {
+          IAccess.FunctionInfo[] storage functions;
+          functions = _authorizeForService(CLAIM(), ALL());
+          _authorize(functions, IClaimService.submit.selector, "submit");
+     }
+
+     /// @dev Distribution service function authorization.
      function _setupDistributionServiceAuthorization()
           internal
      {
           IAccess.FunctionInfo[] storage functions;
-
           functions = _authorizeForService(DISTRIBUTION(), POLICY());
           _authorize(functions, IDistributionService.processSale.selector, "processSale");
           _authorize(functions, IDistributionService.processReferral.selector, "processReferral");

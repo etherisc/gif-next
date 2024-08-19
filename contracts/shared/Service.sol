@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
@@ -19,14 +18,13 @@ import {Versionable} from "../upgradeability/Versionable.sol";
 abstract contract Service is 
     Registerable,
     Versionable,
-    AccessManagedUpgradeable,
     ReentrancyGuardUpgradeable,
     IService
 {
 
-    function _initializeService(
-        address registry, 
+    function __Service_init(
         address authority, // real authority for registry service adress(0) for other services
+        address registry, 
         address initialOwner
     )
         internal
@@ -35,17 +33,8 @@ abstract contract Service is
     {
         __ReentrancyGuard_init();
 
-        // externally provided authority
-        if(authority != address(0)) {
-            __AccessManaged_init(authority);
-        } else {
-            address registryServiceAddress = _getServiceAddress(REGISTRY());
-
-            // copy authority from already registered registry services
-            __AccessManaged_init(IAccessManaged(registryServiceAddress).authority());
-        }
-
-        _initializeRegisterable(
+        __Registerable_init(
+            authority,
             registry, 
             IRegistry(registry).getNftId(), 
             SERVICE(), 
@@ -53,8 +42,6 @@ abstract contract Service is
             initialOwner, 
             ""); // data
 
-
-        _registerInterface(type(IAccessManaged).interfaceId);
         _registerInterface(type(IService).interfaceId);
     }
 
@@ -62,18 +49,12 @@ abstract contract Service is
         return _getDomain();
     }
 
-    function getRoleId() external virtual pure returns(RoleId serviceRoleId) {
-        return RoleIdLib.roleForTypeAndVersion(_getDomain(), getRelease());
+    function getVersion() public pure virtual override (IVersionable, Versionable) returns(Version) {
+        return VersionLib.toVersion(3, 0, 0);
     }
 
-    /// @inheritdoc IVersionable
-    function getVersion()
-        public 
-        pure 
-        virtual override (IVersionable, Versionable)
-        returns(Version)
-    {
-        return VersionLib.toVersion(GIF_RELEASE,0,0);
+    function getRoleId() external virtual view returns(RoleId serviceRoleId) {
+        return RoleIdLib.roleForTypeAndVersion(_getDomain(), getRelease());
     }
 
     function _getDomain() internal virtual pure returns (ObjectType);

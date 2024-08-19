@@ -18,7 +18,6 @@ contract NftIdSetTest is GifTest {
     function setUp() public override {
         super.setUp();
 
-        Dummy dummyAuthority = new Dummy();
         MockObjectSet master = new MockObjectSet();
 
         objectSet = MockObjectSet(Clones.clone(address(master)));
