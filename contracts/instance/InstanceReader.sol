@@ -27,7 +27,7 @@ import {TimestampLib} from "../type/Timestamp.sol";
 
 import {InstanceStore} from "./InstanceStore.sol";
 import {BundleSet} from "./BundleSet.sol";
-import {RiskSet} from "./RiskSet.sol";
+import {RiskSet} from "../product/RiskSet.sol";
 
 
 contract InstanceReader {

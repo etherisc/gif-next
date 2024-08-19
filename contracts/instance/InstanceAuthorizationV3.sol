@@ -6,7 +6,7 @@ import {
 } from "../../contracts/type/ObjectType.sol";
 
 import {BundleSet} from "../instance/BundleSet.sol";
-import {RiskSet} from "../instance/RiskSet.sol"; 
+import {RiskSet} from "../product/RiskSet.sol"; 
 import {IAccess} from "../authorization/IAccess.sol";
 import {Instance} from "../instance/Instance.sol";
 import {InstanceAdmin} from "../instance/InstanceAdmin.sol";

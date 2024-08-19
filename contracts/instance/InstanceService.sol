@@ -7,7 +7,7 @@ import {IAuthorization} from "../authorization/IAuthorization.sol";
 import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
 import {Amount} from "../type/Amount.sol";
 import {BundleSet} from "./BundleSet.sol";
-import {RiskSet} from "./RiskSet.sol";
+import {RiskSet} from "../product/RiskSet.sol";
 import {ChainNft} from "../registry/ChainNft.sol";
 import {NftId} from "../type/NftId.sol";
 import {RoleId} from "../type/RoleId.sol";
