@@ -94,10 +94,11 @@ export async function deployAndRegisterMasterInstance(
         [],
         { 
             libraries: {
-                NftIdLib: libraries.nftIdLibAddress,
-                LibNftIdSet: libraries.libNftIdSetAddress,
                 Key32Lib: libraries.key32LibAddress,
+                LibNftIdSet: libraries.libNftIdSetAddress,
                 LibKey32Set: libraries.libKey32SetAddress,
+                NftIdLib: libraries.nftIdLibAddress,
+                ObjectSetHelperLib: libraries.objectSetHelperLibAddress,
             }
         }
     );
@@ -109,10 +110,11 @@ export async function deployAndRegisterMasterInstance(
         [],
         { 
             libraries: {
-                NftIdLib: libraries.nftIdLibAddress,
-                LibNftIdSet: libraries.libNftIdSetAddress,
                 Key32Lib: libraries.key32LibAddress,
+                LibNftIdSet: libraries.libNftIdSetAddress,
                 LibKey32Set: libraries.libKey32SetAddress,
+                NftIdLib: libraries.nftIdLibAddress,
+                ObjectSetHelperLib: libraries.objectSetHelperLibAddress,
                 RiskIdLib: libraries.riskIdLibAddress,
             }
         }

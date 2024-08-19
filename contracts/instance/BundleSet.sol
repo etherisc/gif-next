@@ -7,7 +7,7 @@ import {Key32} from "../type/Key32.sol";
 import {BUNDLE} from "../type/ObjectType.sol";
 
 import {ObjectSet} from "./base/ObjectSet.sol";
-import {ObjectSetHelperLib} from "./base/ObjectSetHelper.sol";
+import {ObjectSetHelperLib} from "./base/ObjectSetHelperLib.sol";
 
 contract BundleSet is 
     ObjectSet

@@ -5,7 +5,7 @@ import {Key32} from "../type/Key32.sol";
 import {LibNftIdSet} from "../type/NftIdSet.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectSet} from "./base/ObjectSet.sol";
-import {ObjectSetHelperLib} from "./base/ObjectSetHelper.sol";
+import {ObjectSetHelperLib} from "./base/ObjectSetHelperLib.sol";
 import {RiskIdLib, RiskId} from "../type/RiskId.sol";
 
 /// @dev RiskSet manages the risks and its active policies per product.
