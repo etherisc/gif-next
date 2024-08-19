@@ -6,7 +6,7 @@ import {ClaimId, ClaimIdLib} from "../type/ClaimId.sol";
 import {DistributorType} from "../type/DistributorType.sol";
 import {Key32} from "../type/Key32.sol";
 import {NftId} from "../type/NftId.sol";
-import {COMPONENT, DISTRIBUTOR, DISTRIBUTION, PREMIUM, PRODUCT, POLICY, POOL, BUNDLE} from "../type/ObjectType.sol";
+import {COMPONENT, DISTRIBUTOR, DISTRIBUTION, FEE, PREMIUM, PRODUCT, POLICY, POOL, BUNDLE} from "../type/ObjectType.sol";
 import {PayoutId, PayoutIdLib} from "../type/PayoutId.sol";
 import {ReferralId, ReferralStatus, ReferralLib, REFERRAL_OK, REFERRAL_ERROR_UNKNOWN, REFERRAL_ERROR_EXPIRED, REFERRAL_ERROR_EXHAUSTED} from "../type/Referral.sol";
 import {RequestId} from "../type/RequestId.sol";
@@ -408,6 +408,17 @@ contract InstanceReader {
         }
     }
 
+    function getFeeInfo(NftId productNftId)
+        public
+        view
+        returns (IComponents.FeeInfo memory feeInfo)
+    {
+        bytes memory data = _store.getData(toFeeKey(productNftId));
+        if (data.length > 0) {
+            return abi.decode(data, (IComponents.FeeInfo));
+        }
+    }
+
     function getPoolInfo(NftId poolNftId)
         public
         view
@@ -552,6 +563,10 @@ contract InstanceReader {
 
     function toProductKey(NftId productNftId) public pure returns (Key32) { 
         return productNftId.toKey32(PRODUCT());
+    }
+
+    function toFeeKey(NftId productNftId) public pure returns (Key32) { 
+        return productNftId.toKey32(FEE());
     }
 
     // low level function

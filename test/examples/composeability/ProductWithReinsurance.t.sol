@@ -362,6 +362,7 @@ contract ProductWithReinsuranceTest is
             instanceNftId,
             address(token),
             _getProductWithReinsuranceProductInfo(),
+            _getSimpleFeeInfo(),
             new ProductWithReinsuranceAuthorization(),
             productOwner
         );
@@ -432,6 +433,7 @@ contract ProductWithReinsuranceTest is
 
         // solhint-disable-next-line
         console.log("risk id");
+        // solhint-disable-next-line
         console.logBytes8(RiskId.unwrap(riskReId));
 
         // solhint-disable-next-line

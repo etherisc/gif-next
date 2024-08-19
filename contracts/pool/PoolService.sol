@@ -175,7 +175,7 @@ contract PoolService is
 
         {
             NftId productNftId = registry.getObjectInfo(poolNftId).parentNftId;
-            Fee memory stakingFee = instanceReader.getProductInfo(productNftId).stakingFee;
+            Fee memory stakingFee = instanceReader.getFeeInfo(productNftId).stakingFee;
             (
                 feeAmount,
                 netAmount

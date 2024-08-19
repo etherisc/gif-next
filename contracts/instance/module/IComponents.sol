@@ -6,7 +6,6 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import {Amount} from "../../type/Amount.sol";
 import {Fee} from "../../type/Fee.sol";
 import {NftId} from "../../type/NftId.sol";
-import {RoleId} from "../../type/RoleId.sol";
 import {TokenHandler} from "../../shared/TokenHandler.sol";
 import {UFixed} from "../../type/UFixed.sol";
 
@@ -28,6 +27,9 @@ interface IComponents {
         NftId poolNftId; // mandatory
         NftId distributionNftId; // 0..1 (optional)
         NftId [] oracleNftId; // 0..n (optional)
+    }
+
+    struct FeeInfo {
         Fee productFee; // product fee on net premium
         Fee processingFee; // product fee on payout amounts        
         Fee distributionFee; // distribution fee for sales that do not include commissions
@@ -36,7 +38,6 @@ interface IComponents {
         Fee stakingFee; // pool fee on staked capital from investor
         Fee performanceFee; // pool fee on profits from capital investors
     }
-
 
     struct PoolInfo {
         Amount maxBalanceAmount; // max balance amount allowed for pool

@@ -29,6 +29,7 @@ abstract contract BasicProduct is
         string memory name,
         address token,
         IComponents.ProductInfo memory productInfo,
+        IComponents.FeeInfo memory feeInfo,
         IAuthorization authorization,
         address initialOwner
     )
@@ -42,6 +43,7 @@ abstract contract BasicProduct is
             name, 
             token, 
             productInfo,
+            feeInfo,
             authorization, 
             initialOwner, 
             ""); // component data

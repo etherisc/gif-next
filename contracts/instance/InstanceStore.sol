@@ -7,10 +7,10 @@ import {Amount} from "../type/Amount.sol";
 import {Key32} from "../type/Key32.sol";
 import {NftId} from "../type/NftId.sol";
 import {ClaimId} from "../type/ClaimId.sol";
-import {ObjectType, BUNDLE, POLICY, POOL, PREMIUM, PRODUCT, COMPONENT, DISTRIBUTOR} from "../type/ObjectType.sol";
+import {ObjectType, BUNDLE, POLICY, POOL, PREMIUM, PRODUCT, COMPONENT, DISTRIBUTOR, FEE} from "../type/ObjectType.sol";
 import {RequestId} from "../type/RequestId.sol";
 import {RiskId} from "../type/RiskId.sol";
-import {StateId} from "../type/StateId.sol";
+import {StateId, KEEP_STATE} from "../type/StateId.sol";
 import {ReferralId} from "../type/Referral.sol";
 import {DistributorType} from "../type/DistributorType.sol";
 import {PayoutId} from "../type/PayoutId.sol";
@@ -83,6 +83,17 @@ contract InstanceStore is
 
     function updateProduct(NftId productNftId, IComponents.ProductInfo memory info, StateId newState) external restricted() {
         _update(_toNftKey32(productNftId, PRODUCT()), abi.encode(info), newState);
+    }
+
+
+    //--- Fee -----------------------------------------------------------//
+    function createFee(NftId productNftId, IComponents.FeeInfo memory info) external restricted() {
+        _create(_toNftKey32(productNftId, FEE()), abi.encode(info));
+    }
+
+    // Fee only has one state, so no change change possible
+    function updateFee(NftId productNftId, IComponents.FeeInfo memory info) external restricted() {
+        _update(_toNftKey32(productNftId, FEE()), abi.encode(info), KEEP_STATE());
     }
 
     //--- Pool --------------------------------------------------------------//

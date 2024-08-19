@@ -39,6 +39,7 @@ contract SimpleProduct is
         string memory name,
         address token,
         IComponents.ProductInfo memory productInfo,
+        IComponents.FeeInfo memory feeInfo,
         IAuthorization authorization,
         address initialOwner
     )
@@ -49,6 +50,7 @@ contract SimpleProduct is
             name,
             token,
             productInfo,
+            feeInfo,
             authorization,
             initialOwner); 
     }
@@ -60,6 +62,7 @@ contract SimpleProduct is
         string memory name,
         address token,
         IComponents.ProductInfo memory productInfo,
+        IComponents.FeeInfo memory feeInfo,
         IAuthorization authorization,
         address initialOwner
     )
@@ -73,6 +76,7 @@ contract SimpleProduct is
             name,
             token,
             productInfo,
+            feeInfo,
             authorization,
             initialOwner); 
 

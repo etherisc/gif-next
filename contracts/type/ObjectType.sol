@@ -48,82 +48,86 @@ function COMPONENT() pure returns (ObjectType) {
     return ObjectType.wrap(11);
 }
 
-function PRODUCT() pure returns (ObjectType) {
+function ACCOUNTING() pure returns (ObjectType) {
     return ObjectType.wrap(12);
 }
 
-function ORACLE() pure returns (ObjectType) {
+function PRODUCT() pure returns (ObjectType) {
     return ObjectType.wrap(13);
 }
 
-function DISTRIBUTION() pure returns (ObjectType) {
+function FEE() pure returns (ObjectType) {
     return ObjectType.wrap(14);
 }
 
-function POOL() pure returns (ObjectType) {
+function ORACLE() pure returns (ObjectType) {
     return ObjectType.wrap(15);
 }
 
+function DISTRIBUTION() pure returns (ObjectType) {
+    return ObjectType.wrap(16);
+}
+
+function POOL() pure returns (ObjectType) {
+    return ObjectType.wrap(17);
+}
+
 function APPLICATION() pure returns (ObjectType) {
-    return ObjectType.wrap(20);
+    return ObjectType.wrap(18);
 }
 
 function POLICY() pure returns (ObjectType) {
-    return ObjectType.wrap(21);
+    return ObjectType.wrap(19);
 }
 
 function PREMIUM() pure returns (ObjectType) {
-    return ObjectType.wrap(22);
+    return ObjectType.wrap(20);
 }
 
 function CLAIM() pure returns (ObjectType) {
-    return ObjectType.wrap(23);
+    return ObjectType.wrap(21);
 }
 
 function PAYOUT() pure returns (ObjectType) {
-    return ObjectType.wrap(24); 
+    return ObjectType.wrap(22); 
 }
 
 function RISK() pure returns (ObjectType) {
-    return ObjectType.wrap(25);
+    return ObjectType.wrap(23);
 }
 
 function PRICE() pure returns (ObjectType) {
-    return ObjectType.wrap(26);
+    return ObjectType.wrap(24);
 }
 
 function REQUEST() pure returns (ObjectType) {
-    return ObjectType.wrap(27);
+    return ObjectType.wrap(25);
 }
 
 function DISTRIBUTOR_TYPE() pure returns (ObjectType) {
-    return ObjectType.wrap(28);
+    return ObjectType.wrap(26);
 }
 
 function DISTRIBUTOR() pure returns (ObjectType) {
-    return ObjectType.wrap(29);
+    return ObjectType.wrap(27);
 }
 
 function REFERRAL() pure returns (ObjectType) {
-    return ObjectType.wrap(30);
+    return ObjectType.wrap(28);
 }
 
 function BUNDLE() pure returns (ObjectType) {
-    return ObjectType.wrap(31);
+    return ObjectType.wrap(29);
 }
 
 function TARGET() pure returns (ObjectType) {
-    return ObjectType.wrap(32);
+    return ObjectType.wrap(30);
 }
 
 function STAKE() pure returns (ObjectType) {
-    return ObjectType.wrap(33);
+    return ObjectType.wrap(31);
 }
 
-// TODO: change id for accounting
-function ACCOUNTING() pure returns (ObjectType) {
-    return ObjectType.wrap(34);
-}
 
 
 /// @dev Object type that includes any other object type.

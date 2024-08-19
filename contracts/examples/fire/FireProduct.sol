@@ -107,7 +107,9 @@ contract FireProduct is
                 numberOfOracles: 0,
                 poolNftId: NftIdLib.zero(),
                 distributionNftId: NftIdLib.zero(),
-                oracleNftId: new NftId[](0),
+                oracleNftId: new NftId[](0)
+            }), 
+            IComponents.FeeInfo({
                 productFee: FeeLib.zero(),
                 processingFee: FeeLib.zero(),
                 distributionFee: FeeLib.zero(),

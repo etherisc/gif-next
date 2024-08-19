@@ -28,6 +28,7 @@ contract ProductWithReinsurance is
         NftId instanceNftId,
         address token,
         IComponents.ProductInfo memory productInfo,
+        IComponents.FeeInfo memory feeInfo,
         IAuthorization authorization,
         address initialOwner
     )
@@ -37,6 +38,7 @@ contract ProductWithReinsurance is
             "ProductWithReinsurance", 
             token,
             productInfo,
+            feeInfo,
             authorization,
             initialOwner
         )

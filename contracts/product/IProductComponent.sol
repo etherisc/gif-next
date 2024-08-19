@@ -53,7 +53,10 @@ interface IProductComponent is
     ) external view returns (Amount netPremiumAmount);    
 
 
-    /// @dev returns initial pool specific infos for this pool
+    /// @dev returns initial product specific infos 
     function getInitialProductInfo() external view returns (IComponents.ProductInfo memory info);
+
+    /// @dev returns initial fee infos
+    function getInitialFeeInfo() external view returns (IComponents.FeeInfo memory info);
     
 }

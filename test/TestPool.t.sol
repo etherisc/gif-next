@@ -114,17 +114,17 @@ contract TestPool is GifTest {
     function test_poolSetFees() public {
         // GIVEN setup includes pool and product
 
-        IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
+        IComponents.FeeInfo memory feeInfo = instanceReader.getFeeInfo(productNftId);
 
-        Fee memory poolFee = productInfo.poolFee;
+        Fee memory poolFee = feeInfo.poolFee;
         assertEq(poolFee.fractionalFee.toInt(), 0, "pool fee not 0 (fractional)");
         assertEq(poolFee.fixedFee, 0, "pool fee not 0 (fixed)");
 
-        Fee memory stakingFee = productInfo.stakingFee;
+        Fee memory stakingFee = feeInfo.stakingFee;
         assertEq(stakingFee.fractionalFee.toInt(), 0, "staking fee not 0 (fractional)");
         assertEq(stakingFee.fixedFee, 0, "staking fee not 0 (fixed)");
 
-        Fee memory performanceFee = productInfo.performanceFee;
+        Fee memory performanceFee = feeInfo.performanceFee;
         assertEq(performanceFee.fractionalFee.toInt(), 0, "performance fee not 0 (fractional)");
         assertEq(performanceFee.fixedFee, 0, "performance fee fee not 0 (fixed)");
 
@@ -136,10 +136,10 @@ contract TestPool is GifTest {
         pool.setFees(newPoolFee, newStakingFee, newPerformanceFee);
         vm.stopPrank();
 
-        productInfo = instanceReader.getProductInfo(productNftId);
-        poolFee = productInfo.poolFee;
-        stakingFee = productInfo.stakingFee;
-        performanceFee = productInfo.performanceFee;
+        feeInfo = instanceReader.getFeeInfo(productNftId);
+        poolFee = feeInfo.poolFee;
+        stakingFee = feeInfo.stakingFee;
+        performanceFee = feeInfo.performanceFee;
 
         assertEq(poolFee.fractionalFee.toInt(), 111, "pool fee not 111 (fractional)");
         assertEq(poolFee.fixedFee, 222, "pool fee not 222 (fixed)");

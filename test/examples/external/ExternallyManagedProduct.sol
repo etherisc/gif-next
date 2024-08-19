@@ -31,6 +31,7 @@ contract ExternallyManagedProduct is
         NftId instanceNftId,
         address token,
         IComponents.ProductInfo memory productInfo,
+        IComponents.FeeInfo memory feeInfo,
         address initialOwner
     )
         SimpleProduct(
@@ -39,6 +40,7 @@ contract ExternallyManagedProduct is
             "VerifyingProduct", 
             token,
             productInfo,
+            feeInfo,
             new BasicProductAuthorization("ExternallyManagedProduct"),
             initialOwner
         )

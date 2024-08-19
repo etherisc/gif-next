@@ -33,6 +33,7 @@ contract VerifyingProduct is
         NftId instanceNftId,
         address token,
         IComponents.ProductInfo memory productInfo,
+        IComponents.FeeInfo memory feeInfo,
         address initialOwner
     )
         SimpleProduct(
@@ -41,6 +42,7 @@ contract VerifyingProduct is
             "VerifyingProduct", 
             token,
             productInfo,
+            feeInfo,
             new BasicProductAuthorization("VerifyingProduct"),
             initialOwner
         )

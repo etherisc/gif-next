@@ -57,10 +57,11 @@ contract TestProduct is GifTest {
         assertEq(productInfo.poolNftId.toInt(), pool.getNftId().toInt(), "unexpected pool nft id");
 
         // check fees
-        Fee memory productFee = productInfo.productFee;
+        IComponents.FeeInfo memory feeInfo = instanceReader.getFeeInfo(productNftId);
+        Fee memory productFee = feeInfo.productFee;
         assertEq(productFee.fractionalFee.toInt(), 0, "product fee not 0");
         assertEq(productFee.fixedFee, 0, "product fee not 0");
-        Fee memory processingFee = productInfo.processingFee;
+        Fee memory processingFee = feeInfo.processingFee;
         assertEq(processingFee.fractionalFee.toInt(), 0, "processing fee not 0");
         assertEq(processingFee.fixedFee, 0, "processing fee not 0");
     }
@@ -68,11 +69,11 @@ contract TestProduct is GifTest {
 
     function test_productSetFees() public {
 
-        IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
-        Fee memory productFee = productInfo.productFee;
+        IComponents.FeeInfo memory feeInfo = instanceReader.getFeeInfo(productNftId);
+        Fee memory productFee = feeInfo.productFee;
         assertEq(productFee.fractionalFee.toInt(), 0, "product fee not 0");
         assertEq(productFee.fixedFee, 0, "product fee not 0");
-        Fee memory processingFee = productInfo.processingFee;
+        Fee memory processingFee = feeInfo.processingFee;
         assertEq(processingFee.fractionalFee.toInt(), 0, "processing fee not 0");
         assertEq(processingFee.fixedFee, 0, "processing fee not 0");
         
@@ -83,12 +84,12 @@ contract TestProduct is GifTest {
         product.setFees(newProductFee, newProcessingFee);
         vm.stopPrank();
 
-        productInfo = instanceReader.getProductInfo(productNftId);
-        productFee = productInfo.productFee;
+        feeInfo = instanceReader.getFeeInfo(productNftId);
+        productFee = feeInfo.productFee;
         assertEq(productFee.fractionalFee.toInt(), 123, "product fee not 123");
         assertEq(productFee.fixedFee, 456, "product fee not 456");
 
-        processingFee = productInfo.processingFee;
+        processingFee = feeInfo.processingFee;
         assertEq(processingFee.fractionalFee.toInt(), 789, "processing fee not 789");
         assertEq(processingFee.fixedFee, 101112, "processing fee not 101112");
     }
