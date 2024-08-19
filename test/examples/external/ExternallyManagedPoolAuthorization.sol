@@ -13,7 +13,7 @@ import {PUBLIC_ROLE} from "../../../contracts/type/RoleId.sol";
 import {RoleId} from "../../../contracts/type/RoleId.sol";
 
 
-contract PoolWithReinsuranceAuthorization
+contract ExternallyManagedPoolAuthorization
      is Authorization
 {
 

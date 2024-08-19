@@ -30,25 +30,10 @@ contract InstanceAuthorizationV3
           Authorization(INSTANCE_TARGET_NAME, INSTANCE())
      { }
 
-
-     function _setupRoles()
-          internal
-          override
-     {
-          // empty implementation
-     }
-
      function _setupTargets()
           internal
           override
      {
-          // TODO cleanup
-          // // instance target
-          // _addTargetWithRole(
-          //      INSTANCE_TARGET_NAME, 
-          //      _toTargetRoleId(INSTANCE()),
-          //      INSTANCE_ROLE_NAME);
-
           // instance supporting targets
           _addTarget(INSTANCE_STORE_TARGET_NAME);
           _addTarget(INSTANCE_ADMIN_TARGET_NAME);

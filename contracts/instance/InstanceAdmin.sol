@@ -86,7 +86,6 @@ contract InstanceAdmin is
         _registry = registry;
     }
 
-    event LogDebug(string message, uint256 value);
     /// @dev Completes the initialization of this instance admin using the provided instance, registry and version.
     /// Important: Initialization of instance admin is only complete after calling this function. 
     /// Important: The instance MUST be registered and all instance supporting contracts must be wired to this instance.
@@ -110,20 +109,14 @@ contract InstanceAdmin is
             revert ErrorInstanceAdminReleaseMismatch();
         }
 
-        // TODO cleanup
-        emit LogDebug("a", 0);
         // create instance role and target
         _setupInstance(instance);
-        emit LogDebug("b", 0);
 
         // add instance authorization
         _createRoles(_instanceAuthorization);
-        emit LogDebug("c", 0);
 
         _setupInstanceHelperTargetsWithRoles();
-        emit LogDebug("d", 0);
         _createTargetAuthorizations(_instanceAuthorization);
-        emit LogDebug("e", 0);
     }
 
 
@@ -138,43 +131,24 @@ contract InstanceAdmin is
         // checks
         _checkTargetIsReadyForAuthorization(address(component));
 
-        emit LogDebug("f", 0);
-
         // setup target and role for component (including token handler)
         _setupComponentAndTokenHandler(component);
-
-        emit LogDebug("g", 0);
 
         // create other roles
         IAuthorization authorization = component.getAuthorization();
         _createRoles(authorization);
-
-        emit LogDebug("h", 0);
         
-        FunctionInfo[] memory functions = new FunctionInfo[](3);
-        functions[0] = toFunction(TokenHandler.collectTokens.selector, "collectTokens");
-        functions[1] = toFunction(TokenHandler.collectTokensToThreeRecipients.selector, "collectTokensToThreeRecipients");
-        functions[2] = toFunction(TokenHandler.distributeTokens.selector, "distributeTokens");
-
-        emit LogDebug("i", 0);
+        FunctionInfo[] memory functions = new FunctionInfo[](2);
+        functions[0] = toFunction(TokenHandler.pullToken.selector, "pullTokens");
+        functions[1] = toFunction(TokenHandler.pushToken.selector, "pushToken");
 
         // FIXME: make this a bit nicer and work with IAuthorization. Use a specific role, not public - access to TokenHandler must be restricted
         _authorizeTargetFunctions(
             address(component.getTokenHandler()),
             getPublicRole(),
             functions);
-
-        emit LogDebug("j", 0);
-
-        // TODO cleanup
-        // _grantRoleToAccount(
-        //     authorization.getTargetRole(
-        //         authorization.getMainTarget()), 
-        //     address(component));
         
         _createTargetAuthorizations(authorization);
-
-        emit LogDebug("k", 0);
     }
 
     // create instance role and target

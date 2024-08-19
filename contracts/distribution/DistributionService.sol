@@ -314,7 +314,7 @@ contract DistributionService is
         {
             address distributor = getRegistry().ownerOf(distributorNftId);
             emit LogDistributionServiceCommissionWithdrawn(distributorNftId, distributor, address(distributionInfo.token), withdrawnAmount);
-            distributionInfo.tokenHandler.distributeTokens(distributionWallet, distributor, withdrawnAmount);
+            distributionInfo.tokenHandler.pushToken(distributor, withdrawnAmount);
         }
     }
 

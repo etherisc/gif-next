@@ -28,12 +28,20 @@ contract ExternallyManagedPoolTest is GifTest {
 
     function setUp() public override {
         super.setUp();
+        _prepareExternallyManagedSetup();
+    }
 
+    function _prepareExternallyManagedSetup() internal {
         _deployProduct(); // simple product setup
 
         vm.startPrank(instanceOwner);
         emProductNftId = instance.registerProduct(address(emProduct));
         emProduct.init();
+        vm.stopPrank();
+
+        // token handler only becomes available after registration
+        vm.startPrank(productOwner);
+        emProduct.approveTokenHandler(token, AmountLib.max());
         vm.stopPrank();
 
         _deployPool(emProductNftId);
@@ -42,8 +50,12 @@ contract ExternallyManagedPoolTest is GifTest {
         emPoolNftId = emProduct.registerComponent(address(emPool));
         emPool.init();
         vm.stopPrank();
-    }
 
+        // token handler only becomes available after registration
+        vm.startPrank(poolOwner);
+        emPool.approveTokenHandler(token, AmountLib.max());
+        vm.stopPrank();
+    }
 
     function test_externallyManagedPoolSetUp() public {
         // GIVEN just setUp

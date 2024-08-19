@@ -18,15 +18,6 @@ contract BasicDistributionAuthorization
           Authorization(distributionlName, DISTRIBUTION())
      {}
 
-     // TODO cleanup
-     // function _setupTargets()
-     //      internal
-     //      virtual override
-     // {
-     //      _addComponentTargetWithRole(DISTRIBUTION()); // basic target
-     // }
-
-
      function _setupTargetAuthorizations()
           internal
           virtual override

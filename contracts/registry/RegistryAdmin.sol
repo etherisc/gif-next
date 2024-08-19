@@ -291,8 +291,8 @@ contract RegistryAdmin is
         // grant permissions to the staking role for token handler contract
         IStaking staking = IStaking(_staking);
         functions = new FunctionInfo[](2);
-        functions[0] = toFunction(TokenHandler.collectTokens.selector, "collectTokens");
-        functions[1] = toFunction(TokenHandler.distributeTokens.selector, "distributeTokens");
+        functions[0] = toFunction(TokenHandler.pullToken.selector, "pullTokens");
+        functions[1] = toFunction(TokenHandler.pushToken.selector, "pushToken");
         _authorizeTargetFunctions(address(staking.getTokenHandler()), stakingRoleId, functions);
 
         // create staking service role

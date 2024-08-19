@@ -235,7 +235,7 @@ contract PolicyService is
         emit LogPolicyServicePolicyPremiumCollected(policyNftId, premium.premiumAmount);
 
         // interactions
-        _transferFunds(instanceReader, policyNftId, policyInfo.productNftId, premium);
+        _transferPremiumAmounts(instanceReader, policyNftId, policyInfo.productNftId, premium);
     }
 
 
@@ -441,28 +441,6 @@ contract PolicyService is
         _policyHolderPolicyExpired(policyNftId, expiredAt);
     }
 
-    // TODO cleanup
-    // /// @dev Calculates the premium and updates all counters in the other services.
-    // /// Only book keeping, no token transfers.
-    // function _processPremium(
-    //     IInstance instance,
-    //     NftId applicationNftId,
-    //     IPolicy.PolicyInfo memory applicationInfo,
-    //     IPolicy.PremiumInfo memory premium
-    // )
-    //     internal
-    //     virtual
-    // {
-    //     // update the counters
-    //     _processSale(
-    //         instanceReader, 
-    //         instance.getInstanceStore(), 
-    //         productNftId, 
-    //         applicationInfo.bundleNftId, 
-    //         applicationInfo.referralId, 
-    //         premium);
-    // }
-
 
     function _activate(
         NftId policyNftId, 
@@ -528,7 +506,7 @@ contract PolicyService is
 
 
     /// @dev transfer the premium to the wallets the premium is distributed to
-    function _transferFunds(
+    function _transferPremiumAmounts(
         InstanceReader instanceReader,
         NftId policyNftId,
         NftId productNftId,
@@ -549,14 +527,18 @@ contract PolicyService is
             instanceReader, 
             productNftId);
 
-        tokenHandler.collectTokensToThreeRecipients(
-            policyHolder,
-            productWallet,
-            premium.productFeeAmount,
-            distributionWallet,
-            premium.distributionFeeAndCommissionAmount,
-            poolWallet,
-            premium.poolPremiumAndFeeAmount);
+        // step 1: collect premium amount from policy holder
+        tokenHandler.pullToken(policyHolder, premium.premiumAmount);
+
+        // step 2: push distribution fee to distribution wallet
+        if (premium.distributionFeeAndCommissionAmount.gtz()) {
+            tokenHandler.pushToken(distributionWallet, premium.distributionFeeAndCommissionAmount);
+        }
+
+        // step 3: push pool fee, bundle fee and pool premium to pool wallet
+        if (premium.poolPremiumAndFeeAmount.gtz()) {
+            tokenHandler.pushToken(poolWallet, premium.poolPremiumAndFeeAmount);
+        }
     }
 
 

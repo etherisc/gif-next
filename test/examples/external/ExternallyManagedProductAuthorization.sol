@@ -12,7 +12,7 @@ import {PUBLIC_ROLE} from "../../../contracts/type/RoleId.sol";
 import {RoleId} from "../../../contracts/type/RoleId.sol";
 
 
-contract ProductWithReinsuranceAuthorization
+contract ExternallyManagedProductAuthorization
      is Authorization
 {
 

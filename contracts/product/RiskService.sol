@@ -39,12 +39,6 @@ contract RiskService is
         ) = abi.decode(data, (address, address));
 
         __Service_init(authority, registry, owner);
-
-        // TODO cleanup
-        // _instanceService = IInstanceService(_getServiceAddress(INSTANCE()));
-        // _poolService = IPoolService(getRegistry().getServiceAddress(POOL(), getVersion().toMajorPart()));
-        // _registryService = IRegistryService(_getServiceAddress(REGISTRY()));
-
         _registerInterface(type(IRiskService).interfaceId);
     }
 

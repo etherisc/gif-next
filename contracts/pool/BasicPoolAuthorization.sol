@@ -26,15 +26,6 @@ contract BasicPoolAuthorization
           _addServiceTargetWithRole(POOL());
      }
 
-     // TODO cleanup
-     // function _setupTargets()
-     //      internal
-     //      virtual override
-     // {
-     //      _addComponentTargetWithRole(POOL()); // basic pool target
-     // }
-
-
      function _setupTargetAuthorizations()
           internal
           virtual override
@@ -58,7 +49,6 @@ contract BasicPoolAuthorization
           _authorize(functions, BasicPool.extend.selector, "extend");
 
           _authorize(functions, IInstanceLinkedComponent.withdrawFees.selector, "withdrawFees");
-
           _authorize(functions, BasicPool.withdrawBundleFees.selector, "withdrawBundleFees");
 
           // authorize pool service

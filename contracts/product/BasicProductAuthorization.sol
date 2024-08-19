@@ -17,16 +17,6 @@ contract BasicProductAuthorization
           Authorization(componentName, PRODUCT())
      {}
 
-     // TODO cleanup
-     // function _setupTargets()
-     //      internal
-     //      virtual override
-     // {
-     //      // basic component target
-     //      _addComponentTargetWithRole(PRODUCT()); 
-     // }
-
-
      function _setupTargetAuthorizations()
           internal
           virtual override

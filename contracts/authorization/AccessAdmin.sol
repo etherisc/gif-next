@@ -633,10 +633,7 @@ contract AccessAdmin is
         }
 
         uint64 roleIdInt = RoleId.unwrap(roleId);
-        if (roleIdInt == _authority.ADMIN_ROLE())
-        // TODO cleanup
-            //|| roleIdInt == _authority.PUBLIC_ROLE()) prevents granting of public role
-        {
+        if (roleIdInt == _authority.ADMIN_ROLE()) {
             revert ErrorRoleIsLocked(roleId);
         }
 

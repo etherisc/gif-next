@@ -217,21 +217,6 @@ contract Authorization
                 getRelease().toInt()));
     }
 
-    // TODO cleanup
-    // function _addComponentTargetWithRole(ObjectType componentType) internal {
-    //     _addComponentTargetWithRole(componentType, 0);
-    // }
-
-
-    // function _addComponentTargetWithRole(ObjectType componentType, uint64 index) internal {
-    //     string memory mainTargetName = getMainTargetName();
-    //     _addTargetWithRole(
-    //         mainTargetName, 
-    //         RoleIdLib.toComponentRoleId(componentType, index),
-    //         _toTargetRoleName(
-    //             mainTargetName));
-    // }
-
 
     /// @dev Add a contract role for the provided role id and name.
     function _addCustomRole(RoleId roleId, RoleId adminRoleId, uint32 maxMemberCount, string memory name) internal {
@@ -243,6 +228,7 @@ contract Authorization
                 maxMemberCount,
                 name));
     }
+
 
     /// @dev Use this method to to add an authorized target together with its target role.
     function _addTargetWithRole(

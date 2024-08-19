@@ -413,9 +413,9 @@ contract BundleService is
 
         // transfer amount to bundle owner
         {
-            address owner = getRegistry().ownerOf(bundleNftId);
-            emit LogBundleServiceFeesWithdrawn(bundleNftId, owner, address(poolInfo.token), withdrawnAmount);
-            poolInfo.tokenHandler.distributeTokens(poolWallet, owner, withdrawnAmount);
+            address bundleOwner = getRegistry().ownerOf(bundleNftId);
+            emit LogBundleServiceFeesWithdrawn(bundleNftId, bundleOwner, address(poolInfo.token), withdrawnAmount);
+            poolInfo.tokenHandler.pushToken(bundleOwner, withdrawnAmount);
         }
     }
 

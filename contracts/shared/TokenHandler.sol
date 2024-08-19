@@ -159,33 +159,6 @@ contract TokenHandlerBase {
     }
 
 
-    function _pullAndPushToken(
-        address from, 
-        Amount pullAmount,
-        address to1,
-        Amount amount1,
-        address to2,
-        Amount amount2
-    )
-        internal
-    {
-        address wallet = getWallet();
-
-        if (wallet == to1 || wallet == to2 || to1 == to2) {
-            revert ErrorTokenHandlerWalletsNotDistinct(wallet, to1, to2);
-        }
-
-        if (amount1 + amount2 > pullAmount) {
-            revert ErrorTokenHandlerPushAmountsTooLarge(amount1 + amount2, pullAmount);
-        }
-
-        _pullToken(from, pullAmount);
-
-        if (amount1.gtz()) { _pushToken(to1, amount1); }
-        if (amount2.gtz()) { _pushToken(to2, amount2); }
-    }
-
-
     function _pullToken(address from, Amount amount)
         internal
     {
@@ -313,7 +286,7 @@ contract TokenHandler is
 
     /// @dev Collect tokens from outside of GIF and transfer them to the wallet.
     /// This method also checks balance and allowance and makes sure the amount is greater than zero.
-    function collectTokens(
+    function pullToken(
         address from,
         Amount amount
     )
@@ -325,8 +298,7 @@ contract TokenHandler is
     }
 
 
-    /// @dev Collect tokens from outside of GIF and transfer them to the wallet.
-    /// This method also checks balance and allowance and makes sure the amount is greater than zero.
+    /// @dev Distribute tokens from a wallet within the scope of gif to some address.
     function pushToken(
         address to,
         Amount amount
@@ -335,55 +307,6 @@ contract TokenHandler is
         // restricted() // TODO re-activate
         onlyService()
     {
-        _pushToken(to, amount);
-    }
-
-
-    /// @dev collect tokens from outside of the gif and transfer them to three distinct wallets within the scope of gif
-    /// This method also checks balance and allowance and makes sure the amount is greater than zero.
-    function collectTokensToThreeRecipients( 
-        address from,
-        address to,
-        Amount amount,
-        address to2,
-        Amount amount2,
-        address to3,
-        Amount amount3
-    )
-        external
-        restricted()
-        onlyService()
-    {
-        if (to == to2 || to == to3 || to2 == to3) {
-            revert ErrorTokenHandlerRecipientWalletsMustBeDistinct(to, to2, to3);
-        }
-
-        _checkPreconditions(from, amount + amount2 + amount3);
-
-        if (amount.gtz()) {
-            _transfer(from, to, amount, false);
-        }
-        if (amount2.gtz()) {
-            _transfer(from, to2, amount2, false);
-        }
-        if (amount3.gtz()) {
-            _transfer(from, to3, amount3, false);
-        }
-    }
-
-
-    /// @dev distribute tokens from a wallet within the scope of gif to an external address.
-    /// This method also checks balance and allowance and makes sure the amount is greater than zero.
-    function distributeTokens(
-        address from,
-        address to,
-        Amount amount
-    )
-        external
-        restricted()
-        onlyService()
-    {
-        // _transfer(from, to, amount, true);
         _pushToken(to, amount);
     }
 }

@@ -18,16 +18,6 @@ contract BasicOracleAuthorization
           Authorization(componentName, ORACLE())
      {}
 
-     // TODO cleanup
-     // function _setupTargets()
-     //      internal
-     //      virtual override
-     // {
-     //      // basic component target
-     //      _addComponentTargetWithRole(ORACLE()); 
-     // }
-
-
      function _setupTargetAuthorizations()
           internal
           virtual override

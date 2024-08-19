@@ -190,7 +190,6 @@ contract ComponentService is
     {
         (NftId componentNftId, IInstance instance) = _getAndVerifyActiveComponent(COMPONENT());
         IComponents.ComponentInfo memory info = instance.getInstanceReader().getComponentInfo(componentNftId);
-        address componentWallet = info.tokenHandler.getWallet();
 
         // determine withdrawn amount
         withdrawnAmount = amount;
@@ -211,7 +210,7 @@ contract ComponentService is
         // transfer amount to component owner
         address componentOwner = getRegistry().ownerOf(componentNftId);
         emit LogComponentServiceComponentFeesWithdrawn(componentNftId, componentOwner, address(info.token), withdrawnAmount);
-        info.tokenHandler.distributeTokens(componentWallet, componentOwner, withdrawnAmount);
+        info.tokenHandler.pushToken(componentOwner, withdrawnAmount);
     }
 
 
@@ -245,13 +244,10 @@ contract ComponentService is
         instanceStore.createProduct(
             productNftId, 
             initialProductInfo);
+
         instanceStore.createFee(
             productNftId, 
             product.getInitialFeeInfo());
-
-        // TODO cleanup move authorization into _register
-        // authorize
-        // instanceAdmin.initializeComponentAuthorization(product);
     }
 
 
@@ -317,11 +313,6 @@ contract ComponentService is
         // set distribution in product info
         productInfo.distributionNftId = distributionNftId;
         instanceStore.updateProduct(productNftId, productInfo, KEEP_STATE());
-
-        // TODO cleanup
-        // authorize
-        // instanceAdmin.initializeComponentAuthorization(
-        //     IInstanceLinkedComponent(distributioAddress));
     }
 
 
@@ -387,10 +378,6 @@ contract ComponentService is
         productInfo.oracleNftId[productInfo.numberOfOracles] = oracleNftId;
         productInfo.numberOfOracles++;
         instanceStore.updateProduct(productNftId, productInfo, KEEP_STATE());
-
-        // TODO cleanup
-        // instanceAdmin.initializeComponentAuthorization(
-        //     IInstanceLinkedComponent(oracleAddress));
     }
 
     //-------- pool ---------------------------------------------------------//
@@ -425,9 +412,6 @@ contract ComponentService is
         // update pool in product info
         productInfo.poolNftId = poolNftId;
         instanceStore.updateProduct(productNftId, productInfo, KEEP_STATE());
-
-        // TODO cleanup
-        // instanceAdmin.initializeComponentAuthorization(pool);
     }
 
 

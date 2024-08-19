@@ -102,8 +102,7 @@ contract PoolService is
 
         if ((unstakedAmount + feeAmount).gtz()){
             IComponents.ComponentInfo memory poolComponentInfo = instance.getInstanceReader().getComponentInfo(poolNftId);
-            poolComponentInfo.tokenHandler.distributeTokens(
-                poolComponentInfo.tokenHandler.getWallet(), 
+            poolComponentInfo.tokenHandler.pushToken(
                 getRegistry().ownerOf(bundleNftId), 
                 unstakedAmount + feeAmount);
         }
@@ -200,7 +199,7 @@ contract PoolService is
 
             // collect tokens from bundle owner
             address bundleOwner = getRegistry().ownerOf(bundleNftId);
-            _collectStakingAmount(
+            _pullStakingAmount(
                 instanceReader,
                 poolNftId, 
                 bundleOwner, 
@@ -251,7 +250,7 @@ contract PoolService is
 
             // transfer amount to bundle owner
             address bundleOwner = getRegistry().ownerOf(bundleNftId);
-            _distributeUnstakingAmount(
+            _pushUnstakingAmount(
                 instanceReader,
                 poolNftId, 
                 bundleOwner, 
@@ -279,7 +278,7 @@ contract PoolService is
         address poolOwner = getRegistry().ownerOf(poolNftId);
         emit LogPoolServiceWalletFunded(poolNftId, poolOwner, amount);
 
-        _collectStakingAmount(
+        _pullStakingAmount(
             reader,
             poolNftId, 
             poolOwner, 
@@ -306,7 +305,7 @@ contract PoolService is
         address poolOwner = getRegistry().ownerOf(poolNftId);
         emit LogPoolServiceWalletDefunded(poolNftId, poolOwner, amount);
 
-        _distributeUnstakingAmount(
+        _pushUnstakingAmount(
             reader,
             poolNftId, 
             poolOwner, 
@@ -554,8 +553,8 @@ contract PoolService is
     }
 
 
-    /// @dev transfers the specified amount from the "from account" to the pool's wallet
-    function _collectStakingAmount(
+    /// @dev Transfers the specified amount from the "from account" to the pool's wallet
+    function _pullStakingAmount(
         InstanceReader reader,
         NftId poolNftId,
         address from,
@@ -564,13 +563,13 @@ contract PoolService is
         internal
     {
         IComponents.ComponentInfo memory info = reader.getComponentInfo(poolNftId);
-        info.tokenHandler.collectTokens(
+        info.tokenHandler.pullToken(
             from,
             amount);
     }
 
-    /// @dev distributes the specified amount from the pool's wallet to the "to account"
-    function _distributeUnstakingAmount(
+    /// @dev Transfers the specified amount from the pool's wallet to the "to account"
+    function _pushUnstakingAmount(
         InstanceReader reader,
         NftId poolNftId,
         address to,
@@ -579,8 +578,7 @@ contract PoolService is
         internal
     {
         IComponents.ComponentInfo memory info = reader.getComponentInfo(poolNftId);
-        info.tokenHandler.distributeTokens(
-            info.tokenHandler.getWallet(), 
+        info.tokenHandler.pushToken(
             to, 
             amount);
     }
