@@ -18,16 +18,17 @@ contract PoolWithReinsuranceAuthorization
 {
 
      constructor()
-          Authorization("PoolWithReinsurance")
+          Authorization("PoolWithReinsurance", POOL())
      {}
 
-     function _setupTargets()
-          internal
-          virtual override
-     {
-          uint64 index = 1; // 0 is default
-          _addComponentTargetWithRole(POOL(), index);
-     }
+     // TODO cleanup
+     // function _setupTargets()
+     //      internal
+     //      virtual override
+     // {
+     //      uint64 index = 1; // 0 is default
+     //      _addComponentTargetWithRole(POOL(), index);
+     // }
 
 
      function _setupTargetAuthorizations()
@@ -37,7 +38,7 @@ contract PoolWithReinsuranceAuthorization
           IAccess.FunctionInfo[] storage functions;
 
           // authorize public role (open access to any account, only allows to lock target)
-          functions = _authorizeForTarget(getTargetName(), PUBLIC_ROLE());
+          functions = _authorizeForTarget(getMainTargetName(), PUBLIC_ROLE());
           _authorize(functions, BasicPool.stake.selector, "stake");
           _authorize(functions, BasicPool.unstake.selector, "unstake");
           _authorize(functions, BasicPool.extend.selector, "extend");
@@ -55,7 +56,7 @@ contract PoolWithReinsuranceAuthorization
           _authorize(functions, IInstanceLinkedComponent.withdrawFees.selector, "withdrawFees");
 
           // authorize claim service for callback
-          functions = _authorizeForTarget(getTargetName(), getServiceRole(CLAIM()));
+          functions = _authorizeForTarget(getMainTargetName(), getServiceRole(CLAIM()));
           _authorize(functions, IPoolComponent.processConfirmedClaim.selector, "processConfirmedClaim");
           _authorize(functions, IPolicyHolder.payoutExecuted.selector, "payoutExecuted");
      }

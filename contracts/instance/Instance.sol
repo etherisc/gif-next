@@ -26,11 +26,13 @@ contract Instance is
 
     IComponentService internal _componentService;
     IInstanceService internal _instanceService;
+
     InstanceAdmin internal _instanceAdmin;
     InstanceReader internal _instanceReader;
     BundleSet internal _bundleSet;
     RiskSet internal _riskSet;
     InstanceStore internal _instanceStore;
+    NftId [] internal _products;
 
     modifier onlyChainNft() {
         if(msg.sender != getRegistry().getChainNftAddress()) {
@@ -93,12 +95,14 @@ contract Instance is
     }
 
     //--- ProductRegistration ----------------------------------------------//
+
     function registerProduct(address product)
         external
         onlyOwner()
         returns (NftId productNftId)
     {
-        return _componentService.registerProduct(product);
+        productNftId = _componentService.registerProduct(product);
+        _products.push(productNftId);
     }
 
     //--- Staking ----------------------------------------------------------//
@@ -210,6 +214,14 @@ contract Instance is
     }
 
     //--- external view functions -------------------------------------------//
+
+    function products() external view returns (uint256 productCount) {
+        return _products.length;
+    }
+
+    function getProductNftid(uint256 idx) external view returns (NftId productNftId) {
+        return _products[idx];
+    }
 
     function getInstanceReader() external view returns (InstanceReader) {
         return _instanceReader;

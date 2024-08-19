@@ -14,16 +14,17 @@ contract BasicProductAuthorization
 {
 
      constructor(string memory componentName)
-          Authorization(componentName)
+          Authorization(componentName, PRODUCT())
      {}
 
-     function _setupTargets()
-          internal
-          virtual override
-     {
-          // basic component target
-          _addComponentTargetWithRole(PRODUCT()); 
-     }
+     // TODO cleanup
+     // function _setupTargets()
+     //      internal
+     //      virtual override
+     // {
+     //      // basic component target
+     //      _addComponentTargetWithRole(PRODUCT()); 
+     // }
 
 
      function _setupTargetAuthorizations()
@@ -33,7 +34,7 @@ contract BasicProductAuthorization
           IAccess.FunctionInfo[] storage functions;
 
           // authorize public role (open access to any account, only allows to lock target)
-          functions = _authorizeForTarget(getTargetName(), PUBLIC_ROLE());
+          functions = _authorizeForTarget(getMainTargetName(), PUBLIC_ROLE());
           _authorize(functions, BasicProduct.setFees.selector, "setFees");
           _authorize(functions, IInstanceLinkedComponent.withdrawFees.selector, "withdrawFees");
      }

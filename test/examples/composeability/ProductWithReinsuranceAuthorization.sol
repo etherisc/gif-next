@@ -16,16 +16,17 @@ contract ProductWithReinsuranceAuthorization
 {
 
      constructor()
-          Authorization("ProductWithReinsurance")
+          Authorization("ProductWithReinsurance", PRODUCT())
      {}
 
-     function _setupTargets()
-          internal
-          virtual override
-     {
-          uint64 index = 1; // 0 is default
-          _addComponentTargetWithRole(PRODUCT(), index);
-     }
+     // TODO cleanup
+     // function _setupTargets()
+     //      internal
+     //      virtual override
+     // {
+     //      uint64 index = 1; // 0 is default
+     //      _addComponentTargetWithRole(PRODUCT(), index);
+     // }
 
 
      function _setupTargetAuthorizations()
@@ -35,12 +36,12 @@ contract ProductWithReinsuranceAuthorization
           IAccess.FunctionInfo[] storage functions;
 
           // authorize public role (open access to any account, only allows to lock target)
-          functions = _authorizeForTarget(getTargetName(), PUBLIC_ROLE());
+          functions = _authorizeForTarget(getMainTargetName(), PUBLIC_ROLE());
           _authorize(functions, BasicProduct.setFees.selector, "setFees");
           _authorize(functions, IInstanceLinkedComponent.withdrawFees.selector, "withdrawFees");
 
           // authorize pool service for callback
-          functions = _authorizeForTarget(getTargetName(), getServiceRole(POOL()));
+          functions = _authorizeForTarget(getMainTargetName(), getServiceRole(POOL()));
           _authorize(functions, IProductComponent.processFundedClaim.selector, "processFundedClaim");
      }
 }

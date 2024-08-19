@@ -15,15 +15,16 @@ contract BasicDistributionAuthorization
 {
 
      constructor(string memory distributionlName)
-          Authorization(distributionlName)
+          Authorization(distributionlName, DISTRIBUTION())
      {}
 
-     function _setupTargets()
-          internal
-          virtual override
-     {
-          _addComponentTargetWithRole(DISTRIBUTION()); // basic target
-     }
+     // TODO cleanup
+     // function _setupTargets()
+     //      internal
+     //      virtual override
+     // {
+     //      _addComponentTargetWithRole(DISTRIBUTION()); // basic target
+     // }
 
 
      function _setupTargetAuthorizations()
@@ -33,7 +34,7 @@ contract BasicDistributionAuthorization
           IAccess.FunctionInfo[] storage functions;
 
           // authorize public role (open access to any account, only allows to lock target)
-          functions = _authorizeForTarget(getTargetName(), PUBLIC_ROLE());
+          functions = _authorizeForTarget(getMainTargetName(), PUBLIC_ROLE());
           _authorize(functions, BasicDistribution.setFees.selector, "setFees");
           _authorize(functions, BasicDistribution.createDistributorType.selector, "createDistributorType");
           _authorize(functions, BasicDistribution.createDistributor.selector, "createDistributor");

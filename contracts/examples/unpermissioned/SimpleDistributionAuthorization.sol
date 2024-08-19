@@ -21,7 +21,7 @@ contract SimpleDistributionAuthorization
 
         // authorize public role (open access to any account, only allows to lock target)
         IAccess.FunctionInfo[] storage functions;
-        functions = _authorizeForTarget(getTargetName(), PUBLIC_ROLE());
+        functions = _authorizeForTarget(getMainTargetName(), PUBLIC_ROLE());
         _authorize(functions, SimpleDistribution.approveTokenHandler.selector, "approveTokenHandler");
         _authorize(functions, SimpleDistribution.setWallet.selector, "setWallet");
     }

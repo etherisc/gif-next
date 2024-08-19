@@ -14,16 +14,17 @@ contract DistributionWithReinsuranceAuthorization
 {
 
      constructor()
-          Authorization("DistributionWithReinsurance")
+          Authorization("DistributionWithReinsurance", DISTRIBUTION())
      {}
 
-     function _setupTargets()
-          internal
-          virtual override
-     {
-          uint64 index = 1; // 0 is default
-          _addComponentTargetWithRole(DISTRIBUTION(), index);
-     }
+     // // TODO cleanup
+     // function _setupTargets()
+     //      internal
+     //      virtual override
+     // {
+     //      uint64 index = 1; // 0 is default
+     //      _addComponentTargetWithRole(DISTRIBUTION(), index);
+     // }
 
 
      function _setupTargetAuthorizations()

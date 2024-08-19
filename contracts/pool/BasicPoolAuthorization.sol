@@ -16,7 +16,7 @@ contract BasicPoolAuthorization
 {
 
      constructor(string memory poolName)
-          Authorization(poolName)
+          Authorization(poolName, POOL())
      {}
 
      function _setupServiceTargets()
@@ -26,12 +26,13 @@ contract BasicPoolAuthorization
           _addServiceTargetWithRole(POOL());
      }
 
-     function _setupTargets()
-          internal
-          virtual override
-     {
-          _addComponentTargetWithRole(POOL()); // basic pool target
-     }
+     // TODO cleanup
+     // function _setupTargets()
+     //      internal
+     //      virtual override
+     // {
+     //      _addComponentTargetWithRole(POOL()); // basic pool target
+     // }
 
 
      function _setupTargetAuthorizations()
@@ -41,7 +42,7 @@ contract BasicPoolAuthorization
           IAccess.FunctionInfo[] storage functions;
 
           // authorize public role (open access to any account, only allows to lock target)
-          functions = _authorizeForTarget(getTargetName(), PUBLIC_ROLE());
+          functions = _authorizeForTarget(getMainTargetName(), PUBLIC_ROLE());
           _authorize(functions, BasicPool.stake.selector, "stake");
           _authorize(functions, BasicPool.unstake.selector, "unstake");
           _authorize(functions, BasicPool.extend.selector, "extend");
@@ -61,7 +62,7 @@ contract BasicPoolAuthorization
           _authorize(functions, BasicPool.withdrawBundleFees.selector, "withdrawBundleFees");
 
           // authorize pool service
-          functions = _authorizeForTarget(getTargetName(), getServiceRole(POOL()));
+          functions = _authorizeForTarget(getMainTargetName(), getServiceRole(POOL()));
           _authorize(functions, IPoolComponent.verifyApplication.selector, "verifyApplication");
      }
 }

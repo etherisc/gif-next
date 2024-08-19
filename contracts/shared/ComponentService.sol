@@ -249,8 +249,9 @@ contract ComponentService is
             productNftId, 
             product.getInitialFeeInfo());
 
+        // TODO cleanup move authorization into _register
         // authorize
-        instanceAdmin.initializeComponentAuthorization(product);
+        // instanceAdmin.initializeComponentAuthorization(product);
     }
 
 
@@ -317,9 +318,10 @@ contract ComponentService is
         productInfo.distributionNftId = distributionNftId;
         instanceStore.updateProduct(productNftId, productInfo, KEEP_STATE());
 
+        // TODO cleanup
         // authorize
-        instanceAdmin.initializeComponentAuthorization(
-            IInstanceLinkedComponent(distributioAddress));
+        // instanceAdmin.initializeComponentAuthorization(
+        //     IInstanceLinkedComponent(distributioAddress));
     }
 
 
@@ -386,9 +388,9 @@ contract ComponentService is
         productInfo.numberOfOracles++;
         instanceStore.updateProduct(productNftId, productInfo, KEEP_STATE());
 
-        // authorize
-        instanceAdmin.initializeComponentAuthorization(
-            IInstanceLinkedComponent(oracleAddress));
+        // TODO cleanup
+        // instanceAdmin.initializeComponentAuthorization(
+        //     IInstanceLinkedComponent(oracleAddress));
     }
 
     //-------- pool ---------------------------------------------------------//
@@ -424,8 +426,8 @@ contract ComponentService is
         productInfo.poolNftId = poolNftId;
         instanceStore.updateProduct(productNftId, productInfo, KEEP_STATE());
 
-        // authorize
-        instanceAdmin.initializeComponentAuthorization(pool);
+        // TODO cleanup
+        // instanceAdmin.initializeComponentAuthorization(pool);
     }
 
 
@@ -532,6 +534,9 @@ contract ComponentService is
         // link component contract to nft id
         component.linkToRegisteredNftId();
 
+        // authorize
+        instanceAdmin.initializeComponentAuthorization(component);
+
         emit LogComponentServiceRegistered(instanceNftId, componentNftId, requiredType, address(component), address(token), initialOwner);
     }
 
@@ -611,9 +616,12 @@ contract ComponentService is
             revert ErrorComponentServiceAlreadyRegistered(componentAddress);
         }
 
-        // check release matches
+        // component release matches servie release
         address parentAddress = registry.getObjectAddress(parentNftId);
-        if (component.getRelease() != IRegisterable(parentAddress).getRelease()) {
+        if (component.getRelease() != getRelease()) {
+            revert ErrorComponentServiceReleaseMismatch(componentAddress, component.getRelease(), getRelease());
+        // component release matches parent release
+        } else if (component.getRelease() != IRegisterable(parentAddress).getRelease()){
             revert ErrorComponentServiceReleaseMismatch(componentAddress, component.getRelease(), IRegisterable(parentAddress).getRelease());
         }
 

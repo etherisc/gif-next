@@ -21,7 +21,7 @@ contract SimplePoolAuthorization
 
         // authorize public role (open access to any account, only allows to lock target)
         IAccess.FunctionInfo[] storage functions;
-        functions = _authorizeForTarget(getTargetName(), PUBLIC_ROLE());
+        functions = _authorizeForTarget(getMainTargetName(), PUBLIC_ROLE());
         _authorize(functions, SimplePool.approveTokenHandler.selector, "approveTokenHandler");
         _authorize(functions, SimplePool.setWallet.selector, "setWallet");
     }

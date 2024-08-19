@@ -16,49 +16,41 @@ import {BUNDLE, COMPONENT, DISTRIBUTION, ORACLE, POOL, PRODUCT, POLICY, RISK, RE
 import {RoleId} from "../../contracts/type/RoleId.sol";
 import {VersionPartLib} from "../../contracts/type/Version.sol";
 
+
+contract TestInstanceAdminMockInstance {
+    address public authority;
+
+    constructor(address auth) {
+        authority = auth;
+    }
+}
+
+
 contract TestInstanceAdmin is
     GifTest
 {
+    // address public someInstanceAuthz;
+    InstanceAdmin public someInstanceAdmin;
     AccessManagerCloneable public someAccessManager;
-    address public someInstanceAuthz;
-    InstanceAdmin public someInstanceAdminMaster;
 
     function setUp() public override {
         super.setUp();
 
-        someAccessManager = new AccessManagerCloneable();
-        someInstanceAuthz = address(new InstanceAuthorizationV3());
-        someInstanceAdminMaster = new InstanceAdmin(someInstanceAuthz);
-        someAccessManager = AccessManagerCloneable(someInstanceAdminMaster.authority());
+        someAccessManager = AccessManagerCloneable(
+            Clones.clone(instance.authority()));
+        
+        someInstanceAdmin = InstanceAdmin(
+            Clones.clone(
+                address(instance.getInstanceAdmin())));
+
+        someInstanceAdmin.initialize(
+            someAccessManager,
+            instance.getRegistry(),
+            instance.getRelease());
     }
 
     function test_instanceAdminSetup() public {
-        vm.startPrank(instanceOwner);
-        InstanceAdmin clonedAdmin = _cloneNewInstanceAdmin();
-        vm.stopPrank();
-
-        _printAuthz(clonedAdmin, "instance");
+        _printAuthz(someInstanceAdmin, "instance");
         assertTrue(true, "something is wrong");
-    }
-
-    function _cloneNewInstanceAdmin()
-        internal 
-        returns (InstanceAdmin clonedInstanceAdmin)
-    {
-        clonedInstanceAdmin = InstanceAdmin(
-            Clones.clone(
-                address(someInstanceAdminMaster)));
-
-        // create AccessManager and assign admin role to clonedInstanceAdmin
-        AccessManagerCloneable clonedAccessMananger = new AccessManagerCloneable();
-
-        clonedInstanceAdmin.initialize(
-            clonedAccessMananger,
-            registry,
-            VersionPartLib.toVersionPart(3));
-
-        clonedInstanceAdmin.completeSetup(
-            address(instance),
-            someInstanceAuthz);
     }
 }
