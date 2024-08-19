@@ -25,14 +25,14 @@ import {Fee, FeeLib} from "../type/Fee.sol";
 import {KEEP_STATE} from "../type/StateId.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
 import {ObjectType, ACCOUNTING, REGISTRY, COMPONENT, DISTRIBUTION, INSTANCE, ORACLE, POOL, PRODUCT} from "../type/ObjectType.sol";
-import {Service} from "../shared/Service.sol";
+import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {TokenHandlerDeployerLib} from "../shared/TokenHandlerDeployerLib.sol";
 import {VersionPart} from "../type/Version.sol";
 
 
 contract ComponentService is
-    Service,
+    ComponentVerifyingService,
     IComponentService
 {
     bool private constant INCREASE = true;
@@ -94,6 +94,7 @@ contract ComponentService is
     function registerComponent(address component)
         external
         virtual
+        restricted()
         onlyComponent(component)
         returns (NftId componentNftId)
     {
@@ -119,9 +120,10 @@ contract ComponentService is
     )
         external
         virtual
+        restricted()
     {
         // checks
-        (NftId componentNftId, IInstance instance) = _getAndVerifyActiveComponent(COMPONENT());
+        (NftId componentNftId,, IInstance instance) = _getAndVerifyCallingComponent(COMPONENT());
         TokenHandler tokenHandler = instance.getInstanceReader().getComponentInfo(
             componentNftId).tokenHandler;
 
@@ -136,6 +138,7 @@ contract ComponentService is
     )
         external
         virtual
+        restricted()
     {
         // checks
         ContractLib.getAndVerifyStaking(
@@ -151,9 +154,10 @@ contract ComponentService is
     function setWallet(address newWallet)
         external
         virtual
+        restricted()
     {
         // checks
-        (NftId componentNftId, IInstance instance) = _getAndVerifyActiveComponent(COMPONENT());
+        (NftId componentNftId,, IInstance instance) = _getAndVerifyCallingComponent(COMPONENT());
         TokenHandler tokenHandler = instance.getInstanceReader().getComponentInfo(
             componentNftId).tokenHandler;
 
@@ -165,6 +169,7 @@ contract ComponentService is
     function setLockedFromInstance(address componentAddress, bool locked) 
         external 
         virtual
+        restricted()
         onlyInstance()
     {
         address instanceAddress = msg.sender;
@@ -177,18 +182,20 @@ contract ComponentService is
     function setLockedFromComponent(address componentAddress, bool locked) 
         external
         virtual
+        restricted()
         onlyComponent(msg.sender)
     {
-        (, IInstance instance) = _getAndVerifyComponent(COMPONENT(), false);
+        (,, IInstance instance) = _getAndVerifyCallingComponent(COMPONENT());
         _setLocked(instance.getInstanceAdmin(), componentAddress, locked);
     }
 
     function withdrawFees(Amount amount)
         external
         virtual
+        restricted()
         returns (Amount withdrawnAmount)
     {
-        (NftId componentNftId, IInstance instance) = _getAndVerifyActiveComponent(COMPONENT());
+        (NftId componentNftId,, IInstance instance) = _getAndVerifyCallingComponent(COMPONENT());
         IComponents.ComponentInfo memory info = instance.getInstanceReader().getComponentInfo(componentNftId);
         address componentWallet = info.tokenHandler.getWallet();
 
@@ -220,6 +227,7 @@ contract ComponentService is
     function registerProduct(address productAddress)
         external
         virtual
+        restricted()
         nonReentrant()
         onlyComponent(productAddress)
         returns (NftId productNftId)
@@ -260,9 +268,10 @@ contract ComponentService is
     )
         external
         virtual
+        restricted()
         nonReentrant()
     {
-        (NftId productNftId, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
+        (NftId productNftId,, IInstance instance) = _getAndVerifyCallingComponent(PRODUCT());
         IComponents.FeeInfo memory feeInfo = instance.getInstanceReader().getFeeInfo(productNftId);
         bool feesChanged = false;
 
@@ -289,7 +298,7 @@ contract ComponentService is
     //-------- distribution -------------------------------------------------//
 
     /// @dev registers the sending component as a distribution component
-    function _registerDistribution(address distributioAddress)
+    function _registerDistribution(address distributionAddress)
         internal
         virtual
         nonReentrant()
@@ -301,7 +310,7 @@ contract ComponentService is
         InstanceStore instanceStore;
         NftId productNftId;
         (instanceReader, instanceAdmin, instanceStore, productNftId, distributionNftId) = _register(
-            distributioAddress,
+            distributionAddress,
             DISTRIBUTION());
 
         // check product is still expecting a distribution registration
@@ -319,7 +328,7 @@ contract ComponentService is
 
         // authorize
         instanceAdmin.initializeComponentAuthorization(
-            IInstanceLinkedComponent(distributioAddress));
+            IInstanceLinkedComponent(distributionAddress));
     }
 
 
@@ -329,8 +338,9 @@ contract ComponentService is
     )
         external
         virtual
+        restricted()
     {
-        (NftId distributionNftId, IInstance instance) = _getAndVerifyActiveComponent(DISTRIBUTION());
+        (NftId distributionNftId,, IInstance instance) = _getAndVerifyCallingComponent(DISTRIBUTION());
         (NftId productNftId, IComponents.FeeInfo memory feeInfo) = _getLinkedFeeInfo(
             instance.getInstanceReader(), distributionNftId);
         bool feesChanged = false;
@@ -435,10 +445,10 @@ contract ComponentService is
         Fee memory performanceFee // pool fee on profits from capital investors
     )
         external
+        restricted()
         virtual
     {
-        (NftId poolNftId, IInstance instance) = _getAndVerifyActiveComponent(POOL());
-
+        (NftId poolNftId,, IInstance instance) = _getAndVerifyCallingComponent(POOL());
         (NftId productNftId, IComponents.FeeInfo memory feeInfo) = _getLinkedFeeInfo(
             instance.getInstanceReader(), poolNftId);
         bool feesChanged = false;
@@ -596,7 +606,7 @@ contract ComponentService is
 
         // the sender is the parent of the component to be registered
         // an instance caller wanting to register a product - or -
-        // a product caller wantint go register a distribution, oracle or pool
+        // a product caller wanting go register a distribution, oracle or pool
         parentNftId = senderInfo.nftId;
 
         // check component is of required type
@@ -612,7 +622,7 @@ contract ComponentService is
         }
 
         // check release matches
-        address parentAddress = registry.getObjectAddress(parentNftId);
+        address parentAddress = senderInfo.objectAddress;
         if (component.getRelease() != IRegisterable(parentAddress).getRelease()) {
             revert ErrorComponentServiceReleaseMismatch(componentAddress, component.getRelease(), IRegisterable(parentAddress).getRelease());
         }
@@ -646,46 +656,6 @@ contract ComponentService is
 
     function _setLocked(InstanceAdmin instanceAdmin, address componentAddress, bool locked) internal {
         instanceAdmin.setTargetLocked(componentAddress, locked);
-    }
-
-    function _getAndVerifyActiveComponent(ObjectType expectedType) 
-        internal 
-        view 
-        returns (
-            NftId componentNftId,
-            IInstance instance
-        )
-    {
-        return _getAndVerifyComponent(expectedType, true); // only active
-    }
-
-    function _getAndVerifyComponent(ObjectType expectedType, bool isActive) 
-        internal 
-        view 
-        returns (
-            NftId componentNftId,
-            IInstance instance
-        )
-    {
-        IRegistry.ObjectInfo memory info;
-        address instanceAddress;
-
-        if (expectedType != COMPONENT()) {
-            (info, instanceAddress) = ContractLib.getAndVerifyComponent(
-                getRegistry(),
-                msg.sender, // caller
-                expectedType,
-                isActive); 
-        } else {
-            (info, instanceAddress) = ContractLib.getAndVerifyAnyComponent(
-                getRegistry(),
-                msg.sender,
-                isActive); 
-        }
-
-        // get component nft id and instance
-        componentNftId = info.nftId;
-        instance = IInstance(instanceAddress);
     }
 
     function _getDomain() internal pure virtual override returns(ObjectType) {

@@ -46,7 +46,7 @@ interface IComponent is
     /// the default address is the component token address
     function getWallet() external view returns (address walletAddress);
 
-    /// @dev returns true iff this compoent intercepts nft minting and transfers for objects registered by this component
+    /// @dev returns true iff this component intercepts nft minting and transfers for objects registered by this component
     function isNftInterceptor() external view returns(bool isInterceptor);
 
     /// @dev returns true iff this component is registered with the registry

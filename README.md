@@ -154,7 +154,7 @@ https://hardhat.org/hardhat-runner/docs/guides/compile-contracts
 #### find methods missing the `restricted` modifier
 
 ```bash
-hh run scripts/find_unrestricted_methods.ts.ts
+hh run scripts/find_unrestricted_methods.ts
 ```
 
 Checks all public/external methods in services and components for methods that are missing the `restricted` modifier but should have one.

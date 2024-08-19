@@ -369,7 +369,7 @@ contract InstanceService is
         _registerInterface(type(IInstanceService).interfaceId);
     }
 
-
+    // TODO use function from ComponentVerifyingService instead?
     function _validateInstanceAndComponent(NftId instanceNftId, address componentAddress) 
         internal
         view
@@ -381,20 +381,17 @@ contract InstanceService is
             revert ErrorInstanceServiceNotInstanceNftId(instanceNftId);
         }
 
-        if (registry.getNftIdForAddress(componentAddress).gtz()) {
-            IRegistry.ObjectInfo memory componentInfo = registry.getObjectInfo(componentAddress);
-
-            if(componentInfo.parentNftId != instanceNftId) {
-                revert ErrorInstanceServiceInstanceComponentMismatch(instanceNftId, componentInfo.nftId);
-            }
-
-            componentNftId = componentInfo.nftId;
-        } else {
-
+        if(registry.getNftIdForAddress(componentAddress).eqz()) {
+            revert ErrorInstanceServiceComponentNotRegistered(componentAddress);
+        }
+        
+        IRegistry.ObjectInfo memory componentInfo = registry.getObjectInfo(componentAddress);
+        if(componentInfo.parentNftId != instanceNftId) {
+            revert ErrorInstanceServiceInstanceComponentMismatch(instanceNftId, componentInfo.nftId);
         }
 
+        componentNftId = componentInfo.nftId;
         instance = Instance(instanceInfo.objectAddress);
-        
     }
 
     // From IService

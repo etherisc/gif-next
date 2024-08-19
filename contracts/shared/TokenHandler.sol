@@ -117,6 +117,7 @@ contract TokenHandlerBase {
 
         emit LogTokenHandlerTokenApproved(NFT_ID, address(this), address(token), amount, isMaxAmount);
 
+        // token handler is wallet itself -> why it needs to approve itself???
         // execute approval
         SafeERC20.forceApprove(
             token, 
@@ -265,6 +266,7 @@ contract TokenHandler is
     // TODO delete
     error ErrorTokenHandlerRecipientWalletsMustBeDistinct(address to, address to2, address to3);
 
+    // TODO check service version
     modifier onlyService() {
         if (!REGISTRY.isObjectType(msg.sender, SERVICE())) {
             revert ErrorTokenHandlerNotService(msg.sender);
@@ -289,7 +291,7 @@ contract TokenHandler is
     /// covers the current component balance must exist
     function setWallet(address newWallet)
         external
-        // restricted() // TODO re-activate
+        restricted()
         onlyService()
     {
         _setWallet(newWallet);
@@ -305,7 +307,7 @@ contract TokenHandler is
         Amount amount
     )
         external
-        // restricted() // TODO re-activate
+        restricted()
         onlyService()
     {
         _approve(token, amount);
@@ -318,7 +320,7 @@ contract TokenHandler is
         Amount amount
     )
         external
-        // restricted() // TODO re-activate
+        restricted()
         onlyService()
     {
         _pullToken(from, amount);
@@ -332,7 +334,7 @@ contract TokenHandler is
         Amount amount
     )
         external
-        // restricted() // TODO re-activate
+        restricted()
         onlyService()
     {
         _pushToken(to, amount);

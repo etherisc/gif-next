@@ -47,6 +47,13 @@ contract Staking is
         NftId _protocolNftId;
     }
 
+    modifier onlyRegistry() {
+        if (msg.sender != address(getRegistry())) {
+            revert ErrorStakingNotRegistry(msg.sender);
+        }
+        _;
+    }
+
 
     modifier onlyStake(NftId stakeNftId) {
         if (!_getStakingStorage()._store.exists(stakeNftId)) {
@@ -65,12 +72,14 @@ contract Staking is
 
     function initializeTokenHandler()
         external
+        onlyRegistry()
     {
-        if (msg.sender != address(getRegistry())) {
-            revert ErrorStakingNotRegistry(msg.sender);
+        StakingStorage storage $ = _getStakingStorage();
+
+        if(address($._tokenHandler) != address(0)) {
+            revert ErrorStakingTokenHandlerAlreadyInitialized(address($._tokenHandler));
         }
 
-        StakingStorage storage $ = _getStakingStorage();
         $._tokenHandler = TokenHandlerDeployerLib.deployTokenHandler(
             address(getRegistry()),
             address(this),
@@ -81,7 +90,7 @@ contract Staking is
 
     function approveTokenHandler(IERC20Metadata token, Amount amount)
         public
-        restricted()
+        restricted() // TODO consider deleting this -> under control of RegistryAdmin -> can not be locked, see similar functions below
         onlyOwner()
     {
         _approveTokenHandler(token, amount);

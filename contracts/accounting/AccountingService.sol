@@ -152,8 +152,7 @@ contract AccountingService is
     )
         public 
         virtual 
-        // TODO re-enable once role granting is stable and fixed
-        // restricted()
+        restricted()
     {
         _checkNftType(poolNftId, POOL());
         _changeTargetBalance(DECREASE, instanceStore, poolNftId, amount, feeAmount);

@@ -134,12 +134,13 @@ contract ApplicationService is
     )
         external
         virtual
+        restricted()
         nonReentrant()
         returns (NftId applicationNftId)
     {
         _checkNftType(bundleNftId, BUNDLE());
 
-        (NftId productNftId,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
+        (NftId productNftId,, IInstance instance) = _getAndVerifyCallingComponent(PRODUCT());
 
         // check if provided references are valid and linked to calling product contract
         InstanceReader instanceReader = instance.getInstanceReader();
@@ -213,6 +214,7 @@ contract ApplicationService is
         external
         virtual
         nonReentrant()
+        restricted()
         returns (NftId applicationNftId)
     {
         _checkNftType(policyNftId, POLICY());
@@ -232,6 +234,7 @@ contract ApplicationService is
     )
         external
         virtual
+        restricted()
         nonReentrant()
     {
         _checkNftType(applicationNftId, POLICY());
@@ -242,11 +245,12 @@ contract ApplicationService is
     function revoke(NftId applicationNftId)
         external
         virtual
+        restricted()
         nonReentrant()
     {
         _checkNftType(applicationNftId, POLICY());
 
-        (,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
+        (,, IInstance instance) = _getAndVerifyCallingComponent(PRODUCT());
         instance.getInstanceStore().updateApplicationState(applicationNftId, REVOKED());
     }
 

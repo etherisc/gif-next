@@ -24,6 +24,8 @@ interface IStaking is
     event LogStakingRewardRateSet(NftId targetNftId, UFixed oldRewardRate, UFixed rewardRate);
 
     // modifiers
+    error ErrorStakingNotRegistry(address registry);
+
     error ErrorStakingNotStake(NftId stakeNftId);
     error ErrorStakingNotTarget(NftId targetNftId);
 
@@ -31,7 +33,7 @@ interface IStaking is
     error ErrorStakingNotNftOwner(NftId nftId);
 
     // initializeTokenHandler
-    error ErrorStakingNotRegistry(address registry);
+    error ErrorStakingTokenHandlerAlreadyInitialized(address tokenHandler);
 
     // staking rate
     error ErrorStakingTokenNotRegistered(uint256 chainId, address token);

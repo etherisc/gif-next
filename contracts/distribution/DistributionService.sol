@@ -70,10 +70,10 @@ contract DistributionService is
         bytes memory data
     )
         external
+        restricted()
         returns (DistributorType distributorType)
     {
-        (NftId distributionNftId,, IInstance instance) = _getAndVerifyActiveComponent(DISTRIBUTION());
-        // InstanceReader instanceReader = instance.getInstanceReader();
+        (NftId distributionNftId,, IInstance instance) = _getAndVerifyCallingComponent(DISTRIBUTION());
 
         {
             NftId productNftId = _getProductNftId(distributionNftId);
@@ -115,9 +115,10 @@ contract DistributionService is
     )
         external 
         virtual
+        restricted()
         returns (NftId distributorNftId)
     {
-        (NftId distributionNftId,, IInstance instance) = _getAndVerifyActiveComponent(DISTRIBUTION());
+        (NftId distributionNftId,, IInstance instance) = _getAndVerifyCallingComponent(DISTRIBUTION());
 
         distributorNftId = _registryService.registerDistributor(
             IRegistry.ObjectInfo(
@@ -145,9 +146,10 @@ contract DistributionService is
         bytes memory data
     )
         external
+        restricted()
         virtual
     {
-        (,, IInstance instance) = _getAndVerifyActiveComponent(DISTRIBUTION());
+        (,, IInstance instance) = _getAndVerifyCallingComponent(DISTRIBUTION());
         IDistribution.DistributorInfo memory distributorInfo = instance.getInstanceReader().getDistributorInfo(distributorNftId);
         distributorInfo.distributorType = distributorType;
         distributorInfo.data = data;
@@ -165,10 +167,10 @@ contract DistributionService is
     )
         external
         virtual
-        onlyNftOfType(distributorNftId, DISTRIBUTOR())
+        restricted()
         returns (ReferralId referralId)
     {
-        (NftId distributionNftId,, IInstance instance) = _getAndVerifyActiveComponent(DISTRIBUTION());
+        (NftId distributionNftId,, IInstance instance) = _getAndVerifyCallingComponent(DISTRIBUTION());
 
         if (bytes(code).length == 0) {
             revert ErrorIDistributionServiceInvalidReferral(code);
@@ -279,11 +281,10 @@ contract DistributionService is
     function withdrawCommission(NftId distributorNftId, Amount amount) 
         public 
         virtual
-        // TODO: restricted() (once #462 is done)
-        onlyNftOfType(distributorNftId, DISTRIBUTOR())
+        restricted()
         returns (Amount withdrawnAmount) 
     {
-        (NftId distributionNftId,, IInstance instance) = _getAndVerifyActiveComponent(DISTRIBUTION());
+        (NftId distributionNftId,, IInstance instance) = _getAndVerifyCallingComponent(DISTRIBUTION());
         InstanceReader reader = instance.getInstanceReader();
         
         IComponents.ComponentInfo memory distributionInfo = reader.getComponentInfo(distributionNftId);
@@ -318,6 +319,7 @@ contract DistributionService is
         }
     }
 
+    // TODO nft type check always fails for non registered nfts
     function referralIsValid(NftId distributionNftId, ReferralId referralId) 
         public 
         view 

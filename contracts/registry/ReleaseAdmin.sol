@@ -52,6 +52,7 @@ contract ReleaseAdmin is
     )
         external
         reinitializer(uint64(release.toInt()))
+        onlyDeployer()
     {
         AccessManagerCloneable(
             authority()).completeSetup(

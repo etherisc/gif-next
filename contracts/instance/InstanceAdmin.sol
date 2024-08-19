@@ -10,6 +10,7 @@ import {IAuthorization} from "../authorization/IAuthorization.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IInstance} from "./IInstance.sol";
 import {ObjectType} from "../type/ObjectType.sol";
+import {NftId} from "../type/NftId.sol";
 import {RoleId, RoleIdLib} from "../type/RoleId.sol";
 import {Str, StrLib} from "../type/String.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
@@ -29,8 +30,8 @@ contract InstanceAdmin is
 
     error ErrorInstanceAdminCallerNotInstanceOwner(address caller);
     error ErrorInstanceAdminInstanceAlreadyLocked();
-    error ErrorInstanceAdminNotRegistered(address target);
-    error ErrorInstanceAdminAlreadyAuthorized(address target);
+    error ErrorInstanceAdminTargetNotRegistered(address target);
+    error ErrorInstanceAdminTargetAlreadyAuthorized(address target);
     error ErrorInstanceAdminReleaseMismatch();
     error ErrorInstanceAdminExpectedTargetMissing(string targetName);
 
@@ -119,15 +120,14 @@ contract InstanceAdmin is
         IInstanceLinkedComponent component
     )
         external
+        restricted()
     {
-        // !!! TODO add caller restrictions?
-
-        _checkTargetIsReadyForAuthorization(address(component));
-
+        // TODO check componentInfo exists
+        // TODO deploy token handler here
         // get authorization specification
         IAuthorization authorization = component.getAuthorization();
         string memory targetName = authorization.getTargetName();
-        _checkTargetIsReadyForAuthorization(address(component));
+        NftId componentNftId = _checkTargetIsReadyForAuthorization(address(component));
 
 
         // create roles
@@ -140,20 +140,25 @@ contract InstanceAdmin is
             true, // checkAuthority
             false); // custom
 
+        address tokenHandler = address(_instance.getInstanceReader().getComponentInfo(componentNftId).tokenHandler);
         _createTarget(
-            address(component.getTokenHandler()), 
+            tokenHandler, 
             string(abi.encodePacked(targetName, "TH")), 
             true, 
             false);
         
-        FunctionInfo[] memory functions = new FunctionInfo[](3);
-        functions[0] = toFunction(TokenHandler.collectTokens.selector, "collectTokens");
-        functions[1] = toFunction(TokenHandler.collectTokensToThreeRecipients.selector, "collectTokensToThreeRecipients");
-        functions[2] = toFunction(TokenHandler.distributeTokens.selector, "distributeTokens");
+        FunctionInfo[] memory functions = new FunctionInfo[](6);
+        functions[0] = toFunction(TokenHandler.setWallet.selector, "setWallet");
+        functions[1] = toFunction(TokenHandler.approve.selector, "approve");
+        functions[2] = toFunction(TokenHandler.collectTokens.selector, "collectTokens");
+        functions[3] = toFunction(TokenHandler.pushToken.selector, "pushToken");
+        functions[4] = toFunction(TokenHandler.collectTokensToThreeRecipients.selector, "collectTokensToThreeRecipients");
+        functions[5] = toFunction(TokenHandler.distributeTokens.selector, "distributeTokens");
 
         // FIXME: make this a bit nicer and work with IAuthorization. Use a specific role, not public - access to TokenHandler must be restricted
+        // Okay if restriction is for lock only?
         _authorizeTargetFunctions(
-            address(component.getTokenHandler()),
+            tokenHandler,
             getPublicRole(),
             functions);
 
@@ -220,13 +225,16 @@ contract InstanceAdmin is
     function _checkTargetIsReadyForAuthorization(address target)
         internal
         view
+        returns (NftId nftId)
     {
-        if (!_registry.isRegistered(target)) {
-            revert ErrorInstanceAdminNotRegistered(target);
+        nftId = _registry.getNftIdForAddress(target);
+
+        if (nftId.eqz()) {
+            revert ErrorInstanceAdminTargetNotRegistered(target);
         }
 
         if (targetExists(target)) {
-            revert ErrorInstanceAdminAlreadyAuthorized(target);
+            revert ErrorInstanceAdminTargetAlreadyAuthorized(target);
         }
     }
 

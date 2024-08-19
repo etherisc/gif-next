@@ -32,7 +32,6 @@ interface IClaimService is
 
     error ErrorClaimServiceBeneficiarySet(NftId policyNftId, PayoutId payoutId, address beneficiary);
 
-    error ErrorClaimServicePolicyProductMismatch(NftId policyNftId, NftId expectedProduct, NftId actualProduct);
     error ErrorClaimServicePolicyNotOpen(NftId policyNftId);
     error ErrorClaimServiceClaimAmountIsZero(NftId policyNftId);
     error ErrorClaimServiceClaimExceedsSumInsured(NftId policyNftId, Amount sumInsured, Amount payoutsIncludingClaimAmount);

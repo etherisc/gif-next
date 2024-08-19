@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {IInstance} from "../instance/IInstance.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
+import {ContractLib} from "../shared/ContractLib.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType, COMPONENT, DISTRIBUTION, ORACLE, POOL, PRODUCT, STAKING} from "../type/ObjectType.sol";
 import {Service} from "../shared/Service.sol";
@@ -15,27 +16,45 @@ abstract contract ComponentVerifyingService is
     error ErrorComponentVerifyingServiceComponentTypeInvalid(NftId componentNftId, ObjectType expectedType, ObjectType actualType);
     error ErrorComponentVerifyingServiceComponentIsLocked(NftId componentNftId);
 
+
+    function _getAndVerifyCallingInstance()
+        internal
+        view
+        returns (
+            NftId instanceNftId,
+            IRegistry.ObjectInfo memory info, 
+            IInstance instance
+        )
+    {
+
+        info = ContractLib.getAndVerifyInstance(
+            getRegistry(), msg.sender, getRelease(), true);
+
+        instanceNftId = info.nftId;
+        instance = IInstance(msg.sender);
+    }
+
     /// @dev based on the sender address returns the corresponding components nft id, info and instance.
     /// the function reverts iff:
     /// - there is no such component
     /// - the component has the wrong object type
     /// - the component is locked
-    function _getAndVerifyActiveComponent(
-        ObjectType expectedType // assume always of `component` type
-    )
-        internal
-        view
-        returns(
+    function _getAndVerifyCallingComponent(ObjectType expectedType) 
+        internal 
+        view 
+        returns (
             NftId componentNftId,
-            IRegistry.ObjectInfo memory objectInfo, 
+            IRegistry.ObjectInfo memory info,
             IInstance instance
         )
     {
-        componentNftId = getRegistry().getNftIdForAddress(msg.sender);
-        (objectInfo, instance) = _getAndVerifyComponentInfo(
-            componentNftId, 
-            expectedType,
-            true); // only active
+        address instanceAddress;
+        (info, instanceAddress) = ContractLib.getAndVerifyComponent(
+            getRegistry(), msg.sender, expectedType, getRelease(), true);
+
+        // get component nft id and instance
+        componentNftId = info.nftId;
+        instance = IInstance(instanceAddress);
     }
 
 
@@ -43,7 +62,7 @@ abstract contract ComponentVerifyingService is
     /// the function reverts iff:
     /// - there is no such component
     /// - the component has the wrong object type
-    function _getAndVerifyComponentInfo(
+    function _getAndVerifyComponent(
         NftId componentNftId,
         ObjectType expectedType, // assume always of `component` type
         bool onlyActive
@@ -56,48 +75,52 @@ abstract contract ComponentVerifyingService is
             IInstance instance
         )
     {
-        IRegistry registry = getRegistry();
-        info = registry.getObjectInfo(componentNftId);
+        address instanceAddress;
+        (info, instanceAddress) = ContractLib.getAndVerifyComponent(
+            getRegistry(), componentNftId, expectedType, getRelease(), onlyActive);
 
-        // if not COMPONENT require exact match
-        if(expectedType != COMPONENT()) {
-            // ensure component is of expected type
-            if(info.objectType != expectedType) {
-                revert ErrorComponentVerifyingServiceComponentTypeInvalid(
-                    componentNftId,
-                    expectedType,
-                    info.objectType);
-            }
-        } else {
-            if(!(info.objectType == PRODUCT()
-                || info.objectType == POOL()
-                || info.objectType == DISTRIBUTION()
-                || info.objectType == ORACLE()
-            ))
-            {
-                revert ErrorComponentVerifyingServiceComponentTypeInvalid(
-                    componentNftId,
-                    expectedType,
-                    info.objectType);
-            }
-        }
+        instance = IInstance(instanceAddress);
+    }
 
-        if (info.objectType == STAKING()) {
-            return (info, instance);
-        }
-        
-        if (info.objectType == PRODUCT()) {
-            instance = _getInstance(registry, info.parentNftId);
-        } else {
-            instance = _getInstanceForComponent(registry, info.parentNftId);
-        }
+    function _getAndVerifyCallingComponentForObject(NftId objectNftId, ObjectType objectType)
+        internal
+        virtual
+        view
+        returns (
+            NftId componentNftId,
+            IInstance instance
+        )
+    {
+        address instanceAddress;
+        (
+            componentNftId, 
+            instanceAddress
+        ) = ContractLib.getAndVerifyComponentForObject(
+                getRegistry(), msg.sender, objectNftId, objectType, getRelease(), true); // only active caller
 
-        // ensure component is not locked
-        if (onlyActive) {
-            if (instance.getInstanceAdmin().isTargetLocked(info.objectAddress)) {
-                revert ErrorComponentVerifyingServiceComponentIsLocked(componentNftId);
-            }
-        }
+        instance = IInstance(instanceAddress);
+    }
+
+    // TODO better naming
+    function _getAndVerifyComponentAndObjectHaveSameProduct(NftId objectNftId, ObjectType objectType)
+        internal
+        virtual
+        view
+        returns (
+            NftId productNftId,
+            NftId componentNftId,
+            IInstance instance
+        )
+    {
+        address instanceAddress;
+        (
+            productNftId,
+            componentNftId,
+            instanceAddress
+        ) = ContractLib._getAndVerifyProductForComponentAndObject(
+                getRegistry(), msg.sender, objectNftId, objectType, getRelease(), true); // only active caller
+
+        instance = IInstance(instanceAddress);
     }
 
 

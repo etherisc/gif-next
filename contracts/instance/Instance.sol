@@ -160,7 +160,7 @@ contract Instance is
     }
 
     //--- Targets ------------------------------------------------------------//
-
+    // TODO consider restricted()
     function createTarget(address target, string memory name) 
         external 
         onlyOwner()
@@ -181,6 +181,7 @@ contract Instance is
         // _instanceAdmin.setTargetFunctionRoleByInstance(targetName, selectors, roleId);
     }
 
+    // TODO MUST call instance admin directlly -> component service may be upgraded to disable lock
     function setLocked(address target, bool locked)
         external 
         onlyOwner()

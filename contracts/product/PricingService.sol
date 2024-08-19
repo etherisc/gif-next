@@ -82,7 +82,7 @@ contract PricingService is
             (
                 IRegistry.ObjectInfo memory registryInfo, 
                 IInstance instance
-            ) = _getAndVerifyComponentInfo(productNftId, PRODUCT(), false);
+            ) = _getAndVerifyComponent(productNftId, PRODUCT(), false);
 
             // get instance reader from local instance variable
             reader = instance.getInstanceReader();

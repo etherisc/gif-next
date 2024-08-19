@@ -19,7 +19,6 @@ interface IPolicyService is IService {
     event LogPolicyServicePolicyExpirationUpdated(NftId policyNftId, Timestamp originalExpiredAt, Timestamp expiredAt);
     event LogPolicyServicePolicyClosed(NftId policyNftId);
 
-    error ErrorPolicyServicePolicyProductMismatch(NftId applicationNftId, NftId expectedProductNftId, NftId actualProductNftId);
     error ErrorPolicyServicePolicyStateNotApplied(NftId applicationNftId);
     error ErrorPolicyServicePolicyStateNotCollateralized(NftId applicationNftId);
     error ErrorPolicyServicePolicyAlreadyActivated(NftId policyNftId);

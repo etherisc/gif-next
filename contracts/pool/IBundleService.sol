@@ -21,9 +21,6 @@ interface IBundleService is IService {
     error ErrorBundleServiceCapacityInsufficient(NftId bundleNftId, Amount capacityAmount, Amount collateralAmount);
     error ErrorBundleServiceBundleWithOpenPolicies(NftId bundleNftId, uint256 openPoliciesCount);
 
-    error ErrorBundleServiceBundleUnknown(NftId bundleNftId);
-    error ErrorBundleServiceBundlePoolMismatch(NftId bundleNftId, NftId expectedPool, NftId actualPool);
-
     error ErrorBundleServicePolicyNotCloseable(NftId policyNftId);
 
     error ErrorBundleServiceFeesWithdrawAmountExceedsLimit(Amount amount, Amount limit);

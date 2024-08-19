@@ -138,6 +138,7 @@ contract InstanceAuthorizationV3
           // authorize component service role
           functions = _authorizeForTarget(INSTANCE_ADMIN_TARGET_NAME, getServiceRole(COMPONENT()));
           _authorize(functions, InstanceAdmin.setTargetLocked.selector, "setTargetLocked");
+          _authorize(functions, InstanceAdmin.initializeComponentAuthorization.selector, "initComponentAuthorization");
      }
 
 

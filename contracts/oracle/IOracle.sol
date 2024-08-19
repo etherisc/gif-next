@@ -16,7 +16,6 @@ interface IOracle {
         bytes responseData; 
         Timestamp respondedAt; // response timestamp
         Timestamp expiredAt; // expiry timestamp
-        bool isCancelled;
     }
 
 

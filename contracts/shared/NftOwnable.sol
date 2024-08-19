@@ -41,6 +41,7 @@ contract NftOwnable is
     }
 
     function _checkNftType(NftId nftId, ObjectType expectedObjectType) internal view {
+        assert(expectedObjectType.gtz()); // TODO must not check non registered nftId against empty type!
         if(!getRegistry().isObjectType(nftId, expectedObjectType)) {
             revert ErrorNftOwnableInvalidType(nftId, expectedObjectType);
         }
