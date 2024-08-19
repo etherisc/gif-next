@@ -5,6 +5,7 @@ import {Key32} from "../type/Key32.sol";
 import {LibNftIdSet} from "../type/NftIdSet.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectSet} from "./base/ObjectSet.sol";
+import {ObjectSetHelperLib} from "./base/ObjectSetHelper.sol";
 import {RiskIdLib, RiskId} from "../type/RiskId.sol";
 
 /// @dev RiskSet manages the risks and its active policies per product.
@@ -53,7 +54,7 @@ contract RiskSet is
     /// @dev add a new risk to a product registered with this instance
     // the corresponding product is fetched via instance reader
     function add(RiskId riskId) external restricted() {
-        NftId productNftId = _instance.getInstanceReader().getRiskInfo(riskId).productNftId;
+        NftId productNftId = ObjectSetHelperLib.getProductNftId(_instanceAddress, riskId);
 
         // ensure product is registered with instance
         if(productNftId.eqz()) {
@@ -66,14 +67,14 @@ contract RiskSet is
 
     /// @dev Applications linked to active risks may be underwritten
     function activate(RiskId riskId) external restricted() {
-        NftId productNftId = _instance.getInstanceReader().getRiskInfo(riskId).productNftId;
+        NftId productNftId = ObjectSetHelperLib.getProductNftId(_instanceAddress, riskId);
         _activate(productNftId, riskId.toKey32());
         emit LogRiskSetRiskActive(productNftId, riskId);
     }
 
     /// @dev Applications linked to paused/archived risks may not be underwritten
     function pause(RiskId riskId) external restricted() {
-        NftId productNftId = _instance.getInstanceReader().getRiskInfo(riskId).productNftId;
+        NftId productNftId = ObjectSetHelperLib.getProductNftId(_instanceAddress, riskId);
         _deactivate(productNftId, riskId.toKey32());
         emit LogRiskSetRiskPaused(productNftId, riskId);
     }
