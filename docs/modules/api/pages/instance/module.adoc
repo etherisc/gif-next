@@ -1,0 +1,93 @@
+:github-icon: pass:[<svg class="icon"><use href="#github-icon"/></svg>]
+
+= Module
+ 
+Contains the instance module contracts. 
+
+== Contracts
+
+:Type: pass:normal[xref:#IAccess-Type[`++Type++`]]
+:RoleInfo: pass:normal[xref:#IAccess-RoleInfo[`++RoleInfo++`]]
+:TargetInfo: pass:normal[xref:#IAccess-TargetInfo[`++TargetInfo++`]]
+:ErrorIAccessRoleIdTooBig: pass:normal[xref:#IAccess-ErrorIAccessRoleIdTooBig-RoleId-[`++ErrorIAccessRoleIdTooBig++`]]
+:ErrorIAccessRoleIdTooSmall: pass:normal[xref:#IAccess-ErrorIAccessRoleIdTooSmall-RoleId-[`++ErrorIAccessRoleIdTooSmall++`]]
+:ErrorIAccessRoleTypeInvalid: pass:normal[xref:#IAccess-ErrorIAccessRoleTypeInvalid-RoleId-enum-IAccess-Type-[`++ErrorIAccessRoleTypeInvalid++`]]
+:ErrorIAccessTargetAddressZero: pass:normal[xref:#IAccess-ErrorIAccessTargetAddressZero--[`++ErrorIAccessTargetAddressZero++`]]
+:ErrorIAccessTargetTypeInvalid: pass:normal[xref:#IAccess-ErrorIAccessTargetTypeInvalid-address-enum-IAccess-Type-[`++ErrorIAccessTargetTypeInvalid++`]]
+:ErrorIAccessTargetLocked: pass:normal[xref:#IAccess-ErrorIAccessTargetLocked-address-[`++ErrorIAccessTargetLocked++`]]
+:ErrorIAccessTargetNotRegistered: pass:normal[xref:#IAccess-ErrorIAccessTargetNotRegistered-address-[`++ErrorIAccessTargetNotRegistered++`]]
+:ErrorIAccessTargetAuthorityInvalid: pass:normal[xref:#IAccess-ErrorIAccessTargetAuthorityInvalid-address-address-[`++ErrorIAccessTargetAuthorityInvalid++`]]
+:ErrorIAccessTargetInstanceMismatch: pass:normal[xref:#IAccess-ErrorIAccessTargetInstanceMismatch-address-NftId-NftId-[`++ErrorIAccessTargetInstanceMismatch++`]]
+
+[.contract]
+[[IAccess]]
+=== `++IAccess++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/instance/module/IAccess.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/instance/module/IAccess.sol";
+```
+
+:BundleInfo: pass:normal[xref:#IBundle-BundleInfo[`++BundleInfo++`]]
+
+[.contract]
+[[IBundle]]
+=== `++IBundle++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/instance/module/IBundle.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/instance/module/IBundle.sol";
+```
+
+:ComponentInfo: pass:normal[xref:#IComponents-ComponentInfo[`++ComponentInfo++`]]
+:ProductInfo: pass:normal[xref:#IComponents-ProductInfo[`++ProductInfo++`]]
+:FeeInfo: pass:normal[xref:#IComponents-FeeInfo[`++FeeInfo++`]]
+:PoolInfo: pass:normal[xref:#IComponents-PoolInfo[`++PoolInfo++`]]
+
+[.contract]
+[[IComponents]]
+=== `++IComponents++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/instance/module/IComponents.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/instance/module/IComponents.sol";
+```
+
+:DistributorTypeInfo: pass:normal[xref:#IDistribution-DistributorTypeInfo[`++DistributorTypeInfo++`]]
+:DistributorInfo: pass:normal[xref:#IDistribution-DistributorInfo[`++DistributorInfo++`]]
+:ReferralInfo: pass:normal[xref:#IDistribution-ReferralInfo[`++ReferralInfo++`]]
+
+[.contract]
+[[IDistribution]]
+=== `++IDistribution++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/instance/module/IDistribution.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/instance/module/IDistribution.sol";
+```
+
+:PremiumInfo: pass:normal[xref:#IPolicy-PremiumInfo[`++PremiumInfo++`]]
+:PolicyInfo: pass:normal[xref:#IPolicy-PolicyInfo[`++PolicyInfo++`]]
+:ClaimInfo: pass:normal[xref:#IPolicy-ClaimInfo[`++ClaimInfo++`]]
+:PayoutInfo: pass:normal[xref:#IPolicy-PayoutInfo[`++PayoutInfo++`]]
+
+[.contract]
+[[IPolicy]]
+=== `++IPolicy++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/instance/module/IPolicy.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/instance/module/IPolicy.sol";
+```
+
+:RiskInfo: pass:normal[xref:#IRisk-RiskInfo[`++RiskInfo++`]]
+
+[.contract]
+[[IRisk]]
+=== `++IRisk++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/instance/module/IRisk.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/instance/module/IRisk.sol";
+```
+

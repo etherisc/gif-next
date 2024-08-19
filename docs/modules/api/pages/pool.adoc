@@ -1,0 +1,2326 @@
+:github-icon: pass:[<svg class="icon"><use href="#github-icon"/></svg>]
+:xref-Pool-onlyBundleOwner-NftId-: xref:pool.adoc#Pool-onlyBundleOwner-NftId-
+= Pool
+ 
+Contains interfaces and contracts related to pools. 
+
+== Contracts
+
+:ErrorPoolNotBundleOwner: pass:normal[xref:#IPoolComponent-ErrorPoolNotBundleOwner-NftId-address-[`++ErrorPoolNotBundleOwner++`]]
+:ErrorPoolNotPoolService: pass:normal[xref:#IPoolComponent-ErrorPoolNotPoolService-address-[`++ErrorPoolNotPoolService++`]]
+:ErrorPoolApplicationBundleMismatch: pass:normal[xref:#IPoolComponent-ErrorPoolApplicationBundleMismatch-NftId-[`++ErrorPoolApplicationBundleMismatch++`]]
+:LogPoolVerifiedByPool: pass:normal[xref:#IPoolComponent-LogPoolVerifiedByPool-address-NftId-Amount-[`++LogPoolVerifiedByPool++`]]
+:verifyApplication: pass:normal[xref:#IPoolComponent-verifyApplication-NftId-NftId-Amount-[`++verifyApplication++`]]
+:applicationMatchesBundle: pass:normal[xref:#IPoolComponent-applicationMatchesBundle-NftId-bytes-NftId-bytes-Amount-[`++applicationMatchesBundle++`]]
+:processConfirmedClaim: pass:normal[xref:#IPoolComponent-processConfirmedClaim-NftId-ClaimId-Amount-[`++processConfirmedClaim++`]]
+:getInitialPoolInfo: pass:normal[xref:#IPoolComponent-getInitialPoolInfo--[`++getInitialPoolInfo++`]]
+
+[.contract]
+[[IPoolComponent]]
+=== `++IPoolComponent++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/pool/IPoolComponent.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/pool/IPoolComponent.sol";
+```
+
+pool components hold and manage the collateral to cover active policies
+pools come in different flavors
+
+[.contract-index]
+.Functions
+--
+* [`++verifyApplication(applicationNftId, bundleNftId, collateralizationAmount)++`]
+* [`++applicationMatchesBundle(applicationNftId, applicationData, bundleNftId, bundleFilter, collateralizationAmount)++`]
+* [`++processConfirmedClaim(policyNftId, claimId, amount)++`]
+* [`++getInitialPoolInfo()++`]
+
+[.contract-subindex-inherited]
+.IInstanceLinkedComponent
+* [`++withdrawFees(amount)++`]
+* [`++getInstance()++`]
+* [`++getAuthorization()++`]
+
+[.contract-subindex-inherited]
+.IComponent
+* [`++getName()++`]
+* [`++getToken()++`]
+* [`++getTokenHandler()++`]
+* [`++getWallet()++`]
+* [`++isNftInterceptor()++`]
+* [`++isRegistered()++`]
+* [`++getComponentInfo()++`]
+* [`++getInitialComponentInfo()++`]
+
+[.contract-subindex-inherited]
+.ITransferInterceptor
+* [`++nftTransferFrom(from, to, tokenId, operator)++`]
+
+[.contract-subindex-inherited]
+.IRegisterable
+* [`++isActive()++`]
+* [`++getInitialInfo()++`]
+
+[.contract-subindex-inherited]
+.IRelease
+* [`++getRelease()++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IERC165
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++authority()++`]
+* [`++setAuthority()++`]
+* [`++isConsumingScheduledOp()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+* [`++LogPoolVerifiedByPool(pool, applicationNftId, collateralizationAmount)++`]
+
+[.contract-subindex-inherited]
+.IInstanceLinkedComponent
+
+[.contract-subindex-inherited]
+.IComponent
+* [`++LogComponentWalletAddressChanged(oldWallet, newWallet)++`]
+* [`++LogComponentWalletTokensTransferred(from, to, amount)++`]
+* [`++LogComponentTokenHandlerApproved(tokenHandler, token, limit, isMaxAmount)++`]
+
+[.contract-subindex-inherited]
+.ITransferInterceptor
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.IRelease
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+--
+
+[.contract-item]
+[[IPoolComponent-verifyApplication-NftId-NftId-Amount-]]
+==== `[.contract-item-name]#++verifyApplication++#++(NftId applicationNftId, NftId bundleNftId, Amount collateralizationAmount)++` [.item-kind]#external#
+
+This is a callback function that is called by the product service when underwriting a policy.
+The pool has the option to check the details and object to underwriting by reverting.
+The function is only called for "active" pools that ask to be involved/notified.
+The default implementation is empty.
+
+[.contract-item]
+[[IPoolComponent-applicationMatchesBundle-NftId-bytes-NftId-bytes-Amount-]]
+==== `[.contract-item-name]#++applicationMatchesBundle++#++(NftId applicationNftId, bytes applicationData, NftId bundleNftId, bytes bundleFilter, Amount collateralizationAmount) → bool isMatching++` [.item-kind]#external#
+
+Returns true iff the application matches with the bundle.
+This is a callback function that is only called if a pool declares itself as a verifying pool
+The default implementation returns true.
+
+[.contract-item]
+[[IPoolComponent-processConfirmedClaim-NftId-ClaimId-Amount-]]
+==== `[.contract-item-name]#++processConfirmedClaim++#++(NftId policyNftId, ClaimId claimId, Amount amount)++` [.item-kind]#external#
+
+This is a callback function that is called by the claim service when a claim is confirmed.
+The pool has the option to implement custom behavirous such as triggering a reinsurance claim or blocking the claim confirmaation.
+The default implementation is empty.
+
+[.contract-item]
+[[IPoolComponent-getInitialPoolInfo--]]
+==== `[.contract-item-name]#++getInitialPoolInfo++#++() → struct IComponents.PoolInfo info++` [.item-kind]#external#
+
+Returns initial pool specific infos for this pool
+
+[.contract-item]
+[[IPoolComponent-LogPoolVerifiedByPool-address-NftId-Amount-]]
+==== `[.contract-item-name]#++LogPoolVerifiedByPool++#++(address pool, NftId applicationNftId, Amount collateralizationAmount)++` [.item-kind]#event#
+
+:LogPoolServiceMaxBalanceAmountUpdated: pass:normal[xref:#IPoolService-LogPoolServiceMaxBalanceAmountUpdated-NftId-Amount-Amount-[`++LogPoolServiceMaxBalanceAmountUpdated++`]]
+:LogPoolServiceWalletFunded: pass:normal[xref:#IPoolService-LogPoolServiceWalletFunded-NftId-address-Amount-[`++LogPoolServiceWalletFunded++`]]
+:LogPoolServiceWalletDefunded: pass:normal[xref:#IPoolService-LogPoolServiceWalletDefunded-NftId-address-Amount-[`++LogPoolServiceWalletDefunded++`]]
+:LogPoolServiceBundleCreated: pass:normal[xref:#IPoolService-LogPoolServiceBundleCreated-NftId-NftId-NftId-[`++LogPoolServiceBundleCreated++`]]
+:LogPoolServiceBundleClosed: pass:normal[xref:#IPoolService-LogPoolServiceBundleClosed-NftId-NftId-NftId-[`++LogPoolServiceBundleClosed++`]]
+:LogPoolServiceBundleStaked: pass:normal[xref:#IPoolService-LogPoolServiceBundleStaked-NftId-NftId-NftId-Amount-Amount-[`++LogPoolServiceBundleStaked++`]]
+:LogPoolServiceBundleUnstaked: pass:normal[xref:#IPoolService-LogPoolServiceBundleUnstaked-NftId-NftId-NftId-Amount-Amount-[`++LogPoolServiceBundleUnstaked++`]]
+:LogPoolServiceProcessFundedClaim: pass:normal[xref:#IPoolService-LogPoolServiceProcessFundedClaim-NftId-ClaimId-Amount-[`++LogPoolServiceProcessFundedClaim++`]]
+:ErrorPoolServicePoolNotExternallyManaged: pass:normal[xref:#IPoolService-ErrorPoolServicePoolNotExternallyManaged-NftId-[`++ErrorPoolServicePoolNotExternallyManaged++`]]
+:ErrorPoolServicePolicyPoolMismatch: pass:normal[xref:#IPoolService-ErrorPoolServicePolicyPoolMismatch-NftId-NftId-NftId-[`++ErrorPoolServicePolicyPoolMismatch++`]]
+:ErrorPoolServiceBundleOwnerRoleAlreadySet: pass:normal[xref:#IPoolService-ErrorPoolServiceBundleOwnerRoleAlreadySet-NftId-[`++ErrorPoolServiceBundleOwnerRoleAlreadySet++`]]
+:ErrorPoolServiceInvalidTransferAmount: pass:normal[xref:#IPoolService-ErrorPoolServiceInvalidTransferAmount-Amount-Amount-[`++ErrorPoolServiceInvalidTransferAmount++`]]
+:ErrorPoolServiceBundlePoolMismatch: pass:normal[xref:#IPoolService-ErrorPoolServiceBundlePoolMismatch-NftId-NftId-[`++ErrorPoolServiceBundlePoolMismatch++`]]
+:ErrorPoolServiceMaxBalanceAmountExceeded: pass:normal[xref:#IPoolService-ErrorPoolServiceMaxBalanceAmountExceeded-NftId-Amount-Amount-Amount-[`++ErrorPoolServiceMaxBalanceAmountExceeded++`]]
+:setMaxBalanceAmount: pass:normal[xref:#IPoolService-setMaxBalanceAmount-Amount-[`++setMaxBalanceAmount++`]]
+:lockCollateral: pass:normal[xref:#IPoolService-lockCollateral-contract-IInstance-address-NftId-NftId-NftId-Amount-[`++lockCollateral++`]]
+:releaseCollateral: pass:normal[xref:#IPoolService-releaseCollateral-contract-IInstance-address-NftId-struct-IPolicy-PolicyInfo-[`++releaseCollateral++`]]
+:processPayout: pass:normal[xref:#IPoolService-processPayout-contract-IInstance-address-NftId-struct-IPolicy-PolicyInfo-Amount-[`++processPayout++`]]
+:stake: pass:normal[xref:#IPoolService-stake-NftId-Amount-[`++stake++`]]
+:unstake: pass:normal[xref:#IPoolService-unstake-NftId-Amount-[`++unstake++`]]
+:closeBundle: pass:normal[xref:#IPoolService-closeBundle-NftId-[`++closeBundle++`]]
+:processFundedClaim: pass:normal[xref:#IPoolService-processFundedClaim-NftId-ClaimId-Amount-[`++processFundedClaim++`]]
+:fundPoolWallet: pass:normal[xref:#IPoolService-fundPoolWallet-Amount-[`++fundPoolWallet++`]]
+:defundPoolWallet: pass:normal[xref:#IPoolService-defundPoolWallet-Amount-[`++defundPoolWallet++`]]
+:processSale: pass:normal[xref:#IPoolService-processSale-NftId-struct-IPolicy-PremiumInfo-[`++processSale++`]]
+:calculateRequiredCollateral: pass:normal[xref:#IPoolService-calculateRequiredCollateral-contract-InstanceReader-NftId-Amount-[`++calculateRequiredCollateral++`]]
+:calculateRequiredCollateral: pass:normal[xref:#IPoolService-calculateRequiredCollateral-UFixed-UFixed-Amount-[`++calculateRequiredCollateral++`]]
+
+[.contract]
+[[IPoolService]]
+=== `++IPoolService++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/pool/IPoolService.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/pool/IPoolService.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++setMaxBalanceAmount(maxBalanceAmount)++`]
+* [`++lockCollateral(instance, token, productNftId, applicationNftId, bundleNftId, sumInsuredAmount)++`]
+* [`++releaseCollateral(instance, token, policyNftId, policyInfo)++`]
+* [`++processPayout(instance, token, policyNftId, policyInfo, payoutAmount)++`]
+* [`++stake(bundleNftId, amount)++`]
+* [`++unstake(bundleNftId, amount)++`]
+* [`++closeBundle(bundleNftId)++`]
+* [`++processFundedClaim(policyNftId, claimId, availableAmount)++`]
+* [`++fundPoolWallet(amount)++`]
+* [`++defundPoolWallet(amount)++`]
+* [`++processSale(bundleNftId, premium)++`]
+* [`++calculateRequiredCollateral(instanceReader, productNftId, sumInsuredAmount)++`]
+* [`++calculateRequiredCollateral(collateralizationLevel, retentionLevel, sumInsuredAmount)++`]
+
+[.contract-subindex-inherited]
+.IService
+* [`++getDomain()++`]
+* [`++getRoleId()++`]
+
+[.contract-subindex-inherited]
+.IVersionable
+* [`++initializeVersionable(activatedBy, activationData)++`]
+* [`++upgradeVersionable(upgradeData)++`]
+* [`++getVersion()++`]
+
+[.contract-subindex-inherited]
+.IRegisterable
+* [`++isActive()++`]
+* [`++getInitialInfo()++`]
+
+[.contract-subindex-inherited]
+.IRelease
+* [`++getRelease()++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IERC165
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++authority()++`]
+* [`++setAuthority()++`]
+* [`++isConsumingScheduledOp()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+* [`++LogPoolServiceMaxBalanceAmountUpdated(poolNftId, previousMaxCapitalAmount, currentMaxCapitalAmount)++`]
+* [`++LogPoolServiceWalletFunded(poolNftId, poolOwner, amount)++`]
+* [`++LogPoolServiceWalletDefunded(poolNftId, poolOwner, amount)++`]
+* [`++LogPoolServiceBundleCreated(instanceNftId, poolNftId, bundleNftId)++`]
+* [`++LogPoolServiceBundleClosed(instanceNftId, poolNftId, bundleNftId)++`]
+* [`++LogPoolServiceBundleStaked(instanceNftId, poolNftId, bundleNftId, amount, netAmount)++`]
+* [`++LogPoolServiceBundleUnstaked(instanceNftId, poolNftId, bundleNftId, amount, netAmount)++`]
+* [`++LogPoolServiceProcessFundedClaim(policyNftId, claimId, availableAmount)++`]
+
+[.contract-subindex-inherited]
+.IService
+
+[.contract-subindex-inherited]
+.IVersionable
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.IRelease
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+--
+
+[.contract-item]
+[[IPoolService-setMaxBalanceAmount-Amount-]]
+==== `[.contract-item-name]#++setMaxBalanceAmount++#++(Amount maxBalanceAmount)++` [.item-kind]#external#
+
+sets the max balance amount for the calling pool
+
+[.contract-item]
+[[IPoolService-lockCollateral-contract-IInstance-address-NftId-NftId-NftId-Amount-]]
+==== `[.contract-item-name]#++lockCollateral++#++(contract IInstance instance, address token, NftId productNftId, NftId applicationNftId, NftId bundleNftId, Amount sumInsuredAmount) → Amount localCollateralAmount, Amount totalCollateralAmount++` [.item-kind]#external#
+
+locks required collateral to cover the specified application (and turn it into a policy)
+- retention level == 1: the full collateral amount will be locked by the specified bundle
+- retention level < 1: a part of the coverage is provided by the specified bundle, the rest by the pool component
+in which case the pool component might hold a re-insurance policy
+may only be called by the policy service for unlocked pool components
+
+[.contract-item]
+[[IPoolService-releaseCollateral-contract-IInstance-address-NftId-struct-IPolicy-PolicyInfo-]]
+==== `[.contract-item-name]#++releaseCollateral++#++(contract IInstance instance, address token, NftId policyNftId, struct IPolicy.PolicyInfo policyInfo)++` [.item-kind]#external#
+
+releases the remaining collateral linked to the specified policy
+may only be called by the policy service for unlocked pool components
+
+[.contract-item]
+[[IPoolService-processPayout-contract-IInstance-address-NftId-struct-IPolicy-PolicyInfo-Amount-]]
+==== `[.contract-item-name]#++processPayout++#++(contract IInstance instance, address token, NftId policyNftId, struct IPolicy.PolicyInfo policyInfo, Amount payoutAmount)++` [.item-kind]#external#
+
+reduces the locked collateral in the bundle associated with the specified policy and updates pool/bundle counters
+every payout of a policy reduces the collateral by the payout amount
+may only be called by the claim service for unlocked pool components
+
+[.contract-item]
+[[IPoolService-stake-NftId-Amount-]]
+==== `[.contract-item-name]#++stake++#++(NftId bundleNftId, Amount amount) → Amount netAmount++` [.item-kind]#external#
+
+increase stakes for bundle
+staking fees will be deducted by the pool service from the staking amount
+may only be called by registered and unlocked pool components
+
+[.contract-item]
+[[IPoolService-unstake-NftId-Amount-]]
+==== `[.contract-item-name]#++unstake++#++(NftId bundleNftId, Amount amount) → Amount netAmount++` [.item-kind]#external#
+
+decrease stakes for bundle
+performance fees will be deducted by the pool service from the staking amount
+may only be called by registered and unlocked pool components
+
+[.contract-item]
+[[IPoolService-closeBundle-NftId-]]
+==== `[.contract-item-name]#++closeBundle++#++(NftId bundleNftId)++` [.item-kind]#external#
+
+closes the specified bundle
+only open bundles (active or locked) may be closed
+to close a bundle it may not have any non-closed polices attached to it
+bundle fees and remaining capital (after deduction of the performance fee) will be transferred to the bundle owner
+may only be called by registered and unlocked pool components
+
+[.contract-item]
+[[IPoolService-processFundedClaim-NftId-ClaimId-Amount-]]
+==== `[.contract-item-name]#++processFundedClaim++#++(NftId policyNftId, ClaimId claimId, Amount availableAmount)++` [.item-kind]#external#
+
+Informs product about available funds to process a confirmed claim.
+The function triggers a callback to the product component when the product's property isProcessingFundedClaims is set.
+
+[.contract-item]
+[[IPoolService-fundPoolWallet-Amount-]]
+==== `[.contract-item-name]#++fundPoolWallet++#++(Amount amount)++` [.item-kind]#external#
+
+Fund the pool wallet with the provided amount.
+This function will collect the amount from the pool owner and transfers it to the pool wallet.
+The function will not update balance amounts managed by the framework.
+Only available for externally managed pools.
+
+[.contract-item]
+[[IPoolService-defundPoolWallet-Amount-]]
+==== `[.contract-item-name]#++defundPoolWallet++#++(Amount amount)++` [.item-kind]#external#
+
+Defund the specified pool wallet with the provided amount.
+This function will transfer the amount from the pool wallet to the pool owner.
+The function will not update balance amounts managed by the framework.
+Only available for externally managed pools.
+
+[.contract-item]
+[[IPoolService-processSale-NftId-struct-IPolicy-PremiumInfo-]]
+==== `[.contract-item-name]#++processSale++#++(NftId bundleNftId, struct IPolicy.PremiumInfo premium)++` [.item-kind]#external#
+
+processes the sale of a bundle and track the pool fee and bundle fee amounts
+
+[.contract-item]
+[[IPoolService-calculateRequiredCollateral-contract-InstanceReader-NftId-Amount-]]
+==== `[.contract-item-name]#++calculateRequiredCollateral++#++(contract InstanceReader instanceReader, NftId productNftId, Amount sumInsuredAmount) → NftId poolNftId, Amount totalCollateralAmount, Amount localCollateralAmount, bool poolIsVerifyingApplications++` [.item-kind]#external#
+
+Calulate required collateral for the provided parameters.
+
+[.contract-item]
+[[IPoolService-calculateRequiredCollateral-UFixed-UFixed-Amount-]]
+==== `[.contract-item-name]#++calculateRequiredCollateral++#++(UFixed collateralizationLevel, UFixed retentionLevel, Amount sumInsuredAmount) → Amount totalCollateralAmount, Amount localCollateralAmount++` [.item-kind]#external#
+
+calulate required collateral for the provided parameters.
+Collateralization is applied to sum insured.
+Retention level defines the fraction of the collateral that is required locally.
+
+[.contract-item]
+[[IPoolService-LogPoolServiceMaxBalanceAmountUpdated-NftId-Amount-Amount-]]
+==== `[.contract-item-name]#++LogPoolServiceMaxBalanceAmountUpdated++#++(NftId poolNftId, Amount previousMaxCapitalAmount, Amount currentMaxCapitalAmount)++` [.item-kind]#event#
+
+[.contract-item]
+[[IPoolService-LogPoolServiceWalletFunded-NftId-address-Amount-]]
+==== `[.contract-item-name]#++LogPoolServiceWalletFunded++#++(NftId poolNftId, address poolOwner, Amount amount)++` [.item-kind]#event#
+
+[.contract-item]
+[[IPoolService-LogPoolServiceWalletDefunded-NftId-address-Amount-]]
+==== `[.contract-item-name]#++LogPoolServiceWalletDefunded++#++(NftId poolNftId, address poolOwner, Amount amount)++` [.item-kind]#event#
+
+[.contract-item]
+[[IPoolService-LogPoolServiceBundleCreated-NftId-NftId-NftId-]]
+==== `[.contract-item-name]#++LogPoolServiceBundleCreated++#++(NftId instanceNftId, NftId poolNftId, NftId bundleNftId)++` [.item-kind]#event#
+
+[.contract-item]
+[[IPoolService-LogPoolServiceBundleClosed-NftId-NftId-NftId-]]
+==== `[.contract-item-name]#++LogPoolServiceBundleClosed++#++(NftId instanceNftId, NftId poolNftId, NftId bundleNftId)++` [.item-kind]#event#
+
+[.contract-item]
+[[IPoolService-LogPoolServiceBundleStaked-NftId-NftId-NftId-Amount-Amount-]]
+==== `[.contract-item-name]#++LogPoolServiceBundleStaked++#++(NftId instanceNftId, NftId poolNftId, NftId bundleNftId, Amount amount, Amount netAmount)++` [.item-kind]#event#
+
+[.contract-item]
+[[IPoolService-LogPoolServiceBundleUnstaked-NftId-NftId-NftId-Amount-Amount-]]
+==== `[.contract-item-name]#++LogPoolServiceBundleUnstaked++#++(NftId instanceNftId, NftId poolNftId, NftId bundleNftId, Amount amount, Amount netAmount)++` [.item-kind]#event#
+
+[.contract-item]
+[[IPoolService-LogPoolServiceProcessFundedClaim-NftId-ClaimId-Amount-]]
+==== `[.contract-item-name]#++LogPoolServiceProcessFundedClaim++#++(NftId policyNftId, ClaimId claimId, Amount availableAmount)++` [.item-kind]#event#
+
+:LogBundleServiceBundleCreated: pass:normal[xref:#IBundleService-LogBundleServiceBundleCreated-NftId-NftId-[`++LogBundleServiceBundleCreated++`]]
+:LogBundleServiceBundleActivated: pass:normal[xref:#IBundleService-LogBundleServiceBundleActivated-NftId-[`++LogBundleServiceBundleActivated++`]]
+:LogBundleServiceBundleLocked: pass:normal[xref:#IBundleService-LogBundleServiceBundleLocked-NftId-[`++LogBundleServiceBundleLocked++`]]
+:ErrorBundleServiceInsufficientAllowance: pass:normal[xref:#IBundleService-ErrorBundleServiceInsufficientAllowance-address-address-Amount-[`++ErrorBundleServiceInsufficientAllowance++`]]
+:ErrorBundleServiceBundleNotOpen: pass:normal[xref:#IBundleService-ErrorBundleServiceBundleNotOpen-NftId-StateId-Timestamp-[`++ErrorBundleServiceBundleNotOpen++`]]
+:ErrorBundleServiceCapacityInsufficient: pass:normal[xref:#IBundleService-ErrorBundleServiceCapacityInsufficient-NftId-Amount-Amount-[`++ErrorBundleServiceCapacityInsufficient++`]]
+:ErrorBundleServiceBundleWithOpenPolicies: pass:normal[xref:#IBundleService-ErrorBundleServiceBundleWithOpenPolicies-NftId-uint256-[`++ErrorBundleServiceBundleWithOpenPolicies++`]]
+:ErrorBundleServiceBundleUnknown: pass:normal[xref:#IBundleService-ErrorBundleServiceBundleUnknown-NftId-[`++ErrorBundleServiceBundleUnknown++`]]
+:ErrorBundleServiceBundlePoolMismatch: pass:normal[xref:#IBundleService-ErrorBundleServiceBundlePoolMismatch-NftId-NftId-NftId-[`++ErrorBundleServiceBundlePoolMismatch++`]]
+:ErrorBundleServicePolicyNotCloseable: pass:normal[xref:#IBundleService-ErrorBundleServicePolicyNotCloseable-NftId-[`++ErrorBundleServicePolicyNotCloseable++`]]
+:ErrorBundleServiceFeesWithdrawAmountExceedsLimit: pass:normal[xref:#IBundleService-ErrorBundleServiceFeesWithdrawAmountExceedsLimit-Amount-Amount-[`++ErrorBundleServiceFeesWithdrawAmountExceedsLimit++`]]
+:ErrorBundleServiceUnstakeAmountExceedsLimit: pass:normal[xref:#IBundleService-ErrorBundleServiceUnstakeAmountExceedsLimit-Amount-Amount-[`++ErrorBundleServiceUnstakeAmountExceedsLimit++`]]
+:ErrorBundleServiceExtensionLifetimeIsZero: pass:normal[xref:#IBundleService-ErrorBundleServiceExtensionLifetimeIsZero--[`++ErrorBundleServiceExtensionLifetimeIsZero++`]]
+:LogBundleServiceFeesWithdrawn: pass:normal[xref:#IBundleService-LogBundleServiceFeesWithdrawn-NftId-address-address-Amount-[`++LogBundleServiceFeesWithdrawn++`]]
+:LogBundleServiceBundleExtended: pass:normal[xref:#IBundleService-LogBundleServiceBundleExtended-NftId-Seconds-Timestamp-[`++LogBundleServiceBundleExtended++`]]
+:create: pass:normal[xref:#IBundleService-create-address-struct-Fee-Seconds-bytes-[`++create++`]]
+:stake: pass:normal[xref:#IBundleService-stake-contract-IInstance-NftId-Amount-[`++stake++`]]
+:unstake: pass:normal[xref:#IBundleService-unstake-contract-IInstance-NftId-Amount-[`++unstake++`]]
+:extend: pass:normal[xref:#IBundleService-extend-NftId-Seconds-[`++extend++`]]
+:lock: pass:normal[xref:#IBundleService-lock-NftId-[`++lock++`]]
+:unlock: pass:normal[xref:#IBundleService-unlock-NftId-[`++unlock++`]]
+:close: pass:normal[xref:#IBundleService-close-contract-IInstance-NftId-[`++close++`]]
+:setFee: pass:normal[xref:#IBundleService-setFee-NftId-struct-Fee-[`++setFee++`]]
+:lockCollateral: pass:normal[xref:#IBundleService-lockCollateral-contract-IInstance-NftId-NftId-Amount-[`++lockCollateral++`]]
+:releaseCollateral: pass:normal[xref:#IBundleService-releaseCollateral-contract-IInstance-NftId-NftId-Amount-[`++releaseCollateral++`]]
+:withdrawBundleFees: pass:normal[xref:#IBundleService-withdrawBundleFees-NftId-Amount-[`++withdrawBundleFees++`]]
+
+[.contract]
+[[IBundleService]]
+=== `++IBundleService++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/pool/IBundleService.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/pool/IBundleService.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++create(owner, fee, lifetime, filter)++`]
+* [`++stake(instance, bundleNftId, amount)++`]
+* [`++unstake(instance, bundleNftId, amount)++`]
+* [`++extend(bundleNftId, lifetimeExtension)++`]
+* [`++lock(bundleNftId)++`]
+* [`++unlock(bundleNftId)++`]
+* [`++close(instance, bundleNftId)++`]
+* [`++setFee(bundleNftId, fee)++`]
+* [`++lockCollateral(instance, policyNftId, bundleNftId, collateralAmount)++`]
+* [`++releaseCollateral(instance, policyNftId, bundleNftId, collateralAmount)++`]
+* [`++withdrawBundleFees(bundleNftId, amount)++`]
+
+[.contract-subindex-inherited]
+.IService
+* [`++getDomain()++`]
+* [`++getRoleId()++`]
+
+[.contract-subindex-inherited]
+.IVersionable
+* [`++initializeVersionable(activatedBy, activationData)++`]
+* [`++upgradeVersionable(upgradeData)++`]
+* [`++getVersion()++`]
+
+[.contract-subindex-inherited]
+.IRegisterable
+* [`++isActive()++`]
+* [`++getInitialInfo()++`]
+
+[.contract-subindex-inherited]
+.IRelease
+* [`++getRelease()++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IERC165
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++authority()++`]
+* [`++setAuthority()++`]
+* [`++isConsumingScheduledOp()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+* [`++LogBundleServiceBundleCreated(bundleNftId, poolNftId)++`]
+* [`++LogBundleServiceBundleActivated(bundleNftId)++`]
+* [`++LogBundleServiceBundleLocked(bundleNftId)++`]
+* [`++LogBundleServiceFeesWithdrawn(bundleNftId, recipient, tokenAddress, amount)++`]
+* [`++LogBundleServiceBundleExtended(bundleNftId, lifetimeExtension, extendedExpiredAt)++`]
+
+[.contract-subindex-inherited]
+.IService
+
+[.contract-subindex-inherited]
+.IVersionable
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.IRelease
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+--
+
+[.contract-item]
+[[IBundleService-create-address-struct-Fee-Seconds-bytes-]]
+==== `[.contract-item-name]#++create++#++(address owner, struct Fee fee, Seconds lifetime, bytes filter) → NftId bundleNftId++` [.item-kind]#external#
+
+Create a new bundle for the specified attributes.
+
+[.contract-item]
+[[IBundleService-stake-contract-IInstance-NftId-Amount-]]
+==== `[.contract-item-name]#++stake++#++(contract IInstance instance, NftId bundleNftId, Amount amount)++` [.item-kind]#external#
+
+increase bundle stakes by the specified amount. bundle must not be expired or closed
+may only be called by the pool service
+
+[.contract-item]
+[[IBundleService-unstake-contract-IInstance-NftId-Amount-]]
+==== `[.contract-item-name]#++unstake++#++(contract IInstance instance, NftId bundleNftId, Amount amount) → Amount unstakedAmount++` [.item-kind]#external#
+
+decrease bundle stakes by the specified amount
+may only be called by the pool service
+
+[.contract-item]
+[[IBundleService-extend-NftId-Seconds-]]
+==== `[.contract-item-name]#++extend++#++(NftId bundleNftId, Seconds lifetimeExtension) → Timestamp extendedExpiredAt++` [.item-kind]#external#
+
+extend the lifetime of the bundle by the specified time in seconds
+
+[.contract-item]
+[[IBundleService-lock-NftId-]]
+==== `[.contract-item-name]#++lock++#++(NftId bundleNftId)++` [.item-kind]#external#
+
+locks the specified bundle, locked bundles are not available to collateralize new policies
+only active bundles may be locked
+may only be called by registered and unlocked pool components
+
+[.contract-item]
+[[IBundleService-unlock-NftId-]]
+==== `[.contract-item-name]#++unlock++#++(NftId bundleNftId)++` [.item-kind]#external#
+
+activates the specified bundle
+only locked bundles may be unlocked
+may only be called by registered and unlocked pool components
+
+[.contract-item]
+[[IBundleService-close-contract-IInstance-NftId-]]
+==== `[.contract-item-name]#++close++#++(contract IInstance instance, NftId bundleNftId) → Amount balanceAmount, Amount feeAmount++` [.item-kind]#external#
+
+closes the specified bundle
+only open bundles (active or locked) may be closed
+to close a bundle it may not have any non-closed polices attached to it
+may only be called by registered and unlocked pool components
+
+[.contract-item]
+[[IBundleService-setFee-NftId-struct-Fee-]]
+==== `[.contract-item-name]#++setFee++#++(NftId bundleNftId, struct Fee fee)++` [.item-kind]#external#
+
+set bundle fee to provided value
+may only be called by registered and unlocked pool components
+
+[.contract-item]
+[[IBundleService-lockCollateral-contract-IInstance-NftId-NftId-Amount-]]
+==== `[.contract-item-name]#++lockCollateral++#++(contract IInstance instance, NftId policyNftId, NftId bundleNftId, Amount collateralAmount)++` [.item-kind]#external#
+
+locks the specified collateral in the bundle
+the locked collateral is added to the bundle locked capital
+the bundles' fees are updated with the fees for this premium
+the premium (minus bundle fee) is added to the bundle capital
+may only be called by pool service
+
+[.contract-item]
+[[IBundleService-releaseCollateral-contract-IInstance-NftId-NftId-Amount-]]
+==== `[.contract-item-name]#++releaseCollateral++#++(contract IInstance instance, NftId policyNftId, NftId bundleNftId, Amount collateralAmount)++` [.item-kind]#external#
+
+releases the specified collateral in the bundle
+may only be called by pool service
+
+[.contract-item]
+[[IBundleService-withdrawBundleFees-NftId-Amount-]]
+==== `[.contract-item-name]#++withdrawBundleFees++#++(NftId bundleNftId, Amount amount) → Amount withdrawnAmount++` [.item-kind]#external#
+
+Withdraw bundle feeds for the given bundle
+
+[.contract-item]
+[[IBundleService-LogBundleServiceBundleCreated-NftId-NftId-]]
+==== `[.contract-item-name]#++LogBundleServiceBundleCreated++#++(NftId bundleNftId, NftId poolNftId)++` [.item-kind]#event#
+
+[.contract-item]
+[[IBundleService-LogBundleServiceBundleActivated-NftId-]]
+==== `[.contract-item-name]#++LogBundleServiceBundleActivated++#++(NftId bundleNftId)++` [.item-kind]#event#
+
+[.contract-item]
+[[IBundleService-LogBundleServiceBundleLocked-NftId-]]
+==== `[.contract-item-name]#++LogBundleServiceBundleLocked++#++(NftId bundleNftId)++` [.item-kind]#event#
+
+[.contract-item]
+[[IBundleService-LogBundleServiceFeesWithdrawn-NftId-address-address-Amount-]]
+==== `[.contract-item-name]#++LogBundleServiceFeesWithdrawn++#++(NftId bundleNftId, address recipient, address tokenAddress, Amount amount)++` [.item-kind]#event#
+
+[.contract-item]
+[[IBundleService-LogBundleServiceBundleExtended-NftId-Seconds-Timestamp-]]
+==== `[.contract-item-name]#++LogBundleServiceBundleExtended++#++(NftId bundleNftId, Seconds lifetimeExtension, Timestamp extendedExpiredAt)++` [.item-kind]#event#
+
+:POOL_STORAGE_LOCATION_V1: pass:normal[xref:#Pool-POOL_STORAGE_LOCATION_V1-bytes32[`++POOL_STORAGE_LOCATION_V1++`]]
+:PoolStorage: pass:normal[xref:#Pool-PoolStorage[`++PoolStorage++`]]
+:onlyBundleOwner: pass:normal[xref:#Pool-onlyBundleOwner-NftId-[`++onlyBundleOwner++`]]
+:getContractLocation: pass:normal[xref:#Pool-getContractLocation-bytes-[`++getContractLocation++`]]
+:verifyApplication: pass:normal[xref:#Pool-verifyApplication-NftId-NftId-Amount-[`++verifyApplication++`]]
+:processConfirmedClaim: pass:normal[xref:#Pool-processConfirmedClaim-NftId-ClaimId-Amount-[`++processConfirmedClaim++`]]
+:applicationMatchesBundle: pass:normal[xref:#Pool-applicationMatchesBundle-NftId-bytes-NftId-bytes-Amount-[`++applicationMatchesBundle++`]]
+:getInitialPoolInfo: pass:normal[xref:#Pool-getInitialPoolInfo--[`++getInitialPoolInfo++`]]
+:_initializePool: pass:normal[xref:#Pool-_initializePool-address-NftId-string-address-struct-IComponents-PoolInfo-contract-IAuthorization-address-bytes-[`++_initializePool++`]]
+:_setPoolFees: pass:normal[xref:#Pool-_setPoolFees-struct-Fee-struct-Fee-struct-Fee-[`++_setPoolFees++`]]
+:_setMaxBalanceAmount: pass:normal[xref:#Pool-_setMaxBalanceAmount-Amount-[`++_setMaxBalanceAmount++`]]
+:_fundPoolWallet: pass:normal[xref:#Pool-_fundPoolWallet-Amount-[`++_fundPoolWallet++`]]
+:_defundPoolWallet: pass:normal[xref:#Pool-_defundPoolWallet-Amount-[`++_defundPoolWallet++`]]
+:_createBundle: pass:normal[xref:#Pool-_createBundle-address-struct-Fee-Seconds-bytes-[`++_createBundle++`]]
+:_setBundleFee: pass:normal[xref:#Pool-_setBundleFee-NftId-struct-Fee-[`++_setBundleFee++`]]
+:_withdrawBundleFees: pass:normal[xref:#Pool-_withdrawBundleFees-NftId-Amount-[`++_withdrawBundleFees++`]]
+:_stake: pass:normal[xref:#Pool-_stake-NftId-Amount-[`++_stake++`]]
+:_unstake: pass:normal[xref:#Pool-_unstake-NftId-Amount-[`++_unstake++`]]
+:_extend: pass:normal[xref:#Pool-_extend-NftId-Seconds-[`++_extend++`]]
+:_lockBundle: pass:normal[xref:#Pool-_lockBundle-NftId-[`++_lockBundle++`]]
+:_unlockBundle: pass:normal[xref:#Pool-_unlockBundle-NftId-[`++_unlockBundle++`]]
+:_closeBundle: pass:normal[xref:#Pool-_closeBundle-NftId-[`++_closeBundle++`]]
+:_processFundedClaim: pass:normal[xref:#Pool-_processFundedClaim-NftId-ClaimId-Amount-[`++_processFundedClaim++`]]
+
+[.contract]
+[[Pool]]
+=== `++Pool++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/pool/Pool.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/pool/Pool.sol";
+```
+
+[.contract-index]
+.Modifiers
+--
+* {xref-Pool-onlyBundleOwner-NftId-}[`++onlyBundleOwner(bundleNftId)++`]
+--
+
+[.contract-index]
+.Functions
+--
+* [`++getContractLocation(name)++`]
+* [`++verifyApplication(applicationNftId, bundleNftId, collateralizationAmount)++`]
+* [`++processConfirmedClaim(policyNftId, claimId, amount)++`]
+* [`++applicationMatchesBundle(applicationNftId, applicationData, bundleNftId, bundleFilter, collateralizationAmount)++`]
+* [`++getInitialPoolInfo()++`]
+* [`++_initializePool(registry, productNftId, name, token, poolInfo, authorization, initialOwner, componentData)++`]
+* [`++_setPoolFees(poolFee, stakingFee, performanceFee)++`]
+* [`++_setMaxBalanceAmount(maxBalanceAmount)++`]
+* [`++_fundPoolWallet(amount)++`]
+* [`++_defundPoolWallet(amount)++`]
+* [`++_createBundle(bundleOwner, fee, lifetime, filter)++`]
+* [`++_setBundleFee(bundleNftId, fee)++`]
+* [`++_withdrawBundleFees(bundleNftId, amount)++`]
+* [`++_stake(bundleNftId, amount)++`]
+* [`++_unstake(bundleNftId, amount)++`]
+* [`++_extend(bundleNftId, lifetimeExtension)++`]
+* [`++_lockBundle(bundleNftId)++`]
+* [`++_unlockBundle(bundleNftId)++`]
+* [`++_closeBundle(bundleNftId)++`]
+* [`++_processFundedClaim(policyNftId, claimId, availableAmount)++`]
+
+[.contract-subindex-inherited]
+.IPoolComponent
+
+[.contract-subindex-inherited]
+.InstanceLinkedComponent
+* [`++withdrawFees(amount)++`]
+* [`++getInstance()++`]
+* [`++getAuthorization()++`]
+* [`++_initializeInstanceLinkedComponent(registry, parentNftId, name, token, componentType, authorization, isInterceptor, initialOwner, componentData)++`]
+* [`++_checkAndGetInstanceNftId(registryAddress, parentNftId, componentType)++`]
+* [`++_checkAndGetRegistry(registryAddress, objectNftId, requiredType)++`]
+* [`++_setWallet(newWallet)++`]
+* [`++_getComponentInfo()++`]
+* [`++_getInstanceReader()++`]
+* [`++_withdrawFees(amount)++`]
+
+[.contract-subindex-inherited]
+.IInstanceLinkedComponent
+
+[.contract-subindex-inherited]
+.Component
+* [`++_initializeComponent(authority, registry, parentNftId, name, token, componentType, isInterceptor, initialOwner, registryData, componentData)++`]
+* [`++nftTransferFrom(from, to, tokenId, operator)++`]
+* [`++getWallet()++`]
+* [`++getTokenHandler()++`]
+* [`++getToken()++`]
+* [`++getName()++`]
+* [`++getVersion()++`]
+* [`++getComponentInfo()++`]
+* [`++getInitialComponentInfo()++`]
+* [`++isNftInterceptor()++`]
+* [`++isRegistered()++`]
+* [`++_approveTokenHandler(token, amount)++`]
+* [`++_nftTransferFrom(from, to, tokenId, operator)++`]
+* [`++_setLocked(locked)++`]
+* [`++_getServiceAddress(domain)++`]
+
+[.contract-subindex-inherited]
+.IComponent
+
+[.contract-subindex-inherited]
+.ITransferInterceptor
+
+[.contract-subindex-inherited]
+.Registerable
+* [`++__Registerable_init(authority, registry, parentNftId, objectType, isInterceptor, initialOwner, data)++`]
+* [`++isActive()++`]
+* [`++getRelease()++`]
+* [`++getInitialInfo()++`]
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.IRelease
+
+[.contract-subindex-inherited]
+.NftOwnable
+* [`++_checkNftType(nftId, expectedObjectType)++`]
+* [`++__NftOwnable_init(registry, initialOwner)++`]
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+* [`++_linkToNftOwnable(nftOwnableAddress)++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+* [`++__RegistryLinked_init(registry)++`]
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+* [`++_initializeERC165()++`]
+* [`++_registerInterface(interfaceId)++`]
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+* [`++__AccessManaged_init(initialAuthority)++`]
+* [`++__AccessManaged_init_unchained(initialAuthority)++`]
+* [`++authority()++`]
+* [`++setAuthority(newAuthority)++`]
+* [`++isConsumingScheduledOp()++`]
+* [`++_setAuthority(newAuthority)++`]
+* [`++_checkCanCall(caller, data)++`]
+
+[.contract-subindex-inherited]
+.IAccessManaged
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+* [`++__Context_init()++`]
+* [`++__Context_init_unchained()++`]
+* [`++_msgSender()++`]
+* [`++_msgData()++`]
+* [`++_contextSuffixLength()++`]
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.IPoolComponent
+* [`++LogPoolVerifiedByPool(pool, applicationNftId, collateralizationAmount)++`]
+
+[.contract-subindex-inherited]
+.InstanceLinkedComponent
+
+[.contract-subindex-inherited]
+.IInstanceLinkedComponent
+
+[.contract-subindex-inherited]
+.Component
+
+[.contract-subindex-inherited]
+.IComponent
+* [`++LogComponentWalletAddressChanged(oldWallet, newWallet)++`]
+* [`++LogComponentWalletTokensTransferred(from, to, amount)++`]
+* [`++LogComponentTokenHandlerApproved(tokenHandler, token, limit, isMaxAmount)++`]
+
+[.contract-subindex-inherited]
+.ITransferInterceptor
+
+[.contract-subindex-inherited]
+.Registerable
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.IRelease
+
+[.contract-subindex-inherited]
+.NftOwnable
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[Pool-onlyBundleOwner-NftId-]]
+==== `[.contract-item-name]#++onlyBundleOwner++#++(NftId bundleNftId)++` [.item-kind]#modifier#
+
+[.contract-item]
+[[Pool-getContractLocation-bytes-]]
+==== `[.contract-item-name]#++getContractLocation++#++(bytes name) → bytes32 hash++` [.item-kind]#external#
+
+[.contract-item]
+[[Pool-verifyApplication-NftId-NftId-Amount-]]
+==== `[.contract-item-name]#++verifyApplication++#++(NftId applicationNftId, NftId bundleNftId, Amount collateralizationAmount)++` [.item-kind]#public#
+
+see {IPoolComponent.verifyApplication}
+
+[.contract-item]
+[[Pool-processConfirmedClaim-NftId-ClaimId-Amount-]]
+==== `[.contract-item-name]#++processConfirmedClaim++#++(NftId policyNftId, ClaimId claimId, Amount amount)++` [.item-kind]#public#
+
+see {IPoolComponent.processConfirmedClaim}
+
+[.contract-item]
+[[Pool-applicationMatchesBundle-NftId-bytes-NftId-bytes-Amount-]]
+==== `[.contract-item-name]#++applicationMatchesBundle++#++(NftId applicationNftId, bytes applicationData, NftId bundleNftId, bytes bundleFilter, Amount collateralizationAmount) → bool isMatching++` [.item-kind]#public#
+
+see {IPoolComponent.applicationMatchesBundle}
+Default implementation always returns true.
+Override this function to implement any custom application verification.
+Calling super.applicationMatchesBundle will ensure validation of application and bundle nft ids.
+
+[.contract-item]
+[[Pool-getInitialPoolInfo--]]
+==== `[.contract-item-name]#++getInitialPoolInfo++#++() → struct IComponents.PoolInfo poolInfo++` [.item-kind]#public#
+
+Returns initial pool specific infos for this pool
+
+[.contract-item]
+[[Pool-_initializePool-address-NftId-string-address-struct-IComponents-PoolInfo-contract-IAuthorization-address-bytes-]]
+==== `[.contract-item-name]#++_initializePool++#++(address registry, NftId productNftId, string name, address token, struct IComponents.PoolInfo poolInfo, contract IAuthorization authorization, address initialOwner, bytes componentData)++` [.item-kind]#internal#
+
+[.contract-item]
+[[Pool-_setPoolFees-struct-Fee-struct-Fee-struct-Fee-]]
+==== `[.contract-item-name]#++_setPoolFees++#++(struct Fee poolFee, struct Fee stakingFee, struct Fee performanceFee)++` [.item-kind]#internal#
+
+Update pool fees to the specified values.
+Pool fee: are deducted from the premium amount and goes to the pool owner.
+Staking fee: are deducted from the staked tokens by a bundle owner and goes to the pool owner.
+Performance fee: when a bundle is closed a bundle specific profit is calculated.
+The performance fee is deducted from this profit and goes to the pool owner.
+
+[.contract-item]
+[[Pool-_setMaxBalanceAmount-Amount-]]
+==== `[.contract-item-name]#++_setMaxBalanceAmount++#++(Amount maxBalanceAmount)++` [.item-kind]#internal#
+
+Sets the maximum balance amound held by this pool.
+Function may only be called by pool owner.
+
+[.contract-item]
+[[Pool-_fundPoolWallet-Amount-]]
+==== `[.contract-item-name]#++_fundPoolWallet++#++(Amount amount)++` [.item-kind]#internal#
+
+Fund the pool wallet with the specified amount.
+Function is only available for externally managed pools.
+
+[.contract-item]
+[[Pool-_defundPoolWallet-Amount-]]
+==== `[.contract-item-name]#++_defundPoolWallet++#++(Amount amount)++` [.item-kind]#internal#
+
+Withdraw the specified amount from the pool wallet.
+Function is only available for externally managed pools.
+
+[.contract-item]
+[[Pool-_createBundle-address-struct-Fee-Seconds-bytes-]]
+==== `[.contract-item-name]#++_createBundle++#++(address bundleOwner, struct Fee fee, Seconds lifetime, bytes filter) → NftId bundleNftId++` [.item-kind]#internal#
+
+Creates a new empty bundle using the provided parameter values.
+
+[.contract-item]
+[[Pool-_setBundleFee-NftId-struct-Fee-]]
+==== `[.contract-item-name]#++_setBundleFee++#++(NftId bundleNftId, struct Fee fee)++` [.item-kind]#internal#
+
+Sets the fee for the specified bundle.
+The fee is added on top of the poolFee and deducted from the premium amounts
+Via these fees individual bundler owner may earn income per policy in the context of peer to peer pools.
+
+[.contract-item]
+[[Pool-_withdrawBundleFees-NftId-Amount-]]
+==== `[.contract-item-name]#++_withdrawBundleFees++#++(NftId bundleNftId, Amount amount) → Amount withdrawnAmount++` [.item-kind]#internal#
+
+Withdraws the specified amount of fees from the bundle.
+
+[.contract-item]
+[[Pool-_stake-NftId-Amount-]]
+==== `[.contract-item-name]#++_stake++#++(NftId bundleNftId, Amount amount) → Amount++` [.item-kind]#internal#
+
+increases the staked tokens by the specified amount
+bundle MUST be in active or locked state
+
+[.contract-item]
+[[Pool-_unstake-NftId-Amount-]]
+==== `[.contract-item-name]#++_unstake++#++(NftId bundleNftId, Amount amount) → Amount netAmount++` [.item-kind]#internal#
+
+decreases the staked tokens by the specified amount
+bundle MUST be in active, locked or closed state
+
+[.contract-item]
+[[Pool-_extend-NftId-Seconds-]]
+==== `[.contract-item-name]#++_extend++#++(NftId bundleNftId, Seconds lifetimeExtension) → Timestamp extendedExpiredAt++` [.item-kind]#internal#
+
+extends the bundle lifetime of the bundle by the specified time
+bundle MUST be in active or locked state
+
+[.contract-item]
+[[Pool-_lockBundle-NftId-]]
+==== `[.contract-item-name]#++_lockBundle++#++(NftId bundleNftId)++` [.item-kind]#internal#
+
+Locks the specified bundle.
+A bundle to be locked MUST be in active state.
+Locked bundles may not be used to collateralize any new policy.
+
+[.contract-item]
+[[Pool-_unlockBundle-NftId-]]
+==== `[.contract-item-name]#++_unlockBundle++#++(NftId bundleNftId)++` [.item-kind]#internal#
+
+Unlocks the specified bundle.
+A bundle to be unlocked MUST be in locked state.
+
+[.contract-item]
+[[Pool-_closeBundle-NftId-]]
+==== `[.contract-item-name]#++_closeBundle++#++(NftId bundleNftId)++` [.item-kind]#internal#
+
+Close the specified bundle.
+A bundle to be closed MUST be in active or locked state.
+To close a bundle all all linked policies MUST be in closed state as well.
+Closing a bundle finalizes the bundle bookkeeping including overall profit calculation.
+Once a bundle is closed this action cannot be reversed.
+
+[.contract-item]
+[[Pool-_processFundedClaim-NftId-ClaimId-Amount-]]
+==== `[.contract-item-name]#++_processFundedClaim++#++(NftId policyNftId, ClaimId claimId, Amount availableAmount)++` [.item-kind]#internal#
+
+:_initializeBasicPool: pass:normal[xref:#BasicPool-_initializeBasicPool-address-NftId-string-address-struct-IComponents-PoolInfo-contract-IAuthorization-address-[`++_initializeBasicPool++`]]
+:stake: pass:normal[xref:#BasicPool-stake-NftId-Amount-[`++stake++`]]
+:unstake: pass:normal[xref:#BasicPool-unstake-NftId-Amount-[`++unstake++`]]
+:extend: pass:normal[xref:#BasicPool-extend-NftId-Seconds-[`++extend++`]]
+:lockBundle: pass:normal[xref:#BasicPool-lockBundle-NftId-[`++lockBundle++`]]
+:unlockBundle: pass:normal[xref:#BasicPool-unlockBundle-NftId-[`++unlockBundle++`]]
+:closeBundle: pass:normal[xref:#BasicPool-closeBundle-NftId-[`++closeBundle++`]]
+:setBundleFee: pass:normal[xref:#BasicPool-setBundleFee-NftId-struct-Fee-[`++setBundleFee++`]]
+:withdrawBundleFees: pass:normal[xref:#BasicPool-withdrawBundleFees-NftId-Amount-[`++withdrawBundleFees++`]]
+:setMaxBalanceAmount: pass:normal[xref:#BasicPool-setMaxBalanceAmount-Amount-[`++setMaxBalanceAmount++`]]
+:setFees: pass:normal[xref:#BasicPool-setFees-struct-Fee-struct-Fee-struct-Fee-[`++setFees++`]]
+
+[.contract]
+[[BasicPool]]
+=== `++BasicPool++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/pool/BasicPool.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/pool/BasicPool.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++_initializeBasicPool(registry, productNftId, name, token, poolInfo, authorization, initialOwner)++`]
+* [`++stake(bundleNftId, amount)++`]
+* [`++unstake(bundleNftId, amount)++`]
+* [`++extend(bundleNftId, lifetimeExtension)++`]
+* [`++lockBundle(bundleNftId)++`]
+* [`++unlockBundle(bundleNftId)++`]
+* [`++closeBundle(bundleNftId)++`]
+* [`++setBundleFee(bundleNftId, fee)++`]
+* [`++withdrawBundleFees(bundleNftId, amount)++`]
+* [`++setMaxBalanceAmount(maxBalanceAmount)++`]
+* [`++setFees(poolFee, stakingFee, performanceFee)++`]
+
+[.contract-subindex-inherited]
+.Pool
+* [`++getContractLocation(name)++`]
+* [`++verifyApplication(applicationNftId, bundleNftId, collateralizationAmount)++`]
+* [`++processConfirmedClaim(policyNftId, claimId, amount)++`]
+* [`++applicationMatchesBundle(applicationNftId, applicationData, bundleNftId, bundleFilter, collateralizationAmount)++`]
+* [`++getInitialPoolInfo()++`]
+* [`++_initializePool(registry, productNftId, name, token, poolInfo, authorization, initialOwner, componentData)++`]
+* [`++_setPoolFees(poolFee, stakingFee, performanceFee)++`]
+* [`++_setMaxBalanceAmount(maxBalanceAmount)++`]
+* [`++_fundPoolWallet(amount)++`]
+* [`++_defundPoolWallet(amount)++`]
+* [`++_createBundle(bundleOwner, fee, lifetime, filter)++`]
+* [`++_setBundleFee(bundleNftId, fee)++`]
+* [`++_withdrawBundleFees(bundleNftId, amount)++`]
+* [`++_stake(bundleNftId, amount)++`]
+* [`++_unstake(bundleNftId, amount)++`]
+* [`++_extend(bundleNftId, lifetimeExtension)++`]
+* [`++_lockBundle(bundleNftId)++`]
+* [`++_unlockBundle(bundleNftId)++`]
+* [`++_closeBundle(bundleNftId)++`]
+* [`++_processFundedClaim(policyNftId, claimId, availableAmount)++`]
+
+[.contract-subindex-inherited]
+.IPoolComponent
+
+[.contract-subindex-inherited]
+.InstanceLinkedComponent
+* [`++withdrawFees(amount)++`]
+* [`++getInstance()++`]
+* [`++getAuthorization()++`]
+* [`++_initializeInstanceLinkedComponent(registry, parentNftId, name, token, componentType, authorization, isInterceptor, initialOwner, componentData)++`]
+* [`++_checkAndGetInstanceNftId(registryAddress, parentNftId, componentType)++`]
+* [`++_checkAndGetRegistry(registryAddress, objectNftId, requiredType)++`]
+* [`++_setWallet(newWallet)++`]
+* [`++_getComponentInfo()++`]
+* [`++_getInstanceReader()++`]
+* [`++_withdrawFees(amount)++`]
+
+[.contract-subindex-inherited]
+.IInstanceLinkedComponent
+
+[.contract-subindex-inherited]
+.Component
+* [`++_initializeComponent(authority, registry, parentNftId, name, token, componentType, isInterceptor, initialOwner, registryData, componentData)++`]
+* [`++nftTransferFrom(from, to, tokenId, operator)++`]
+* [`++getWallet()++`]
+* [`++getTokenHandler()++`]
+* [`++getToken()++`]
+* [`++getName()++`]
+* [`++getVersion()++`]
+* [`++getComponentInfo()++`]
+* [`++getInitialComponentInfo()++`]
+* [`++isNftInterceptor()++`]
+* [`++isRegistered()++`]
+* [`++_approveTokenHandler(token, amount)++`]
+* [`++_nftTransferFrom(from, to, tokenId, operator)++`]
+* [`++_setLocked(locked)++`]
+* [`++_getServiceAddress(domain)++`]
+
+[.contract-subindex-inherited]
+.IComponent
+
+[.contract-subindex-inherited]
+.ITransferInterceptor
+
+[.contract-subindex-inherited]
+.Registerable
+* [`++__Registerable_init(authority, registry, parentNftId, objectType, isInterceptor, initialOwner, data)++`]
+* [`++isActive()++`]
+* [`++getRelease()++`]
+* [`++getInitialInfo()++`]
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.IRelease
+
+[.contract-subindex-inherited]
+.NftOwnable
+* [`++_checkNftType(nftId, expectedObjectType)++`]
+* [`++__NftOwnable_init(registry, initialOwner)++`]
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+* [`++_linkToNftOwnable(nftOwnableAddress)++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+* [`++__RegistryLinked_init(registry)++`]
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+* [`++_initializeERC165()++`]
+* [`++_registerInterface(interfaceId)++`]
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+* [`++__AccessManaged_init(initialAuthority)++`]
+* [`++__AccessManaged_init_unchained(initialAuthority)++`]
+* [`++authority()++`]
+* [`++setAuthority(newAuthority)++`]
+* [`++isConsumingScheduledOp()++`]
+* [`++_setAuthority(newAuthority)++`]
+* [`++_checkCanCall(caller, data)++`]
+
+[.contract-subindex-inherited]
+.IAccessManaged
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+* [`++__Context_init()++`]
+* [`++__Context_init_unchained()++`]
+* [`++_msgSender()++`]
+* [`++_msgData()++`]
+* [`++_contextSuffixLength()++`]
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.Pool
+
+[.contract-subindex-inherited]
+.IPoolComponent
+* [`++LogPoolVerifiedByPool(pool, applicationNftId, collateralizationAmount)++`]
+
+[.contract-subindex-inherited]
+.InstanceLinkedComponent
+
+[.contract-subindex-inherited]
+.IInstanceLinkedComponent
+
+[.contract-subindex-inherited]
+.Component
+
+[.contract-subindex-inherited]
+.IComponent
+* [`++LogComponentWalletAddressChanged(oldWallet, newWallet)++`]
+* [`++LogComponentWalletTokensTransferred(from, to, amount)++`]
+* [`++LogComponentTokenHandlerApproved(tokenHandler, token, limit, isMaxAmount)++`]
+
+[.contract-subindex-inherited]
+.ITransferInterceptor
+
+[.contract-subindex-inherited]
+.Registerable
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.IRelease
+
+[.contract-subindex-inherited]
+.NftOwnable
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[BasicPool-_initializeBasicPool-address-NftId-string-address-struct-IComponents-PoolInfo-contract-IAuthorization-address-]]
+==== `[.contract-item-name]#++_initializeBasicPool++#++(address registry, NftId productNftId, string name, address token, struct IComponents.PoolInfo poolInfo, contract IAuthorization authorization, address initialOwner)++` [.item-kind]#internal#
+
+[.contract-item]
+[[BasicPool-stake-NftId-Amount-]]
+==== `[.contract-item-name]#++stake++#++(NftId bundleNftId, Amount amount)++` [.item-kind]#public#
+
+[.contract-item]
+[[BasicPool-unstake-NftId-Amount-]]
+==== `[.contract-item-name]#++unstake++#++(NftId bundleNftId, Amount amount)++` [.item-kind]#public#
+
+[.contract-item]
+[[BasicPool-extend-NftId-Seconds-]]
+==== `[.contract-item-name]#++extend++#++(NftId bundleNftId, Seconds lifetimeExtension) → Timestamp newExpiredAt++` [.item-kind]#public#
+
+[.contract-item]
+[[BasicPool-lockBundle-NftId-]]
+==== `[.contract-item-name]#++lockBundle++#++(NftId bundleNftId)++` [.item-kind]#public#
+
+[.contract-item]
+[[BasicPool-unlockBundle-NftId-]]
+==== `[.contract-item-name]#++unlockBundle++#++(NftId bundleNftId)++` [.item-kind]#public#
+
+[.contract-item]
+[[BasicPool-closeBundle-NftId-]]
+==== `[.contract-item-name]#++closeBundle++#++(NftId bundleNftId)++` [.item-kind]#public#
+
+[.contract-item]
+[[BasicPool-setBundleFee-NftId-struct-Fee-]]
+==== `[.contract-item-name]#++setBundleFee++#++(NftId bundleNftId, struct Fee fee)++` [.item-kind]#public#
+
+Updates the bundle feeds to the specified values.
+
+[.contract-item]
+[[BasicPool-withdrawBundleFees-NftId-Amount-]]
+==== `[.contract-item-name]#++withdrawBundleFees++#++(NftId bundleNftId, Amount amount) → Amount withdrawnAmount++` [.item-kind]#external#
+
+Withdraw bundle feeds for the given bundle.
+
+[.contract-item]
+[[BasicPool-setMaxBalanceAmount-Amount-]]
+==== `[.contract-item-name]#++setMaxBalanceAmount++#++(Amount maxBalanceAmount)++` [.item-kind]#public#
+
+[.contract-item]
+[[BasicPool-setFees-struct-Fee-struct-Fee-struct-Fee-]]
+==== `[.contract-item-name]#++setFees++#++(struct Fee poolFee, struct Fee stakingFee, struct Fee performanceFee)++` [.item-kind]#public#
+
+:constructor: pass:normal[xref:#BasicPoolAuthorization-constructor-string-[`++constructor++`]]
+:_setupServiceTargets: pass:normal[xref:#BasicPoolAuthorization-_setupServiceTargets--[`++_setupServiceTargets++`]]
+:_setupTargets: pass:normal[xref:#BasicPoolAuthorization-_setupTargets--[`++_setupTargets++`]]
+:_setupTargetAuthorizations: pass:normal[xref:#BasicPoolAuthorization-_setupTargetAuthorizations--[`++_setupTargetAuthorizations++`]]
+
+[.contract]
+[[BasicPoolAuthorization]]
+=== `++BasicPoolAuthorization++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/pool/BasicPoolAuthorization.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/pool/BasicPoolAuthorization.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++constructor(poolName)++`]
+* [`++_setupServiceTargets()++`]
+* [`++_setupTargets()++`]
+* [`++_setupTargetAuthorizations()++`]
+
+[.contract-subindex-inherited]
+.Authorization
+* [`++getServiceDomains()++`]
+* [`++getServiceRole(serviceDomain)++`]
+* [`++getServiceTarget(serviceDomain)++`]
+* [`++getRoles()++`]
+* [`++roleExists(roleId)++`]
+* [`++getRoleInfo(roleId)++`]
+* [`++getTargetName()++`]
+* [`++getMainTarget()++`]
+* [`++getTarget(targetName)++`]
+* [`++getTargets()++`]
+* [`++targetExists(target)++`]
+* [`++getTargetRole(target)++`]
+* [`++getAuthorizedRoles(target)++`]
+* [`++getAuthorizedFunctions(target, roleId)++`]
+* [`++getRelease()++`]
+* [`++_setupRoles()++`]
+* [`++_addServiceTargetWithRole(serviceDomain)++`]
+* [`++_addRole(roleId, info)++`]
+* [`++_addContractRole(roleId, name)++`]
+* [`++_addServiceRole(serviceDomain)++`]
+* [`++_addComponentTargetWithRole(componentType)++`]
+* [`++_addComponentTargetWithRole(componentType, index)++`]
+* [`++_addCustomRole(roleId, adminRoleId, maxMemberCount, name)++`]
+* [`++_addTargetWithRole(targetName, roleId, roleName)++`]
+* [`++_addTarget(name)++`]
+* [`++_authorizeForTarget(target, authorizedRoleId)++`]
+* [`++_authorize(functions, selector, name)++`]
+* [`++_toTargetRoleId(targetDomain)++`]
+* [`++_toTargetRoleName(targetName)++`]
+* [`++_toRoleInfo(adminRoleId, roleType, maxMemberCount, name)++`]
+
+[.contract-subindex-inherited]
+.IAuthorization
+
+[.contract-subindex-inherited]
+.IAccess
+
+--
+
+[.contract-item]
+[[BasicPoolAuthorization-constructor-string-]]
+==== `[.contract-item-name]#++constructor++#++(string poolName)++` [.item-kind]#public#
+
+[.contract-item]
+[[BasicPoolAuthorization-_setupServiceTargets--]]
+==== `[.contract-item-name]#++_setupServiceTargets++#++()++` [.item-kind]#internal#
+
+Sets up the relevant service targets for the component.
+Overwrite this function for a specific component.
+
+[.contract-item]
+[[BasicPoolAuthorization-_setupTargets--]]
+==== `[.contract-item-name]#++_setupTargets++#++()++` [.item-kind]#internal#
+
+Sets up the relevant (non-service) targets for the component.
+Overwrite this function for a specific component.
+
+[.contract-item]
+[[BasicPoolAuthorization-_setupTargetAuthorizations--]]
+==== `[.contract-item-name]#++_setupTargetAuthorizations++#++()++` [.item-kind]#internal#
+
+Sets up the relevant target authorizations for the component.
+Overwrite this function for a specific realease.
+
+:_bundleService: pass:normal[xref:#PoolService-_bundleService-contract-IBundleService[`++_bundleService++`]]
+:_componentService: pass:normal[xref:#PoolService-_componentService-contract-IComponentService[`++_componentService++`]]
+:_initialize: pass:normal[xref:#PoolService-_initialize-address-bytes-[`++_initialize++`]]
+:setMaxBalanceAmount: pass:normal[xref:#PoolService-setMaxBalanceAmount-Amount-[`++setMaxBalanceAmount++`]]
+:closeBundle: pass:normal[xref:#PoolService-closeBundle-NftId-[`++closeBundle++`]]
+:processFundedClaim: pass:normal[xref:#PoolService-processFundedClaim-NftId-ClaimId-Amount-[`++processFundedClaim++`]]
+:stake: pass:normal[xref:#PoolService-stake-NftId-Amount-[`++stake++`]]
+:unstake: pass:normal[xref:#PoolService-unstake-NftId-Amount-[`++unstake++`]]
+:fundPoolWallet: pass:normal[xref:#PoolService-fundPoolWallet-Amount-[`++fundPoolWallet++`]]
+:defundPoolWallet: pass:normal[xref:#PoolService-defundPoolWallet-Amount-[`++defundPoolWallet++`]]
+:processSale: pass:normal[xref:#PoolService-processSale-NftId-struct-IPolicy-PremiumInfo-[`++processSale++`]]
+:lockCollateral: pass:normal[xref:#PoolService-lockCollateral-contract-IInstance-address-NftId-NftId-NftId-Amount-[`++lockCollateral++`]]
+:processPayout: pass:normal[xref:#PoolService-processPayout-contract-IInstance-address-NftId-struct-IPolicy-PolicyInfo-Amount-[`++processPayout++`]]
+:releaseCollateral: pass:normal[xref:#PoolService-releaseCollateral-contract-IInstance-address-NftId-struct-IPolicy-PolicyInfo-[`++releaseCollateral++`]]
+:calculateRequiredCollateral: pass:normal[xref:#PoolService-calculateRequiredCollateral-contract-InstanceReader-NftId-Amount-[`++calculateRequiredCollateral++`]]
+:calculateRequiredCollateral: pass:normal[xref:#PoolService-calculateRequiredCollateral-UFixed-UFixed-Amount-[`++calculateRequiredCollateral++`]]
+:_processStakingFees: pass:normal[xref:#PoolService-_processStakingFees-struct-Fee-Amount-[`++_processStakingFees++`]]
+:_collectStakingAmount: pass:normal[xref:#PoolService-_collectStakingAmount-contract-InstanceReader-NftId-address-Amount-[`++_collectStakingAmount++`]]
+:_distributeUnstakingAmount: pass:normal[xref:#PoolService-_distributeUnstakingAmount-contract-InstanceReader-NftId-address-Amount-[`++_distributeUnstakingAmount++`]]
+:_getAndVerifyActivePool: pass:normal[xref:#PoolService-_getAndVerifyActivePool--[`++_getAndVerifyActivePool++`]]
+:_getDomain: pass:normal[xref:#PoolService-_getDomain--[`++_getDomain++`]]
+
+[.contract]
+[[PoolService]]
+=== `++PoolService++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/pool/PoolService.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/pool/PoolService.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++_initialize(owner, data)++`]
+* [`++setMaxBalanceAmount(maxBalanceAmount)++`]
+* [`++closeBundle(bundleNftId)++`]
+* [`++processFundedClaim(policyNftId, claimId, availableAmount)++`]
+* [`++stake(bundleNftId, amount)++`]
+* [`++unstake(bundleNftId, amount)++`]
+* [`++fundPoolWallet(amount)++`]
+* [`++defundPoolWallet(amount)++`]
+* [`++processSale(bundleNftId, premium)++`]
+* [`++lockCollateral(instance, token, productNftId, applicationNftId, bundleNftId, sumInsuredAmount)++`]
+* [`++processPayout(instance, token, policyNftId, policyInfo, payoutAmount)++`]
+* [`++releaseCollateral(instance, token, policyNftId, policyInfo)++`]
+* [`++calculateRequiredCollateral(instanceReader, productNftId, sumInsuredAmount)++`]
+* [`++calculateRequiredCollateral(collateralizationLevel, retentionLevel, sumInsuredAmount)++`]
+* [`++_processStakingFees(stakingFee, stakingAmount)++`]
+* [`++_collectStakingAmount(reader, poolNftId, from, amount)++`]
+* [`++_distributeUnstakingAmount(reader, poolNftId, to, amount)++`]
+* [`++_getAndVerifyActivePool()++`]
+* [`++_getDomain()++`]
+
+[.contract-subindex-inherited]
+.IPoolService
+
+[.contract-subindex-inherited]
+.Service
+* [`++__Service_init(authority, registry, initialOwner)++`]
+* [`++getDomain()++`]
+* [`++getVersion()++`]
+* [`++getRoleId()++`]
+* [`++_getServiceAddress(domain)++`]
+
+[.contract-subindex-inherited]
+.IService
+
+[.contract-subindex-inherited]
+.ReentrancyGuardUpgradeable
+* [`++__ReentrancyGuard_init()++`]
+* [`++__ReentrancyGuard_init_unchained()++`]
+* [`++_reentrancyGuardEntered()++`]
+
+[.contract-subindex-inherited]
+.Versionable
+* [`++initializeVersionable(activatedBy, data)++`]
+* [`++upgradeVersionable(data)++`]
+* [`++_upgrade(data)++`]
+
+[.contract-subindex-inherited]
+.IVersionable
+
+[.contract-subindex-inherited]
+.Registerable
+* [`++__Registerable_init(authority, registry, parentNftId, objectType, isInterceptor, initialOwner, data)++`]
+* [`++isActive()++`]
+* [`++getRelease()++`]
+* [`++getInitialInfo()++`]
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.IRelease
+
+[.contract-subindex-inherited]
+.NftOwnable
+* [`++_checkNftType(nftId, expectedObjectType)++`]
+* [`++__NftOwnable_init(registry, initialOwner)++`]
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+* [`++_linkToNftOwnable(nftOwnableAddress)++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+* [`++__RegistryLinked_init(registry)++`]
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+* [`++_initializeERC165()++`]
+* [`++_registerInterface(interfaceId)++`]
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+* [`++__AccessManaged_init(initialAuthority)++`]
+* [`++__AccessManaged_init_unchained(initialAuthority)++`]
+* [`++authority()++`]
+* [`++setAuthority(newAuthority)++`]
+* [`++isConsumingScheduledOp()++`]
+* [`++_setAuthority(newAuthority)++`]
+* [`++_checkCanCall(caller, data)++`]
+
+[.contract-subindex-inherited]
+.IAccessManaged
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+* [`++__Context_init()++`]
+* [`++__Context_init_unchained()++`]
+* [`++_msgSender()++`]
+* [`++_msgData()++`]
+* [`++_contextSuffixLength()++`]
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.IPoolService
+* [`++LogPoolServiceMaxBalanceAmountUpdated(poolNftId, previousMaxCapitalAmount, currentMaxCapitalAmount)++`]
+* [`++LogPoolServiceWalletFunded(poolNftId, poolOwner, amount)++`]
+* [`++LogPoolServiceWalletDefunded(poolNftId, poolOwner, amount)++`]
+* [`++LogPoolServiceBundleCreated(instanceNftId, poolNftId, bundleNftId)++`]
+* [`++LogPoolServiceBundleClosed(instanceNftId, poolNftId, bundleNftId)++`]
+* [`++LogPoolServiceBundleStaked(instanceNftId, poolNftId, bundleNftId, amount, netAmount)++`]
+* [`++LogPoolServiceBundleUnstaked(instanceNftId, poolNftId, bundleNftId, amount, netAmount)++`]
+* [`++LogPoolServiceProcessFundedClaim(policyNftId, claimId, availableAmount)++`]
+
+[.contract-subindex-inherited]
+.Service
+
+[.contract-subindex-inherited]
+.IService
+
+[.contract-subindex-inherited]
+.ReentrancyGuardUpgradeable
+
+[.contract-subindex-inherited]
+.Versionable
+
+[.contract-subindex-inherited]
+.IVersionable
+
+[.contract-subindex-inherited]
+.Registerable
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.IRelease
+
+[.contract-subindex-inherited]
+.NftOwnable
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[PoolService-_initialize-address-bytes-]]
+==== `[.contract-item-name]#++_initialize++#++(address owner, bytes data)++` [.item-kind]#internal#
+
+[.contract-item]
+[[PoolService-setMaxBalanceAmount-Amount-]]
+==== `[.contract-item-name]#++setMaxBalanceAmount++#++(Amount maxBalanceAmount)++` [.item-kind]#external#
+
+sets the max balance amount for the calling pool
+
+[.contract-item]
+[[PoolService-closeBundle-NftId-]]
+==== `[.contract-item-name]#++closeBundle++#++(NftId bundleNftId)++` [.item-kind]#external#
+
+closes the specified bundle
+only open bundles (active or locked) may be closed
+to close a bundle it may not have any non-closed polices attached to it
+bundle fees and remaining capital (after deduction of the performance fee) will be transferred to the bundle owner
+may only be called by registered and unlocked pool components
+
+[.contract-item]
+[[PoolService-processFundedClaim-NftId-ClaimId-Amount-]]
+==== `[.contract-item-name]#++processFundedClaim++#++(NftId policyNftId, ClaimId claimId, Amount availableAmount)++` [.item-kind]#external#
+
+Informs product about available funds to process a confirmed claim.
+The function triggers a callback to the product component when the product's property isProcessingFundedClaims is set.
+
+[.contract-item]
+[[PoolService-stake-NftId-Amount-]]
+==== `[.contract-item-name]#++stake++#++(NftId bundleNftId, Amount amount) → Amount netAmount++` [.item-kind]#external#
+
+increase stakes for bundle
+staking fees will be deducted by the pool service from the staking amount
+may only be called by registered and unlocked pool components
+
+[.contract-item]
+[[PoolService-unstake-NftId-Amount-]]
+==== `[.contract-item-name]#++unstake++#++(NftId bundleNftId, Amount amount) → Amount netAmount++` [.item-kind]#external#
+
+decrease stakes for bundle
+performance fees will be deducted by the pool service from the staking amount
+may only be called by registered and unlocked pool components
+
+[.contract-item]
+[[PoolService-fundPoolWallet-Amount-]]
+==== `[.contract-item-name]#++fundPoolWallet++#++(Amount amount)++` [.item-kind]#external#
+
+Fund the pool wallet with the provided amount.
+This function will collect the amount from the pool owner and transfers it to the pool wallet.
+The function will not update balance amounts managed by the framework.
+Only available for externally managed pools.
+
+[.contract-item]
+[[PoolService-defundPoolWallet-Amount-]]
+==== `[.contract-item-name]#++defundPoolWallet++#++(Amount amount)++` [.item-kind]#external#
+
+Defund the specified pool wallet with the provided amount.
+This function will transfer the amount from the pool wallet to the pool owner.
+The function will not update balance amounts managed by the framework.
+Only available for externally managed pools.
+
+[.contract-item]
+[[PoolService-processSale-NftId-struct-IPolicy-PremiumInfo-]]
+==== `[.contract-item-name]#++processSale++#++(NftId bundleNftId, struct IPolicy.PremiumInfo premium)++` [.item-kind]#external#
+
+processes the sale of a bundle and track the pool fee and bundle fee amounts
+
+[.contract-item]
+[[PoolService-lockCollateral-contract-IInstance-address-NftId-NftId-NftId-Amount-]]
+==== `[.contract-item-name]#++lockCollateral++#++(contract IInstance instance, address token, NftId productNftId, NftId applicationNftId, NftId bundleNftId, Amount sumInsuredAmount) → Amount totalCollateralAmount, Amount localCollateralAmount++` [.item-kind]#external#
+
+locks required collateral to cover the specified application (and turn it into a policy)
+- retention level == 1: the full collateral amount will be locked by the specified bundle
+- retention level < 1: a part of the coverage is provided by the specified bundle, the rest by the pool component
+in which case the pool component might hold a re-insurance policy
+may only be called by the policy service for unlocked pool components
+
+[.contract-item]
+[[PoolService-processPayout-contract-IInstance-address-NftId-struct-IPolicy-PolicyInfo-Amount-]]
+==== `[.contract-item-name]#++processPayout++#++(contract IInstance instance, address token, NftId policyNftId, struct IPolicy.PolicyInfo policyInfo, Amount payoutAmount)++` [.item-kind]#external#
+
+reduces the locked collateral in the bundle associated with the specified policy and updates pool/bundle counters
+every payout of a policy reduces the collateral by the payout amount
+may only be called by the claim service for unlocked pool components
+
+[.contract-item]
+[[PoolService-releaseCollateral-contract-IInstance-address-NftId-struct-IPolicy-PolicyInfo-]]
+==== `[.contract-item-name]#++releaseCollateral++#++(contract IInstance instance, address token, NftId policyNftId, struct IPolicy.PolicyInfo policyInfo)++` [.item-kind]#external#
+
+releases the remaining collateral linked to the specified policy
+may only be called by the policy service for unlocked pool components
+
+[.contract-item]
+[[PoolService-calculateRequiredCollateral-contract-InstanceReader-NftId-Amount-]]
+==== `[.contract-item-name]#++calculateRequiredCollateral++#++(contract InstanceReader instanceReader, NftId productNftId, Amount sumInsuredAmount) → NftId poolNftId, Amount totalCollateralAmount, Amount localCollateralAmount, bool poolIsVerifyingApplications++` [.item-kind]#public#
+
+Calulate required collateral for the provided parameters.
+
+[.contract-item]
+[[PoolService-calculateRequiredCollateral-UFixed-UFixed-Amount-]]
+==== `[.contract-item-name]#++calculateRequiredCollateral++#++(UFixed collateralizationLevel, UFixed retentionLevel, Amount sumInsuredAmount) → Amount totalCollateralAmount, Amount localCollateralAmount++` [.item-kind]#public#
+
+calulate required collateral for the provided parameters.
+Collateralization is applied to sum insured.
+Retention level defines the fraction of the collateral that is required locally.
+
+[.contract-item]
+[[PoolService-_processStakingFees-struct-Fee-Amount-]]
+==== `[.contract-item-name]#++_processStakingFees++#++(struct Fee stakingFee, Amount stakingAmount) → Amount stakingNetAmount++` [.item-kind]#internal#
+
+[.contract-item]
+[[PoolService-_collectStakingAmount-contract-InstanceReader-NftId-address-Amount-]]
+==== `[.contract-item-name]#++_collectStakingAmount++#++(contract InstanceReader reader, NftId poolNftId, address from, Amount amount)++` [.item-kind]#internal#
+
+transfers the specified amount from the "from account" to the pool's wallet
+
+[.contract-item]
+[[PoolService-_distributeUnstakingAmount-contract-InstanceReader-NftId-address-Amount-]]
+==== `[.contract-item-name]#++_distributeUnstakingAmount++#++(contract InstanceReader reader, NftId poolNftId, address to, Amount amount)++` [.item-kind]#internal#
+
+distributes the specified amount from the pool's wallet to the "to account"
+
+[.contract-item]
+[[PoolService-_getAndVerifyActivePool--]]
+==== `[.contract-item-name]#++_getAndVerifyActivePool++#++() → NftId poolNftId, contract IInstance instance++` [.item-kind]#internal#
+
+[.contract-item]
+[[PoolService-_getDomain--]]
+==== `[.contract-item-name]#++_getDomain++#++() → ObjectType++` [.item-kind]#internal#
+
+:NAME: pass:normal[xref:#BundleService-NAME-string[`++NAME++`]]
+:_initialize: pass:normal[xref:#BundleService-_initialize-address-bytes-[`++_initialize++`]]
+:setFee: pass:normal[xref:#BundleService-setFee-NftId-struct-Fee-[`++setFee++`]]
+:create: pass:normal[xref:#BundleService-create-address-struct-Fee-Seconds-bytes-[`++create++`]]
+:lockCollateral: pass:normal[xref:#BundleService-lockCollateral-contract-IInstance-NftId-NftId-Amount-[`++lockCollateral++`]]
+:lock: pass:normal[xref:#BundleService-lock-NftId-[`++lock++`]]
+:unlock: pass:normal[xref:#BundleService-unlock-NftId-[`++unlock++`]]
+:close: pass:normal[xref:#BundleService-close-contract-IInstance-NftId-[`++close++`]]
+:stake: pass:normal[xref:#BundleService-stake-contract-IInstance-NftId-Amount-[`++stake++`]]
+:unstake: pass:normal[xref:#BundleService-unstake-contract-IInstance-NftId-Amount-[`++unstake++`]]
+:extend: pass:normal[xref:#BundleService-extend-NftId-Seconds-[`++extend++`]]
+:releaseCollateral: pass:normal[xref:#BundleService-releaseCollateral-contract-IInstance-NftId-NftId-Amount-[`++releaseCollateral++`]]
+:withdrawBundleFees: pass:normal[xref:#BundleService-withdrawBundleFees-NftId-Amount-[`++withdrawBundleFees++`]]
+:_getDomain: pass:normal[xref:#BundleService-_getDomain--[`++_getDomain++`]]
+
+[.contract]
+[[BundleService]]
+=== `++BundleService++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/pool/BundleService.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/pool/BundleService.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++_initialize(owner, data)++`]
+* [`++setFee(bundleNftId, fee)++`]
+* [`++create(owner, bundleFee, lifetime, filter)++`]
+* [`++lockCollateral(instance, policyNftId, bundleNftId, collateralAmount)++`]
+* [`++lock(bundleNftId)++`]
+* [`++unlock(bundleNftId)++`]
+* [`++close(instance, bundleNftId)++`]
+* [`++stake(instance, bundleNftId, amount)++`]
+* [`++unstake(instance, bundleNftId, amount)++`]
+* [`++extend(bundleNftId, lifetimeExtension)++`]
+* [`++releaseCollateral(instance, policyNftId, bundleNftId, collateralAmount)++`]
+* [`++withdrawBundleFees(bundleNftId, amount)++`]
+* [`++_getDomain()++`]
+
+[.contract-subindex-inherited]
+.IBundleService
+
+[.contract-subindex-inherited]
+.ComponentVerifyingService
+* [`++_getAndVerifyActiveComponent(expectedType)++`]
+* [`++_getAndVerifyComponentInfo(componentNftId, expectedType, onlyActive)++`]
+* [`++_getInstanceForComponent(registry, productNftId)++`]
+* [`++_getProductNftId(componentNftId)++`]
+* [`++_getInstance(registry, instanceNftId)++`]
+
+[.contract-subindex-inherited]
+.Service
+* [`++__Service_init(authority, registry, initialOwner)++`]
+* [`++getDomain()++`]
+* [`++getVersion()++`]
+* [`++getRoleId()++`]
+* [`++_getServiceAddress(domain)++`]
+
+[.contract-subindex-inherited]
+.IService
+
+[.contract-subindex-inherited]
+.ReentrancyGuardUpgradeable
+* [`++__ReentrancyGuard_init()++`]
+* [`++__ReentrancyGuard_init_unchained()++`]
+* [`++_reentrancyGuardEntered()++`]
+
+[.contract-subindex-inherited]
+.Versionable
+* [`++initializeVersionable(activatedBy, data)++`]
+* [`++upgradeVersionable(data)++`]
+* [`++_upgrade(data)++`]
+
+[.contract-subindex-inherited]
+.IVersionable
+
+[.contract-subindex-inherited]
+.Registerable
+* [`++__Registerable_init(authority, registry, parentNftId, objectType, isInterceptor, initialOwner, data)++`]
+* [`++isActive()++`]
+* [`++getRelease()++`]
+* [`++getInitialInfo()++`]
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.IRelease
+
+[.contract-subindex-inherited]
+.NftOwnable
+* [`++_checkNftType(nftId, expectedObjectType)++`]
+* [`++__NftOwnable_init(registry, initialOwner)++`]
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+* [`++_linkToNftOwnable(nftOwnableAddress)++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+* [`++__RegistryLinked_init(registry)++`]
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+* [`++_initializeERC165()++`]
+* [`++_registerInterface(interfaceId)++`]
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+* [`++__AccessManaged_init(initialAuthority)++`]
+* [`++__AccessManaged_init_unchained(initialAuthority)++`]
+* [`++authority()++`]
+* [`++setAuthority(newAuthority)++`]
+* [`++isConsumingScheduledOp()++`]
+* [`++_setAuthority(newAuthority)++`]
+* [`++_checkCanCall(caller, data)++`]
+
+[.contract-subindex-inherited]
+.IAccessManaged
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+* [`++__Context_init()++`]
+* [`++__Context_init_unchained()++`]
+* [`++_msgSender()++`]
+* [`++_msgData()++`]
+* [`++_contextSuffixLength()++`]
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.IBundleService
+* [`++LogBundleServiceBundleCreated(bundleNftId, poolNftId)++`]
+* [`++LogBundleServiceBundleActivated(bundleNftId)++`]
+* [`++LogBundleServiceBundleLocked(bundleNftId)++`]
+* [`++LogBundleServiceFeesWithdrawn(bundleNftId, recipient, tokenAddress, amount)++`]
+* [`++LogBundleServiceBundleExtended(bundleNftId, lifetimeExtension, extendedExpiredAt)++`]
+
+[.contract-subindex-inherited]
+.ComponentVerifyingService
+
+[.contract-subindex-inherited]
+.Service
+
+[.contract-subindex-inherited]
+.IService
+
+[.contract-subindex-inherited]
+.ReentrancyGuardUpgradeable
+
+[.contract-subindex-inherited]
+.Versionable
+
+[.contract-subindex-inherited]
+.IVersionable
+
+[.contract-subindex-inherited]
+.Registerable
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.IRelease
+
+[.contract-subindex-inherited]
+.NftOwnable
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[BundleService-_initialize-address-bytes-]]
+==== `[.contract-item-name]#++_initialize++#++(address owner, bytes data)++` [.item-kind]#internal#
+
+[.contract-item]
+[[BundleService-setFee-NftId-struct-Fee-]]
+==== `[.contract-item-name]#++setFee++#++(NftId bundleNftId, struct Fee fee)++` [.item-kind]#external#
+
+set bundle fee to provided value
+may only be called by registered and unlocked pool components
+
+[.contract-item]
+[[BundleService-create-address-struct-Fee-Seconds-bytes-]]
+==== `[.contract-item-name]#++create++#++(address owner, struct Fee bundleFee, Seconds lifetime, bytes filter) → NftId bundleNftId++` [.item-kind]#external#
+
+[.contract-item]
+[[BundleService-lockCollateral-contract-IInstance-NftId-NftId-Amount-]]
+==== `[.contract-item-name]#++lockCollateral++#++(contract IInstance instance, NftId policyNftId, NftId bundleNftId, Amount collateralAmount)++` [.item-kind]#external#
+
+locks the specified collateral in the bundle
+the locked collateral is added to the bundle locked capital
+the bundles' fees are updated with the fees for this premium
+the premium (minus bundle fee) is added to the bundle capital
+may only be called by pool service
+
+[.contract-item]
+[[BundleService-lock-NftId-]]
+==== `[.contract-item-name]#++lock++#++(NftId bundleNftId)++` [.item-kind]#external#
+
+locks the specified bundle, locked bundles are not available to collateralize new policies
+only active bundles may be locked
+may only be called by registered and unlocked pool components
+
+[.contract-item]
+[[BundleService-unlock-NftId-]]
+==== `[.contract-item-name]#++unlock++#++(NftId bundleNftId)++` [.item-kind]#external#
+
+activates the specified bundle
+only locked bundles may be unlocked
+may only be called by registered and unlocked pool components
+
+[.contract-item]
+[[BundleService-close-contract-IInstance-NftId-]]
+==== `[.contract-item-name]#++close++#++(contract IInstance instance, NftId bundleNftId) → Amount unstakedAmount, Amount feeAmount++` [.item-kind]#external#
+
+closes the specified bundle
+only open bundles (active or locked) may be closed
+to close a bundle it may not have any non-closed polices attached to it
+may only be called by registered and unlocked pool components
+
+[.contract-item]
+[[BundleService-stake-contract-IInstance-NftId-Amount-]]
+==== `[.contract-item-name]#++stake++#++(contract IInstance instance, NftId bundleNftId, Amount amount)++` [.item-kind]#external#
+
+increase bundle stakes by the specified amount. bundle must not be expired or closed
+may only be called by the pool service
+
+[.contract-item]
+[[BundleService-unstake-contract-IInstance-NftId-Amount-]]
+==== `[.contract-item-name]#++unstake++#++(contract IInstance instance, NftId bundleNftId, Amount amount) → Amount unstakedAmount++` [.item-kind]#external#
+
+decrease bundle stakes by the specified amount
+may only be called by the pool service
+
+[.contract-item]
+[[BundleService-extend-NftId-Seconds-]]
+==== `[.contract-item-name]#++extend++#++(NftId bundleNftId, Seconds lifetimeExtension) → Timestamp extendedExpiredAt++` [.item-kind]#external#
+
+extend the lifetime of the bundle by the specified time in seconds
+
+[.contract-item]
+[[BundleService-releaseCollateral-contract-IInstance-NftId-NftId-Amount-]]
+==== `[.contract-item-name]#++releaseCollateral++#++(contract IInstance instance, NftId policyNftId, NftId bundleNftId, Amount collateralAmount)++` [.item-kind]#external#
+
+releases the specified collateral in the bundle
+may only be called by pool service
+
+[.contract-item]
+[[BundleService-withdrawBundleFees-NftId-Amount-]]
+==== `[.contract-item-name]#++withdrawBundleFees++#++(NftId bundleNftId, Amount amount) → Amount withdrawnAmount++` [.item-kind]#public#
+
+Withdraw bundle feeds for the given bundle
+
+[.contract-item]
+[[BundleService-_getDomain--]]
+==== `[.contract-item-name]#++_getDomain++#++() → ObjectType++` [.item-kind]#internal#
+
+:constructor: pass:normal[xref:#PoolServiceManager-constructor-address-address-bytes32-[`++constructor++`]]
+:getPoolService: pass:normal[xref:#PoolServiceManager-getPoolService--[`++getPoolService++`]]
+
+[.contract]
+[[PoolServiceManager]]
+=== `++PoolServiceManager++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/pool/PoolServiceManager.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/pool/PoolServiceManager.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++constructor(authority, registry, salt)++`]
+* [`++getPoolService()++`]
+
+[.contract-subindex-inherited]
+.ProxyManager
+* [`++initialize(registry, implementation, data, salt)++`]
+* [`++deploy(registry, initialImplementation, initializationData)++`]
+* [`++deployDetermenistic(registry, initialImplementation, initializationData, salt)++`]
+* [`++upgrade(newImplementation, upgradeData)++`]
+* [`++linkToProxy()++`]
+* [`++getDeployData(proxyOwner, deployData)++`]
+* [`++getUpgradeData(upgradeData)++`]
+* [`++getProxy()++`]
+* [`++getVersion()++`]
+* [`++getVersionCount()++`]
+* [`++getVersion(idx)++`]
+* [`++getVersionInfo(_version)++`]
+
+[.contract-subindex-inherited]
+.NftOwnable
+* [`++_checkNftType(nftId, expectedObjectType)++`]
+* [`++__NftOwnable_init(registry, initialOwner)++`]
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+* [`++_linkToNftOwnable(nftOwnableAddress)++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+* [`++__RegistryLinked_init(registry)++`]
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+* [`++_initializeERC165()++`]
+* [`++_registerInterface(interfaceId)++`]
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.ProxyManager
+* [`++LogProxyManagerVersionableDeployed(proxy, initialImplementation)++`]
+* [`++LogProxyManagerVersionableUpgraded(proxy, upgradedImplementation)++`]
+
+[.contract-subindex-inherited]
+.NftOwnable
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[PoolServiceManager-constructor-address-address-bytes32-]]
+==== `[.contract-item-name]#++constructor++#++(address authority, address registry, bytes32 salt)++` [.item-kind]#public#
+
+initializes proxy manager with pool service implementation
+
+[.contract-item]
+[[PoolServiceManager-getPoolService--]]
+==== `[.contract-item-name]#++getPoolService++#++() → contract PoolService poolService++` [.item-kind]#external#
+
+:constructor: pass:normal[xref:#BundleServiceManager-constructor-address-address-bytes32-[`++constructor++`]]
+:getBundleService: pass:normal[xref:#BundleServiceManager-getBundleService--[`++getBundleService++`]]
+
+[.contract]
+[[BundleServiceManager]]
+=== `++BundleServiceManager++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/pool/BundleServiceManager.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/pool/BundleServiceManager.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++constructor(authority, registry, salt)++`]
+* [`++getBundleService()++`]
+
+[.contract-subindex-inherited]
+.ProxyManager
+* [`++initialize(registry, implementation, data, salt)++`]
+* [`++deploy(registry, initialImplementation, initializationData)++`]
+* [`++deployDetermenistic(registry, initialImplementation, initializationData, salt)++`]
+* [`++upgrade(newImplementation, upgradeData)++`]
+* [`++linkToProxy()++`]
+* [`++getDeployData(proxyOwner, deployData)++`]
+* [`++getUpgradeData(upgradeData)++`]
+* [`++getProxy()++`]
+* [`++getVersion()++`]
+* [`++getVersionCount()++`]
+* [`++getVersion(idx)++`]
+* [`++getVersionInfo(_version)++`]
+
+[.contract-subindex-inherited]
+.NftOwnable
+* [`++_checkNftType(nftId, expectedObjectType)++`]
+* [`++__NftOwnable_init(registry, initialOwner)++`]
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+* [`++_linkToNftOwnable(nftOwnableAddress)++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+* [`++__RegistryLinked_init(registry)++`]
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+* [`++_initializeERC165()++`]
+* [`++_registerInterface(interfaceId)++`]
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.ProxyManager
+* [`++LogProxyManagerVersionableDeployed(proxy, initialImplementation)++`]
+* [`++LogProxyManagerVersionableUpgraded(proxy, upgradedImplementation)++`]
+
+[.contract-subindex-inherited]
+.NftOwnable
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[BundleServiceManager-constructor-address-address-bytes32-]]
+==== `[.contract-item-name]#++constructor++#++(address authority, address registry, bytes32 salt)++` [.item-kind]#public#
+
+initializes proxy manager with pool service implementation
+
+[.contract-item]
+[[BundleServiceManager-getBundleService--]]
+==== `[.contract-item-name]#++getBundleService++#++() → contract BundleService++` [.item-kind]#external#
+
