@@ -1,7 +1,13 @@
 import { AddressLike, Signer, ethers, resolveAddress } from "ethers";
-import { 
-    Instance, InstanceReader, InstanceStore, BundleSet, RiskSet, InstanceAdmin, InstanceAuthorizationV3, IInstance__factory, 
+import {
+    BundleSet,
+    IInstance__factory,
+    Instance,
+    InstanceAdmin,
+    InstanceReader,
     InstanceService__factory,
+    InstanceStore,
+    RiskSet
 } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
@@ -30,7 +36,7 @@ export async function deployAndRegisterMasterInstance(
 ): Promise<InstanceAddresses> {
     logger.info("======== Starting deployment of master instance ========");
 
-    const { address: masterInstanceAuthorizationV3Address, contract: masterInstanceAuthorizationV3Contract } = await deployContract(
+    const { address: masterInstanceAuthorizationV3Address } = await deployContract(
         "InstanceAuthorizationV3",
         owner,
         [],
@@ -45,12 +51,11 @@ export async function deployAndRegisterMasterInstance(
             }
         }
     );
-    const masterInstanceAuthorizationV3 = masterInstanceAuthorizationV3Contract as InstanceAuthorizationV3;
 
     const { address: masterInstanceAdminAddress, contract: masterInstanceAdminContract } = await deployContract(
         "InstanceAdmin",
         owner,
-        [masterInstanceAuthorizationV3],
+        [masterInstanceAuthorizationV3Address],
         {
             libraries: {
                 ContractLib: libraries.contractLibAddress,
