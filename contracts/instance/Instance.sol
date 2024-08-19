@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import {Amount} from "../type/Amount.sol";
 import {BundleSet} from "./BundleSet.sol";
-import {RiskSet} from "./RiskSet.sol";
+import {RiskSet} from "../product/RiskSet.sol";
 import {COMPONENT, INSTANCE} from "../type/ObjectType.sol";
 import {IInstance} from "./IInstance.sol";
 import {IComponentService} from "../shared/IComponentService.sol";
@@ -75,8 +75,8 @@ contract Instance is
 
         // initialize instance supporting contracts
         _instanceStore.initialize();
-        _bundleSet.initialize();
-        _riskSet.initialize();
+        _bundleSet.__ObjectSet_init();
+        _riskSet.__ObjectSet_init();
         _instanceReader.initialize();
 
         _componentService = IComponentService(

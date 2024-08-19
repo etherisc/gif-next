@@ -22,8 +22,8 @@ contract ObjectSet is
     IInstance internal _instance; // store instance address -> more flexible, instance may not be registered during ObjectSet initialization
 
     /// @dev This initializer needs to be called from the instance itself.
-    function initialize() 
-        external
+    function __ObjectSet_init() 
+        public
         initializer()
     {
         _instance = IInstance(msg.sender);

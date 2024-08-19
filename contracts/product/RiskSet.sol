@@ -4,13 +4,15 @@ pragma solidity ^0.8.20;
 import {Key32} from "../type/Key32.sol";
 import {LibNftIdSet} from "../type/NftIdSet.sol";
 import {NftId} from "../type/NftId.sol";
-import {ObjectSet} from "./base/ObjectSet.sol";
 import {RiskIdLib, RiskId} from "../type/RiskId.sol";
+
+import {ObjectSet} from "../instance/base/ObjectSet.sol";
 
 /// @dev RiskSet manages the risks and its active policies per product.
 contract RiskSet is
     ObjectSet
 {
+    using LibNftIdSet for LibNftIdSet.Set;
 
     event LogRiskSetPolicyLinked(RiskId riskId, NftId policyNftId);
     event LogRiskSetPolicyUnlinked(RiskId riskId, NftId policyNftId);

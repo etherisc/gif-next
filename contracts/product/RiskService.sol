@@ -16,7 +16,7 @@ import {ACTIVE, PAUSED, KEEP_STATE} from "../type/StateId.sol";
 import {NftId} from "../type/NftId.sol";
 import {RiskId} from "../type/RiskId.sol";
 import {StateId} from "../type/StateId.sol";
-import {RiskSet} from "../instance/RiskSet.sol";
+import {RiskSet} from "../product/RiskSet.sol";
 import {Service} from "../shared/Service.sol";
 import {TimestampLib} from "../type/Timestamp.sol";
 

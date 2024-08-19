@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import {Amount} from "../type/Amount.sol";
 import {BundleSet} from "./BundleSet.sol";
-import {RiskSet} from "./RiskSet.sol";
+import {RiskSet} from "../product/RiskSet.sol";
 import {InstanceAdmin} from "./InstanceAdmin.sol";
 import {InstanceReader} from "./InstanceReader.sol";
 import {InstanceStore} from "./InstanceStore.sol";
