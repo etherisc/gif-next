@@ -52,11 +52,10 @@ contract OracleService is
         onlyNftOfType(oracleNftId, ORACLE())
         returns (RequestId requestId) 
     {
-        // IRegistry registry = getRegistry();
-
+        // checks
         // get and check active caller
         (
-            IRegistry.ObjectInfo memory info, 
+            IRegistry.ObjectInfo memory requesterInfo, 
             address instance
         ) = ContractLib.getAndVerifyAnyComponent(
             getRegistry(), msg.sender, true);
@@ -65,8 +64,9 @@ contract OracleService is
             NftId requesterNftId,
             IOracleComponent oracle
         ) = _checkRequestParams(
-            getRegistry(), oracleNftId, info, expiryAt, callbackMethodName);
+            getRegistry(), oracleNftId, requesterInfo, expiryAt, callbackMethodName);
 
+        // effects
         {
             // create request info
             IOracle.RequestInfo memory request = IOracle.RequestInfo({
@@ -84,14 +84,15 @@ contract OracleService is
             requestId = IInstance(instance).getInstanceStore().createRequest(request);
         }
 
+        emit LogOracleServiceRequestCreated(requestId, requesterNftId, oracleNftId, expiryAt);
+
+        // interactions
         // callback to oracle component
         oracle.request(
             requestId, 
             requesterNftId, 
             requestData, 
             expiryAt);
-
-        emit LogOracleServiceRequestCreated(requestId, requesterNftId, oracleNftId, expiryAt);
     }
 
 
@@ -220,7 +221,7 @@ contract OracleService is
     function _checkRequestParams(
         IRegistry registry,
         NftId oracleNftId,
-        IRegistry.ObjectInfo memory info,
+        IRegistry.ObjectInfo memory requesterInfo,
         Timestamp expiryAt,
         string memory callbackMethodName
     )
@@ -237,17 +238,17 @@ contract OracleService is
             registry, oracleNftId, true);
 
         // obtain return values
-        requesterNftId = info.nftId;
+        requesterNftId = requesterInfo.nftId;
         oracle = IOracleComponent(oracleInfo.objectAddress);
 
         // check that requester and oracle share same product cluster
-        if (info.objectType == PRODUCT()) {
+        if (requesterInfo.objectType == PRODUCT()) {
             if (oracleInfo.parentNftId != requesterNftId) {
-                revert ErrorOracleServiceProductMismatch(info.objectType, requesterNftId, oracleInfo.parentNftId);
+                revert ErrorOracleServiceProductMismatch(requesterInfo.objectType, requesterNftId, oracleInfo.parentNftId);
             }
         } else {
-            if (oracleInfo.parentNftId != info.parentNftId) {
-                revert ErrorOracleServiceProductMismatch(info.objectType, info.parentNftId, oracleInfo.parentNftId);
+            if (oracleInfo.parentNftId != requesterInfo.parentNftId) {
+                revert ErrorOracleServiceProductMismatch(requesterInfo.objectType, requesterInfo.parentNftId, oracleInfo.parentNftId);
             }
         }
 

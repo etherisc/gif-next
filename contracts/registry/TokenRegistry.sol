@@ -66,7 +66,7 @@ contract TokenRegistry is
         setAuthority(authority);
         
         _registry = registry;
-        _dipToken = dipToken;
+        _dipToken = _verifyOnchainToken(address(dipToken));
 
         // register dip token
         uint256 chainId = block.chainid;
