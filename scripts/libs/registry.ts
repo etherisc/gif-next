@@ -231,13 +231,6 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     const staking = Staking__factory.connect(stakingAddress, owner);
     const stakingNftId = await registry.getNftIdForAddress(stakingAddress);
 
-    // verify service implementation 
-    prepareVerificationData(
-        "Staking", 
-        await getImplementationAddress(hhEthers.provider, await stakingManager.getProxy()), 
-        [], 
-        undefined);
-
     await executeTx(
         async () => await stakingReader.initialize(stakingAddress, stakingStoreAddress, getTxOpts()),
         "stakingReader.initialize",
@@ -260,6 +253,25 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         registryAddress, 
         chainNftAddress,
         await resolveAddress(owner));
+
+    // verify staking implementation 
+    await prepareVerificationData(
+        "Staking", 
+        await getImplementationAddress(hhEthers.provider, await stakingManager.getProxy()), 
+        [], 
+        undefined);
+    
+    await prepareVerificationData(
+        "TokenHandler", 
+        await staking.getTokenHandler(), 
+        [
+            registryAddress, // reg
+            stakingAddress, // compo
+            dipAddress, // token
+            registryAdminAddress  // authority
+        ], 
+        undefined);
+    
 
     logger.info(`Dip deployed at ${dipAddress}`);
     logger.info(`RegistryAdmin deployeqd at ${registryAdmin}`);
