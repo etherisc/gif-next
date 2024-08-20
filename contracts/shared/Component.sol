@@ -201,7 +201,7 @@ abstract contract Component is
         internal
         virtual
     {
-        _getComponentStorage()._componentService.setLockedFromComponent(address(this), locked);
+        _getComponentStorage()._componentService.setComponentLocked(address(this), locked);
     }
 
 

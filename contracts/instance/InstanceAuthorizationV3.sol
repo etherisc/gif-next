@@ -123,6 +123,10 @@ contract InstanceAuthorizationV3
           // authorize instance service role
           functions = _authorizeForTarget(INSTANCE_TARGET_NAME, getServiceRole(INSTANCE()));
           _authorize(functions, Instance.setInstanceReader.selector, "setInstanceReader");
+
+          // authorize component service role
+          functions = _authorizeForTarget(INSTANCE_TARGET_NAME, getServiceRole(COMPONENT()));
+          _authorize(functions, Instance.setLockedFromService.selector, "setLockedFromService");
      }
 
 
@@ -137,7 +141,6 @@ contract InstanceAuthorizationV3
 
           // authorize component service role
           functions = _authorizeForTarget(INSTANCE_ADMIN_TARGET_NAME, getServiceRole(COMPONENT()));
-          _authorize(functions, InstanceAdmin.setTargetLocked.selector, "setTargetLocked");
           _authorize(functions, InstanceAdmin.initializeComponentAuthorization.selector, "initComponentAuthorization");
      }
 

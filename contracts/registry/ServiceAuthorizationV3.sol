@@ -182,8 +182,7 @@ contract ServiceAuthorizationV3
           _authorize(functions, IComponentService.approveTokenHandler.selector, "approveTokenHandler");
           _authorize(functions, IComponentService.approveStakingTokenHandler.selector, "approveStakingTokenHandler");
           _authorize(functions, IComponentService.setWallet.selector, "setWallet");
-          _authorize(functions, IComponentService.setLockedFromInstance.selector, "setLockedFromInstance");
-          _authorize(functions, IComponentService.setLockedFromComponent.selector, "setLockedFromComponent");
+          _authorize(functions, IComponentService.setComponentLocked.selector, "setComponentLocked");
           _authorize(functions, IComponentService.withdrawFees.selector, "withdrawFees");
           _authorize(functions, IComponentService.registerProduct.selector, "registerProduct");
           _authorize(functions, IComponentService.setProductFees.selector, "setProductFees");

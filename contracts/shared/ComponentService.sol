@@ -149,27 +149,13 @@ contract ComponentService is
     }
 
     /// @inheritdoc IComponentService
-    function setLockedFromInstance(address componentAddress, bool locked) 
+    function setComponentLocked(address componentAddress, bool locked) 
         external 
         virtual
         restricted()
-        //onlyInstance()
-    {
-        address instanceAddress = msg.sender;
-        // NftId instanceNftId = getRegistry().getNftIdForAddress(msg.sender);
-        IInstance instance = IInstance(instanceAddress);
-        _setLocked(instance.getInstanceAdmin(), componentAddress, locked);
-    }
-
-    /// @inheritdoc IComponentService
-    function setLockedFromComponent(address componentAddress, bool locked) 
-        external
-        virtual
-        restricted()
-        //onlyComponent(msg.sender)
     {
         (,, IInstance instance) = _getAndVerifyCallingComponent(COMPONENT());
-        _setLocked(instance.getInstanceAdmin(), componentAddress, locked);
+        instance.setLockedFromService(componentAddress, locked);
     }
 
     function withdrawFees(Amount amount)
@@ -591,10 +577,6 @@ contract ComponentService is
         if (getRegistry().getNftIdForAddress(componentAddress).gtz()) {
             revert ErrorComponentServiceComponentAlreadyRegistered(componentAddress);
         }
-    }
-
-    function _setLocked(InstanceAdmin instanceAdmin, address componentAddress, bool locked) internal {
-        instanceAdmin.setTargetLocked(componentAddress, locked);
     }
 
     function _getDomain() internal pure virtual override returns(ObjectType) {

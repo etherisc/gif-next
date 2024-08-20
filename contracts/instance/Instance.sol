@@ -181,12 +181,21 @@ contract Instance is
         // _instanceAdmin.setTargetFunctionRoleByInstance(targetName, selectors, roleId);
     }
 
-    // TODO MUST call instance admin directlly -> component service may be upgraded to disable lock
+    // Important: owner MUST be able to unlock instance and instance admin no matter what
+    // Nice to have: owner can lock/unlock targets while instance access manager is locked
     function setLocked(address target, bool locked)
         external 
         onlyOwner()
     {
-        _componentService.setLockedFromInstance(target, locked);
+        _instanceAdmin.setTargetLocked(target, locked);
+    }
+
+    function setLockedFromService(address target, bool locked) 
+        external
+        restricted()
+    {
+        // TODO service can not lock any of instance contracts
+        _instanceAdmin.setTargetLocked(target, locked);
     }
 
     //--- ITransferInterceptor ----------------------------------------------//
