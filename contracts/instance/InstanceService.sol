@@ -232,8 +232,8 @@ contract InstanceService is
         if(bundleSet.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceBundleSetAuthorityMismatch(); }
         if(riskSet.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceRiskSetAuthorityMismatch(); }
         if(instanceStore.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceInstanceStoreAuthorityMismatch(); }
-        if(bundleSet.getInstance() != instance) { revert ErrorInstanceServiceBundleSetInstanceMismatch(); }
-        if(riskSet.getInstance() != instance) { revert ErrorInstanceServiceRiskSetInstanceMismatch(); }
+        if(bundleSet.getInstanceAddress() != address(instance)) { revert ErrorInstanceServiceBundleSetInstanceMismatch(); }
+        if(riskSet.getInstanceAddress() != address(instance)) { revert ErrorInstanceServiceRiskSetInstanceMismatch(); }
         if(instanceReader.getInstance() != instance) { revert ErrorInstanceServiceInstanceReaderInstanceMismatch2(); }
 
         _masterAccessManager = accessManagerAddress;

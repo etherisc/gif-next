@@ -3,7 +3,6 @@ pragma solidity ^0.8.20;
 
 import {Cloneable} from "./Cloneable.sol";
 
-import {IInstance} from "../IInstance.sol";
 import {LibKey32Set} from "../../type/Key32Set.sol";
 import {NftId} from "../../type/NftId.sol";
 import {Key32} from "../../type/Key32.sol";
@@ -19,21 +18,21 @@ contract ObjectSet is
 
     mapping(NftId compnentNftId => LibKey32Set.Set objects) internal _activeObjects;
     mapping(NftId compnentNftId => LibKey32Set.Set objects) internal _allObjects;
-    IInstance internal _instance; // store instance address -> more flexible, instance may not be registered during ObjectSet initialization
+    address internal _instanceAddress;
 
     /// @dev This initializer needs to be called from the instance itself.
-    function initialize() 
+    function initialize(address authority, address registry) 
         external
         initializer()
     {
-        _instance = IInstance(msg.sender);
-        __Cloneable_init(_instance.authority(), address(_instance.getRegistry()));
+        _instanceAddress = msg.sender;
+        __Cloneable_init(authority, registry);
         
-        emit LogObjectSetInitialized(address(_instance));
+        emit LogObjectSetInitialized(address(_instanceAddress));
     }
 
-    function getInstance() external view returns (IInstance) {
-        return _instance;
+    function getInstanceAddress() external view returns (address) {
+        return _instanceAddress;
     }
 
     function _add(NftId componentNftId, Key32 key) internal {

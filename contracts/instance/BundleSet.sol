@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IPolicy} from "../instance/module/IPolicy.sol";
 import {LibNftIdSet} from "../type/NftIdSet.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
 import {Key32} from "../type/Key32.sol";
 import {BUNDLE} from "../type/ObjectType.sol";
 
 import {ObjectSet} from "./base/ObjectSet.sol";
+import {ObjectSetHelperLib} from "./base/ObjectSetHelperLib.sol";
 
 contract BundleSet is 
     ObjectSet
@@ -60,7 +60,7 @@ contract BundleSet is
     /// @dev add a new bundle to a pool registerd with this instance
     // the corresponding pool is fetched via instance reader
     function add(NftId bundleNftId) external restricted() {
-        NftId poolNftId = _instance.getInstanceReader().getBundleInfo(bundleNftId).poolNftId;
+        NftId poolNftId = ObjectSetHelperLib.getPoolNftId(_instanceAddress, bundleNftId);
 
         // ensure pool is registered with instance
         if(poolNftId.eqz()) {
@@ -74,14 +74,14 @@ contract BundleSet is
 
     /// @dev unlocked (active) bundles are available to collateralize new policies
     function unlock(NftId bundleNftId) external restricted() {
-        NftId poolNftId = _instance.getInstanceReader().getBundleInfo(bundleNftId).poolNftId;
+        NftId poolNftId = ObjectSetHelperLib.getPoolNftId(_instanceAddress, bundleNftId);
         _activate(poolNftId, _toBundleKey32(bundleNftId));
         emit LogBundleSetBundleUnlocked(poolNftId, bundleNftId);
     }
 
     /// @dev locked (deactivated) bundles may not collateralize any new policies
     function lock(NftId bundleNftId) external restricted() {
-        NftId poolNftId = _instance.getInstanceReader().getBundleInfo(bundleNftId).poolNftId;
+        NftId poolNftId = ObjectSetHelperLib.getPoolNftId(_instanceAddress, bundleNftId);
         _deactivate(poolNftId, _toBundleKey32(bundleNftId));
         emit LogBundleSetBundleLocked(poolNftId, bundleNftId);
     }

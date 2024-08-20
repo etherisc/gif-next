@@ -75,8 +75,8 @@ contract Instance is
 
         // initialize instance supporting contracts
         _instanceStore.initialize();
-        _bundleSet.initialize();
-        _riskSet.initialize();
+        _bundleSet.initialize(instanceAdmin.authority(), address(registry));
+        _riskSet.initialize(instanceAdmin.authority(), address(registry));
         _instanceReader.initialize();
 
         _componentService = IComponentService(

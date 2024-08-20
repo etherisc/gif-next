@@ -8,14 +8,14 @@ import {ObjectSet} from "../../contracts/instance/base/ObjectSet.sol";
 
 contract MockObjectSet is ObjectSet {
 
-    function initialize(address instance)
+    function initialize(address authority, address registry, address instanceAddress) 
         external
         initializer()
     {
-        _instance = IInstance(instance);
-        __Cloneable_init(_instance.authority(), address(_instance.getRegistry()));
+        _instanceAddress = instanceAddress;
+        __Cloneable_init(authority, registry);
         
-        emit LogObjectSetInitialized(instance);
+        emit LogObjectSetInitialized(instanceAddress);
     }
 
     function add(NftId componentNftId, NftId objectNftId) external {
