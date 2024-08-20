@@ -126,7 +126,7 @@ contract PolicyService is
             applicationInfo.sumInsuredAmount);
 
         // optional activation of policy
-        if(activateAt > TimestampLib.zero()) {
+        if(activateAt.gtz()) {
             applicationInfo = _activate(applicationNftId, applicationInfo, activateAt);
         }
 
@@ -165,7 +165,7 @@ contract PolicyService is
         }
 
         // link policy to risk and bundle
-        NftId poolNftId = getRegistry().getObjectInfo(bundleNftId).parentNftId;
+        NftId poolNftId = getRegistry().getParentNftId(bundleNftId);
         instance.getRiskSet().linkPolicy(productNftId, riskId, applicationNftId);
         instance.getBundleSet().linkPolicy(poolNftId, bundleNftId, applicationNftId);
 
@@ -360,7 +360,7 @@ contract PolicyService is
         instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, CLOSED());
 
         // unlink policy from risk and bundle
-        NftId poolNftId = getRegistry().getObjectInfo(bundleNftId).parentNftId;
+        NftId poolNftId = getRegistry().getParentNftId(bundleNftId);
         instance.getRiskSet().unlinkPolicy(productNftId, riskId, policyNftId);
         instance.getBundleSet().unlinkPolicy(poolNftId, bundleNftId, policyNftId);
 

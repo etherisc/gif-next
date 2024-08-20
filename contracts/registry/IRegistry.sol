@@ -118,6 +118,8 @@ interface IRegistry is
 
     function getObjectInfo(NftId nftId) external view returns (ObjectInfo memory info);
 
+    function getParentNftId(NftId nftId) external view returns (NftId parentNftId);
+
     function isObjectType(NftId nftId, ObjectType expectedObjectType) external view returns (bool);
 
     function isObjectType(address contractAddress, ObjectType expectedObjectType) external view returns (bool);

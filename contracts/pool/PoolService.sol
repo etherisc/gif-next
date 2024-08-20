@@ -122,7 +122,7 @@ contract PoolService is
 
         (NftId poolNftId, IInstance instance) = _getAndVerifyActivePool();
         InstanceReader instanceReader = instance.getInstanceReader();
-        NftId productNftId = getRegistry().getObjectInfo(poolNftId).parentNftId;
+        NftId productNftId = getRegistry().getParentNftId(poolNftId);
 
         // check policy matches with calling pool
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
@@ -173,7 +173,7 @@ contract PoolService is
         Amount feeAmount;
 
         {
-            NftId productNftId = registry.getObjectInfo(poolNftId).parentNftId;
+            NftId productNftId = registry.getParentNftId(poolNftId);
             Fee memory stakingFee = instanceReader.getFeeInfo(productNftId).stakingFee;
             (
                 feeAmount,
@@ -324,7 +324,7 @@ contract PoolService is
         _checkNftType(bundleNftId, BUNDLE());
 
         IRegistry registry = getRegistry();
-        NftId poolNftId = registry.getObjectInfo(bundleNftId).parentNftId;
+        NftId poolNftId = registry.getParentNftId(bundleNftId);
         (, address instanceAddress) = ContractLib.getInfoAndInstance(registry, poolNftId, true);
         IInstance instance = IInstance(instanceAddress);
 
@@ -422,7 +422,7 @@ contract PoolService is
         _checkNftType(policyNftId, POLICY());
 
         NftId bundleNftId = policyInfo.bundleNftId;
-        NftId poolNftId = getRegistry().getObjectInfo(bundleNftId).parentNftId;
+        NftId poolNftId = getRegistry().getParentNftId(bundleNftId);
         InstanceStore instanceStore = instance.getInstanceStore();
         
         _accountingService.decreasePoolBalance(

@@ -20,7 +20,7 @@ import {NftId} from "../type/NftId.sol";
 import {ObjectType, COMPONENT, INSTANCE, PRODUCT} from "../type/ObjectType.sol";
 import {VersionPart} from "../type/Version.sol";
 import {RoleId, RoleIdLib} from "../type/RoleId.sol";
-import {IAccess} from "../instance/module/IAccess.sol";
+import {IAccess} from "../authorization/IAccess.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {VersionPart} from "../type/Version.sol";
 
@@ -134,7 +134,7 @@ abstract contract InstanceLinkedComponent is
 
         // if not product parent is product, and parent of product is instance
         IRegistry registry = _checkAndGetRegistry(registryAddress, parentNftId, PRODUCT());
-        return registry.getObjectInfo(parentNftId).parentNftId;
+        return registry.getParentNftId(parentNftId);
     }
 
     /// @dev checks the and gets registry.

@@ -16,22 +16,5 @@ contract DistributionWithReinsuranceAuthorization
      constructor()
           Authorization("DistributionWithReinsurance", DISTRIBUTION())
      {}
-
-     // // TODO cleanup
-     // function _setupTargets()
-     //      internal
-     //      virtual override
-     // {
-     //      uint64 index = 1; // 0 is default
-     //      _addComponentTargetWithRole(DISTRIBUTION(), index);
-     // }
-
-
-     function _setupTargetAuthorizations()
-          internal
-          virtual override
-     {
-          // we don't need distribution, empty implementation is sufficient
-     }
 }
 

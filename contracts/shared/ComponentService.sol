@@ -551,7 +551,7 @@ contract ComponentService is
             IComponents.FeeInfo memory info
         )
     {
-        productNftId = getRegistry().getObjectInfo(componentNftId).parentNftId;
+        productNftId = getRegistry().getParentNftId(componentNftId);
         info = instanceReader.getFeeInfo(productNftId);
     }
 

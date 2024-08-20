@@ -394,7 +394,7 @@ contract ClaimService is
             emit LogClaimServicePayoutProcessed(policyNftId, payoutId, payoutAmount, beneficiary, netPayoutAmount, processingFeeAmount);
 
             {
-                NftId poolNftId = getRegistry().getObjectInfo(policyInfo.bundleNftId).parentNftId;
+                NftId poolNftId = getRegistry().getParentNftId(policyInfo.bundleNftId);
                 IComponents.ComponentInfo memory poolInfo = instanceReader.getComponentInfo(poolNftId);
                 poolInfo.tokenHandler.pushToken(
                     beneficiary, 
@@ -551,7 +551,7 @@ contract ClaimService is
             NftId productNftId = policyInfo.productNftId;
 
             // get pool component info from policy or product
-            NftId poolNftId = getRegistry().getObjectInfo(policyInfo.bundleNftId).parentNftId;
+            NftId poolNftId = getRegistry().getParentNftId(policyInfo.bundleNftId);
             IComponents.ComponentInfo memory poolInfo = instanceReader.getComponentInfo(poolNftId);
 
             netPayoutAmount = payoutAmount;

@@ -51,7 +51,7 @@ library StakeManagerLib {
 
         // TODO check that additional dip, rewards and rewards increment 
         // are still ok with max target staking amount
-        NftId targetNftId = registry.getObjectInfo(stakeNftId).parentNftId;
+        NftId targetNftId = registry.getParentNftId(stakeNftId);
 
         stakingStore.restakeRewards(
             stakeNftId, 

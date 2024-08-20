@@ -373,11 +373,6 @@ contract ProductWithReinsuranceTest is
         productReNftId = instance.registerProduct(address(productRe));
         vm.stopPrank();
 
-        // token handler only becomes available after registration
-        vm.startPrank(productOwner);
-        productRe.approveTokenHandler(token, AmountLib.max());
-        vm.stopPrank();
-
         // solhint-disable
         console.log("product nft id", productReNftId.toInt());
         console.log("product component at", address(productRe));
@@ -397,11 +392,6 @@ contract ProductWithReinsuranceTest is
         vm.stopPrank();
 
         poolReNftId = _registerComponent(productRe, address(poolRe), "pool re");
-
-        // token handler only becomes available after registration
-        vm.startPrank(poolOwner);
-        poolRe.approveTokenHandler(token, AmountLib.max());
-        vm.stopPrank();
 
         // solhint-disable-next-line
         console.log("--- fund investor and customer");

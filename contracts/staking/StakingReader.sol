@@ -93,7 +93,7 @@ contract StakingReader is
 
 
     function getTargetNftId(NftId stakeNftId) public view returns (NftId targetNftId) {
-        return _registry.getObjectInfo(stakeNftId).parentNftId;
+        return _registry.getParentNftId(stakeNftId);
     }
 
 

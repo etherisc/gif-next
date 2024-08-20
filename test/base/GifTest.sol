@@ -500,13 +500,9 @@ contract GifTest is GifDeployer {
         newNftId = instance.registerProduct(address(newProduct));
         vm.stopPrank();
 
-        // token handler only becomes available after registration
-        vm.startPrank(productOwner);
-        newProduct.approveTokenHandler(token, AmountLib.max());
-        vm.stopPrank();
-
         // solhint-disable-next-line
         console.log("product nft id", newNftId.toInt());
+        console.log("product parent nft id", registry.getParentNftId(newNftId).toInt());
     }
 
 
@@ -561,11 +557,6 @@ contract GifTest is GifDeployer {
         vm.stopPrank();
 
         poolNftId = _registerComponent(product, address(pool), "pool");
-
-        // token handler only becomes available after registration
-        vm.startPrank(poolOwner);
-        pool.approveTokenHandler(token, AmountLib.max());
-        vm.stopPrank();
     }
 
     function _getDefaultSimplePoolInfo() internal view returns (IComponents.PoolInfo memory) {
@@ -594,11 +585,6 @@ contract GifTest is GifDeployer {
         vm.stopPrank();
 
         distributionNftId = _registerComponent(product, address(distribution), "distribution");
-
-        // token handler only becomes available after registration
-        vm.startPrank(distributionOwner);
-        distribution.approveTokenHandler(token, AmountLib.max());
-        vm.stopPrank();
     }
 
 

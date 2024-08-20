@@ -7,7 +7,7 @@ import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessMana
 import {BasicDistributionAuthorization} from "../contracts/distribution/BasicDistributionAuthorization.sol";
 import {Fee, FeeLib} from "../contracts/type/Fee.sol";
 import {GifTest} from "./base/GifTest.sol";
-import {IAccess} from "../contracts/instance/module/IAccess.sol";
+import {IAccess} from "../contracts/authorization/IAccess.sol";
 import {IComponent} from "../contracts/shared/IComponent.sol";
 import {IComponents} from "../contracts/instance/module/IComponents.sol";
 import {IComponentService} from "../contracts/shared/IComponentService.sol";

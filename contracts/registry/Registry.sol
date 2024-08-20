@@ -356,6 +356,10 @@ contract Registry is
         return _info[nftId];
     }
 
+    function getParentNftId(NftId nftId) external view returns (NftId parentNftId) {
+        return _info[nftId].parentNftId;
+    }
+
     function isObjectType(address contractAddress, ObjectType expectedObjectType) external view returns (bool) {
         NftId nftId = _nftIdByAddress[contractAddress];
         return isObjectType(nftId, expectedObjectType);
