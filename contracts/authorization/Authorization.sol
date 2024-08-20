@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import {IAccess} from "./IAccess.sol";
 import {IAuthorization} from "./IAuthorization.sol";
-import {ObjectType, ObjectTypeLib} from "../type/ObjectType.sol";
+import {ObjectType, ObjectTypeLib, PRODUCT, ORACLE, DISTRIBUTION, POOL} from "../type/ObjectType.sol";
 import {RoleId, RoleIdLib, ADMIN_ROLE} from "../type/RoleId.sol";
 import {SelectorLib} from "../type/Selector.sol";
 import {Str, StrLib} from "../type/String.sol";
@@ -22,7 +22,10 @@ contract Authorization
     mapping(ObjectType domain => Str target) internal _serviceTarget;
 
     string internal _mainTargetName = "Component";
+    string internal _tokenHandlerName = "ComponentTH";
+
     Str internal _mainTarget;
+    Str internal _tokenHandlerTarget;
     Str[] internal _targets;
 
     mapping(Str target => RoleId roleid) internal _targetRole;
@@ -52,14 +55,10 @@ contract Authorization
         // effects
         // setup main target, main role id and main role info
         _mainTargetName = mainTargetName;
+        _tokenHandlerName = string(abi.encodePacked(mainTargetName, "TH"));
 
         RoleId mainRoleId = RoleIdLib.toComponentRoleId(targetDomain, 0);
         string memory mainRolName = _toTargetRoleName(mainTargetName);
-        // RoleInfo memory mainRoleInfo = _toRoleInfo(
-        //     ADMIN_ROLE(),
-        //     RoleType.Contract,
-        //     1,
-        //     mainTargetName);
 
         _addTargetWithRole(
             _mainTargetName, 
@@ -68,15 +67,26 @@ contract Authorization
 
         _mainTarget = StrLib.toStr(mainTargetName);
         _targetRole[_mainTarget] = mainRoleId;
-        // string memory targetName, 
-        // RoleId roleId, 
-        // string memory roleName
+
+        // add token handler target for components
+        if (targetDomain == PRODUCT() 
+            || targetDomain == DISTRIBUTION()
+            || targetDomain == ORACLE()
+            || targetDomain == POOL()
+        ) {
+            _addTarget(_tokenHandlerName);
+        }
+
+        // setup token handler target
+        _tokenHandlerTarget = StrLib.toStr(_tokenHandlerName);
 
         // setup use case specific parts
         _setupServiceTargets();
         _setupRoles(); // not including main target role
-        _setupTargets(); // not including main target
-        _setupTargetAuthorizations();
+        _setupTargets(); // not including main target (and token handler target)
+
+        _setupTokenHandlerAuthorizations();
+        _setupTargetAuthorizations(); // not including token handler target
     }
 
     function getServiceDomains() external view returns(ObjectType[] memory serviceDomains) {
@@ -117,6 +127,14 @@ contract Authorization
         return _mainTarget;
     }
 
+    function getTokenHandlerName() public view returns(string memory) {
+        return _tokenHandlerName;
+    }
+
+    function getTokenHandlerTarget() public view returns(Str) {
+        return _tokenHandlerTarget;
+    }
+
     function getTarget(string memory targetName) public view returns(Str target) {
         return StrLib.toStr(targetName);
     }
@@ -146,21 +164,24 @@ contract Authorization
     }
 
     /// @dev Sets up the relevant service targets for the component.
-    /// Overwrite this function for a specific component.
+    /// Overwrite this function for use case specific authorizations.
     function _setupServiceTargets() internal virtual { }
 
     /// @dev Sets up the relevant (non-service) targets for the component.
-    /// Overwrite this function for a specific component.
+    /// Overwrite this function for use case specific authorizations.
     function _setupTargets() internal virtual { }
 
     /// @dev Sets up the relevant roles for the component.
-    /// Overwrite this function for a specific component.
+    /// Overwrite this function for use case specific authorizations.
     function _setupRoles() internal virtual {}
 
-    /// @dev Sets up the relevant target authorizations for the component.
-    /// Overwrite this function for a specific realease.
-    function _setupTargetAuthorizations() internal virtual {}
+    /// @dev Sets up the relevant component's token handler authorizations.
+    /// Overwrite this function for use case specific authorizations.
+    function _setupTokenHandlerAuthorizations() internal virtual {}
 
+    /// @dev Sets up the relevant target authorizations for the component.
+    /// Overwrite this function for use case specific authorizations.
+    function _setupTargetAuthorizations() internal virtual {}
 
     /// @dev Add the service target role for the specified service domain
     function _addServiceTargetWithRole(ObjectType serviceDomain) internal {

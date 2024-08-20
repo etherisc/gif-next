@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
-import {ExternallyManagedPoolAuthorization} from "./ExternallyManagedPoolAuthorization.sol";
+import {BasicPoolAuthorization} from "../../../contracts/pool/BasicPoolAuthorization.sol";
 import {ClaimId} from "../../../contracts/type/ClaimId.sol";
 import {Fee, FeeLib} from "../../../contracts/type/Fee.sol";
 import {IAuthorization} from "../../../contracts/authorization/IAuthorization.sol";
@@ -40,7 +40,7 @@ contract ExternallyManagedPool is
             productNftId,
             token,
             poolInfo,
-            new ExternallyManagedPoolAuthorization(),
+            new BasicPoolAuthorization("ExternallyManagedPool"),
             initialOwner
         )
     {

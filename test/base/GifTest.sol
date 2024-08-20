@@ -16,12 +16,15 @@ import {Timestamp} from "../../contracts/type/Timestamp.sol";
 
 import {IAccess} from "../../contracts/authorization/IAccess.sol";
 import {IAccessAdmin} from "../../contracts/authorization/IAccessAdmin.sol";
+import {IServiceAuthorization} from "../../contracts/authorization/IServiceAuthorization.sol";
 
 import {SimpleDistributionAuthorization} from "../../contracts/examples/unpermissioned/SimpleDistributionAuthorization.sol";
 import {BasicOracleAuthorization} from "../../contracts/oracle/BasicOracleAuthorization.sol";
+import {BasicProductAuthorization} from "../../contracts/product/BasicProductAuthorization.sol";
+// TODO cleanup
+// import {BasicPoolAuthorization} from "../../contracts/pool/BasicPoolAuthorization.sol";
 import {SimplePoolAuthorization} from "../../contracts/examples/unpermissioned/SimplePoolAuthorization.sol";
-import {SimpleProductAuthorization} from "../../contracts/examples/unpermissioned/SimpleProductAuthorization.sol";
-import {IServiceAuthorization} from "../../contracts/authorization/IServiceAuthorization.sol";
+// import {SimpleProductAuthorization} from "../../contracts/examples/unpermissioned/SimpleProductAuthorization.sol";
 import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
 import {ReleaseRegistry} from "../../contracts/registry/ReleaseRegistry.sol";
 import {ServiceAuthorizationV3} from "../../contracts/registry/ServiceAuthorizationV3.sol";
@@ -487,7 +490,7 @@ contract GifTest is GifDeployer {
             address(token),
             _getSimpleProductInfo(),
             _getSimpleFeeInfo(),
-            new SimpleProductAuthorization(name),
+            new BasicProductAuthorization(name),
             productOwner // initial owner
         );
         vm.stopPrank();
@@ -619,8 +622,10 @@ contract GifTest is GifDeployer {
         componentNftId = prd.registerComponent(component);
         vm.stopPrank();
 
-        // solhint-disable-next-line
+        // solhint-disable
         console.log(componentName, "nft id", componentNftId.toInt());
+        console.log(componentName, "parent nft id", registry.getParentNftId(componentNftId).toInt());
+        // solhint-enable
     }
 
 

@@ -8,6 +8,7 @@ using {
     eqSelector as ==, 
     neSelector as !=, 
     SelectorLib.toBytes4,
+    SelectorLib.toString,
     SelectorLib.eqz
 } for Selector global;
 
@@ -45,6 +46,10 @@ library SelectorLib {
 
     function toBytes4(Selector s) public pure returns (bytes4) {
         return Selector.unwrap(s);
+    }
+
+    function toString(Selector s) public pure returns (string memory) {
+        return string(abi.encode(Selector.unwrap(s)));
     }
 }
 

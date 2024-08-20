@@ -7,14 +7,12 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import {IComponent} from "./IComponent.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {IComponentService} from "./IComponentService.sol";
-import {INftOwnable} from "../shared/INftOwnable.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRelease} from "../registry/IRelease.sol";
 
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {ContractLib} from "./ContractLib.sol";
 import {NftId} from "../type/NftId.sol";
-import {NftOwnable} from "../shared/NftOwnable.sol";
 import {ObjectType, COMPONENT, STAKING} from "../type/ObjectType.sol";
 import {Registerable} from "../shared/Registerable.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
@@ -107,25 +105,13 @@ abstract contract Component is
         _registerInterface(type(IComponent).interfaceId);
     }
 
-    /// @dev links the component to the registered nft id and approves the token handler to its max value
-    function linkToRegisteredNftId()
-        public
-        virtual override (INftOwnable, NftOwnable)
-        returns (NftId nftId)
-    {
-        nftId = super.linkToRegisteredNftId();
-
-        if (getInitialInfo().objectType != STAKING()) {
-            _approveTokenHandler(getToken(), AmountLib.max());
-        }
-    }
 
     /// @dev callback function for nft transfers
     /// may only be called by chain nft contract.
     /// override internal function _nftTransferFrom to implement custom behaviour
     function nftTransferFrom(address from, address to, uint256 tokenId, address operator)
         external
-        onlyChainNft
+        onlyChainNft()
     {
         _nftTransferFrom(from, to, tokenId, operator);
     }

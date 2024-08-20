@@ -2,7 +2,8 @@
 pragma solidity ^0.8.20;
 
 import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
-import {ExternallyManagedProductAuthorization} from "./ExternallyManagedProductAuthorization.sol";
+import {BasicProductAuthorization} from "../../../contracts/product/BasicProductAuthorization.sol"; 
+// import {ExternallyManagedProductAuthorization} from "./ExternallyManagedProductAuthorization.sol";
 import {SimpleProduct} from "../../../contracts/examples/unpermissioned/SimpleProduct.sol";
 import {ClaimId} from "../../../contracts/type/ClaimId.sol";
 import {FeeLib} from "../../../contracts/type/Fee.sol";
@@ -41,7 +42,7 @@ contract ExternallyManagedProduct is
             token,
             productInfo,
             feeInfo,
-            new ExternallyManagedProductAuthorization(),
+            new BasicProductAuthorization("ExternallyManagedProduct"),
             initialOwner
         )
     {

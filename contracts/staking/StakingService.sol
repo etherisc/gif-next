@@ -32,6 +32,28 @@ contract StakingService is
         TokenHandler _tokenHandler;
     }
 
+
+    modifier onlyStaking() {
+        if (msg.sender != address(_getStakingServiceStorage()._staking)) {
+            revert ErrorStakingServiceNotStaking(msg.sender);
+        }
+        _;
+    }
+
+
+    function approveTokenHandler(
+        IERC20Metadata token,
+        Amount amount
+    )
+        external
+        virtual
+        onlyStaking()
+    {
+        _getStakingServiceStorage()._tokenHandler.approve(
+            token, amount);
+    }
+
+
     function createInstanceTarget(
         NftId targetNftId,
         Seconds initialLockingPeriod,

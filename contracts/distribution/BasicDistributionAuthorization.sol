@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IAccess} from "../authorization/IAccess.sol";
+import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
+
 import {Authorization} from "../authorization/Authorization.sol";
 import {BasicDistribution} from "./BasicDistribution.sol"; 
 import {Distribution} from "./Distribution.sol";
-import {DISTRIBUTION} from "../type/ObjectType.sol";
-import {IAccess} from "../authorization/IAccess.sol";
-import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
-import {PUBLIC_ROLE} from "../../contracts/type/RoleId.sol";
+import {COMPONENT, DISTRIBUTION} from "../type/ObjectType.sol";
+import {RoleId, PUBLIC_ROLE} from "../type/RoleId.sol";
+import {TokenHandler} from "../shared/TokenHandler.sol";
 
 
 contract BasicDistributionAuthorization
@@ -17,6 +19,20 @@ contract BasicDistributionAuthorization
      constructor(string memory distributionlName)
           Authorization(distributionlName, DISTRIBUTION())
      {}
+
+     function _setupServiceTargets()
+          internal
+          virtual override
+     {
+          _addServiceTargetWithRole(COMPONENT());
+     }
+
+     function _setupTokenHandlerAuthorizations() internal virtual override {
+          IAccess.FunctionInfo[] storage functions;
+          functions = _authorizeForTarget(getTokenHandlerName(), getServiceRole(COMPONENT()));
+          _authorize(functions, TokenHandler.approve.selector, "approve");
+          _authorize(functions, TokenHandler.setWallet.selector, "setWallet");
+     }
 
      function _setupTargetAuthorizations()
           internal

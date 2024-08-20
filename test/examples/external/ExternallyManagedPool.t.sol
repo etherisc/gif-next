@@ -45,7 +45,7 @@ contract ExternallyManagedPoolTest is GifTest {
         emPoolNftId = emProduct.registerComponent(address(emPool));
         emPool.init();
         vm.stopPrank();
-   }
+    }
 
     function test_externallyManagedPoolSetUp() public {
         // GIVEN just setUp

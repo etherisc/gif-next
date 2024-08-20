@@ -24,6 +24,8 @@ contract TestComponent is GifTest {
     function setUp() public override {
         super.setUp();
         _prepareProduct(); // also deploys and registers distribution
+
+        _printAuthz(instance.getInstanceAdmin(), "instance (including components)");
     }
 
     function test_componentGetComponentInfo() public {

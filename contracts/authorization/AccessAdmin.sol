@@ -344,15 +344,18 @@ contract AccessAdmin is
             revert ErrorAuthorizeForAdminRoleInvalid(target);
         }
 
-        bool addFunctions = true;
-        bytes4[] memory functionSelectors = _processFunctionSelectors(target, functions, addFunctions);
+        (
+            bytes4[] memory functionSelectors,
+            string[] memory functionNames
+        ) = _processFunctionSelectors(target, functions, true);
 
         // apply authz via access manager
         _grantRoleAccessToFunctions(
             target, 
             roleId, 
-            functionSelectors, 
-            false); // allowLockedRoles
+            functionSelectors,
+            functionNames, 
+            false); // allow locked roles
     }
 
     function _unauthorizeTargetFunctions(
@@ -361,14 +364,17 @@ contract AccessAdmin is
     )
         internal
     {
-        bool addFunctions = false;
-        bytes4[] memory functionSelectors = _processFunctionSelectors(target, functions, addFunctions);
+        (
+            bytes4[] memory functionSelectors,
+            string[] memory functionNames
+        ) = _processFunctionSelectors(target, functions, false);
 
         _grantRoleAccessToFunctions(
             target, 
             getAdminRole(), 
             functionSelectors, 
-            true); // allowLockedRoles
+            functionNames, 
+            true);  // allowLockedRoles
     }
 
     function _processFunctionSelectors(
@@ -379,11 +385,13 @@ contract AccessAdmin is
         internal
         onlyExistingTarget(target)
         returns (
-            bytes4[] memory functionSelectors
+            bytes4[] memory functionSelectors,
+            string[] memory functionNames
         )
     {
         uint256 n = functions.length;
         functionSelectors = new bytes4[](n);
+        functionNames = new string[](n);
         FunctionInfo memory func;
         Selector selector;
 
@@ -400,6 +408,7 @@ contract AccessAdmin is
 
             // add bytes4 selector to function selector array
             functionSelectors[i] = selector.toBytes4();
+            functionNames[i] = func.name.toString();
         }
     }
 
@@ -408,18 +417,27 @@ contract AccessAdmin is
         address target,
         RoleId roleId, 
         bytes4[] memory functionSelectors,
+        string[] memory functionNames,
         bool allowLockedRoles // admin and public roles are locked
     )
         internal
         onlyExistingTarget(target)
         onlyExistingRole(roleId, true, allowLockedRoles)
     {
+
         _authority.setTargetFunctionRole(
             target,
             functionSelectors,
             RoleId.unwrap(roleId));
 
-        // implizit logging: rely on OpenZeppelin log TargetFunctionRoleUpdated
+        for (uint256 i = 0; i < functionSelectors.length; i++) {
+            emit LogAccessAdminFunctionGranted(
+                target, 
+                // _getAccountName(target), 
+                // string(abi.encodePacked("", functionSelectors[i])), 
+                functionNames[i], 
+                _getRoleName(roleId));
+        }
     }
 
 
@@ -448,7 +466,7 @@ contract AccessAdmin is
             account, 
             0);
         
-        // indirect logging: rely on OpenZeppelin log RoleGranted
+        emit LogAccessAdminRoleGranted(account, _getRoleName(roleId));
     }
 
     /// @dev revoke the specified role from the provided account
@@ -468,7 +486,7 @@ contract AccessAdmin is
             RoleId.unwrap(roleId), 
             account);
 
-        // indirect logging: rely on OpenZeppelin log RoleGranted
+        emit LogAccessAdminRoleRevoked(account, _roleInfo[roleId].name.toString());
     }
 
 
@@ -527,7 +545,7 @@ contract AccessAdmin is
         // add role to list of roles
         _roleIds.push(roleId);
 
-        emit LogRoleCreated(roleId, info.roleType, info.adminRoleId, info.name.toString());
+        emit LogAccessAdminRoleCreated(roleId, info.roleType, info.adminRoleId, info.name.toString());
     }
 
 
@@ -586,7 +604,7 @@ contract AccessAdmin is
         // add role to list of roles
         _targets.push(target);
 
-        emit LogTargetCreated(target, targetName);
+        emit LogAccessAdminTargetCreated(target, targetName);
     }
 
 
@@ -618,6 +636,21 @@ contract AccessAdmin is
         }
 
         _authority.setTargetClosed(target, locked);
+    }
+
+    function _getAccountName(address account) internal view returns (string memory) {
+        if (targetExists(account)) {
+            return _targetInfo[account].name.toString();
+        }
+        return "<unknown-account>";
+    }
+
+
+    function _getRoleName(RoleId roleId) internal view returns (string memory) {
+        if (roleExists(roleId)) {
+            return _roleInfo[roleId].name.toString();
+        }
+        return "<unknown-role>";
     }
 
 

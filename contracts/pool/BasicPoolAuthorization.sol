@@ -1,14 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Authorization} from "../authorization/Authorization.sol";
-import {BasicPool} from "./BasicPool.sol"; 
 import {IAccess} from "../authorization/IAccess.sol";
 import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
 import {IPoolComponent} from "./IPoolComponent.sol";
-import {POOL} from "../type/ObjectType.sol";
+
+import {Authorization} from "../authorization/Authorization.sol";
+import {BasicPool} from "./BasicPool.sol"; 
+import {COMPONENT, POOL} from "../type/ObjectType.sol";
 import {PUBLIC_ROLE} from "../../contracts/type/RoleId.sol";
 import {RoleId} from "../type/RoleId.sol";
+import {TokenHandler} from "../shared/TokenHandler.sol";
 
 
 contract BasicPoolAuthorization
@@ -23,7 +25,20 @@ contract BasicPoolAuthorization
           internal
           virtual override
      {
+          _addServiceTargetWithRole(COMPONENT());
           _addServiceTargetWithRole(POOL());
+     }
+
+     function _setupTokenHandlerAuthorizations() internal virtual override {
+          // authorize token handler functions for component service role
+          IAccess.FunctionInfo[] storage functions;
+          functions = _authorizeForTarget(getTokenHandlerName(), getServiceRole(COMPONENT()));
+          _authorize(functions, TokenHandler.approve.selector, "approve");
+          _authorize(functions, TokenHandler.setWallet.selector, "setWallet");
+
+          // authorize token handler functions for pool service role
+          functions = _authorizeForTarget(getTokenHandlerName(), getServiceRole(POOL()));
+          _authorize(functions, TokenHandler.pullToken.selector, "pullToken");
      }
 
      function _setupTargetAuthorizations()

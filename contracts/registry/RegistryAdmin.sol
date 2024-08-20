@@ -4,11 +4,12 @@ pragma solidity ^0.8.20;
 import {AccessAdmin} from "../authorization/AccessAdmin.sol";
 import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
 import {IAccess} from "../authorization/IAccess.sol";
+import {IComponent} from "../shared/IComponent.sol";
 import {IRegistry} from "./IRegistry.sol";
 import {IService} from "../shared/IService.sol";
 import {IServiceAuthorization} from "../authorization/IServiceAuthorization.sol";
 import {IStaking} from "../staking/IStaking.sol";
-import {ObjectType, ObjectTypeLib, ALL, REGISTRY, STAKING, POOL, RELEASE} from "../type/ObjectType.sol";
+import {ObjectType, ObjectTypeLib, ALL, COMPONENT, REGISTRY, STAKING, POOL, RELEASE} from "../type/ObjectType.sol";
 import {ReleaseRegistry} from "./ReleaseRegistry.sol";
 import {RoleId, RoleIdLib, ADMIN_ROLE, GIF_MANAGER_ROLE, GIF_ADMIN_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {Staking} from "../staking/Staking.sol";
@@ -45,6 +46,7 @@ contract RegistryAdmin is
 
     /// @dev gif roles for external contracts
     string public constant REGISTRY_SERVICE_ROLE_NAME = "RegistryServiceRole";
+    string public constant COMPONENT_SERVICE_ROLE_NAME = "ComponentServiceRole";
     string public constant POOL_SERVICE_ROLE_NAME = "PoolServiceRole";
     string public constant STAKING_SERVICE_ROLE_NAME = "StakingServiceRole";
 
@@ -291,7 +293,7 @@ contract RegistryAdmin is
         // grant permissions to the staking role for token handler contract
         IStaking staking = IStaking(_staking);
         functions = new FunctionInfo[](2);
-        functions[0] = toFunction(TokenHandler.pullToken.selector, "pullTokens");
+        functions[0] = toFunction(TokenHandler.pullToken.selector, "pullToken");
         functions[1] = toFunction(TokenHandler.pushToken.selector, "pushToken");
         _authorizeTargetFunctions(address(staking.getTokenHandler()), stakingRoleId, functions);
 
@@ -319,6 +321,13 @@ contract RegistryAdmin is
         functions[9] = toFunction(IStaking.updateRewards.selector, "updateRewards");
         functions[10] = toFunction(IStaking.claimRewards.selector, "claimRewards");
         _authorizeTargetFunctions(_staking, stakingServiceRoleId, functions);
+
+        // grant permissions to the staking service role for staking token handler
+        functions = new FunctionInfo[](2);
+        functions[0] = toFunction(TokenHandler.approve.selector, "approve");
+        functions[1] = toFunction(TokenHandler.pullToken.selector, "pullToken");
+        _authorizeTargetFunctions(
+            address(IComponent(_staking).getTokenHandler()), stakingServiceRoleId, functions);
 
         // create pool service role
         RoleId poolServiceRoleId = RoleIdLib.roleForTypeAndAllVersions(POOL());

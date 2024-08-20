@@ -9,6 +9,7 @@ import {IInstance} from "./IInstance.sol";
 
 import {AccessAdmin} from "../authorization/AccessAdmin.sol";
 import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
+import {NftId} from "../type/NftId.sol";
 import {ObjectType} from "../type/ObjectType.sol";
 import {RoleId, RoleIdLib} from "../type/RoleId.sol";
 import {Str, StrLib} from "../type/String.sol";
@@ -137,16 +138,17 @@ contract InstanceAdmin is
         // create other roles
         IAuthorization authorization = component.getAuthorization();
         _createRoles(authorization);
-        
-        FunctionInfo[] memory functions = new FunctionInfo[](2);
-        functions[0] = toFunction(TokenHandler.pullToken.selector, "pullTokens");
-        functions[1] = toFunction(TokenHandler.pushToken.selector, "pushToken");
 
-        // FIXME: make this a bit nicer and work with IAuthorization. Use a specific role, not public - access to TokenHandler must be restricted
-        _authorizeTargetFunctions(
-            address(component.getTokenHandler()),
-            getPublicRole(),
-            functions);
+        // TODO cleanup
+        // FunctionInfo[] memory functions = new FunctionInfo[](2);
+        // functions[0] = toFunction(TokenHandler.pullToken.selector, "pullToken");
+        // functions[1] = toFunction(TokenHandler.pushToken.selector, "pushToken");
+
+        // // FIXME: make this a bit nicer and work with IAuthorization. Use a specific role, not public - access to TokenHandler must be restricted
+        // _authorizeTargetFunctions(
+        //     address(component.getTokenHandler()),
+        //     getPublicRole(),
+        //     functions);
         
         _createTargetAuthorizations(authorization);
     }
@@ -244,10 +246,14 @@ contract InstanceAdmin is
             false); // custom
 
         // create component's token handler target
+        NftId componentNftId = _registry.getNftIdForAddress(address(component));
+        address tokenHandler = address(
+            _instance.getInstanceReader().getComponentInfo(
+                componentNftId).tokenHandler);
+
         _createTarget(
-            // TODO fetch token handler from instance
-            address(component.getTokenHandler()), 
-            string(abi.encodePacked(targetName, "TH")), 
+            tokenHandler, 
+            authorization.getTokenHandlerName(), 
             true, 
             false);
 

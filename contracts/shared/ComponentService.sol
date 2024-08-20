@@ -130,24 +130,6 @@ contract ComponentService is
     }
 
 
-    function approveStakingTokenHandler(
-        IERC20Metadata token,
-        Amount amount
-    )
-        external
-        virtual
-    {
-        // checks
-        ContractLib.getAndVerifyStaking(
-            getRegistry(),
-            msg.sender); // only active
-
-        // effects
-        TokenHandler tokenHandler = IComponent(msg.sender).getTokenHandler();
-        tokenHandler.approve(token, amount);
-    }
-
-
     function setWallet(address newWallet)
         external
         virtual

@@ -75,6 +75,9 @@ contract TokenHandlerBase {
         }
 
         TOKEN = IERC20Metadata(token);
+
+        // self approval of token handler to max amount
+        _approve(TOKEN, AmountLib.max());
     }
 
 
@@ -235,9 +238,6 @@ contract TokenHandler is
     // onlyService
     error ErrorTokenHandlerNotService(address service);
 
-    // TODO delete
-    error ErrorTokenHandlerRecipientWalletsMustBeDistinct(address to, address to2, address to3);
-
     modifier onlyService() {
         if (!REGISTRY.isObjectType(msg.sender, SERVICE())) {
             revert ErrorTokenHandlerNotService(msg.sender);
@@ -262,7 +262,7 @@ contract TokenHandler is
     /// covers the current component balance must exist
     function setWallet(address newWallet)
         external
-        // restricted() // TODO re-activate
+        restricted()
         onlyService()
     {
         _setWallet(newWallet);
@@ -278,7 +278,7 @@ contract TokenHandler is
         Amount amount
     )
         external
-        // restricted() // TODO re-activate
+        restricted()
         onlyService()
     {
         _approve(token, amount);
@@ -291,7 +291,7 @@ contract TokenHandler is
         Amount amount
     )
         external
-        // restricted() // TODO re-activate
+        restricted()
         onlyService()
     {
         _pullToken(from, amount);

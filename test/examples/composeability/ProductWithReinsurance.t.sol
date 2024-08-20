@@ -5,7 +5,6 @@ import {Vm, console} from "../../../lib/forge-std/src/Test.sol";
 
 import {GifTest} from "../../base/GifTest.sol";
 import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
-import {DistributionWithReinsuranceAuthorization} from "./DistributionWithReinsuranceAuthorization.sol";
 import {PoolWithReinsuranceAuthorization} from "./PoolWithReinsuranceAuthorization.sol";
 import {ProductWithReinsuranceAuthorization} from "./ProductWithReinsuranceAuthorization.sol";
 import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
@@ -13,7 +12,6 @@ import {ClaimId, ClaimIdLib} from "../../../contracts/type/ClaimId.sol";
 import {ContractLib} from "../../../contracts/shared/ContractLib.sol";
 import {ProductWithReinsurance} from "./ProductWithReinsurance.sol";
 import {PoolWithReinsurance} from "./PoolWithReinsurance.sol";
-import {SimpleDistribution} from "../../../contracts/examples/unpermissioned/SimpleDistribution.sol";
 import {SimpleProduct} from "../../../contracts/examples/unpermissioned/SimpleProduct.sol";
 import {SimplePool} from "../../../contracts/examples/unpermissioned/SimplePool.sol";
 import {IComponents} from "../../../contracts/instance/module/IComponents.sol";
@@ -43,11 +41,9 @@ contract ProductWithReinsuranceTest is
     uint256 public constant SUM_INSURED = 1000;
     uint256 public constant CUSTOMER_FUNDS = 400;
 
-    SimpleDistribution public distributionRe;
     PoolWithReinsurance public poolRe;
     ProductWithReinsurance public productRe;
 
-    NftId public distributionReNftId;
     NftId public poolReNftId;
     NftId public productReNftId;
     NftId public policyReNftId;
@@ -69,6 +65,7 @@ contract ProductWithReinsuranceTest is
 
         // reinsurance product
         _prepareProduct();
+        _printAuthz(instanceAdmin, "instance with simple product setup");
 
         // setup product with reinsurance
         _prepareProductWithReinsurance();
@@ -392,6 +389,8 @@ contract ProductWithReinsuranceTest is
         vm.stopPrank();
 
         poolReNftId = _registerComponent(productRe, address(poolRe), "pool re");
+
+        _printAuthz(instanceAdmin, "instance with reinsurance setup");
 
         // solhint-disable-next-line
         console.log("--- fund investor and customer");
