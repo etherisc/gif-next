@@ -92,9 +92,11 @@ async function executeAllDeploymentSteps(contractName: string, signer: Signer, c
 }
 
 async function verifyDeployedContract(contractName: string, address: AddressLike, tx: TransactionResponse, constructorArgs?: any[] | undefined, sourceFileContract?: string) {
-    constructorArgs !== undefined
-        ? await prepareVerificationData(contractName, address, constructorArgs, sourceFileContract)
-        : await prepareVerificationData(contractName, address, [], sourceFileContract);
+    if (constructorArgs !== undefined) {
+        await prepareVerificationData(contractName, address, constructorArgs, sourceFileContract)
+    } else {
+        await prepareVerificationData(contractName, address, [], sourceFileContract);
+    }
 }
 
 async function awaitDeploymentTxAndVerify(contractName: string, signer: Signer, constructorArgs?: any[] | undefined, sourceFileContract?: string): Promise<DeploymentResult> {

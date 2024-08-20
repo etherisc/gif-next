@@ -15,6 +15,7 @@ import { LibraryAddresses } from "./libraries";
 import { RegistryAddresses } from "./registry";
 import { ServiceAddresses } from "./services";
 import { executeTx, getFieldFromLogs, getFieldFromTxRcptLogs, getTxOpts } from "./transaction";
+import { prepareVerificationData } from "./verification";
 
 export type InstanceAddresses = {
     instanceAuthorizationV3Address: AddressLike,
@@ -69,6 +70,13 @@ export async function deployAndRegisterMasterInstance(
         }
     );
     const masterInstanceAdmin = masterInstanceAdminContract as InstanceAdmin;
+
+    prepareVerificationData(
+        "AccessManagerCloneable",
+        await masterInstanceAdmin.authority(),
+        [],
+        undefined
+    );
 
     const { address: masterInstanceStoreAddress, contract: masterInstanceStoreContract } = await deployContract(
         "InstanceStore",
