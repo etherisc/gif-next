@@ -7,7 +7,6 @@ import { deploymentsBaseDirectory, isTestChain } from "./deployment_state";
 
 export type LibraryAddresses = {
     nftIdLibAddress: AddressLike;
-    mathLibAddress: AddressLike;
     uFixedLibAddress: AddressLike;
     amountLibAddress: AddressLike;
     claimIdLibAddress: AddressLike;
@@ -126,13 +125,6 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
             }
         });
     LIBRARY_ADDRESSES.set("PayoutIdLib", payoutIdLibAddress);
-
-    const { address: mathLibAddress } = await deployContract(
-        "Math",
-        owner,
-        undefined,
-        {});
-    LIBRARY_ADDRESSES.set("Math", mathLibAddress);
 
     const { address: blockNumberLibAddress } = await deployContract(
         "BlocknumberLib",
@@ -329,7 +321,6 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         
     return {
         nftIdLibAddress,
-        mathLibAddress,
         uFixedLibAddress,
         amountLibAddress,
         contractLibAddress,
