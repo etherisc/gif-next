@@ -187,10 +187,7 @@ contract OracleService is
         virtual
         restricted()
     {
-        (
-            NftId requesterNftId,,
-            IInstance instance
-        ) = _getAndVerifyCallingComponent(COMPONENT());
+        (NftId requesterNftId,, IInstance instance) = _getAndVerifyCallingComponent(COMPONENT());
 
         // oracle nftId - referral id corespondence is stored in instance store instead of registry
         bool callerIsOracle = false;
@@ -214,10 +211,6 @@ contract OracleService is
         internal
         virtual
         view
-        returns (
-            NftId requesterNftId,
-            IOracleComponent oracle
-        )
     {
         // check expiriyAt >= now
         if (expiryAt < TimestampLib.blockTimestamp()) {

@@ -11,6 +11,7 @@ import {GifTest} from "../../base/GifTest.sol";
 import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
 import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
 import {ClaimId} from "../../../contracts/type/ClaimId.sol";
+import {ContractLib} from "../../../contracts/shared/ContractLib.sol";
 import {SimpleProduct} from "../../../contracts/examples/unpermissioned/SimpleProduct.sol";
 import {SimplePool} from "../../../contracts/examples/unpermissioned/SimplePool.sol";
 import {IAuthorization} from "../../../contracts/authorization/IAuthorization.sol";
@@ -92,7 +93,7 @@ contract TestProductRegistration is GifTest {
         // WHEN + THEN
         vm.expectRevert(
             abi.encodeWithSelector(
-                IComponentService.ErrorComponentServiceAlreadyRegistered.selector,
+                IComponentService.ErrorComponentServiceComponentAlreadyRegistered.selector,
                 address(myProduct)));
 
         vm.startPrank(instanceOwner);
@@ -118,7 +119,7 @@ contract TestProductRegistration is GifTest {
     }
 
 
-    // check that non instance owner fails to register a product
+    // check that non instance fails to register a product
     function test_productRegisterAttemptViaService() public {
         // GIVEN
         SimpleProduct myProduct = _deployProductDefault("MyProduct");
@@ -126,7 +127,7 @@ contract TestProductRegistration is GifTest {
         // WHEN + THEN
         vm.expectRevert(
             abi.encodeWithSelector(
-                IComponentService.ErrorComponentServiceSenderNotRegistered.selector,
+                ContractLib.ErrorContractLibTargetNotRegistered.selector,
                 address(instanceOwner)));
 
         vm.startPrank(instanceOwner);
@@ -152,10 +153,10 @@ contract TestProductRegistration is GifTest {
         // WHEN + THEN
         vm.expectRevert(
             abi.encodeWithSelector(
-                IComponentService.ErrorComponentServiceReleaseMismatch.selector,
+                IComponentService.ErrorComponentServiceComponentReleaseMismatch.selector,
                 address(myProductV4),
-                myProductV4.getRelease(),
-                instance.getRelease()));
+                instance.getRelease(),
+                myProductV4.getRelease()));
 
         vm.startPrank(instanceOwner);
         NftId myNftId = instance.registerProduct(address(myProductV4));
@@ -190,9 +191,8 @@ contract TestProductRegistration is GifTest {
         // WHEN + THEN
         vm.expectRevert(
             abi.encodeWithSelector(
-                IComponentService.ErrorComponentServiceInvalidType.selector,
+                IComponentService.ErrorComponentServiceComponentTypeNotSupported.selector,
                 address(myPool),
-                PRODUCT(), 
                 POOL()));
 
         vm.startPrank(instanceOwner);
