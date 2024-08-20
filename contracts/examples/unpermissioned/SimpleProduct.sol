@@ -188,6 +188,13 @@ contract SimpleProduct is
         _activate(policyNftId, activateAt);
     }
 
+    function adjustActivation(
+        NftId policyNftId,
+        Timestamp activateAt
+    ) public {
+        _adjustActivation(policyNftId, activateAt);
+    }
+
     function close(
         NftId policyNftId
     ) public {

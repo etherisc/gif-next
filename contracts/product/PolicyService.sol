@@ -269,6 +269,47 @@ contract PolicyService is
         _policyHolderPolicyActivated(policyNftId, activateAt);
     }
 
+    /// @inheritdoc IPolicyService
+    function adjustActivation(
+        NftId policyNftId,
+        Timestamp newActivateAt
+    )
+        external
+        virtual
+        nonReentrant()
+    {
+        // checks
+        (
+            IInstance instance,,
+            IPolicy.PolicyInfo memory policyInfo
+        ) = _getAndVerifyCallerForPolicy(policyNftId);
+
+        if (policyInfo.activatedAt.eqz()) {
+            revert ErrorPolicyServicePolicyNotActivated(policyNftId);
+        }
+
+        if (newActivateAt < TimestampLib.blockTimestamp()) {
+            revert ErrorPolicyServicePolicyActivationTooEarly(policyNftId, TimestampLib.blockTimestamp(), newActivateAt);
+        }
+
+        if (newActivateAt > policyInfo.expiredAt) {
+            revert ErrorPolicyServicePolicyActivationTooLate(policyNftId, policyInfo.expiredAt, newActivateAt);
+        }
+
+        Timestamp originalActivatedAt = policyInfo.activatedAt;
+
+        // effects
+        policyInfo.activatedAt = newActivateAt;
+        instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, KEEP_STATE());
+
+        // log policy activation before interactions with policy holder
+        emit LogPolicyServicePolicyActivatedUpdated(policyNftId, originalActivatedAt, newActivateAt);
+
+        // interactions
+        // callback to policy holder if applicable
+        _policyHolderPolicyActivated(policyNftId, newActivateAt);
+    }
+
 
     /// @inheritdoc IPolicyService
     function expire(
