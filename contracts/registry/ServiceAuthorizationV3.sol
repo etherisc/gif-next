@@ -319,7 +319,7 @@ contract ServiceAuthorizationV3
           _authorize(functions, IPolicyService.collectPremium.selector, "collectPremium");
           _authorize(functions, IPolicyService.activate.selector, "activate");
           _authorize(functions, IPolicyService.expire.selector, "expire");
-          _authorize(functions, IPolicyService.expirePolicy.selector, "expirePolicy");
+          _authorize(functions, IPolicyService.expireFromService.selector, "expireFromService");
           _authorize(functions, IPolicyService.close.selector, "close");
 
      }
