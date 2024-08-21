@@ -21,25 +21,11 @@ interface IPolicyService is IService {
 
     error ErrorPolicyServicePolicyStateNotApplied(NftId applicationNftId);
     error ErrorPolicyServicePolicyStateNotCollateralized(NftId applicationNftId);
-    error ErrorPolicyServicePolicyAlreadyActivated(NftId policyNftId);
 
     error ErrorPolicyServiceBalanceInsufficient(address policyOwner, uint256 premiumAmount, uint256 balance);
     error ErrorPolicyServiceAllowanceInsufficient(address policyOwner, address tokenHandler, uint256 premiumAmount, uint256 allowance);
 
-    error ErrorPolicyServiceInsufficientAllowance(address customer, address tokenHandlerAddress, uint256 amount);
     error ErrorPolicyServicePremiumAlreadyPaid(NftId policyNftId);
-
-    error ErrorPolicyServicePolicyNotCloseable(NftId policyNftId);
-
-    error ErrorPolicyServicePolicyNotActive(NftId policyNftId, StateId state);
-    error ErrorPolicyServicePremiumNotPaid(NftId policyNftId, Amount premiumAmount);
-    error ErrorPolicyServiceOpenClaims(NftId policyNftId, uint16 openClaimsCount);
-    error ErrorPolicyServicePolicyHasNotExpired(NftId policyNftId, Timestamp expiredAt);
-    error ErrorPolicyServicePolicyExpirationTooLate(NftId policyNftId, Timestamp upperLimit, Timestamp expiredAt);
-    error ErrorPolicyServicePolicyExpirationTooEarly(NftId policyNftId, Timestamp lowerLimit, Timestamp expiredAt);
-
-    error ErrorPolicyServicePremiumMismatch(NftId policyNftId, Amount expectedPremiumAmount, Amount recalculatedPremiumAmount);
-    error ErrorPolicyServiceTransferredPremiumMismatch(NftId policyNftId, Amount expectedPremiumAmount, Amount transferredPremiumAmount);
 
     /// @dev creates the policy from {applicationNftId}. 
     /// After successful completion of the function the policy can be referenced using the application NftId.
@@ -82,8 +68,5 @@ interface IPolicyService is IService {
 
     /// @dev Expires the specified policy and sets the expiry date in the policy metadata. 
     /// Function consumers is claim service.
-    function expirePolicy(IInstance instance, NftId policyNftId, Timestamp expireAt) external returns (Timestamp expiredAt);
-
-    /// @dev Returns true iff policy is closeable
-    function policyIsCloseable(InstanceReader instanceReader, NftId policyNftId) external view returns (bool isCloseable);
+    function expireFromService(IInstance instance, NftId policyNftId, Timestamp expireAt) external returns (Timestamp expiredAt);
 }

@@ -58,8 +58,8 @@ interface IPolicy {
         uint16 openClaimsCount;
         Amount claimAmount; // sum of confirmed claim amounts (max = sum insured amount)
         Amount payoutAmount; // sum of payouts (max = sum confirmed claim amountst)
-        Timestamp activatedAt; // time of underwriting
-        Timestamp expiredAt; // no new claims (activatedAt + lifetime)
+        Timestamp activatedAt; // time of underwriting, change limits now <= newActivatedAt < expiredAt
+        Timestamp expiredAt; // no new claims (activatedAt + lifetime), change limits activatedAt < newExpiredAt < oldExpiredAt
         Timestamp closedAt; // no locked capital (or declinedAt)
     }
 

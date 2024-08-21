@@ -9,6 +9,7 @@ import {SimpleProduct} from "../contracts/examples/unpermissioned/SimpleProduct.
 import {IComponents} from "../contracts/instance/module/IComponents.sol";
 import {IDistribution} from "../contracts/instance/module/IDistribution.sol";
 import {IPolicy} from "../contracts/instance/module/IPolicy.sol";
+import {PolicyLib} from "../contracts/product/PolicyLib.sol";
 import {Amount, AmountLib} from "../contracts/type/Amount.sol";
 import {Fee, FeeLib} from "../contracts/type/Fee.sol";
 import {UFixedLib} from "../contracts/type/UFixed.sol";
@@ -216,7 +217,7 @@ contract TestProduct is GifTest {
         assertTrue(policyInfo.expiredAt.gtz(), "expiredAt not set");
         assertTrue(policyInfo.expiredAt.toInt() == policyInfo.activatedAt.addSeconds(sec30).toInt(), "expiredAt not activatedAt + 30");
 
-        assertEq(instanceReader.getPremiumInfoState(policyNftId).toInt(), EXPECTED().toInt(), "premium info state not CALCULATED");
+        assertEq(instanceReader.getPremiumState(policyNftId).toInt(), EXPECTED().toInt(), "premium info state not CALCULATED");
 
         // solhint-disable-next-line
         console.log("checking bundle amounts after underwriting");
@@ -322,7 +323,7 @@ contract TestProduct is GifTest {
         assertTrue(policyInfo.expiredAt.gtz(), "expiredAt not set");
         assertTrue(policyInfo.expiredAt.toInt() == policyInfo.activatedAt.addSeconds(sec30).toInt(), "expiredAt not activatedAt + 30");
 
-        assertEq(instanceReader.getPremiumInfoState(policyNftId).toInt(), PAID().toInt(), "premium info state not CALCULATED");
+        assertEq(instanceReader.getPremiumState(policyNftId).toInt(), PAID().toInt(), "premium info state not CALCULATED");
 
         // solhint-disable-next-line 
         console.log("checking token balances after underwriting");
@@ -658,7 +659,7 @@ contract TestProduct is GifTest {
 
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
         assertEq(policyInfo.premiumAmount.toInt(), 137, "unexpected premium amount from application");
-        assertEq(instanceReader.getPremiumInfoState(policyNftId).toInt(), PAID().toInt(), "unexpected premium info state");
+        assertEq(instanceReader.getPremiumState(policyNftId).toInt(), PAID().toInt(), "unexpected premium info state");
     }
 
 
@@ -1244,7 +1245,7 @@ contract TestProduct is GifTest {
         
         // THEN - expect revert
         vm.expectRevert(abi.encodeWithSelector(
-            IPolicyService.ErrorPolicyServicePolicyNotActive.selector, 
+            PolicyLib.ErrorPolicyLibPolicyNotActive.selector, 
             policyNftId,
             DECLINED()));
 
@@ -1302,7 +1303,7 @@ contract TestProduct is GifTest {
         
         // THEN - expect revert
         vm.expectRevert(abi.encodeWithSelector(
-            IPolicyService.ErrorPolicyServicePolicyExpirationTooLate.selector, 
+            PolicyLib.ErrorPolicyLibPolicyExpirationTooLate.selector, 
             policyNftId,
             expireAtTs,
             expireAtTs));
@@ -1315,7 +1316,7 @@ contract TestProduct is GifTest {
         Timestamp expireAtTs2 = TimestampLib.toTimestamp(expireAt);
 
         vm.expectRevert(abi.encodeWithSelector(
-            IPolicyService.ErrorPolicyServicePolicyExpirationTooLate.selector, 
+            PolicyLib.ErrorPolicyLibPolicyExpirationTooLate.selector, 
             policyNftId,
             expireAtTs,
             expireAtTs2));
@@ -1376,7 +1377,7 @@ contract TestProduct is GifTest {
         
         // THEN - expect revert
         vm.expectRevert(abi.encodeWithSelector(
-            IPolicyService.ErrorPolicyServicePolicyExpirationTooEarly.selector, 
+            PolicyLib.ErrorPolicyLibPolicyExpirationTooEarly.selector, 
             policyNftId,
             vm.getBlockTimestamp(),
             expireAtTs));

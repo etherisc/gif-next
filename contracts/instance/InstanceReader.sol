@@ -99,7 +99,7 @@ contract InstanceReader {
         }
     }
 
-    function getPremiumInfoState(NftId policyNftId) 
+    function getPremiumState(NftId policyNftId) 
         public
         view
         returns (StateId state)
@@ -528,6 +528,13 @@ contract InstanceReader {
         return _instance.getInstanceAdmin().hasAdminRole(account, roleId);
     }
 
+    function isExists(RoleId role) public view returns (bool) {
+        return _instance.getInstanceAdmin().roleExists(role);
+    }
+
+    function isExists(address target) public view returns (bool) {
+        return _instance.getInstanceAdmin().targetExists(target);
+    }
 
     function isLocked(address target) public view returns (bool) {
         return _instance.getInstanceAdmin().isTargetLocked(target);
