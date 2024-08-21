@@ -319,7 +319,9 @@ contract ProductWithReinsuranceTest is
         // create allowance to pay for premium
         uint256 maxPremiumAmount = SUM_INSURED * 10**token.decimals() / 4;
         vm.startPrank(policyHolder);
-        token.approve(instanceReader.getTokenHandler(productReNftId), maxPremiumAmount);
+        token.approve(
+            address(instanceReader.getTokenHandler(productReNftId)), 
+            maxPremiumAmount);
         vm.stopPrank();
 
         newPolicyNftId = productRe.createApplication(
@@ -401,7 +403,9 @@ contract ProductWithReinsuranceTest is
         vm.stopPrank();
 
         vm.startPrank(investor);
-        token.approve(instanceReader.getTokenHandler(poolReNftId), DEFAULT_BUNDLE_CAPITALIZATION * 10**token.decimals());
+        token.approve(
+            address(instanceReader.getTokenHandler(poolReNftId)), 
+            DEFAULT_BUNDLE_CAPITALIZATION * 10**token.decimals());
 
         // solhint-disable-next-line
         console.log("--- create bundle");

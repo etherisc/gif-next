@@ -1014,7 +1014,7 @@ contract TestProduct is GifTest {
     }
 
     /// @dev test that policy expiration works 
-    function test_productPolicyExpire() public {
+    function test_productPolicyExpireHappyCase() public {
         // GIVEN
         vm.startPrank(registryOwner);
         token.transfer(customer, 1000);

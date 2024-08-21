@@ -8,6 +8,7 @@ import {IComponents} from "../instance/module/IComponents.sol";
 import {IComponentService} from "../shared/IComponentService.sol";
 import {IInstance} from "../instance/IInstance.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
+import {IPolicyHolder} from "../shared/IPolicyHolder.sol";
 import {IPoolComponent} from "../pool/IPoolComponent.sol";
 import {IPoolService} from "./IPoolService.sol";
 import {IProductComponent} from "../product/IProductComponent.sol";
@@ -17,17 +18,19 @@ import {IStaking} from "../staking/IStaking.sol";
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {ClaimId} from "../type/ClaimId.sol";
 import {ContractLib} from "../shared/ContractLib.sol";
-import {Fee, FeeLib} from "../type/Fee.sol";
-import {NftId} from "../type/NftId.sol";
-import {ObjectType, ACCOUNTING, POOL, BUNDLE, PRODUCT, POLICY, COMPONENT} from "../type/ObjectType.sol";
-import {Fee, FeeLib} from "../type/Fee.sol";
-import {KEEP_STATE} from "../type/StateId.sol";
-import {UFixed} from "../type/UFixed.sol";
-import {Service} from "../shared/Service.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
+import {KEEP_STATE} from "../type/StateId.sol";
+import {NftId} from "../type/NftId.sol";
+import {ObjectType, ACCOUNTING, POOL, BUNDLE, PRODUCT, POLICY, COMPONENT} from "../type/ObjectType.sol";
+import {PayoutId} from "../type/PayoutId.sol";
+import {PoolLib} from "./PoolLib.sol";
+import {Service} from "../shared/Service.sol";
+import {TokenHandler} from "../shared/TokenHandler.sol";
+import {UFixed} from "../type/UFixed.sol";
 
 string constant POOL_SERVICE_NAME = "PoolService";
+
 
 contract PoolService is 
     Service, 
@@ -143,23 +146,47 @@ contract PoolService is
     }
 
 
+    // function _checkAndGetPoolInfo(NftId bundleNftId)
+    //     internal
+    //     view
+    //     returns (
+    //         InstanceReader instanceReader,
+    //         InstanceStore instanceStore,
+    //         NftId instanceNftId,
+    //         NftId poolNftId,
+    //         IComponents.PoolInfo memory poolInfo
+    //     )
+    // {
+    //     _checkNftType(bundleNftId, BUNDLE());
+
+    //     (NftId poolNftId, IInstance instance) = _getAndVerifyActivePool();
+    //     instanceReader = instance.getInstanceReader();
+    //     instanceStore = instance.getInstanceStore();
+    //     instanceNftId = instance.getNftId();
+    //     poolInfo = instanceReader.getPoolInfo(poolNftId);
+
+    //     if (getRegistry().getParentNftId(bundleNftId) != poolNftId) {
+    //         revert ErrorPoolServiceBundlePoolMismatch(bundleNftId, poolNftId);
+    //     }
+    // }
+
+
     /// @inheritdoc IPoolService
     function stake(NftId bundleNftId, Amount amount) 
         external 
         virtual
         // TODO: restricted() (once #462 is done)
-        returns(Amount netAmount) 
+        returns(
+            Amount netAmount
+        ) 
     {
-        _checkNftType(bundleNftId, BUNDLE());
-
-        (NftId poolNftId, IInstance instance) = _getAndVerifyActivePool();
-        InstanceReader instanceReader = instance.getInstanceReader();
-        IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
-        IComponents.PoolInfo memory poolInfo = instanceReader.getPoolInfo(poolNftId);
-
-        if (bundleInfo.poolNftId != poolNftId) {
-            revert ErrorPoolServiceBundlePoolMismatch(bundleNftId, poolNftId);
-        }
+        (
+            InstanceReader instanceReader,
+            InstanceStore instanceStore,
+            NftId instanceNftId,
+            NftId poolNftId,
+            IComponents.PoolInfo memory poolInfo
+        ) = PoolLib.checkAndGetPoolInfo(getRegistry(), msg.sender, bundleNftId);
 
         {
             Amount currentPoolBalance = instanceReader.getBalanceAmount(poolNftId);
@@ -169,30 +196,26 @@ contract PoolService is
         }
 
         // calculate fees
-        IRegistry registry = getRegistry();
         Amount feeAmount;
-
-        {
-            NftId productNftId = registry.getParentNftId(poolNftId);
-            Fee memory stakingFee = instanceReader.getFeeInfo(productNftId).stakingFee;
-            (
-                feeAmount,
-                netAmount
-            ) = FeeLib.calculateFee(
-                stakingFee, 
-                amount);
-        }
+        (
+            feeAmount,
+            netAmount
+        ) = PoolLib.calculateStakingAmounts(
+            getRegistry(),
+            instanceReader,
+            poolNftId,
+            amount);
 
         // do all the book keeping
         _accountingService.increasePoolBalance(
-            instance.getInstanceStore(), 
+            instanceStore, 
             poolNftId, 
             netAmount, 
             feeAmount);
 
-        _bundleService.stake(instance, bundleNftId, netAmount);
+        _bundleService.stake(instanceReader, instanceStore, bundleNftId, netAmount);
 
-        emit LogPoolServiceBundleStaked(instance.getNftId(), poolNftId, bundleNftId, amount, netAmount);
+        emit LogPoolServiceBundleStaked(instanceNftId, poolNftId, bundleNftId, amount, netAmount);
 
         // only collect staking amount when pool is not externally managed
         if (!poolInfo.isExternallyManaged) {
@@ -215,19 +238,15 @@ contract PoolService is
         // TODO: restricted() (once #462 is done)
         returns(Amount netAmount) 
     {
-        _checkNftType(bundleNftId, BUNDLE());
-
-        (NftId poolNftId, IInstance instance) = _getAndVerifyActivePool();
-        InstanceReader instanceReader = instance.getInstanceReader();
-        InstanceStore instanceStore = instance.getInstanceStore();
-        IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
-
-        if (bundleInfo.poolNftId != poolNftId) {
-            revert ErrorPoolServiceBundlePoolMismatch(bundleNftId, poolNftId);
-        }
+        (
+            InstanceReader instanceReader,
+            InstanceStore instanceStore,
+            NftId instanceNftId,
+            NftId poolNftId,
+        ) = PoolLib.checkAndGetPoolInfo(getRegistry(), msg.sender, bundleNftId);
 
         // call bundle service for bookkeeping and additional checks
-        Amount unstakedAmount = _bundleService.unstake(instance, bundleNftId, amount);
+        Amount unstakedAmount = _bundleService.unstake(instanceStore, bundleNftId, amount);
 
         // Important: from now on work only with unstakedAmount as it is the only reliable amount.
         // if amount was max, this was set to the available amount
@@ -243,7 +262,7 @@ contract PoolService is
             AmountLib.zero());
 
 
-        emit LogPoolServiceBundleUnstaked(instance.getNftId(), poolNftId, bundleNftId, unstakedAmount, netAmount);
+        emit LogPoolServiceBundleUnstaked(instanceNftId, poolNftId, bundleNftId, unstakedAmount, netAmount);
 
         // only distribute staking amount when pool is not externally managed
         if (!instanceReader.getPoolInfo(poolNftId).isExternallyManaged) {
@@ -374,7 +393,7 @@ contract PoolService is
             totalCollateralAmount,
             localCollateralAmount,
             poolIsVerifyingApplications
-        ) = calculateRequiredCollateral(
+        ) = PoolLib.calculateRequiredCollateral(
             instance.getInstanceReader(),
             productNftId, 
             sumInsuredAmount);
@@ -409,21 +428,24 @@ contract PoolService is
     }
 
     function processPayout(
-        IInstance instance, 
-        address token,
+        InstanceReader instanceReader,
+        InstanceStore instanceStore, 
+        NftId productNftId,
         NftId policyNftId, 
-        IPolicy.PolicyInfo memory policyInfo,
-        Amount payoutAmount
+        NftId bundleNftId,
+        PayoutId payoutId,
+        Amount payoutAmount,
+        address payoutBeneficiary
     )
         external
         virtual
         restricted()
     {
+        // checks
         _checkNftType(policyNftId, POLICY());
 
-        NftId bundleNftId = policyInfo.bundleNftId;
+        // effects
         NftId poolNftId = getRegistry().getParentNftId(bundleNftId);
-        InstanceStore instanceStore = instance.getInstanceStore();
         
         _accountingService.decreasePoolBalance(
             instanceStore,
@@ -438,16 +460,123 @@ contract PoolService is
             AmountLib.zero());
 
         _bundleService.releaseCollateral(
-            instance, 
+            instanceStore, 
             policyNftId, 
-            policyInfo.bundleNftId, 
+            bundleNftId, 
             payoutAmount);
 
         // update value locked with staking service
+        TokenHandler poolTokenHandler = TokenHandler(
+            instanceReader.getTokenHandler(
+                poolNftId));
+
         _staking.decreaseTotalValueLocked(
-            instance.getNftId(),
-            token,
+            instanceReader.getInstanceNftId(), 
+            address(poolTokenHandler.TOKEN()),
             payoutAmount);
+
+        // interactions
+        _transferTokenAndNotifyPolicyHolder(
+            instanceReader, 
+            poolTokenHandler,
+            productNftId, 
+            policyNftId, 
+            payoutId, 
+            payoutAmount, 
+            payoutBeneficiary);
+    }
+
+    function _transferTokenAndNotifyPolicyHolder(
+        InstanceReader instanceReader,
+        TokenHandler poolTokenHandler,
+        NftId productNftId,
+        NftId policyNftId,
+        PayoutId payoutId,
+        Amount payoutAmount,
+        address payoutBeneficiary
+    )
+        internal
+    {
+        (
+            Amount netPayoutAmount,
+            Amount processingFeeAmount,
+            address beneficiary
+        ) = PoolLib.calculatePayoutAmounts(
+            getRegistry(),
+            instanceReader,
+            productNftId, 
+            policyNftId,
+            payoutAmount,
+            payoutBeneficiary);
+
+        // 1st token tx to payout to beneficiary
+        poolTokenHandler.pushToken(
+            beneficiary, 
+            netPayoutAmount);
+
+        // 2nd token tx to transfer processing fees to product wallet
+        // if processingFeeAmount > 0
+        if (processingFeeAmount.gtz()) {
+            poolTokenHandler.pushToken(
+                instanceReader.getWallet(productNftId), 
+                processingFeeAmount);
+        }
+
+        // callback to policy holder if applicable
+        _policyHolderPayoutExecuted(
+            policyNftId, 
+            payoutId, 
+            beneficiary, 
+            netPayoutAmount);
+    }
+
+
+    /// @inheritdoc IPoolService
+    function withdrawBundleFees(
+        NftId bundleNftId,
+        Amount amount
+    ) 
+        public 
+        virtual
+        restricted()
+        returns (Amount withdrawnAmount) 
+    {
+        // checks
+        _checkNftType(bundleNftId, BUNDLE());
+
+        (NftId poolNftId, IInstance instance) = _getAndVerifyActivePool();
+        InstanceReader reader = instance.getInstanceReader();
+        
+        // determine withdrawn amount
+        withdrawnAmount = amount;
+        if (withdrawnAmount.gte(AmountLib.max())) {
+            withdrawnAmount = reader.getFeeAmount(bundleNftId);
+        } else {
+            if (withdrawnAmount > reader.getFeeAmount(bundleNftId)) {
+                revert ErrorPoolServiceFeesWithdrawAmountExceedsLimit(withdrawnAmount, reader.getFeeAmount(bundleNftId));
+            }
+        }
+
+        // effects
+        // decrease fee counters by withdrawnAmount
+        {
+            InstanceStore store = instance.getInstanceStore();
+            // decrease fee amount of the bundle
+            _accountingService.decreaseBundleBalanceForPool(store, bundleNftId, AmountLib.zero(), withdrawnAmount);
+            // decrease pool balance 
+            _accountingService.decreasePoolBalance(store, poolNftId, withdrawnAmount, AmountLib.zero());
+        }
+
+        // interactions
+        // transfer amount to bundle owner
+        {
+            address bundleOwner = getRegistry().ownerOf(bundleNftId);
+            TokenHandler tokenHandler = reader.getTokenHandler(poolNftId);
+            address token = address(tokenHandler.TOKEN());
+            emit LogPoolServiceFeesWithdrawn(bundleNftId, bundleOwner, token, withdrawnAmount);
+
+            tokenHandler.pushToken(bundleOwner, withdrawnAmount);
+        }
     }
 
 
@@ -455,7 +584,6 @@ contract PoolService is
     /// may only be called by the policy service for unlocked pool components
     function releaseCollateral(
         IInstance instance, 
-        address token,
         NftId policyNftId, 
         IPolicy.PolicyInfo memory policyInfo
     )
@@ -468,87 +596,91 @@ contract PoolService is
         Amount remainingCollateralAmount = policyInfo.sumInsuredAmount - policyInfo.claimAmount;
 
         _bundleService.releaseCollateral(
-            instance, 
+            instance.getInstanceStore(), 
             policyNftId, 
             policyInfo.bundleNftId, 
             remainingCollateralAmount);
 
         // update value locked with staking service
+        InstanceReader instanceReader = instance.getInstanceReader();
         _staking.decreaseTotalValueLocked(
-            instance.getNftId(),
-            token,
+            instanceReader.getInstanceNftId(),
+            address(instanceReader.getToken(policyInfo.productNftId)),
             remainingCollateralAmount);
     }
 
 
-    function calculateRequiredCollateral(
-        InstanceReader instanceReader,
-        NftId productNftId, 
-        Amount sumInsuredAmount
-    )
-        public
-        view 
-        returns(
-            NftId poolNftId,
-            Amount totalCollateralAmount,
-            Amount localCollateralAmount,
-            bool poolIsVerifyingApplications
-        )
-    {
-        _checkNftType(productNftId, PRODUCT());
+    // function calculateRequiredCollateral(
+    //     InstanceReader instanceReader,
+    //     NftId productNftId, 
+    //     Amount sumInsuredAmount
+    // )
+    //     public
+    //     view 
+    //     returns(
+    //         NftId poolNftId,
+    //         Amount totalCollateralAmount,
+    //         Amount localCollateralAmount,
+    //         bool poolIsVerifyingApplications
+    //     )
+    // {
+    //     return CollateralLib.calculateRequiredCollateral(
+    //         instanceReader,
+    //         productNftId, 
+    //         sumInsuredAmount);
+    // }
 
-        poolNftId = instanceReader.getProductInfo(productNftId).poolNftId;
-        IComponents.PoolInfo memory poolInfo = instanceReader.getPoolInfo(poolNftId);
-        poolIsVerifyingApplications = poolInfo.isVerifyingApplications;
+    //     _checkNftType(productNftId, PRODUCT());
 
-        (
-            totalCollateralAmount,
-            localCollateralAmount
-        ) = calculateRequiredCollateral(
-            poolInfo.collateralizationLevel,
-            poolInfo.retentionLevel,
-            sumInsuredAmount);
-    }
+    //     poolNftId = instanceReader.getProductInfo(productNftId).poolNftId;
+    //     IComponents.PoolInfo memory poolInfo = instanceReader.getPoolInfo(poolNftId);
+    //     poolIsVerifyingApplications = poolInfo.isVerifyingApplications;
 
-
-    function calculateRequiredCollateral(
-        UFixed collateralizationLevel, 
-        UFixed retentionLevel, 
-        Amount sumInsuredAmount
-    )
-        public
-        pure 
-        returns(
-            Amount totalCollateralAmount,
-            Amount localCollateralAmount
-        )
-    {
-        // collateralization is applied to sum insured
-        UFixed totalUFixed = collateralizationLevel * sumInsuredAmount.toUFixed();
-        totalCollateralAmount = AmountLib.toAmount(totalUFixed.toInt());
-
-        // retention level defines how much capital is required locally
-        localCollateralAmount = AmountLib.toAmount(
-            (retentionLevel * totalUFixed).toInt());
-    }
+    //     (
+    //         totalCollateralAmount,
+    //         localCollateralAmount
+    //     ) = calculateRequiredCollateral(
+    //         poolInfo.collateralizationLevel,
+    //         poolInfo.retentionLevel,
+    //         sumInsuredAmount);
+    // }
 
 
-    function _processStakingFees(
-        Fee memory stakingFee, 
-        Amount stakingAmount
+    // function calculateRequiredCollateral(
+    //     UFixed collateralizationLevel, 
+    //     UFixed retentionLevel, 
+    //     Amount sumInsuredAmount
+    // )
+    //     public
+    //     pure 
+    //     returns(
+    //         Amount totalCollateralAmount,
+    //         Amount localCollateralAmount
+    //     )
+    // {
+    //     // collateralization is applied to sum insured
+    //     UFixed totalUFixed = collateralizationLevel * sumInsuredAmount.toUFixed();
+    //     totalCollateralAmount = AmountLib.toAmount(totalUFixed.toInt());
+
+    //     // retention level defines how much capital is required locally
+    //     localCollateralAmount = AmountLib.toAmount(
+    //         (retentionLevel * totalUFixed).toInt());
+    // }
+
+
+
+
+    function _policyHolderPayoutExecuted(
+        NftId policyNftId, 
+        PayoutId payoutId,
+        address beneficiary,
+        Amount payoutAmount
     )
         internal
-        pure
-        returns (Amount stakingNetAmount)
     {
-        stakingNetAmount = stakingAmount;
-
-        // check if any staking fees apply
-        if (FeeLib.gtz(stakingFee)) {
-            (Amount feeAmount, Amount netAmount) = FeeLib.calculateFee(stakingFee, stakingAmount);
-            stakingNetAmount = netAmount;
-
-            // TODO update fee balance for pool
+        IPolicyHolder policyHolder = PoolLib.getPolicyHolder(getRegistry(), policyNftId);
+        if(address(policyHolder) != address(0)) {
+            policyHolder.payoutExecuted(policyNftId, payoutId, payoutAmount, beneficiary);
         }
     }
 
@@ -593,18 +725,30 @@ contract PoolService is
             IInstance instance
         )
     {
-        (
-            IRegistry.ObjectInfo memory info, 
-            address instanceAddress
-        ) = ContractLib.getAndVerifyComponent(
-            getRegistry(), 
-            msg.sender,
-            POOL(),
-            true); // only active pools
-
-        poolNftId = info.nftId;
-        instance = IInstance(instanceAddress);
+        return PoolLib.getAndVerifyActivePool(getRegistry(), msg.sender);
     }
+
+    // function _getAndVerifyActivePool()
+    //     internal
+    //     virtual
+    //     view
+    //     returns (
+    //         NftId poolNftId,
+    //         IInstance instance
+    //     )
+    // {
+    //     (
+    //         IRegistry.ObjectInfo memory info, 
+    //         address instanceAddress
+    //     ) = ContractLib.getAndVerifyComponent(
+    //         getRegistry(), 
+    //         msg.sender,
+    //         POOL(),
+    //         true); // only active pools
+
+    //     poolNftId = info.nftId;
+    //     instance = IInstance(instanceAddress);
+    // }
 
 
     function _getDomain() internal pure override returns(ObjectType) {

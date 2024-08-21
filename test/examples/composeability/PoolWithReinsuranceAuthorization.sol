@@ -33,6 +33,8 @@ contract PoolWithReinsuranceAuthorization
           IAccess.FunctionInfo[] storage functions;
           functions = _authorizeForTarget(getMainTargetName(), getServiceRole(CLAIM()));
           _authorize(functions, IPoolComponent.processConfirmedClaim.selector, "processConfirmedClaim");
+
+          functions = _authorizeForTarget(getMainTargetName(), getServiceRole(POOL()));
           _authorize(functions, IPolicyHolder.payoutExecuted.selector, "payoutExecuted");
      }
 }

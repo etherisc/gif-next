@@ -12,6 +12,10 @@ import {NftId} from "../type/NftId.sol";
 import {SERVICE} from "../type/ObjectType.sol";
 
 
+/// @dev Token specific transfer helper base contract.
+/// A default token contract is provided via contract constructor.
+/// Relies internally on OpenZeppelin SafeERC20.safeTransferFrom.
+/// This base contract simplifies writing tests.
 contract TokenHandlerBase {
 
     // _setWallet
@@ -35,10 +39,6 @@ contract TokenHandlerBase {
 
     // _approveTokenHandler
     error ErrorTokenHandlerNotWallet(NftId nftId, address tokenHandler, address wallet);
-
-    // _pullAndPullToken
-    error ErrorTokenHandlerWalletsNotDistinct(address from, address to1, address to2);
-    error ErrorTokenHandlerPushAmountsTooLarge(Amount pushAmount, Amount pullAmount);
 
     // _checkPreconditions
     error ErrorTokenHandlerBalanceTooLow(address token, address from, uint256 balance, uint256 expectedBalance);
@@ -78,6 +78,20 @@ contract TokenHandlerBase {
 
         // self approval of token handler to max amount
         _approve(TOKEN, AmountLib.max());
+    }
+
+
+    /// @dev Checks the balance and allowance for the from address and amount.
+    /// When requiring amount > 0 set checkAmount to true.
+    function checkBalanceAndAllowance(
+        address from,
+        Amount amount,
+        bool checkAmount
+    )
+        external
+        view
+    {
+        _checkBalanceAndAllowance(from, amount, checkAmount);
     }
 
 
@@ -185,8 +199,8 @@ contract TokenHandlerBase {
         internal
     {
         if (checkPreconditions) {
-            // check amount > 0, balance >= amount and allowance >= amount
-            _checkPreconditions(from, amount);
+            bool checkAmount = true;
+            _checkBalanceAndAllowance(from, amount, checkAmount);
         }
 
         // transfer the tokens
@@ -200,15 +214,16 @@ contract TokenHandlerBase {
     }
 
 
-    function _checkPreconditions(
+    function _checkBalanceAndAllowance(
         address from,
-        Amount amount
+        Amount amount,
+        bool checkAmount
     ) 
         internal
         view
     {
         // amount must be greater than zero
-        if (amount.eqz()) {
+        if (checkAmount && amount.eqz()) {
             revert ErrorTokenHandlerAmountIsZero();
         }
 
@@ -227,9 +242,9 @@ contract TokenHandlerBase {
 }
 
 
-/// @dev Token specific transfer helper
-/// a default token contract is provided via contract constructor
-/// relies internally on oz SafeERC20.safeTransferFrom
+/// @dev Token specific transfer helper.
+/// Contract is derived from TokenHandlerBase and adds 
+/// authorization based on OpenZeppelin AccessManaged.
 contract TokenHandler is
     AccessManaged,
     TokenHandlerBase
@@ -304,7 +319,21 @@ contract TokenHandler is
         Amount amount
     )
         external
-        // restricted() // TODO re-activate
+        restricted()
+        onlyService()
+    {
+        _pushToken(to, amount);
+    }
+
+
+    /// @dev Distribute fee tokens from a wallet within the scope of gif to some address.
+    /// Separate push function for component service.
+    function pushFeeToken(
+        address to,
+        Amount amount
+    )
+        external
+        restricted()
         onlyService()
     {
         _pushToken(to, amount);

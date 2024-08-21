@@ -143,6 +143,9 @@ contract ServiceAuthorizationV3
           _authorize(functions, IAccountingService.increaseBundleBalance.selector, "increaseBundleBalance");
           _authorize(functions, IAccountingService.decreaseBundleBalance.selector, "decreaseBundleBalance");
 
+          functions = _authorizeForService(ACCOUNTING(), POOL());
+          _authorize(functions, IAccountingService.decreaseBundleBalanceForPool.selector, "decreaseBundleBalanceForPool");
+
           functions = _authorizeForService(ACCOUNTING(), COMPONENT());
           _authorize(functions, IAccountingService.decreaseComponentFees.selector, "decreaseComponentFees");
 
@@ -214,6 +217,9 @@ contract ServiceAuthorizationV3
 
           functions = _authorizeForService(POOL(), CLAIM());
           _authorize(functions, IPoolService.processPayout.selector, "processPayout");
+
+          functions = _authorizeForService(POOL(), ALL());
+          _authorize(functions, IPoolService.withdrawBundleFees.selector, "withdrawBundleFees");
      }
 
 
@@ -236,7 +242,6 @@ contract ServiceAuthorizationV3
           _authorize(functions, IBundleService.lock.selector, "lock");
           _authorize(functions, IBundleService.unlock.selector, "unlock");
           _authorize(functions, IBundleService.setFee.selector, "setFee");
-          _authorize(functions, IBundleService.withdrawBundleFees.selector, "withdrawBundleFees");
      }
 }
 

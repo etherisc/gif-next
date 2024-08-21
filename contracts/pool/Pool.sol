@@ -240,15 +240,6 @@ abstract contract Pool is
     }
 
 
-    /// @dev Withdraws the specified amount of fees from the bundle.
-    function _withdrawBundleFees(NftId bundleNftId, Amount amount) 
-        internal
-        returns (Amount withdrawnAmount) 
-    {
-        return _getPoolStorage()._bundleService.withdrawBundleFees(bundleNftId, amount);
-    }
-
-
     /// @dev increases the staked tokens by the specified amount
     /// bundle MUST be in active or locked state
     function _stake(
@@ -322,6 +313,15 @@ abstract contract Pool is
         virtual
     {
         _getPoolStorage()._poolService.closeBundle(bundleNftId);
+    }
+
+
+    /// @dev Withdraws the specified amount of fees from the bundle.
+    function _withdrawBundleFees(NftId bundleNftId, Amount amount) 
+        internal
+        returns (Amount withdrawnAmount) 
+    {
+        return _getPoolStorage()._poolService.withdrawBundleFees(bundleNftId, amount);
     }
 
 

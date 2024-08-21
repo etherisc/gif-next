@@ -33,10 +33,12 @@ contract BasicProductAuthorization
           functions = _authorizeForTarget(getTokenHandlerName(), getServiceRole(COMPONENT()));
           _authorize(functions, TokenHandler.approve.selector, "approve");
           _authorize(functions, TokenHandler.setWallet.selector, "setWallet");
+          _authorize(functions, TokenHandler.pushFeeToken.selector, "pushFeeToken");
 
           // authorize token handler functions for pool service role
           functions = _authorizeForTarget(getTokenHandlerName(), getServiceRole(POLICY()));
           _authorize(functions, TokenHandler.pullToken.selector, "pullToken");
+          _authorize(functions, TokenHandler.pushToken.selector, "pushToken");
      }
 
      function _setupTargetAuthorizations()

@@ -165,34 +165,52 @@ contract ComponentService is
         _setLocked(instance.getInstanceAdmin(), componentAddress, locked);
     }
 
+    /// @inheritdoc IComponentService
     function withdrawFees(Amount amount)
         external
         virtual
         returns (Amount withdrawnAmount)
     {
+        // checks
         (NftId componentNftId, IInstance instance) = _getAndVerifyActiveComponent(COMPONENT());
-        IComponents.ComponentInfo memory info = instance.getInstanceReader().getComponentInfo(componentNftId);
+        InstanceReader instanceReader = instance.getInstanceReader();
 
         // determine withdrawn amount
+        Amount maxAvailableAmount = instanceReader.getFeeAmount(componentNftId);
         withdrawnAmount = amount;
-        if (withdrawnAmount.gte(AmountLib.max())) {
-            withdrawnAmount = instance.getInstanceReader().getFeeAmount(componentNftId);
-        } else if (withdrawnAmount.eqz()) {
-            revert ErrorComponentServiceWithdrawAmountIsZero();
-        } else {
-            Amount withdrawLimit = instance.getInstanceReader().getFeeAmount(componentNftId);
-            if (withdrawnAmount.gt(withdrawLimit)) {
-                revert ErrorComponentServiceWithdrawAmountExceedsLimit(withdrawnAmount, withdrawLimit);
-            }
+
+        // max amount -> withraw all available fees
+        if (amount == AmountLib.max()) {
+            withdrawnAmount = maxAvailableAmount;
         }
 
+        // check modified withdrawn amount
+        if (withdrawnAmount.eqz()) {
+            revert ErrorComponentServiceWithdrawAmountIsZero();
+        } else if (withdrawnAmount > maxAvailableAmount) {
+            revert ErrorComponentServiceWithdrawAmountExceedsLimit(withdrawnAmount, maxAvailableAmount);
+        }
+
+        // effects
         // decrease fee counters by withdrawnAmount
-        _accountingService.decreaseComponentFees(instance.getInstanceStore(), componentNftId, withdrawnAmount);
+        _accountingService.decreaseComponentFees(
+            instance.getInstanceStore(), 
+            componentNftId, 
+            withdrawnAmount);
         
-        // transfer amount to component owner
         address componentOwner = getRegistry().ownerOf(componentNftId);
-        emit LogComponentServiceComponentFeesWithdrawn(componentNftId, componentOwner, address(info.token), withdrawnAmount);
-        info.tokenHandler.pushToken(componentOwner, withdrawnAmount);
+        TokenHandler tokenHandler = instanceReader.getTokenHandler(componentNftId);
+        emit LogComponentServiceComponentFeesWithdrawn(
+            componentNftId, 
+            componentOwner, 
+            address(tokenHandler.TOKEN()), 
+            withdrawnAmount);
+
+        // interactions
+        // transfer amount to component owner
+        tokenHandler.pushFeeToken(
+            componentOwner, 
+            withdrawnAmount);
     }
 
 

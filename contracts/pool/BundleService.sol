@@ -144,6 +144,7 @@ contract BundleService is
         virtual
         restricted()
     {
+        // checks
         _checkNftType(policyNftId, POLICY());
         _checkNftType(bundleNftId, BUNDLE());
 
@@ -175,6 +176,7 @@ contract BundleService is
             }
         }
 
+        // effects
         // updated locked amount
         instanceStore.increaseLocked(bundleNftId, collateralAmount);
     }
@@ -185,6 +187,7 @@ contract BundleService is
         virtual
         restricted()
     {
+        // checks
         _checkNftType(bundleNftId, BUNDLE());
 
         (,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
@@ -192,6 +195,7 @@ contract BundleService is
         // udpate bundle state
         instance.getInstanceStore().updateBundleState(bundleNftId, PAUSED());
 
+        // effects
         // update set of active bundles
         BundleSet bundleManager = instance.getBundleSet();
         bundleManager.lock(bundleNftId);
@@ -205,10 +209,12 @@ contract BundleService is
         virtual
         restricted()
     {
+        // checks
         _checkNftType(bundleNftId, BUNDLE());
 
         (,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
 
+        // effects
         // udpate bundle state
         instance.getInstanceStore().updateBundleState(bundleNftId, ACTIVE());
 
@@ -229,6 +235,7 @@ contract BundleService is
         restricted()
         returns (Amount unstakedAmount, Amount feeAmount)
     {
+        // checks
         _checkNftType(bundleNftId, BUNDLE());
 
         InstanceReader instanceReader = instance.getInstanceReader();
@@ -240,6 +247,7 @@ contract BundleService is
             revert ErrorBundleServiceBundleWithOpenPolicies(bundleNftId, openPolicies);
         }
 
+        // effects
         {
             // update bundle state
             InstanceStore instanceStore = instance.getInstanceStore();
@@ -256,7 +264,8 @@ contract BundleService is
 
     /// @inheritdoc IBundleService
     function stake(
-        IInstance instance,
+        InstanceReader instanceReader,
+        InstanceStore instanceStore,
         NftId bundleNftId, 
         Amount amount
     ) 
@@ -264,10 +273,11 @@ contract BundleService is
         virtual
         restricted()
     {
+        // checks
         _checkNftType(bundleNftId, BUNDLE());
 
-        IBundle.BundleInfo memory bundleInfo = instance.getInstanceReader().getBundleInfo(bundleNftId);
-        StateId bundleState = instance.getInstanceReader().getBundleState(bundleNftId);
+        IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
+        StateId bundleState = instanceReader.getBundleState(bundleNftId);
 
         if( (bundleState != ACTIVE() && bundleState != PAUSED()) // locked bundles can be staked
             || bundleInfo.expiredAt < TimestampLib.blockTimestamp() 
@@ -275,8 +285,9 @@ contract BundleService is
             revert ErrorBundleServiceBundleNotOpen(bundleNftId, bundleState, bundleInfo.expiredAt);
         }
 
+        // effects
         _accountingService.increaseBundleBalance(
-            instance.getInstanceStore(), 
+            instanceStore, 
             bundleNftId, 
             amount, 
             AmountLib.zero());
@@ -284,7 +295,7 @@ contract BundleService is
 
     /// @inheritdoc IBundleService
     function unstake(
-        IInstance instance, 
+        InstanceStore instanceStore,
         NftId bundleNftId, 
         Amount amount
     ) 
@@ -293,9 +304,9 @@ contract BundleService is
         restricted()
         returns (Amount unstakedAmount)
     {
+        // checks
         _checkNftType(bundleNftId, BUNDLE());
 
-        InstanceStore instanceStore = instance.getInstanceStore();
         (
             Amount balanceAmount,
             Amount lockedAmount,
@@ -315,6 +326,7 @@ contract BundleService is
             revert ErrorBundleServiceUnstakeAmountExceedsLimit(amount, availableAmount);
         }
 
+        // effects
         _accountingService.decreaseBundleBalance(
             instanceStore, 
             bundleNftId, 
@@ -329,6 +341,7 @@ contract BundleService is
         restricted()
         returns (Timestamp extendedExpiredAt) 
     {
+        // checks
         _checkNftType(bundleNftId, BUNDLE());
 
         (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
@@ -349,17 +362,18 @@ contract BundleService is
             revert ErrorBundleServiceExtensionLifetimeIsZero();
         }
 
+        // effects
         bundleInfo.expiredAt = bundleInfo.expiredAt.addSeconds(lifetimeExtension);
+        extendedExpiredAt = bundleInfo.expiredAt;
+
         instance.getInstanceStore().updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
 
-        emit LogBundleServiceBundleExtended(bundleNftId, lifetimeExtension, bundleInfo.expiredAt);
-
-        return bundleInfo.expiredAt;
+        emit LogBundleServiceBundleExtended(bundleNftId, lifetimeExtension, extendedExpiredAt);
     }
 
 
     function releaseCollateral(
-        IInstance instance,
+        InstanceStore instanceStore,
         NftId policyNftId, 
         NftId bundleNftId, 
         Amount collateralAmount
@@ -371,53 +385,9 @@ contract BundleService is
         _checkNftType(policyNftId, POLICY());
         _checkNftType(bundleNftId, BUNDLE());
 
-        instance.getInstanceStore().decreaseLocked(bundleNftId, collateralAmount);
+        instanceStore.decreaseLocked(bundleNftId, collateralAmount);
     }
 
-
-    /// @inheritdoc IBundleService
-    function withdrawBundleFees(NftId bundleNftId, Amount amount) 
-        public 
-        virtual
-        restricted()
-        returns (Amount withdrawnAmount) 
-    {
-        _checkNftType(bundleNftId, BUNDLE());
-
-        (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
-        InstanceReader reader = instance.getInstanceReader();
-        
-        IComponents.ComponentInfo memory poolInfo = reader.getComponentInfo(poolNftId);
-        address poolWallet = poolInfo.tokenHandler.getWallet();
-        
-        // IBundle.BundleInfo memory bundleInfo = reader.getBundleInfo(bundleNftId);
-        
-        // determine withdrawn amount
-        withdrawnAmount = amount;
-        if (withdrawnAmount.gte(AmountLib.max())) {
-            withdrawnAmount = reader.getFeeAmount(bundleNftId);
-        } else {
-            if (withdrawnAmount.gt(reader.getFeeAmount(bundleNftId))) {
-                revert ErrorBundleServiceFeesWithdrawAmountExceedsLimit(withdrawnAmount, reader.getFeeAmount(bundleNftId));
-            }
-        }
-
-        // decrease fee counters by withdrawnAmount
-        {
-            InstanceStore store = instance.getInstanceStore();
-            // decrease fee amount of the bundle
-            _accountingService.decreaseBundleBalance(store, bundleNftId, AmountLib.zero(), withdrawnAmount);
-            // decrease pool balance 
-            _accountingService.decreasePoolBalance(store, poolNftId, withdrawnAmount, AmountLib.zero());
-        }
-
-        // transfer amount to bundle owner
-        {
-            address bundleOwner = getRegistry().ownerOf(bundleNftId);
-            emit LogBundleServiceFeesWithdrawn(bundleNftId, bundleOwner, address(poolInfo.token), withdrawnAmount);
-            poolInfo.tokenHandler.pushToken(bundleOwner, withdrawnAmount);
-        }
-    }
 
     function _getDomain() internal pure override returns(ObjectType) {
         return BUNDLE();

@@ -323,9 +323,10 @@ contract RegistryAdmin is
         _authorizeTargetFunctions(_staking, stakingServiceRoleId, functions);
 
         // grant permissions to the staking service role for staking token handler
-        functions = new FunctionInfo[](2);
+        functions = new FunctionInfo[](3);
         functions[0] = toFunction(TokenHandler.approve.selector, "approve");
         functions[1] = toFunction(TokenHandler.pullToken.selector, "pullToken");
+        functions[2] = toFunction(TokenHandler.pushToken.selector, "pushToken");
         _authorizeTargetFunctions(
             address(IComponent(_staking).getTokenHandler()), stakingServiceRoleId, functions);
 
