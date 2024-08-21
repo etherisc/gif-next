@@ -11,6 +11,9 @@ interface IAuthorization is
      IAccess 
 {
 
+     error ErrorAuthorizationMainTargetNameEmpty();
+     error ErrorAuthorizationTargetDomainZero();
+
      /// @dev Returns the list of service targets.
      function getServiceDomains() external view returns(ObjectType[] memory serviceDomains);
 
@@ -19,6 +22,9 @@ interface IAuthorization is
 
      /// @dev Returns the service target for the specified domain.
      function getServiceTarget(ObjectType serviceDomain) external view returns(Str serviceTarget);
+
+     /// @dev Returns the component role for the specified domain.
+     function getComponentRole(ObjectType componentDomain) external view returns(RoleId componentRoleId);
 
      /// @dev Returns the list of involved roles.
      function getRoles() external view returns(RoleId[] memory roles);
@@ -32,10 +38,18 @@ interface IAuthorization is
      /// @dev Returns the main target id name as string.
      /// This name is used to derive the target id and a corresponding target role name
      /// Overwrite this function to change the basic pool target name.
-     function getTargetName() external view returns (string memory name);
+     function getMainTargetName() external view returns (string memory name);
 
      /// @dev Returns the main target.
      function getMainTarget() external view returns(Str target);
+
+     /// @dev Returns the token hander name.
+     /// Only components have a token handler.
+     function getTokenHandlerName() external view returns(string memory name);
+
+     /// @dev Returns the token hander target.
+     /// Only components have a token handler.
+     function getTokenHandlerTarget() external view returns(Str target);
 
      /// @dev Returns the complete list of targets.
      function getTargets() external view returns(Str[] memory targets);

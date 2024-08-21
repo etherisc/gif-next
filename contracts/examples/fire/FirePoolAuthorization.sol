@@ -25,7 +25,7 @@ contract FirePoolAuthorization
         IAccess.FunctionInfo[] storage functions;
 
         // authorize public role (open access to any account, only allows to lock target)
-        functions = _authorizeForTarget(getTargetName(), PUBLIC_ROLE());
+        functions = _authorizeForTarget(getMainTargetName(), PUBLIC_ROLE());
         // TODO: FirePool.createBundle must require a custom role (e.g. INVESTOR) instead of PUBLIC_ROLE
         _authorize(functions, FirePool.approveTokenHandler.selector, "approveTokenHandler");
         _authorize(functions, FirePool.createBundle.selector, "createBundle");

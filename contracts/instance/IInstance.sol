@@ -57,7 +57,11 @@ interface IInstance is
     /// Permissioned: only the target owner may call this function.
     function withdrawStakingRewardReserves(Amount dipAmount) external returns (Amount newBalance);
 
-    // get instance release and supporting contracts
+    // get products
+    function products() external view returns (uint256 productCount);
+    function getProductNftid(uint256 idx) external view returns (NftId productNftId);
+
+    // get supporting contracts
     function getInstanceReader() external view returns (InstanceReader);
     function getBundleSet() external view returns (BundleSet);
     function getRiskSet() external view returns (RiskSet);

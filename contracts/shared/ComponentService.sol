@@ -130,24 +130,6 @@ contract ComponentService is
     }
 
 
-    function approveStakingTokenHandler(
-        IERC20Metadata token,
-        Amount amount
-    )
-        external
-        virtual
-    {
-        // checks
-        ContractLib.getAndVerifyStaking(
-            getRegistry(),
-            msg.sender); // only active
-
-        // effects
-        TokenHandler tokenHandler = IComponent(msg.sender).getTokenHandler();
-        tokenHandler.approve(token, amount);
-    }
-
-
     function setWallet(address newWallet)
         external
         virtual
@@ -183,35 +165,52 @@ contract ComponentService is
         _setLocked(instance.getInstanceAdmin(), componentAddress, locked);
     }
 
+    /// @inheritdoc IComponentService
     function withdrawFees(Amount amount)
         external
         virtual
         returns (Amount withdrawnAmount)
     {
+        // checks
         (NftId componentNftId, IInstance instance) = _getAndVerifyActiveComponent(COMPONENT());
-        IComponents.ComponentInfo memory info = instance.getInstanceReader().getComponentInfo(componentNftId);
-        address componentWallet = info.tokenHandler.getWallet();
+        InstanceReader instanceReader = instance.getInstanceReader();
 
         // determine withdrawn amount
+        Amount maxAvailableAmount = instanceReader.getFeeAmount(componentNftId);
         withdrawnAmount = amount;
-        if (withdrawnAmount.gte(AmountLib.max())) {
-            withdrawnAmount = instance.getInstanceReader().getFeeAmount(componentNftId);
-        } else if (withdrawnAmount.eqz()) {
-            revert ErrorComponentServiceWithdrawAmountIsZero();
-        } else {
-            Amount withdrawLimit = instance.getInstanceReader().getFeeAmount(componentNftId);
-            if (withdrawnAmount.gt(withdrawLimit)) {
-                revert ErrorComponentServiceWithdrawAmountExceedsLimit(withdrawnAmount, withdrawLimit);
-            }
+
+        // max amount -> withraw all available fees
+        if (amount == AmountLib.max()) {
+            withdrawnAmount = maxAvailableAmount;
         }
 
+        // check modified withdrawn amount
+        if (withdrawnAmount.eqz()) {
+            revert ErrorComponentServiceWithdrawAmountIsZero();
+        } else if (withdrawnAmount > maxAvailableAmount) {
+            revert ErrorComponentServiceWithdrawAmountExceedsLimit(withdrawnAmount, maxAvailableAmount);
+        }
+
+        // effects
         // decrease fee counters by withdrawnAmount
-        _accountingService.decreaseComponentFees(instance.getInstanceStore(), componentNftId, withdrawnAmount);
+        _accountingService.decreaseComponentFees(
+            instance.getInstanceStore(), 
+            componentNftId, 
+            withdrawnAmount);
         
-        // transfer amount to component owner
         address componentOwner = getRegistry().ownerOf(componentNftId);
-        emit LogComponentServiceComponentFeesWithdrawn(componentNftId, componentOwner, address(info.token), withdrawnAmount);
-        info.tokenHandler.distributeTokens(componentWallet, componentOwner, withdrawnAmount);
+        TokenHandler tokenHandler = instanceReader.getTokenHandler(componentNftId);
+        emit LogComponentServiceComponentFeesWithdrawn(
+            componentNftId, 
+            componentOwner, 
+            address(tokenHandler.TOKEN()), 
+            withdrawnAmount);
+
+        // interactions
+        // transfer amount to component owner
+        tokenHandler.pushFeeToken(
+            componentOwner, 
+            withdrawnAmount);
     }
 
 
@@ -245,12 +244,10 @@ contract ComponentService is
         instanceStore.createProduct(
             productNftId, 
             initialProductInfo);
+
         instanceStore.createFee(
             productNftId, 
             product.getInitialFeeInfo());
-
-        // authorize
-        instanceAdmin.initializeComponentAuthorization(product);
     }
 
 
@@ -316,10 +313,6 @@ contract ComponentService is
         // set distribution in product info
         productInfo.distributionNftId = distributionNftId;
         instanceStore.updateProduct(productNftId, productInfo, KEEP_STATE());
-
-        // authorize
-        instanceAdmin.initializeComponentAuthorization(
-            IInstanceLinkedComponent(distributioAddress));
     }
 
 
@@ -385,10 +378,6 @@ contract ComponentService is
         productInfo.oracleNftId[productInfo.numberOfOracles] = oracleNftId;
         productInfo.numberOfOracles++;
         instanceStore.updateProduct(productNftId, productInfo, KEEP_STATE());
-
-        // authorize
-        instanceAdmin.initializeComponentAuthorization(
-            IInstanceLinkedComponent(oracleAddress));
     }
 
     //-------- pool ---------------------------------------------------------//
@@ -423,9 +412,6 @@ contract ComponentService is
         // update pool in product info
         productInfo.poolNftId = poolNftId;
         instanceStore.updateProduct(productNftId, productInfo, KEEP_STATE());
-
-        // authorize
-        instanceAdmin.initializeComponentAuthorization(pool);
     }
 
 
@@ -532,6 +518,9 @@ contract ComponentService is
         // link component contract to nft id
         component.linkToRegisteredNftId();
 
+        // authorize
+        instanceAdmin.initializeComponentAuthorization(component);
+
         emit LogComponentServiceRegistered(instanceNftId, componentNftId, requiredType, address(component), address(token), initialOwner);
     }
 
@@ -562,7 +551,7 @@ contract ComponentService is
             IComponents.FeeInfo memory info
         )
     {
-        productNftId = getRegistry().getObjectInfo(componentNftId).parentNftId;
+        productNftId = getRegistry().getParentNftId(componentNftId);
         info = instanceReader.getFeeInfo(productNftId);
     }
 
@@ -611,9 +600,12 @@ contract ComponentService is
             revert ErrorComponentServiceAlreadyRegistered(componentAddress);
         }
 
-        // check release matches
+        // component release matches servie release
         address parentAddress = registry.getObjectAddress(parentNftId);
-        if (component.getRelease() != IRegisterable(parentAddress).getRelease()) {
+        if (component.getRelease() != getRelease()) {
+            revert ErrorComponentServiceReleaseMismatch(componentAddress, component.getRelease(), getRelease());
+        // component release matches parent release
+        } else if (component.getRelease() != IRegisterable(parentAddress).getRelease()){
             revert ErrorComponentServiceReleaseMismatch(componentAddress, component.getRelease(), IRegisterable(parentAddress).getRelease());
         }
 

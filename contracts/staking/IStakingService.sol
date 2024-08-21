@@ -31,6 +31,7 @@ interface IStakingService is IService
     event LogStakingServiceRewardsClaimed(NftId stakeNftId, address stakeOwner, Amount rewardsClaimedAmount);
 
     // modifiers
+    error ErrorStakingServiceNotStakingOwner(address account);
     error ErrorStakingServiceNotStaking(address stakingAddress);
     error ErrorStakingServiceNotSupportingIStaking(address stakingAddress);
 
@@ -47,6 +48,13 @@ interface IStakingService is IService
     // function setProtocolRewardRate(UFixed rewardRate) external;
     // function setProtocolLockingPeriod(Seconds lockingPeriod) external;
     // TODO also make sure that protocol rewards can be refilled and withdrawn
+
+    /// @dev Approves the staking token handler.
+    /// Reverts if the staking token handler wallet is not the token handler itself.
+    function approveTokenHandler(
+        IERC20Metadata token,
+        Amount amount
+    ) external;
 
     /// @dev creates/registers an on-chain instance staking target.
     /// function granted to instance service

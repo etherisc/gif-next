@@ -5,7 +5,6 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 
 import {Amount, AmountLib} from "../../type/Amount.sol";
 import {BasicPool} from "../../pool/BasicPool.sol";
-import {BasicPoolAuthorization} from "../../pool/BasicPoolAuthorization.sol";
 import {Fee} from "../../type/Fee.sol";
 import {IAuthorization} from "../../authorization/IAuthorization.sol";
 import {IComponents} from "../../instance/module/IComponents.sol";

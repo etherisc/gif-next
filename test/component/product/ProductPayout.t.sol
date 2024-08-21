@@ -201,29 +201,17 @@ contract TestProductClaim is GifTest {
             , // IPolicy.PayoutInfo memory payoutInfo
         ) = _createClaimAndPayout(policyNftId, claimAmountInt, payoutAmountInt, payoutData, false);
 
-        // WHEN
-        vm.recordLogs();
-        product.processPayout(policyNftId, payoutId);
-        Vm.Log[] memory entries = vm.getRecordedLogs();
+        // WHEN + THEN
+        Amount payoutAmount = AmountLib.toAmount(payoutAmountInt);
+        vm.expectEmit(address(claimService));
+        emit IClaimService.LogClaimServicePayoutProcessed(
+                policyNftId, 
+                payoutId,
+                payoutAmount);
 
-        // search for right index
-        // solhint-disable
-        console.log("logs", entries.length);
-        for(uint i = 0; i < entries.length; i++) {
-            console.log(i, vm.toString(entries[i].topics[0]), vm.toString(keccak256("LogClaimServicePayoutProcessed(uint96,uint24,uint96,address,uint96)")));
-        }
-        // solhint-enable
+        product.processPayout(policyNftId, payoutId);
 
         // THEN
-        // checking last of 11 logs
-        assertEq(entries.length, 11, "unexpected number of logs");
-        assertEq(entries[8].topics[0], keccak256("LogClaimServicePayoutProcessed(uint96,uint40,uint96,address,uint96,uint96)"), "unexpected log signature");
-        assertEq(entries[8].emitter, address(claimService), "unexpected emitter");
-        (uint96 nftIdInt, uint40 payoutIdInt, uint96 payoutAmntInt) = abi.decode(entries[8].data, (uint96,uint40,uint96));
-        assertEq(nftIdInt, policyNftId.toInt(), "unexpected policy nft id");
-        assertEq(payoutIdInt, payoutId.toInt(), "unexpected payout id");
-        assertEq(payoutAmntInt, payoutAmountInt, "unexpected payout amount");
-
         // check policy
         {
             IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);

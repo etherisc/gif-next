@@ -314,7 +314,7 @@ contract DistributionService is
         {
             address distributor = getRegistry().ownerOf(distributorNftId);
             emit LogDistributionServiceCommissionWithdrawn(distributorNftId, distributor, address(distributionInfo.token), withdrawnAmount);
-            distributionInfo.tokenHandler.distributeTokens(distributionWallet, distributor, withdrawnAmount);
+            distributionInfo.tokenHandler.pushToken(distributor, withdrawnAmount);
         }
     }
 
@@ -346,7 +346,7 @@ contract DistributionService is
         view
         returns(IInstance instance)
     {
-        NftId instanceNftId = getRegistry().getObjectInfo(distributionNftId).parentNftId;
+        NftId instanceNftId = getRegistry().getParentNftId(distributionNftId);
         address instanceAddress = getRegistry().getObjectAddress(instanceNftId);
         return IInstance(instanceAddress);
     }

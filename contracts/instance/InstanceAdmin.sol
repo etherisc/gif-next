@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
+import {IAccess} from "../authorization/IAccess.sol";
+import {IAuthorization} from "../authorization/IAuthorization.sol";
+import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
+import {IRegistry} from "../registry/IRegistry.sol";
+import {IInstance} from "./IInstance.sol";
 
 import {AccessAdmin} from "../authorization/AccessAdmin.sol";
 import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
-import {IAuthorization} from "../authorization/IAuthorization.sol";
-import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
-import {IAuthorization} from "../authorization/IAuthorization.sol";
-import {IRegistry} from "../registry/IRegistry.sol";
-import {IInstance} from "./IInstance.sol";
+import {NftId} from "../type/NftId.sol";
 import {ObjectType} from "../type/ObjectType.sol";
 import {RoleId, RoleIdLib} from "../type/RoleId.sol";
 import {Str, StrLib} from "../type/String.sol";
@@ -30,13 +31,21 @@ contract InstanceAdmin is
     error ErrorInstanceAdminCallerNotInstanceOwner(address caller);
     error ErrorInstanceAdminInstanceAlreadyLocked();
     error ErrorInstanceAdminNotRegistered(address target);
+
     error ErrorInstanceAdminAlreadyAuthorized(address target);
+    error ErrorInstanceAdminNotComponentRole(RoleId roleId);
+    error ErrorInstanceAdminRoleAlreadyExists(RoleId roleId);
+    error ErrorInstanceAdminRoleTypeNotContract(RoleId roleId, IAccess.RoleType roleType);
+
     error ErrorInstanceAdminReleaseMismatch();
     error ErrorInstanceAdminExpectedTargetMissing(string targetName);
 
     IInstance internal _instance;
     IRegistry internal _registry;
-    uint64 internal _idNext;
+    uint64 internal _customIdNext;
+
+    mapping(address target => RoleId roleId) internal _targetRoleId;
+    uint64 internal _components;
 
     IAuthorization internal _instanceAuthorization;
 
@@ -78,7 +87,6 @@ contract InstanceAdmin is
         _registry = registry;
     }
 
-
     /// @dev Completes the initialization of this instance admin using the provided instance, registry and version.
     /// Important: Initialization of instance admin is only complete after calling this function. 
     /// Important: The instance MUST be registered and all instance supporting contracts must be wired to this instance.
@@ -90,14 +98,10 @@ contract InstanceAdmin is
         reinitializer(uint64(getRelease().toInt()))
         onlyDeployer()
     {
-        _idNext = CUSTOM_ROLE_ID_MIN;
+        _components = 0;
+        _customIdNext = CUSTOM_ROLE_ID_MIN;
         _instance = IInstance(instance);
         _instanceAuthorization = IAuthorization(authorization);
-
-        // AccessManagerCloneable accessManager = AccessManagerCloneable(authority());
-        // accessManager.completeSetup(
-        //     address(_registry), 
-        //     release); 
 
         _checkTargetIsReadyForAuthorization(instance);
 
@@ -106,9 +110,13 @@ contract InstanceAdmin is
             revert ErrorInstanceAdminReleaseMismatch();
         }
 
+        // create instance role and target
+        _setupInstance(instance);
+
         // add instance authorization
         _createRoles(_instanceAuthorization);
-        _createModuleTargetsWithRoles();
+
+        _setupInstanceHelperTargetsWithRoles();
         _createTargetAuthorizations(_instanceAuthorization);
     }
 
@@ -119,50 +127,53 @@ contract InstanceAdmin is
         IInstanceLinkedComponent component
     )
         external
+        restricted()
     {
-        // !!! TODO add caller restrictions?
-
+        // checks
         _checkTargetIsReadyForAuthorization(address(component));
 
-        // get authorization specification
+        // setup target and role for component (including token handler)
+        _setupComponentAndTokenHandler(component);
+
+        // create other roles
         IAuthorization authorization = component.getAuthorization();
-        string memory targetName = authorization.getTargetName();
-        _checkTargetIsReadyForAuthorization(address(component));
-
-
-        // create roles
         _createRoles(authorization);
 
-        // create component target
+        // TODO cleanup
+        // FunctionInfo[] memory functions = new FunctionInfo[](2);
+        // functions[0] = toFunction(TokenHandler.pullToken.selector, "pullToken");
+        // functions[1] = toFunction(TokenHandler.pushToken.selector, "pushToken");
+
+        // // FIXME: make this a bit nicer and work with IAuthorization. Use a specific role, not public - access to TokenHandler must be restricted
+        // _authorizeTargetFunctions(
+        //     address(component.getTokenHandler()),
+        //     getPublicRole(),
+        //     functions);
+        
+        _createTargetAuthorizations(authorization);
+    }
+
+    // create instance role and target
+    function _setupInstance(address instance) internal {
+        // create instance role
+        RoleId instanceRoleId = _instanceAuthorization.getTargetRole(
+            _instanceAuthorization.getMainTarget());
+
+        _createRole(
+            instanceRoleId,
+            _instanceAuthorization.getRoleInfo(instanceRoleId));
+
+        // create instance target
         _createTarget(
-            address(component), 
-            targetName, 
+            instance, 
+            _instanceAuthorization.getMainTargetName(), 
             true, // checkAuthority
             false); // custom
 
-        _createTarget(
-            address(component.getTokenHandler()), 
-            string(abi.encodePacked(targetName, "TH")), 
-            true, 
-            false);
-        
-        FunctionInfo[] memory functions = new FunctionInfo[](3);
-        functions[0] = toFunction(TokenHandler.collectTokens.selector, "collectTokens");
-        functions[1] = toFunction(TokenHandler.collectTokensToThreeRecipients.selector, "collectTokensToThreeRecipients");
-        functions[2] = toFunction(TokenHandler.distributeTokens.selector, "distributeTokens");
-
-        // FIXME: make this a bit nicer and work with IAuthorization. Use a specific role, not public - access to TokenHandler must be restricted
-        _authorizeTargetFunctions(
-            address(component.getTokenHandler()),
-            getPublicRole(),
-            functions);
-
+        // assign instance role to instance
         _grantRoleToAccount(
-            authorization.getTargetRole(
-                authorization.getMainTarget()), 
-            address(component));
-        
-        _createTargetAuthorizations(authorization);
+            instanceRoleId, 
+            instance);
     }
 
     /// @dev Creates a custom role
@@ -217,6 +228,95 @@ contract InstanceAdmin is
 
     // ------------------- Internal functions ------------------- //
 
+    function _setupComponentAndTokenHandler(IInstanceLinkedComponent component)
+        internal
+    {
+
+        IAuthorization authorization = component.getAuthorization();
+        string memory targetName = authorization.getMainTargetName();
+
+        // create component role and target
+        RoleId componentRoleId = _createComponentRoleId(component, authorization);
+
+        // create component's target
+        _createTarget(
+            address(component), 
+            targetName, 
+            true, // checkAuthority
+            false); // custom
+
+        // create component's token handler target
+        NftId componentNftId = _registry.getNftIdForAddress(address(component));
+        address tokenHandler = address(
+            _instance.getInstanceReader().getComponentInfo(
+                componentNftId).tokenHandler);
+
+        _createTarget(
+            tokenHandler, 
+            authorization.getTokenHandlerName(), 
+            true, 
+            false);
+
+        // assign component role to component
+        _grantRoleToAccount(
+            componentRoleId, 
+            address(component));
+
+        // token handler does not require its own role
+        // token handler is not calling other components
+    }
+
+
+    function _createComponentRoleId(
+        IInstanceLinkedComponent component,
+        IAuthorization authorization
+    )
+        internal 
+        returns (RoleId componentRoleId)
+    {
+        // checks
+        // check component is not yet authorized
+        if (_targetRoleId[address(component)].gtz()) {
+            revert ErrorInstanceAdminAlreadyAuthorized(address(component));
+        }
+
+        // check generic component role
+        RoleId genericComponentRoleId = authorization.getTargetRole(
+            authorization.getMainTarget());
+
+        if (!genericComponentRoleId.isComponentRole()) {
+            revert ErrorInstanceAdminNotComponentRole(genericComponentRoleId);
+        }
+
+        // check component role does not exist
+        componentRoleId = toComponentRole(
+            genericComponentRoleId, 
+            _components);
+
+        if (roleExists(componentRoleId)) {
+            revert ErrorInstanceAdminRoleAlreadyExists(componentRoleId);
+        }
+
+        // check role info
+        IAccess.RoleInfo memory roleInfo = authorization.getRoleInfo(
+            genericComponentRoleId);
+
+        if (roleInfo.roleType != IAccess.RoleType.Contract) {
+            revert ErrorInstanceAdminRoleTypeNotContract(
+                componentRoleId,
+                roleInfo.roleType);
+        }
+
+        // effects
+        _targetRoleId[address(component)] = componentRoleId;
+        _components++;
+
+        _createRole(
+            componentRoleId,
+            roleInfo);
+    }
+
+
     function _checkTargetIsReadyForAuthorization(address target)
         internal
         view
@@ -235,18 +335,33 @@ contract InstanceAdmin is
         internal
     {
         RoleId[] memory roles = authorization.getRoles();
+        RoleId mainTargetRoleId = authorization.getTargetRole(
+            authorization.getMainTarget());
+
         RoleId roleId;
         RoleInfo memory roleInfo;
 
         for(uint256 i = 0; i < roles.length; i++) {
+
             roleId = roles[i];
 
-            if (!roleExists(roleId)) {
+            // skip main target role, create role if not exists
+            if (roleId != mainTargetRoleId && !roleExists(roleId)) {
                 _createRole(
                     roleId,
                     authorization.getRoleInfo(roleId));
             }
         }
+    }
+
+
+    function toComponentRole(RoleId roleId, uint64 componentIdx)
+        internal
+        pure
+        returns (RoleId)
+    {
+        return RoleIdLib.toRoleId(
+            RoleIdLib.toInt(roleId) + componentIdx);
     }
 
 
@@ -300,11 +415,12 @@ contract InstanceAdmin is
         }
     }
 
-    function _createModuleTargetsWithRoles()
+    function _setupInstanceHelperTargetsWithRoles()
         internal
     {
+        // _checkAndCreateTargetWithRole(address(_instance), INSTANCE_TARGET_NAME);
+
         // create module targets
-        _checkAndCreateTargetWithRole(address(_instance), INSTANCE_TARGET_NAME);
         _checkAndCreateTargetWithRole(address(_instance.getInstanceStore()), INSTANCE_STORE_TARGET_NAME);
         _checkAndCreateTargetWithRole(address(_instance.getInstanceAdmin()), INSTANCE_ADMIN_TARGET_NAME);
         _checkAndCreateTargetWithRole(address(_instance.getBundleSet()), BUNDLE_SET_TARGET_NAME);

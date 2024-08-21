@@ -64,10 +64,6 @@ contract FireTestBase is GifTest {
         vm.startPrank(instanceOwner);
         fireProductNftId = instance.registerProduct(address(fireProduct));
         vm.stopPrank();
-
-        vm.startPrank(fireProduct.getOwner());
-        fireProduct.approveTokenHandler(fireUSD, AmountLib.max());
-        vm.stopPrank();
     }
 
     function _deployFirePool() internal {
@@ -83,11 +79,6 @@ contract FireTestBase is GifTest {
         vm.stopPrank();
 
         firePoolNftId = _registerComponent(fireProductOwner, fireProduct, address(firePool), "firePool");
-
-        // token handler only becomes available after registration
-        vm.startPrank(firePool.getOwner());
-        firePool.approveTokenHandler(fireUSD, AmountLib.max());
-        vm.stopPrank();
     }
 
     function _initialFundAccounts() internal {

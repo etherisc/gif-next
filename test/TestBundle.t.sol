@@ -32,7 +32,7 @@ contract TestBundle is GifTest {
 
 
     /// @dev test staking of an existing bundle 
-    function test_Bundle_stakeBundle() public {
+    function test_bundle_stakeBundle() public {
         // GIVEN
         initialStakingFee = FeeLib.percentageFee(4);
         _prepareProduct(false);
@@ -86,7 +86,7 @@ contract TestBundle is GifTest {
     }
 
     /// @dev test staking of an existing locked bundle 
-    function test_Bundle_stakeBundle_lockedBundle() public {
+    function test_bundle_stakeBundle_lockedBundle() public {
         // GIVEN
         initialStakingFee = FeeLib.percentageFee(4);
         _prepareProduct(false);
@@ -139,7 +139,7 @@ contract TestBundle is GifTest {
         assertEq(instanceReader.getFeeAmount(bundleNftId).toInt(), 0, "bundle fees 0");
     }
 
-    function test_Bundle_stakeBundle_maxBalanceExceeded() public {
+    function test_bundle_stakeBundle_maxBalanceExceeded() public {
         // GIVEN
         initialStakingFee = FeeLib.percentageFee(4);
         _prepareProduct(false);
@@ -181,7 +181,7 @@ contract TestBundle is GifTest {
     }
 
     /// @dev test staking when the allowance is too small
-    function test_Bundle_stakeBundle_allowanceTooSmall() public {
+    function test_bundle_stakeBundle_allowanceTooSmall() public {
         // GIVEN
         initialStakingFee = FeeLib.percentageFee(4);
         _prepareProduct(false);
@@ -216,7 +216,7 @@ contract TestBundle is GifTest {
     }
 
     /// @dev test staking amount of zero
-    function test_Bundle_stakeBundle_amountIsZero() public {
+    function test_bundle_stakeBundle_amountIsZero() public {
         // GIVEN
         initialStakingFee = FeeLib.percentageFee(4);
         _prepareProduct(false);
@@ -245,7 +245,7 @@ contract TestBundle is GifTest {
     }
 
     /// @dev test staking into an expired bundle
-    function test_Bundle_stakeBundle_bundleExpired() public {
+    function test_bundle_stakeBundle_bundleExpired() public {
         // GIVEN
         initialStakingFee = FeeLib.percentageFee(4);
         _prepareProduct(false);
@@ -281,7 +281,7 @@ contract TestBundle is GifTest {
     }
 
     /// @dev test staking into a closed bundle
-    function test_Bundle_stakeBundle_bundleClosed() public {
+    function test_bundle_stakeBundle_bundleClosed() public {
         // GIVEN
         initialStakingFee = FeeLib.percentageFee(4);
         _prepareProduct(false);
@@ -316,7 +316,7 @@ contract TestBundle is GifTest {
     }
 
     /// @dev test unstaking of a bundle 
-    function test_Bundle_unstakeBundle() public {
+    function test_bundle_unstakeBundle() public {
         // GIVEN
         initialStakingFee = FeeLib.percentageFee(4);
         _prepareProduct(false);
@@ -367,7 +367,7 @@ contract TestBundle is GifTest {
     }
 
     /// @dev test unstaking of all available staked tokens
-    function test_Bundle_unstakeBundle_maxAmount() public {
+    function test_bundle_unstakeBundle_maxAmount() public {
         // GIVEN
         initialStakingFee = FeeLib.percentageFee(4);
         _prepareProduct(false);
@@ -419,7 +419,7 @@ contract TestBundle is GifTest {
     }
 
     /// @dev test unstaking of an amount that exceeds the available balance
-    function test_Bundle_unstakeBundle_exceedsAvailable() public {
+    function test_bundle_unstakeBundle_exceedsAvailable() public {
         // GIVEN
         initialStakingFee = FeeLib.percentageFee(4);
         _prepareProduct(false);
@@ -451,7 +451,7 @@ contract TestBundle is GifTest {
     }
 
     /// @dev test unstaking of an amount that exceeds the available balance
-    function test_Bundle_unstakeBundle_amountZero() public {
+    function test_bundle_unstakeBundle_amountZero() public {
         // GIVEN
         initialStakingFee = FeeLib.percentageFee(4);
         _prepareProduct(false);
@@ -480,7 +480,7 @@ contract TestBundle is GifTest {
     }
 
     /// @dev test unstaking of an amount when allowance is too small
-    function test_Bundle_unstakeBundle_allowanceTooSmall() public {
+    function test_bundle_unstakeBundle_allowanceTooSmall() public {
         // GIVEN
         initialStakingFee = FeeLib.percentageFee(4);
         _prepareProduct(false);
@@ -523,7 +523,7 @@ contract TestBundle is GifTest {
     }
 
     /// @dev test extension of a bundle
-    function test_Bundle_extend() public {
+    function test_bundle_extend() public {
         // GIVEN
         _prepareProduct(false);
         
@@ -563,7 +563,7 @@ contract TestBundle is GifTest {
     }
 
     /// @dev test extension of an expired bundle
-    function test_Bundle_extend_bundleExpired() public {
+    function test_bundle_extend_bundleExpired() public {
         // GIVEN
         _prepareProduct(false);
         
@@ -602,7 +602,7 @@ contract TestBundle is GifTest {
     }
 
     /// @dev test extension of a closed bundle
-    function test_Bundle_extend_bundleClosed() public {
+    function test_bundle_extend_bundleClosed() public {
         // GIVEN
         _prepareProduct(false);
         
@@ -634,7 +634,7 @@ contract TestBundle is GifTest {
     }
 
     /// @dev test extension with lifetime is zero
-    function test_Bundle_extend_lifetimeIsZero() public {
+    function test_bundle_extend_lifetimeIsZero() public {
         // GIVEN
         _prepareProduct(false);
         
@@ -658,7 +658,7 @@ contract TestBundle is GifTest {
     }
 
     /// @dev test closing of a bundle
-    function test_Bundle_closeBundle() public {
+    function test_bundleCloseBundleHappyCase() public {
         // GIVEN
         initialStakingFee = FeeLib.percentageFee(4);
         _prepareProduct(true);
@@ -698,7 +698,7 @@ contract TestBundle is GifTest {
     }
 
     /// @dev test closing of a bundle with a closed policy (no staking fee)
-    function test_Bundle_closeBundle_withClosedPolicy() public {
+    function test_bundleCloseBundle_withClosedPolicy() public {
         // GIVEN - pool (no staking fee), a bundle with 3% fee and a closed policy
         initialBundleFee = FeeLib.percentageFee(3);
         _prepareProduct(true);
@@ -741,7 +741,7 @@ contract TestBundle is GifTest {
     }
 
     /// @dev test closing of a bundle without any balance (full unstake before)
-    function test_Bundle_closeBundle_unstakeFullAmountBeforeClose() public {
+    function test_bundleCloseBundle_unstakeFullAmountBeforeClose() public {
         // GIVEN - pool (3% staking fee), a bundle and no policy
         initialStakingFee = FeeLib.percentageFee(3);
         _prepareProduct(true);
@@ -784,7 +784,7 @@ contract TestBundle is GifTest {
     }
 
     /// @dev test closing of a bundle with a closed policy and no balance (full unstake before close)
-    function test_Bundle_closeBundle_withClosedPolicyUnstakeFullAmountBeforeClose() public {
+    function test_bundleCloseBundle_withClosedPolicyUnstakeFullAmountBeforeClose() public {
         // GIVEN - pool (3% staking fee), a bundle (6% bundle fee) and a closed policy
         initialStakingFee = FeeLib.percentageFee(3);
         initialBundleFee = FeeLib.percentageFee(6);
@@ -831,7 +831,7 @@ contract TestBundle is GifTest {
     }
 
     /// @dev test closing of a bundle with a closed policy and no fees (fee withdrawal before close)
-    function test_Bundle_closeBundle_withClosedPolicyWithdrawFeesBeforeClose() public {
+    function test_bundleCloseBundle_withClosedPolicyWithdrawFeesBeforeClose() public {
         // GIVEN - pool (3% staking fee), a bundle (6% fee) and a closed policy
         initialStakingFee = FeeLib.percentageFee(3);
         initialBundleFee = FeeLib.percentageFee(6);
@@ -878,7 +878,7 @@ contract TestBundle is GifTest {
     }
 
     /// @dev test closing of a bundle with a closed policy and no fees (fee withdrawal before close)
-    function test_Bundle_closeBundle_withClosedPolicyUnstakedAndWithdrawFeesBeforeClose() public {
+    function test_bundleCloseBundle_withClosedPolicyUnstakedAndWithdrawFeesBeforeClose() public {
         // GIVEN - pool (3% staking fee), a bundle (6% fee) and a closed policy
         initialStakingFee = FeeLib.percentageFee(3);
         initialBundleFee = FeeLib.percentageFee(6);
@@ -926,7 +926,7 @@ contract TestBundle is GifTest {
     }
 
     /// @dev test closing of a bundle with an open policy
-    function test_Bundle_closeBundle_openPolicy() public {
+    function test_bundleCloseBundle_openPolicy() public {
         // GIVEN
         initialBundleFee = FeeLib.percentageFee(3);
         _prepareProduct(true);
@@ -963,7 +963,7 @@ contract TestBundle is GifTest {
     }
 
     /// @dev test closing of a bundle when allowance is too small
-    function test_Bundle_closeBundle_allowanceTooSmall() public {
+    function test_bundleCloseBundle_allowanceTooSmall() public {
         // GIVEN
         initialStakingFee = FeeLib.percentageFee(4);
         _prepareProduct(true);
@@ -994,7 +994,7 @@ contract TestBundle is GifTest {
     }
 
     /// @dev test closing of a bundle when caller is not the owner
-    function test_Bundle_closeBundle_notOwner() public {
+    function test_bundleCloseBundle_notOwner() public {
         // GIVEN
         initialStakingFee = FeeLib.percentageFee(4);
         _prepareProduct(true);

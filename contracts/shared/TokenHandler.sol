@@ -12,6 +12,10 @@ import {NftId} from "../type/NftId.sol";
 import {SERVICE} from "../type/ObjectType.sol";
 
 
+/// @dev Token specific transfer helper base contract.
+/// A default token contract is provided via contract constructor.
+/// Relies internally on OpenZeppelin SafeERC20.safeTransferFrom.
+/// This base contract simplifies writing tests.
 contract TokenHandlerBase {
 
     // _setWallet
@@ -35,10 +39,6 @@ contract TokenHandlerBase {
 
     // _approveTokenHandler
     error ErrorTokenHandlerNotWallet(NftId nftId, address tokenHandler, address wallet);
-
-    // _pullAndPullToken
-    error ErrorTokenHandlerWalletsNotDistinct(address from, address to1, address to2);
-    error ErrorTokenHandlerPushAmountsTooLarge(Amount pushAmount, Amount pullAmount);
 
     // _checkPreconditions
     error ErrorTokenHandlerBalanceTooLow(address token, address from, uint256 balance, uint256 expectedBalance);
@@ -75,6 +75,23 @@ contract TokenHandlerBase {
         }
 
         TOKEN = IERC20Metadata(token);
+
+        // self approval of token handler to max amount
+        _approve(TOKEN, AmountLib.max());
+    }
+
+
+    /// @dev Checks the balance and allowance for the from address and amount.
+    /// When requiring amount > 0 set checkAmount to true.
+    function checkBalanceAndAllowance(
+        address from,
+        Amount amount,
+        bool checkAmount
+    )
+        external
+        view
+    {
+        _checkBalanceAndAllowance(from, amount, checkAmount);
     }
 
 
@@ -159,33 +176,6 @@ contract TokenHandlerBase {
     }
 
 
-    function _pullAndPushToken(
-        address from, 
-        Amount pullAmount,
-        address to1,
-        Amount amount1,
-        address to2,
-        Amount amount2
-    )
-        internal
-    {
-        address wallet = getWallet();
-
-        if (wallet == to1 || wallet == to2 || to1 == to2) {
-            revert ErrorTokenHandlerWalletsNotDistinct(wallet, to1, to2);
-        }
-
-        if (amount1 + amount2 > pullAmount) {
-            revert ErrorTokenHandlerPushAmountsTooLarge(amount1 + amount2, pullAmount);
-        }
-
-        _pullToken(from, pullAmount);
-
-        if (amount1.gtz()) { _pushToken(to1, amount1); }
-        if (amount2.gtz()) { _pushToken(to2, amount2); }
-    }
-
-
     function _pullToken(address from, Amount amount)
         internal
     {
@@ -209,8 +199,8 @@ contract TokenHandlerBase {
         internal
     {
         if (checkPreconditions) {
-            // check amount > 0, balance >= amount and allowance >= amount
-            _checkPreconditions(from, amount);
+            bool checkAmount = true;
+            _checkBalanceAndAllowance(from, amount, checkAmount);
         }
 
         // transfer the tokens
@@ -224,15 +214,16 @@ contract TokenHandlerBase {
     }
 
 
-    function _checkPreconditions(
+    function _checkBalanceAndAllowance(
         address from,
-        Amount amount
+        Amount amount,
+        bool checkAmount
     ) 
         internal
         view
     {
         // amount must be greater than zero
-        if (amount.eqz()) {
+        if (checkAmount && amount.eqz()) {
             revert ErrorTokenHandlerAmountIsZero();
         }
 
@@ -251,9 +242,9 @@ contract TokenHandlerBase {
 }
 
 
-/// @dev Token specific transfer helper
-/// a default token contract is provided via contract constructor
-/// relies internally on oz SafeERC20.safeTransferFrom
+/// @dev Token specific transfer helper.
+/// Contract is derived from TokenHandlerBase and adds 
+/// authorization based on OpenZeppelin AccessManaged.
 contract TokenHandler is
     AccessManaged,
     TokenHandlerBase
@@ -261,9 +252,6 @@ contract TokenHandler is
 
     // onlyService
     error ErrorTokenHandlerNotService(address service);
-
-    // TODO delete
-    error ErrorTokenHandlerRecipientWalletsMustBeDistinct(address to, address to2, address to3);
 
     modifier onlyService() {
         if (!REGISTRY.isObjectType(msg.sender, SERVICE())) {
@@ -289,7 +277,7 @@ contract TokenHandler is
     /// covers the current component balance must exist
     function setWallet(address newWallet)
         external
-        // restricted() // TODO re-activate
+        restricted()
         onlyService()
     {
         _setWallet(newWallet);
@@ -305,7 +293,7 @@ contract TokenHandler is
         Amount amount
     )
         external
-        // restricted() // TODO re-activate
+        restricted()
         onlyService()
     {
         _approve(token, amount);
@@ -313,69 +301,34 @@ contract TokenHandler is
 
     /// @dev Collect tokens from outside of GIF and transfer them to the wallet.
     /// This method also checks balance and allowance and makes sure the amount is greater than zero.
-    function collectTokens(
+    function pullToken(
         address from,
         Amount amount
     )
         external
-        // restricted() // TODO re-activate
+        restricted()
         onlyService()
     {
         _pullToken(from, amount);
     }
 
 
-    /// @dev Collect tokens from outside of GIF and transfer them to the wallet.
-    /// This method also checks balance and allowance and makes sure the amount is greater than zero.
+    /// @dev Distribute tokens from a wallet within the scope of gif to some address.
     function pushToken(
         address to,
         Amount amount
     )
         external
-        // restricted() // TODO re-activate
+        restricted()
         onlyService()
     {
         _pushToken(to, amount);
     }
 
 
-    /// @dev collect tokens from outside of the gif and transfer them to three distinct wallets within the scope of gif
-    /// This method also checks balance and allowance and makes sure the amount is greater than zero.
-    function collectTokensToThreeRecipients( 
-        address from,
-        address to,
-        Amount amount,
-        address to2,
-        Amount amount2,
-        address to3,
-        Amount amount3
-    )
-        external
-        restricted()
-        onlyService()
-    {
-        if (to == to2 || to == to3 || to2 == to3) {
-            revert ErrorTokenHandlerRecipientWalletsMustBeDistinct(to, to2, to3);
-        }
-
-        _checkPreconditions(from, amount + amount2 + amount3);
-
-        if (amount.gtz()) {
-            _transfer(from, to, amount, false);
-        }
-        if (amount2.gtz()) {
-            _transfer(from, to2, amount2, false);
-        }
-        if (amount3.gtz()) {
-            _transfer(from, to3, amount3, false);
-        }
-    }
-
-
-    /// @dev distribute tokens from a wallet within the scope of gif to an external address.
-    /// This method also checks balance and allowance and makes sure the amount is greater than zero.
-    function distributeTokens(
-        address from,
+    /// @dev Distribute fee tokens from a wallet within the scope of gif to some address.
+    /// Separate push function for component service.
+    function pushFeeToken(
         address to,
         Amount amount
     )
@@ -383,7 +336,6 @@ contract TokenHandler is
         restricted()
         onlyService()
     {
-        // _transfer(from, to, amount, true);
         _pushToken(to, amount);
     }
 }

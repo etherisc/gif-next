@@ -1,19 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Amount} from "../type/Amount.sol";
-import {ClaimId, ClaimIdLib} from "../type/ClaimId.sol";
-import {DistributorType} from "../type/DistributorType.sol";
-import {Key32} from "../type/Key32.sol";
-import {NftId} from "../type/NftId.sol";
-import {COMPONENT, DISTRIBUTOR, DISTRIBUTION, FEE, PREMIUM, PRODUCT, POLICY, POOL, BUNDLE} from "../type/ObjectType.sol";
-import {PayoutId, PayoutIdLib} from "../type/PayoutId.sol";
-import {ReferralId, ReferralStatus, ReferralLib, REFERRAL_OK, REFERRAL_ERROR_UNKNOWN, REFERRAL_ERROR_EXPIRED, REFERRAL_ERROR_EXHAUSTED} from "../type/Referral.sol";
-import {RequestId} from "../type/RequestId.sol";
-import {RiskId} from "../type/RiskId.sol";
-import {RoleId} from "../type/RoleId.sol";
-import {StateId} from "../type/StateId.sol";
-import {UFixed, UFixedLib} from "../type/UFixed.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {IBundle} from "../instance/module/IBundle.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
@@ -22,12 +10,28 @@ import {IInstance} from "./IInstance.sol";
 import {IKeyValueStore} from "../shared/IKeyValueStore.sol";
 import {IOracle} from "../oracle/IOracle.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
+import {IRegistry} from "../registry/IRegistry.sol";
 import {IRisk} from "../instance/module/IRisk.sol";
 import {TimestampLib} from "../type/Timestamp.sol";
 
-import {InstanceStore} from "./InstanceStore.sol";
+import {Amount} from "../type/Amount.sol";
 import {BundleSet} from "./BundleSet.sol";
+import {BUNDLE, COMPONENT, DISTRIBUTOR, DISTRIBUTION, FEE, PREMIUM, POLICY, POOL, PRODUCT} from "../type/ObjectType.sol";
+import {ClaimId, ClaimIdLib} from "../type/ClaimId.sol";
+import {DistributorType} from "../type/DistributorType.sol";
+import {InstanceStore} from "./InstanceStore.sol";
+import {Key32} from "../type/Key32.sol";
+import {NftId} from "../type/NftId.sol";
+import {PayoutId, PayoutIdLib} from "../type/PayoutId.sol";
+import {ReferralId, ReferralStatus, ReferralLib, REFERRAL_OK, REFERRAL_ERROR_UNKNOWN, REFERRAL_ERROR_EXPIRED, REFERRAL_ERROR_EXHAUSTED} from "../type/Referral.sol";
+import {RequestId} from "../type/RequestId.sol";
+import {RiskId} from "../type/RiskId.sol";
 import {RiskSet} from "./RiskSet.sol";
+import {RoleId} from "../type/RoleId.sol";
+import {StateId} from "../type/StateId.sol";
+import {TokenHandler} from "../shared/TokenHandler.sol";
+import {UFixed, UFixedLib} from "../type/UFixed.sol";
+
 
 
 contract InstanceReader {
@@ -37,7 +41,9 @@ contract InstanceReader {
 
     bool private _initialized = false;
 
+    IRegistry internal _registry;
     IInstance internal _instance;
+
     InstanceStore internal _store;
     BundleSet internal _bundleSet;
     RiskSet internal _riskSet;
@@ -51,7 +57,6 @@ contract InstanceReader {
         initializeWithInstance(msg.sender);
     }
 
-    /// @dev This initializer needs to be called from the instance itself.
     function initializeWithInstance(address instanceAddress)
         public
     {
@@ -61,11 +66,27 @@ contract InstanceReader {
 
         _initialized = true;
         _instance = IInstance(instanceAddress);
+        _registry = _instance.getRegistry();
+
         _store = _instance.getInstanceStore();
         _bundleSet = _instance.getBundleSet();
         _riskSet = _instance.getRiskSet();
     }
 
+
+    // instance level functions
+
+    function getRegistry() public view returns (IRegistry registry) {
+        return _registry;
+    }
+
+    function getInstanceNftId() public view returns (NftId instanceNftid) {
+        return _registry.getNftIdForAddress(address(_instance));
+    }
+
+    function getInstance() public view returns (IInstance instance) {
+        return _instance;
+    }
 
     // module specific functions
 
@@ -315,31 +336,42 @@ contract InstanceReader {
         return _riskSet.getLinkedPolicyNftId(riskId, idx);
     }
 
+
+    function getToken(NftId componentNftId)
+        public
+        view
+        returns (IERC20Metadata token)
+    {
+        TokenHandler tokenHandler = getTokenHandler(componentNftId);
+        if (address(tokenHandler) != address(0)) {
+            return tokenHandler.TOKEN();
+        }
+    }
+
+
     function getWallet(NftId componentNftId)
         public
         view
-        returns (address tokenHandler)
+        returns (address wallet)
     {
-        bytes memory data = _store.getData(toComponentKey(componentNftId));
-
-        if (data.length > 0) {
-            IComponents.ComponentInfo memory info = abi.decode(data, (IComponents.ComponentInfo));
-            return info.tokenHandler.getWallet();
+        TokenHandler tokenHandler = getTokenHandler(componentNftId);
+        if (address(tokenHandler) != address(0)) {
+            return tokenHandler.getWallet();
         }
     }
+
 
     function getTokenHandler(NftId componentNftId)
         public
         view
-        returns (address tokenHandler)
+        returns (TokenHandler tokenHandler)
     {
         bytes memory data = _store.getData(toComponentKey(componentNftId));
-
         if (data.length > 0) {
-            IComponents.ComponentInfo memory info = abi.decode(data, (IComponents.ComponentInfo));
-            return address(info.tokenHandler);
+            return abi.decode(data, (IComponents.ComponentInfo)).tokenHandler;
         }
     }
+
 
     function getBundleInfo(NftId bundleNftId)
         public 
@@ -570,9 +602,6 @@ contract InstanceReader {
     }
 
     // low level function
-    function getInstance() external view returns (IInstance instance) {
-        return _instance;
-    }
 
     function getInstanceStore() external view returns (IKeyValueStore store) {
         return _store;

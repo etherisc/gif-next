@@ -90,6 +90,7 @@ export async function deployFireComponentContracts(libraries: LibraryAddresses, 
         [fireProductName],
         {
             libraries: {
+                ObjectTypeLib: objectTypeLibAddress,
                 RoleIdLib: roleIdLibAddress,
                 SelectorLib: selectorLibAddress,
                 StrLib: strLibAddress,

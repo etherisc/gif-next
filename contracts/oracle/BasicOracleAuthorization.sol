@@ -15,17 +15,8 @@ contract BasicOracleAuthorization
 {
 
      constructor(string memory componentName)
-          Authorization(componentName)
+          Authorization(componentName, ORACLE())
      {}
-
-     function _setupTargets()
-          internal
-          virtual override
-     {
-          // basic component target
-          _addComponentTargetWithRole(ORACLE()); 
-     }
-
 
      function _setupTargetAuthorizations()
           internal
@@ -34,12 +25,12 @@ contract BasicOracleAuthorization
           IAccess.FunctionInfo[] storage functions;
 
           // authorize public role (open access to any account, only allows to lock target)
-          functions = _authorizeForTarget(getTargetName(), getServiceRole(ORACLE()));
+          functions = _authorizeForTarget(getMainTargetName(), getServiceRole(ORACLE()));
           _authorize(functions, IOracle.request.selector, "request");
           _authorize(functions, IOracle.cancel.selector, "cancel");
 
           // authorize public role (open access to any account, only allows to lock target)
-          functions = _authorizeForTarget(getTargetName(), PUBLIC_ROLE());
+          functions = _authorizeForTarget(getMainTargetName(), PUBLIC_ROLE());
           _authorize(functions, BasicOracle.respond.selector, "respond");
      }
 }

@@ -11,9 +11,11 @@ type RoleId is uint64;
 using {
     eqRoleId as ==, 
     neRoleId as !=,
+    RoleIdLib.toInt,
     RoleIdLib.eqz,
     RoleIdLib.gtz,
-    RoleIdLib.toInt
+    RoleIdLib.isComponentRole,
+    RoleIdLib.isCustomRole
     // RoleIdLib.toKey32
 } for RoleId global;
 
@@ -75,6 +77,8 @@ function RELEASE_REGISTRY_ROLE() pure returns (RoleId) { return RoleIdLib.toRole
 // - application service role (version 3): 2003
 
 //--- GIF component contract roles (range 12'001 - 19'099) ------------------//
+// the min value of 12'001 is based on the following calculation:
+// object type * 1000 + 1 where the lowest object type is 12 (product) 
 // assigned at component registration time
 // object type * 1000 + instane specific component counter
 // on any instance a maximum number of 999 components may be deployed
@@ -95,7 +99,9 @@ library RoleIdLib {
 
     uint64 public constant ALL_VERSIONS = 99;
     uint64 public constant SERVICE_DOMAIN_ROLE_FACTOR = 100;
-    uint64 public constant COMPONENT_ROLE_FACTOR = 100;
+    uint64 public constant COMPONENT_ROLE_FACTOR = 1000;
+    uint64 public constant COMPONENT_ROLE_MIN_INT = 12000;
+    uint64 public constant COMPONENT_ROLE_MAX_INT = 19000;
     uint64 public constant CUSTOM_ROLE_MIN_INT = 1000000;
 
     /// @dev Converts the RoleId to a uint.
@@ -151,6 +157,17 @@ library RoleIdLib {
     /// @dev Returns true if the value is zero (== 0).
     function eqz(RoleId a) public pure returns (bool) {
         return RoleId.unwrap(a) == 0;
+    }
+
+    /// @dev Returns true iff the role id is a component role.
+    function isComponentRole(RoleId roleId) public pure returns (bool) {
+        uint64 roleIdInt = RoleId.unwrap(roleId);
+        return roleIdInt >= COMPONENT_ROLE_MIN_INT && roleIdInt <= COMPONENT_ROLE_MAX_INT;
+    }
+
+    /// @dev Returns true iff the role id is a custom role.
+    function isCustomRole(RoleId roleId) public pure returns (bool) {
+        return RoleId.unwrap(roleId) >= CUSTOM_ROLE_MIN_INT;
     }
 
     /// @dev Returns the key32 value for the specified id and object type.

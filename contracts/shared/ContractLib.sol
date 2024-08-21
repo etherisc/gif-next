@@ -135,10 +135,11 @@ library ContractLib {
         view
         returns (address instance)
     {
-        NftId productNftId = registry.getObjectInfo(componentNftId).parentNftId;
-        NftId instanceNftId = registry.getObjectInfo(productNftId).parentNftId;
+        NftId productNftId = registry.getParentNftId(componentNftId);
+        NftId instanceNftId = registry.getParentNftId(productNftId);
         return registry.getObjectInfo(instanceNftId).objectAddress;
     }
+
 
     function isActiveToken(
         address tokenRegistryAddress,

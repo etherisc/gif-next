@@ -452,11 +452,10 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         { libraries: {
                 AmountLib: libraries.amountLibAddress,
                 ContractLib: libraries.contractLibAddress,
-                FeeLib: libraries.feeLibAddress,
+                PoolLib: libraries.poolLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
-                UFixedLib: libraries.uFixedLibAddress,
                 VersionLib: libraries.versionLibAddress, 
             }});
     
@@ -618,11 +617,10 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
                 AmountLib: libraries.amountLibAddress,
                 ClaimIdLib: libraries.claimIdLibAddress,
                 ContractLib: libraries.contractLibAddress,
-                FeeLib: libraries.feeLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
+                PayoutIdLib: libraries.payoutIdLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
-                PayoutIdLib: libraries.payoutIdLibAddress,
                 VersionLib: libraries.versionLibAddress, 
             }});
 

@@ -116,7 +116,7 @@ abstract contract ComponentVerifyingService is
     /// @dev returns the product nft id from the registry.
     /// assumes the component nft id is valid and represents a product linked component.
     function _getProductNftId(NftId componentNftId) internal view returns (NftId productNftId) {
-        productNftId = getRegistry().getObjectInfo(componentNftId).parentNftId;
+        productNftId = getRegistry().getParentNftId(componentNftId);
     }
 
 

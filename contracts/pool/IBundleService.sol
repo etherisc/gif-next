@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IService} from "../shared/IService.sol";
+import {IInstance} from "../instance/IInstance.sol";
+
 import {Amount} from "../type/Amount.sol";
 import {NftId} from "../type/NftId.sol";
 import {Fee} from "../type/Fee.sol";
-import {IService} from "../shared/IService.sol";
-import {IInstance} from "../instance/IInstance.sol";
+import {InstanceReader} from "../instance/InstanceReader.sol";
+import {InstanceStore} from "../instance/InstanceStore.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {StateId} from "../type/StateId.sol";
 import {Timestamp} from "../type/Timestamp.sol";
@@ -25,14 +28,11 @@ interface IBundleService is IService {
     error ErrorBundleServiceBundlePoolMismatch(NftId bundleNftId, NftId expectedPool, NftId actualPool);
 
     error ErrorBundleServicePolicyNotCloseable(NftId policyNftId);
-
-    error ErrorBundleServiceFeesWithdrawAmountExceedsLimit(Amount amount, Amount limit);
     
     error ErrorBundleServiceUnstakeAmountExceedsLimit(Amount amount, Amount limit);
 
     error ErrorBundleServiceExtensionLifetimeIsZero();
 
-    event LogBundleServiceFeesWithdrawn(NftId bundleNftId, address recipient, address tokenAddress, Amount amount);
     event LogBundleServiceBundleExtended(NftId bundleNftId, Seconds lifetimeExtension, Timestamp extendedExpiredAt);
 
     /// @dev Create a new bundle for the specified attributes.
@@ -48,15 +48,16 @@ interface IBundleService is IService {
 
     /// @dev increase bundle stakes by the specified amount. bundle must not be expired or closed
     /// may only be called by the pool service
-    function stake(IInstance instance, NftId bundleNftId, Amount amount) external;
+    function stake(
+        InstanceReader instanceReader,
+        InstanceStore instanceStore,
+        NftId bundleNftId, 
+        Amount amount
+    ) external;
 
     /// @dev decrease bundle stakes by the specified amount
     /// may only be called by the pool service
-    /// @param instance the instance relevant for the bundle
-    /// @param bundleNftId the bundle nft id
-    /// @param amount the amount to unstake (set to AmountLib.max() to unstake all available stakes)
-    /// @return unstakedAmount the effective unstaked amount
-    function unstake(IInstance instance, NftId bundleNftId, Amount amount) external returns (Amount unstakedAmount);
+    function unstake(InstanceStore instanceStore, NftId bundleNftId, Amount amount) external returns (Amount unstakedAmount);
 
     /// @dev extend the lifetime of the bundle by the specified time in seconds
     function extend(NftId bundleNftId, Seconds lifetimeExtension) external returns (Timestamp extendedExpiredAt);
@@ -106,16 +107,9 @@ interface IBundleService is IService {
     /// @dev releases the specified collateral in the bundle
     /// may only be called by pool service
     function releaseCollateral(
-        IInstance instance, 
+        InstanceStore instanceStore, 
         NftId policyNftId, 
         NftId bundleNftId, 
         Amount collateralAmount
     ) external;
-
-    // FIXME: move to pool service
-    /// @dev Withdraw bundle feeds for the given bundle
-    /// @param bundleNftId the bundle Nft Id
-    /// @param amount the amount to withdraw. If set to AMOUNT_MAX, the full commission available is withdrawn
-    /// @return withdrawnAmount the effective withdrawn amount
-    function withdrawBundleFees(NftId bundleNftId, Amount amount) external returns (Amount withdrawnAmount);
 }

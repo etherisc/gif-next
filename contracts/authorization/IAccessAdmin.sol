@@ -16,10 +16,13 @@ interface IAccessAdmin is
     IRegistryLinked
 {
 
-    // roles
-    event LogRoleCreated(RoleId roleId, RoleType roleType, RoleId roleAdminId, string name);
-    event LogTargetCreated(address target, string name);
-    event LogFunctionCreated(address target, Selector selector, string name);
+    // roles, targets and functions
+    event LogAccessAdminRoleCreated(RoleId roleId, RoleType roleType, RoleId roleAdminId, string name);
+    event LogAccessAdminTargetCreated(address target, string name);
+
+    event LogAccessAdminRoleGranted(address account, string roleName);
+    event LogAccessAdminRoleRevoked(address account, string roleName);
+    event LogAccessAdminFunctionGranted(address target, string functionName, string roleName);
 
     // only deployer modifier
     error ErrorNotDeployer();

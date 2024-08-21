@@ -158,14 +158,6 @@ interface IStaking is
             Amount rewardsClaimedAmount
         );
 
-    //--- helper functions --------------------------------------------------//
-
-    // /// @dev transfers the specified amount of dips from the from address to the staking wallet.
-    // function collectDipAmount(address from, Amount dipAmount) external;
-
-    // /// @dev transfers the specified amount of dips from the staking wallet to the to addess.
-    // function transferDipAmount(address to, Amount dipAmount) external;
-
     //--- view and pure functions -------------------------------------------//
 
     function getStakingStore() external view returns (StakingStore stakingStore);

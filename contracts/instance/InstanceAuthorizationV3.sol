@@ -26,27 +26,14 @@ contract InstanceAuthorizationV3
      string public constant BUNDLE_SET_TARGET_NAME = "BundleSet";
      string public constant RISK_SET_TARGET_NAME = "RiskSet";
 
-     constructor() Authorization(INSTANCE_TARGET_NAME) {}
-
-
-     function _setupRoles()
-          internal
-          override
-     {
-          // empty implementation
-     }
-
+     constructor()
+          Authorization(INSTANCE_TARGET_NAME, INSTANCE())
+     { }
 
      function _setupTargets()
           internal
           override
      {
-          // instance target
-          _addTargetWithRole(
-               INSTANCE_TARGET_NAME, 
-               _toTargetRoleId(INSTANCE()),
-               INSTANCE_ROLE_NAME);
-
           // instance supporting targets
           _addTarget(INSTANCE_STORE_TARGET_NAME);
           _addTarget(INSTANCE_ADMIN_TARGET_NAME);
@@ -132,11 +119,12 @@ contract InstanceAuthorizationV3
           IAccess.FunctionInfo[] storage functions;
 
           // authorize instance role
-          functions = _authorizeForTarget(INSTANCE_ADMIN_TARGET_NAME, _toTargetRoleId(INSTANCE()));
+          functions = _authorizeForTarget(INSTANCE_ADMIN_TARGET_NAME, getComponentRole(INSTANCE()));
           _authorize(functions, InstanceAdmin.grantRole.selector, "grantRole");
 
           // authorize component service role
           functions = _authorizeForTarget(INSTANCE_ADMIN_TARGET_NAME, getServiceRole(COMPONENT()));
+          _authorize(functions, InstanceAdmin.initializeComponentAuthorization.selector, "initializeComponentAuthoriz");
           _authorize(functions, InstanceAdmin.setTargetLocked.selector, "setTargetLocked");
      }
 

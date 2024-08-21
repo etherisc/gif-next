@@ -468,7 +468,7 @@ contract Staking is
         internal
         virtual override
     {
-        IComponentService(_getServiceAddress(COMPONENT())).approveStakingTokenHandler(
+        IComponentService(_getServiceAddress(STAKING())).approveTokenHandler(
             token, 
             amount);
     }

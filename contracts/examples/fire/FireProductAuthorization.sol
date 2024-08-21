@@ -23,7 +23,7 @@ contract FireProductAuthorization
         IAccess.FunctionInfo[] storage functions;
 
         // authorize public role (open access to any account, only allows to lock target)
-        functions = _authorizeForTarget(getTargetName(), PUBLIC_ROLE());
+        functions = _authorizeForTarget(getMainTargetName(), PUBLIC_ROLE());
         // fully public functions
         _authorize(functions, FireProduct.approveTokenHandler.selector, "approveTokenHandler");
         _authorize(functions, FireProduct.createApplication.selector, "createApplication");

@@ -119,14 +119,14 @@ contract PolicyService is
         // actual collateralizaion
         _poolService.lockCollateral(
             instance,
-            address(instanceReader.getComponentInfo(productNftId).token),
+            address(instanceReader.getToken(productNftId)),
             productNftId,
             applicationNftId,
             applicationInfo.bundleNftId,
             applicationInfo.sumInsuredAmount);
 
         // optional activation of policy
-        if(activateAt > TimestampLib.zero()) {
+        if(activateAt.gtz()) {
             applicationInfo = _activate(applicationNftId, applicationInfo, activateAt);
         }
 
@@ -165,7 +165,7 @@ contract PolicyService is
         }
 
         // link policy to risk and bundle
-        NftId poolNftId = getRegistry().getObjectInfo(bundleNftId).parentNftId;
+        NftId poolNftId = getRegistry().getParentNftId(bundleNftId);
         instance.getRiskSet().linkPolicy(productNftId, riskId, applicationNftId);
         instance.getBundleSet().linkPolicy(poolNftId, bundleNftId, applicationNftId);
 
@@ -207,12 +207,18 @@ contract PolicyService is
 
         // check funds and allowance of policy holder
         IPolicy.PremiumInfo memory premium = instanceReader.getPremiumInfo(policyNftId);
-        TokenHandler tokenHandler = _getTokenHandler(instanceReader, policyInfo.productNftId);        
-        _checkPremiumBalanceAndAllowance(
-            tokenHandler.TOKEN(), 
-            address(tokenHandler),
-            getRegistry().ownerOf(policyNftId), 
-            premium.premiumAmount);
+        instanceReader.getTokenHandler(
+            productNftId).checkBalanceAndAllowance(
+                getRegistry().ownerOf(policyNftId), 
+                premium.premiumAmount, 
+                false);
+
+        // )
+        // _checkPremiumBalanceAndAllowance(
+        //     tokenHandler.TOKEN(), 
+        //     address(tokenHandler),
+        //     getRegistry().ownerOf(policyNftId), 
+        //     premium.premiumAmount);
 
         // effects
         _processSale(
@@ -235,7 +241,7 @@ contract PolicyService is
         emit LogPolicyServicePolicyPremiumCollected(policyNftId, premium.premiumAmount);
 
         // interactions
-        _transferFunds(instanceReader, policyNftId, policyInfo.productNftId, premium);
+        _transferPremiumAmounts(instanceReader, policyNftId, policyInfo.productNftId, premium);
     }
 
 
@@ -349,7 +355,6 @@ contract PolicyService is
         // release (remaining) collateral that was blocked by policy
         _poolService.releaseCollateral(
             instance, 
-            address(instanceReader.getComponentInfo(productNftId).token),
             policyNftId, 
             policyInfo);
 
@@ -360,7 +365,7 @@ contract PolicyService is
         instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, CLOSED());
 
         // unlink policy from risk and bundle
-        NftId poolNftId = getRegistry().getObjectInfo(bundleNftId).parentNftId;
+        NftId poolNftId = getRegistry().getParentNftId(bundleNftId);
         instance.getRiskSet().unlinkPolicy(productNftId, riskId, policyNftId);
         instance.getBundleSet().unlinkPolicy(poolNftId, bundleNftId, policyNftId);
 
@@ -441,28 +446,6 @@ contract PolicyService is
         _policyHolderPolicyExpired(policyNftId, expiredAt);
     }
 
-    // TODO cleanup
-    // /// @dev Calculates the premium and updates all counters in the other services.
-    // /// Only book keeping, no token transfers.
-    // function _processPremium(
-    //     IInstance instance,
-    //     NftId applicationNftId,
-    //     IPolicy.PolicyInfo memory applicationInfo,
-    //     IPolicy.PremiumInfo memory premium
-    // )
-    //     internal
-    //     virtual
-    // {
-    //     // update the counters
-    //     _processSale(
-    //         instanceReader, 
-    //         instance.getInstanceStore(), 
-    //         productNftId, 
-    //         applicationInfo.bundleNftId, 
-    //         applicationInfo.referralId, 
-    //         premium);
-    // }
-
 
     function _activate(
         NftId policyNftId, 
@@ -528,7 +511,7 @@ contract PolicyService is
 
 
     /// @dev transfer the premium to the wallets the premium is distributed to
-    function _transferFunds(
+    function _transferPremiumAmounts(
         InstanceReader instanceReader,
         NftId policyNftId,
         NftId productNftId,
@@ -537,7 +520,6 @@ contract PolicyService is
         internal
         virtual
     {
-        TokenHandler tokenHandler = _getTokenHandler(instanceReader, productNftId);
         address policyHolder = getRegistry().ownerOf(policyNftId);
 
         (
@@ -549,14 +531,19 @@ contract PolicyService is
             instanceReader, 
             productNftId);
 
-        tokenHandler.collectTokensToThreeRecipients(
-            policyHolder,
-            productWallet,
-            premium.productFeeAmount,
-            distributionWallet,
-            premium.distributionFeeAndCommissionAmount,
-            poolWallet,
-            premium.poolPremiumAndFeeAmount);
+        // step 1: collect premium amount from policy holder
+        TokenHandler tokenHandler = instanceReader.getTokenHandler(productNftId);
+        tokenHandler.pullToken(policyHolder, premium.premiumAmount);
+
+        // step 2: push distribution fee to distribution wallet
+        if (premium.distributionFeeAndCommissionAmount.gtz()) {
+            tokenHandler.pushToken(distributionWallet, premium.distributionFeeAndCommissionAmount);
+        }
+
+        // step 3: push pool fee, bundle fee and pool premium to pool wallet
+        if (premium.poolPremiumAndFeeAmount.gtz()) {
+            tokenHandler.pushToken(poolWallet, premium.poolPremiumAndFeeAmount);
+        }
     }
 
 
@@ -576,29 +563,30 @@ contract PolicyService is
     }
 
 
+    // TODO cleanup
     /// @dev checks the balance and allowance of the policy holder
-    function _checkPremiumBalanceAndAllowance(
-        IERC20Metadata token,
-        address tokenHandlerAddress, 
-        address policyHolder, 
-        Amount premiumAmount
-    )
-        internal
-        virtual
-        view
-    {
-        uint256 premium = premiumAmount.toInt();
-        uint256 balance = token.balanceOf(policyHolder);
-        uint256 allowance = token.allowance(policyHolder, tokenHandlerAddress);
+    // function _checkPremiumBalanceAndAllowance(
+    //     IERC20Metadata token,
+    //     address tokenHandlerAddress, 
+    //     address policyHolder, 
+    //     Amount premiumAmount
+    // )
+    //     internal
+    //     virtual
+    //     view
+    // {
+    //     uint256 premium = premiumAmount.toInt();
+    //     uint256 balance = token.balanceOf(policyHolder);
+    //     uint256 allowance = token.allowance(policyHolder, tokenHandlerAddress);
     
-        if (balance < premium) {
-            revert ErrorPolicyServiceBalanceInsufficient(policyHolder, premium, balance);
-        }
+    //     if (balance < premium) {
+    //         revert ErrorPolicyServiceBalanceInsufficient(policyHolder, premium, balance);
+    //     }
 
-        if (allowance < premium) {
-            revert ErrorPolicyServiceAllowanceInsufficient(policyHolder, tokenHandlerAddress, premium, allowance);
-        }
-    }
+    //     if (allowance < premium) {
+    //         revert ErrorPolicyServiceAllowanceInsufficient(policyHolder, tokenHandlerAddress, premium, allowance);
+    //     }
+    // }
 
 
     function _policyHolderPolicyActivated(
@@ -659,19 +647,20 @@ contract PolicyService is
     }
 
 
-    function _getTokenHandler(
-        InstanceReader instanceReader,
-        NftId productNftId
-    )
-        internal 
-        virtual
-        view 
-        returns (
-            TokenHandler tokenHandler
-        )
-    {
-        tokenHandler = instanceReader.getComponentInfo(productNftId).tokenHandler;
-    }
+    // TODO cleanup
+    // function _getTokenHandler(
+    //     InstanceReader instanceReader,
+    //     NftId productNftId
+    // )
+    //     internal 
+    //     virtual
+    //     view 
+    //     returns (
+    //         TokenHandler tokenHandler
+    //     )
+    // {
+    //     tokenHandler = instanceReader.getTokenHandler(productNftId).tokenHandler;
+    // }
 
 
     function _getDistributionNftAndWallets(

@@ -28,7 +28,10 @@ contract ExternallyManagedPoolTest is GifTest {
 
     function setUp() public override {
         super.setUp();
+        _prepareExternallyManagedSetup();
+    }
 
+    function _prepareExternallyManagedSetup() internal {
         _deployProduct(); // simple product setup
 
         vm.startPrank(instanceOwner);
@@ -43,7 +46,6 @@ contract ExternallyManagedPoolTest is GifTest {
         emPool.init();
         vm.stopPrank();
     }
-
 
     function test_externallyManagedPoolSetUp() public {
         // GIVEN just setUp

@@ -318,8 +318,8 @@ contract ClaimService is
     {
         // checks
         (
-            ,
-            IInstance instance,
+            NftId productNftId,,
+            // IInstance instance,
             InstanceReader instanceReader,
             InstanceStore instanceStore,
             IPolicy.PolicyInfo memory policyInfo
@@ -347,8 +347,8 @@ contract ClaimService is
         payoutInfo.paidAt = TimestampLib.blockTimestamp();
         instanceStore.updatePayout(policyNftId, payoutId, payoutInfo, PAID());
 
+        // update and save claim info with instance
         Amount payoutAmount = payoutInfo.amount;
-
         {
             ClaimId claimId = payoutId.toClaimId();
             IPolicy.ClaimInfo memory claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
@@ -371,41 +371,19 @@ contract ClaimService is
         policyInfo.payoutAmount = policyInfo.payoutAmount + payoutAmount;
         instanceStore.updatePolicyClaims(policyNftId, policyInfo, KEEP_STATE());
 
-        // inform pool about payout
+        emit LogClaimServicePayoutProcessed(policyNftId, payoutId, payoutAmount);
+
+        // effects + interactions (push tokens to beneficiary, product)
+        // delegate to pool to update book keeping and moving tokens payout
         _poolService.processPayout(
-            instance, 
-            address(instanceReader.getComponentInfo(policyInfo.productNftId).token),
+            instanceReader,
+            instanceStore, 
+            policyInfo.productNftId, // product nft id 
             policyNftId, 
-            policyInfo, 
-            payoutAmount);
-        
-        // transfer payout token and fee
-        {
-            (
-                Amount netPayoutAmount,
-                Amount processingFeeAmount,
-                address beneficiary
-            ) = _calculatePayoutAmount(
-                instanceReader,
-                policyNftId,
-                policyInfo,
-                payoutInfo);
-
-            emit LogClaimServicePayoutProcessed(policyNftId, payoutId, payoutAmount, beneficiary, netPayoutAmount, processingFeeAmount);
-
-            {
-                NftId poolNftId = getRegistry().getObjectInfo(policyInfo.bundleNftId).parentNftId;
-                IComponents.ComponentInfo memory poolInfo = instanceReader.getComponentInfo(poolNftId);
-                poolInfo.tokenHandler.pushToken(
-                    beneficiary, 
-                    netPayoutAmount);
-
-                // TODO add 2nd token tx if processingFeeAmount > 0
-            }
-
-            // callback to policy holder if applicable
-            _policyHolderPayoutExecuted(policyNftId, payoutId, beneficiary, payoutAmount);
-        }
+            policyInfo.bundleNftId, 
+            payoutId,
+            payoutAmount,
+            payoutInfo.beneficiary);
     }
 
     function cancelPayout(
@@ -480,11 +458,10 @@ contract ClaimService is
     {
         // checks
         (
-            ,
-            ,
+            ,,
             InstanceReader instanceReader,
             InstanceStore instanceStore,
-            IPolicy.PolicyInfo memory policyInfo
+            // IPolicy.PolicyInfo memory policyInfo
         ) = _verifyCallerWithPolicy(policyNftId);
 
         IPolicy.ClaimInfo memory claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
@@ -531,45 +508,6 @@ contract ClaimService is
     }
 
 
-    function _calculatePayoutAmount(
-        InstanceReader instanceReader,
-        NftId policyNftId,
-        IPolicy.PolicyInfo memory policyInfo,
-        IPolicy.PayoutInfo memory payoutInfo
-    )
-        internal
-        view
-        returns (
-            Amount netPayoutAmount,
-            Amount processingFeeAmount,
-            address beneficiary
-        )
-    {
-        Amount payoutAmount = payoutInfo.amount;
-
-        if(payoutAmount.gtz()) {
-            NftId productNftId = policyInfo.productNftId;
-
-            // get pool component info from policy or product
-            NftId poolNftId = getRegistry().getObjectInfo(policyInfo.bundleNftId).parentNftId;
-            IComponents.ComponentInfo memory poolInfo = instanceReader.getComponentInfo(poolNftId);
-
-            netPayoutAmount = payoutAmount;
-
-            if (payoutInfo.beneficiary == address(0)) {
-                beneficiary = getRegistry().ownerOf(policyNftId);
-            } else { 
-                beneficiary = payoutInfo.beneficiary;
-            }
-
-            IComponents.FeeInfo memory feeInfo = instanceReader.getFeeInfo(productNftId);
-            if(FeeLib.gtz(feeInfo.processingFee)) {
-                // TODO calculate and set net payout and processing fees
-            }
-        }
-    }
-
-
     function _verifyCallerWithPolicy(
         NftId policyNftId
     )
@@ -596,6 +534,7 @@ contract ClaimService is
             productNftId);
         }
     }
+
 
     function _getAndVerifyActiveComponent(ObjectType expectedType) 
         internal 
@@ -672,22 +611,7 @@ contract ClaimService is
         }
     }
 
-
-    function _policyHolderPayoutExecuted(
-        NftId policyNftId, 
-        PayoutId payoutId,
-        address beneficiary,
-        Amount payoutAmount
-    )
-        internal
-    {
-        IPolicyHolder policyHolder = _getPolicyHolder(policyNftId);
-        if(address(policyHolder) != address(0)) {
-            policyHolder.payoutExecuted(policyNftId, payoutId, payoutAmount, beneficiary);
-        }
-    }
-
-
+    // TODO: move to policy helper lib or something
     function _getPolicyHolder(NftId policyNftId)
         internal 
         view 

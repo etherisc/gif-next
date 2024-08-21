@@ -67,10 +67,6 @@ interface IComponentService is
     /// Reverts if the component's token handler wallet is not the token handler itself.
     function approveTokenHandler(IERC20Metadata token, Amount amount) external;
 
-    /// @dev Approves the staking token handler.
-    /// Reverts if the staking token handler wallet is not the token handler itself.
-    function approveStakingTokenHandler(IERC20Metadata token, Amount amount) external;
-
     /// @dev Sets the components associated wallet address
     function setWallet(address newWallet) external;
 

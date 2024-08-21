@@ -2,22 +2,25 @@
 pragma solidity ^0.8.20;
 
 import {console} from "../lib/forge-std/src/Test.sol";
-import {COLLATERALIZED} from "../contracts/type/StateId.sol";
-import {DistributorType} from "../contracts/type/DistributorType.sol";
-import {IDistributionService} from "../contracts/distribution/IDistributionService.sol";
-import {GifTest} from "./base/GifTest.sol";
-import {NftId, NftIdLib} from "../contracts/type/NftId.sol";
+
 import {IBundleService} from "../contracts/pool/IBundleService.sol";
 import {IComponentService} from "../contracts/shared/IComponentService.sol";
 import {IComponents} from "../contracts/instance/module/IComponents.sol";
+import {IDistributionService} from "../contracts/distribution/IDistributionService.sol";
 import {IPolicy} from "../contracts/instance/module/IPolicy.sol";
 import {IPoolComponent} from "../contracts/pool/IPoolComponent.sol";
+import {IPoolService} from "../contracts/pool/IPoolService.sol";
+
+import {COLLATERALIZED} from "../contracts/type/StateId.sol";
+import {DistributorType} from "../contracts/type/DistributorType.sol";
+import {GifTest} from "./base/GifTest.sol";
+import {NftId} from "../contracts/type/NftId.sol";
 import {FeeLib} from "../contracts/type/Fee.sol";
 import {RiskId, RiskIdLib} from "../contracts/type/RiskId.sol";
 import {ReferralId, ReferralLib} from "../contracts/type/Referral.sol";
 import {Seconds, SecondsLib} from "../contracts/type/Seconds.sol";
 import {Timestamp, TimestampLib} from "../contracts/type/Timestamp.sol";
-import {TokenHandler, TokenHandlerBase} from "../contracts/shared/TokenHandler.sol";
+import {TokenHandlerBase} from "../contracts/shared/TokenHandler.sol";
 import {Amount, AmountLib} from "../contracts/type/Amount.sol";
 import {INftOwnable} from "../contracts/shared/INftOwnable.sol";
 
@@ -182,7 +185,7 @@ contract TestFees is GifTest {
     }
 
     /// @dev test withdraw fees from pool component as pool owner
-    function test_feesWithdrawPoolFees() public {
+    function test_feesWithdrawPoolFeesHappyCase() public {
         // GIVEN
         _setupWithActivePolicy(false);
 
@@ -213,7 +216,7 @@ contract TestFees is GifTest {
     }
 
     /// @dev test withdraw fees from pool component as not the pool owner
-    function test_feesWithdrawPoolFees_notOwner() public {
+    function test_feesWithdrawPoolFeesNotOwner() public {
         // GIVEN
         _setupWithActivePolicy(false);
 
@@ -278,7 +281,7 @@ contract TestFees is GifTest {
     }
     
     /// @dev test withdraw of distributor commission
-    function test_feesWithdrawCommission() public {
+    function test_feesWithdrawCommissionHappyCase() public {
         // GIVEN
         _setupWithActivePolicy(true);
 
@@ -329,7 +332,7 @@ contract TestFees is GifTest {
     }
 
     /// @dev test withdraw of distributor commission as not the distributor
-    function test_feesWithdrawCommission_notDistributor() public {
+    function test_feesWithdrawCommissionNotDistributor() public {
         // GIVEN
         _setupWithActivePolicy(true);
 
@@ -344,7 +347,7 @@ contract TestFees is GifTest {
     }
 
     /// @dev test withdraw of distributor commission with max value
-    function test_feesWithdrawCommission_maxAmount() public {
+    function test_feesWithdrawCommissionMaxAmount() public {
         // GIVEN
         _setupWithActivePolicy(true);
 
@@ -393,7 +396,7 @@ contract TestFees is GifTest {
     }
 
     /// @dev test withdraw of distributor commission with a too large amount
-    function test_feesWithdrawCommission_amountTooLarge() public {
+    function test_feesWithdrawCommissionAmountTooLarge() public {
         // GIVEN
         _setupWithActivePolicy(true);
 
@@ -411,7 +414,7 @@ contract TestFees is GifTest {
     }
 
     /// @dev test withdraw of distributor commission with a zero amount
-    function test_feesWithdrawCommission_amountIsZero() public {
+    function test_feesWithdrawCommissionAmountIsZero() public {
         // GIVEN
         _setupWithActivePolicy(true);
 
@@ -427,7 +430,7 @@ contract TestFees is GifTest {
     }
 
     /// @dev test withdraw of distributor commission when allowance is too small
-    function test_feesWithdrawCommission_allowanceTooSmall() public {
+    function test_feesWithdrawCommissionAllowanceTooSmall() public {
         // GIVEN
         _setupWithActivePolicy(true);
 
@@ -452,7 +455,7 @@ contract TestFees is GifTest {
         distribution.withdrawCommission(distributorNftId, withdrawAmount);
     }
 
-    function test_feesWithdrawBundleFees() public {
+    function test_feesWithdrawBundleFeesHappyCase() public {
         // GIVEN
         _setupWithActivePolicy(false);
 
@@ -472,7 +475,7 @@ contract TestFees is GifTest {
 
         // THEN - expect a log entry for the fee withdrawal
         vm.expectEmit();
-        emit IBundleService.LogBundleServiceFeesWithdrawn(
+        emit IPoolService.LogPoolServiceFeesWithdrawn(
             bundleNftId,
             investor,
             address(token),
@@ -514,7 +517,7 @@ contract TestFees is GifTest {
 
         // THEN - expect a log entry for the fee withdrawal
         vm.expectEmit();
-        emit IBundleService.LogBundleServiceFeesWithdrawn(
+        emit IPoolService.LogPoolServiceFeesWithdrawn(
             bundleNftId,
             investor,
             address(token),
@@ -570,7 +573,7 @@ contract TestFees is GifTest {
 
         // THEN - expect a log entry for the fee withdrawal
         vm.expectEmit();
-        emit IBundleService.LogBundleServiceFeesWithdrawn(
+        emit IPoolService.LogPoolServiceFeesWithdrawn(
             bundleNftId,
             investor,
             address(token),
@@ -610,7 +613,7 @@ contract TestFees is GifTest {
         
         // THEN - expect a revert
         vm.expectRevert(abi.encodeWithSelector(
-            IBundleService.ErrorBundleServiceFeesWithdrawAmountExceedsLimit.selector, 
+            IPoolService.ErrorPoolServiceFeesWithdrawAmountExceedsLimit.selector, 
             withdrawAmount,
             10));
         

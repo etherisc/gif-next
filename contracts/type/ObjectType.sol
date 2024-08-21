@@ -44,88 +44,101 @@ function INSTANCE() pure returns (ObjectType) {
     return ObjectType.wrap(10);
 }
 
+/// @dev Generic component object type.
+/// Component role id range is 11-19.
+/// Stick to this range for new component object types.
 function COMPONENT() pure returns (ObjectType) {
     return ObjectType.wrap(11);
 }
 
-function ACCOUNTING() pure returns (ObjectType) {
+/// @dev Product object type.
+/// IMPORTANT the actual value has an influence on the corresponding role id (RoleIdLib.sol). 
+/// Do not change this value without updating the corresponding role id calculation.
+function PRODUCT() pure returns (ObjectType) {
     return ObjectType.wrap(12);
 }
 
-function PRODUCT() pure returns (ObjectType) {
+function ORACLE() pure returns (ObjectType) {
     return ObjectType.wrap(13);
 }
 
-function FEE() pure returns (ObjectType) {
+function DISTRIBUTION() pure returns (ObjectType) {
     return ObjectType.wrap(14);
 }
 
-function ORACLE() pure returns (ObjectType) {
+function POOL() pure returns (ObjectType) {
     return ObjectType.wrap(15);
 }
 
-function DISTRIBUTION() pure returns (ObjectType) {
-    return ObjectType.wrap(16);
-}
-
-function POOL() pure returns (ObjectType) {
-    return ObjectType.wrap(17);
-}
-
+/// @dev Application object type.
+/// Range for NFT objects created thorugh components is 20-29.
 function APPLICATION() pure returns (ObjectType) {
-    return ObjectType.wrap(18);
-}
-
-function POLICY() pure returns (ObjectType) {
-    return ObjectType.wrap(19);
-}
-
-function PREMIUM() pure returns (ObjectType) {
     return ObjectType.wrap(20);
 }
 
-function CLAIM() pure returns (ObjectType) {
+function POLICY() pure returns (ObjectType) {
     return ObjectType.wrap(21);
 }
 
-function PAYOUT() pure returns (ObjectType) {
-    return ObjectType.wrap(22); 
-}
-
-function RISK() pure returns (ObjectType) {
-    return ObjectType.wrap(23);
-}
-
-function PRICE() pure returns (ObjectType) {
-    return ObjectType.wrap(24);
-}
-
-function REQUEST() pure returns (ObjectType) {
-    return ObjectType.wrap(25);
-}
-
-function DISTRIBUTOR_TYPE() pure returns (ObjectType) {
-    return ObjectType.wrap(26);
+function BUNDLE() pure returns (ObjectType) {
+    return ObjectType.wrap(22);
 }
 
 function DISTRIBUTOR() pure returns (ObjectType) {
-    return ObjectType.wrap(27);
+    return ObjectType.wrap(23);
 }
 
-function REFERRAL() pure returns (ObjectType) {
-    return ObjectType.wrap(28);
-}
-
-function BUNDLE() pure returns (ObjectType) {
-    return ObjectType.wrap(29);
-}
-
-function TARGET() pure returns (ObjectType) {
+/// @dev Stake object type.
+/// NFT object type is 30
+function STAKE() pure returns (ObjectType) {
     return ObjectType.wrap(30);
 }
 
-function STAKE() pure returns (ObjectType) {
+/// @dev Staking target object type.
+function TARGET() pure returns (ObjectType) {
     return ObjectType.wrap(31);
+}
+
+/// @dev Accounting object type.
+/// Range for non-NFT types created through components is 40+
+function ACCOUNTING() pure returns (ObjectType) {
+    return ObjectType.wrap(40);
+}
+
+function FEE() pure returns (ObjectType) {
+    return ObjectType.wrap(41);
+}
+
+function PRICE() pure returns (ObjectType) {
+    return ObjectType.wrap(42);
+}
+
+function PREMIUM() pure returns (ObjectType) {
+    return ObjectType.wrap(43);
+}
+
+function RISK() pure returns (ObjectType) {
+    return ObjectType.wrap(44);
+}
+
+function CLAIM() pure returns (ObjectType) {
+    return ObjectType.wrap(45);
+}
+
+function PAYOUT() pure returns (ObjectType) {
+    return ObjectType.wrap(46); 
+}
+
+function REQUEST() pure returns (ObjectType) {
+    return ObjectType.wrap(47);
+}
+
+function DISTRIBUTOR_TYPE() pure returns (ObjectType) {
+    return ObjectType.wrap(48);
+}
+
+function REFERRAL() pure returns (ObjectType) {
+    return ObjectType.wrap(49);
 }
 
 

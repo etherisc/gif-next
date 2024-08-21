@@ -24,8 +24,9 @@ interface IPolicyService is IService {
     error ErrorPolicyServicePolicyStateNotCollateralized(NftId applicationNftId);
     error ErrorPolicyServicePolicyAlreadyActivated(NftId policyNftId);
 
-    error ErrorPolicyServiceBalanceInsufficient(address policyOwner, uint256 premiumAmount, uint256 balance);
-    error ErrorPolicyServiceAllowanceInsufficient(address policyOwner, address tokenHandler, uint256 premiumAmount, uint256 allowance);
+    // TODO cleanup
+    // error ErrorPolicyServiceBalanceInsufficient(address policyOwner, uint256 premiumAmount, uint256 balance);
+    // error ErrorPolicyServiceAllowanceInsufficient(address policyOwner, address tokenHandler, uint256 premiumAmount, uint256 allowance);
 
     error ErrorPolicyServiceInsufficientAllowance(address customer, address tokenHandlerAddress, uint256 amount);
     error ErrorPolicyServicePremiumAlreadyPaid(NftId policyNftId);
