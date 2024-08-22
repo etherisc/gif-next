@@ -716,6 +716,13 @@ contract StakingTest is GifTest {
         stakingService.restakeToNewTarget(stakeNftId, instanceNftId2);
     }
 
+    // TODO: test - target not valid nft
+    
+    // TODO: test - target not stakeable target
+
+    // TODO: test - restake with reward rate set to value > 0
+
+
 
     function _addRewardReserves(
         NftId instanceNftId, 
