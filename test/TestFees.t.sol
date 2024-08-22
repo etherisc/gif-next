@@ -714,7 +714,7 @@ contract TestFees is GifTest {
                 instanceReader.toUFixed(8, -2), 
                 instanceReader.toUFixed(5, -2), 
                 10, 
-                30 * 24 * 60 * 60, 
+                SecondsLib.toSeconds(30 * 24 * 60 * 60), 
                 false, 
                 false, 
                 "");

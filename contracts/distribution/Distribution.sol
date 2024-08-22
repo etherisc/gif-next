@@ -1,19 +1,21 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Amount} from "../type/Amount.sol";
-import {COMPONENT, DISTRIBUTION, DISTRIBUTOR} from "../type/ObjectType.sol";
 import {IAuthorization} from "../authorization/IAuthorization.sol";
-import {IDistributionService} from "./IDistributionService.sol";
-import {NftId, NftIdLib} from "../type/NftId.sol";
-import {ReferralId, ReferralStatus, ReferralLib} from "../type/Referral.sol";
-import {Fee} from "../type/Fee.sol";
-import {InstanceLinkedComponent} from "../shared/InstanceLinkedComponent.sol";
 import {IComponentService} from "../shared/IComponentService.sol";
 import {IDistributionComponent} from "./IDistributionComponent.sol";
-import {UFixed} from "../type/UFixed.sol";
+import {IDistributionService} from "./IDistributionService.sol";
+
+import {Amount} from "../type/Amount.sol";
+import {COMPONENT, DISTRIBUTION, DISTRIBUTOR} from "../type/ObjectType.sol";
 import {DistributorType} from "../type/DistributorType.sol";
+import {Fee} from "../type/Fee.sol";
+import {NftId, NftIdLib} from "../type/NftId.sol";
+import {ReferralId, ReferralStatus, ReferralLib} from "../type/Referral.sol";
+import {InstanceLinkedComponent} from "../shared/InstanceLinkedComponent.sol";
+import {Seconds} from "../type/Seconds.sol";
 import {Timestamp} from "../type/Timestamp.sol";
+import {UFixed} from "../type/UFixed.sol";
 
 
 abstract contract Distribution is
@@ -180,7 +182,7 @@ abstract contract Distribution is
         UFixed maxDiscountPercentage,
         UFixed commissionPercentage,
         uint32 maxReferralCount,
-        uint32 maxReferralLifetime,
+        Seconds maxReferralLifetime,
         bool allowSelfReferrals,
         bool allowRenewals,
         bytes memory data

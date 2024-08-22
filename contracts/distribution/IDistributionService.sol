@@ -8,30 +8,31 @@ import {IService} from "../shared/IService.sol";
 import {UFixed} from "../type/UFixed.sol";
 import {DistributorType} from "../type/DistributorType.sol";
 import {ReferralId} from "../type/Referral.sol";
+import {Seconds} from "../type/Seconds.sol";
 import {Timestamp} from "../type/Timestamp.sol";
 
 
 interface IDistributionService is IService {
 
     error ErrorDistributionServiceCallerNotRegistered(address caller);
-    error ErrorIDistributionServiceParentNftIdNotInstance(NftId nftId, NftId parentNftId);
-    error ErrorIDistributionServiceCallerNotDistributor(address caller);
-    error ErrorIDistributionServiceInvalidReferralId(ReferralId referralId);
-    error ErrorIDistributionServiceMaxReferralsExceeded(uint256 maxReferrals);
-    error ErrorIDistributionServiceDiscountTooLow(uint256 minDiscountPercentage, uint256 discountPercentage);
-    error ErrorIDistributionServiceDiscountTooHigh(uint256 maxDiscountPercentage, uint256 discountPercentage);
-    error ErrorIDistributionServiceExpiryTooLong(uint256 maxReferralLifetime, uint256 expiryAt);
-    error ErrorIDistributionServiceInvalidReferral(string code);
-    error ErrorIDistributionServiceExpirationInvalid(Timestamp expiryAt);
-    error ErrorIDistributionServiceCommissionTooHigh(uint256 commissionPercentage, uint256 maxCommissionPercentage);
-    error ErrorIDistributionServiceMinFeeTooHigh(uint256 minFee, uint256 limit);
+    error ErrorDistributionServiceParentNftIdNotInstance(NftId nftId, NftId parentNftId);
+    error ErrorDistributionServiceCallerNotDistributor(address caller);
+    error ErrorDistributionServiceInvalidReferralId(ReferralId referralId);
+    error ErrorDistributionServiceMaxReferralsExceeded(uint256 maxReferrals);
+    error ErrorDistributionServiceDiscountTooLow(uint256 minDiscountPercentage, uint256 discountPercentage);
+    error ErrorDistributionServiceDiscountTooHigh(uint256 maxDiscountPercentage, uint256 discountPercentage);
+    error ErrorDistributionServiceExpiryTooLong(Seconds maxReferralLifetime, Timestamp expiryAt);
+    error ErrorDistributionServiceInvalidReferral(string code);
+    error ErrorDistributionServiceExpirationInvalid(Timestamp expiryAt);
+    error ErrorDistributionServiceCommissionTooHigh(uint256 commissionPercentage, uint256 maxCommissionPercentage);
+    error ErrorDistributionServiceMinFeeTooHigh(uint256 minFee, uint256 limit);
 
     error ErrorDistributionServiceCommissionWithdrawAmountExceedsLimit(Amount amount, Amount limit);
     
     error ErrorDistributionServiceVariableFeesTooHight(uint256 maxDiscountPercentage, uint256 limit);
     error ErrorDistributionServiceMaxDiscountTooHigh(uint256 maxDiscountPercentage, uint256 limit);
 
-    error ErrorIDistributionServiceReferralInvalid(NftId distributionNftId, ReferralId referralId);
+    error ErrorDistributionServiceReferralInvalid(NftId distributionNftId, ReferralId referralId);
     error ErrorDistributionServiceInvalidFeeTransferred(Amount transferredDistributionFeeAmount, Amount expectedDistributionFeeAmount);
 
     event LogDistributionServiceCommissionWithdrawn(NftId distributorNftId, address recipient, address tokenAddress, Amount amount);
@@ -42,7 +43,7 @@ interface IDistributionService is IService {
         UFixed maxDiscountPercentage,
         UFixed commissionPercentage,
         uint32 maxReferralCount,
-        uint32 maxReferralLifetime,
+        Seconds maxReferralLifetime,
         bool allowSelfReferrals,
         bool allowRenewals,
         bytes memory data

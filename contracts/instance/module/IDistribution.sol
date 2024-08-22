@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {Amount} from "../../type/Amount.sol";
 import {DistributorType} from "../../type/DistributorType.sol";
 import {NftId} from "../../type/NftId.sol";
+import {Seconds} from "../../type/Seconds.sol";
 import {Timestamp} from "../../type/Timestamp.sol";
 import {UFixed} from "../../type/UFixed.sol";
 
@@ -15,7 +16,7 @@ interface IDistribution {
         UFixed maxDiscountPercentage;
         UFixed commissionPercentage;
         uint32 maxReferralCount;
-        uint32 maxReferralLifetime;
+        Seconds maxReferralLifetime;
         bool allowSelfReferrals;
         bool allowRenewals;
         bytes data;

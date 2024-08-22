@@ -228,7 +228,7 @@ contract Instance is
         return _products.length;
     }
 
-    function getProductNftid(uint256 idx) external view returns (NftId productNftId) {
+    function getProductNftId(uint256 idx) external view returns (NftId productNftId) {
         return _products[idx];
     }
 

@@ -55,7 +55,7 @@ contract TestComponent is GifTest {
         assertEq(distribution.getWallet(), externallyOwnerWallet, "wallet not changed to externallyOwnerWallet");
     }
 
-    function test_componentSetWalletToComponent() public {
+    function test_componentSetWalletToComponentHappyCase() public {
         // GIVEN - just setUp
 
         address externallyOwnerWallet = makeAddr("externallyOwnerWallet");

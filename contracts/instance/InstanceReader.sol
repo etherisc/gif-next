@@ -88,6 +88,18 @@ contract InstanceReader {
         return _instance;
     }
 
+    function components() public view returns (uint256 componentCount) {
+        return _instance.getInstanceAdmin().components();
+    }
+
+    function products() public view returns (uint256 productCount) {
+        return _instance.products();
+    }
+
+    function getProductNftId(uint256 idx) public view returns (NftId productNftId) {
+        return _instance.getProductNftId(idx);
+    }
+
     // module specific functions
 
     function getPolicyInfo(NftId policyNftId)
