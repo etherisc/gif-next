@@ -16,7 +16,8 @@ interface IPolicyService is IService {
     event LogPolicyServicePolicyDeclined(NftId policyNftId);
     event LogPolicyServicePolicyPremiumCollected(NftId policyNftId, Amount premiumAmount);
     event LogPolicyServicePolicyActivated(NftId policyNftId, Timestamp activatedAt);
-    event LogPolicyServicePolicyExpirationUpdated(NftId policyNftId, Timestamp originalExpiredAt, Timestamp expiredAt);
+    event LogPolicyServicePolicyActivatedUpdated(NftId policyNftId, Timestamp activatedAt);
+    event LogPolicyServicePolicyExpirationUpdated(NftId policyNftId, Timestamp expiredAt);
     event LogPolicyServicePolicyClosed(NftId policyNftId);
 
     error ErrorPolicyServicePolicyProductMismatch(NftId applicationNftId, NftId expectedProductNftId, NftId actualProductNftId);
@@ -24,10 +25,10 @@ interface IPolicyService is IService {
     error ErrorPolicyServicePolicyStateNotCollateralized(NftId applicationNftId);
     error ErrorPolicyServicePolicyAlreadyActivated(NftId policyNftId);
 
-    // TODO cleanup
-    // error ErrorPolicyServiceBalanceInsufficient(address policyOwner, uint256 premiumAmount, uint256 balance);
-    // error ErrorPolicyServiceAllowanceInsufficient(address policyOwner, address tokenHandler, uint256 premiumAmount, uint256 allowance);
-
+    error ErrorPolicyServicePolicyNotActivated(NftId policyNftId);
+    error ErrorPolicyServicePolicyActivationTooEarly(NftId policyNftId, Timestamp lowerLimit, Timestamp activatedAt);
+    error ErrorPolicyServicePolicyActivationTooLate(NftId policyNftId, Timestamp upperLimit, Timestamp activatedAt);
+    
     error ErrorPolicyServiceInsufficientAllowance(address customer, address tokenHandlerAddress, uint256 amount);
     error ErrorPolicyServicePremiumAlreadyPaid(NftId policyNftId);
 
@@ -68,6 +69,11 @@ interface IPolicyService is IService {
     /// to activate a policy it needs to be in underwritten state
     function activate(NftId policyNftId, Timestamp activateAt) external;
 
+    /// @dev adjusts the activation date of the specified policy and sets the new activation date in the policy metadata
+    /// to adjust the activation date of a policy it needs to have an activation date set. 
+    /// the new activation date must not be before the current block timestamp or after the expiry date
+    function adjustActivation(NftId policyNftId, Timestamp newActivateAt) external;
+
     /// @dev Expires the specified policy and sets the expiry date in the policy metadata. 
     /// Function consumers are products.
     /// If expiry date is set to 0, then the earliest possible expiry date (current blocktime) is set
@@ -86,6 +92,4 @@ interface IPolicyService is IService {
     /// Function consumers is claim service.
     function expirePolicy(IInstance instance, NftId policyNftId, Timestamp expireAt) external returns (Timestamp expiredAt);
 
-    /// @dev Returns true iff policy is closeable
-    function policyIsCloseable(InstanceReader instanceReader, NftId policyNftId) external view returns (bool isCloseable);
 }
