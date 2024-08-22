@@ -18,22 +18,20 @@ interface IPoolService is IService {
     event LogPoolServiceMaxBalanceAmountUpdated(NftId poolNftId, Amount previousMaxCapitalAmount, Amount currentMaxCapitalAmount);
     event LogPoolServiceWalletFunded(NftId poolNftId, address poolOwner, Amount amount);
     event LogPoolServiceWalletDefunded(NftId poolNftId, address poolOwner, Amount amount);
-
+    // TODO remove instanceNftId
     event LogPoolServiceBundleCreated(NftId instanceNftId, NftId poolNftId, NftId bundleNftId);
     event LogPoolServiceBundleClosed(NftId instanceNftId, NftId poolNftId, NftId bundleNftId);
 
-    event LogPoolServiceBundleStaked(NftId instanceNftId, NftId poolNftId, NftId bundleNftId, Amount amount, Amount netAmount);
-    event LogPoolServiceBundleUnstaked(NftId instanceNftId, NftId poolNftId, NftId bundleNftId, Amount amount, Amount netAmount);
+    event LogPoolServiceBundleStaked(NftId poolNftId, NftId bundleNftId, Amount amount, Amount netAmount);
+    event LogPoolServiceBundleUnstaked(NftId poolNftId, NftId bundleNftId, Amount amount, Amount netAmount);
 
     event LogPoolServiceFeesWithdrawn(NftId bundleNftId, address recipient, address tokenAddress, Amount amount);
 
     event LogPoolServiceProcessFundedClaim(NftId policyNftId, ClaimId claimId, Amount availableAmount);
 
     error ErrorPoolServicePoolNotExternallyManaged(NftId poolNftId);
-    error ErrorPoolServicePolicyPoolMismatch(NftId policyNftId, NftId productNftId, NftId expectedProductNftId);
     error ErrorPoolServiceBundleOwnerRoleAlreadySet(NftId poolNftId);
     error ErrorPoolServiceInvalidTransferAmount(Amount expectedAmount, Amount actualAmount);
-    error ErrorPoolServiceBundlePoolMismatch(NftId bundleNftId, NftId poolNftId);
     error ErrorPoolServiceMaxBalanceAmountExceeded(NftId poolNftId, Amount maxBalanceAmount, Amount currentBalanceAmount, Amount transferAmount);
     error ErrorPoolServiceFeesWithdrawAmountExceedsLimit(Amount amount, Amount limit);
 
@@ -129,37 +127,5 @@ interface IPoolService is IService {
 
     /// @dev processes the sale of a bundle and track the pool fee and bundle fee amounts
     function processSale(NftId bundleNftId, IPolicy.PremiumInfo memory premium) external;
-
-
-    // /// @dev Calulate required collateral for the provided parameters.
-    // function calculateRequiredCollateral(
-    //     InstanceReader instanceReader,
-    //     NftId productNftId, 
-    //     Amount sumInsuredAmount
-    // )
-    //     external
-    //     view 
-    //     returns(
-    //         NftId poolNftId,
-    //         Amount totalCollateralAmount,
-    //         Amount localCollateralAmount,
-    //         bool poolIsVerifyingApplications
-    //     );
-
-
-    // /// @dev calulate required collateral for the provided parameters.
-    // /// Collateralization is applied to sum insured.
-    // /// Retention level defines the fraction of the collateral that is required locally.
-    // function calculateRequiredCollateral(
-    //     UFixed collateralizationLevel, 
-    //     UFixed retentionLevel, 
-    //     Amount sumInsuredAmount
-    // )
-    //     external
-    //     pure 
-    //     returns(
-    //         Amount totalCollateralAmount,
-    //         Amount localCollateralAmount
-    //     );
 
 }

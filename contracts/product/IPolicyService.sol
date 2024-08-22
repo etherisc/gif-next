@@ -20,7 +20,6 @@ interface IPolicyService is IService {
     event LogPolicyServicePolicyExpirationUpdated(NftId policyNftId, Timestamp expiredAt);
     event LogPolicyServicePolicyClosed(NftId policyNftId);
 
-    error ErrorPolicyServicePolicyProductMismatch(NftId applicationNftId, NftId expectedProductNftId, NftId actualProductNftId);
     error ErrorPolicyServicePolicyStateNotApplied(NftId applicationNftId);
     error ErrorPolicyServicePolicyStateNotCollateralized(NftId applicationNftId);
     error ErrorPolicyServicePolicyAlreadyActivated(NftId policyNftId);
@@ -29,7 +28,6 @@ interface IPolicyService is IService {
     error ErrorPolicyServicePolicyActivationTooEarly(NftId policyNftId, Timestamp lowerLimit, Timestamp activatedAt);
     error ErrorPolicyServicePolicyActivationTooLate(NftId policyNftId, Timestamp upperLimit, Timestamp activatedAt);
     
-    error ErrorPolicyServiceInsufficientAllowance(address customer, address tokenHandlerAddress, uint256 amount);
     error ErrorPolicyServicePremiumAlreadyPaid(NftId policyNftId);
 
     error ErrorPolicyServicePolicyNotCloseable(NftId policyNftId);
@@ -90,6 +88,6 @@ interface IPolicyService is IService {
 
     /// @dev Expires the specified policy and sets the expiry date in the policy metadata. 
     /// Function consumers is claim service.
-    function expirePolicy(IInstance instance, NftId policyNftId, Timestamp expireAt) external returns (Timestamp expiredAt);
+    function expireFromService(IInstance instance, NftId policyNftId, Timestamp expireAt) external returns (Timestamp expiredAt);
 
 }

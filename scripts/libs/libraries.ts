@@ -236,9 +236,7 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         {
             libraries: {
                 AmountLib: amountLibAddress,
-                ContractLib: contractLibAddress,
                 FeeLib: feeLibAddress,
-                NftIdLib: nftIdLibAddress,
                 UFixedLib: uFixedLibAddress,
             }
         });

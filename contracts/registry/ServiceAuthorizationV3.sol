@@ -312,13 +312,15 @@ contract ServiceAuthorizationV3
      {
           IAccess.FunctionInfo[] storage functions;
 
+          functions = _authorizeForService(POLICY(), CLAIM());
+          _authorize(functions, IPolicyService.expireFromService.selector, "expireFromService");
+
           functions = _authorizeForService(POLICY(), ALL());
           _authorize(functions, IPolicyService.decline.selector, "decline");
           _authorize(functions, IPolicyService.createPolicy.selector, "createPolicy");
           _authorize(functions, IPolicyService.collectPremium.selector, "collectPremium");
           _authorize(functions, IPolicyService.activate.selector, "activate");
           _authorize(functions, IPolicyService.expire.selector, "expire");
-          _authorize(functions, IPolicyService.expirePolicy.selector, "expirePolicy");
           _authorize(functions, IPolicyService.close.selector, "close");
 
      }

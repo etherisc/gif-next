@@ -314,6 +314,7 @@ contract StakingService is
 
     function getDipToken()
         external
+        view
         virtual
         returns (IERC20Metadata dip)
     {
@@ -323,6 +324,7 @@ contract StakingService is
 
     function getTokenHandler()
         external
+        view
         virtual
         returns (TokenHandler tokenHandler)
     {
@@ -332,6 +334,7 @@ contract StakingService is
 
     function getStaking()
         external
+        view
         virtual
         returns (IStaking staking)
     {

@@ -46,6 +46,7 @@ import {ReferralId, ReferralLib} from "../../../contracts/type/Referral.sol";
 import {SUBMITTED, ACTIVE, COLLATERALIZED, CONFIRMED, DECLINED, CLOSED} from "../../../contracts/type/StateId.sol";
 import {StateId} from "../../../contracts/type/StateId.sol";
 import {UFixed, UFixedLib} from "../../../contracts/type/UFixed.sol";
+import {ContractLib} from "../../../contracts/shared/ContractLib.sol";
 
 contract ProductClusterTest is GifTest {
 
@@ -234,7 +235,7 @@ contract ProductClusterTest is GifTest {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                IPolicyService.ErrorPolicyServicePolicyProductMismatch.selector, 
+                ContractLib.ErrorContractLibParentMismatch.selector, 
                 applicationNftId2, 
                 myProductNftId1, // expected (caller)
                 myProductNftId2)); // actual (from application)

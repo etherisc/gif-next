@@ -25,7 +25,7 @@ import {ObjectType, ACCOUNTING, COMPONENT, DISTRIBUTION, PRODUCT, POOL, POLICY, 
 import {PolicyServiceLib} from "./PolicyServiceLib.sol";
 import {ReferralId} from "../type/Referral.sol";
 import {RiskId} from "../type/RiskId.sol";
-import {Service} from "../shared/Service.sol";
+import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
 import {StateId} from "../type/StateId.sol";
 import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
@@ -33,7 +33,7 @@ import {VersionPart} from "../type/Version.sol";
 
 
 contract PolicyService is
-    Service, 
+    ComponentVerifyingService, 
     IPolicyService
 {
     IAccountingService private _accountingService;
@@ -73,10 +73,11 @@ contract PolicyService is
     )
         external
         virtual
+        restricted()
         nonReentrant()
     {
         // checks
-        (IInstance instance,,) = _getAndVerifyCallerForPolicy(applicationNftId);
+        (IInstance instance,,) = _getAndVerifyCallingProductForPolicy(applicationNftId);
 
         // check policy is in state applied
         if (instance.getInstanceReader().getPolicyState(applicationNftId) != APPLIED()) {
@@ -100,6 +101,7 @@ contract PolicyService is
     )
         external 
         virtual
+        restricted()
         nonReentrant()
         returns (Amount premiumAmount)
     {
@@ -108,39 +110,39 @@ contract PolicyService is
             IInstance instance,
             NftId productNftId,
             IPolicy.PolicyInfo memory applicationInfo
-        ) = _getAndVerifyCallerForPolicy(applicationNftId);
+        ) = _getAndVerifyCallingProductForPolicy(applicationNftId);
+
+        InstanceReader instanceReader = instance.getInstanceReader();
+        InstanceStore instanceStore = instance.getInstanceStore();
 
         // check policy is in state applied
-        InstanceReader instanceReader = instance.getInstanceReader();
         if (instanceReader.getPolicyState(applicationNftId) != APPLIED()) {
             revert ErrorPolicyServicePolicyStateNotApplied(applicationNftId);
         }
 
         // effects
-        // actual collateralizaion
-        _poolService.lockCollateral(
-            instance,
-            address(instanceReader.getToken(productNftId)),
-            productNftId,
-            applicationNftId,
-            applicationInfo.bundleNftId,
-            applicationInfo.sumInsuredAmount);
-
         // optional activation of policy
         if(activateAt.gtz()) {
             applicationInfo = _activate(applicationNftId, applicationInfo, activateAt);
         }
 
         // update policy and set state to collateralized
-        instance.getInstanceStore().updatePolicy(
+        instanceStore.updatePolicy(
             applicationNftId, 
             applicationInfo, 
             COLLATERALIZED());
 
-        // calculate and store premium
-        RiskId riskId = applicationInfo.riskId;
         NftId bundleNftId = applicationInfo.bundleNftId;
+        RiskId riskId = applicationInfo.riskId;
 
+        // link policy to risk and bundle
+        {
+            NftId poolNftId = getRegistry().getObjectInfo(bundleNftId).parentNftId;
+            instance.getRiskSet().linkPolicy(productNftId, riskId, applicationNftId);
+            instance.getBundleSet().linkPolicy(poolNftId, bundleNftId, applicationNftId);
+        }
+
+        // calculate and store premium
         IPolicy.PremiumInfo memory premium = _pricingService.calculatePremium(
             productNftId,
             riskId,
@@ -151,9 +153,18 @@ contract PolicyService is
             applicationInfo.referralId);
 
         premiumAmount = premium.fullPremiumAmount;
-        instance.getInstanceStore().createPremium(
+        instanceStore.createPremium(
             applicationNftId,
             premium);
+
+        // actual collateralizaion
+        _poolService.lockCollateral(
+            instance,
+            address(instanceReader.getComponentInfo(productNftId).token),
+            productNftId,
+            applicationNftId,
+            bundleNftId,
+            applicationInfo.sumInsuredAmount);
 
         // update referral counter if product has linked distributino component
         {
@@ -165,13 +176,8 @@ contract PolicyService is
             }
         }
 
-        // link policy to risk and bundle
-        NftId poolNftId = getRegistry().getParentNftId(bundleNftId);
-        instance.getRiskSet().linkPolicy(productNftId, riskId, applicationNftId);
-        instance.getBundleSet().linkPolicy(poolNftId, bundleNftId, applicationNftId);
-
         // log policy creation before interactions with token and policy holder
-        emit LogPolicyServicePolicyCreated(applicationNftId, premium.premiumAmount, activateAt);
+        emit LogPolicyServicePolicyCreated(applicationNftId, premium.premiumAmount, applicationInfo.activatedAt);
 
         // interactions
         // callback to policy holder if applicable
@@ -186,6 +192,7 @@ contract PolicyService is
     )
         external 
         virtual
+        restricted()
         nonReentrant()
     {
         // checks
@@ -193,10 +200,12 @@ contract PolicyService is
             IInstance instance,
             NftId productNftId,
             IPolicy.PolicyInfo memory policyInfo
-        ) = _getAndVerifyCallerForPolicy(policyNftId);
+        ) = _getAndVerifyCallingProductForPolicy(policyNftId);
+
+        InstanceReader instanceReader = instance.getInstanceReader();
+        InstanceStore instanceStore = instance.getInstanceStore();
 
         // check policy is in state collateralized
-        InstanceReader instanceReader = instance.getInstanceReader();
         if (instanceReader.getPolicyState(policyNftId) != COLLATERALIZED()) {
             revert ErrorPolicyServicePolicyStateNotCollateralized(policyNftId);
         }
@@ -214,17 +223,11 @@ contract PolicyService is
                 premium.premiumAmount, 
                 false);
 
-        // )
-        // _checkPremiumBalanceAndAllowance(
-        //     tokenHandler.TOKEN(), 
-        //     address(tokenHandler),
-        //     getRegistry().ownerOf(policyNftId), 
-        //     premium.premiumAmount);
 
         // effects
         _processSale(
             instanceReader, 
-            instance.getInstanceStore(), 
+            instanceStore, 
             productNftId, 
             policyInfo.bundleNftId, 
             policyInfo.referralId, 
@@ -235,8 +238,8 @@ contract PolicyService is
             policyInfo = _activate(policyNftId, policyInfo, activateAt);
         }
 
-        instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, KEEP_STATE());
-        instance.getInstanceStore().updatePremiumState(policyNftId, PAID());
+        instanceStore.updatePolicy(policyNftId, policyInfo, KEEP_STATE());
+        instanceStore.updatePremiumState(policyNftId, PAID());
 
         // log premium collection before interactions with token
         emit LogPolicyServicePolicyPremiumCollected(policyNftId, premium.premiumAmount);
@@ -250,13 +253,14 @@ contract PolicyService is
     function activate(NftId policyNftId, Timestamp activateAt)
         external
         virtual
+        restricted()
         nonReentrant()
     {
         // checks
         (
             IInstance instance,,
             IPolicy.PolicyInfo memory policyInfo
-        ) = _getAndVerifyCallerForPolicy(policyNftId);
+        ) = _getAndVerifyCallingProductForPolicy(policyNftId);
 
         // effects
         policyInfo = _activate(policyNftId, policyInfo, activateAt);
@@ -283,7 +287,7 @@ contract PolicyService is
         (
             IInstance instance,,
             IPolicy.PolicyInfo memory policyInfo
-        ) = _getAndVerifyCallerForPolicy(policyNftId);
+        ) = _getAndVerifyCallingProductForPolicy(policyNftId);
 
         if (policyInfo.activatedAt.eqz()) {
             revert ErrorPolicyServicePolicyNotActivated(policyNftId);
@@ -317,6 +321,7 @@ contract PolicyService is
     )
         external
         virtual
+        restricted()
         nonReentrant()
         returns (Timestamp expiredAt)
     {
@@ -324,7 +329,7 @@ contract PolicyService is
         (
             IInstance instance,,
             IPolicy.PolicyInfo memory policyInfo
-        ) = _getAndVerifyCallerForPolicy(policyNftId);
+        ) = _getAndVerifyCallingProductForPolicy(policyNftId);
 
         // more checks, effects + interactions
         return _expire(
@@ -337,13 +342,14 @@ contract PolicyService is
 
 
     /// @inheritdoc IPolicyService
-    function expirePolicy(
+    function expireFromService(
         IInstance instance,
         NftId policyNftId,
         Timestamp expireAt
     )
         external
         virtual
+        restricted()
         nonReentrant()
         returns (Timestamp expiredAt)
     {
@@ -368,6 +374,7 @@ contract PolicyService is
     )
         external 
         virtual
+        restricted()
         nonReentrant()
     {
         // checks
@@ -375,7 +382,7 @@ contract PolicyService is
             IInstance instance,
             NftId productNftId,
             IPolicy.PolicyInfo memory policyInfo
-        ) = _getAndVerifyCallerForPolicy(policyNftId);
+        ) = _getAndVerifyCallingProductForPolicy(policyNftId);
         InstanceReader instanceReader = instance.getInstanceReader();
 
         // check policy is in a closeable state
@@ -644,7 +651,7 @@ contract PolicyService is
     }
 
 
-    function  _getAndVerifyCallerForPolicy(NftId policyNftId)
+    function  _getAndVerifyCallingProductForPolicy(NftId policyNftId)
         internal
         virtual
         view
@@ -654,27 +661,17 @@ contract PolicyService is
             IPolicy.PolicyInfo memory policyInfo
         )
     {
-        (
-            IRegistry.ObjectInfo memory productInfo, 
-            address instanceAddress
-        ) = ContractLib.getAndVerifyComponent(
-            getRegistry(), 
-            msg.sender, // caller contract 
-            PRODUCT(), // caller must be product
-            true); // only active caller
+        address instanceAddress;
 
-        productNftId = productInfo.nftId; // calling product nft id
+        (
+            productNftId, 
+            instanceAddress
+        ) = ContractLib.getAndVerifyComponentForObject(
+                getRegistry(), msg.sender, policyNftId, POLICY(), getRelease(), true);
+
         instance = IInstance(instanceAddress);
         policyInfo = instance.getInstanceReader().getPolicyInfo(policyNftId);
-
-        if (policyInfo.productNftId != productNftId) {
-            revert ErrorPolicyServicePolicyProductMismatch(
-                policyNftId, 
-                productNftId,
-                policyInfo.productNftId);
-        }
     }
-
 
     function _getDomain() internal pure override returns(ObjectType) {
         return POLICY();

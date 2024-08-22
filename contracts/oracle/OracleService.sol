@@ -13,13 +13,13 @@ import {IRegistry} from "../registry/IRegistry.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType, COMPONENT, ORACLE, PRODUCT} from "../type/ObjectType.sol";
 import {RequestId} from "../type/RequestId.sol";
-import {Service} from "../shared/Service.sol";
+import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
 import {StateId, ACTIVE, KEEP_STATE, FULFILLED, FAILED, CANCELLED} from "../type/StateId.sol";
 import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
 
 
 contract OracleService is
-    Service,
+    ComponentVerifyingService,
     IOracleService
 {
 
@@ -47,24 +47,17 @@ contract OracleService is
         string calldata callbackMethodName
     )
         external 
-        virtual 
-        // restricted() // add authz
-        onlyNftOfType(oracleNftId, ORACLE())
+        virtual
+        restricted()
         returns (RequestId requestId) 
     {
-        // checks
-        // get and check active caller
         (
-            IRegistry.ObjectInfo memory requesterInfo, 
-            address instance
-        ) = ContractLib.getAndVerifyAnyComponent(
-            getRegistry(), msg.sender, true);
-
-        (
+            ,
             NftId requesterNftId,
-            IOracleComponent oracle
-        ) = _checkRequestParams(
-            getRegistry(), oracleNftId, requesterInfo, expiryAt, callbackMethodName);
+            IInstance instance
+        ) = _getAndVerifyComponentAndObjectHaveSameProduct(oracleNftId, ORACLE());
+
+        _checkRequestParams(expiryAt, callbackMethodName);
 
         // effects
         {
@@ -76,8 +69,7 @@ contract OracleService is
                 requestData: requestData,
                 responseData: "",
                 respondedAt: TimestampLib.zero(),
-                expiredAt: expiryAt,
-                isCancelled: false
+                expiredAt: expiryAt
             });
 
             // store request with instance
@@ -88,6 +80,7 @@ contract OracleService is
 
         // interactions
         // callback to oracle component
+        IOracleComponent oracle = IOracleComponent(getRegistry().getObjectAddress(oracleNftId));
         oracle.request(
             requestId, 
             requesterNftId, 
@@ -104,17 +97,13 @@ contract OracleService is
     )
         external
         virtual
-        // restricted() // add authz
+        restricted()
+        nonReentrant() // TODO add RESPONDING state?
         returns (bool success)
     {
-        (
-            IRegistry.ObjectInfo memory info, 
-            address instanceAddress
-        ) = ContractLib.getAndVerifyComponent(
-            getRegistry(), msg.sender, ORACLE(), true);
+        (NftId oracleNftId,, IInstance instance) = _getAndVerifyCallingComponent(ORACLE(), true);
 
-        NftId oracleNftId = info.nftId;
-        IInstance instance = IInstance(instanceAddress);
+        // oracle nft id - referral id corespondence is stored in instance store instead of registry
         bool callerIsOracle = true;
         IOracle.RequestInfo memory request = _checkAndGetRequestInfo(instance, requestId, oracleNftId, callerIsOracle);
         request.responseData = responseData;
@@ -123,7 +112,7 @@ contract OracleService is
         instance.getInstanceStore().updateRequest(
             requestId, request, KEEP_STATE());
 
-        IRegistry.ObjectInfo memory requesterInfo = getRegistry().getObjectInfo(
+        address requesterAddress = getRegistry().getObjectAddress(
             request.requesterNftId);
 
         string memory functionSignature = string(
@@ -132,7 +121,7 @@ contract OracleService is
                 "(uint64,bytes)"
             ));
 
-        (success, ) = requesterInfo.objectAddress.call(
+        (success, ) = requesterAddress.call(
             abi.encodeWithSignature(
                 functionSignature, 
                 requestId,
@@ -143,7 +132,7 @@ contract OracleService is
             instance.getInstanceStore().updateRequestState(requestId, FULFILLED());
         } else {
             instance.getInstanceStore().updateRequestState(requestId, FAILED());
-            emit LogOracleServiceDeliveryFailed(requestId, requesterInfo.objectAddress, functionSignature);
+            emit LogOracleServiceDeliveryFailed(requestId, requesterAddress, functionSignature);
         }
 
         emit LogOracleServiceResponseProcessed(requestId, oracleNftId);
@@ -152,17 +141,17 @@ contract OracleService is
 
     function resend(RequestId requestId)
         external 
-        virtual 
-        // restricted() // add authz
+        virtual
+        restricted()
+        nonReentrant() 
     {
         (
-            IRegistry.ObjectInfo memory info, 
-            address instanceAddress
-        ) = ContractLib.getAndVerifyAnyComponent(
-            getRegistry(), msg.sender, true);
+            NftId requesterNftId,
+            IRegistry.ObjectInfo memory requesterInfo, 
+            IInstance instance
+        ) = _getAndVerifyCallingComponent(COMPONENT(), true);
 
-        NftId requesterNftId = info.nftId;
-        IInstance instance = IInstance(instanceAddress);
+        // oracle nftId - referral id corespondence is stored in instance store instead of registry
         bool callerIsOracle = false;
         IOracle.RequestInfo memory request = _checkAndGetRequestInfo(instance, requestId, requesterNftId, callerIsOracle);
 
@@ -173,7 +162,7 @@ contract OracleService is
                 "(uint64,bytes)"
             ));
 
-        (bool success, bytes memory returnData) = info.objectAddress.call(
+        (bool success,) = requesterInfo.objectAddress.call(
             abi.encodeWithSignature(
                 functionSignature, 
                 requestId,
@@ -184,28 +173,20 @@ contract OracleService is
             instance.getInstanceStore().updateRequestState(requestId, FULFILLED());
             emit LogOracleServiceResponseResent(requestId, requesterNftId);
         } else {
-            emit LogOracleServiceDeliveryFailed(requestId, info.objectAddress, functionSignature);
+            emit LogOracleServiceDeliveryFailed(requestId, requesterInfo.objectAddress, functionSignature);
         }
     }
 
-
     function cancel(RequestId requestId)
         external 
-        virtual 
-        // restricted() // add authz
+        virtual
+        restricted()
     {
-        (
-            IRegistry.ObjectInfo memory info, 
-            address instanceAddress
-        ) = ContractLib.getAndVerifyAnyComponent(
-            getRegistry(), msg.sender, true);
+        (NftId requesterNftId,, IInstance instance) = _getAndVerifyCallingComponent(COMPONENT(), true);
 
-        NftId requesterNftId = info.nftId;
-        IInstance instance = IInstance(instanceAddress);
+        // oracle nftId - referral id corespondence is stored in instance store instead of registry
         bool callerIsOracle = false;
-        // TODO property isCancelled and state update to CANCELLED are redundant, get rid of isCancelled
         IOracle.RequestInfo memory request = _checkAndGetRequestInfo(instance, requestId, requesterNftId, callerIsOracle);
-        request.isCancelled = true;
 
         instance.getInstanceStore().updateRequest(requestId, request, CANCELLED());
 
@@ -219,39 +200,13 @@ contract OracleService is
 
 
     function _checkRequestParams(
-        IRegistry registry,
-        NftId oracleNftId,
-        IRegistry.ObjectInfo memory requesterInfo,
         Timestamp expiryAt,
         string memory callbackMethodName
     )
         internal
         virtual
         view
-        returns (
-            NftId requesterNftId,
-            IOracleComponent oracle
-        )
     {
-        // get oracle info
-        (IRegistry.ObjectInfo memory oracleInfo,) = ContractLib.getInfoAndInstance(
-            registry, oracleNftId, true);
-
-        // obtain return values
-        requesterNftId = requesterInfo.nftId;
-        oracle = IOracleComponent(oracleInfo.objectAddress);
-
-        // check that requester and oracle share same product cluster
-        if (requesterInfo.objectType == PRODUCT()) {
-            if (oracleInfo.parentNftId != requesterNftId) {
-                revert ErrorOracleServiceProductMismatch(requesterInfo.objectType, requesterNftId, oracleInfo.parentNftId);
-            }
-        } else {
-            if (oracleInfo.parentNftId != requesterInfo.parentNftId) {
-                revert ErrorOracleServiceProductMismatch(requesterInfo.objectType, requesterInfo.parentNftId, oracleInfo.parentNftId);
-            }
-        }
-
         // check expiriyAt >= now
         if (expiryAt < TimestampLib.blockTimestamp()) {
             revert ErrorOracleServiceExpiryInThePast(TimestampLib.blockTimestamp(), expiryAt);
@@ -277,9 +232,9 @@ contract OracleService is
     {
         InstanceReader reader = instance.getInstanceReader();
         StateId state = reader.getState(requestId.toKey32());
+        info = reader.getRequestInfo(requestId);
 
         // check caller against resonsible oracle or requester
-        info = reader.getRequestInfo(requestId);
         if (callerIsOracle) {
             if (state != ACTIVE()) {
                 revert ErrorOracleServiceRequestStateNotActive(requestId, state);

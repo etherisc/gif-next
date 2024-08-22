@@ -67,19 +67,12 @@ contract BundleService is
         virtual
         restricted()
     {
-        _checkNftType(bundleNftId, BUNDLE());
+        // checks
+        (, IInstance instance) = _getAndVerifyCallingComponentForObject(
+            bundleNftId, BUNDLE());
 
-        (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
-        InstanceReader instanceReader = instance.getInstanceReader();
-        IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
-        if(bundleInfo.poolNftId.eqz()) {
-            revert ErrorBundleServiceBundleUnknown(bundleNftId);
-        }
-
-        if(bundleInfo.poolNftId != poolNftId) {
-            revert ErrorBundleServiceBundlePoolMismatch(bundleNftId, bundleInfo.poolNftId, poolNftId);
-        }
-
+        // effects
+        IBundle.BundleInfo memory bundleInfo = instance.getInstanceReader().getBundleInfo(bundleNftId);
         bundleInfo.fee = fee;
         instance.getInstanceStore().updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
     }
@@ -96,8 +89,10 @@ contract BundleService is
         restricted()
         returns(NftId bundleNftId)
     {
-        (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
+        // checks
+        (NftId poolNftId,, IInstance instance) = _getAndVerifyCallingComponent(POOL(), true);
 
+        // effects
         // register bundle with registry
         bundleNftId = _registryService.registerBundle(
             IRegistry.ObjectInfo(
@@ -181,21 +176,20 @@ contract BundleService is
         instanceStore.increaseLocked(bundleNftId, collateralAmount);
     }
 
-
+    // TODO lock, unlock is done by bundle owner directlly while component is notified?
     function lock(NftId bundleNftId) 
         external
         virtual
         restricted()
     {
         // checks
-        _checkNftType(bundleNftId, BUNDLE());
+        (, IInstance instance) = _getAndVerifyCallingComponentForObject(
+            bundleNftId, BUNDLE());
 
-        (,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
-
+        // effects
         // udpate bundle state
         instance.getInstanceStore().updateBundleState(bundleNftId, PAUSED());
 
-        // effects
         // update set of active bundles
         BundleSet bundleManager = instance.getBundleSet();
         bundleManager.lock(bundleNftId);
@@ -210,9 +204,8 @@ contract BundleService is
         restricted()
     {
         // checks
-        _checkNftType(bundleNftId, BUNDLE());
-
-        (,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
+        (, IInstance instance) = _getAndVerifyCallingComponentForObject(
+            bundleNftId, BUNDLE());
 
         // effects
         // udpate bundle state
@@ -341,17 +334,12 @@ contract BundleService is
         restricted()
         returns (Timestamp extendedExpiredAt) 
     {
-        // checks
-        _checkNftType(bundleNftId, BUNDLE());
+        (NftId poolNftId, IInstance instance) = _getAndVerifyCallingComponentForObject(
+            bundleNftId, BUNDLE());
 
-        (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
-        IBundle.BundleInfo memory bundleInfo = instance.getInstanceReader().getBundleInfo(bundleNftId);
-        StateId bundleState = instance.getInstanceReader().getBundleState(bundleNftId);
-
-        // ensure bundle belongs to the pool
-        if (bundleInfo.poolNftId != poolNftId) {
-            revert ErrorBundleServiceBundlePoolMismatch(bundleNftId, bundleInfo.poolNftId, poolNftId);
-        }
+        InstanceReader reader = instance.getInstanceReader();
+        IBundle.BundleInfo memory bundleInfo = reader.getBundleInfo(bundleNftId);
+        StateId bundleState = reader.getBundleState(bundleNftId);
 
         // ensure bundle is active and not yet expired
         if(bundleState != ACTIVE() || bundleInfo.expiredAt < TimestampLib.blockTimestamp()) {

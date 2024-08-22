@@ -2,17 +2,14 @@
 pragma solidity ^0.8.20;
 
 import {IComponents} from "../instance/module/IComponents.sol";
-import {IInstance} from "../instance/IInstance.sol";
 import {INftOwnable} from "../shared/INftOwnable.sol";
 import {IPolicyHolder} from "../shared/IPolicyHolder.sol";
-import {IPoolService} from "./IPoolService.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {ContractLib} from "../shared/ContractLib.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
-import {InstanceStore} from "../instance/InstanceStore.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType, BUNDLE, POOL} from "../type/ObjectType.sol";
 import {UFixed} from "../type/UFixed.sol";
@@ -147,61 +144,6 @@ library PoolLib {
         if (!ContractLib.isPolicyHolder(policyHolderAddress)) {
             policyHolder = IPolicyHolder(address(0));
         }
-    }
-
-
-    function checkAndGetPoolInfo(
-        IRegistry registry,
-        address sender,
-        NftId bundleNftId
-    )
-        public
-        view
-        returns (
-            InstanceReader instanceReader,
-            InstanceStore instanceStore,
-            NftId instanceNftId,
-            NftId poolNftId,
-            IComponents.PoolInfo memory poolInfo
-        )
-    {
-        checkNftType(registry, bundleNftId, BUNDLE());
-
-        IInstance instance;
-        (poolNftId, instance) = getAndVerifyActivePool(registry, sender);
-        instanceReader = instance.getInstanceReader();
-        instanceStore = instance.getInstanceStore();
-        instanceNftId = instance.getNftId();
-        poolInfo = instanceReader.getPoolInfo(poolNftId);
-
-        if (registry.getParentNftId(bundleNftId) != poolNftId) {
-            revert IPoolService.ErrorPoolServiceBundlePoolMismatch(bundleNftId, poolNftId);
-        }
-    }
-
-
-    function getAndVerifyActivePool(
-        IRegistry registry,
-        address sender
-    )
-        public
-        view
-        returns (
-            NftId poolNftId,
-            IInstance instance
-        )
-    {
-        (
-            IRegistry.ObjectInfo memory info, 
-            address instanceAddress
-        ) = ContractLib.getAndVerifyComponent(
-            registry, 
-            sender,
-            POOL(),
-            true); // only active pools
-
-        poolNftId = info.nftId;
-        instance = IInstance(instanceAddress);
     }
 
     function checkNftType(

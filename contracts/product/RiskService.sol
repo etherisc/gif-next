@@ -17,11 +17,11 @@ import {NftId} from "../type/NftId.sol";
 import {RiskId} from "../type/RiskId.sol";
 import {StateId} from "../type/StateId.sol";
 import {RiskSet} from "../instance/RiskSet.sol";
-import {Service} from "../shared/Service.sol";
+import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
 import {TimestampLib} from "../type/Timestamp.sol";
 
 contract RiskService is
-    Service,
+    ComponentVerifyingService,
     IRiskService 
 {
 
@@ -39,6 +39,7 @@ contract RiskService is
         ) = abi.decode(data, (address, address));
 
         __Service_init(authority, registry, owner);
+
         _registerInterface(type(IRiskService).interfaceId);
     }
 
@@ -51,8 +52,7 @@ contract RiskService is
         restricted()
     {
         // checks
-        (NftId productNftId, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
-
+        (NftId productNftId,, IInstance instance) = _getAndVerifyCallingComponent(PRODUCT(), true);
         // effects
         IRisk.RiskInfo memory riskInfo = IRisk.RiskInfo({
             productNftId: productNftId, 
@@ -78,7 +78,7 @@ contract RiskService is
         restricted()
     {
         // checks
-        (NftId productNftId, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
+        (,, IInstance instance) = _getAndVerifyCallingComponent(PRODUCT(), true);
 
         // effects
         InstanceReader instanceReader = instance.getInstanceReader();
@@ -96,7 +96,7 @@ contract RiskService is
         restricted()
     {
         // checks
-        (NftId productNftId, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
+        (,, IInstance instance) = _getAndVerifyCallingComponent(PRODUCT(), true);
 
         // effects
         instance.getInstanceStore().updateRiskState(riskId, state);
@@ -107,37 +107,6 @@ contract RiskService is
             instance.getRiskSet().pause(riskId);
         }
     }
-
-    function _getAndVerifyActiveComponent(ObjectType expectedType) 
-        internal 
-        view 
-        returns (
-            NftId componentNftId,
-            IInstance instance
-        )
-    {
-        IRegistry.ObjectInfo memory info;
-        address instanceAddress;
-        bool isActive = true;
-
-        if (expectedType != COMPONENT()) {
-            (info, instanceAddress) = ContractLib.getAndVerifyComponent(
-                getRegistry(),
-                msg.sender, // caller
-                expectedType,
-                isActive); 
-        } else {
-            (info, instanceAddress) = ContractLib.getAndVerifyAnyComponent(
-                getRegistry(),
-                msg.sender,
-                isActive); 
-        }
-
-        // get component nft id and instance
-        componentNftId = info.nftId;
-        instance = IInstance(instanceAddress);
-    }
-
 
     function _getDomain() internal pure override returns(ObjectType) {
         return RISK();

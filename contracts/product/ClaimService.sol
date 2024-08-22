@@ -20,14 +20,14 @@ import {InstanceStore} from "../instance/InstanceStore.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType, COMPONENT, CLAIM, POLICY, POOL, PRODUCT} from "../type/ObjectType.sol";
 import {PayoutId, PayoutIdLib} from "../type/PayoutId.sol";
-import {Service} from "../shared/Service.sol";
+import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
 import {StateId} from "../type/StateId.sol";
 import {SUBMITTED, KEEP_STATE, DECLINED, REVOKED, CANCELLED, CONFIRMED, CLOSED, EXPECTED, PAID} from "../type/StateId.sol";
 import {TimestampLib} from "../type/Timestamp.sol";
 
 
 contract ClaimService is 
-    Service, 
+    ComponentVerifyingService, 
     IClaimService
 {
 
@@ -72,7 +72,7 @@ contract ClaimService is
             IInstance instance,,
             InstanceStore instanceStore,
             IPolicy.PolicyInfo memory policyInfo
-        ) = _verifyCallerWithPolicy(policyNftId);
+        ) = _getAndVerifyCallingProductForPolicy(policyNftId);
 
         // check policy is in its active period
         if(policyInfo.activatedAt.eqz() || TimestampLib.blockTimestamp() >= policyInfo.expiredAt) {
@@ -114,18 +114,17 @@ contract ClaimService is
     )
         external
         virtual
+        restricted()
         // nonReentrant() // prevents creating a reinsurance claim in a single tx
     {
         // checks
-        _checkNftType(policyNftId, POLICY());
-
         (
             NftId productNftId,
             IInstance instance,
             InstanceReader instanceReader,
             InstanceStore instanceStore,
             IPolicy.PolicyInfo memory policyInfo
-        ) = _verifyCallerWithPolicy(policyNftId);
+        ) = _getAndVerifyCallingProductForPolicy(policyNftId);
 
         _checkClaimAmount(policyNftId, policyInfo, confirmedAmount);
 
@@ -142,7 +141,7 @@ contract ClaimService is
 
         // should policy still be active it needs to become expired
         if (policyInfo.claimAmount >= policyInfo.sumInsuredAmount) {
-            _policyService.expirePolicy(instance, policyNftId, TimestampLib.blockTimestamp());
+            _policyService.expireFromService(instance, policyNftId, TimestampLib.blockTimestamp());
         }
 
         emit LogClaimServiceClaimConfirmed(policyNftId, claimId, confirmedAmount);
@@ -163,17 +162,16 @@ contract ClaimService is
     )
         external
         virtual
+        restricted()
         // nonReentrant() // prevents creating a reinsurance claim in a single tx
     {
-        _checkNftType(policyNftId, POLICY());
-
         (
             ,
             IInstance instance,
             InstanceReader instanceReader,
             InstanceStore instanceStore,
             IPolicy.PolicyInfo memory policyInfo
-        ) = _verifyCallerWithPolicy(policyNftId);
+        ) = _getAndVerifyCallingProductForPolicy(policyNftId);
 
         // check/update claim info
         IPolicy.ClaimInfo memory claimInfo = _verifyClaim(instanceReader, policyNftId, claimId, SUBMITTED());
@@ -194,6 +192,7 @@ contract ClaimService is
         ClaimId claimId
     )
         external
+        restricted()
         virtual
         // nonReentrant() // prevents creating a reinsurance claim in a single tx
     {        
@@ -203,7 +202,7 @@ contract ClaimService is
             InstanceReader instanceReader,
             InstanceStore instanceStore,
             IPolicy.PolicyInfo memory policyInfo
-        ) = _verifyCallerWithPolicy(policyNftId);
+        ) = _getAndVerifyCallingProductForPolicy(policyNftId);
 
         // check/update claim info
         IPolicy.ClaimInfo memory claimInfo = _verifyClaim(instanceReader, policyNftId, claimId, SUBMITTED());
@@ -224,17 +223,16 @@ contract ClaimService is
     )
         external
         virtual
+        restricted()
         // nonReentrant() // prevents creating a reinsurance claim in a single tx
     {
-        _checkNftType(policyNftId, POLICY());
-        
         (
             ,
             IInstance instance,
             InstanceReader instanceReader,
             InstanceStore instanceStore,
             IPolicy.PolicyInfo memory policyInfo
-        ) = _verifyCallerWithPolicy(policyNftId);
+        ) = _getAndVerifyCallingProductForPolicy(policyNftId);
 
         // check/update claim info
         IPolicy.ClaimInfo memory claimInfo = _verifyClaim(instanceReader, policyNftId, claimId, CONFIRMED());
@@ -270,9 +268,12 @@ contract ClaimService is
     )
         external
         virtual
+        restricted()
         // nonReentrant() // prevents creating a reinsurance claim in a single tx
         returns (PayoutId payoutId)
     {
+        _getAndVerifyCallingProductForPolicy(policyNftId);
+
         if (beneficiary == address(0)) {
             revert ErrorClaimServiceBeneficiaryIsZero(policyNftId, claimId);
         }
@@ -294,11 +295,11 @@ contract ClaimService is
     )
         external
         virtual
+        restricted()
         // nonReentrant() // prevents creating a reinsurance payout in a single tx
         returns (PayoutId payoutId)
     {
-        _checkNftType(policyNftId, POLICY());
-        
+        _getAndVerifyCallingComponentForObject(policyNftId, POLICY());
         return _createPayout(
             policyNftId, 
             claimId, 
@@ -314,16 +315,17 @@ contract ClaimService is
     )
         external
         virtual
+        restricted()
         // nonReentrant() // prevents creating a reinsurance payout in a single tx
     {
         // checks
         (
-            NftId productNftId,,
-            // IInstance instance,
+            ,
+            IInstance instance,
             InstanceReader instanceReader,
             InstanceStore instanceStore,
             IPolicy.PolicyInfo memory policyInfo
-        ) = _verifyCallerWithPolicy(policyNftId);
+        ) = _getAndVerifyCallingProductForPolicy(policyNftId);
 
         // check that payout exists and is open
         IPolicy.PayoutInfo memory payoutInfo = instanceReader.getPayoutInfo(policyNftId, payoutId);
@@ -392,6 +394,7 @@ contract ClaimService is
     )
         external
         virtual
+        restricted()
     {
         // checks
         (
@@ -400,7 +403,7 @@ contract ClaimService is
             InstanceReader instanceReader,
             InstanceStore instanceStore,
             IPolicy.PolicyInfo memory policyInfo
-        ) = _verifyCallerWithPolicy(policyNftId);
+        ) = _getAndVerifyCallingProductForPolicy(policyNftId);
 
         StateId payoutState = instanceReader.getPayoutState(policyNftId, payoutId);
         if (payoutState != EXPECTED()) {
@@ -461,8 +464,8 @@ contract ClaimService is
             ,,
             InstanceReader instanceReader,
             InstanceStore instanceStore,
-            // IPolicy.PolicyInfo memory policyInfo
-        ) = _verifyCallerWithPolicy(policyNftId);
+            //IPolicy.PolicyInfo memory policyInfo
+        ) = _getAndVerifyCallingProductForPolicy(policyNftId);
 
         IPolicy.ClaimInfo memory claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
 
@@ -508,7 +511,7 @@ contract ClaimService is
     }
 
 
-    function _verifyCallerWithPolicy(
+    function _getAndVerifyCallingProductForPolicy(
         NftId policyNftId
     )
         internal
@@ -522,40 +525,11 @@ contract ClaimService is
             IPolicy.PolicyInfo memory policyInfo
         )
     {
-        (productNftId, instance) = _getAndVerifyActiveComponent(PRODUCT());
+        (productNftId, instance) = _getAndVerifyCallingComponentForObject(
+            policyNftId, POLICY());
         instanceReader = instance.getInstanceReader();
         instanceStore = instance.getInstanceStore();
-
-        // check caller(product) policy match
         policyInfo = instanceReader.getPolicyInfo(policyNftId);
-        if(policyInfo.productNftId != productNftId) {
-            revert ErrorClaimServicePolicyProductMismatch(policyNftId, 
-            policyInfo.productNftId, 
-            productNftId);
-        }
-    }
-
-
-    function _getAndVerifyActiveComponent(ObjectType expectedType) 
-        internal 
-        view 
-        returns (
-            NftId productNftId,
-            IInstance instance
-        )
-    {
-        (
-            IRegistry.ObjectInfo memory info,
-            address instanceAddress
-        ) = ContractLib.getAndVerifyComponent(
-            getRegistry(),
-            msg.sender, // caller
-            PRODUCT(),
-            true); // isActive 
-
-        // get component nft id and instance
-        productNftId = info.nftId;
-        instance = IInstance(instanceAddress);
     }
 
     function _verifyClaim(

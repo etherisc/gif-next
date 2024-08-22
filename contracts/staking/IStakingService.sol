@@ -15,10 +15,7 @@ import {UFixed} from "../type/UFixed.sol";
 interface IStakingService is IService
 {
 
-    event LogStakingServiceProtocolTargetRegistered(NftId protocolNftId);
     event LogStakingServiceInstanceTargetRegistered(NftId instanceNftId, uint256 chainId);
-    event LogStakingServiceLockingPeriodSet(NftId targetNftId, Seconds oldLockingDuration, Seconds lockingDuration);
-    event LogStakingServiceRewardRateSet(NftId targetNftId, UFixed oldRewardRate, UFixed rewardRate);
 
     event LogStakingServiceRewardReservesIncreased(NftId targetNftId, address rewardProvider, Amount dipAmount, Amount newBalance);
     event LogStakingServiceRewardReservesDecreased(NftId targetNftId, address targetOwner, Amount dipAmount, Amount newBalance);
@@ -31,16 +28,9 @@ interface IStakingService is IService
     event LogStakingServiceRewardsClaimed(NftId stakeNftId, address stakeOwner, Amount rewardsClaimedAmount);
 
     // modifiers
-    error ErrorStakingServiceNotStakingOwner(address account);
     error ErrorStakingServiceNotStaking(address stakingAddress);
     error ErrorStakingServiceNotSupportingIStaking(address stakingAddress);
 
-    // create
-    error ErrorStakingServiceZeroTargetNftId();
-    error ErrorStakingServiceNotTargetNftId(NftId targetNftId);
-    error ErrorStakingServiceNotActiveTargetNftId(NftId targetNftId);
-    error ErrorStakingServiceDipBalanceInsufficient(NftId targetNftId, uint256 amount, uint256 balance);
-    error ErrorStakingServiceDipAllowanceInsufficient(NftId targetNftId, address tokenHandler, uint256 amount, uint256 allowance);
 
     /// @dev Set the protocol reward rate stake locking period to the specified duration.
     /// Permissioned: only staking owner
@@ -153,13 +143,16 @@ interface IStakingService is IService
 
     function getDipToken()
         external
+        view
         returns (IERC20Metadata dip);
 
     function getTokenHandler()
         external
+        view
         returns (TokenHandler tokenHandler);
 
     function getStaking()
         external
+        view
         returns (IStaking staking);
 }

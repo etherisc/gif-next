@@ -91,7 +91,6 @@ contract TestOracle is GifTest {
         assertEq(request.oracleNftId.toInt(), oracleNftId.toInt(), "unexpected oracle nft id");
         assertEq(request.requestData, expectedRequestData, "unexpected request data");
         assertEq(request.expiredAt.toInt(), expiryAt.toInt(), "unexpected expired at");
-        assertFalse(request.isCancelled, "request cancelled");
 
         // check request state
         StateId requestState = instanceReader.getState(requestId.toKey32());
@@ -151,7 +150,6 @@ contract TestOracle is GifTest {
         assertEq(request.requestData, expectedRequestData, "unexpected request data");
         assertEq(request.responseData, expectedResponseData, "unexpected response data");
         assertEq(request.expiredAt.toInt(), expiryAt.toInt(), "unexpected expired at");
-        assertFalse(request.isCancelled, "request cancelled");
 
         // check request state
         StateId requestState = instanceReader.getState(requestId.toKey32());
@@ -217,7 +215,6 @@ contract TestOracle is GifTest {
         assertEq(request.requestData, expectedRequestData, "unexpected request data");
         assertEq(request.responseData, expectedResponseData, "unexpected response data");
         assertEq(request.expiredAt.toInt(), expiryAt.toInt(), "unexpected expired at");
-        assertFalse(request.isCancelled, "request cancelled");
 
         // check request state
         StateId requestState = instanceReader.getState(requestId.toKey32());
@@ -281,7 +278,6 @@ contract TestOracle is GifTest {
         assertEq(request.requestData, expectedRequestData, "unexpected request data");
         assertEq(request.responseData, expectedResponseData, "unexpected response data");
         assertEq(request.expiredAt.toInt(), expiryAt.toInt(), "unexpected expired at");
-        assertFalse(request.isCancelled, "request cancelled");
 
         // check request state
         StateId requestState = instanceReader.getState(requestId.toKey32());
@@ -341,7 +337,6 @@ contract TestOracle is GifTest {
         assertEq(request.callbackMethodName, "fulfillOracleRequestAsync", "unexpected callback name");
         assertEq(request.oracleNftId.toInt(), oracleNftId.toInt(), "unexpected oracle nft id");
         assertEq(request.expiredAt.toInt(), expiryAt.toInt(), "unexpected expired at");
-        assertFalse(request.isCancelled, "request cancelled");
 
         // check request state
         requestState = instanceReader.getState(requestId.toKey32());
@@ -383,7 +378,6 @@ contract TestOracle is GifTest {
         assertEq(request.oracleNftId.toInt(), oracleNftId.toInt(), "unexpected oracle nft id");
         assertEq(request.requestData, expectedRequestData, "unexpected request data");
         assertEq(request.expiredAt.toInt(), expiryAt.toInt(), "unexpected expired at");
-        assertTrue(request.isCancelled, "request not cancelled");
 
         // check request state
         StateId requestState = instanceReader.getState(requestId.toKey32());

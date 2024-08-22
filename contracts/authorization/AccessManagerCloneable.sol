@@ -21,7 +21,7 @@ contract AccessManagerCloneable is
     error ErrorAccessManagerCallerNotAdmin(address caller);
     error ErrorAccessManagerRegistryAlreadySet(address registry);
     error ErrorAccessManagerInvalidRelease(VersionPart release);
-
+    // TODO this error is converted into "AccessManagedUnauthorized" by AccessManaged
     error ErrorAccessManagerTargetAdminLocked(address target);
     error ErrorAccessManagerCallerAdminLocked(address caller);
 
