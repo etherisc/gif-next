@@ -180,7 +180,6 @@ contract ServiceAuthorizationV3
           functions = _authorizeForService(COMPONENT(), ALL());
           _authorize(functions, IComponentService.registerComponent.selector, "registerComponent");
           _authorize(functions, IComponentService.approveTokenHandler.selector, "approveTokenHandler");
-          _authorize(functions, IComponentService.approveStakingTokenHandler.selector, "approveStakingTokenHandler");
           _authorize(functions, IComponentService.setWallet.selector, "setWallet");
           _authorize(functions, IComponentService.setComponentLocked.selector, "setComponentLocked");
           _authorize(functions, IComponentService.withdrawFees.selector, "withdrawFees");
@@ -259,6 +258,7 @@ contract ServiceAuthorizationV3
           _authorize(functions, IPoolService.unstake.selector, "unstake");
           _authorize(functions, IPoolService.fundPoolWallet.selector, "fundPoolWallet");
           _authorize(functions, IPoolService.defundPoolWallet.selector, "defundPoolWallet");
+          _authorize(functions, IPoolService.withdrawBundleFees.selector, "withdrawBundleFees");
      }
 
 
@@ -281,7 +281,6 @@ contract ServiceAuthorizationV3
           _authorize(functions, IBundleService.lock.selector, "lock");
           _authorize(functions, IBundleService.unlock.selector, "unlock");
           _authorize(functions, IBundleService.setFee.selector, "setFee");
-          _authorize(functions, IBundleService.withdrawBundleFees.selector, "withdrawBundleFees");
      }
 
      function _setupOracleServiceAuthorization()
@@ -319,7 +318,7 @@ contract ServiceAuthorizationV3
           _authorize(functions, IPolicyService.collectPremium.selector, "collectPremium");
           _authorize(functions, IPolicyService.activate.selector, "activate");
           _authorize(functions, IPolicyService.expire.selector, "expire");
-          _authorize(functions, IPolicyService.expireFromService.selector, "expireFromService");
+          _authorize(functions, IPolicyService.expirePolicy.selector, "expirePolicy");
           _authorize(functions, IPolicyService.close.selector, "close");
 
      }

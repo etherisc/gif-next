@@ -149,7 +149,7 @@ contract ComponentService is
         virtual
         restricted()
     {
-        (IInstance instance) = _getAndVerifyActiveComponent(COMPONENT());
+        (,IInstance instance) = _getAndVerifyActiveComponent(COMPONENT());
         instance.setLockedFromService(componentAddress, locked);
     }
 
