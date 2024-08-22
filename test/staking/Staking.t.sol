@@ -686,6 +686,37 @@ contract StakingTest is GifTest {
     }
 
 
+    /// @dev test restaking when the stake is still locked
+    // solhint-disable-next-line func-name-mixedcase
+    function test_restake_stakeLocked() public {
+        // GIVEN
+
+        // create a second instance - restake target
+        vm.startPrank(instanceOwner2);
+        (instance2, instanceNftId2) = instanceService.createInstance();
+        Seconds lockingPeriod = stakingReader.getTargetInfo(instanceNftId).lockingPeriod;
+        vm.stopPrank();
+
+        (, Amount dipAmount) = _prepareAccount(staker, 3000);
+
+        vm.startPrank(staker);
+
+        // create initial instance stake
+        NftId stakeNftId = stakingService.create(
+            instanceNftId, 
+            dipAmount);
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IStaking.ErrorStakingStakeLocked.selector, 
+            stakeNftId,
+            TimestampLib.blockTimestamp().addSeconds(lockingPeriod)));
+
+        // WHEN - restake to new target
+        stakingService.restakeToNewTarget(stakeNftId, instanceNftId2);
+    }
+
+
     function _addRewardReserves(
         NftId instanceNftId, 
         address instanceOwner, 
