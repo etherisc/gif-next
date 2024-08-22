@@ -1,15 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Distribution} from "./Distribution.sol";
-import {DISTRIBUTOR} from "../type/ObjectType.sol";
 import {IAuthorization} from "../authorization/IAuthorization.sol";
+
+import {Distribution} from "./Distribution.sol";
+import {DistributorType} from "../type/DistributorType.sol";
+import {DISTRIBUTOR} from "../type/ObjectType.sol";
+import {Fee} from "../type/Fee.sol";
 import {NftId} from "../type/NftId.sol";
 import {ReferralId} from "../type/Referral.sol";
-import {Fee} from "../type/Fee.sol";
-import {UFixed} from "../type/UFixed.sol";
-import {DistributorType} from "../type/DistributorType.sol";
+import {Seconds} from "../type/Seconds.sol";
 import {Timestamp} from "../type/Timestamp.sol";
+import {UFixed} from "../type/UFixed.sol";
 
 
 contract BasicDistribution is
@@ -37,7 +39,7 @@ contract BasicDistribution is
         UFixed maxDiscountPercentage,
         UFixed commissionPercentage,
         uint32 maxReferralCount,
-        uint32 maxReferralLifetime,
+        Seconds maxReferralLifetime,
         bool allowSelfReferrals,
         bool allowRenewals,
         bytes memory data

@@ -545,30 +545,21 @@ contract PolicyService is
         }
     }
 
-    // TODO cleanup
-    /// @dev checks the balance and allowance of the policy holder
-    // function _checkPremiumBalanceAndAllowance(
-    //     IERC20Metadata token,
-    //     address tokenHandlerAddress, 
-    //     address policyHolder, 
-    //     Amount premiumAmount
-    // )
-    //     internal
-    //     virtual
-    //     view
-    // {
-    //     uint256 premium = premiumAmount.toInt();
-    //     uint256 balance = token.balanceOf(policyHolder);
-    //     uint256 allowance = token.allowance(policyHolder, tokenHandlerAddress);
-    
-    //     if (balance < premium) {
-    //         revert ErrorPolicyServiceBalanceInsufficient(policyHolder, premium, balance);
-    //     }
 
-    //     if (allowance < premium) {
-    //         revert ErrorPolicyServiceAllowanceInsufficient(policyHolder, tokenHandlerAddress, premium, allowance);
-    //     }
-    // }
+    /// @dev checks that policy has been collateralized and has been activated.
+    /// does not check if policy has been expired or closed.
+    function _policyHasBeenActivated(
+        StateId policyState,
+        IPolicy.PolicyInfo memory policyInfo
+    )
+        internal
+        view
+        returns (bool)
+    {
+        if (policyState != COLLATERALIZED()) { return false; } 
+        if (TimestampLib.blockTimestamp() < policyInfo.activatedAt) { return false; } 
+        return true;
+    }
 
 
     function _policyHolderPolicyActivated(
@@ -629,22 +620,6 @@ contract PolicyService is
     }
 
 
-    // TODO cleanup
-    // function _getTokenHandler(
-    //     InstanceReader instanceReader,
-    //     NftId productNftId
-    // )
-    //     internal 
-    //     virtual
-    //     view 
-    //     returns (
-    //         TokenHandler tokenHandler
-    //     )
-    // {
-    //     tokenHandler = instanceReader.getTokenHandler(productNftId).tokenHandler;
-    // }
-
-
     function _getDistributionNftAndWallets(
         InstanceReader instanceReader,
         NftId productNftId
@@ -688,7 +663,7 @@ contract PolicyService is
             PRODUCT(), // caller must be product
             true); // only active caller
 
-        productNftId = productInfo.nftId;
+        productNftId = productInfo.nftId; // calling product nft id
         instance = IInstance(instanceAddress);
         policyInfo = instance.getInstanceReader().getPolicyInfo(policyNftId);
 
