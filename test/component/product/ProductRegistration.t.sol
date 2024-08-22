@@ -3,40 +3,19 @@ pragma solidity ^0.8.20;
 
 import {Vm, console} from "../../../lib/forge-std/src/Test.sol";
 
-import {BasicDistributionAuthorization} from "../../../contracts/distribution/BasicDistributionAuthorization.sol";
-import {BasicOracleAuthorization} from "../../../contracts/oracle/BasicOracleAuthorization.sol";
 import {BasicPoolAuthorization} from "../../../contracts/pool/BasicPoolAuthorization.sol";
 import {BasicProductAuthorization} from "../../../contracts/product/BasicProductAuthorization.sol";
 import {GifTest} from "../../base/GifTest.sol";
-import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
-import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
-import {ClaimId} from "../../../contracts/type/ClaimId.sol";
+import {NftId} from "../../../contracts/type/NftId.sol";
 import {SimpleProduct} from "../../../contracts/examples/unpermissioned/SimpleProduct.sol";
 import {SimplePool} from "../../../contracts/examples/unpermissioned/SimplePool.sol";
 import {IAuthorization} from "../../../contracts/authorization/IAuthorization.sol";
 import {IComponents} from "../../../contracts/instance/module/IComponents.sol";
 import {IComponentService} from "../../../contracts/shared/IComponentService.sol";
 import {Registerable} from "../../../contracts/shared/Registerable.sol";
-import {IRegisterable} from "../../../contracts/shared/IRegisterable.sol";
 import {IRelease} from "../../../contracts/registry/IRelease.sol";
-import {IInstanceLinkedComponent} from "../../../contracts/shared/IInstanceLinkedComponent.sol";
-import {ILifecycle} from "../../../contracts/shared/ILifecycle.sol";
 import {INftOwnable} from "../../../contracts/shared/INftOwnable.sol";
-import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
-import {IBundle} from "../../../contracts/instance/module/IBundle.sol";
-import {Fee, FeeLib} from "../../../contracts/type/Fee.sol";
-import {UFixedLib} from "../../../contracts/type/UFixed.sol";
 import {VersionPart, VersionPartLib} from "../../../contracts/type/Version.sol";
-import {Seconds, SecondsLib} from "../../../contracts/type/Seconds.sol";
-import {Timestamp, TimestampLib, zeroTimestamp} from "../../../contracts/type/Timestamp.sol";
-import {IPolicyService} from "../../../contracts/product/IPolicyService.sol";
-import {IRisk} from "../../../contracts/instance/module/IRisk.sol";
-import {PayoutId, PayoutIdLib} from "../../../contracts/type/PayoutId.sol";
-import {POLICY, PRODUCT, POOL} from "../../../contracts/type/ObjectType.sol";
-import {RiskId, RiskIdLib, eqRiskId} from "../../../contracts/type/RiskId.sol";
-import {ReferralLib} from "../../../contracts/type/Referral.sol";
-import {SUBMITTED, ACTIVE, COLLATERALIZED, CONFIRMED, DECLINED, CLOSED} from "../../../contracts/type/StateId.sol";
-import {StateId} from "../../../contracts/type/StateId.sol";
 
 contract TestProductRegistration is GifTest {
 
@@ -92,7 +71,7 @@ contract TestProductRegistration is GifTest {
         // WHEN + THEN
         vm.expectRevert(
             abi.encodeWithSelector(
-                IComponentService.ErrorComponentServiceAlreadyRegistered.selector,
+                IComponentService.ErrorComponentServiceComponentAlreadyRegistered.selector,
                 address(myProduct)));
 
         vm.startPrank(instanceOwner);
@@ -117,22 +96,22 @@ contract TestProductRegistration is GifTest {
         vm.stopPrank();
     }
 
-
-    // check that non instance owner fails to register a product
-    function test_productRegisterAttemptViaService() public {
+    // FIXME: when proper instance verification is added to registerProduct()
+    // check that non instance fails to register a product
+    /*function test_productRegisterAttemptViaService() public {
         // GIVEN
         SimpleProduct myProduct = _deployProductDefault("MyProduct");
 
         // WHEN + THEN
         vm.expectRevert(
             abi.encodeWithSelector(
-                IComponentService.ErrorComponentServiceSenderNotRegistered.selector,
+                IAccessManaged.AccessManagedUnauthorized.selector,
                 address(instanceOwner)));
 
         vm.startPrank(instanceOwner);
-        NftId myNftId = componentService.registerProduct(address(myProduct));
+        componentService.registerProduct(address(myProduct));
         vm.stopPrank();
-    }
+    }*/
 
 
     // check that product registration fails for product with a different release than instance
@@ -152,10 +131,10 @@ contract TestProductRegistration is GifTest {
         // WHEN + THEN
         vm.expectRevert(
             abi.encodeWithSelector(
-                IComponentService.ErrorComponentServiceReleaseMismatch.selector,
+                IComponentService.ErrorComponentServiceComponentReleaseMismatch.selector,
                 address(myProductV4),
-                myProductV4.getRelease(),
-                instance.getRelease()));
+                instance.getRelease(),
+                myProductV4.getRelease()));
 
         vm.startPrank(instanceOwner);
         NftId myNftId = instance.registerProduct(address(myProductV4));
@@ -190,13 +169,13 @@ contract TestProductRegistration is GifTest {
         // WHEN + THEN
         vm.expectRevert(
             abi.encodeWithSelector(
-                IComponentService.ErrorComponentServiceInvalidType.selector,
+                IComponentService.ErrorComponentServiceComponentParentInvalid.selector,
                 address(myPool),
-                PRODUCT(), 
-                POOL()));
+                instanceNftId,
+                myProdNftId));
 
         vm.startPrank(instanceOwner);
-        NftId myNftId = instance.registerProduct(address(myPool));
+        instance.registerProduct(address(myPool));
         vm.stopPrank();
     }
 

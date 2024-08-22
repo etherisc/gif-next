@@ -17,19 +17,10 @@ interface IComponentService is
     IService
 {
     error ErrorComponentServiceNotInstanceLinkedComponent(address component);
-    error ErrorComponentServiceSenderNotRegistered(address sender);
-    error ErrorComponentServiceNotComponent(address component);
-    error ErrorComponentServiceTypeNotSupported(address component, ObjectType invalidType);
-    error ErrorComponentServiceInvalidType(address component, ObjectType requiredType, ObjectType componentType);
-    error ErrorComponentServiceAlreadyRegistered(address component);
-    error ErrorComponentServiceReleaseMismatch(address component, VersionPart componentRelease, VersionPart parentRelease);
-    error ErrorComponentServiceSenderNotComponentParent(NftId senderNftId, NftId compnentParentNftId);
-    error ErrorComponentServiceParentNotInstance(NftId nftId, ObjectType objectType);
-    error ErrorComponentServiceParentNotProduct(NftId nftId, ObjectType objectType);
-
-    error ErrorComponentServiceNotRegistered(address instanceAddress);
-    error ErrorComponentServiceNotInstance(address instanceAddress, ObjectType objectType);
-    error ErrorComponentServiceInstanceVersionMismatch(address instanceAddress, VersionPart instanceVersion);
+    error ErrorComponentServiceComponentTypeNotSupported(address component, ObjectType invalid);
+    error ErrorComponentServiceComponentParentInvalid(address component, NftId required, NftId actual);
+    error ErrorComponentServiceComponentReleaseMismatch(address component, VersionPart serviceRelease, VersionPart componentRelease);
+    error ErrorComponentServiceComponentAlreadyRegistered(address component);
     
     error ErrorProductServiceNoDistributionExpected(NftId productNftId);
     error ErrorProductServiceDistributionAlreadyRegistered(NftId productNftId, NftId distributionNftId);
@@ -45,7 +36,7 @@ interface IComponentService is
     error ErrorComponentServiceWithdrawAmountExceedsLimit(Amount withdrawnAmount, Amount withdrawLimit);
     error ErrorComponentServiceWalletAllowanceTooSmall(address wallet, address spender, uint256 allowance, uint256 amount);
 
-    event LogComponentServiceRegistered(NftId instanceNftId, NftId componentNftId, ObjectType componentType, address component, address token, address initialOwner); 
+    event LogComponentServiceRegistered(NftId componentNftId, ObjectType componentType, address component, address token, address initialOwner); 
     event LogComponentServiceWalletAddressChanged(NftId componentNftId, address currentWallet, address newWallet);
     event LogComponentServiceWalletTokensTransferred(NftId componentNftId, address currentWallet, address newWallet, uint256 currentBalance);
     event LogComponentServiceComponentFeesWithdrawn(NftId componentNftId, address recipient, address token, Amount withdrawnAmount);

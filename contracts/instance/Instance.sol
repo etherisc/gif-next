@@ -101,6 +101,7 @@ contract Instance is
         onlyOwner()
         returns (NftId productNftId)
     {
+        // TODO consider verification on instance side
         productNftId = _componentService.registerProduct(product);
         _products.push(productNftId);
     }
