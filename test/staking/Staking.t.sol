@@ -5,6 +5,7 @@ pragma solidity ^0.8.20;
 import {Amount, AmountLib} from "../../contracts/type/Amount.sol";
 import {GifTest} from "../base/GifTest.sol";
 import {IInstance} from "../../contracts/instance/IInstance.sol";
+import {INftOwnable} from "../../contracts/shared/INftOwnable.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {IStaking} from "../../contracts/staking/IStaking.sol";
 import {IStakingService} from "../../contracts/staking/IStakingService.sol";
@@ -635,6 +636,53 @@ contract StakingTest is GifTest {
         assertEq(stakingReader.getStakeBalance(instanceNftId2).toInt(), dipAmount.toInt(), "unexpected instance stake amount (2)");
         assertEq(stakingReader.getRewardBalance(instanceNftId2).toInt(), 0, "unexpected instance reward amount (2)");
         assertEq(stakingReader.getBalanceUpdatedIn(instanceNftId2).toInt(), block.number, "unexpected instance last updated in (2)");
+    }
+
+    // solhint-disable-next-line func-name-mixedcase
+    function test_restake_invalidNftType() public {
+        // GIVEN
+
+        // create a second instance - restake target
+        vm.startPrank(instanceOwner2);
+        (instance2, instanceNftId2) = instanceService.createInstance();
+        Seconds lockingPeriod2 = stakingReader.getTargetInfo(instanceNftId2).lockingPeriod;
+        vm.stopPrank();
+
+        (, Amount dipAmount) = _prepareAccount(staker, 3000);
+
+        vm.startPrank(instanceOwner);
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            INftOwnable.ErrorNftOwnableInvalidType.selector, 
+            instanceNftId,
+            30));
+
+        // WHEN - restake to new target
+        stakingService.restakeToNewTarget(instanceNftId, instanceNftId2);
+    }
+
+    // solhint-disable-next-line func-name-mixedcase
+    function test_restake_notOwner() public {
+        // GIVEN
+
+        // create a second instance - restake target
+        vm.startPrank(instanceOwner2);
+        (instance2, instanceNftId2) = instanceService.createInstance();
+        Seconds lockingPeriod2 = stakingReader.getTargetInfo(instanceNftId2).lockingPeriod;
+        vm.stopPrank();
+
+        (, Amount dipAmount) = _prepareAccount(staker, 3000);
+
+        vm.startPrank(staker);
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            INftOwnable.ErrorNftOwnableNotOwner.selector, 
+            staker));
+
+        // WHEN - restake to new target
+        stakingService.restakeToNewTarget(instanceNftId, instanceNftId2);
     }
 
 
