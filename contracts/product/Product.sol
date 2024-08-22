@@ -288,6 +288,21 @@ abstract contract Product is
         expiredAt = _getProductStorage()._policyService.expire(policyNftId, expireAt);
     }
 
+    /// @dev adjust the activation date of the policy. 
+    /// The policy must already have an activation date set.
+    /// Allowed values are from the current blocktime to the expiration date of the policy.
+    function _adjustActivation(
+        NftId policyNftId,
+        Timestamp activateAt
+    )
+        internal
+        virtual
+    {
+        _getProductStorage()._policyService.adjustActivation(
+            policyNftId, 
+            activateAt);
+    }
+
     function _collectPremium(
         NftId policyNftId,
         Timestamp activateAt

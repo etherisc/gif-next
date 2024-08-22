@@ -766,6 +766,230 @@ contract TestProduct is GifTest {
         assertTrue(policyInfo.expiredAt.toInt() == policyInfo.activatedAt.addSeconds(sec30).toInt(), "expiredAt not activatedAt + 30");
     }
 
+    function test_adjustActivation() public {
+        // GIVEN
+        vm.startPrank(registryOwner);
+        token.transfer(customer, 1000);
+        vm.stopPrank();
+
+        RiskId riskId = RiskIdLib.toRiskId("42x4711");
+        bytes memory data = "bla di blubb";
+        product.createRisk(riskId, data);
+        vm.stopPrank();
+
+        vm.startPrank(customer);
+
+        IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(productNftId);
+        token.approve(address(componentInfo.tokenHandler), 1000);
+
+        uint sumInsuredAmount = 1000;
+        Seconds lifetime = SecondsLib.toSeconds(30);
+        bytes memory applicationData = "";
+        ReferralId referralId = ReferralLib.zero();
+        NftId policyNftId = product.createApplication(
+            customer,
+            riskId,
+            sumInsuredAmount,
+            lifetime,
+            applicationData,
+            bundleNftId,
+            referralId
+        );
+
+        vm.stopPrank();
+
+        assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
+        
+        vm.startPrank(productOwner);
+
+        Timestamp activateAt = TimestampLib.blockTimestamp().addSeconds(SecondsLib.toSeconds(1000));
+        product.createPolicy(policyNftId, true, activateAt); 
+
+        // THEN
+        assertTrue(instanceReader.getPolicyState(policyNftId) == COLLATERALIZED(), "policy state not COLLATERALIZED");
+        assertEq(instanceReader.getPolicyInfo(policyNftId).activatedAt.toInt(), activateAt.toInt(), "unexpected activatedAt");
+
+        // WHEN
+        Timestamp newActivateAt = TimestampLib.blockTimestamp();
+        product.adjustActivation(policyNftId, newActivateAt);
+
+        // THEN
+        assertTrue(instanceReader.getPolicyState(policyNftId) == COLLATERALIZED(), "policy state not COLLATERALIZED");
+        assertEq(instanceReader.getPolicyInfo(policyNftId).activatedAt.toInt(), newActivateAt.toInt(), "unexpected activatedAt");
+    }
+
+    function test_adjustActivation_tooEarly() public {
+        vm.warp(100000);
+
+        // GIVEN
+        vm.startPrank(registryOwner);
+        token.transfer(customer, 1000);
+        vm.stopPrank();
+
+        RiskId riskId = RiskIdLib.toRiskId("42x4711");
+        bytes memory data = "bla di blubb";
+        product.createRisk(riskId, data);
+        vm.stopPrank();
+
+        vm.startPrank(customer);
+
+        IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(productNftId);
+        token.approve(address(componentInfo.tokenHandler), 1000);
+
+        uint sumInsuredAmount = 1000;
+        Seconds lifetime = SecondsLib.toSeconds(30);
+        bytes memory applicationData = "";
+        ReferralId referralId = ReferralLib.zero();
+        NftId policyNftId = product.createApplication(
+            customer,
+            riskId,
+            sumInsuredAmount,
+            lifetime,
+            applicationData,
+            bundleNftId,
+            referralId
+        );
+
+        vm.stopPrank();
+
+        assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
+        
+        vm.startPrank(productOwner);
+
+        Timestamp now =  TimestampLib.blockTimestamp();
+        Timestamp activateAt = TimestampLib.blockTimestamp().addSeconds(SecondsLib.toSeconds(1000));
+        product.createPolicy(policyNftId, true, activateAt); 
+
+        // THEN
+        assertTrue(instanceReader.getPolicyState(policyNftId) == COLLATERALIZED(), "policy state not COLLATERALIZED");
+        assertEq(instanceReader.getPolicyInfo(policyNftId).activatedAt.toInt(), activateAt.toInt(), "unexpected activatedAt");
+
+        Timestamp newActivateAt = TimestampLib.toTimestamp(TimestampLib.blockTimestamp().toInt() - 100);
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IPolicyService.ErrorPolicyServicePolicyActivationTooEarly.selector,
+            policyNftId,
+            now,
+            newActivateAt));
+        
+        // WHEN
+        product.adjustActivation(policyNftId, newActivateAt);
+    }
+
+    function test_adjustActivation_tooLate() public {
+        vm.warp(100000);
+
+        // GIVEN
+        vm.startPrank(registryOwner);
+        token.transfer(customer, 1000);
+        vm.stopPrank();
+
+        RiskId riskId = RiskIdLib.toRiskId("42x4711");
+        bytes memory data = "bla di blubb";
+        product.createRisk(riskId, data);
+        vm.stopPrank();
+
+        vm.startPrank(customer);
+
+        IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(productNftId);
+        token.approve(address(componentInfo.tokenHandler), 1000);
+
+        uint sumInsuredAmount = 1000;
+        Seconds lifetime = SecondsLib.toSeconds(30);
+        bytes memory applicationData = "";
+        ReferralId referralId = ReferralLib.zero();
+        NftId policyNftId = product.createApplication(
+            customer,
+            riskId,
+            sumInsuredAmount,
+            lifetime,
+            applicationData,
+            bundleNftId,
+            referralId
+        );
+
+        vm.stopPrank();
+
+        assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
+        
+        vm.startPrank(productOwner);
+
+        Timestamp activateAt = TimestampLib.blockTimestamp();
+        product.createPolicy(policyNftId, true, activateAt); 
+
+        // THEN
+        assertTrue(instanceReader.getPolicyState(policyNftId) == COLLATERALIZED(), "policy state not COLLATERALIZED");
+        assertEq(instanceReader.getPolicyInfo(policyNftId).activatedAt.toInt(), activateAt.toInt(), "unexpected activatedAt");
+
+        Timestamp newActivateAt = activateAt.addSeconds(lifetime).addSeconds(SecondsLib.toSeconds(1000));
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IPolicyService.ErrorPolicyServicePolicyActivationTooLate.selector,
+            policyNftId,
+            activateAt.addSeconds(lifetime),
+            newActivateAt));
+
+        // WHEN
+        product.adjustActivation(policyNftId, newActivateAt);
+    }
+
+    function test_adjustActivation_notActive() public {
+        vm.warp(100000);
+
+        // GIVEN
+        vm.startPrank(registryOwner);
+        token.transfer(customer, 1000);
+        vm.stopPrank();
+
+        RiskId riskId = RiskIdLib.toRiskId("42x4711");
+        bytes memory data = "bla di blubb";
+        product.createRisk(riskId, data);
+        vm.stopPrank();
+
+        vm.startPrank(customer);
+
+        IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(productNftId);
+        token.approve(address(componentInfo.tokenHandler), 1000);
+
+        uint sumInsuredAmount = 1000;
+        Seconds lifetime = SecondsLib.toSeconds(30);
+        bytes memory applicationData = "";
+        ReferralId referralId = ReferralLib.zero();
+        NftId policyNftId = product.createApplication(
+            customer,
+            riskId,
+            sumInsuredAmount,
+            lifetime,
+            applicationData,
+            bundleNftId,
+            referralId
+        );
+
+        vm.stopPrank();
+
+        assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
+        
+        vm.startPrank(productOwner);
+
+        product.createPolicy(policyNftId, true, TimestampLib.zero()); 
+
+        // THEN
+        assertTrue(instanceReader.getPolicyState(policyNftId) == COLLATERALIZED(), "policy state not COLLATERALIZED");
+        assertEq(instanceReader.getPolicyInfo(policyNftId).activatedAt.toInt(), 0, "unexpected activatedAt");
+
+        Timestamp newActivateAt = TimestampLib.blockTimestamp();
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IPolicyService.ErrorPolicyServicePolicyNotActivated.selector,
+            policyNftId));
+
+        // WHEN
+        product.adjustActivation(policyNftId, newActivateAt);
+    }
+
     function test_productPolicyCollectPremium() public {
         // GIVEN
         vm.startPrank(registryOwner);
