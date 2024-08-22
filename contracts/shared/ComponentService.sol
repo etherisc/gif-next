@@ -149,7 +149,8 @@ contract ComponentService is
         virtual
         restricted()
     {
-        (,IInstance instance) = _getAndVerifyActiveComponent(COMPONENT());
+        // TODO inactive component can lock/unlock other components?
+        (, IInstance instance) = _getAndVerifyComponent(COMPONENT(), false);
         instance.setLockedFromService(componentAddress, locked);
     }
 
