@@ -70,11 +70,8 @@ interface IComponentService is
     /// @dev Sets the components associated wallet address
     function setWallet(address newWallet) external;
 
-    /// @dev Locks/Unlocks the given component - call from instanceService
-    function setLockedFromInstance(address componentAddress, bool locked) external;
-
     /// @dev Locks/Unlocks the given component - call from component
-    function setLockedFromComponent(address componentAddress, bool locked) external;
+    function setComponentLocked(address componentAddress, bool locked) external;
 
     /// @dev Withdraw fees from the distribution component. Only component owner is allowed to withdraw fees.
     /// @param withdrawAmount the amount to withdraw

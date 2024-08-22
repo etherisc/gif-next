@@ -7,10 +7,14 @@ import {
 
 import {IAccess} from "../authorization/IAccess.sol";
 import {IAccountingService} from "../accounting/IAccountingService.sol";
+import {IApplicationService} from "../product/IApplicationService.sol";
 import {IBundleService} from "../pool/IBundleService.sol";
 import {IClaimService} from "../product/IClaimService.sol";
+import {IComponentService} from "../shared/IComponentService.sol";
 import {IDistributionService} from "../distribution/IDistributionService.sol";
 import {IInstanceService} from "../instance/IInstanceService.sol";
+import {IOracleService} from "../oracle/IOracleService.sol";
+import {IPolicyService} from "../product/IPolicyService.sol";
 import {IPoolService} from "../pool/IPoolService.sol";
 import {IStakingService} from "../staking/IStakingService.sol";
 import {IRegistryService} from "./IRegistryService.sol";
@@ -62,6 +66,9 @@ contract ServiceAuthorizationV3
           _setupDistributionServiceAuthorization();
           _setupPoolServiceAuthorization();
           _setupBundleServiceAuthorization();
+          _setupOracleServiceAuthorization();
+          _setupApplicationServiceAuthorization();
+          _setupPolicyServiceAuthorization();
      }
 
 
@@ -143,9 +150,6 @@ contract ServiceAuthorizationV3
           _authorize(functions, IAccountingService.increaseBundleBalance.selector, "increaseBundleBalance");
           _authorize(functions, IAccountingService.decreaseBundleBalance.selector, "decreaseBundleBalance");
 
-          functions = _authorizeForService(ACCOUNTING(), POOL());
-          _authorize(functions, IAccountingService.decreaseBundleBalanceForPool.selector, "decreaseBundleBalanceForPool");
-
           functions = _authorizeForService(ACCOUNTING(), COMPONENT());
           _authorize(functions, IAccountingService.decreaseComponentFees.selector, "decreaseComponentFees");
 
@@ -171,6 +175,20 @@ contract ServiceAuthorizationV3
      function _setupComponentServiceAuthorization()
           internal
      {
+          IAccess.FunctionInfo[] storage functions;
+
+          functions = _authorizeForService(COMPONENT(), ALL());
+          _authorize(functions, IComponentService.registerComponent.selector, "registerComponent");
+          _authorize(functions, IComponentService.approveTokenHandler.selector, "approveTokenHandler");
+          _authorize(functions, IComponentService.approveStakingTokenHandler.selector, "approveStakingTokenHandler");
+          _authorize(functions, IComponentService.setWallet.selector, "setWallet");
+          _authorize(functions, IComponentService.setComponentLocked.selector, "setComponentLocked");
+          _authorize(functions, IComponentService.withdrawFees.selector, "withdrawFees");
+          _authorize(functions, IComponentService.registerProduct.selector, "registerProduct");
+          _authorize(functions, IComponentService.setProductFees.selector, "setProductFees");
+          _authorize(functions, IComponentService.setDistributionFees.selector, "setDistributionFees");
+          _authorize(functions, IComponentService.setPoolFees.selector, "setPoolFees");
+
      }
 
      /// @dev Distribution service function authorization.
@@ -191,6 +209,14 @@ contract ServiceAuthorizationV3
           IAccess.FunctionInfo[] storage functions;
           functions = _authorizeForService(CLAIM(), ALL());
           _authorize(functions, IClaimService.submit.selector, "submit");
+          _authorize(functions, IClaimService.confirm.selector, "confirm");
+          _authorize(functions, IClaimService.decline.selector, "decline");
+          _authorize(functions, IClaimService.revoke.selector, "revoke");
+          _authorize(functions, IClaimService.close.selector, "close");
+          _authorize(functions, IClaimService.createPayoutForBeneficiary.selector, "createPayoutForBeneficiary");
+          _authorize(functions, IClaimService.createPayout.selector, "createPayout");
+          _authorize(functions, IClaimService.processPayout.selector, "processPayout");
+          _authorize(functions, IClaimService.cancelPayout.selector, "cancelPayout");
      }
 
      /// @dev Distribution service function authorization.
@@ -201,6 +227,13 @@ contract ServiceAuthorizationV3
           functions = _authorizeForService(DISTRIBUTION(), POLICY());
           _authorize(functions, IDistributionService.processSale.selector, "processSale");
           _authorize(functions, IDistributionService.processReferral.selector, "processReferral");
+
+          functions = _authorizeForService(DISTRIBUTION(), ALL());
+          _authorize(functions, IDistributionService.createDistributorType.selector, "createDistributorType");
+          _authorize(functions, IDistributionService.createDistributor.selector, "createDistributor");
+          _authorize(functions, IDistributionService.changeDistributorType.selector, "changeDistributorType");
+          _authorize(functions, IDistributionService.createReferral.selector, "createReferral");
+          _authorize(functions, IDistributionService.withdrawCommission.selector, "withdrawCommission");
      }
 
 
@@ -219,7 +252,13 @@ contract ServiceAuthorizationV3
           _authorize(functions, IPoolService.processPayout.selector, "processPayout");
 
           functions = _authorizeForService(POOL(), ALL());
-          _authorize(functions, IPoolService.withdrawBundleFees.selector, "withdrawBundleFees");
+          _authorize(functions, IPoolService.setMaxBalanceAmount.selector, "setMaxBalanceAmount");
+          _authorize(functions, IPoolService.closeBundle.selector, "closeBundle");
+          _authorize(functions, IPoolService.processFundedClaim.selector, "processFundedClaim");
+          _authorize(functions, IPoolService.stake.selector, "stake");
+          _authorize(functions, IPoolService.unstake.selector, "unstake");
+          _authorize(functions, IPoolService.fundPoolWallet.selector, "fundPoolWallet");
+          _authorize(functions, IPoolService.defundPoolWallet.selector, "defundPoolWallet");
      }
 
 
@@ -242,6 +281,47 @@ contract ServiceAuthorizationV3
           _authorize(functions, IBundleService.lock.selector, "lock");
           _authorize(functions, IBundleService.unlock.selector, "unlock");
           _authorize(functions, IBundleService.setFee.selector, "setFee");
+          _authorize(functions, IBundleService.withdrawBundleFees.selector, "withdrawBundleFees");
+     }
+
+     function _setupOracleServiceAuthorization()
+          internal
+     {
+          IAccess.FunctionInfo[] storage functions;
+
+          functions = _authorizeForService(ORACLE(), ALL());
+          _authorize(functions, IOracleService.request.selector, "request");
+          _authorize(functions, IOracleService.respond.selector, "respond");
+          _authorize(functions, IOracleService.resend.selector, "resend");
+          _authorize(functions, IOracleService.cancel.selector, "cancel");
+     }
+
+     function _setupApplicationServiceAuthorization()
+          internal
+     {
+          IAccess.FunctionInfo[] storage functions;
+
+          functions = _authorizeForService(APPLICATION(), ALL());
+          _authorize(functions, IApplicationService.create.selector, "create");
+          _authorize(functions, IApplicationService.renew.selector, "renew");
+          _authorize(functions, IApplicationService.adjust.selector, "adjust");
+          _authorize(functions, IApplicationService.revoke.selector, "revoke");
+     }
+
+     function _setupPolicyServiceAuthorization()
+          internal
+     {
+          IAccess.FunctionInfo[] storage functions;
+
+          functions = _authorizeForService(POLICY(), ALL());
+          _authorize(functions, IPolicyService.decline.selector, "decline");
+          _authorize(functions, IPolicyService.createPolicy.selector, "createPolicy");
+          _authorize(functions, IPolicyService.collectPremium.selector, "collectPremium");
+          _authorize(functions, IPolicyService.activate.selector, "activate");
+          _authorize(functions, IPolicyService.expire.selector, "expire");
+          _authorize(functions, IPolicyService.expireFromService.selector, "expireFromService");
+          _authorize(functions, IPolicyService.close.selector, "close");
+
      }
 }
 

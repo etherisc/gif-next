@@ -4,14 +4,13 @@ pragma solidity ^0.8.20;
 import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
+import {Amount} from "../type/Amount.sol";
+import {ContractLib} from "./ContractLib.sol";
 import {IComponent} from "./IComponent.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {IComponentService} from "./IComponentService.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRelease} from "../registry/IRelease.sol";
-
-import {Amount, AmountLib} from "../type/Amount.sol";
-import {ContractLib} from "./ContractLib.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType, COMPONENT, STAKING} from "../type/ObjectType.sol";
 import {Registerable} from "../shared/Registerable.sol";
@@ -111,7 +110,7 @@ abstract contract Component is
     /// override internal function _nftTransferFrom to implement custom behaviour
     function nftTransferFrom(address from, address to, uint256 tokenId, address operator)
         external
-        onlyChainNft()
+        onlyChainNft
     {
         _nftTransferFrom(from, to, tokenId, operator);
     }
@@ -202,7 +201,7 @@ abstract contract Component is
         internal
         virtual
     {
-        _getComponentStorage()._componentService.setLockedFromComponent(address(this), locked);
+        _getComponentStorage()._componentService.setComponentLocked(address(this), locked);
     }
 
 

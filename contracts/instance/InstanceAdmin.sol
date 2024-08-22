@@ -29,6 +29,7 @@ contract InstanceAdmin is
     uint64 public constant CUSTOM_ROLE_ID_MIN = 10000; // MUST be even
 
     error ErrorInstanceAdminCallerNotInstanceOwner(address caller);
+    error ErrorInstanceAdminCallerNotInstance(address caller);
     error ErrorInstanceAdminInstanceAlreadyLocked();
     error ErrorInstanceAdminNotRegistered(address target);
 
@@ -53,6 +54,13 @@ contract InstanceAdmin is
     modifier onlyInstanceOwner() {        
         if(msg.sender != _registry.ownerOf(address(_instance))) {
             revert ErrorInstanceAdminCallerNotInstanceOwner(msg.sender);
+        }
+        _;
+    }
+
+    modifier onlyInstance() {
+        if(msg.sender != address(_instance)) {
+            revert ErrorInstanceAdminCallerNotInstance(msg.sender);
         }
         _;
     }
@@ -129,6 +137,8 @@ contract InstanceAdmin is
         external
         restricted()
     {
+        // TODO check componentInfo exists
+        // TODO deploy token handler here
         // checks
         _checkTargetIsReadyForAuthorization(address(component));
 
@@ -139,10 +149,6 @@ contract InstanceAdmin is
         IAuthorization authorization = component.getAuthorization();
         _createRoles(authorization);
 
-        // TODO cleanup
-        // FunctionInfo[] memory functions = new FunctionInfo[](2);
-        // functions[0] = toFunction(TokenHandler.pullToken.selector, "pullToken");
-        // functions[1] = toFunction(TokenHandler.pushToken.selector, "pushToken");
 
         // // FIXME: make this a bit nicer and work with IAuthorization. Use a specific role, not public - access to TokenHandler must be restricted
         // _authorizeTargetFunctions(
@@ -210,7 +216,7 @@ contract InstanceAdmin is
 
     function setTargetLocked(address target, bool locked) 
         external 
-        restricted()
+        onlyInstance()
     {
         _setTargetClosed(target, locked);
     }

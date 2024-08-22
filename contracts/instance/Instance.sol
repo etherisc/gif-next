@@ -164,7 +164,7 @@ contract Instance is
     }
 
     //--- Targets ------------------------------------------------------------//
-
+    // TODO consider restricted()
     function createTarget(address target, string memory name) 
         external 
         onlyOwner()
@@ -189,7 +189,15 @@ contract Instance is
         external 
         onlyOwner()
     {
-        _componentService.setLockedFromInstance(target, locked);
+        _instanceAdmin.setTargetLocked(target, locked);
+    }
+
+    function setLockedFromService(address target, bool locked) 
+        external
+        restricted()
+    {
+        // TODO service can not lock any of instance contracts
+        _instanceAdmin.setTargetLocked(target, locked);
     }
 
     //--- ITransferInterceptor ----------------------------------------------//

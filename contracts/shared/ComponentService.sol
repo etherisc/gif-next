@@ -144,25 +144,13 @@ contract ComponentService is
     }
 
     /// @inheritdoc IComponentService
-    function setLockedFromInstance(address componentAddress, bool locked) 
+    function setComponentLocked(address componentAddress, bool locked) 
         external 
         virtual
-        onlyInstance()
+        restricted()
     {
-        address instanceAddress = msg.sender;
-        // NftId instanceNftId = getRegistry().getNftIdForAddress(msg.sender);
-        IInstance instance = IInstance(instanceAddress);
-        _setLocked(instance.getInstanceAdmin(), componentAddress, locked);
-    }
-
-    /// @inheritdoc IComponentService
-    function setLockedFromComponent(address componentAddress, bool locked) 
-        external
-        virtual
-        onlyComponent(msg.sender)
-    {
-        (, IInstance instance) = _getAndVerifyComponent(COMPONENT(), false);
-        _setLocked(instance.getInstanceAdmin(), componentAddress, locked);
+        (IInstance instance) = _getAndVerifyActiveComponent(COMPONENT());
+        instance.setLockedFromService(componentAddress, locked);
     }
 
     /// @inheritdoc IComponentService
@@ -198,6 +186,7 @@ contract ComponentService is
             componentNftId, 
             withdrawnAmount);
         
+        // transfer amount to component owner
         address componentOwner = getRegistry().ownerOf(componentNftId);
         TokenHandler tokenHandler = instanceReader.getTokenHandler(componentNftId);
         emit LogComponentServiceComponentFeesWithdrawn(
