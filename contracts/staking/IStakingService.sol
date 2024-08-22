@@ -26,6 +26,7 @@ interface IStakingService is IService
     event LogStakingServiceStakeCreated(NftId stakeNftId, NftId targetNftId, address owner, Amount stakedAmount);
     event LogStakingServiceStakeIncreased(NftId stakeNftId, address owner, Amount stakedAmount, Amount stakeBalance);
     event LogStakingServiceUnstaked(NftId stakeNftId, address stakeOwner, Amount totalAmount);
+    event LogStakingServiceStakeRestaked(address stakeOwner, NftId indexed stakeNftId, NftId newStakeNftId, NftId indexed newTargetNftId, Amount indexed newStakeBalance);
 
     event LogStakingServiceRewardsUpdated(NftId stakeNftId);
     event LogStakingServiceRewardsClaimed(NftId stakeNftId, address stakeOwner, Amount rewardsClaimedAmount);
@@ -116,7 +117,8 @@ interface IStakingService is IService
     )
         external
         returns (
-            NftId newStakeNftId
+            NftId newStakeNftId,
+            Amount newStakeBalance
         );
 
 

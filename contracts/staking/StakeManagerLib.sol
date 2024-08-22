@@ -1,16 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-
 import {Amount, AmountLib} from "../type/Amount.sol";
-import {Component} from "../shared/Component.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
-import {IRegistryService} from "../registry/IRegistryService.sol";
 import {IStaking} from "./IStaking.sol";
-import {Key32} from "../type/Key32.sol";
 import {NftId} from "../type/NftId.sol";
-import {ObjectType, INSTANCE, PROTOCOL, TARGET} from "../type/ObjectType.sol";
 import {Seconds, SecondsLib} from "../type/Seconds.sol";
 import {StakingReader} from "./StakingReader.sol";
 import {StakingStore} from "./StakingStore.sol";
@@ -72,6 +66,55 @@ library StakeManagerLib {
 
     }
 
+    function restake(
+        StakingReader stakingReader,
+        StakingStore stakingStore,
+        NftId oldStakeNftId,
+        NftId newStakeNftId
+    )
+        external
+        returns (Amount newStakeBalance)
+    {
+        NftId oldTargetNftId = stakingReader.getTargetNftId(oldStakeNftId);
+        (UFixed oldRewardRate,) = checkUnstakeParameters(stakingReader, oldStakeNftId);
+        
+        // calculate new rewards update and unstake full amount
+        (
+            Amount rewardIncrementAmount,
+        ) = calculateRewardIncrease(
+            stakingReader, 
+            oldStakeNftId,
+            oldRewardRate);
+        stakingStore.updateRewards(
+            oldStakeNftId, 
+            oldTargetNftId, 
+            rewardIncrementAmount);
+        (
+            Amount unstakedAmount, 
+            Amount rewardsAmount
+        ) = stakingStore.unstakeUpTo(
+            oldStakeNftId,
+            oldTargetNftId,
+            AmountLib.max(), // unstake all stakes
+            AmountLib.max()); // claim all rewards
+
+        // calculate full restake amount
+        newStakeBalance = unstakedAmount + rewardsAmount;
+        NftId newTargetNftId = stakingReader.getTargetNftId(newStakeNftId);
+        
+        // create new staking target and increase stake
+        Timestamp newLockedUntil = _checkCreateParameters(stakingReader, newTargetNftId, newStakeBalance);
+        stakingStore.create(
+            newStakeNftId, 
+            IStaking.StakeInfo({
+                    lockedUntil: newLockedUntil
+                }));
+        stakingStore.increaseStake(
+            newStakeNftId, 
+            newTargetNftId, 
+            newStakeBalance);
+    }
+
     function checkCreateParameters(
         StakingReader stakingReader,
         NftId targetNftId, 
@@ -79,6 +122,19 @@ library StakeManagerLib {
     )
         external
         view
+        returns (
+            Timestamp lockedUntil
+        )
+    {
+        return _checkCreateParameters(stakingReader, targetNftId, dipAmount);
+    }
+
+    function _checkCreateParameters(
+        StakingReader stakingReader,
+        NftId targetNftId, 
+        Amount dipAmount
+    )
+        internal view
         returns (
             Timestamp lockedUntil
         )

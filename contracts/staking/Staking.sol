@@ -4,7 +4,6 @@ pragma solidity ^0.8.20;
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {IRegistry} from "../registry/IRegistry.sol";
-import {IRegistryService} from "../registry/IRegistryService.sol";
 import {IRelease} from "../registry/IRelease.sol";
 import {IStaking} from "./IStaking.sol";
 import {IVersionable} from "../upgradeability/IVersionable.sol";
@@ -14,7 +13,7 @@ import {Component} from "../shared/Component.sol";
 import {IComponent} from "../shared/IComponent.sol";
 import {IComponentService} from "../shared/IComponentService.sol";
 import {NftId} from "../type/NftId.sol";
-import {ObjectType, COMPONENT, STAKING} from "../type/ObjectType.sol";
+import {ObjectType, STAKE, STAKING} from "../type/ObjectType.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {Registerable} from "../shared/Registerable.sol";
 import {StakeManagerLib} from "./StakeManagerLib.sol";
@@ -317,20 +316,25 @@ contract Staking is
 
     function restake(
         NftId stakeNftId, 
-        NftId newTargetNftId
+        NftId newStakeNftId
     )
         external
         virtual
         restricted() // only staking service
         onlyStake(stakeNftId)
-        returns (NftId newStakeNftId)
+        returns (Amount newStakeBalance)
     {
+        _checkNftType(stakeNftId, STAKE());
+        _checkNftType(newStakeNftId, STAKE());
+
         // TODO add check that allows additional staking amount
         StakingStorage storage $ = _getStakingStorage();
-
-        // TODO implement
+        newStakeBalance = StakeManagerLib.restake(
+            $._reader,
+            $._store,
+            stakeNftId,
+            newStakeNftId);    
     }
-
 
     function updateRewards(NftId stakeNftId)
         external

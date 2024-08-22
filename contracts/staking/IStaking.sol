@@ -132,7 +132,7 @@ interface IStaking is
     /// @dev restakes the dips to a new target.
     /// the sum of the staked dips and the accumulated rewards will be restaked.
     /// permissioned: only staking service may call this function.
-    function restake(NftId stakeNftId, NftId newTargetNftId) external returns (NftId newStakeNftId);
+    function restake(NftId stakeNftId, NftId newStakeNftId) external returns (Amount newStakeBalance);
 
     /// @dev retuns the specified amount of dips to the holder of the specified stake nft.
     /// if dipAmount is set to Amount.max() all staked dips and all rewards are transferred to 
