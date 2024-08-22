@@ -160,11 +160,11 @@ library StakeManagerLib {
     {
         NftId targetNftId = stakingReader.getTargetNftId(stakeNftId);
 
-        // only accept stakes for active targets
-        if (!stakingReader.isActive(targetNftId)) {
-            revert IStaking.ErrorStakingTargetNotActive(targetNftId);
+        // target nft id must be registered
+        if (!stakingReader.isTarget(targetNftId)) {
+            revert IStaking.ErrorStakingNotTarget(targetNftId);
         }
-
+        
         IStaking.TargetInfo memory info = stakingReader.getTargetInfo(targetNftId);
         rewardRate = info.rewardRate;
         lockingPeriod = info.lockingPeriod;
@@ -200,11 +200,6 @@ library StakeManagerLib {
         // target nft id must be registered
         if (!stakingReader.isTarget(targetNftId)) {
             revert IStaking.ErrorStakingNotTarget(targetNftId);
-        }
-
-        // only accept stakes for active targets
-        if (!stakingReader.isActive(targetNftId)) {
-            revert IStaking.ErrorStakingTargetNotActive(targetNftId);
         }
 
         lockingPeriod = stakingReader.getTargetInfo(targetNftId).lockingPeriod;

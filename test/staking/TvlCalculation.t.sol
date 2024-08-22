@@ -39,7 +39,6 @@ contract TvlCalculation is GifTest {
 
         // check instance is active target
         assertTrue(stakingReader.isTarget(instanceNftId), "instance not target");
-        assertTrue(stakingReader.isActive(instanceNftId), "instance not active target");
 
         // check token is what we think it is
         assertEq(token.symbol(), "USDC", "token symbol not USDC");

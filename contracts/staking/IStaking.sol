@@ -52,7 +52,6 @@ interface IStaking is
     error ErrorStakingTargetNotFound(NftId targetNftId);
     error ErrorStakingTargetTokenNotFound(NftId targetNftId, uint256 chainId, address token);
 
-    error ErrorStakingTargetNotActive(NftId targetNftId);
     error ErrorStakingStakeAmountZero(NftId targetNftId);
 
     // info for individual stake
