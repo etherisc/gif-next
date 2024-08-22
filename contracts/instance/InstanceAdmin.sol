@@ -137,19 +137,7 @@ contract InstanceAdmin is
 
         // create other roles
         IAuthorization authorization = component.getAuthorization();
-        _createRoles(authorization);
-
-        // TODO cleanup
-        // FunctionInfo[] memory functions = new FunctionInfo[](2);
-        // functions[0] = toFunction(TokenHandler.pullToken.selector, "pullToken");
-        // functions[1] = toFunction(TokenHandler.pushToken.selector, "pushToken");
-
-        // // FIXME: make this a bit nicer and work with IAuthorization. Use a specific role, not public - access to TokenHandler must be restricted
-        // _authorizeTargetFunctions(
-        //     address(component.getTokenHandler()),
-        //     getPublicRole(),
-        //     functions);
-        
+        _createRoles(authorization);        
         _createTargetAuthorizations(authorization);
     }
 
@@ -215,7 +203,14 @@ contract InstanceAdmin is
         _setTargetClosed(target, locked);
     }
 
-
+    /// @dev Returns the number of components that have been registered with this instance.   
+    function components() 
+        external 
+        view 
+        returns (uint64)
+    {
+        return _components;
+    }
 
     /// @dev Returns the instance authorization specification used to set up this instance admin.
     function getInstanceAuthorization()
