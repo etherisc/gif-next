@@ -363,7 +363,7 @@ contract TestProduct is GifTest {
             UFixedLib.toUFixed(5, -2),
             UFixedLib.toUFixed(3, -2),
             10,
-            14 * 24 * 3600,
+            SecondsLib.toSeconds(14 * 24 * 3600),
             false,
             false,
             "");
@@ -485,7 +485,7 @@ contract TestProduct is GifTest {
             UFixedLib.toUFixed(5, -2),
             UFixedLib.toUFixed(3, -2),
             10,
-            14 * 24 * 3600,
+            SecondsLib.toSeconds(14 * 24 * 3600),
             false,
             false,
             "");
@@ -593,7 +593,7 @@ contract TestProduct is GifTest {
             UFixedLib.toUFixed(5, -2),
             UFixedLib.toUFixed(3, -2),
             10,
-            14 * 24 * 3600,
+            SecondsLib.toSeconds(14 * 24 * 3600),
             false,
             false,
             "");

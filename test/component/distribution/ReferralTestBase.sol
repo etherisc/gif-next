@@ -5,11 +5,12 @@ import {GifTest} from "../../base/GifTest.sol";
 
 import {NftId} from "../../../contracts/type/NftId.sol";
 import {DistributorType} from "../../../contracts/type/DistributorType.sol";
+import {FeeLib} from "../../../contracts/type/Fee.sol";
 import {ReferralId} from "../../../contracts/type/Referral.sol";
+import {SimpleDistribution} from "../../../contracts/examples/unpermissioned/SimpleDistribution.sol";
+import {Seconds, SecondsLib} from "../../../contracts/type/Seconds.sol";
 import {Timestamp, TimestampLib} from "../../../contracts/type/Timestamp.sol";
 import {UFixed, UFixedLib} from "../../../contracts/type/UFixed.sol";
-import {SimpleDistribution} from "../../../contracts/examples/unpermissioned/SimpleDistribution.sol";
-import {FeeLib} from "../../../contracts/type/Fee.sol";
 
 contract ReferralTestBase is GifTest {
 
@@ -19,7 +20,7 @@ contract ReferralTestBase is GifTest {
     UFixed public maxDiscountPercentage;
     UFixed public commissionPercentage;
     uint32 public maxReferralCount;
-    uint32 public maxReferralLifetime;
+    Seconds public maxReferralLifetime;
     bool public allowSelfReferrals;
     bool public allowRenewals;
     bytes public data;
@@ -47,7 +48,7 @@ contract ReferralTestBase is GifTest {
         maxDiscountPercentage = instanceReader.toUFixed(75, -3);
         commissionPercentage = instanceReader.toUFixed(3, -2);
         maxReferralCount = 20;
-        maxReferralLifetime = 14 * 24 * 3600;
+        maxReferralLifetime = SecondsLib.toSeconds(14 * 24 * 3600);
         allowSelfReferrals = true;
         allowRenewals = true;
         data = ".";

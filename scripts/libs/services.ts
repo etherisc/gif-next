@@ -329,6 +329,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
                 NftIdLib: libraries.nftIdLibAddress,
                 ReferralLib: libraries.referralLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
+                SecondsLib: libraries.secondsLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
                 UFixedLib: libraries.uFixedLibAddress,
                 VersionLib: libraries.versionLibAddress, 
