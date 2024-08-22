@@ -16,8 +16,8 @@ interface IPolicyService is IService {
     event LogPolicyServicePolicyDeclined(NftId policyNftId);
     event LogPolicyServicePolicyPremiumCollected(NftId policyNftId, Amount premiumAmount);
     event LogPolicyServicePolicyActivated(NftId policyNftId, Timestamp activatedAt);
-    event LogPolicyServicePolicyActivatedUpdated(NftId policyNftId, Timestamp originalActivatedAt, Timestamp activatedAt);
-    event LogPolicyServicePolicyExpirationUpdated(NftId policyNftId, Timestamp originalExpiredAt, Timestamp expiredAt);
+    event LogPolicyServicePolicyActivatedUpdated(NftId policyNftId, Timestamp activatedAt);
+    event LogPolicyServicePolicyExpirationUpdated(NftId policyNftId, Timestamp expiredAt);
     event LogPolicyServicePolicyClosed(NftId policyNftId);
 
     error ErrorPolicyServicePolicyProductMismatch(NftId applicationNftId, NftId expectedProductNftId, NftId actualProductNftId);
@@ -92,6 +92,4 @@ interface IPolicyService is IService {
     /// Function consumers is claim service.
     function expirePolicy(IInstance instance, NftId policyNftId, Timestamp expireAt) external returns (Timestamp expiredAt);
 
-    /// @dev Returns true iff policy is closeable
-    function policyIsCloseable(InstanceReader instanceReader, NftId policyNftId) external view returns (bool isCloseable);
 }
