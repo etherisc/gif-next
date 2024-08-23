@@ -211,14 +211,17 @@ library StakingLib {
         Amount dipAmount
     )
         public 
-        pure 
+        view 
     {
         // check stake amount > 0
         if (dipAmount.eqz()) {
             revert IStaking.ErrorStakingStakeAmountZero(targetNftId);
         }
 
-        // TODO add check for target specific max dip amount (min stake + tvl * stake rate + buffer)
+        Amount maxStakedAmount = stakingReader.getTargetMaxStakedAmount(targetNftId);
+        if (dipAmount > maxStakedAmount) {
+            revert IStaking.ErrorStakingTargetMaxStakedAmountExceeded(targetNftId, maxStakedAmount, dipAmount);
+        }
     }
 
     function calculateRewardIncrease(

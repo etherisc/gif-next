@@ -54,6 +54,7 @@ interface IStaking is
     error ErrorStakingRewardRateTooHigh(NftId targetNftId, UFixed maxRewardRate, UFixed rewardRate);
     error ErrorStakingTargetNotFound(NftId targetNftId);
     error ErrorStakingTargetTokenNotFound(NftId targetNftId, uint256 chainId, address token);
+    error ErrorStakingTargetMaxStakedAmountExceeded(NftId targetNftId, Amount maxStakedAmount, Amount stakedAmount);
 
     error ErrorStakingStakeAmountZero(NftId targetNftId);
 

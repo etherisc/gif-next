@@ -104,6 +104,11 @@ contract StakingReader is
         rewardRate = getTargetInfo(targetNftId).rewardRate;
     }
 
+    /// @dev get the max staked amount allowed for the specified target nft id.
+    function getTargetMaxStakedAmount(NftId targetNftId) external view returns (Amount maxStakedAmount) {
+        return getTargetInfo(targetNftId).maxStakedAmount;
+    }
+
 
     /// @dev get the reward rate for the specified target nft id.
     function getRewardRate(NftId targetNftId) external view returns (UFixed rewardRate) {
