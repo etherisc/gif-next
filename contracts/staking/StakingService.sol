@@ -240,19 +240,17 @@ contract StakingService is
             revert ErrorStakingServiceTargetUnknown(newTargetNftId);
         }
 
-        if (! $._staking.getStakingReader().isTarget(newTargetNftId)) {
-            // register new stake object with registry
-            newStakeNftId = $._registryService.registerStake(
-                IRegistry.ObjectInfo({
-                    nftId: NftIdLib.zero(),
-                    parentNftId: newTargetNftId,
-                    objectType: STAKE(),
-                    isInterceptor: false,
-                    objectAddress: address(0),
-                    initialOwner: stakeOwner,
-                    data: ""
-                }));
-        }
+        // register new stake object with registry
+        newStakeNftId = $._registryService.registerStake(
+            IRegistry.ObjectInfo({
+                nftId: NftIdLib.zero(),
+                parentNftId: newTargetNftId,
+                objectType: STAKE(),
+                isInterceptor: false,
+                objectAddress: address(0),
+                initialOwner: stakeOwner,
+                data: ""
+            }));
 
         newStakeBalance = $._staking.restake(
             stakeNftId, 

@@ -581,7 +581,7 @@ contract StakingTest is GifTest {
     }
 
     // solhint-disable-next-line func-name-mixedcase
-    function test_restake() public {
+    function test_restake_happyCase() public {
         // GIVEN
 
         // create a second instance - restake target
@@ -637,6 +637,72 @@ contract StakingTest is GifTest {
         assertEq(stakingReader.getRewardBalance(instanceNftId2).toInt(), 0, "unexpected instance reward amount (2)");
         assertEq(stakingReader.getBalanceUpdatedIn(instanceNftId2).toInt(), block.number, "unexpected instance last updated in (2)");
     }
+
+    // solhint-disable-next-line func-name-mixedcase
+    function test_restake_alreadyStakedTarget() public {
+        // GIVEN
+
+        // create a second instance - restake target
+        vm.startPrank(instanceOwner2);
+        (instance2, instanceNftId2) = instanceService.createInstance();
+        Seconds lockingPeriod2 = stakingReader.getTargetInfo(instanceNftId2).lockingPeriod;
+        vm.stopPrank();
+
+        (, Amount dipAmount) = _prepareAccount(staker, 3000);
+        Amount oneThousand = AmountLib.toAmount(1000 * 10 ** dip.decimals());
+        Amount twoThousand = AmountLib.toAmount(2000 * 10 ** dip.decimals());
+
+        vm.startPrank(staker);
+
+        // create initial instance stakes
+        NftId stakeNftId = stakingService.create(
+            instanceNftId, 
+            oneThousand);
+
+        NftId stakeNftId2 = stakingService.create(
+            instanceNftId2, 
+            twoThousand);
+
+        Timestamp initialTime = TimestampLib.blockTimestamp();
+
+        // wait some time
+        _wait(SecondsLib.oneYear());
+        
+        // WHEN - restake to target
+        (NftId stakeNftId3, Amount restakedAmount) = stakingService.restakeToNewTarget(stakeNftId, instanceNftId2);
+
+        // THEN - check restake only created new staked and changed counters nothing else, especially no tokens moved
+        assertTrue(stakeNftId2.gtz());
+        assertEq(oneThousand.toInt(), restakedAmount.toInt());
+
+        // check balances after staking - no tokens mived
+        assertEq(dip.balanceOf(staker), 0, "staker: unexpected dip balance (after staking)");
+        assertEq(dip.balanceOf(staking.getWallet()), dipAmount.toInt(), "staking wallet: unexpected dip balance (after staking)");
+
+        // check stake balance after restake
+        assertEq(stakingReader.getStakeBalance(stakeNftId).toInt(), 0, "unexpected stake amount");
+        assertEq(stakingReader.getRewardBalance(stakeNftId).toInt(), 0, "unexpected reward amount");
+        assertEq(stakingReader.getStakeBalance(stakeNftId2).toInt(), twoThousand.toInt(), "unexpected stake amount (2)");
+        assertEq(stakingReader.getRewardBalance(stakeNftId2).toInt(), 0, "unexpected reward amount (2)");
+        assertEq(stakingReader.getStakeBalance(stakeNftId3).toInt(), oneThousand.toInt(), "unexpected stake amount (3)");
+        assertEq(stakingReader.getRewardBalance(stakeNftId3).toInt(), 0, "unexpected reward amount (3)");
+
+        // check state info
+        IStaking.StakeInfo memory stakeInfo2 = stakingReader.getStakeInfo(stakeNftId2);
+        assertEq(stakeInfo2.lockedUntil.toInt(), initialTime.toInt() + lockingPeriod2.toInt(), "unexpected locked until (2)");
+        IStaking.StakeInfo memory stakeInfo3 = stakingReader.getStakeInfo(stakeNftId3);
+        assertEq(stakeInfo3.lockedUntil.toInt(), TimestampLib.blockTimestamp().toInt() + lockingPeriod2.toInt(), "unexpected locked until (3)");
+
+        // check accumulated stakes/rewards on instance and instance2
+        assertEq(stakingReader.getStakeBalance(instanceNftId).toInt(), 0, "unexpected instance stake amount");
+        assertEq(stakingReader.getRewardBalance(instanceNftId).toInt(), 0, "unexpected instance reward amount");
+        assertEq(stakingReader.getBalanceUpdatedIn(instanceNftId).toInt(), block.number, "unexpected instance last updated in");
+
+        assertEq(stakingReader.getStakeBalance(instanceNftId2).toInt(), dipAmount.toInt(), "unexpected instance stake amount (2)");
+        assertEq(stakingReader.getRewardBalance(instanceNftId2).toInt(), 0, "unexpected instance reward amount (2)");
+        assertEq(stakingReader.getBalanceUpdatedIn(instanceNftId2).toInt(), block.number, "unexpected instance last updated in (2)");
+    }
+
 
     // solhint-disable-next-line func-name-mixedcase
     function test_restake_invalidNftType() public {
@@ -747,8 +813,6 @@ contract StakingTest is GifTest {
     }
     
     // TODO: test - restake with reward rate set to value > 0
-
-    // TODO: test  - restake to already staked target
 
     function _addRewardReserves(
         NftId instanceNftId, 
