@@ -75,8 +75,8 @@ library StakeManagerLib {
         external
         returns (Amount newStakeBalance)
     {
-        NftId oldTargetNftId = stakingReader.getTargetNftId(oldStakeNftId);
-        (UFixed oldRewardRate,) = checkUnstakeParameters(stakingReader, oldStakeNftId);
+        checkUnstakeParameters(stakingReader, oldStakeNftId);
+        (NftId oldTargetNftId, UFixed oldRewardRate) = stakingReader.getTargetRewardRate(oldStakeNftId);
         
         // calculate new rewards update and unstake full amount
         (
@@ -177,12 +177,11 @@ library StakeManagerLib {
         public
         view
         returns (
-            UFixed rewardRate,
             Seconds lockingPeriod
         )
     {
         IStaking.StakeInfo memory stakeInfo = stakingReader.getStakeInfo(stakeNftId);
-
+        
         if (stakeInfo.lockedUntil > TimestampLib.blockTimestamp()) {
             revert IStaking.ErrorStakingStakeLocked(stakeNftId, stakeInfo.lockedUntil);
         }
@@ -247,10 +246,9 @@ library StakeManagerLib {
             rewardRate,
             duration,
             stakeAmount);
-
+        
         totalDipAmount = stakeAmount + rewardAmount + rewardIncreaseAmount;
     }
-
 
     function calculateRewardAmount(
         UFixed rewardRate,
