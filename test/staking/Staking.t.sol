@@ -716,13 +716,39 @@ contract StakingTest is GifTest {
         stakingService.restakeToNewTarget(stakeNftId, instanceNftId2);
     }
 
-    // TODO: test - target not valid nft
-    
-    // TODO: test - target not stakeable target
+    /// @dev test restaking when the target is an unknown nft
+    // solhint-disable-next-line func-name-mixedcase
+    function test_restake_invalidTarget() public {
+        // GIVEN
 
+        // create a second instance - restake target
+        vm.startPrank(instanceOwner2);
+        (instance2, instanceNftId2) = instanceService.createInstance();
+        Seconds lockingPeriod = stakingReader.getTargetInfo(instanceNftId).lockingPeriod;
+        vm.stopPrank();
+
+        (, Amount dipAmount) = _prepareAccount(staker, 3000);
+
+        vm.startPrank(staker);
+
+        // create initial instance stake
+        NftId stakeNftId = stakingService.create(
+            instanceNftId, 
+            dipAmount);
+        NftId targetNftId = NftIdLib.zero();
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IStakingService.ErrorStakingServiceTargetUnknown.selector, 
+            targetNftId));
+
+        // WHEN - restake to new target
+        stakingService.restakeToNewTarget(stakeNftId, targetNftId);
+    }
+    
     // TODO: test - restake with reward rate set to value > 0
 
-
+    // TODO: test  - restake to already staked target
 
     function _addRewardReserves(
         NftId instanceNftId, 

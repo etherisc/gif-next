@@ -37,6 +37,7 @@ interface IStakingService is IService
     error ErrorStakingServiceNotSupportingIStaking(address stakingAddress);
 
     // create
+    error ErrorStakingServiceTargetUnknown(NftId targetNftId);
     error ErrorStakingServiceZeroTargetNftId();
     error ErrorStakingServiceNotTargetNftId(NftId targetNftId);
     error ErrorStakingServiceNotActiveTargetNftId(NftId targetNftId);
