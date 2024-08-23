@@ -43,31 +43,6 @@ contract ComponentService is
     IRegistryService private _registryService;
     IInstanceService private _instanceService;
 
-    modifier onlyComponent(address component) {
-        _checkSupportsInterface(component);
-        _;
-    }
-
-    modifier onlyInstance() {        
-        NftId instanceNftId = getRegistry().getNftIdForAddress(msg.sender);
-        if (instanceNftId.eqz()) {
-            revert ErrorComponentServiceNotRegistered(msg.sender);
-        }
-
-        ObjectType objectType = getRegistry().getObjectInfo(instanceNftId).objectType;
-        if (objectType != INSTANCE()) {
-            revert ErrorComponentServiceNotInstance(msg.sender, objectType);
-        }
-
-        VersionPart instanceVersion = IInstance(msg.sender).getRelease();
-        if (instanceVersion != getVersion().toMajorPart()) {
-            revert ErrorComponentServiceInstanceVersionMismatch(msg.sender, instanceVersion);
-        }
-
-        _;
-    }
-
-
     function _initialize(
         address owner, 
         bytes memory data
@@ -92,31 +67,24 @@ contract ComponentService is
 
     //-------- component ----------------------------------------------------//
 
-    function registerComponent(address component)
+    /// @inheritdoc IComponentService
+    function registerComponent(address componentAddress)
         external
         virtual
-        onlyComponent(component)
         returns (NftId componentNftId)
     {
-        // type specific registration
-        IRegistry.ObjectInfo memory componentObjectInfo = IInstanceLinkedComponent(component).getInitialInfo();
-        ObjectType componentType = componentObjectInfo.objectType;        
-        IComponent productComponent = IComponent(getRegistry().getObjectAddress(componentObjectInfo.parentNftId));
+        (NftId productNftId, IInstance instance) = _getAndVerifyActiveComponent(COMPONENT());
+        NftId instanceNftId = getRegistry().getNftIdForAddress(address(instance));
 
-        if (componentType == POOL()) {
-            return _registerPool(component, address(productComponent.getToken()));
-        }
-        if (componentType == DISTRIBUTION()) {
-            return _registerDistribution(component, address(productComponent.getToken()));
-        }
-        if (componentType == ORACLE()) {
-            return _registerOracle(component, address(productComponent.getToken()));
-        }
-
-        // fail
-        revert ErrorComponentServiceTypeNotSupported(component, componentType);
+        componentNftId = _verifyAndRegister(
+            instanceNftId, 
+            instance, 
+            componentAddress, 
+            productNftId, 
+            address(0));
     }
 
+    /// @inheritdoc IComponentService
     function approveTokenHandler(
         IERC20Metadata token,
         Amount amount
@@ -126,8 +94,8 @@ contract ComponentService is
     {
         // checks
         (NftId componentNftId, IInstance instance) = _getAndVerifyActiveComponent(COMPONENT());
-        TokenHandler tokenHandler = instance.getInstanceReader().getComponentInfo(
-            componentNftId).tokenHandler;
+        TokenHandler tokenHandler = instance.getInstanceReader().getTokenHandler(
+            componentNftId);
 
         // effects
         tokenHandler.approve(token, amount);
@@ -140,8 +108,8 @@ contract ComponentService is
     {
         // checks
         (NftId componentNftId, IInstance instance) = _getAndVerifyActiveComponent(COMPONENT());
-        TokenHandler tokenHandler = instance.getInstanceReader().getComponentInfo(
-            componentNftId).tokenHandler;
+        TokenHandler tokenHandler = instance.getInstanceReader().getTokenHandler(
+            componentNftId);
 
         // effects
         tokenHandler.setWallet(newWallet);
@@ -218,37 +186,15 @@ contract ComponentService is
         external
         virtual
         nonReentrant()
-        onlyComponent(productAddress)
         returns (NftId productNftId)
     {
-        // register/create component setup
-        InstanceAdmin instanceAdmin;
-        InstanceStore instanceStore;
-        (, instanceAdmin, instanceStore,, productNftId) = _register(
-            productAddress,
-            PRODUCT(),
-            token);
+        // TODO instance verification
+        //(NftId instanceNftId,, IInstance instance) = _getAndVerifyCallingInstance();
+        NftId instanceNftId = getRegistry().getNftIdForAddress(msg.sender);
+        IInstance instance = IInstance(msg.sender);
 
-        // get product
-        IProductComponent product = IProductComponent(productAddress);
-        
-        IComponents.ProductInfo memory initialProductInfo = product.getInitialProductInfo();
-        // force initialization of linked components with empty values to 
-        // ensure no components are linked upon initialization of the product
-        initialProductInfo.poolNftId = NftIdLib.zero();
-        initialProductInfo.distributionNftId = NftIdLib.zero();
-        initialProductInfo.oracleNftId = new NftId[](initialProductInfo.expectedNumberOfOracles);
-
-        // create info
-        instanceStore.createProduct(
-            productNftId, 
-            initialProductInfo);
-
-        instanceStore.createFee(
-            productNftId, 
-            product.getInitialFeeInfo());
+        productNftId = _verifyAndRegister(instanceNftId, instance, productAddress, instanceNftId, token);
     }
-
 
     function setProductFees(
         Fee memory productFee, // product fee on net premium
@@ -282,27 +228,48 @@ contract ComponentService is
         }
     }
 
+    function _createProduct(
+        InstanceStore instanceStore,
+        NftId productNftId,
+        address productAddress,
+        address token
+    )
+        internal
+        virtual
+    {
+        // create product in instance instanceStore
+        IProductComponent product = IProductComponent(productAddress);
+        IComponents.ProductInfo memory initialProductInfo = product.getInitialProductInfo();
+        // force initialization of linked components with empty values to 
+        // ensure no components are linked upon initialization of the product
+        initialProductInfo.poolNftId = NftIdLib.zero();
+        initialProductInfo.distributionNftId = NftIdLib.zero();
+        initialProductInfo.oracleNftId = new NftId[](initialProductInfo.expectedNumberOfOracles);
+
+        // create info
+        instanceStore.createProduct(
+            productNftId, 
+            initialProductInfo);
+
+        instanceStore.createFee(
+            productNftId, 
+            product.getInitialFeeInfo());
+    }
+
     //-------- distribution -------------------------------------------------//
 
     /// @dev registers the sending component as a distribution component
-    function _registerDistribution(address distributioAddress, address token)
+    function _createDistribution(
+        InstanceStore instanceStore,
+        NftId productNftId,
+        NftId distributionNftId,
+        IComponents.ProductInfo memory productInfo
+    )
         internal
         virtual
         nonReentrant()
-        returns (NftId distributionNftId)
     {
-        // register/create component info
-        InstanceReader instanceReader;
-        InstanceAdmin instanceAdmin;
-        InstanceStore instanceStore;
-        NftId productNftId;
-        (instanceReader, instanceAdmin, instanceStore, productNftId, distributionNftId) = _register(
-            distributioAddress,
-            DISTRIBUTION(),
-            token);
-
         // check product is still expecting a distribution registration
-        IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
         if (!productInfo.hasDistribution) {
             revert ErrorProductServiceNoDistributionExpected(productNftId);
         }
@@ -314,7 +281,6 @@ contract ComponentService is
         productInfo.distributionNftId = distributionNftId;
         instanceStore.updateProduct(productNftId, productInfo, KEEP_STATE());
     }
-
 
     function setDistributionFees(
         Fee memory distributionFee, // distribution fee for sales that do not include commissions
@@ -350,24 +316,16 @@ contract ComponentService is
 
     //-------- oracle -------------------------------------------------------//
 
-    function _registerOracle(address oracleAddress, address token)
+    function _createOracle(
+        InstanceStore instanceStore,
+        NftId productNftId,
+        NftId oracleNftId,
+        IComponents.ProductInfo memory productInfo
+    )
         internal
         virtual
-        returns (NftId oracleNftId)
     {
-        // register/create component setup
-        InstanceReader instanceReader;
-        InstanceAdmin instanceAdmin;
-        InstanceStore instanceStore;
-        NftId productNftId;
-
-        (instanceReader, instanceAdmin, instanceStore, productNftId, oracleNftId) = _register(
-            oracleAddress,
-            ORACLE(),
-            token);
-
         // check product is still expecting an oracle registration
-        IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
         if (productInfo.expectedNumberOfOracles == 0) {
             revert ErrorProductServiceNoOraclesExpected(productNftId);
         }
@@ -380,33 +338,26 @@ contract ComponentService is
         productInfo.numberOfOracles++;
         instanceStore.updateProduct(productNftId, productInfo, KEEP_STATE());
     }
-
     //-------- pool ---------------------------------------------------------//
 
-    function _registerPool(address poolAddress, address token)
+    function _createPool(
+        InstanceStore instanceStore,
+        NftId productNftId,
+        NftId poolNftId,
+        address componentAddress,
+        IComponents.ProductInfo memory productInfo
+    )
         internal
         virtual
-        returns (NftId poolNftId)
     {
-        // register/create component setup
-        InstanceReader instanceReader;
-        InstanceAdmin instanceAdmin;
-        InstanceStore instanceStore;
-        NftId productNftId;
-
-        (instanceReader, instanceAdmin, instanceStore, productNftId, poolNftId) = _register(
-            poolAddress,
-            POOL(),
-            token);
-
         // check product is still expecting a pool registration
-        IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
+        //IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
         if (productInfo.poolNftId.gtz()) {
             revert ErrorProductServicePoolAlreadyRegistered(productNftId, productInfo.poolNftId);
         }
 
         // create info
-        IPoolComponent pool = IPoolComponent(poolAddress);
+        IPoolComponent pool = IPoolComponent(componentAddress);
         instanceStore.createPool(
             poolNftId, 
             pool.getInitialPoolInfo());
@@ -459,37 +410,96 @@ contract ComponentService is
     }
 
     /// @dev Registers the component represented by the provided address.
-    function _register(
-        address componentAddress, // address of component to register
-        ObjectType requiredType, // required type for component for registration
+    function _verifyAndRegister(
+        NftId instanceNftId,
+        IInstance instance,
+        address componentAddress,
+        NftId parentNftId,
         address token
     )
         internal
         virtual
-        returns (
-            InstanceReader instanceReader, 
-            InstanceAdmin instanceAdmin, 
-            InstanceStore instanceStore, 
-            NftId parentNftId,
-            NftId componentNftId
-        )
+        returns (NftId componentNftId)
     {
-        NftId instanceNftId;
-        IInstance instance;
-        IInstanceLinkedComponent component;
-        address initialOwner;
-
         (
-            instanceNftId, 
-            instance, 
-            parentNftId, 
-            component, 
-            initialOwner
+            IInstanceLinkedComponent component,
+            IRegistry.ObjectInfo memory objectInfo // initial component info
         ) = _getAndVerifyRegisterableComponent(
-            getRegistry(),
             componentAddress,
-            requiredType);
+            parentNftId);
 
+        InstanceAdmin instanceAdmin = instance.getInstanceAdmin();
+        InstanceStore instanceStore = instance.getInstanceStore();
+        InstanceReader instanceReader = instance.getInstanceReader();
+        ObjectType componentType = objectInfo.objectType;
+
+        if(componentType == PRODUCT()) {
+            // register product with registry
+            componentNftId = _registryService.registerProduct(
+                component, 
+                objectInfo.initialOwner).nftId;
+
+            // create product info in instance store
+            _createProduct(instanceStore, componentNftId, componentAddress, token);
+        } else {
+            // register non product component with registry
+            componentNftId = _registryService.registerProductLinkedComponent(
+                component, 
+                objectInfo.objectType, 
+                objectInfo.initialOwner).nftId;
+
+            // create non product component info in instance store
+            NftId productNftId = parentNftId;
+            IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
+            if(componentType == POOL()) {
+                _createPool(instanceStore, productNftId, componentNftId, componentAddress, productInfo);
+            } else if(componentType == DISTRIBUTION()) {
+                _createDistribution(instanceStore, productNftId, componentNftId, productInfo);
+            } else if(componentType == ORACLE()) {
+                _createOracle(instanceStore, productNftId, componentNftId, productInfo);
+            } else {
+                revert ErrorComponentServiceComponentTypeNotSupported(componentAddress, componentType);
+            }
+
+            // get product's token
+            token = address(instanceReader.getTokenHandler(productNftId).TOKEN());
+        }
+
+        _checkToken(instance, token);
+
+        // deploy and wire token handler
+        IComponents.ComponentInfo memory componentInfo = component.getInitialComponentInfo();
+        componentInfo.tokenHandler = TokenHandlerDeployerLib.deployTokenHandler(
+            address(getRegistry()),
+            address(component), // initially, component is its own wallet
+            token, 
+            instanceAdmin.authority());
+        
+        // register component with instance
+        instanceStore.createComponent(
+            componentNftId, 
+            componentInfo);
+
+        // link component contract to nft id
+        component.linkToRegisteredNftId();
+
+        // authorize
+        instanceAdmin.initializeComponentAuthorization(componentAddress, componentType);
+
+        // TODO mostly repeats Registry log
+        emit LogComponentServiceRegistered(
+            instanceNftId,
+            componentNftId, 
+            componentType, 
+            address(component), 
+            token, 
+            objectInfo.initialOwner);
+    }
+
+    function _checkToken(IInstance instance, address token) 
+        internal
+        view
+    {
         if (! instance.isTokenRegistryDisabled()) {
             // check if provided token is whitelisted and active
             if (!ContractLib.isActiveToken(
@@ -501,45 +511,7 @@ contract ComponentService is
                 revert ErrorComponentServiceTokenInvalid(token);
             }
         }
-
-        // get instance supporting contracts (as function return values)
-        instanceReader = instance.getInstanceReader();
-        instanceAdmin = instance.getInstanceAdmin();
-        instanceStore = instance.getInstanceStore();
-
-        // register with registry
-        if (requiredType == PRODUCT()) {
-            componentNftId = _registryService.registerProduct(
-                component, initialOwner).nftId;
-        } else {
-            componentNftId = _registryService.registerProductLinkedComponent(
-                component, requiredType, initialOwner).nftId;
-        }
-
-        // deploy and wire token handler
-        {
-            IComponents.ComponentInfo memory componentInfo = component.getInitialComponentInfo();
-            componentInfo.tokenHandler = TokenHandlerDeployerLib.deployTokenHandler(
-                address(getRegistry()),
-                componentAddress, // initially, component is its own wallet
-                token, 
-                address(instanceAdmin.authority()));
-            
-            // register component with instance
-            instanceStore.createComponent(
-                componentNftId, 
-                componentInfo);
-        }
-
-        // link component contract to nft id
-        component.linkToRegisteredNftId();
-
-        // authorize
-        instanceAdmin.initializeComponentAuthorization(componentAddress, requiredType);
-
-        emit LogComponentServiceRegistered(instanceNftId, componentNftId, requiredType, componentAddress, token, initialOwner);
     }
-
 
     function _logUpdateFee(NftId productNftId, string memory name, Fee memory feeBefore, Fee memory feeAfter)
         internal
@@ -571,85 +543,47 @@ contract ComponentService is
         info = instanceReader.getFeeInfo(productNftId);
     }
 
-
     /// @dev Based on the provided component address required type the component 
     /// and related instance contract this function reverts iff:
-    /// - the sender is not registered
     /// - the component contract does not support IInstanceLinkedComponent
-    /// - the component type does not match with the required type
+    /// - the component parent does not match with the required parent
+    /// - the component release does not match with the service release
     /// - the component has already been registered
     function _getAndVerifyRegisterableComponent(
-        IRegistry registry,
         address componentAddress,
-        ObjectType requiredType
+        NftId requiredParent
     )
         internal
         view
         returns (
-            NftId instanceNftId,
-            IInstance instance,
-            NftId parentNftId,
             IInstanceLinkedComponent component,
-            address initialOwner
+            IRegistry.ObjectInfo memory info
         )
     {
-        // check sender (instance or product) is registered
-        IRegistry.ObjectInfo memory senderInfo = registry.getObjectInfo(msg.sender);
-        if (senderInfo.nftId.eqz()) {
-            revert ErrorComponentServiceSenderNotRegistered(msg.sender);
+        // check component interface
+        if (!ContractLib.supportsInterface(componentAddress, type(IInstanceLinkedComponent).interfaceId)) {
+            revert ErrorComponentServiceNotInstanceLinkedComponent(componentAddress);
         }
 
-        // the sender is the parent of the component to be registered
-        // an instance caller wanting to register a product - or -
-        // a product caller wantint go register a distribution, oracle or pool
-        parentNftId = senderInfo.nftId;
-
-        // check component is of required type
         component = IInstanceLinkedComponent(componentAddress);
-        IRegistry.ObjectInfo memory info = component.getInitialInfo();
-        if(info.objectType != requiredType) {
-            revert ErrorComponentServiceInvalidType(componentAddress, requiredType, info.objectType);
+        info = component.getInitialInfo();
+
+        // check component parent
+        if(info.parentNftId != requiredParent) {
+            revert ErrorComponentServiceComponentParentInvalid(componentAddress, requiredParent, info.parentNftId);
+        }
+
+        // check component release
+        // TODO check version with registry
+        //if(info.version != getRelease()) {
+        if(component.getRelease() != getRelease()) {
+            revert ErrorComponentServiceComponentReleaseMismatch(componentAddress, getRelease(), component.getRelease());
         }
 
         // check component has not already been registered
         if (getRegistry().getNftIdForAddress(componentAddress).gtz()) {
-            revert ErrorComponentServiceAlreadyRegistered(componentAddress);
+            revert ErrorComponentServiceComponentAlreadyRegistered(componentAddress);
         }
-
-        // component release matches servie release
-        address parentAddress = registry.getObjectAddress(parentNftId);
-        if (component.getRelease() != getRelease()) {
-            revert ErrorComponentServiceReleaseMismatch(componentAddress, component.getRelease(), getRelease());
-        // component release matches parent release
-        } else if (component.getRelease() != IRegisterable(parentAddress).getRelease()){
-            revert ErrorComponentServiceReleaseMismatch(componentAddress, component.getRelease(), IRegisterable(parentAddress).getRelease());
-        }
-
-        // check component belongs to same product cluster 
-        // parent of product must be instance, parent of other componet types must be product
-        if (info.parentNftId != senderInfo.nftId) {
-            revert ErrorComponentServiceSenderNotComponentParent(senderInfo.nftId, info.parentNftId);
-        }
-
-        // verify parent is registered instance
-        if (requiredType == PRODUCT()) {
-            if (senderInfo.objectType != INSTANCE()) {
-                revert ErrorComponentServiceParentNotInstance(senderInfo.nftId, senderInfo.objectType);
-            }
-
-            instanceNftId = senderInfo.nftId;
-        // verify parent is registered product
-        } else {
-            if (senderInfo.objectType != PRODUCT()) {
-                revert ErrorComponentServiceParentNotProduct(senderInfo.nftId, senderInfo.objectType);
-            }
-
-            instanceNftId = senderInfo.parentNftId;
-        }
-
-        // get initial owner and instance
-        initialOwner = info.initialOwner;
-        instance = IInstance(registry.getObjectAddress(instanceNftId));
     }
 
     function _setLocked(InstanceAdmin instanceAdmin, address componentAddress, bool locked) internal {
@@ -698,11 +632,5 @@ contract ComponentService is
 
     function _getDomain() internal pure virtual override returns(ObjectType) {
         return COMPONENT();
-    }
-
-    function _checkSupportsInterface(address component) internal view {
-        if (!ContractLib.supportsInterface(component, type(IInstanceLinkedComponent).interfaceId)) {
-            revert ErrorComponentServiceNotInstanceLinkedComponent(component);
-        }
     }
 }
