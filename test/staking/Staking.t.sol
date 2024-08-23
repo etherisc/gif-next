@@ -150,6 +150,30 @@ contract StakingTest is GifTest {
         assertEq(stakingReader.getBalanceUpdatedIn(instanceNftId).toInt(), block.number, "unexpected instance last updated in");
     }
 
+    function test_stakeExceedsMaxStakedAmount() public {
+        // GIVEN
+        (, Amount dipAmount) = _prepareAccount(staker2, 3000);
+
+        vm.startPrank(instanceOwner);
+        Amount maxStakedAmount = dipAmount - AmountLib.toAmount(500);
+        instance.setStakingMaxStakedAmount(maxStakedAmount);
+        vm.stopPrank();
+
+        vm.startPrank(staker2);
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IStaking.ErrorStakingTargetMaxStakedAmountExceeded.selector, 
+            instanceNftId,
+            maxStakedAmount,
+            dipAmount));
+
+        // WHEN - create instance stake
+        stakingService.create(
+            instanceNftId, 
+            dipAmount);
+    }
+
     function test_stakingUpdateInstanceLockingPeriod() public {
         Seconds lockingPeriod = stakingReader.getTargetInfo(instanceNftId).lockingPeriod;
         assertEq(lockingPeriod.toInt(), TargetManagerLib.getDefaultLockingPeriod().toInt(), "unexpected locking period");

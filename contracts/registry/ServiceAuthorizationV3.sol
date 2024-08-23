@@ -111,6 +111,7 @@ contract ServiceAuthorizationV3
           _authorize(functions, IStakingService.createInstanceTarget.selector, "createInstanceTarget");
           _authorize(functions, IStakingService.setInstanceLockingPeriod.selector, "setInstanceLockingPeriod");
           _authorize(functions, IStakingService.setInstanceRewardRate.selector, "setInstanceRewardRate");
+          _authorize(functions, IStakingService.setInstanceMaxStakedAmount.selector, "setInstanceMaxStakedAmount");
           _authorize(functions, IStakingService.refillInstanceRewardReserves.selector, "refillInstanceRewardReserves");
           _authorize(functions, IStakingService.withdrawInstanceRewardReserves.selector, "withdrawInstanceRewardReserves");
 
@@ -139,6 +140,7 @@ contract ServiceAuthorizationV3
 
           _authorize(functions, IInstanceService.setStakingLockingPeriod.selector, "setStakingLockingPeriod");
           _authorize(functions, IInstanceService.setStakingRewardRate.selector, "setStakingRewardRate");
+          _authorize(functions, IInstanceService.setStakingMaxStakedAmount.selector, "setStakingMaxStakedAmount");
           _authorize(functions, IInstanceService.refillStakingRewardReserves.selector, "refillStakingRewardReserves");
           _authorize(functions, IInstanceService.withdrawStakingRewardReserves.selector, "withdrawStakingRewardReserves");
      }
