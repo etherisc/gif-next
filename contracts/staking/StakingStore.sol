@@ -91,7 +91,8 @@ contract StakingStore is
                 objectType: PROTOCOL(),
                 chainId: 1,
                 lockingPeriod: TargetManagerLib.getDefaultLockingPeriod(),
-                rewardRate: TargetManagerLib.getDefaultRewardRate()}));
+                rewardRate: TargetManagerLib.getDefaultRewardRate(),
+                maxStakedAmount: AmountLib.max()}));
     }
 
 

@@ -165,6 +165,18 @@ contract InstanceService is
             rewardRate);
     }
 
+    function setStakingMaxStakedAmount(Amount maxStakedAmount)
+        external
+        virtual
+        restricted()
+        onlyInstance()
+    {
+        NftId instanceNftId = getRegistry().getNftIdForAddress(msg.sender);
+        _stakingService.setInstanceMaxStakedAmount(
+            instanceNftId,
+            maxStakedAmount);
+    }    
+
 
     function refillStakingRewardReserves(address rewardProvider, Amount dipAmount)
         external

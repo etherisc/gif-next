@@ -74,6 +74,10 @@ interface IStakingService is IService
     /// Permissioned: Only owner of the specified target.
     function setInstanceRewardRate(NftId instanceNftId, UFixed rewardRate) external;
 
+    /// @dev Set the instance max staked amount to the specified value.
+    /// Permissioned: Only owner of the specified target.
+    function setInstanceMaxStakedAmount(NftId instanceNftId, Amount maxStakingAmount) external;
+
     /// @dev (Re)fills the staking reward reserves for the specified target using the dips provided by the reward provider.
     /// unpermissioned: anybody may fill up staking reward reserves
     function refillInstanceRewardReserves(NftId instanceNftId, address rewardProvider, Amount dipAmount) external returns (Amount newBalance);

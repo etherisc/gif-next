@@ -98,6 +98,17 @@ contract StakingService is
             rewardRate);
     }
 
+    function setInstanceMaxStakedAmount(NftId instanceNftId, Amount maxStakingAmount)
+        external
+        virtual
+        restricted()
+    {
+        _checkNftType(instanceNftId, INSTANCE());
+        _getStakingServiceStorage()._staking.setMaxStakedAmount(
+            instanceNftId, 
+            maxStakingAmount);
+    }
+
 
     function refillInstanceRewardReserves(NftId instanceNftId, address rewardProvider, Amount dipAmount)
         external

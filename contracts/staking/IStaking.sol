@@ -24,6 +24,7 @@ interface IStaking is
     // target parameters
     event LogStakingLockingPeriodSet(NftId targetNftId, Seconds oldLockingPeriod, Seconds lockingPeriod);
     event LogStakingRewardRateSet(NftId targetNftId, UFixed oldRewardRate, UFixed rewardRate);
+    event LogStakingMaxStakedAmountSet(NftId targetNftId, Amount maxStakedAmount);
 
     // modifiers
     error ErrorStakingNotStake(NftId stakeNftId);
@@ -66,6 +67,7 @@ interface IStaking is
         uint256 chainId;
         Seconds lockingPeriod;
         UFixed rewardRate;
+        Amount maxStakedAmount;
     }
 
     function initializeTokenHandler() external;
@@ -97,6 +99,10 @@ interface IStaking is
     /// @dev update the target specific reward rate.
     /// permissioned: only the staking service may call this function
     function setRewardRate(NftId targetNftId, UFixed rewardRate) external;
+
+    /// @dev set the maximum staked amount for the specified target.
+    /// permissioned: only the staking service may call this function
+    function setMaxStakedAmount(NftId targetNftId, Amount maxStakedAmount) external;
 
     /// @dev (re)fills the staking reward reserves for the specified target
     /// unpermissioned: anybody may fill up staking reward reserves
