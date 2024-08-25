@@ -36,6 +36,8 @@ contract StakingTest is GifTest {
     }
 
     function test_stakingSetUp() public {
+        _printAuthz(registryAdmin, "registry setup");
+
         assertEq(staking.getWallet(), address(staking.getTokenHandler()), "unexpected staking wallet");
         assertEq(dip.allowance(staking.getWallet(), address(staking.getTokenHandler())), type(uint256).max, "unexpected allowance for staking token handler");
     }

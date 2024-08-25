@@ -170,6 +170,16 @@ library ContractLib {
     }
 
 
+    function isRegistered(address registry, address caller, ObjectType expectedType) public view returns (bool) {
+        NftId nftId = IRegistry(registry).getNftIdForAddress(caller);
+        if (nftId.eqz()) {
+            return false;
+        }
+
+        return IRegistry(registry).getObjectInfo(nftId).objectType == expectedType;
+    }
+
+
     function isRegistry(address registry) public view returns (bool) {
         if (!isContract(registry)) {
             return false;

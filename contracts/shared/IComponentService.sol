@@ -67,11 +67,12 @@ interface IComponentService is
     /// Reverts if the component's token handler wallet is not the token handler itself.
     function approveTokenHandler(IERC20Metadata token, Amount amount) external;
 
-    /// @dev Sets the components associated wallet address
+    /// @dev Sets the components associated wallet address.
+    /// To set the wallet to the token handler contract, use address(0) as the new wallet adress.
     function setWallet(address newWallet) external;
 
-    /// @dev Locks/Unlocks the given component - call from component
-    function setComponentLocked(address componentAddress, bool locked) external;
+    /// @dev Locks/Unlocks the calling component.
+    function setLocked(bool locked) external;
 
     /// @dev Withdraw fees from the distribution component. Only component owner is allowed to withdraw fees.
     /// @param withdrawAmount the amount to withdraw

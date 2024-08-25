@@ -16,7 +16,7 @@ contract BasicProductAuthorization
 {
 
      constructor(string memory componentName)
-          Authorization(componentName, PRODUCT())
+          Authorization(componentName, PRODUCT(), true, true)
      {}
 
      function _setupServiceTargets()

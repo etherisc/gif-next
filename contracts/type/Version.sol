@@ -8,7 +8,9 @@ using {
     versionPartEq as ==,
     versionPartNe as !=,
     VersionPartLib.eqz,
+    VersionPartLib.gtz,
     VersionPartLib.toInt,
+    VersionPartLib.toString,
     VersionPartLib.isValidRelease
 }
     for VersionPart global;
@@ -18,6 +20,9 @@ function versionPartEq(VersionPart a, VersionPart b) pure returns(bool isSame) {
 function versionPartNe(VersionPart a, VersionPart b) pure returns(bool isSame) { return VersionPart.unwrap(a) != VersionPart.unwrap(b); }
 
 library VersionPartLib {
+
+    error ErrorReleaseTooBig(VersionPart releaseMax, VersionPart release);
+
     function releaseMin() public pure returns (VersionPart) { return toVersionPart(3); }
     function releaseMax() public pure returns (VersionPart) { return toVersionPart(99); }
 
@@ -26,7 +31,41 @@ library VersionPartLib {
         return 3 <= releaseInt && releaseInt <= 99; 
     } 
 
+    function toString(VersionPart a) external pure returns (string memory) {
+        if (a > releaseMax()) {
+            revert ErrorReleaseTooBig(releaseMax(), a);
+        }
+
+        uint256 value = VersionPart.unwrap(a);
+        if (value == 0) {
+            return "0";
+        }
+
+        uint256 temp = value;
+        uint256 digits = 0;
+        while (temp != 0) {
+            digits++;
+            temp /= 10;
+        }
+
+        bytes memory buffer = new bytes(digits);
+        uint index = digits - 1;
+
+        temp = value;
+        while (temp != 0) {
+            buffer[index] = bytes1(uint8(48 + temp % 10));
+            temp /= 10;
+
+            if (index > 0) {
+                index--;
+            }
+        }
+
+        return string(buffer);
+    }
+
     function eqz(VersionPart a) external pure returns(bool) { return VersionPart.unwrap(a) == 0; }
+    function gtz(VersionPart a) external pure returns(bool) { return VersionPart.unwrap(a) > 0; }
     function toInt(VersionPart a) external pure returns(uint256) { return VersionPart.unwrap(a); }
     function toVersionPart(uint256 a) public pure returns(VersionPart) { return VersionPart.wrap(uint8(a)); }
 }

@@ -2,8 +2,11 @@
 pragma solidity ^0.8.20;
 
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
+
+import {IAccess} from "../../contracts/authorization/IAccess.sol";
+import {IAccessAdmin} from "../../contracts/authorization/IAccessAdmin.sol";
+import {IServiceAuthorization} from "../../contracts/authorization/IServiceAuthorization.sol";
 
 import {Amount, AmountLib} from "../../contracts/type/Amount.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
@@ -13,10 +16,8 @@ import {UFixed, UFixedLib} from "../../contracts/type/UFixed.sol";
 import {RoleId} from "../../contracts/type/RoleId.sol";
 import {ACTIVE} from "../../contracts/type/StateId.sol";
 import {Timestamp} from "../../contracts/type/Timestamp.sol";
+import {VersionPartLib} from "../../contracts/type/Version.sol";
 
-import {IAccess} from "../../contracts/authorization/IAccess.sol";
-import {IAccessAdmin} from "../../contracts/authorization/IAccessAdmin.sol";
-import {IServiceAuthorization} from "../../contracts/authorization/IServiceAuthorization.sol";
 
 import {SimpleDistributionAuthorization} from "../../contracts/examples/unpermissioned/SimpleDistributionAuthorization.sol";
 import {BasicOracleAuthorization} from "../../contracts/oracle/BasicOracleAuthorization.sol";
@@ -86,7 +87,7 @@ contract GifTest is GifDeployer {
 
     AccessManagerCloneable public masterAccessManager;
     InstanceAdmin public masterInstanceAdmin;
-    address public instanceAuthorizationV3;
+    InstanceAuthorizationV3 public instanceAuthorizationV3;
     BundleSet public masterBundleSet;
     RiskSet public masterRiskSet;
     InstanceStore public masterInstanceStore;
@@ -303,18 +304,24 @@ contract GifTest is GifDeployer {
         assertEq(releaseRegistry.getState(releaseRegistry.getLatestVersion()).toInt(), ACTIVE().toInt(), "unexpected state for releaseRegistry after activateNextRelease");
     }
 
+// TODO cleanup logs
+event LogDebugMaster(string key, string value);
+
     function _deployMasterInstance() internal 
     {
         // create instance supporting contracts
-        instanceAuthorizationV3 = address(new InstanceAuthorizationV3());
-        masterInstanceAdmin = new InstanceAdmin(instanceAuthorizationV3);
+        masterAccessManager = new AccessManagerCloneable();
+        masterInstanceAdmin = new InstanceAdmin(address(masterAccessManager));
+
         masterInstanceStore = new InstanceStore();
         masterBundleSet = new BundleSet();
         masterRiskSet = new RiskSet();
         masterInstanceReader = new InstanceReader();
 
         // crate instance
+emit LogDebugMaster("1", "a");
         masterInstance = new Instance();
+emit LogDebugMaster("1", "b");
         masterInstance.initialize(
             masterInstanceAdmin,
             masterInstanceStore,
@@ -322,15 +329,25 @@ contract GifTest is GifDeployer {
             masterRiskSet,
             masterInstanceReader,
             registry,
+            VersionPartLib.toVersionPart(3),
             registryOwner);
-
-        // retrieve master access manager from instance
-        masterAccessManager = AccessManagerCloneable(
-            masterInstanceAdmin.authority());
-
+emit LogDebugMaster("1", "c");
         // sets master instance address in instance service
         // instance service is now ready to create cloned instances
         masterInstanceNftId = instanceService.setAndRegisterMasterInstance(address(masterInstance));
+emit LogDebugMaster("1", "d");
+        // setup roles, targets and function grantings
+        instanceAuthorizationV3 = new InstanceAuthorizationV3();
+emit LogDebugMaster("1", "e");
+        masterInstanceAdmin.completeSetup(
+            address(registry),
+            address(masterInstance), 
+            address(instanceAuthorizationV3),
+            VersionPartLib.toVersionPart(3));
+emit LogDebugMaster("1", "f");
+
+        require(address(masterInstanceAdmin.getRegistry()) == address(registry), "unexpected master instance registry");
+        // require(masterInstanceAdmin.getRelease().toInt() == 3, "unexpected master instance release");
 
         // MUST be set after instance is set up and registered
         // TODO consider deleting this -> master instance just provides impl code, it own state must pe mot initialized
@@ -637,6 +654,9 @@ contract GifTest is GifDeployer {
     {
         // solhint-disable no-console
         console.log("==========================================");
+        console.log(aaName, registry.getObjectAddress(aa.getLinkedNftId()));
+        console.log(aaName, "nft id", aa.getLinkedNftId().toInt());
+        console.log(aaName, "owner", aa.getLinkedOwner());
         console.log(aaName, "admin authorization");
         console.log(aaName, "admin contract:", address(aa));
         console.log(aaName, "admin authority:", aa.authority());

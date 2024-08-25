@@ -28,6 +28,7 @@ contract AccessManagerCloneable is
     VersionPart private _release;
     bool private _isLocked;
 
+
     modifier onlyAdminRole() {
         (bool isMember, ) = hasRole(ADMIN_ROLE, msg.sender);
         if(!isMember) {
@@ -36,12 +37,14 @@ contract AccessManagerCloneable is
         _;
     }
 
+
     function initialize(address admin)
-        external
+        public
         initializer()
     {
+        __ERC165_init();
         __AccessManager_init(admin);
-        _initializeERC165();
+
         _registerInterface(type(IAccessManager).interfaceId);
     }
 
@@ -56,22 +59,27 @@ contract AccessManagerCloneable is
         onlyAdminRole
         reinitializer(uint64(release.toInt()))
     {
-        _completeSetup(registry, release, true);
+        _checkAndSetRegistry(registry);
+        _checkAndSetRelease(release);
     }
 
-    /// @dev Completes the setup of the access manager.
-    /// Links the access manager to the registry and sets the release version.
-    function completeSetup(
-        address registry, 
-        VersionPart release,
-        bool verifyRelease
-    )
-        public
-        onlyAdminRole
-        reinitializer(uint64(release.toInt()))
-    {
-        _completeSetup(registry, release, verifyRelease);
-    }
+    // /// @dev Completes the setup of the access manager.
+    // /// Links the access manager to the registry and sets the release version.
+    // function completeSetup(
+    //     address registry, 
+    //     VersionPart release,
+    //     bool verifyRelease
+    // )
+    //     public
+    //     onlyAdminRole
+    //     reinitializer(uint64(release.toInt()))
+    // {
+    //     _checkAndSetRegistry(registry);
+
+    //     if (verifyRelease) {
+    //         _checkAndSetRelease(release);
+    //     }
+    // }
 
     /// @dev Returns true if the caller is authorized to call the target with the given selector and the manager lock is not set to locked.
     /// Feturn values as in OpenZeppelin AccessManager.
@@ -89,12 +97,12 @@ contract AccessManagerCloneable is
             uint32 delay
         ) 
     {
-        (immediate, delay) = super.canCall(caller, target, selector);
-
         // locking of all contracts under control of this access manager
-        if (isLocked()) {
+        if (_isLocked) {
             revert ErrorAccessManagerTargetAdminLocked(target);
         }
+
+        (immediate, delay) = super.canCall(caller, target, selector);
     }
 
 
@@ -126,11 +134,18 @@ contract AccessManagerCloneable is
     }
 
 
-    function _completeSetup(
-        address registry,
-        VersionPart release,
-        bool verifyRelease
-    )
+    function _checkAndSetRelease(VersionPart release)
+        internal
+    {
+        if (!release.isValidRelease()) {
+            revert ErrorAccessManagerInvalidRelease(release);
+        }
+
+        _release = release;
+    }
+
+
+    function _checkAndSetRegistry(address registry)
         internal
     {
         // checks
@@ -138,12 +153,7 @@ contract AccessManagerCloneable is
             revert ErrorAccessManagerRegistryAlreadySet(address(getRegistry()) );
         }
 
-        if (verifyRelease && !release.isValidRelease()) {
-            revert ErrorAccessManagerInvalidRelease(release);
-        }
-
         // effects
         __RegistryLinked_init(registry);
-        _release = release;
     }
 }

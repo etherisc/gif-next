@@ -5,6 +5,10 @@ import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessMana
 
 import {IAccess} from "./IAccess.sol";
 import {IRegistryLinked} from "../shared/IRegistryLinked.sol";
+import {IRelease} from "../registry/IRelease.sol";
+
+import {NftId} from "../type/NftId.sol";
+import {ObjectType} from "../type/ObjectType.sol";
 import {RoleId} from "../type/RoleId.sol";
 import {Selector} from "../type/Selector.sol";
 import {Str} from "../type/String.sol";
@@ -13,59 +17,80 @@ import {VersionPart} from "../type/Version.sol";
 interface IAccessAdmin is 
     IAccessManaged,
     IAccess,
-    IRegistryLinked
+    IRegistryLinked,
+    IRelease
 {
 
     // roles, targets and functions
-    event LogAccessAdminRoleCreated(RoleId roleId, RoleType roleType, RoleId roleAdminId, string name);
-    event LogAccessAdminTargetCreated(address target, string name);
+    event LogAccessAdminRoleCreated(string admin, RoleId roleId, RoleType roleType, RoleId roleAdminId, string name);
+    event LogAccessAdminTargetCreated(string admin, address target, string name);
 
-    event LogAccessAdminRoleGranted(address account, string roleName);
-    event LogAccessAdminRoleRevoked(address account, string roleName);
-    event LogAccessAdminFunctionGranted(address target, string functionName, string roleName);
+    event LogAccessAdminRoleGranted(string admin, address account, string roleName);
+    event LogAccessAdminRoleRevoked(string admin, address account, string roleName);
+    event LogAccessAdminFunctionGranted(string admin, address target, string func);
 
     // only deployer modifier
-    error ErrorNotDeployer();
+    error ErrorAccessAdminNotDeployer();
 
     // only role admin modifier
-    error ErrorNotAdminOfRole(RoleId adminRoleId);
+    error ErrorAccessAdminNotAdminOfRole(RoleId adminRoleId);
 
     // only role owner modifier
-    error ErrorNotRoleOwner(RoleId roleId);
+    error ErrorAccessAdminNotRoleOwner(RoleId roleId);
 
-    // initialize authority
-    error ErrorAdminRoleMissing();
-
-    // create role
-    error ErrorRoleAlreadyCreated(RoleId roleId, string name);
-    error ErrorRoleAdminNotExisting(RoleId adminRoleId);
-    error ErrorRoleNameEmpty(RoleId roleId);
-    error ErrorRoleNameAlreadyExists(RoleId roleId, string name, RoleId existingRoleId);
-
-    // grant/revoke/renounce role
-    error ErrorRoleUnknown(RoleId roleId);
-    error ErrorRoleIsLocked(RoleId roleId);
-    error ErrorRoleIsPaused(RoleId roleId);
-    error ErrorRoleMembersLimitReached(RoleId roleId, uint256 memberCountLimit);
-    error ErrorRoleMemberNotContract(RoleId roleId, address notContract);
-    error ErrorRoleMemberRemovalDisabled(RoleId roleId, address expectedMember);
-
-    // create target
-    error ErrorTargetAlreadyCreated(address target, string name);
-    error ErrorTargetNameEmpty(address target);
-    error ErrorTargetNameAlreadyExists(address target, string name, address existingTarget);
-    error ErrorTargetNotAccessManaged(address target);
-    error ErrorTargetAuthorityMismatch(address expectedAuthority, address actualAuthority);
-
-    // lock target
-    error ErrorTagetNotLockable();
-    error ErrorTargetAlreadyLocked(address target, bool isLocked);
-
-    // authorize target functions
-    error ErrorAuthorizeForAdminRoleInvalid(address target);
+    // initialization
+    error ErrorAccessAdminNotRegistry(address registry);
+    error ErrorAccessAdminAuthorityNotContract(address authority);
+    error ErrorAccessAdminAccessManagerNotAccessManager(address authority);
+    error ErrorAccessAdminAccessManagerEmptyName();
 
     // check target
-    error ErrorTargetUnknown(address target);
+    error ErrorAccessAdminTargetNotCreated(address target);
+    error ErrorAccessAdminTargetNotRegistered(address target);
+    error ErrorAccessAdminTargetTypeMismatch(address target, ObjectType expectedType, ObjectType actualType);
+
+    // check authorization
+    error ErrorAccessAdminAlreadyInitialized(address authorization);
+    error ErrorAccessAdminNotAuthorization(address authorization);
+    error ErrorAccessAdminDomainMismatch(address authorization, ObjectType expectedDomain, ObjectType actualDomain);
+    error ErrorAccessAdminReleaseMismatch(address authorization, VersionPart expectedRelease, VersionPart actualRelease);
+
+    // link to nft
+    error ErrorAccessAdminNotRegistered(address registerable);
+
+    // initialize authority
+    error ErrorAccessAdminAdminRoleMissing();
+
+    // create role
+    error ErrorAccessAdminRoleAlreadyCreated(RoleId roleId, string name);
+    error ErrorAccessAdminRoleAdminNotExisting(RoleId adminRoleId);
+    error ErrorAccessAdminRoleNameEmpty(RoleId roleId);
+    error ErrorAccessAdminRoleNameAlreadyExists(RoleId roleId, string name, RoleId existingRoleId);
+
+    // grant/revoke/renounce role
+    error ErrorAccessAdminRoleUnknown(RoleId roleId);
+    error ErrorAccessAdminRoleIsLocked(RoleId roleId);
+    error ErrorAccessAdminRoleIsPaused(RoleId roleId);
+    error ErrorAccessAdminRoleMembersLimitReached(RoleId roleId, uint256 memberCountLimit);
+    error ErrorAccessAdminRoleMemberNotContract(RoleId roleId, address notContract);
+    error ErrorAccessAdminRoleMemberRemovalDisabled(RoleId roleId, address expectedMember);
+
+    // create target
+    error ErrorAccessAdminTargetAlreadyCreated(address target, string name);
+    error ErrorAccessAdminTargetNameEmpty(address target);
+    error ErrorAccessAdminTargetNameAlreadyExists(address target, string name, address existingTarget);
+    error ErrorAccessAdminTargetNotAccessManaged(address target);
+    error ErrorAccessAdminTargetAuthorityMismatch(address expectedAuthority, address actualAuthority);
+
+    // lock target
+    error ErrorAccessAdminTagetNotLockable();
+    error ErrorAccessAdminTargetAlreadyLocked(address target, bool isLocked);
+
+    // authorize target functions
+    error ErrorAccessAdminAuthorizeForAdminRoleInvalid(address target);
+
+    // check target
+    error ErrorAccessAdminTargetUnknown(address target);
 
     /// @dev Set the disabled status of the speicified role.
     /// Role disabling only prevents the role from being granted to new accounts.
@@ -110,7 +135,10 @@ interface IAccessAdmin is
 
     //--- view functions ----------------------------------------------------//
 
-    function getRelease() external view returns (VersionPart release);
+    function getLinkedNftId() external view returns (NftId linkedNftId);
+    function getLinkedOwner() external view returns (address linkedOwner);
+
+    function isLocked() external view returns (bool locked);
 
     function roles() external view returns (uint256 numberOfRoles);
     function getRoleId(uint256 idx) external view returns (RoleId roleId);

@@ -130,6 +130,9 @@ contract ServiceAuthorizationV3
      {
           IAccess.FunctionInfo[] storage functions;
           functions = _authorizeForService(INSTANCE(), ALL());
+          _authorize(functions, IInstanceService.setInstanceLocked.selector, "setInstanceLocked");
+          _authorize(functions, IInstanceService.setTargetLocked.selector, "setTargetLocked");
+
           _authorize(functions, IInstanceService.createInstance.selector, "createInstance");
           _authorize(functions, IInstanceService.upgradeInstanceReader.selector, "upgradeInstanceReader");
           _authorize(functions, IInstanceService.upgradeMasterInstanceReader.selector, "upgradeMasterInstanceReader");
@@ -181,7 +184,7 @@ contract ServiceAuthorizationV3
           _authorize(functions, IComponentService.registerComponent.selector, "registerComponent");
           _authorize(functions, IComponentService.approveTokenHandler.selector, "approveTokenHandler");
           _authorize(functions, IComponentService.setWallet.selector, "setWallet");
-          _authorize(functions, IComponentService.setComponentLocked.selector, "setComponentLocked");
+          _authorize(functions, IComponentService.setLocked.selector, "setLocked");
           _authorize(functions, IComponentService.withdrawFees.selector, "withdrawFees");
           _authorize(functions, IComponentService.registerProduct.selector, "registerProduct");
           _authorize(functions, IComponentService.setProductFees.selector, "setProductFees");

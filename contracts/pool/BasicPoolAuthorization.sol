@@ -18,7 +18,7 @@ contract BasicPoolAuthorization
 {
 
      constructor(string memory poolName)
-          Authorization(poolName, POOL())
+          Authorization(poolName, POOL(), true, true)
      {}
 
      function _setupServiceTargets()

@@ -157,7 +157,7 @@ contract AccessAdminManageMockTest is AccessAdminBaseTest {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessAdmin.ErrorAuthorizeForAdminRoleInvalid.selector,
+                IAccessAdmin.ErrorAccessAdminAuthorizeForAdminRoleInvalid.selector,
                 target));
 
         vm.startPrank(accessAdminDeployer);

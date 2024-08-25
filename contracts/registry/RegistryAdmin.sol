@@ -1,18 +1,20 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import {AccessAdmin} from "../authorization/AccessAdmin.sol";
-import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
-import {IAccess} from "../authorization/IAccess.sol";
+import {IAuthorization} from "../authorization/IAuthorization.sol";
 import {IComponent} from "../shared/IComponent.sol";
 import {IRegistry} from "./IRegistry.sol";
 import {IService} from "../shared/IService.sol";
-import {IServiceAuthorization} from "../authorization/IServiceAuthorization.sol";
 import {IStaking} from "../staking/IStaking.sol";
-import {ObjectType, ObjectTypeLib, ALL, COMPONENT, REGISTRY, STAKING, POOL, RELEASE} from "../type/ObjectType.sol";
+
+import {AccessAdmin} from "../authorization/AccessAdmin.sol";
+import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
+import {ContractLib} from "../shared/ContractLib.sol";
+import {ObjectType, REGISTRY, STAKING, POOL, RELEASE} from "../type/ObjectType.sol";
 import {ReleaseRegistry} from "./ReleaseRegistry.sol";
 import {RoleId, RoleIdLib, ADMIN_ROLE, GIF_MANAGER_ROLE, GIF_ADMIN_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {Staking} from "../staking/Staking.sol";
+import {Str, StrLib} from "../type/String.sol";
 import {StakingStore} from "../staking/StakingStore.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {TokenRegistry} from "./TokenRegistry.sol";
@@ -60,7 +62,8 @@ contract RegistryAdmin is
     string public constant TOKEN_REGISTRY_TARGET_NAME = "TokenRegistry";
     string public constant TOKEN_HANDLER_TARGET_NAME = "TokenHandler";
 
-    uint8 public constant MAX_NUM_RELEASES = 99;
+    // completeSetup
+    error ErrorRegistryAdminNotRegistry(address registry);
 
     address internal _registry;
     address private _releaseRegistry;
@@ -68,12 +71,27 @@ contract RegistryAdmin is
     address private _staking;
     address private _stakingStore;
 
+    // function initialize()
+    //     external
+    // {
+    //     AccessManagerCloneable accessManager = new AccessManagerCloneable();
+
+    //     initialize(
+    //         address(accessManager),
+    //         "RegistryAdmin");
+    // }
+
     constructor() {
-        initialize(new AccessManagerCloneable());
+        initialize(
+            address(new AccessManagerCloneable()),
+            "RegistryAdmin");
     }
 
+event LogDebug2(string message, uint256 value);
+
     function completeSetup(
-        IRegistry registry,
+        address registry,
+        address authorization,
         address gifAdmin, 
         address gifManager
     )
@@ -82,37 +100,144 @@ contract RegistryAdmin is
         reinitializer(type(uint8).max)
         onlyDeployer()
     {
-        AccessManagerCloneable accessManager = AccessManagerCloneable(authority());
-        accessManager.completeSetup(
-            address(registry), 
-            VersionPartLib.toVersionPart(type(uint8).max),
-            false); 
+        // TODO cleanup logs
+        emit LogDebug2("a", 0);
 
-        _registry = address(registry);
-        _releaseRegistry = registry.getReleaseRegistryAddress();
-        _tokenRegistry = registry.getTokenRegistryAddress();
-        _staking = registry.getStakingAddress();
+        // checks
+        _checkRegistry(registry);
+
+        VersionPart release = VersionPartLib.toVersionPart(3);
+        AccessManagerCloneable(
+            authority()).completeSetup(
+                registry, 
+                release); 
+
+        _checkAuthorization(authorization, REGISTRY(), release, true);
+
+        _registry = registry;
+        _authorization = IAuthorization(authorization);
+
+        IRegistry registryContract = IRegistry(registry);
+        _releaseRegistry = registryContract.getReleaseRegistryAddress();
+        _tokenRegistry = registryContract.getTokenRegistryAddress();
+        _staking = registryContract.getStakingAddress();
         _stakingStore = address(
             IStaking(_staking).getStakingStore());
 
-        _createTargets();
+        // link nft ownability to registry
+        _linkToNftOwnable(_registry);
 
-        _setupGifAdminRole(gifAdmin);
-        _setupGifManagerRole(gifManager);
+        _setupRegistry(_registry);
+emit LogDebug2("b", 0);
 
-        _setupRegistryRoles();
-        _setupStakingRoles();
+        // setup authorization for registry and supporting contracts
+        _createRoles(_authorization);
+emit LogDebug2("c", 0);
+        _grantRoleToAccount(GIF_ADMIN_ROLE(), gifAdmin);
+emit LogDebug2("d", 0);
+        _grantRoleToAccount(GIF_MANAGER_ROLE(), gifManager);
+emit LogDebug2("e", 0);
+
+        _createTargets(_authorization);
+emit LogDebug2("f", 0);
+        _createTargetAuthorizations(_authorization);
+emit LogDebug2("g", 0);
     }
 
-    /*function transferAdmin(address to)
-        external
-        restricted // only with GIF_ADMIN_ROLE or nft owner
-    {
-        _accessManager.revoke(GIF_ADMIN_ROLE, );
-        _accesssManager.grant(GIF_ADMIN_ROLE, to, 0);
-    }*/
 
-    function grantServiceRoleForAllVersions(IService service, ObjectType domain)
+    // create registry role and target
+    function _setupRegistry(address registry) internal {
+
+        // create registry role
+        RoleId roleId = _authorization.getTargetRole(
+            _authorization.getMainTarget());
+
+        _createRole(
+            roleId,
+            _authorization.getRoleInfo(roleId));
+
+        // create registry target
+        _createTarget(
+            registry, 
+            _authorization.getMainTargetName(), 
+            true, // checkAuthority
+            false); // custom
+
+        // assign registry role to registry
+        _grantRoleToAccount(
+            roleId, 
+            registry);
+    }
+
+
+    function _createRoles(IAuthorization authorization)
+        internal
+    {
+        RoleId[] memory roles = authorization.getRoles();
+        RoleId mainTargetRoleId = authorization.getTargetRole(
+            authorization.getMainTarget());
+
+        RoleId roleId;
+        RoleInfo memory roleInfo;
+
+        for(uint256 i = 0; i < roles.length; i++) {
+
+            roleId = roles[i];
+
+            // skip main target role, create role if not exists
+            if (roleId != mainTargetRoleId && !roleExists(roleId)) {
+                _createRole(
+                    roleId,
+                    authorization.getRoleInfo(roleId));
+            }
+        }
+    }
+
+
+    function _createTargets(IAuthorization authorization)
+        internal
+    {
+        // registry
+        _createTargetWithRole(address(this), REGISTRY_ADMIN_TARGET_NAME, authorization.getTargetRole(StrLib.toStr(REGISTRY_ADMIN_TARGET_NAME)));
+        _createTargetWithRole(_releaseRegistry, RELEASE_REGISTRY_TARGET_NAME, authorization.getTargetRole(StrLib.toStr(RELEASE_REGISTRY_TARGET_NAME)));
+        _createTargetWithRole(_tokenRegistry, TOKEN_REGISTRY_TARGET_NAME, authorization.getTargetRole(StrLib.toStr(TOKEN_REGISTRY_TARGET_NAME)));
+
+        // staking
+        _createTargetWithRole(_staking, STAKING_TARGET_NAME, authorization.getTargetRole(StrLib.toStr(STAKING_TARGET_NAME)));
+        _createTarget(_stakingStore, STAKING_STORE_TARGET_NAME, true, false);
+        _createTarget(address(IComponent(_staking).getTokenHandler()), STAKING_TH_TARGET_NAME, true, false);
+    }
+
+
+    function _createTargetAuthorizations(IAuthorization authorization)
+        internal
+    {
+        Str[] memory targets = authorization.getTargets();
+        Str target;
+
+        for(uint256 i = 0; i < targets.length; i++) {
+            target = targets[i];
+            RoleId[] memory authorizedRoles = authorization.getAuthorizedRoles(target);
+            RoleId authorizedRole;
+
+            for(uint256 j = 0; j < authorizedRoles.length; j++) {
+                authorizedRole = authorizedRoles[j];
+
+                _authorizeTargetFunctions(
+                    getTargetForName(target),
+                    authorizedRole,
+                    authorization.getAuthorizedFunctions(
+                        target, 
+                        authorizedRole));
+            }
+        }
+    }
+
+
+    function grantServiceRoleForAllVersions(
+        IService service, 
+        ObjectType domain
+    )
         external
         restricted()
     {
@@ -133,7 +258,7 @@ contract RegistryAdmin is
 
     //--- private initialization functions -------------------------------------------//
 
-    function _createTargets()
+    function _createTargets(address authorization)
         private 
         onlyInitializing()
     {
@@ -245,7 +370,7 @@ contract RegistryAdmin is
             toRole({
                 adminRoleId: ADMIN_ROLE(),
                 roleType: RoleType.Contract,
-                maxMemberCount: MAX_NUM_RELEASES,
+                maxMemberCount: _getMaxRelases(),
                 name: REGISTRY_SERVICE_ROLE_NAME}));
 
         // grant permissions to the registry service role for registry contract
@@ -304,7 +429,7 @@ contract RegistryAdmin is
             toRole({
                 adminRoleId: ADMIN_ROLE(),
                 roleType: RoleType.Contract,
-                maxMemberCount: MAX_NUM_RELEASES,
+                maxMemberCount: _getMaxRelases(),
                 name: STAKING_SERVICE_ROLE_NAME}));
 
         // grant permissions to the staking service role for staking contract
@@ -337,7 +462,7 @@ contract RegistryAdmin is
             toRole({
                 adminRoleId: ADMIN_ROLE(),
                 roleType: RoleType.Contract,
-                maxMemberCount: MAX_NUM_RELEASES,
+                maxMemberCount: _getMaxRelases(),
                 name: POOL_SERVICE_ROLE_NAME}));
 
         // grant permissions to the pool service role for staking contract
@@ -350,5 +475,9 @@ contract RegistryAdmin is
         functions = new FunctionInfo[](1);
         functions[0] = toFunction(Staking.approveTokenHandler.selector, "approveTokenHandler");
         _authorizeTargetFunctions(_staking, PUBLIC_ROLE(), functions);
+    }
+
+    function _getMaxRelases() internal pure returns (uint32) {
+        return uint32(VersionPartLib.releaseMax().toInt());
     }
 }

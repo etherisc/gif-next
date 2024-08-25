@@ -99,7 +99,8 @@ contract ReleaseRegistry is
         _registry = registry;
         _admin = RegistryAdmin(_registry.getRegistryAdminAddress());
 
-        _masterReleaseAdmin = new ReleaseAdmin();
+        _masterReleaseAdmin = new ReleaseAdmin(
+            address(new AccessManagerCloneable()));
 
         _next = VersionPartLib.toVersionPart(INITIAL_GIF_VERSION - 1);
     }
@@ -373,19 +374,24 @@ contract ReleaseRegistry is
         private
         returns (ReleaseAdmin clonedAdmin)
     {
+        // clone release specific access manager
         AccessManagerCloneable clonedAccessManager = AccessManagerCloneable(
             Clones.clone(
-                _masterReleaseAdmin.authority()
-            )
-        );
+                _masterReleaseAdmin.authority()));
 
+        // clone and setup release specific release admin
         clonedAdmin = ReleaseAdmin(
-            Clones.clone(
-                address(_masterReleaseAdmin)
-            )
-        );
+            Clones.clone(address(_masterReleaseAdmin)));
 
-        clonedAdmin.initialize(clonedAccessManager);
+        string memory releaseAdminName = string(
+            abi.encodePacked(
+                "ReleaseAdmin_v", 
+                release.toString()));
+
+        clonedAdmin.initialize(
+            address(clonedAccessManager),
+            releaseAdminName);
+
         clonedAdmin.completeSetup(
             address(_registry), 
             address(this), // release registry (this contract)

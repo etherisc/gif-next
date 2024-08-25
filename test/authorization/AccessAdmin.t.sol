@@ -31,7 +31,9 @@ contract AccessAdminForTesting is AccessAdmin {
 
     // constructor as in registry admin
     constructor() {
-        initialize(new AccessManagerCloneable());
+        initialize(
+            address(new AccessManagerCloneable()),
+            "TestAdmin");
     }
 
     function completeSetup(
@@ -210,7 +212,7 @@ contract AccessAdminForTesting is AccessAdmin {
         virtual
         restricted()
     {
-        _setTargetClosed(target, locked);
+        _setTargetLocked(target, locked);
 
         // implizit logging: rely on OpenZeppelin log TargetClosed
     }
@@ -220,6 +222,7 @@ contract AccessAdminForTesting is AccessAdmin {
     }
 
 }
+
 contract AccessAdminBaseTest is Test {
 
     address public accessAdminDeployer = makeAddr("accessAdminDeployer");
@@ -339,7 +342,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         address accessAdminTarget = address(accessAdmin);
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessAdmin.ErrorTargetAlreadyCreated.selector, 
+                IAccessAdmin.ErrorAccessAdminTargetAlreadyCreated.selector, 
                 accessAdminTarget,
                 targetName));
 
@@ -351,7 +354,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         address invalidTarget = makeAddr("invalidContract");
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessAdmin.ErrorTargetNotAccessManaged.selector, 
+                IAccessAdmin.ErrorAccessAdminTargetNotAccessManaged.selector, 
                 invalidTarget));
 
         vm.startPrank(accessAdminDeployer);
@@ -361,7 +364,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         // attempt to create target with empty name
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessAdmin.ErrorTargetNameEmpty.selector, 
+                IAccessAdmin.ErrorAccessAdminTargetNameEmpty.selector, 
                 address(this)));
 
         vm.startPrank(accessAdminDeployer);
@@ -371,7 +374,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         // attempt to create target with existing name
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessAdmin.ErrorTargetNameAlreadyExists.selector, 
+                IAccessAdmin.ErrorAccessAdminTargetNameAlreadyExists.selector, 
                 address(this),
                 targetName,
                 accessAdminTarget));
@@ -483,7 +486,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         // WHEN + THEN - attempt to add 2nd role member
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessAdmin.ErrorRoleMembersLimitReached.selector, 
+                IAccessAdmin.ErrorAccessAdminRoleMembersLimitReached.selector, 
                 newRoleId,
                 maxOneRoleMember));
 
@@ -493,7 +496,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         // WHEN + THEN - attempt to revoke role
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessAdmin.ErrorRoleMemberRemovalDisabled.selector, 
+                IAccessAdmin.ErrorAccessAdminRoleMemberRemovalDisabled.selector, 
                 newRoleId,
                 thisContract));
 
@@ -503,7 +506,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         // WHEN + THEN - attempt to renounce role
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessAdmin.ErrorRoleMemberRemovalDisabled.selector, 
+                IAccessAdmin.ErrorAccessAdminRoleMemberRemovalDisabled.selector, 
                 newRoleId,
                 thisContract));
 
@@ -523,7 +526,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         // attempt to recreate admin role
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessAdmin.ErrorRoleAlreadyCreated.selector, 
+                IAccessAdmin.ErrorAccessAdminRoleAlreadyCreated.selector, 
                 adminRole,
                 "AdminRole"));
 
@@ -536,7 +539,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         // attempt to recreate public role
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessAdmin.ErrorRoleAlreadyCreated.selector, 
+                IAccessAdmin.ErrorAccessAdminRoleAlreadyCreated.selector, 
                 publicRole,
                 "PublicRole"));
 
@@ -549,7 +552,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         // attempt to recreate manager role
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessAdmin.ErrorRoleAlreadyCreated.selector, 
+                IAccessAdmin.ErrorAccessAdminRoleAlreadyCreated.selector, 
                 managerRole,
                 "ManagerRole"));
 
@@ -579,7 +582,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         // WHEN + THEN - use existing role id
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessAdmin.ErrorRoleAlreadyCreated.selector, 
+                IAccessAdmin.ErrorAccessAdminRoleAlreadyCreated.selector, 
                 newRoleId,
                 newRoleName));
 
@@ -594,7 +597,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         RoleId otherRoleId = RoleIdLib.toRoleId(123);
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessAdmin.ErrorRoleNameAlreadyExists.selector, 
+                IAccessAdmin.ErrorAccessAdminRoleNameAlreadyExists.selector, 
                 otherRoleId,
                 newRoleName,
                 newRoleId));
@@ -618,7 +621,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         // WHEN + THEN
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessAdmin.ErrorRoleNameEmpty.selector, 
+                IAccessAdmin.ErrorAccessAdminRoleNameEmpty.selector, 
                 newRoleId));
 
         vm.startPrank(accessAdminDeployer);
@@ -631,7 +634,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         // WHEN + THEN
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessAdmin.ErrorRoleAdminNotExisting.selector, 
+                IAccessAdmin.ErrorAccessAdminRoleAdminNotExisting.selector, 
                 missingAdminRoleId));
 
         vm.startPrank(accessAdminDeployer);
@@ -792,7 +795,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         // WHEN + THEN
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessAdmin.ErrorNotAdminOfRole.selector, 
+                IAccessAdmin.ErrorAccessAdminNotAdminOfRole.selector, 
                 newAdminRoleId));
 
         vm.startPrank(accessAdminDeployer);
@@ -843,7 +846,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessAdmin.ErrorNotAdminOfRole.selector, 
+                IAccessAdmin.ErrorAccessAdminNotAdminOfRole.selector, 
                 newAdminRoleId));
 
         vm.startPrank(roleAdmin);
@@ -963,7 +966,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         // remove role account1 no longer has
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessAdmin.ErrorNotRoleOwner.selector,
+                IAccessAdmin.ErrorAccessAdminNotRoleOwner.selector,
                 newRoleId));
 
         accessAdmin.renounceRole(newRoleId);
@@ -983,7 +986,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         // remove role account2 no longer has
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessAdmin.ErrorNotRoleOwner.selector,
+                IAccessAdmin.ErrorAccessAdminNotRoleOwner.selector,
                 newRoleId));
 
         accessAdmin.renounceRole(newRoleId);
@@ -1029,7 +1032,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         // granting non existent role -> role unknown
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessAdmin.ErrorRoleUnknown.selector,
+                IAccessAdmin.ErrorAccessAdminRoleUnknown.selector,
                 missingRoleId));
 
         accessAdmin.grantRole(outsider, missingRoleId);
@@ -1037,7 +1040,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         // revoking non existent role -> role unknown
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessAdmin.ErrorRoleUnknown.selector,
+                IAccessAdmin.ErrorAccessAdminRoleUnknown.selector,
                 missingRoleId));
 
         accessAdmin.revokeRole(outsider, missingRoleId);
@@ -1049,7 +1052,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         // renouncing non existent role -> role unknown
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessAdmin.ErrorNotRoleOwner.selector,
+                IAccessAdmin.ErrorAccessAdminNotRoleOwner.selector,
                 missingRoleId));
 
         accessAdmin.renounceRole(missingRoleId);
@@ -1070,7 +1073,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         console.log("attempt to grant admin role");
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessAdmin.ErrorRoleIsLocked.selector,
+                IAccessAdmin.ErrorAccessAdminRoleIsLocked.selector,
                 adminRole));
 
         accessAdmin.grantRole(outsider, adminRole);
@@ -1079,7 +1082,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         console.log("attempt to revoke admin role");
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessAdmin.ErrorRoleIsLocked.selector,
+                IAccessAdmin.ErrorAccessAdminRoleIsLocked.selector,
                 adminRole));
 
         accessAdmin.revokeRole(outsider, adminRole);
@@ -1088,7 +1091,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         console.log("attempt to renounce admin role");
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessAdmin.ErrorRoleIsLocked.selector,
+                IAccessAdmin.ErrorAccessAdminRoleIsLocked.selector,
                 adminRole));
 
         accessAdmin.renounceRole(adminRole);

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {VersionPart} from "./Version.sol";
+
 type ObjectType is uint8;
 
 // type bindings
@@ -161,8 +163,6 @@ function neObjectType(ObjectType a, ObjectType b) pure returns (bool isSame) {
 // library functions that operate on user defined type
 library ObjectTypeLib {
 
-    error ErrorVersionTooBig(uint256 version);
-
     function zero() public pure returns (ObjectType) {
         return ObjectType.wrap(0);
     }
@@ -242,19 +242,15 @@ library ObjectTypeLib {
     function toVersionedName(
         string memory name, 
         string memory suffix, 
-        uint256 version
+        VersionPart release
     )
         external
         pure
         returns (string memory versionedName)
     {
-        if (version > maxNumReleases()) {
-            revert ErrorVersionTooBig(version);
-        }
-
         string memory versionName = "_v0";
 
-        if (version >= 10) {
+        if (release.toInt() >= 10) {
             versionName = "_v";
         }
 
@@ -263,12 +259,7 @@ library ObjectTypeLib {
                 name,
                 suffix,
                 versionName,
-                toString(version)));
-    }
-
-    /// @dev returns the max number of releases (major versions) this gif setup can handle.
-    function maxNumReleases() public pure returns (uint8) {
-        return 99;
+                release.toString()));
     }
 
     /// @dev returns the provied int as a string

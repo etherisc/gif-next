@@ -15,7 +15,7 @@ contract BasicOracleAuthorization
 {
 
      constructor(string memory componentName)
-          Authorization(componentName, ORACLE())
+          Authorization(componentName, ORACLE(), true, false)
      {}
 
      function _setupTargetAuthorizations()

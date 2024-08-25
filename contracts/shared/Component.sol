@@ -186,7 +186,8 @@ abstract contract Component is
     { }
 
 
-    /// @dev depending on the source of the component information this function needs to be overwritten. 
+    /// @dev Sets the components wallet to the specified address.
+    /// Depending on the source of the component information this function needs to be overwritten. 
     /// eg for instance linked components that externally store this information with the instance store contract
     function _setWallet(
         address newWallet
@@ -201,7 +202,7 @@ abstract contract Component is
         internal
         virtual
     {
-        _getComponentStorage()._componentService.setComponentLocked(address(this), locked);
+        _getComponentStorage()._componentService.setLocked(locked);
     }
 
 

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+
 import {Amount} from "../type/Amount.sol";
 import {IComponent} from "../shared/IComponent.sol";
 import {IVersionable} from "../upgradeability/IVersionable.sol";
@@ -68,6 +70,8 @@ interface IStaking is
     }
 
     function initializeTokenHandler() external;
+
+    function approveTokenHandler(IERC20Metadata token, Amount amount) external;
 
     // staking rate management 
 

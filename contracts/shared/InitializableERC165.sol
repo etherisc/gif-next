@@ -11,13 +11,21 @@ contract InitializableERC165 is
     mapping(bytes4 => bool) private _isSupported;
 
     // @dev initializes with support for ERC165
-    function _initializeERC165() internal onlyInitializing() {
+    function __ERC165_init() internal onlyInitializing() {
+        _initializeERC165();
+    }
+
+    function _initializeERC165() internal {
         _isSupported[type(IERC165).interfaceId] = true;
     }
 
     // @dev register support for provided interfaceId
     // includes initialization for ERC165_ID if not yet done
     function _registerInterface(bytes4 interfaceId) internal onlyInitializing() {
+        _registerInterfaceNotInitializing(interfaceId);
+    }
+
+    function _registerInterfaceNotInitializing(bytes4 interfaceId) internal{
         _isSupported[interfaceId] = true;
     }
 

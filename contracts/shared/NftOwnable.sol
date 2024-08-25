@@ -57,8 +57,8 @@ contract NftOwnable is
         virtual
         onlyInitializing()
     {
+        __ERC165_init();
         __RegistryLinked_init(registry);
-        _initializeERC165();
 
         if(initialOwner == address(0)) {
             revert ErrorNftOwnableInitialOwnerZero();

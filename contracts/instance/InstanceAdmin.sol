@@ -10,7 +10,7 @@ import {IInstance} from "./IInstance.sol";
 import {AccessAdmin} from "../authorization/AccessAdmin.sol";
 import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
 import {NftId} from "../type/NftId.sol";
-import {ObjectType} from "../type/ObjectType.sol";
+import {ObjectType, INSTANCE} from "../type/ObjectType.sol";
 import {RoleId, RoleIdLib} from "../type/RoleId.sol";
 import {Str, StrLib} from "../type/String.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
@@ -21,19 +21,19 @@ contract InstanceAdmin is
     AccessAdmin
 {
     string public constant INSTANCE_TARGET_NAME = "Instance";
-    string public constant INSTANCE_STORE_TARGET_NAME = "InstanceStore";
     string public constant INSTANCE_ADMIN_TARGET_NAME = "InstanceAdmin";
+    string public constant INSTANCE_STORE_TARGET_NAME = "InstanceStore";
     string public constant BUNDLE_SET_TARGET_NAME = "BundleSet";
-    string public constant RISK_SET_TAGET_NAME = "RiskSet";
+    string public constant RISK_SET_TARGET_NAME = "RiskSet";
 
     uint64 public constant CUSTOM_ROLE_ID_MIN = 10000; // MUST be even
 
-    error ErrorInstanceAdminCallerNotInstanceOwner(address caller);
-    error ErrorInstanceAdminCallerNotInstance(address caller);
-    error ErrorInstanceAdminInstanceAlreadyLocked();
-    error ErrorInstanceAdminNotRegistered(address target);
+    error ErrorInstanceAdminNotInstanceService(address caller);
 
-    error ErrorInstanceAdminAlreadyAuthorized(address target);
+    error ErrorInstanceAdminNotRegistered(address instance);
+    error ErrorInstanceAdminNotInstance(address instance);
+    error ErrorInstanceAdminAlreadyAuthorized(address instance);
+
     error ErrorInstanceAdminNotComponentRole(RoleId roleId);
     error ErrorInstanceAdminRoleAlreadyExists(RoleId roleId);
     error ErrorInstanceAdminRoleTypeNotContract(RoleId roleId, IAccess.RoleType roleType);
@@ -43,136 +43,171 @@ contract InstanceAdmin is
 
     IInstance internal _instance;
     IRegistry internal _registry;
+    VersionPart internal _release;
     uint64 internal _customIdNext;
 
     mapping(address target => RoleId roleId) internal _targetRoleId;
     uint64 internal _components;
 
-    IAuthorization internal _instanceAuthorization;
-
-
-    modifier onlyInstanceOwner() {        
-        if(msg.sender != _registry.ownerOf(address(_instance))) {
-            revert ErrorInstanceAdminCallerNotInstanceOwner(msg.sender);
+    modifier onlyInstanceService() {
+        if (msg.sender != _registry.getServiceAddress(INSTANCE(), getRelease())) {
+            revert ErrorInstanceAdminNotInstanceService(msg.sender);
         }
         _;
     }
 
-    modifier onlyInstance() {
-        if(msg.sender != address(_instance)) {
-            revert ErrorInstanceAdminCallerNotInstance(msg.sender);
-        }
-        _;
-    }
+// TODO cleanup logs
+event LogDebug3(string key, string value);
 
     /// @dev Only used for master instance admin.
-    /// Contracts created via constructor come with disabled initializers.
-    constructor(
-        address instanceAuthorization
-    ) {
-        initialize(new AccessManagerCloneable());
-
-        _instanceAuthorization = IAuthorization(instanceAuthorization);
-
-        _disableInitializers();
+    constructor(address accessManager) {
+emit LogDebug3("2a", "");
+        initialize(
+            accessManager,
+            "MasterInstanceAdmin");
+emit LogDebug3("2b", "");
     }
 
+    // TODO cleanup
+    // function initialize(
+    //     AccessManagerCloneable clonedAccessManager,
+    //     IRegistry registry,
+    //     VersionPart release
+    // )
+    //     public
+    //     initializer()
+    // {
+    //     // checks
 
-    function initialize(
-        AccessManagerCloneable clonedAccessManager,
-        IRegistry registry,
-        VersionPart release
-    )
-        external
-        initializer()
-    {
-        __AccessAdmin_init(clonedAccessManager);
+    //     // effects
+    //     __AccessAdmin_init(
+    //         address(clonedAccessManager),
+    //         "InstanceAdmin");
 
-        clonedAccessManager.completeSetup(
-            address(registry), 
-            release); 
+    //     clonedAccessManager.completeSetup(
+    //         address(registry), 
+    //         release); 
 
-        _registry = registry;
-    }
+    //     _registry = registry;
+    // }
+
 
     /// @dev Completes the initialization of this instance admin using the provided instance, registry and version.
     /// Important: Initialization of instance admin is only complete after calling this function. 
     /// Important: The instance MUST be registered and all instance supporting contracts must be wired to this instance.
     function completeSetup(
+        address registry,
         address instance,
-        address authorization
+        address authorization,
+        VersionPart release
     )
         external
-        reinitializer(uint64(getRelease().toInt()))
+        reinitializer(uint64(release.toInt()))
         onlyDeployer()
     {
+        // checks
+        _checkRegistry(registry);
+        _checkIsRegistered(registry, instance, INSTANCE());
+
+        AccessManagerCloneable(
+            authority()).completeSetup(
+                registry, 
+                release); 
+
+        _checkAuthorization(authorization, INSTANCE(), release, true);
+
+        // effects
+        _registry = IRegistry(registry);
+        _release = release;
+
+        _instance = IInstance(instance);
+        _authorization = IAuthorization(authorization);
         _components = 0;
         _customIdNext = CUSTOM_ROLE_ID_MIN;
-        _instance = IInstance(instance);
-        _instanceAuthorization = IAuthorization(authorization);
 
-        _checkTargetIsReadyForAuthorization(instance);
-
-        // check matching releases
-        if (_instanceAuthorization.getRelease() != getRelease()) {
-            revert ErrorInstanceAdminReleaseMismatch();
-        }
+        // link nft ownability to instance
+        _linkToNftOwnable(instance);
+emit LogDebug3("3d", "");
 
         // create instance role and target
         _setupInstance(instance);
+emit LogDebug3("3e", "");
 
         // add instance authorization
-        _createRoles(_instanceAuthorization);
-
+        _createRoles(_authorization);
+emit LogDebug3("3f", "");
+        // _createTargets(_authorization);
+emit LogDebug3("3g", "");
         _setupInstanceHelperTargetsWithRoles();
-        _createTargetAuthorizations(_instanceAuthorization);
+emit LogDebug3("3h", "");
+        _createTargetAuthorizations(_authorization);
+emit LogDebug3("3i", "");
+    }
+
+
+    function _createTargets(IAuthorization authorization)
+        internal
+    {
+        _createTargetWithRole(address(this), INSTANCE_ADMIN_TARGET_NAME, authorization.getTargetRole(StrLib.toStr(INSTANCE_ADMIN_TARGET_NAME)));
+        _createTargetWithRole(address(_instance.getInstanceStore()), INSTANCE_STORE_TARGET_NAME, authorization.getTargetRole(StrLib.toStr(INSTANCE_STORE_TARGET_NAME)));
+        _createTargetWithRole(address(_instance.getBundleSet()), BUNDLE_SET_TARGET_NAME, authorization.getTargetRole(StrLib.toStr(BUNDLE_SET_TARGET_NAME)));
+        _createTargetWithRole(address(_instance.getRiskSet()), RISK_SET_TARGET_NAME, authorization.getTargetRole(StrLib.toStr(RISK_SET_TARGET_NAME)));
     }
 
 
     /// @dev Initializes the authorization for the specified component.
     /// Important: The component MUST be registered.
     function initializeComponentAuthorization(
-        IInstanceLinkedComponent component
+        address componentAddress,
+        ObjectType expectedType
     )
         external
         restricted()
     {
-        // TODO check componentInfo exists
-        // TODO deploy token handler here
         // checks
-        _checkTargetIsReadyForAuthorization(address(component));
+        _checkIsRegistered(address(getRegistry()), componentAddress, expectedType);
 
+        IInstanceLinkedComponent component = IInstanceLinkedComponent(componentAddress);
+        IAuthorization authorization = component.getAuthorization();
+        _checkAuthorization(address(authorization), expectedType, getRelease(), false);
+
+        // effects
         // setup target and role for component (including token handler)
         _setupComponentAndTokenHandler(component);
 
-        // create other roles
-        IAuthorization authorization = component.getAuthorization();
+        // create other roles and function authorizations
         _createRoles(authorization);
-
-
-        // // FIXME: make this a bit nicer and work with IAuthorization. Use a specific role, not public - access to TokenHandler must be restricted
-        // _authorizeTargetFunctions(
-        //     address(component.getTokenHandler()),
-        //     getPublicRole(),
-        //     functions);
-        
         _createTargetAuthorizations(authorization);
     }
 
+    function getRelease()
+        public
+        view
+        override
+        returns (VersionPart release)
+    {
+        return _release;
+    }
+
+    event LogDebug(string key, string value);
+
     // create instance role and target
     function _setupInstance(address instance) internal {
+
+        emit LogDebug("main target", _authorization.getMainTarget().toString());
+
         // create instance role
-        RoleId instanceRoleId = _instanceAuthorization.getTargetRole(
-            _instanceAuthorization.getMainTarget());
+        RoleId instanceRoleId = _authorization.getTargetRole(
+            _authorization.getMainTarget());
 
         _createRole(
             instanceRoleId,
-            _instanceAuthorization.getRoleInfo(instanceRoleId));
+            _authorization.getRoleInfo(instanceRoleId));
 
         // create instance target
         _createTarget(
             instance, 
-            _instanceAuthorization.getMainTargetName(), 
+            _authorization.getMainTargetName(), 
             true, // checkAuthority
             false); // custom
 
@@ -204,21 +239,28 @@ contract InstanceAdmin is
 
     function setInstanceLocked(bool locked)
         external
-        onlyInstanceOwner()
+        // not restricted(): need to operate on locked instances to unlock instance
+        onlyInstanceService()
     {
         AccessManagerCloneable accessManager = AccessManagerCloneable(authority());
-
-        if(accessManager.isLocked() == locked) {
-            revert ErrorInstanceAdminInstanceAlreadyLocked();
-        }
         accessManager.setLocked(locked);
     }
 
+
     function setTargetLocked(address target, bool locked) 
         external 
-        onlyInstance()
+        // not restricted(): might need to operate on targets while instance is locked
+        onlyInstanceService()
     {
-        _setTargetClosed(target, locked);
+        _setTargetLocked(target, locked);
+    }
+
+
+    function setComponentLocked(address target, bool locked) 
+        external 
+        restricted()
+    {
+        _setTargetLocked(target, locked);
     }
 
 
@@ -229,7 +271,7 @@ contract InstanceAdmin is
         view
         returns (IAuthorization instanceAuthorizaion)
     {
-        return _instanceAuthorization;
+        return _authorization;
     }
 
     // ------------------- Internal functions ------------------- //
@@ -323,20 +365,6 @@ contract InstanceAdmin is
     }
 
 
-    function _checkTargetIsReadyForAuthorization(address target)
-        internal
-        view
-    {
-        if (!_registry.isRegistered(target)) {
-            revert ErrorInstanceAdminNotRegistered(target);
-        }
-
-        if (targetExists(target)) {
-            revert ErrorInstanceAdminAlreadyAuthorized(target);
-        }
-    }
-
-
     function _createRoles(IAuthorization authorization)
         internal
     {
@@ -403,7 +431,7 @@ contract InstanceAdmin is
     {
         // check that target name is defined in authorization specification
         Str name = StrLib.toStr(targetName);
-        if (!_instanceAuthorization.targetExists(name)) {
+        if (!_authorization.targetExists(name)) {
             revert ErrorInstanceAdminExpectedTargetMissing(targetName);
         }
 
@@ -415,7 +443,7 @@ contract InstanceAdmin is
             false);
 
         // assign target role if defined
-        RoleId targetRoleId = _instanceAuthorization.getTargetRole(name);
+        RoleId targetRoleId = _authorization.getTargetRole(name);
         if (targetRoleId != RoleIdLib.zero()) {
             _grantRoleToAccount(targetRoleId, target);
         }
@@ -430,11 +458,11 @@ contract InstanceAdmin is
         _checkAndCreateTargetWithRole(address(_instance.getInstanceStore()), INSTANCE_STORE_TARGET_NAME);
         _checkAndCreateTargetWithRole(address(_instance.getInstanceAdmin()), INSTANCE_ADMIN_TARGET_NAME);
         _checkAndCreateTargetWithRole(address(_instance.getBundleSet()), BUNDLE_SET_TARGET_NAME);
-        _checkAndCreateTargetWithRole(address(_instance.getRiskSet()), RISK_SET_TAGET_NAME);
+        _checkAndCreateTargetWithRole(address(_instance.getRiskSet()), RISK_SET_TARGET_NAME);
 
         // create targets for services that need to access the module targets
-        ObjectType[] memory serviceDomains = _instanceAuthorization.getServiceDomains();
-        VersionPart release = _instanceAuthorization.getRelease();
+        ObjectType[] memory serviceDomains = _authorization.getServiceDomains();
+        VersionPart release = _authorization.getRelease();
         ObjectType serviceDomain;
 
         for (uint256 i = 0; i < serviceDomains.length; i++) {
@@ -442,7 +470,7 @@ contract InstanceAdmin is
 
             _checkAndCreateTargetWithRole(
                 _registry.getServiceAddress(serviceDomain, release),
-                _instanceAuthorization.getServiceTarget(serviceDomain).toString());
+                _authorization.getServiceTarget(serviceDomain).toString());
         }
     }
 }

@@ -38,8 +38,41 @@ interface IInstance is
         uint64 requestsCount;
     }
 
+    ///--- instance ---------------------------------------------------------//
+
+    /// @dev Locks/unlocks the complete instance, including all its components.
+    function setInstanceLocked(bool locked) external;
+
+    /// @dev Upgrades the instance reader to the specified target.
+    function upgradeInstanceReader() external;
+
+    /// @dev Sets the instance reader for the instance.
+    /// Permissioned: only the instance service may call this function.
+    function setInstanceReader(InstanceReader instanceReader) external;
+
+    ///--- staking ----------------------------------------------------------//
+
+    /// @dev Sets the duration for locking new stakes on this instance..
+    function setStakingLockingPeriod(Seconds stakeLockingPeriod) external;
+
+    /// @dev Sets the staking reward rate [apr] for this instance.
+    function setStakingRewardRate(UFixed rewardRate) external;
+
+    /// @dev Refills the staking reward reserves for the specified target.
+    function refillStakingRewardReserves(Amount dipAmount) external;
+
+    /// @dev Defunds the staking reward reserves for the specified target.
+    function withdrawStakingRewardReserves(Amount dipAmount) external returns (Amount newBalance);
+
+    ///--- product/component ------------------------------------------------//
+
+    /// @dev Locks/unlocks the specified target.
+    function setTargetLocked(address target, bool locked) external;
+
     /// @dev Register a product with the instance.
     function registerProduct(address product) external returns (NftId productNftId);
+
+    ///--- authz ------------------------------------------------------------//
 
     function createRole(string memory roleName, string memory adminName) external returns (RoleId roleId, RoleId admin);
     function grantRole(RoleId roleId, address account) external;
@@ -47,16 +80,15 @@ interface IInstance is
 
     function createTarget(address target, string memory name) external;
     function setTargetFunctionRole(string memory targetName, bytes4[] calldata selectors, RoleId roleId) external;
-    function setLocked(address target, bool locked) external;
-    function setLockedFromService(address target, bool locked) external;
 
-    function setStakingLockingPeriod(Seconds stakeLockingPeriod) external;
-    function setStakingRewardRate(UFixed rewardRate) external;
-    function refillStakingRewardReserves(Amount dipAmount) external;
 
-    /// @dev Defunds the staking reward reserves for the specified target.
-    /// Permissioned: only the target owner may call this function.
-    function withdrawStakingRewardReserves(Amount dipAmount) external returns (Amount newBalance);
+    //--- getters -----------------------------------------------------------//
+
+    /// @dev returns the overall locking state of the instance (including all components)
+    function isInstanceLocked() external view returns (bool isLocked);
+
+    /// @dev returns the locking state of the specified target
+    function isTargetLocked(address target) external view returns (bool isLocked);
 
     // get products
     function products() external view returns (uint256 productCount);

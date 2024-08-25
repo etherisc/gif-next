@@ -17,7 +17,7 @@ contract BasicDistributionAuthorization
 {
 
      constructor(string memory distributionlName)
-          Authorization(distributionlName, DISTRIBUTION())
+          Authorization(distributionlName, DISTRIBUTION(), true, true)
      {}
 
      function _setupServiceTargets()
