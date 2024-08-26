@@ -22,6 +22,7 @@ import {VersionPartLib} from "../../contracts/type/Version.sol";
 import {BasicDistributionAuthorization} from "../../contracts/distribution/BasicDistributionAuthorization.sol";
 import {BasicOracleAuthorization} from "../../contracts/oracle/BasicOracleAuthorization.sol";
 import {BasicProductAuthorization} from "../../contracts/product/BasicProductAuthorization.sol";
+import {SimpleDistributionAuthorization} from "../../contracts/examples/unpermissioned/SimpleDistributionAuthorization.sol";
 import {SimplePoolAuthorization} from "../../contracts/examples/unpermissioned/SimplePoolAuthorization.sol";
 import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
 import {ReleaseRegistry} from "../../contracts/registry/ReleaseRegistry.sol";

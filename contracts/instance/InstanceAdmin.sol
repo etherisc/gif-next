@@ -10,7 +10,7 @@ import {IInstance} from "./IInstance.sol";
 import {AccessAdmin} from "../authorization/AccessAdmin.sol";
 import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
 import {NftId} from "../type/NftId.sol";
-import {ObjectType, INSTANCE} from "../type/ObjectType.sol";
+import {ObjectType, INSTANCE, ORACLE} from "../type/ObjectType.sol";
 import {RoleId, RoleIdLib} from "../type/RoleId.sol";
 import {Str, StrLib} from "../type/String.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
@@ -138,8 +138,8 @@ contract InstanceAdmin is
         _checkAuthorization(address(authorization), expectedType, getRelease(), false);
 
         // effects
-        // setup target and role for component (including token handler)
-        _setupComponentAndTokenHandler(component);
+        // setup target and role for component (including token handler if applicable)
+        _setupComponentAndTokenHandler(component, expectedType);
 
         // create other roles and function authorizations
         _createRoles(authorization);
@@ -246,7 +246,10 @@ contract InstanceAdmin is
 
     // ------------------- Internal functions ------------------- //
 
-    function _setupComponentAndTokenHandler(IInstanceLinkedComponent component)
+    function _setupComponentAndTokenHandler(
+        IInstanceLinkedComponent component,
+        ObjectType componentType
+    )
         internal
     {
 
@@ -263,25 +266,27 @@ contract InstanceAdmin is
             true, // checkAuthority
             false); // custom
 
-        // create component's token handler target
-        NftId componentNftId = _registry.getNftIdForAddress(address(component));
-        address tokenHandler = address(
-            _instance.getInstanceReader().getComponentInfo(
-                componentNftId).tokenHandler);
+        // create component's token handler target if app
+        if (componentType != ORACLE()) {
+            NftId componentNftId = _registry.getNftIdForAddress(address(component));
+            address tokenHandler = address(
+                _instance.getInstanceReader().getComponentInfo(
+                    componentNftId).tokenHandler);
 
-        _createTarget(
-            tokenHandler, 
-            authorization.getTokenHandlerName(), 
-            true, 
-            false);
+            _createTarget(
+                tokenHandler, 
+                authorization.getTokenHandlerName(), 
+                true, 
+                false);
+
+            // token handler does not require its own role
+            // token handler is not calling other components
+        }
 
         // assign component role to component
         _grantRoleToAccount(
             componentRoleId, 
             address(component));
-
-        // token handler does not require its own role
-        // token handler is not calling other components
     }
 
 
