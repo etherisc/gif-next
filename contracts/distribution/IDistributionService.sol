@@ -13,10 +13,6 @@ import {Timestamp} from "../type/Timestamp.sol";
 
 
 interface IDistributionService is IService {
-    // TODO: rename
-    error ErrorDistributionServiceInvalidDistributorType(DistributorType distributorType);
-    // TODO: rename
-    error ErrorDistributionServiceInvalidDistributor(NftId distributorNftId);
     error ErrorDistributionServiceCallerNotRegistered(address caller);
     error ErrorDistributionServiceParentNftIdNotInstance(NftId nftId, NftId parentNftId);
     error ErrorDistributionServiceCallerNotDistributor(address caller);
@@ -29,6 +25,8 @@ interface IDistributionService is IService {
     error ErrorDistributionServiceExpirationInvalid(Timestamp expiryAt);
     error ErrorDistributionServiceCommissionTooHigh(uint256 commissionPercentage, uint256 maxCommissionPercentage);
     error ErrorDistributionServiceMinFeeTooHigh(uint256 minFee, uint256 limit);
+    error ErrorDistributionServiceDistributorTypeDistributionMismatch(DistributorType distributorType, NftId distributorTypeDistributionNftId, NftId distributionNftId);
+    error ErrorDistributionServiceDistributorDistributionMismatch(NftId distributorNftId, NftId distributorDistributionNftId, NftId distributionNftId);
 
     error ErrorDistributionServiceCommissionWithdrawAmountExceedsLimit(Amount amount, Amount limit);
     

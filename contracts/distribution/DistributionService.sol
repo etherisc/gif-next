@@ -184,7 +184,7 @@ contract DistributionService is
 
         NftId distributorDistributionNftId = getRegistry().getParentNftId(distributorNftId);
         if (distributorDistributionNftId != distributionNftId) {
-            revert ErrorDistributionServiceInvalidDistributor(distributorNftId);
+            revert ErrorDistributionServiceDistributorDistributionMismatch(distributorNftId, distributorDistributionNftId, distributionNftId);
         }
 
         {
@@ -365,7 +365,7 @@ contract DistributionService is
         NftId distributorTypeDistributionNftId = instanceReader.getDistributorTypeInfo(distributorType).distributionNftId;
 
         if (distributorTypeDistributionNftId != expectedDistributionNftId) {
-            revert ErrorDistributionServiceInvalidDistributorType(distributorType);
+            revert ErrorDistributionServiceDistributorTypeDistributionMismatch(distributorType, distributorTypeDistributionNftId, expectedDistributionNftId);
         }
     }
 

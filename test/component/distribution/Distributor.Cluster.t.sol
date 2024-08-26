@@ -49,8 +49,10 @@ contract DistributorClusterTest is GifClusterTest {
 
         // THEN
         vm.expectRevert(abi.encodeWithSelector(
-            IDistributionService.ErrorDistributionServiceInvalidDistributorType.selector, 
-            type2));
+            IDistributionService.ErrorDistributionServiceDistributorTypeDistributionMismatch.selector, 
+            type2,
+            myDistributionNftId2,
+            myDistributionNftId1));
 
         // WHEN
         myDistribution1.createDistributor(makeAddr("distributor"), type2, "");
@@ -68,8 +70,10 @@ contract DistributorClusterTest is GifClusterTest {
         
         // THEN
         vm.expectRevert(abi.encodeWithSelector(
-            IDistributionService.ErrorDistributionServiceInvalidDistributorType.selector, 
-            type2));
+            IDistributionService.ErrorDistributionServiceDistributorTypeDistributionMismatch.selector, 
+            type2,
+            myDistributionNftId2,
+            myDistributionNftId1));
 
         // WHEN
         myDistribution1.changeDistributorType(distributorNftId, type2, "");
@@ -89,8 +93,10 @@ contract DistributorClusterTest is GifClusterTest {
         
         // THEN
         vm.expectRevert(abi.encodeWithSelector(
-            IDistributionService.ErrorDistributionServiceInvalidDistributor.selector, 
-            distributorNftId));
+            IDistributionService.ErrorDistributionServiceDistributorDistributionMismatch.selector, 
+            distributorNftId,
+            myDistributionNftId2,
+            myDistributionNftId1));
 
         // WHEN
         myDistribution1.createReferral2(
