@@ -72,12 +72,22 @@ contract ApplicationService is
         if (!active) { revert ErrorApplicationServiceRiskPaused(riskId, productNftId); }
 
         // check bundle with pool
-        NftId poolNftId = instanceReader.getProductInfo(productNftId).poolNftId;
-        (exists, active) = instanceReader.getBundleSet().checkBundle(poolNftId, bundleNftId);
-        if (!exists) { revert ErrorApplicationServiceBundleUnknown(bundleNftId, poolNftId); }
-        if (!active) { revert ErrorApplicationServiceBundleLocked(bundleNftId, poolNftId); }
+        IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
+        {
+            NftId poolNftId = productInfo.poolNftId;
+            (exists, active) = instanceReader.getBundleSet().checkBundle(poolNftId, bundleNftId);
+            if (!exists) { revert ErrorApplicationServiceBundleUnknown(bundleNftId, poolNftId); }
+            if (!active) { revert ErrorApplicationServiceBundleLocked(bundleNftId, poolNftId); }
+        }
 
-        // TODO check referral with distribution
+        // check referral with distribution
+        {
+            if (productInfo.hasDistribution && ! referralId.eqz()) {
+                if (!instanceReader.isReferralValid(productInfo.distributionNftId, referralId)) {
+                    revert ErrorApplicationServiceReferralInvalid(productNftId, productInfo.distributionNftId, referralId);
+                }
+            }
+        }
     }
 
 

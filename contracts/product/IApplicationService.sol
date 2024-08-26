@@ -20,6 +20,7 @@ interface IApplicationService is IService {
     error ErrorApplicationServiceRiskPaused(RiskId riskId, NftId productNftId);
     error ErrorApplicationServiceBundleUnknown(NftId bundleNftId, NftId poolNftId);
     error ErrorApplicationServiceBundleLocked(NftId bundleNftId, NftId poolNftId);
+    error ErrorApplicationServiceReferralInvalid(NftId productNftId, NftId distributionNftId, ReferralId referralId);
 
     /// @dev creates a new application based on the specified attributes
     /// may only be called by a product component
