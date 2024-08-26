@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import {Test, console} from "../../lib/forge-std/src/Test.sol";
+import {console} from "../../lib/forge-std/src/Test.sol";
 
 import {Amount, AmountLib} from "../../contracts/type/Amount.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
@@ -18,13 +18,11 @@ import {IAccess} from "../../contracts/authorization/IAccess.sol";
 import {IAccessAdmin} from "../../contracts/authorization/IAccessAdmin.sol";
 import {IServiceAuthorization} from "../../contracts/authorization/IServiceAuthorization.sol";
 
-import {BasicDistributionAuthorization} from "../../contracts/distribution/BasicDistributionAuthorization.sol";
 import {BasicOracleAuthorization} from "../../contracts/oracle/BasicOracleAuthorization.sol";
 import {BasicProductAuthorization} from "../../contracts/product/BasicProductAuthorization.sol";
 
 import {SimplePoolAuthorization} from "../../contracts/examples/unpermissioned/SimplePoolAuthorization.sol";
 import {SimpleDistributionAuthorization} from "../../contracts/examples/unpermissioned/SimpleDistributionAuthorization.sol";
-import {SimpleProductAuthorization} from "../../contracts/examples/unpermissioned/SimpleProductAuthorization.sol";
 
 import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
 import {ReleaseRegistry} from "../../contracts/registry/ReleaseRegistry.sol";
@@ -63,7 +61,7 @@ import {GifDeployer} from "./GifDeployer.sol";
 contract GifTest is GifDeployer {
 
     // default customer token balance in full token units, value will be multiplied by 10 ** token.decimals()
-    uint256 DEFAULT_CUSTOMER_FUNDS = 1000;
+    uint256 constant public DEFAULT_CUSTOMER_FUNDS = 1000;
 
     // in full token units, value will be multiplied by 10 ** token.decimals()
     uint256 constant public DEFAULT_BUNDLE_CAPITALIZATION = 10 ** 5;
@@ -74,7 +72,7 @@ contract GifTest is GifDeployer {
     IERC20Metadata public dip;
     IERC20Metadata public token;
 
-    RegistryAdmin registryAdmin;
+    RegistryAdmin public registryAdmin;
     Registry public registry;
     ChainNft public chainNft;
     ReleaseRegistry public releaseRegistry;
@@ -149,24 +147,24 @@ contract GifTest is GifDeployer {
     Fee public initialDistributionFee = FeeLib.percentageFee(initialDistributionFeePercentage);
     Fee public initialMinDistributionOwnerFee = FeeLib.percentageFee(initialMinDistributionOwnerFeePercentage);
 
-    bool poolIsVerifying = true;
-    bool distributionIsVerifying = true;
+    bool public poolIsVerifying = true;
+    bool public distributionIsVerifying = true;
     UFixed poolCollateralizationLevelIs100 = UFixedLib.toUFixed(1);
 
     string private _checkpointLabel;
     uint256 private _checkpointGasLeft = 1; // Start the slot warm.
 
     function setUp() public virtual {
-        _setUp(
-            poolCollateralizationLevelIs100,
-            DEFAULT_BUNDLE_CAPITALIZATION,
-            DEFAULT_BUNDLE_LIFETIME);
+        _setUp();
+            // poolCollateralizationLevelIs100,
+            // DEFAULT_BUNDLE_CAPITALIZATION,
+            // DEFAULT_BUNDLE_LIFETIME);
     }
 
     function _setUp(
-        UFixed poolCollateralizationLevel,
-        uint256 initialBundleCapitalization,
-        uint256 bundleLifetime
+        // UFixed poolCollateralizationLevel,
+        // uint256 initialBundleCapitalization,
+        // uint256 bundleLifetime
     )
         internal
         virtual
@@ -504,9 +502,10 @@ contract GifTest is GifDeployer {
         newNftId = instance.registerProduct(address(newProduct));
         vm.stopPrank();
 
-        // solhint-disable-next-line
+        // solhint-disable
         console.log("product nft id", newNftId.toInt());
         console.log("product parent nft id", registry.getParentNftId(newNftId).toInt());
+        // solhint-enable
     }
 
 
