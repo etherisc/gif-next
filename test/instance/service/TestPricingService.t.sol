@@ -164,7 +164,7 @@ contract TestPricingService is GifTest {
             UFixedLib.toUFixed(10, -2),
             UFixedLib.toUFixed(5, -2),
             10,
-            14 * 24 * 3600,
+            SecondsLib.toSeconds(14 * 24 * 3600),
             false,
             false,
             "");
@@ -227,7 +227,7 @@ contract TestPricingService is GifTest {
             UFixedLib.toUFixed(10, -2),
             UFixedLib.toUFixed(5, -2),
             10,
-            14 * 24 * 3600,
+            SecondsLib.toSeconds(14 * 24 * 3600),
             false,
             false,
             "");
@@ -293,7 +293,7 @@ contract TestPricingService is GifTest {
             UFixedLib.toUFixed(10, -2),
             UFixedLib.toUFixed(5, -2),
             10,
-            14 * 24 * 3600,
+            SecondsLib.toSeconds(14 * 24 * 3600),
             false,
             false,
             "");

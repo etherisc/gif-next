@@ -10,6 +10,7 @@ import {DistributorType, DistributorTypeLib} from "../../../contracts/type/Distr
 import {IDistribution} from "../../../contracts/instance/module/IDistribution.sol";
 import {UFixed, UFixedLib} from "../../../contracts/type/UFixed.sol";
 import {SimpleDistribution} from "../../../contracts/examples/unpermissioned/SimpleDistribution.sol";
+import {Seconds, SecondsLib} from "../../../contracts/type/Seconds.sol";
 import {Fee, FeeLib} from "../../../contracts/type/Fee.sol";
 
 contract DistributorTypeTest is GifTest {
@@ -23,7 +24,7 @@ contract DistributorTypeTest is GifTest {
     UFixed public maxDiscountPercentage;
     UFixed public commissionPercentage;
     uint32 public maxReferralCount;
-    uint32 public maxReferralLifetime;
+    Seconds public maxReferralLifetime;
     bool public allowSelfReferrals;
     bool public allowRenewals;
     bytes public data;
@@ -73,7 +74,7 @@ contract DistributorTypeTest is GifTest {
         console.log("commission percentage", UFixed.unwrap(info.commissionPercentage));        
 
         assertEq(info.maxReferralCount, maxReferralCount, "unexpected referral count");
-        assertEq(info.maxReferralLifetime, maxReferralLifetime, "unexpected referral count");
+        assertEq(info.maxReferralLifetime.toInt(), maxReferralLifetime.toInt(), "unexpected referral count");
         assertEq(info.allowSelfReferrals, allowSelfReferrals, "unexpected allow self referrals");
         assertEq(info.allowRenewals, allowRenewals, "unexpected allow renewals");
         assertTrue(equalBytes(info.data, data), "unexpected data for referral type");
@@ -95,7 +96,7 @@ contract DistributorTypeTest is GifTest {
         maxDiscountPercentage = instanceReader.toUFixed(75, -3);
         commissionPercentage = instanceReader.toUFixed(3, -2);
         maxReferralCount = 20;
-        maxReferralLifetime = 14 * 24 * 3600;
+        maxReferralLifetime = SecondsLib.toSeconds(14 * 24 * 3600);
         allowSelfReferrals = true;
         allowRenewals = true;
         data = ".";

@@ -2,27 +2,28 @@
 pragma solidity ^0.8.20;
 
 import {IAccountingService} from "../accounting/IAccountingService.sol";
-import {IRegistry} from "../registry/IRegistry.sol";
-import {IInstance} from "../instance/IInstance.sol";
 import {IComponentService} from "../shared/IComponentService.sol";
+import {IDistribution} from "../instance/module/IDistribution.sol";
+import {IDistributionService} from "./IDistributionService.sol";
+import {IInstance} from "../instance/IInstance.sol";
 import {IInstanceService} from "../instance/IInstanceService.sol";
+import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegistryService} from "../registry/IRegistryService.sol";
-import {InstanceReader} from "../instance/InstanceReader.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
 
 import {Amount, AmountLib} from "../type/Amount.sol";
+import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
+import {DistributorType, DistributorTypeLib} from "../type/DistributorType.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
 import {KEEP_STATE} from "../type/StateId.sol";
 import {ObjectType, ACCOUNTING, COMPONENT, DISTRIBUTION, INSTANCE, DISTRIBUTION, DISTRIBUTOR, REGISTRY} from "../type/ObjectType.sol";
-import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
-import {IDistributionService} from "./IDistributionService.sol";
-import {UFixed} from "../type/UFixed.sol";
-import {DistributorType, DistributorTypeLib} from "../type/DistributorType.sol";
-import {ReferralId, ReferralLib} from "../type/Referral.sol";
-import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
-import {IDistribution} from "../instance/module/IDistribution.sol";
+import {InstanceReader} from "../instance/InstanceReader.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
+import {ReferralId, ReferralLib} from "../type/Referral.sol";
+import {Seconds} from "../type/Seconds.sol";
+import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
+import {UFixed} from "../type/UFixed.sol";
 
 
 contract DistributionService is
@@ -64,7 +65,7 @@ contract DistributionService is
         UFixed maxDiscountPercentage,
         UFixed commissionPercentage,
         uint32 maxReferralCount,
-        uint32 maxReferralLifetime,
+        Seconds maxReferralLifetime,
         bool allowSelfReferrals,
         bool allowRenewals,
         bytes memory data
@@ -171,10 +172,10 @@ contract DistributionService is
         (NftId distributionNftId,, IInstance instance) = _getAndVerifyActiveComponent(DISTRIBUTION());
 
         if (bytes(code).length == 0) {
-            revert ErrorIDistributionServiceInvalidReferral(code);
+            revert ErrorDistributionServiceInvalidReferral(code);
         }
         if (expiryAt.eqz() || expiryAt.lte(TimestampLib.blockTimestamp())) {
-            revert ErrorIDistributionServiceExpirationInvalid(expiryAt);
+            revert ErrorDistributionServiceExpirationInvalid(expiryAt);
         }
 
         {
@@ -183,16 +184,16 @@ contract DistributionService is
             IDistribution.DistributorTypeInfo memory distributorTypeData = instanceReader.getDistributorTypeInfo(distributorType);
 
             if (distributorTypeData.maxReferralCount < maxReferrals) {
-                revert ErrorIDistributionServiceMaxReferralsExceeded(distributorTypeData.maxReferralCount);
+                revert ErrorDistributionServiceMaxReferralsExceeded(distributorTypeData.maxReferralCount);
             }
             if (distributorTypeData.minDiscountPercentage > discountPercentage) {
-                revert ErrorIDistributionServiceDiscountTooLow(distributorTypeData.minDiscountPercentage.toInt(), discountPercentage.toInt());
+                revert ErrorDistributionServiceDiscountTooLow(distributorTypeData.minDiscountPercentage.toInt(), discountPercentage.toInt());
             }
             if (distributorTypeData.maxDiscountPercentage < discountPercentage) {
-                revert ErrorIDistributionServiceDiscountTooHigh(distributorTypeData.maxDiscountPercentage.toInt(), discountPercentage.toInt());
+                revert ErrorDistributionServiceDiscountTooHigh(distributorTypeData.maxDiscountPercentage.toInt(), discountPercentage.toInt());
             }
-            if (expiryAt.toInt() - TimestampLib.blockTimestamp().toInt() > distributorTypeData.maxReferralLifetime) {
-                revert ErrorIDistributionServiceExpiryTooLong(distributorTypeData.maxReferralLifetime, expiryAt.toInt());
+            if (expiryAt.toInt() - TimestampLib.blockTimestamp().toInt() > distributorTypeData.maxReferralLifetime.toInt()) {
+                revert ErrorDistributionServiceExpiryTooLong(distributorTypeData.maxReferralLifetime, expiryAt);
             }
         }
 

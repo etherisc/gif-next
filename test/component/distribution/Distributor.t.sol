@@ -24,7 +24,7 @@ contract DistributorTest is GifTest {
     UFixed public maxDiscountPercentage;
     UFixed public commissionPercentage;
     uint32 public maxReferralCount;
-    uint32 public maxReferralLifetime;
+    Seconds public maxReferralLifetime;
     bool public allowSelfReferrals;
     bool public allowRenewals;
     bytes public data;
@@ -202,7 +202,7 @@ contract DistributorTest is GifTest {
         assertEq(distributorTypeInfo.maxDiscountPercentage.toInt(), maxDiscountPercentage.toInt(), "unexpected max discount percentage");
         assertEq(distributorTypeInfo.commissionPercentage.toInt(), commissionPercentage.toInt(), "unexpected commission percentage");
         assertEq(distributorTypeInfo.maxReferralCount, maxReferralCount, "unexpected max referral count");
-        assertEq(distributorTypeInfo.maxReferralLifetime, maxReferralLifetime, "unexpected max referral lifetime");
+        assertEq(distributorTypeInfo.maxReferralLifetime.toInt(), maxReferralLifetime.toInt(), "unexpected max referral lifetime");
         assertEq(distributorTypeInfo.allowSelfReferrals, allowSelfReferrals, "unexpected allow self referrals");
         assertEq(distributorTypeInfo.allowRenewals, allowRenewals, "unexpected allow renewals");
         assertEq(keccak256(distributorTypeInfo.data), keccak256(data), "unexpected data");
@@ -295,7 +295,7 @@ contract DistributorTest is GifTest {
         maxDiscountPercentage = instanceReader.toUFixed(75, -3);
         commissionPercentage = instanceReader.toUFixed(3, -2);
         maxReferralCount = 20;
-        maxReferralLifetime = 14 * 24 * 3600;
+        maxReferralLifetime = SecondsLib.toSeconds(14 * 24 * 3600);
         allowSelfReferrals = true;
         allowRenewals = true;
         data = ".";
@@ -320,7 +320,7 @@ contract DistributorTest is GifTest {
         maxDiscountPercentage = instanceReader.toUFixed(75, -3);
         commissionPercentage = instanceReader.toUFixed(5, -2);
         maxReferralCount = 50;
-        maxReferralLifetime = 30 * 24 * 3600;
+        maxReferralLifetime = SecondsLib.toSeconds(30 * 24 * 3600);
         allowSelfReferrals = true;
         allowRenewals = true;
         data = ".";

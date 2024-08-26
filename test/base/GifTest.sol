@@ -19,7 +19,7 @@ import {Timestamp} from "../../contracts/type/Timestamp.sol";
 import {VersionPartLib} from "../../contracts/type/Version.sol";
 
 
-import {SimpleDistributionAuthorization} from "../../contracts/examples/unpermissioned/SimpleDistributionAuthorization.sol";
+import {BasicDistributionAuthorization} from "../../contracts/distribution/BasicDistributionAuthorization.sol";
 import {BasicOracleAuthorization} from "../../contracts/oracle/BasicOracleAuthorization.sol";
 import {BasicProductAuthorization} from "../../contracts/product/BasicProductAuthorization.sol";
 import {SimplePoolAuthorization} from "../../contracts/examples/unpermissioned/SimplePoolAuthorization.sol";

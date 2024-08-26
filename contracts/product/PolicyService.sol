@@ -544,8 +544,6 @@ contract PolicyService is
             tokenHandler.pushToken(poolWallet, premium.poolPremiumAndFeeAmount);
         }
     }
-
-
     function _policyHolderPolicyActivated(
         NftId policyNftId,
         Timestamp activateAt
@@ -647,7 +645,7 @@ contract PolicyService is
             PRODUCT(), // caller must be product
             true); // only active caller
 
-        productNftId = productInfo.nftId;
+        productNftId = productInfo.nftId; // calling product nft id
         instance = IInstance(instanceAddress);
         policyInfo = instance.getInstanceReader().getPolicyInfo(policyNftId);
 

@@ -226,7 +226,14 @@ contract InstanceAdmin is
         _setTargetLocked(target, locked);
     }
 
-
+    /// @dev Returns the number of components that have been registered with this instance.   
+    function components() 
+        external 
+        view 
+        returns (uint64)
+    {
+        return _components;
+    }
 
     /// @dev Returns the instance authorization specification used to set up this instance admin.
     function getInstanceAuthorization()
