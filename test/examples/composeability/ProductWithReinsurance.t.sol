@@ -425,8 +425,7 @@ contract ProductWithReinsuranceTest is
         console.log("--- create risk");
 
         vm.startPrank(productOwner);
-        riskReId = RiskIdLib.toRiskId("RiskWithReinsurance");
-        productRe.createRisk(riskReId, "");
+        riskReId = productRe.createRisk("RiskWithReinsurance", "");
         vm.stopPrank();
 
         // solhint-disable-next-line

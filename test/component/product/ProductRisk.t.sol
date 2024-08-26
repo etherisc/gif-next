@@ -1,30 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Vm, console} from "../../../lib/forge-std/src/Test.sol";
+import {console} from "../../../lib/forge-std/src/Test.sol";
 
 import {GifTest} from "../../base/GifTest.sol";
-import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
 import {KeyId} from "../../../contracts/type/Key32.sol";
-import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
-import {SimpleProduct} from "../../../contracts/examples/unpermissioned/SimpleProduct.sol";
-import {SimplePool} from "../../../contracts/examples/unpermissioned/SimplePool.sol";
-import {IComponents} from "../../../contracts/instance/module/IComponents.sol";
+import {NftId} from "../../../contracts/type/NftId.sol";
 import {ILifecycle} from "../../../contracts/shared/ILifecycle.sol";
-import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
-import {IBundle} from "../../../contracts/instance/module/IBundle.sol";
-import {Fee, FeeLib} from "../../../contracts/type/Fee.sol";
-import {UFixedLib} from "../../../contracts/type/UFixed.sol";
-import {Seconds, SecondsLib} from "../../../contracts/type/Seconds.sol";
-import {Timestamp, TimestampLib, zeroTimestamp} from "../../../contracts/type/Timestamp.sol";
-import {IPolicyService} from "../../../contracts/product/IPolicyService.sol";
-import {IRisk} from "../../../contracts/instance/module/IRisk.sol";
-import {PayoutId, PayoutIdLib} from "../../../contracts/type/PayoutId.sol";
-import {POLICY, RISK} from "../../../contracts/type/ObjectType.sol";
+import {SecondsLib} from "../../../contracts/type/Seconds.sol";
+import {Timestamp, zeroTimestamp} from "../../../contracts/type/Timestamp.sol";
+import {RISK} from "../../../contracts/type/ObjectType.sol";
 import {RiskId, RiskIdLib, eqRiskId} from "../../../contracts/type/RiskId.sol";
 import {ReferralLib} from "../../../contracts/type/Referral.sol";
-import {SUBMITTED, ACTIVE, PAUSED, ARCHIVED, COLLATERALIZED, CONFIRMED, DECLINED, CLOSED} from "../../../contracts/type/StateId.sol";
-import {StateId} from "../../../contracts/type/StateId.sol";
+import {ACTIVE, PAUSED, ARCHIVED} from "../../../contracts/type/StateId.sol";
 
 contract TestProductRisk is GifTest {
 
@@ -43,8 +31,7 @@ contract TestProductRisk is GifTest {
 
         // create risk
         vm.startPrank(productOwner);
-        initialRiskId = RiskIdLib.toRiskId("Risk1");
-        product.createRisk(initialRiskId, abi.encode(1,2,3));
+        initialRiskId = product.createRisk("Risk1", abi.encode(1,2,3));
         vm.stopPrank();
 
         // create application
@@ -58,11 +45,9 @@ contract TestProductRisk is GifTest {
         _approve();
     }
 
-
     function test_productRiskIdLib() public view {
-
         // GIVEN
-        RiskId riskId = RiskIdLib.toRiskId("Risk1");
+        RiskId riskId = RiskIdLib.toRiskId(productNftId, "Risk1");
         KeyId keyId = RiskIdLib.toKeyId(riskId);
         RiskId riskIdReverse = RiskIdLib.toRiskId(keyId);
 
@@ -79,7 +64,7 @@ contract TestProductRisk is GifTest {
         // GIVEN
         // WHEN
         // THEN
-        // solhint-disable next-line
+        // solhint-disable-next-line
         console.log("initialRiskId", initialRiskId.toInt());
 
         assertEq(instanceReader.risks(productNftId), 1, "unexpected number of risks");
@@ -94,7 +79,7 @@ contract TestProductRisk is GifTest {
         assertEq(instanceReader.activeRisks(productNftId), 1, "unexpected number of active risks");
         assertEq(instanceReader.getActiveRiskId(productNftId, 0).toInt(), initialRiskId.toInt(), "unexpected active risk id");
 
-        assertEq(initialRiskId.toInt(), RiskIdLib.toRiskId("Risk1").toInt(), "unexpected initial risk id");
+        assertEq(initialRiskId.toInt(), RiskIdLib.toRiskId(productNftId, "Risk1").toInt(), "unexpected initial risk id");
         assertEq(instanceReader.getPolicyInfo(initialPolicyNftId).riskId.toInt(), initialRiskId.toInt(), "unexpected risk id for policy");
         assertEq(instanceReader.policiesForRisk(initialRiskId), 0, "unexpected number of policies for risk");
     }
@@ -102,11 +87,10 @@ contract TestProductRisk is GifTest {
     // create and a new risk with risk data
     function test_productRiskCreate() public {
         // GIVEN
-        RiskId newRiskId = RiskIdLib.toRiskId("RiskA");
-
+        
         // WHEN
         vm.startPrank(productOwner);
-        product.createRisk(newRiskId, abi.encode(4,5,6));
+        RiskId newRiskId = product.createRisk("RiskA", abi.encode(4,5,6));
         vm.stopPrank();
 
         // THEN
@@ -125,7 +109,7 @@ contract TestProductRisk is GifTest {
         assertEq(instanceReader.getActiveRiskId(productNftId, 1).toInt(), newRiskId.toInt(), "unexpected active new risk id");
 
         // check all risks
-        assertEq(newRiskId.toInt(), RiskIdLib.toRiskId("RiskA").toInt(), "unexpected new risk id");
+        assertEq(newRiskId.toInt(), RiskIdLib.toRiskId(productNftId, "RiskA").toInt(), "unexpected new risk id");
         assertEq(instanceReader.policiesForRisk(initialRiskId), 0, "unexpected number of policies for initial risk");
         assertEq(instanceReader.policiesForRisk(newRiskId), 0, "unexpected number of policies for new risk");
 
@@ -386,12 +370,11 @@ contract TestProductRisk is GifTest {
 
     // create risk from string for product
     function _createRisk(string memory riskName) internal returns (RiskId riskId) {
-        riskId = RiskIdLib.toRiskId(riskName);
-        // solhint-disable next-line
+        // solhint-disable-next-line
         console.log("creating risk", riskName, riskId.toInt());
 
         vm.startPrank(productOwner);
-        product.createRisk(riskId, "");
+        riskId = product.createRisk(riskName, "");
         vm.stopPrank();
     }
 

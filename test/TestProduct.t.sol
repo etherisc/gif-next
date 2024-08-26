@@ -101,10 +101,9 @@ contract TestProduct is GifTest {
         vm.startPrank(productOwner);
         product.setFees(productFee, FeeLib.zero());
 
-        RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
         SimpleProduct dproduct = SimpleProduct(address(product));
-        dproduct.createRisk(riskId, data);
+        RiskId riskId = dproduct.createRisk("42x4711", data);
 
         Amount sumInsured = AmountLib.toAmount(1000);
         Seconds  lifetime = SecondsLib.toSeconds(30);
@@ -136,10 +135,9 @@ contract TestProduct is GifTest {
         vm.startPrank(productOwner);
         product.setFees(productFee, FeeLib.zero());
 
-        RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
         SimpleProduct dproduct = SimpleProduct(address(product));
-        dproduct.createRisk(riskId, data);
+        RiskId riskId = dproduct.createRisk("42x4711", data);
 
         NftId policyNftId = dproduct.createApplication(
             customer,
@@ -173,9 +171,8 @@ contract TestProduct is GifTest {
         product.setFees(productFee, FeeLib.zero());
 
         // create test specific risk
-        RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
-        product.createRisk(riskId, data);
+        RiskId riskId = product.createRisk("42x4711", data);
 
         // crete application
         uint sumInsuredAmount = 1000;
@@ -239,9 +236,8 @@ contract TestProduct is GifTest {
         Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
         product.setFees(productFee, FeeLib.zero());
 
-        RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
-        product.createRisk(riskId, data);
+        RiskId riskId = product.createRisk("42x4711", data);
         vm.stopPrank();
 
         vm.startPrank(customer);
@@ -343,12 +339,11 @@ contract TestProduct is GifTest {
 
         // set product fees and create risk
         Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
-        RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
 
         vm.startPrank(productOwner);
         product.setFees(productFee, FeeLib.zero());
-        product.createRisk(riskId, data);
+        RiskId riskId = product.createRisk("42x4711", data);
         vm.stopPrank();
 
         // configure distribution fee and referral
@@ -465,12 +460,11 @@ contract TestProduct is GifTest {
 
         // set product fees and create risk
         Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
-        RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
 
         vm.startPrank(productOwner);
         product.setFees(productFee, FeeLib.zero());
-        product.createRisk(riskId, data);
+        RiskId riskId = product.createRisk("42x4711", data);
         vm.stopPrank();
 
         // configure distribution fee and referral
@@ -574,9 +568,8 @@ contract TestProduct is GifTest {
         Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
         product.setFees(productFee, FeeLib.zero());
 
-        RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
-        product.createRisk(riskId, data);
+        RiskId riskId = product.createRisk("42x4711", data);
 
         vm.stopPrank();
 
@@ -669,9 +662,8 @@ contract TestProduct is GifTest {
         Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
         product.setFees(productFee, FeeLib.zero());
 
-        RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
-        product.createRisk(riskId, data);
+        RiskId riskId = product.createRisk("42x4711", data);
 
         vm.stopPrank();
 
@@ -719,9 +711,8 @@ contract TestProduct is GifTest {
         Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
         product.setFees(productFee, FeeLib.zero());
 
-        RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
-        product.createRisk(riskId, data);
+        RiskId riskId = product.createRisk("42x4711", data);
 
         uint sumInsuredAmount = 1000;
         NftId policyNftId = product.createApplication(
@@ -772,9 +763,8 @@ contract TestProduct is GifTest {
         token.transfer(customer, 1000);
         vm.stopPrank();
 
-        RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
-        product.createRisk(riskId, data);
+        RiskId riskId = product.createRisk("42x4711", data);
         vm.stopPrank();
 
         vm.startPrank(customer);
@@ -826,9 +816,8 @@ contract TestProduct is GifTest {
         token.transfer(customer, 1000);
         vm.stopPrank();
 
-        RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
-        product.createRisk(riskId, data);
+        RiskId riskId = product.createRisk("42x4711", data);
         vm.stopPrank();
 
         vm.startPrank(customer);
@@ -885,9 +874,8 @@ contract TestProduct is GifTest {
         token.transfer(customer, 1000);
         vm.stopPrank();
 
-        RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
-        product.createRisk(riskId, data);
+        RiskId riskId = product.createRisk("42x4711", data);
         vm.stopPrank();
 
         vm.startPrank(customer);
@@ -943,9 +931,8 @@ contract TestProduct is GifTest {
         token.transfer(customer, 1000);
         vm.stopPrank();
 
-        RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
-        product.createRisk(riskId, data);
+        RiskId riskId = product.createRisk("42x4711", data);
         vm.stopPrank();
 
         vm.startPrank(customer);
@@ -1001,9 +988,8 @@ contract TestProduct is GifTest {
         Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
         product.setFees(productFee, FeeLib.zero());
 
-        RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
-        product.createRisk(riskId, data);
+        RiskId riskId = product.createRisk("42x4711", data);
 
         vm.stopPrank();
         vm.startPrank(customer);
@@ -1108,9 +1094,8 @@ contract TestProduct is GifTest {
         Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
         product.setFees(productFee, FeeLib.zero());
 
-        RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
-        product.createRisk(riskId, data);
+        RiskId riskId = product.createRisk("42x4711", data);
 
         vm.stopPrank();
 
@@ -1196,9 +1181,8 @@ contract TestProduct is GifTest {
         // GIVEN
 
         vm.startPrank(productOwner);
-        RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
-        product.createRisk(riskId, data);
+        RiskId riskId = product.createRisk("42x4711", data);
         vm.stopPrank();
 
         vm.startPrank(customer);
@@ -1246,9 +1230,8 @@ contract TestProduct is GifTest {
 
         vm.startPrank(productOwner);
 
-        RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
-        product.createRisk(riskId, data);
+        RiskId riskId = product.createRisk("42x4711", data);
 
         vm.stopPrank();
 
@@ -1307,9 +1290,8 @@ contract TestProduct is GifTest {
 
         vm.startPrank(productOwner);
 
-        RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
-        product.createRisk(riskId, data);
+        RiskId riskId = product.createRisk("42x4711", data);
 
         vm.stopPrank();
 
@@ -1367,9 +1349,8 @@ contract TestProduct is GifTest {
 
         vm.startPrank(productOwner);
 
-        RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
-        product.createRisk(riskId, data);
+        RiskId riskId = product.createRisk("42x4711", data);
 
         vm.stopPrank();
 
@@ -1424,9 +1405,8 @@ contract TestProduct is GifTest {
 
         vm.startPrank(productOwner);
 
-        RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
-        product.createRisk(riskId, data);
+        RiskId riskId = product.createRisk("42x4711", data);
 
         vm.stopPrank();
 
@@ -1485,9 +1465,8 @@ contract TestProduct is GifTest {
 
         vm.startPrank(productOwner);
 
-        RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
-        product.createRisk(riskId, data);
+        RiskId riskId = product.createRisk("42x4711", data);
 
         vm.stopPrank();
 
@@ -1559,9 +1538,8 @@ contract TestProduct is GifTest {
 
         vm.startPrank(productOwner);
 
-        RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
-        product.createRisk(riskId, data);
+        RiskId riskId = product.createRisk("42x4711", data);
 
         vm.stopPrank();
 
@@ -1611,12 +1589,11 @@ contract TestProduct is GifTest {
 
 
     function test_productRiskCreate() public {
-        RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
 
         // SimpleProduct dproduct = SimpleProduct(address(product));
         vm.startPrank(productOwner);
-        product.createRisk(riskId, data);
+        RiskId riskId = product.createRisk("42x4711", data);
         vm.stopPrank();
 
         IRisk.RiskInfo memory riskInfo = instanceReader.getRiskInfo(riskId);
@@ -1627,11 +1604,10 @@ contract TestProduct is GifTest {
 
     function test_productRiskUpdate() public {
 
-        RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
 
         vm.startPrank(productOwner);
-        product.createRisk(riskId, data);
+        RiskId riskId = product.createRisk("42x4711", data);
         IRisk.RiskInfo memory riskInfo = instanceReader.getRiskInfo(riskId);
 
         assertTrue(riskInfo.productNftId.eq(productNftId), "productNftId not set");

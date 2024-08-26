@@ -49,8 +49,7 @@ contract ExternallyManagedProduct is
     }
 
     function init() public {
-        riskId = RiskIdLib.toRiskId("Risk1");
-        _createRisk(riskId, "Risk1");
+        riskId = _createRisk("Risk1", "Risk1");
 
         policyDuration = SecondsLib.toSeconds(14 * 24 * 3600);
         referralId = ReferralLib.zero();

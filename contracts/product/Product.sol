@@ -3,21 +3,18 @@ pragma solidity ^0.8.20;
 
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {ClaimId} from "../type/ClaimId.sol";
-import {IComponent} from "../shared/IComponent.sol";
-import {Fee, FeeLib} from "../type/Fee.sol";
-import {IRisk} from "../instance/module/IRisk.sol";
+import {Fee} from "../type/Fee.sol";
 import {IApplicationService} from "./IApplicationService.sol";
 import {IAuthorization} from "../authorization/IAuthorization.sol";
 import {IComponentService} from "../shared/IComponentService.sol";
 import {InstanceLinkedComponent} from "../shared/InstanceLinkedComponent.sol";
-import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
 import {IPolicyService} from "./IPolicyService.sol";
 import {IRiskService} from "./IRiskService.sol";
 import {IClaimService} from "./IClaimService.sol";
 import {IPricingService} from "./IPricingService.sol";
 import {IProductComponent} from "./IProductComponent.sol";
-import {NftId, NftIdLib} from "../type/NftId.sol";
-import {ObjectType, COMPONENT, DISTRIBUTION, ORACLE, POOL, PRODUCT, BUNDLE, APPLICATION, POLICY, CLAIM, PRICE } from "../type/ObjectType.sol";
+import {NftId} from "../type/NftId.sol";
+import {COMPONENT, PRODUCT, BUNDLE, APPLICATION, POLICY, CLAIM, PRICE } from "../type/ObjectType.sol";
 import {PayoutId} from "../type/PayoutId.sol";
 import {COMPONENT, PRODUCT, APPLICATION, POLICY, CLAIM, PRICE, BUNDLE, RISK } from "../type/ObjectType.sol";
 import {ReferralId} from "../type/Referral.sol";
@@ -28,9 +25,6 @@ import {Timestamp} from "../type/Timestamp.sol";
 
 import {IPolicy} from "../instance/module/IPolicy.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
-import {IDistributionComponent} from "../distribution/IDistributionComponent.sol";
-import {IOracleComponent} from "../oracle/IOracleComponent.sol";
-import {IPoolComponent} from "../pool/IPoolComponent.sol";
 
 abstract contract Product is
     InstanceLinkedComponent, 
@@ -189,13 +183,14 @@ abstract contract Product is
 
 
     function _createRisk(
-        RiskId id,
+        bytes32 id,
         bytes memory data
     )
         internal
         virtual
+        returns (RiskId riskId)
     {
-        _getProductStorage()._riskService.createRisk(
+        return _getProductStorage()._riskService.createRisk(
             id,
             data
         );
@@ -464,10 +459,6 @@ abstract contract Product is
         _getProductStorage()._claimService.cancelPayout(
             policyNftId,
             payoutId);
-    }
-
-    function _toRiskId(string memory riskName) internal virtual pure returns (RiskId riskId) {
-        return RiskIdLib.toRiskId(riskName);
     }
 
     function _getProductStorage() internal virtual pure returns (ProductStorage storage $) {

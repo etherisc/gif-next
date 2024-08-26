@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {Key32, KeyId, Key32Lib} from "./Key32.sol";
+import {NftId} from "./NftId.sol";
 import {RISK} from "./ObjectType.sol";
 
 type RiskId is bytes8;
@@ -40,9 +41,9 @@ library RiskIdLib {
         return uint64(RiskId.unwrap(riskId));
     }
 
-    // @dev Converts a risk id string into a risk id.
-    function toRiskId(string memory risk) public pure returns (RiskId) {
-        return RiskId.wrap(bytes8(keccak256(abi.encode(risk))));
+    // @dev Converts a risk id string with a product NftId into a risk id.
+    function toRiskId(NftId productNftId, bytes32 risk) public pure returns (RiskId) {
+        return RiskId.wrap(bytes8(keccak256(abi.encode(productNftId, risk))));
     }
 
     /// @dev Returns the key32 value for the specified risk id.
