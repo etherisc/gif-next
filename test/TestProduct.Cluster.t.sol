@@ -1,22 +1,25 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {GifClusterTest} from "../../base/GifClusterTest.sol";
-import {NftId} from "../../../contracts/type/NftId.sol";
-import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
-import {FeeLib} from "../../../contracts/type/Fee.sol";
-import {UFixedLib} from "../../../contracts/type/UFixed.sol";
-import {DistributorType} from "../../../contracts/type/DistributorType.sol";
-import {ReferralId} from "../../../contracts/type/Referral.sol";
-import {RiskId, RiskIdLib} from "../../../contracts/type/RiskId.sol";
-import {Seconds, SecondsLib} from "../../../contracts/type/Seconds.sol";
-import {TimestampLib} from "../../../contracts/type/Timestamp.sol";
-import {IDistributionService} from "../../../contracts/distribution/IDistributionService.sol";
+
+import {GifClusterTest} from "./base/GifClusterTest.sol";
+import {NftId} from "../contracts/type/NftId.sol";
+import {FeeLib} from "../contracts/type/Fee.sol";
+import {UFixedLib} from "../contracts/type/UFixed.sol";
+import {Seconds, SecondsLib} from "../contracts/type/Seconds.sol";
+import {TimestampLib} from "../contracts/type/Timestamp.sol";
+import {RiskId} from "../contracts/type/RiskId.sol";
+import {ReferralId, ReferralLib} from "../contracts/type/Referral.sol";
+import {DistributorType} from "../contracts/type/DistributorType.sol";
+import {IDistributionService} from "../contracts/distribution/IDistributionService.sol";
+
 
 // solhint-disable func-name-mixedcase
-contract PricingServiceClusterTest is GifClusterTest {
+contract TestProductClusterTest is GifClusterTest {
 
-    function setUp() public virtual override {
+    Seconds public sec30;
+
+    function setUp() public override {
         super.setUp();
 
         INSTANCE_OWNER_FUNDING = 1000000 * 10 ** token.decimals();
@@ -32,8 +35,11 @@ contract PricingServiceClusterTest is GifClusterTest {
         vm.stopPrank();
     }
 
-    function test_pricingServiceCalculatePremium_referralFromOtherProductCluster() public {
+    /// @dev Test the product create application with a referral from another product cluster
+    function test_productCreateApplication_withReferralFromOtherProductCluster() public {
         // GIVEN
+        address distributorFromProduct1 = makeAddr("distributorFromProduct1");
+        
         vm.startPrank(instanceOwner);
         DistributorType distributorType = myDistribution1.createDistributorType(
             "Gold",
@@ -47,12 +53,12 @@ contract PricingServiceClusterTest is GifClusterTest {
             "");
 
         NftId distributorNftId = myDistribution1.createDistributor(
-            customer,
+            distributorFromProduct1,
             distributorType,
             "");
         vm.stopPrank();
 
-        vm.startPrank(customer);
+        vm.startPrank(distributorFromProduct1);
         ReferralId referralId = myDistribution1.createReferral(
             "GET_A_DISCOUNT",
             UFixedLib.toUFixed(10, -2),
@@ -61,9 +67,11 @@ contract PricingServiceClusterTest is GifClusterTest {
             "");
         vm.stopPrank();
 
-        RiskId riskId = RiskIdLib.toRiskId(productNftId, "42x4711");
-        Amount sumInsured = AmountLib.toAmount(1000);
-        Seconds lifetime = SecondsLib.toSeconds(300);
+        vm.startPrank(instanceOwner);
+        RiskId riskId = myProduct2.createRisk("42x4711", "");
+        vm.stopPrank();
+
+        Seconds lifetime = SecondsLib.toSeconds(30);
 
         // THEN
         vm.expectRevert(abi.encodeWithSelector(
@@ -73,15 +81,15 @@ contract PricingServiceClusterTest is GifClusterTest {
             myDistributionNftId2));
 
         // WHEN
-        pricingService.calculatePremium(
-            myProductNftId2, 
-            riskId, 
-            sumInsured, 
-            lifetime, 
+        myProduct2.createApplication(
+            customer,
+            riskId,
+            1000,
+            lifetime,
             "",
             bundleNftId,
             referralId);
+        
     }
-
 
 }
