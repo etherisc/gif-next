@@ -96,6 +96,7 @@ contract DistributionService is
         distributorType = DistributorTypeLib.toDistributorType(distributionNftId, name);
         IDistribution.DistributorTypeInfo memory info = IDistribution.DistributorTypeInfo(
             name,
+            distributionNftId,
             minDiscountPercentage,
             maxDiscountPercentage,
             commissionPercentage,
@@ -119,6 +120,14 @@ contract DistributionService is
         returns (NftId distributorNftId)
     {
         (NftId distributionNftId,, IInstance instance) = _getAndVerifyActiveComponent(DISTRIBUTION());
+
+        {
+            NftId expectedDistributionNftId = instance.getInstanceReader().getDistributorTypeInfo(distributorType).distributionNftId;
+
+            if (distributionNftId != expectedDistributionNftId) {
+                revert ErrorDistributionServiceInvalidDistributorType(distributorType);
+            }
+        }
 
         distributorNftId = _registryService.registerDistributor(
             IRegistry.ObjectInfo(
@@ -200,6 +209,7 @@ contract DistributionService is
         {
             referralId = ReferralLib.toReferralId(distributionNftId, code);
             IDistribution.ReferralInfo memory info = IDistribution.ReferralInfo(
+                distributionNftId,
                 distributorNftId,
                 code,
                 discountPercentage,

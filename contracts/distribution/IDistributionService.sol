@@ -14,6 +14,7 @@ import {Timestamp} from "../type/Timestamp.sol";
 
 interface IDistributionService is IService {
 
+    error ErrorDistributionServiceInvalidDistributorType(DistributorType distributorType);
     error ErrorDistributionServiceCallerNotRegistered(address caller);
     error ErrorDistributionServiceParentNftIdNotInstance(NftId nftId, NftId parentNftId);
     error ErrorDistributionServiceCallerNotDistributor(address caller);
