@@ -9,8 +9,8 @@ import {NftId} from "../../../contracts/type/NftId.sol";
 import {ReferralId} from "../../../contracts/type/Referral.sol";
 import {Seconds, SecondsLib} from "../../../contracts/type/Seconds.sol";
 import {SimpleDistribution} from "../../../contracts/examples/unpermissioned/SimpleDistribution.sol";
-import {Timestamp} from "../../../contracts/type/Timestamp.sol";
-import {UFixed} from "../../../contracts/type/UFixed.sol";
+import {Timestamp, TimestampLib} from "../../../contracts/type/Timestamp.sol";
+import {UFixed, UFixedLib} from "../../../contracts/type/UFixed.sol";
 
 
 contract DistributorClusterTest is GifClusterTest {
@@ -73,6 +73,33 @@ contract DistributorClusterTest is GifClusterTest {
 
         // WHEN
         myDistribution1.changeDistributorType(distributorNftId, type2, "");
+    }
+
+    function test_createReferral_distributorFromOtherProductCluster() public {
+        // GIVEN
+        address theDistributor = makeAddr("theDistributor");
+
+        DistributorType type2 = _createDistributorType(myDistribution2, instanceOwner);
+        
+        vm.startPrank(instanceOwner);
+        distributorNftId = myDistribution2.createDistributor(distributor, type2, "");
+
+        Timestamp referralLifetime = TimestampLib.blockTimestamp().addSeconds(SecondsLib.toSeconds(3600));
+        UFixed discount = UFixedLib.toUFixed(1, -1);
+        
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IDistributionService.ErrorDistributionServiceInvalidDistributor.selector, 
+            distributorNftId));
+
+        // WHEN
+        myDistribution1.createReferral2(
+            distributorNftId, 
+            "BESTPRODUCT", 
+            discount, 
+            1, 
+            referralLifetime, 
+            "");
     }
 
 

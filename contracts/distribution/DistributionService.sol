@@ -182,6 +182,11 @@ contract DistributionService is
             revert ErrorDistributionServiceExpirationInvalid(expiryAt);
         }
 
+        NftId distributorDistributionNftId = getRegistry().getParentNftId(distributorNftId);
+        if (distributorDistributionNftId != distributionNftId) {
+            revert ErrorDistributionServiceInvalidDistributor(distributorNftId);
+        }
+
         {
             InstanceReader instanceReader = instance.getInstanceReader();
             DistributorType distributorType = instanceReader.getDistributorInfo(distributorNftId).distributorType;
