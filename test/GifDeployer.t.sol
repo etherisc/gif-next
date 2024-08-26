@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IAccessManager} from "@openzeppelin/contracts/access/manager/IAccessManager.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {console} from "../lib/forge-std/src/Test.sol";
 
@@ -118,20 +119,14 @@ contract GifDeployerTest is GifDeployer {
         assertTrue(registryAdmin.hasRole(gifManager, GIF_MANAGER_ROLE()), "registry owner not manager");
 
         // check sample admin access
-        assertTrue(
-            registryAdmin.canCall(
-                gifAdmin, // caller
-                address(releaseRegistry), // target
-                _toSelector(ReleaseRegistry.createNextRelease.selector)), 
-            "gif manager cannot call registerToken");
+        IAccessManager authority = IAccessManager(registryAdmin.authority());
+        bool can;
+        (can,) = authority.canCall(gifAdmin, address(registryAdmin), TokenRegistry.registerToken.selector);
+        assertFalse(can, "gif admin cannot call registerToken");
 
         // check sample manager access
-        assertTrue(
-            registryAdmin.canCall(
-                gifManager, // caller
-                address(tokenRegistry), // target
-                _toSelector(TokenRegistry.registerToken.selector)), 
-            "gif manager cannot call registerToken");
+        (can,) = authority.canCall(gifManager, address(tokenRegistry), TokenRegistry.registerToken.selector);
+        assertTrue(can, "gif manager cannot call registerToken");
 
         // check linked contracts
         assertEq(address(releaseRegistry.getRegistry()), address(registry), "unexpected registry address");
@@ -139,10 +134,6 @@ contract GifDeployerTest is GifDeployer {
         assertEq(address(releaseRegistry.getRegistryAdmin()), address(registryAdmin), "unexpected registry address");
 
         // TODO amend once full gif setup is streamlined
-    }
-
-    function _toSelector(bytes4 selector) internal pure returns (Selector) {
-        return SelectorLib.toSelector(selector);
     }
 
     function test_deployerCoreStakingManager() public {

@@ -15,7 +15,7 @@ interface IInstanceService is IService {
     // onlyInstance
     error ErrorInstanceServiceNotRegistered(address instance);
     error ErrorInstanceServiceNotInstance(address instance, ObjectType objectType);
-    error ErrorInstanceServiceInstanceVersionMismatch(address instance, VersionPart instanceVersion);
+    error ErrorInstanceServiceInstanceVersionMismatch(NftId instanceNftId, VersionPart expectedRelease, VersionPart instanceRelease);
 
     error ErrorInstanceServiceComponentNotInstanceLinked(address component);
 
@@ -53,6 +53,17 @@ interface IInstanceService is IService {
     
     event LogInstanceCloned(NftId instanceNftId, address instance);
 
+    /// @dev Locks the complete instance, including all its components.
+    function setInstanceLocked(bool locked) external;
+
+    /// @dev Locks/unlocks the specified target constrolled by the corresponding instance admin.
+    function setTargetLocked(address target, bool locked) external;
+
+    /// @dev Creates a new instance.
+    /// The caller becomes the owner of the new instance.
+    /// Creation of a new instance is achieved by this service through the creation and registration 
+    /// of a new clone of the master instance and then setting up the initial wiring and authorization 
+    /// of the necessary components.
     function createInstance()
         external 
         returns (
@@ -60,7 +71,7 @@ interface IInstanceService is IService {
             NftId instanceNftId
         );
 
-    function upgradeInstanceReader(NftId instanceNftId) external;
+    function upgradeInstanceReader() external;
     function upgradeMasterInstanceReader(address instanceReaderAddress) external;
 
     function setStakingLockingPeriod(Seconds stakeLockingPeriod) external;

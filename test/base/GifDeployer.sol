@@ -5,22 +5,25 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
+import {IAccessAdmin} from "../../contracts/authorization/IAccessAdmin.sol";
+import {IAuthorization} from "../../contracts/authorization/IAuthorization.sol";
+import {IRegistry} from "../../contracts/registry/IRegistry.sol";
+import {IRelease} from "../../contracts/registry/IRelease.sol";
+import {IServiceAuthorization} from "../../contracts/authorization/IServiceAuthorization.sol";
+
 import {AmountLib} from "../../contracts/type/Amount.sol";
 import {ObjectType, ObjectTypeLib} from "../../contracts/type/ObjectType.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {ProxyManager} from "../../contracts/upgradeability/ProxyManager.sol";
 import {SCHEDULED, DEPLOYING} from "../../contracts/type/StateId.sol";
 import {VersionPart, VersionPartLib} from "../../contracts/type/Version.sol";
+import {RegistryAuthorization} from "../../contracts/registry/RegistryAuthorization.sol";
 import {StateIdLib} from "../../contracts/type/StateId.sol";
 import {TimestampLib} from "../../contracts/type/Timestamp.sol";
 
-import {IAccessAdmin} from "../../contracts/authorization/IAccessAdmin.sol";
 
 // core contracts
 import {Dip} from "../../contracts/mock/Dip.sol";
-import {IRegistry} from "../../contracts/registry/IRegistry.sol";
-import {IRelease} from "../../contracts/registry/IRelease.sol";
-import {IServiceAuthorization} from "../../contracts/authorization/IServiceAuthorization.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
 import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
 import {ReleaseRegistry} from "../../contracts/registry/ReleaseRegistry.sol";
@@ -169,13 +172,12 @@ contract GifDeployer is Test {
         StakingStore stakingStore = new StakingStore(registry, stakingReader);
 
         // 8) deploy staking manager and staking component
-        bytes32 salt = bytes32("");
         stakingManager = new StakingManager(
             address(registry),
             address(tokenRegistry),
             address(stakingStore),
             stakingOwner,
-            salt);
+            bytes32("")); // salt
         staking = stakingManager.getStaking();
 
         // 9) initialize instance reader
@@ -188,21 +190,13 @@ contract GifDeployer is Test {
             address(releaseRegistry),
             address(tokenRegistry),
             address(staking));
+
         staking.linkToRegisteredNftId();
 
         // 11) initialize registry admin
-        // TODO Consider making it non permitted
-        // no arguments
-        // cmp deployed contracts codehashes with precalculated ones
-        // check authority is the same
-        // check registry is the same
-        // whatever...
-        // Consider: specific completeSetup can do specific checks and require specific initial state of deployed contracts
-        // if state is different -> setup can not be completed...
-        // state: owner/admin/manager
-        // can be usefull for non permissioned deployment
         registryAdmin.completeSetup(
-            registry,
+            address(registry),
+            address(new RegistryAuthorization()),
             gifAdmin,
             gifManager);
 

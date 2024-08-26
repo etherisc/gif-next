@@ -3,27 +3,32 @@ pragma solidity ^0.8.20;
 
 import {IAccess} from "./IAccess.sol";
 import {IAuthorization} from "./IAuthorization.sol";
-import {ObjectType, ObjectTypeLib, PRODUCT, ORACLE, DISTRIBUTION, POOL} from "../type/ObjectType.sol";
+
+import {InitializableERC165} from "../shared/InitializableERC165.sol";
+import {ObjectType, ObjectTypeLib} from "../type/ObjectType.sol";
 import {RoleId, RoleIdLib, ADMIN_ROLE} from "../type/RoleId.sol";
 import {SelectorLib} from "../type/Selector.sol";
 import {Str, StrLib} from "../type/String.sol";
 import {TimestampLib} from "../type/Timestamp.sol";
 import {VersionPart, VersionPartLib} from "../type/Version.sol";
 
-contract Authorization
-    is IAuthorization
+contract Authorization is
+    InitializableERC165,
+    IAuthorization
 {
     uint256 public constant GIF_RELEASE = 3;
 
     string public constant ROLE_NAME_SUFFIX = "Role";
     string public constant SERVICE_ROLE_NAME_SUFFIX = "ServiceRole";
 
+    uint64 internal _nextGifContractRoleId;
     ObjectType[] internal _serviceDomains;
     mapping(ObjectType domain => Str target) internal _serviceTarget;
 
     string internal _mainTargetName = "Component";
     string internal _tokenHandlerName = "ComponentTH";
 
+    ObjectType internal _domain;
     Str internal _mainTarget;
     Str internal _tokenHandlerTarget;
     Str[] internal _targets;
@@ -40,7 +45,9 @@ contract Authorization
 
     constructor(
         string memory mainTargetName, 
-        ObjectType targetDomain
+        ObjectType targetDomain, 
+        bool isComponent,
+        bool includeTokenHandler
     )
     {
         // checks
@@ -48,45 +55,52 @@ contract Authorization
             revert ErrorAuthorizationMainTargetNameEmpty();
         }
 
-        if (targetDomain.eqz()) {
+        if (targetDomain == ObjectTypeLib.zero()) {
             revert ErrorAuthorizationTargetDomainZero();
         }
 
         // effects
-        // setup main target, main role id and main role info
+        _initializeERC165();
+
+        _domain = targetDomain;
         _mainTargetName = mainTargetName;
-        _tokenHandlerName = string(abi.encodePacked(mainTargetName, "TH"));
-
-        RoleId mainRoleId = RoleIdLib.toComponentRoleId(targetDomain, 0);
-        string memory mainRolName = _toTargetRoleName(mainTargetName);
-
-        _addTargetWithRole(
-            _mainTargetName, 
-            mainRoleId,
-            mainRolName);
-
         _mainTarget = StrLib.toStr(mainTargetName);
-        _targetRole[_mainTarget] = mainRoleId;
+        _nextGifContractRoleId = 10;
 
-        // add token handler target for components
-        if (targetDomain == PRODUCT() 
-            || targetDomain == DISTRIBUTION()
-            || targetDomain == ORACLE()
-            || targetDomain == POOL()
-        ) {
-            _addTarget(_tokenHandlerName);
+        if (isComponent) {
+            if (targetDomain.eqz()) {
+                revert ErrorAuthorizationTargetDomainZero();
+            }
+
+            RoleId mainRoleId = RoleIdLib.toComponentRoleId(targetDomain, 0);
+            string memory mainRolName = _toTargetRoleName(_mainTargetName);
+
+            _addTargetWithRole(
+                _mainTargetName, 
+                mainRoleId,
+                mainRolName);
+        } else {
+            _addGifContractTarget(_mainTargetName);
         }
-
-        // setup token handler target
-        _tokenHandlerTarget = StrLib.toStr(_tokenHandlerName);
-
         // setup use case specific parts
         _setupServiceTargets();
         _setupRoles(); // not including main target role
         _setupTargets(); // not including main target (and token handler target)
-
-        _setupTokenHandlerAuthorizations();
         _setupTargetAuthorizations(); // not including token handler target
+
+        // setup component token handler 
+        if (includeTokenHandler) {
+            _tokenHandlerName = string(abi.encodePacked(mainTargetName, "TH"));
+            _tokenHandlerTarget = StrLib.toStr(_tokenHandlerName);
+            _addTarget(_tokenHandlerName);
+            _setupTokenHandlerAuthorizations();
+        }
+
+        _registerInterfaceNotInitializing(type(IAuthorization).interfaceId);
+    }
+
+    function getDomain() external view returns(ObjectType targetDomain) {
+        return _domain;
     }
 
     function getServiceDomains() external view returns(ObjectType[] memory serviceDomains) {
@@ -147,7 +161,7 @@ contract Authorization
         return target == _mainTarget || _targetExists[target];
     }
 
-    function getTargetRole(Str target) external view returns(RoleId roleId) {
+    function getTargetRole(Str target) public view returns(RoleId roleId) {
         return _targetRole[target];
     }
 
@@ -183,6 +197,20 @@ contract Authorization
     /// Overwrite this function for use case specific authorizations.
     function _setupTargetAuthorizations() internal virtual {}
 
+    function _addGifContractTarget(string memory contractName) internal {
+
+        RoleId contractRoleId = RoleIdLib.toRoleId(_nextGifContractRoleId++);
+        string memory contractRoleName = string(
+            abi.encodePacked(
+                contractName,
+                ROLE_NAME_SUFFIX));
+
+        _addTargetWithRole(
+            contractName,
+            contractRoleId,
+            contractRoleName);
+    }
+
     /// @dev Add the service target role for the specified service domain
     function _addServiceTargetWithRole(ObjectType serviceDomain) internal {
         // add service domain
@@ -192,7 +220,7 @@ contract Authorization
         string memory serviceTargetName = ObjectTypeLib.toVersionedName(
                 ObjectTypeLib.toName(serviceDomain), 
                 "Service", 
-                getRelease().toInt());
+                getRelease());
 
         _serviceTarget[serviceDomain] = StrLib.toStr(serviceTargetName);
 
@@ -200,7 +228,7 @@ contract Authorization
         string memory serviceRoleName = ObjectTypeLib.toVersionedName(
                 ObjectTypeLib.toName(serviceDomain), 
                 "ServiceRole", 
-                getRelease().toInt());
+                getRelease());
 
         _addTargetWithRole(
             serviceTargetName,
@@ -235,7 +263,7 @@ contract Authorization
             ObjectTypeLib.toVersionedName(
                 ObjectTypeLib.toName(serviceDomain), 
                 SERVICE_ROLE_NAME_SUFFIX, 
-                getRelease().toInt()));
+                getRelease()));
     }
 
 

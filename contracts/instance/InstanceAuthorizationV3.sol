@@ -1,17 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {
-     ACCOUNTING, ORACLE, POOL, INSTANCE, COMPONENT, DISTRIBUTION, APPLICATION, POLICY, CLAIM, BUNDLE, RISK
-} from "../../contracts/type/ObjectType.sol";
-
-import {BundleSet} from "../instance/BundleSet.sol";
-import {RiskSet} from "../instance/RiskSet.sol"; 
 import {IAccess} from "../authorization/IAccess.sol";
+
+import {Authorization} from "../authorization/Authorization.sol";
+import {ACCOUNTING, ORACLE, POOL, INSTANCE, COMPONENT, DISTRIBUTION, APPLICATION, POLICY, CLAIM, BUNDLE, RISK} from "../../contracts/type/ObjectType.sol";
+import {BundleSet} from "../instance/BundleSet.sol";
 import {Instance} from "../instance/Instance.sol";
 import {InstanceAdmin} from "../instance/InstanceAdmin.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
-import {Authorization} from "../authorization/Authorization.sol";
+import {PUBLIC_ROLE} from "../type/RoleId.sol";
+import {RiskSet} from "../instance/RiskSet.sol"; 
 
 
 contract InstanceAuthorizationV3
@@ -27,19 +26,10 @@ contract InstanceAuthorizationV3
      string public constant RISK_SET_TARGET_NAME = "RiskSet";
 
      constructor()
-          Authorization(INSTANCE_TARGET_NAME, INSTANCE())
+          Authorization(INSTANCE_TARGET_NAME, INSTANCE(), false, false)
      { }
 
-     function _setupTargets()
-          internal
-          override
-     {
-          // instance supporting targets
-          _addTarget(INSTANCE_STORE_TARGET_NAME);
-          _addTarget(INSTANCE_ADMIN_TARGET_NAME);
-          _addTarget(BUNDLE_SET_TARGET_NAME);
-          _addTarget(RISK_SET_TARGET_NAME);
-
+     function _setupServiceTargets() internal virtual override {
           // service targets relevant to instance
           _addServiceTargetWithRole(INSTANCE());
           _addServiceTargetWithRole(ACCOUNTING());
@@ -52,6 +42,19 @@ contract InstanceAuthorizationV3
           _addServiceTargetWithRole(APPLICATION());
           _addServiceTargetWithRole(POLICY());
           _addServiceTargetWithRole(CLAIM());
+     }
+
+     function _setupTargets()
+          internal
+          override
+     {
+          // instance supporting targets
+          // _addGifContractTarget(INSTANCE_ADMIN_TARGET_NAME);
+          _addTarget(INSTANCE_ADMIN_TARGET_NAME);
+          _addTarget(INSTANCE_STORE_TARGET_NAME);
+          _addTarget(BUNDLE_SET_TARGET_NAME);
+          _addTarget(RISK_SET_TARGET_NAME);
+
      }
 
 
@@ -108,6 +111,24 @@ contract InstanceAuthorizationV3
           IAccess.FunctionInfo[] storage functions;
 
           // authorize instance service role
+          functions = _authorizeForTarget(INSTANCE_TARGET_NAME, PUBLIC_ROLE());
+          _authorize(functions, Instance.registerProduct.selector, "registerProduct");
+          _authorize(functions, Instance.upgradeInstanceReader.selector, "upgradeInstanceReader");
+
+          // staking
+          _authorize(functions, Instance.setStakingLockingPeriod.selector, "setStakingLockingPeriod");
+          _authorize(functions, Instance.setStakingRewardRate.selector, "setStakingRewardRate");
+          _authorize(functions, Instance.refillStakingRewardReserves.selector, "refillStakingRewardReserves");
+          _authorize(functions, Instance.withdrawStakingRewardReserves.selector, "withdrawStakingRewardReserves");
+
+          // custom authz
+          _authorize(functions, Instance.createRole.selector, "createRole");
+          _authorize(functions, Instance.grantRole.selector, "grantRole");
+          _authorize(functions, Instance.revokeRole.selector, "revokeRole");
+          _authorize(functions, Instance.createTarget.selector, "createTarget");
+          _authorize(functions, Instance.setTargetFunctionRole.selector, "setTargetFunctionRole");
+
+          // authorize instance service role
           functions = _authorizeForTarget(INSTANCE_TARGET_NAME, getServiceRole(INSTANCE()));
           _authorize(functions, Instance.setInstanceReader.selector, "setInstanceReader");
      }
@@ -118,14 +139,15 @@ contract InstanceAuthorizationV3
      {
           IAccess.FunctionInfo[] storage functions;
 
-          // authorize instance role
-          functions = _authorizeForTarget(INSTANCE_ADMIN_TARGET_NAME, getComponentRole(INSTANCE()));
-          _authorize(functions, InstanceAdmin.grantRole.selector, "grantRole");
+          // authorize component service role
+          functions = _authorizeForTarget(INSTANCE_ADMIN_TARGET_NAME, getServiceRole(INSTANCE()));
+          _authorize(functions, InstanceAdmin.setInstanceLocked.selector, "setInstanceLocked");
+          _authorize(functions, InstanceAdmin.setTargetLocked.selector, "setTargetLocked");
 
           // authorize component service role
           functions = _authorizeForTarget(INSTANCE_ADMIN_TARGET_NAME, getServiceRole(COMPONENT()));
           _authorize(functions, InstanceAdmin.initializeComponentAuthorization.selector, "initializeComponentAuthoriz");
-          _authorize(functions, InstanceAdmin.setTargetLocked.selector, "setTargetLocked");
+          _authorize(functions, InstanceAdmin.setComponentLocked.selector, "setComponentLocked");
      }
 
 

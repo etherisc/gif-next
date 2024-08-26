@@ -270,11 +270,12 @@ contract TokenHandler is
         AccessManaged(authority)
     { }
 
-    /// @dev sets the wallet address for the component.
-    /// if the current wallet has tokens, these will be transferred.
-    /// if the new wallet address is externally owned, an approval from the 
+    /// @dev Sets the wallet address for the component.
+    /// Seeting the new wallet address to address(0) will set the wallet to the tokenHandler contract itself.
+    /// If the current wallet has tokens, these will be transferred.
+    /// If the new wallet address is externally owned, an approval from the 
     /// owner of the external wallet to the tokenhandler of the component that 
-    /// covers the current component balance must exist
+    /// covers the current component balance must exist.
     function setWallet(address newWallet)
         external
         restricted()

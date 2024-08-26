@@ -1,22 +1,24 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IInstance} from "./IInstance.sol";
+import {IComponentService} from "../shared/IComponentService.sol";
+import {IInstanceService} from "./IInstanceService.sol";
+import {IRegistry} from "../registry/IRegistry.sol";
+
 import {Amount} from "../type/Amount.sol";
 import {BundleSet} from "./BundleSet.sol";
 import {RiskSet} from "./RiskSet.sol";
 import {COMPONENT, INSTANCE} from "../type/ObjectType.sol";
-import {IInstance} from "./IInstance.sol";
-import {IComponentService} from "../shared/IComponentService.sol";
-import {IInstanceService} from "./IInstanceService.sol";
 import {InstanceReader} from "./InstanceReader.sol";
 import {InstanceAdmin} from "./InstanceAdmin.sol";
 import {InstanceStore} from "./InstanceStore.sol";
-import {IRegistry} from "../registry/IRegistry.sol";
 import {NftId} from "../type/NftId.sol";
 import {Registerable} from "../shared/Registerable.sol";
 import {RoleId} from "../type/RoleId.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {UFixed} from "../type/UFixed.sol";
+import {VersionPart} from "../type/Version.sol";
 
 contract Instance is
     IInstance,
@@ -48,6 +50,7 @@ contract Instance is
         RiskSet riskSet,
         InstanceReader instanceReader,
         IRegistry registry, 
+        VersionPart release,
         address initialOwner
     ) 
         external 
@@ -84,20 +87,40 @@ contract Instance is
         _componentService = IComponentService(
             getRegistry().getServiceAddress(
                 COMPONENT(), 
-                getRelease()));
+                release));
 
         _instanceService = IInstanceService(
             getRegistry().getServiceAddress(
                 INSTANCE(), 
-                getRelease()));
+                release));
 
         _registerInterface(type(IInstance).interfaceId);    
     }
+
+
+    function setInstanceLocked(bool locked)
+        external 
+        // not restricted(): need to be able to unlock a locked instance
+        onlyOwner()
+    {
+        _instanceService.setInstanceLocked(locked);
+    }
+
+
+    function upgradeInstanceReader()
+        external
+        restricted()
+        onlyOwner()
+    {
+        _instanceService.upgradeInstanceReader();
+    }
+
 
     //--- ProductRegistration ----------------------------------------------//
 
     function registerProduct(address product)
         external
+        restricted()
         onlyOwner()
         returns (NftId productNftId)
     {
@@ -109,6 +132,7 @@ contract Instance is
 
     function setStakingLockingPeriod(Seconds stakeLockingPeriod)
         external
+        restricted()
         onlyOwner()
     {
         _instanceService.setStakingLockingPeriod(stakeLockingPeriod);
@@ -116,6 +140,7 @@ contract Instance is
 
     function setStakingRewardRate(UFixed rewardRate)
         external
+        restricted()
         onlyOwner()
     {
         _instanceService.setStakingRewardRate(rewardRate);
@@ -123,6 +148,7 @@ contract Instance is
 
     function refillStakingRewardReserves(Amount dipAmount)
         external
+        restricted()
         onlyOwner()
     {
         address instanceOwner = msg.sender;
@@ -131,6 +157,7 @@ contract Instance is
 
     function withdrawStakingRewardReserves(Amount dipAmount)
         external
+        restricted()
         onlyOwner()
         returns (Amount newBalance)
     {
@@ -141,6 +168,7 @@ contract Instance is
 
     function createRole(string memory roleName, string memory adminName)
         external
+        restricted()
         onlyOwner()
         returns (RoleId roleId, RoleId admin)
     {
@@ -150,6 +178,7 @@ contract Instance is
 
     function grantRole(RoleId roleId, address account) 
         external 
+        restricted()
         onlyOwner()
     {
         _instanceAdmin.grantRole(roleId, account);
@@ -157,6 +186,7 @@ contract Instance is
 
     function revokeRole(RoleId roleId, address account) 
         external 
+        restricted()
         onlyOwner()
     {
         // TODO refactor
@@ -165,8 +195,18 @@ contract Instance is
 
     //--- Targets ------------------------------------------------------------//
 
+
+    function setTargetLocked(address target, bool locked)
+        external 
+        // not restricted(): instance owner may need to be able to unlock targets on an locked instance
+        onlyOwner()
+    {
+        _instanceService.setTargetLocked(target, locked);
+    }
+
     function createTarget(address target, string memory name) 
         external 
+        restricted()
         onlyOwner()
     {
         // TODO refactor
@@ -179,17 +219,11 @@ contract Instance is
         RoleId roleId
     ) 
         external 
+        restricted()
         onlyOwner()
     {
         // TODO refactor
         // _instanceAdmin.setTargetFunctionRoleByInstance(targetName, selectors, roleId);
-    }
-
-    function setLocked(address target, bool locked)
-        external 
-        onlyOwner()
-    {
-        _componentService.setLockedFromInstance(target, locked);
     }
 
     //--- ITransferInterceptor ----------------------------------------------//
@@ -214,6 +248,14 @@ contract Instance is
     }
 
     //--- external view functions -------------------------------------------//
+
+    function isInstanceLocked() external view returns (bool) {
+        return _instanceAdmin.isLocked();
+    }
+
+    function isTargetLocked(address target) external view returns (bool) {
+        return _instanceAdmin.isTargetLocked(target);
+    }
 
     function products() external view returns (uint256 productCount) {
         return _products.length;

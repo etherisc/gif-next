@@ -208,6 +208,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             TargetManagerLib: libraries.targetManagerLibAddress,
             TimestampLib: libraries.timestampLibAddress,
             VersionLib: libraries.versionLibAddress,
+            VersionPartLib: libraries.versionPartLibAddress,
         }});
 
     const instanceServiceManager = instanceServiceManagerBaseContract as InstanceServiceManager;

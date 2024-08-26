@@ -144,31 +144,24 @@ contract ComponentService is
     }
 
     /// @inheritdoc IComponentService
-    function setLockedFromInstance(address componentAddress, bool locked) 
+    function setLocked(bool locked) 
         external 
         virtual
-        onlyInstance()
-    {
-        address instanceAddress = msg.sender;
-        // NftId instanceNftId = getRegistry().getNftIdForAddress(msg.sender);
-        IInstance instance = IInstance(instanceAddress);
-        _setLocked(instance.getInstanceAdmin(), componentAddress, locked);
-    }
-
-    /// @inheritdoc IComponentService
-    function setLockedFromComponent(address componentAddress, bool locked) 
-        external
-        virtual
-        onlyComponent(msg.sender)
+        restricted()
     {
         (, IInstance instance) = _getAndVerifyComponent(COMPONENT(), false);
-        _setLocked(instance.getInstanceAdmin(), componentAddress, locked);
+
+        address component = msg.sender;
+        instance.getInstanceAdmin().setComponentLocked(
+            component, 
+            locked);
     }
 
     /// @inheritdoc IComponentService
     function withdrawFees(Amount amount)
         external
         virtual
+        restricted()
         returns (Amount withdrawnAmount)
     {
         // checks
@@ -198,6 +191,7 @@ contract ComponentService is
             componentNftId, 
             withdrawnAmount);
         
+        // transfer amount to component owner
         address componentOwner = getRegistry().ownerOf(componentNftId);
         TokenHandler tokenHandler = instanceReader.getTokenHandler(componentNftId);
         emit LogComponentServiceComponentFeesWithdrawn(
@@ -502,26 +496,29 @@ contract ComponentService is
         }
 
         // deploy and wire token handler
-        IComponents.ComponentInfo memory componentInfo = component.getInitialComponentInfo();
-        IERC20Metadata token = componentInfo.token;
-        componentInfo.tokenHandler = TokenHandlerDeployerLib.deployTokenHandler(
-            address(getRegistry()),
-            address(component), // initially, component is its own wallet
-            address(token), 
-            address(instanceAdmin.authority()));
-        
-        // register component with instance
-        instanceStore.createComponent(
-            componentNftId, 
-            componentInfo);
+        address token;
+        {
+            IComponents.ComponentInfo memory componentInfo = component.getInitialComponentInfo();
+            token = address(componentInfo.token);
+            componentInfo.tokenHandler = TokenHandlerDeployerLib.deployTokenHandler(
+                address(getRegistry()),
+                componentAddress, // initially, component is its own wallet
+                token, 
+                address(instanceAdmin.authority()));
+            
+            // register component with instance
+            instanceStore.createComponent(
+                componentNftId, 
+                componentInfo);
+        }
 
         // link component contract to nft id
         component.linkToRegisteredNftId();
 
         // authorize
-        instanceAdmin.initializeComponentAuthorization(component);
+        instanceAdmin.initializeComponentAuthorization(componentAddress, requiredType);
 
-        emit LogComponentServiceRegistered(instanceNftId, componentNftId, requiredType, address(component), address(token), initialOwner);
+        emit LogComponentServiceRegistered(instanceNftId, componentNftId, requiredType, componentAddress, token, initialOwner);
     }
 
 

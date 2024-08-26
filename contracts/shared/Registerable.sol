@@ -26,7 +26,6 @@ abstract contract Registerable is
     struct RegisterableStorage {
         NftId _parentNftId;
         ObjectType _objectType;
-        VersionPart _release;
         bool _isInterceptor;
         bytes _data;
     }
@@ -61,7 +60,6 @@ abstract contract Registerable is
         RegisterableStorage storage $ = _getRegisterableStorage();
         $._parentNftId = parentNftId;
         $._objectType = objectType;
-        $._release = AccessManagerCloneable(authority).getRelease();
         $._isInterceptor = isInterceptor;
         $._data = data;
 
@@ -77,8 +75,7 @@ abstract contract Registerable is
 
     /// @inheritdoc IRelease
     function getRelease() public virtual view returns (VersionPart release) {
-        RegisterableStorage storage $ = _getRegisterableStorage();
-        return $._release;
+        return AccessManagerCloneable(authority()).getRelease();
     }
 
 

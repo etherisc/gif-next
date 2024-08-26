@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+
 import {IAccess} from "../authorization/IAccess.sol";
 import {ObjectType} from "../type/ObjectType.sol";
 import {RoleId} from "../type/RoleId.sol";
@@ -8,11 +10,15 @@ import {Str} from "../type/String.sol";
 import {VersionPart} from "../type/Version.sol";
 
 interface IAuthorization is 
+     IERC165,
      IAccess 
 {
 
      error ErrorAuthorizationMainTargetNameEmpty();
      error ErrorAuthorizationTargetDomainZero();
+
+     /// @dev Returns the main domain of the authorization.
+     function getDomain() external view returns(ObjectType targetDomain);
 
      /// @dev Returns the list of service targets.
      function getServiceDomains() external view returns(ObjectType[] memory serviceDomains);

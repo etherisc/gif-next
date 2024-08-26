@@ -334,7 +334,13 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 // prepare
                 IServiceAuthorization nextAuthMock = new ServiceAuthorizationMockWithRegistryService(nextVersion);
                 bytes32 nextSalt = bytes32(randomNumber(type(uint256).max)); 
-                address nextAdmin = StdUtils.computeCreateAddress(address(releaseRegistry), vm.getNonce(address(releaseRegistry)) + 1);
+                address nextAdmin = _getNextContractAddress(address(releaseRegistry), 0);
+
+                // // solhint-disable
+                // console.log("nextAdmin(0)", i, _getNextContractAddress(address(releaseRegistry), 0));
+                // console.log("nextAdmin(1)", i, _getNextContractAddress(address(releaseRegistry), 1));
+                // console.log("nextAdmin(2)", i, _getNextContractAddress(address(releaseRegistry), 2));
+                // // solhint-enable
 
                 vm.expectEmit(address(releaseRegistry));
                 emit LogReleaseCreation(IAccessAdmin(nextAdmin), nextVersion, nextSalt);
@@ -389,6 +395,13 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
             prevReleaseInfo = nextReleaseInfo;
             nextReleaseInfo = zeroReleaseInfo();
         }  
+    }
+
+    function _getNextContractAddress(address deployer, uint256 nonceOffset) internal returns (address) {
+        // return StdUtils.computeCreateAddress(
+        return vm.computeCreateAddress(
+            deployer, 
+            vm.getNonce(deployer) + nonceOffset);
     }
 
     function test_releaseRegistry_createRelease_whenReleaseDeployedHappyCase() public 
@@ -1116,7 +1129,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
         VersionPart expectedVersion = VersionPartLib.toVersionPart(releaseRegistry.INITIAL_GIF_VERSION());
         ServiceAuthorizationMockWithRegistryService serviceAuth = new ServiceAuthorizationMockWithRegistryService(expectedVersion);
         bytes32 salt = "0x1234";
-        address admin = StdUtils.computeCreateAddress(address(releaseRegistry), vm.getNonce(address(releaseRegistry)) + 1);
+        address admin = _getNextContractAddress(address(releaseRegistry), 0);
 
         vm.prank(gifAdmin);
         releaseRegistry.createNextRelease();

@@ -544,24 +544,6 @@ contract PolicyService is
             tokenHandler.pushToken(poolWallet, premium.poolPremiumAndFeeAmount);
         }
     }
-
-
-    /// @dev checks that policy has been collateralized and has been activated.
-    /// does not check if policy has been expired or closed.
-    function _policyHasBeenActivated(
-        StateId policyState,
-        IPolicy.PolicyInfo memory policyInfo
-    )
-        internal
-        view
-        returns (bool)
-    {
-        if (policyState != COLLATERALIZED()) { return false; } 
-        if (TimestampLib.blockTimestamp() < policyInfo.activatedAt) { return false; } 
-        return true;
-    }
-
-
     function _policyHolderPolicyActivated(
         NftId policyNftId,
         Timestamp activateAt

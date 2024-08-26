@@ -5,10 +5,15 @@ import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/acce
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
+import {IAccessAdmin} from "./IAccessAdmin.sol";
+import {IAuthorization} from "./IAuthorization.sol";
+import {IRegistry} from "../registry/IRegistry.sol";
+
+import {AccessAdminLib} from "./AccessAdminLib.sol";
 import {AccessManagerCloneable} from "./AccessManagerCloneable.sol";
 import {ContractLib} from "../shared/ContractLib.sol";
-import {IAccessAdmin} from "./IAccessAdmin.sol";
-import {IRegistry} from "../registry/IRegistry.sol";
+import {NftId, NftIdLib} from "../type/NftId.sol";
+import {ObjectType} from "../type/ObjectType.sol";
 import {RoleId, RoleIdLib, ADMIN_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {Selector, SelectorLib, SelectorSetLib} from "../type/Selector.sol";
 import {Str, StrLib} from "../type/String.sol";
@@ -34,12 +39,22 @@ contract AccessAdmin is
     string public constant ADMIN_ROLE_NAME = "AdminRole";
     string public constant PUBLIC_ROLE_NAME = "PublicRole";
 
-    /// @dev the OpenZeppelin access manager driving the access admin contract
+    /// @dev admin name used for logging only
+    string internal _adminName;
+
+    /// @dev the access manager driving the access admin contract
+    /// hold link to registry and release version
     AccessManagerCloneable internal _authority;
+
+    /// @dev the authorization contract used for initial access control
+    IAuthorization internal _authorization;
 
     /// @dev stores the deployer address and allows to create initializers
     /// that are restricted to the deployer address.
     address internal _deployer;
+
+    /// @dev the linked NFT ID
+    NftId internal _linkedNftId;
 
     /// @dev store role info per role id
     mapping(RoleId roleId => RoleInfo info) internal _roleInfo;
@@ -79,23 +94,25 @@ contract AccessAdmin is
         }
 
         if (msg.sender != _deployer) {
-            revert ErrorNotDeployer();
+            revert ErrorAccessAdminNotDeployer();
         }
         _;
     }
 
-    modifier onlyRoleAdmin(RoleId roleId) {
+    modifier onlyRoleMember(RoleId roleId, address account) {
         _checkRoleExists(roleId, false);
 
-        if (!hasAdminRole(msg.sender, roleId)) {
-            revert ErrorNotAdminOfRole(_roleInfo[roleId].adminRoleId);
+        if (!hasRole(account, roleId)) {
+            revert ErrorAccessAdminNotRoleOwner(roleId, account);
         }
         _;
     }
 
-    modifier onlyRoleMember(RoleId roleId) {
-        if (!hasRole(msg.sender, roleId)) {
-            revert ErrorNotRoleOwner(roleId);
+    modifier onlyRoleAdmin(RoleId roleId, address account) {
+        _checkRoleExists(roleId, false);
+
+        if (!hasAdminRole(account, roleId)) {
+            revert ErrorAccessAdminNotAdminOfRole(_roleInfo[roleId].adminRoleId, account);
         }
         _;
     }
@@ -113,7 +130,7 @@ contract AccessAdmin is
     }
 
     modifier onlyExistingTarget(address target) {
-        _checkTarget(target);
+        _checkTargetExists(target);
         _;
     }
 
@@ -124,34 +141,61 @@ contract AccessAdmin is
     /// @dev Initializes this admin with the provided accessManager (and authorization specification).
     /// Internally initializes access manager with this admin and creates basic role setup.
     function initialize(
-        AccessManagerCloneable authority 
+        address authority,
+        string memory adminName 
     )
         public
         initializer()
     {
-        __AccessAdmin_init(authority);
+        __AccessAdmin_init(authority, adminName);
     }
 
 
     function __AccessAdmin_init(
-        AccessManagerCloneable authority 
+        address authority, 
+        string memory adminName 
     )
         internal
         onlyInitializing()
-        onlyDeployer() // initializes deployer if not initialized yet
+        onlyDeployer()
     {
-        authority.initialize(address(this));
+        // checks
+        // check authority is contract
+        if (!ContractLib.isContract(authority)) {
+            revert ErrorAccessAdminAuthorityNotContract(authority);
+        }
 
+        // check name not empty
+        if (bytes(adminName).length == 0) {
+            revert ErrorAccessAdminAccessManagerEmptyName();
+        }
+
+        _authority = AccessManagerCloneable(authority);
+        _authority.initialize(address(this));
+
+        // delayed additional check for authority after its initialization
+        if (!ContractLib.isAuthority(authority)) {
+            revert ErrorAccessAdminAccessManagerNotAccessManager(authority);
+        }
+
+        // effects
         // set and initialize this access manager contract as
         // the admin (ADMIN_ROLE) of the provided authority
-        __AccessManaged_init(address(authority));
-        _authority = authority;
+        __AccessManaged_init(authority);
+
+        // set name for logging
+        _adminName = adminName;
+
+        // set initial linked NFT ID to zero
+        _linkedNftId = NftIdLib.zero();
 
         // create admin and public roles
         _initializeAdminAndPublicRoles();
+    }
 
-        // additional use case specific initialization
-        _initializeCustom();
+
+    function getRelease() public view virtual returns (VersionPart release) {
+        return _authority.getRelease();
     }
 
 
@@ -160,46 +204,24 @@ contract AccessAdmin is
     }
 
 
-    function getRelease() public view returns (VersionPart release) {
-        return _authority.getRelease();
+    function getLinkedNftId() external view returns (NftId linkedNftId) {
+        return _linkedNftId;
     }
 
 
-    function _initializeAdminAndPublicRoles()
-        internal
-        virtual
-        onlyInitializing()
-    {
-        RoleId adminRoleId = RoleIdLib.toRoleId(_authority.ADMIN_ROLE());
-
-        // setup admin role
-        _createRoleUnchecked(
-            ADMIN_ROLE(),
-            toRole({
-                adminRoleId: ADMIN_ROLE(),
-                roleType: RoleType.Contract,
-                maxMemberCount: 1,
-                name: ADMIN_ROLE_NAME}));
-
-        // add this contract as admin role member
-        _roleMembers[adminRoleId].add(address(this));
-
-        // setup public role
-        _createRoleUnchecked(
-            PUBLIC_ROLE(),
-            toRole({
-                adminRoleId: ADMIN_ROLE(),
-                roleType: RoleType.Gif,
-                maxMemberCount: type(uint32).max,
-                name: PUBLIC_ROLE_NAME}));
+    function getLinkedOwner() external view returns (address linkedOwner) {
+        return getRegistry().ownerOf(_linkedNftId);
     }
 
 
-    function _initializeCustom()
-        internal
-        virtual
-        onlyInitializing()
-    { }
+    function getAuthorization() public view returns (IAuthorization authorization) {
+        return _authorization;
+    }
+
+
+    function isLocked() public view returns (bool locked) {
+        return _authority.isLocked();
+    }
 
     //--- view functions for roles ------------------------------------------//
 
@@ -223,12 +245,12 @@ contract AccessAdmin is
         return _roleInfo[roleId].createdAt.gtz();
     }
 
-    function getRoleInfo(RoleId roleId) external view returns (RoleInfo memory) {
-        return _roleInfo[roleId];
+    function getRoleForName(string memory name) external view returns (RoleId roleId) {
+        return _roleForName[StrLib.toStr(name)].roleId;
     }
 
-    function getRoleForName(Str name) external view returns (RoleNameInfo memory) {
-        return _roleForName[name];
+    function getRoleInfo(RoleId roleId) external view returns (RoleInfo memory) {
+        return _roleInfo[roleId];
     }
 
     function roleMembers(RoleId roleId) external view returns (uint256 numberOfMembers) {
@@ -305,33 +327,59 @@ contract AccessAdmin is
                 selector.toBytes4()));
     }
 
-    function canCall(address caller, address target, Selector selector) external virtual view returns (bool can) {
-        (can, ) = _authority.canCall(caller, target, selector.toBytes4());
-    }
-
-    function toRole(RoleId adminRoleId, RoleType roleType, uint32 maxMemberCount, string memory name) public view returns (RoleInfo memory) {
-        return RoleInfo({
-            name: StrLib.toStr(name),
-            adminRoleId: adminRoleId,
-            roleType: roleType,
-            maxMemberCount: maxMemberCount,
-            createdAt: TimestampLib.blockTimestamp(),
-            pausedAt: TimestampLib.max()
-        });
-    }
-
-    function toFunction(bytes4 selector, string memory name) public view returns (FunctionInfo memory) {
-        return FunctionInfo({
-            name: StrLib.toStr(name),
-            selector: SelectorLib.toSelector(selector),
-            createdAt: TimestampLib.blockTimestamp()});
-    }
-
     function deployer() public view returns (address) {
         return _deployer;
     }
 
     //--- internal/private functions -------------------------------------------------//
+
+    function _linkToNftOwnable(address registerable) internal {
+        if (!getRegistry().isRegistered(registerable)) {
+            revert ErrorAccessAdminNotRegistered(registerable);
+        }
+
+        _linkedNftId = getRegistry().getNftIdForAddress(registerable);
+    }
+
+    function _initializeAdminAndPublicRoles()
+        internal
+        virtual
+        onlyInitializing()
+    {
+        RoleId adminRoleId = RoleIdLib.toRoleId(_authority.ADMIN_ROLE());
+
+        // setup admin role
+        _createRoleUnchecked(
+            ADMIN_ROLE(),
+            AccessAdminLib.toRole({
+                adminRoleId: ADMIN_ROLE(),
+                roleType: RoleType.Contract,
+                maxMemberCount: 1,
+                name: ADMIN_ROLE_NAME}));
+
+        // add this contract as admin role member
+        _roleMembers[adminRoleId].add(address(this));
+
+        // setup public role
+        _createRoleUnchecked(
+            PUBLIC_ROLE(),
+            AccessAdminLib.toRole({
+                adminRoleId: ADMIN_ROLE(),
+                roleType: RoleType.Gif,
+                maxMemberCount: type(uint32).max,
+                name: PUBLIC_ROLE_NAME}));
+    }
+
+    function _createTargetWithRole(
+        address target,
+        string memory targetName,
+        RoleId targetRoleId
+    )
+        internal
+    {
+        _createTarget(target, targetName, true, false);
+        _grantRoleToAccount(targetRoleId, target);
+    }
 
     function _authorizeTargetFunctions(
         address target, 
@@ -341,7 +389,7 @@ contract AccessAdmin is
         internal
     {
         if (roleId == getAdminRole()) {
-            revert ErrorAuthorizeForAdminRoleInvalid(target);
+            revert ErrorAccessAdminAuthorizeForAdminRoleInvalid(target);
         }
 
         (
@@ -430,13 +478,15 @@ contract AccessAdmin is
             functionSelectors,
             RoleId.unwrap(roleId));
 
+        // log function grantings
         for (uint256 i = 0; i < functionSelectors.length; i++) {
             emit LogAccessAdminFunctionGranted(
+                _adminName, 
                 target, 
-                // _getAccountName(target), 
-                // string(abi.encodePacked("", functionSelectors[i])), 
-                functionNames[i], 
-                _getRoleName(roleId));
+                string(abi.encodePacked(
+                    functionNames[i], 
+                    "(): ",
+                    _getRoleName(roleId))));
         }
     }
 
@@ -448,7 +498,7 @@ contract AccessAdmin is
     {
         // check max role members will not be exceeded
         if (_roleMembers[roleId].length() >= _roleInfo[roleId].maxMemberCount) {
-            revert ErrorRoleMembersLimitReached(roleId, _roleInfo[roleId].maxMemberCount);
+            revert ErrorAccessAdminRoleMembersLimitReached(roleId, _roleInfo[roleId].maxMemberCount);
         }
 
         // check account is contract for contract role
@@ -456,7 +506,7 @@ contract AccessAdmin is
             _roleInfo[roleId].roleType == RoleType.Contract &&
             !ContractLib.isContract(account) // will fail in account's constructor
         ) {
-            revert ErrorRoleMemberNotContract(roleId, account);
+            revert ErrorAccessAdminRoleMemberNotContract(roleId, account);
         }
 
         // TODO check account already have roleId
@@ -466,7 +516,7 @@ contract AccessAdmin is
             account, 
             0);
         
-        emit LogAccessAdminRoleGranted(account, _getRoleName(roleId));
+        emit LogAccessAdminRoleGranted(_adminName, account, _getRoleName(roleId));
     }
 
     /// @dev revoke the specified role from the provided account
@@ -477,7 +527,7 @@ contract AccessAdmin is
 
         // check role removal is permitted
         if (_roleInfo[roleId].roleType == RoleType.Contract) {
-            revert ErrorRoleMemberRemovalDisabled(roleId, account);
+            revert ErrorAccessAdminRoleMemberRemovalDisabled(roleId, account);
         }
 
         // TODO check account have roleId?
@@ -486,7 +536,7 @@ contract AccessAdmin is
             RoleId.unwrap(roleId), 
             account);
 
-        emit LogAccessAdminRoleRevoked(account, _roleInfo[roleId].name.toString());
+        emit LogAccessAdminRoleRevoked(_adminName, account, _roleInfo[roleId].name.toString());
     }
 
 
@@ -498,32 +548,21 @@ contract AccessAdmin is
     )
         internal
     {
-        // check role does not yet exist
-        if(roleExists(roleId)) {
-            revert ErrorRoleAlreadyCreated(
-                roleId, 
-                _roleInfo[roleId].name.toString());
-        }
-
-        // check admin role exists
-        if(!roleExists(info.adminRoleId)) {
-            revert ErrorRoleAdminNotExisting(info.adminRoleId);
-        }
-
-        // check role name is not empty
-        if(info.name.length() == 0) {
-            revert ErrorRoleNameEmpty(roleId);
-        }
-
-        // check role name is not used for another role
-        if(_roleForName[info.name].exists) {
-            revert ErrorRoleNameAlreadyExists(
-                roleId, 
-                info.name.toString(),
-                _roleForName[info.name].roleId);
-        }
-
+        AccessAdminLib.checkRoleCreation(this, roleId, info);
         _createRoleUnchecked(roleId, info);
+    }
+
+
+    function _createTarget(
+        address target, 
+        string memory targetName, 
+        bool checkAuthority,
+        bool custom
+    )
+        internal
+    {
+        AccessAdminLib.checkTargetCreation(this, target, targetName, checkAuthority);
+        _createTargetUnchecked(target, targetName, custom);
     }
 
 
@@ -545,53 +584,19 @@ contract AccessAdmin is
         // add role to list of roles
         _roleIds.push(roleId);
 
-        emit LogAccessAdminRoleCreated(roleId, info.roleType, info.adminRoleId, info.name.toString());
+        emit LogAccessAdminRoleCreated(_adminName, roleId, info.roleType, info.adminRoleId, info.name.toString());
     }
 
 
-    function _createTarget(
+    function _createTargetUnchecked(
         address target, 
         string memory targetName, 
-        bool checkAuthority,
         bool custom
     )
         internal
     {
-        // check target does not yet exist
-        if(targetExists(target)) {
-            revert ErrorTargetAlreadyCreated(
-                target, 
-                _targetInfo[target].name.toString());
-        }
-
-        // check target name is not empty
-        Str name = StrLib.toStr(targetName);
-        if(name.length() == 0) {
-            revert ErrorTargetNameEmpty(target);
-        }
-
-        // check target name is not used for another target
-        if( _targetForName[name] != address(0)) {
-            revert ErrorTargetNameAlreadyExists(
-                target, 
-                targetName,
-                _targetForName[name]);
-        }
-
-        // check target is an access managed contract
-        if (!_isAccessManaged(target)) {
-            revert ErrorTargetNotAccessManaged(target);
-        }
-
-        // check target shares authority with this contract
-        if (checkAuthority) {
-            address targetAuthority = AccessManagedUpgradeable(target).authority();
-            if (targetAuthority != authority()) {
-                revert ErrorTargetAuthorityMismatch(authority(), targetAuthority);
-            }
-        }
-
         // create target info
+        Str name = StrLib.toStr(targetName);
         _targetInfo[target] = TargetInfo({
             name: name,
             isCustom: custom,
@@ -604,45 +609,15 @@ contract AccessAdmin is
         // add role to list of roles
         _targets.push(target);
 
-        emit LogAccessAdminTargetCreated(target, targetName);
+        emit LogAccessAdminTargetCreated(_adminName, target, targetName);
     }
 
 
-    function _isAccessManaged(address target)
+    function _setTargetLocked(address target, bool locked)
         internal
-        view
-        returns (bool)
+        onlyExistingTarget(target)
     {
-        if (!ContractLib.isContract(target)) {
-            return false;
-        }
-
-        (bool success, ) = target.staticcall(
-            abi.encodeWithSelector(
-                IAccessManagedChecker.authority.selector));
-
-        return success;
-    }
-
-
-    function _setTargetClosed(address target, bool locked)
-        internal
-    {
-        _checkTarget(target);
-
-        // target locked/unlocked already
-        if(_authority.isTargetClosed(target) == locked) {
-            revert ErrorTargetAlreadyLocked(target, locked);
-        }
-
         _authority.setTargetClosed(target, locked);
-    }
-
-    function _getAccountName(address account) internal view returns (string memory) {
-        if (targetExists(account)) {
-            return _targetInfo[account].name.toString();
-        }
-        return "<unknown-account>";
     }
 
 
@@ -654,7 +629,25 @@ contract AccessAdmin is
     }
 
 
-    function _checkRoleExists(
+    function _checkAuthorization( 
+        address authorization,
+        ObjectType expectedDomain, 
+        VersionPart expectedRelease,
+        bool checkAlreadyInitialized
+    )
+        internal
+        view
+    {
+        AccessAdminLib.checkAuthorization(
+            address(_authorization), 
+            authorization, 
+            expectedDomain, 
+            expectedRelease, 
+            checkAlreadyInitialized);
+    }
+
+
+    function _checkRoleExists( 
         RoleId roleId, 
         bool onlyActiveRole
     )
@@ -662,28 +655,50 @@ contract AccessAdmin is
         view
     {
         if (!roleExists(roleId)) {
-            revert ErrorRoleUnknown(roleId);
+            revert ErrorAccessAdminRoleUnknown(roleId);
         }
 
         uint64 roleIdInt = RoleId.unwrap(roleId);
         if (roleIdInt == _authority.ADMIN_ROLE()) {
-            revert ErrorRoleIsLocked(roleId);
+            revert ErrorAccessAdminRoleIsLocked(roleId);
         }
 
         // check if role is disabled
         if (onlyActiveRole && _roleInfo[roleId].pausedAt <= TimestampLib.blockTimestamp()) {
-            revert ErrorRoleIsPaused(roleId);
+            revert ErrorAccessAdminRoleIsPaused(roleId);
         }
     }
 
 
+
     /// @dev check if target exists and reverts if it doesn't
-    function _checkTarget(address target)
+    function _checkTargetExists(
+        address target
+    )
         internal
         view
     {
+        // check not yet created
         if (!targetExists(target)) {
-            revert ErrorTargetUnknown(target);
+            revert ErrorAccessAdminTargetNotCreated(target);
+        }
+    }
+
+
+    function _checkIsRegistered( 
+        address registry,
+        address target,
+        ObjectType expectedType
+    )
+        internal
+        view
+    {
+        AccessAdminLib.checkIsRegistered(registry, target, expectedType);
+    }
+
+    function _checkRegistry(address registry) internal view {
+        if (!ContractLib.isRegistry(registry)) {
+            revert ErrorAccessAdminNotRegistry(registry);
         }
     }
 }

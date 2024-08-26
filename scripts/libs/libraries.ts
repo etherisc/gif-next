@@ -37,6 +37,7 @@ export type LibraryAddresses = {
     tokenHandlerDeployerLibAddress: AddressLike;
     objectSetHelperLibAddress: AddressLike;
     policyServiceLibAddress: AddressLike;
+    accessAdminLibAddress: AddressLike;
 }
 
 export const LIBRARY_ADDRESSES: Map<string, AddressLike> = new Map<string, AddressLike>();
@@ -90,7 +91,11 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         "ObjectTypeLib",
         owner,
         undefined,
-        undefined);
+        {
+            libraries: {
+                VersionPartLib: versionPartLibAddress,
+            }
+        });
     LIBRARY_ADDRESSES.set("ObjectTypeLib", objectTypeLibAddress);
 
     const { address: roleIdLibAddress } = await deployContract(
@@ -344,7 +349,23 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
             }
         });
     LIBRARY_ADDRESSES.set("PolicyServiceLib", policyServiceLibAddress);
-        
+
+    const { address: accessAdminLibAddress } = await deployContract(
+        "AccessAdminLib",
+        owner, 
+        undefined,
+        {
+            libraries: {
+                ContractLib: contractLibAddress,
+                ObjectTypeLib: objectTypeLibAddress,
+                RoleIdLib: roleIdLibAddress,
+                SelectorLib: selectorLibAddress,
+                StrLib: strLibAddress,
+                TimestampLib: timestampLibAddress,
+            }
+        });
+    LIBRARY_ADDRESSES.set("AccessAdminLib", accessAdminLibAddress);
+
     logger.info("======== Finished deployment of libraries ========");
 
     dumpLibraryAddressesToFile(LIBRARY_ADDRESSES);
@@ -381,6 +402,7 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         tokenHandlerDeployerLibAddress,
         objectSetHelperLibAddress,
         policyServiceLibAddress,
+        accessAdminLibAddress,
     };
     
 }
