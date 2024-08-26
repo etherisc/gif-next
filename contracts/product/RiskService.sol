@@ -2,19 +2,16 @@
 pragma solidity ^0.8.20;
 
 import {IInstance} from "../instance/IInstance.sol";
-import {IInstanceService} from "../instance/IInstanceService.sol";
-import {IPoolService} from "../pool/PoolService.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
-import {IRegistryService} from "../registry/IRegistryService.sol";
 import {IRisk} from "../instance/module/IRisk.sol";
 import {IRiskService} from "./IRiskService.sol";
 
 import {ContractLib} from "../shared/ContractLib.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
-import {ObjectType, COMPONENT, INSTANCE, PRODUCT, POOL, POLICY, REGISTRY, RISK} from "../type/ObjectType.sol";
+import {ObjectType, COMPONENT, PRODUCT, RISK} from "../type/ObjectType.sol";
 import {ACTIVE, PAUSED, KEEP_STATE} from "../type/StateId.sol";
 import {NftId} from "../type/NftId.sol";
-import {RiskId} from "../type/RiskId.sol";
+import {RiskId, RiskIdLib} from "../type/RiskId.sol";
 import {StateId} from "../type/StateId.sol";
 import {RiskSet} from "../instance/RiskSet.sol";
 import {Service} from "../shared/Service.sol";
@@ -44,16 +41,18 @@ contract RiskService is
 
 
     function createRisk(
-        RiskId riskId,
+        string memory risk,
         bytes memory data
     )
         external 
         restricted()
+        returns (RiskId riskId)
     {
         // checks
         (NftId productNftId, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
 
         // effects
+        riskId = RiskIdLib.toRiskId(productNftId, risk);
         IRisk.RiskInfo memory riskInfo = IRisk.RiskInfo({
             productNftId: productNftId, 
             createdAt: TimestampLib.blockTimestamp(),

@@ -156,6 +156,7 @@ contract ProductClusterTest is GifTest {
         // solhint-enable
     }
 
+    // TODO: add test with two products same riskid -> new sol file, new base class for cluster stuff
 
     function test_productClusterSetup1and4() public {
         _setupProductClusters1and4();
@@ -294,8 +295,7 @@ contract ProductClusterTest is GifTest {
 
     function _createRisk(SimpleProduct prd, string memory riskName) internal returns (RiskId riskId) {
         vm.startPrank(instanceOwner);
-        riskId = RiskIdLib.toRiskId(riskName);
-        prd.createRisk(riskId, "");
+        riskId = prd.createRisk(riskName, "");
         vm.stopPrank();
     }
 
