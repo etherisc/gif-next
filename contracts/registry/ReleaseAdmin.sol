@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {AccessAdmin} from "../authorization/AccessAdmin.sol";
+import {AccessAdminLib} from "../authorization/AccessAdminLib.sol";
 import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
 import {IAccess} from "../authorization/IAccess.sol";
 import {IService} from "../shared/IService.sol";
@@ -158,7 +159,7 @@ contract ReleaseAdmin is
         if(!roleExists(serviceRoleId)) {
             _createRole(
                 serviceRoleId, 
-                toRole({
+                AccessAdminLib.toRole({
                     adminRoleId: ADMIN_ROLE(),
                     roleType: RoleType.Contract,
                     maxMemberCount: 1,
@@ -203,7 +204,7 @@ contract ReleaseAdmin is
                 // create role for authorized domain
                 _createRole(
                     authorizedRoleId, 
-                    toRole({
+                    AccessAdminLib.toRole({
                         adminRoleId: ADMIN_ROLE(),
                         roleType: RoleType.Contract,
                         maxMemberCount: 1,
@@ -235,7 +236,7 @@ contract ReleaseAdmin is
 
         _createRole(
             RELEASE_REGISTRY_ROLE(), 
-            toRole({
+            AccessAdminLib.toRole({
                 adminRoleId: ADMIN_ROLE(),
                 roleType: RoleType.Contract,
                 maxMemberCount: 1,
@@ -243,8 +244,8 @@ contract ReleaseAdmin is
 
         FunctionInfo[] memory functions;
         functions = new FunctionInfo[](2);
-        functions[0] = toFunction(ReleaseAdmin.authorizeService.selector, "authorizeService");
-        functions[1] = toFunction(ReleaseAdmin.setServiceLocked.selector, "setServiceLocked");
+        functions[0] = AccessAdminLib.toFunction(ReleaseAdmin.authorizeService.selector, "authorizeService");
+        functions[1] = AccessAdminLib.toFunction(ReleaseAdmin.setServiceLocked.selector, "setServiceLocked");
         _authorizeTargetFunctions(address(this), RELEASE_REGISTRY_ROLE(), functions);
 
         _grantRoleToAccount(RELEASE_REGISTRY_ROLE(), releaseRegistry);

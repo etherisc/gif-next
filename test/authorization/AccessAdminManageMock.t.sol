@@ -3,11 +3,13 @@ pragma solidity ^0.8.20;
 
 import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
 import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
+import {IAccessManager} from "@openzeppelin/contracts/access/manager/IAccessManager.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
 import {AccessAdmin} from "../../contracts/authorization/AccessAdmin.sol";
+import {AccessAdminLib} from "../../contracts/authorization/AccessAdminLib.sol";
 import {AccessAdminForTesting} from "./AccessAdmin.t.sol";
 import {AccessManagedMock} from "../mock/AccessManagedMock.sol";
 import {IAccess} from "../../contracts/authorization/IAccess.sol";
@@ -88,10 +90,10 @@ contract AccessAdminManageMockTest is AccessAdminBaseTest {
         RoleId adminRole = accessAdmin.getAdminRole();
         RoleId managerRole = accessAdmin.getManagerRole();
 
-        IAccess.FunctionInfo memory increaseCounter1 = accessAdmin.toFunction(
+        IAccess.FunctionInfo memory increaseCounter1 = AccessAdminLib.toFunction(
             AccessManagedMock.increaseCounter1.selector, "increaseCounter1");
 
-        IAccess.FunctionInfo memory increaseCounter2 = accessAdmin.toFunction(
+        IAccess.FunctionInfo memory increaseCounter2 = AccessAdminLib.toFunction(
             AccessManagedMock.increaseCounter2.selector, "increaseCounter2");
 
         _checkIncreaseCounter1Unauthorized(outsider, "outsider (before authorized)");
@@ -148,7 +150,7 @@ contract AccessAdminManageMockTest is AccessAdminBaseTest {
         AccessManager accessManager = AccessManager(accessAdmin.authority());
         RoleId adminRole = accessAdmin.getAdminRole();
 
-        IAccess.FunctionInfo memory increaseCounter1 = accessAdmin.toFunction(
+        IAccess.FunctionInfo memory increaseCounter1 = AccessAdminLib.toFunction(
             AccessManagedMock.increaseCounter1.selector, "increaseCounter1");
 
         // WHEN + THEN
@@ -227,10 +229,10 @@ contract AccessAdminManageMockTest is AccessAdminBaseTest {
         RoleId managerRole = accessAdmin.getManagerRole();
 
         // grant manager role access to increaseCounter2
-        IAccess.FunctionInfo memory increaseCounter1 = accessAdmin.toFunction(
+        IAccess.FunctionInfo memory increaseCounter1 = AccessAdminLib.toFunction(
             AccessManagedMock.increaseCounter1.selector, "increaseCounter1");
 
-        IAccess.FunctionInfo memory increaseCounter2 = accessAdmin.toFunction(
+        IAccess.FunctionInfo memory increaseCounter2 = AccessAdminLib.toFunction(
             AccessManagedMock.increaseCounter2.selector, "increaseCounter2");
 
         // WHEN
@@ -246,18 +248,16 @@ contract AccessAdminManageMockTest is AccessAdminBaseTest {
 
         // check accessAdmin (with admin role) can access restricted functions regardless of granted roles
         // check aa deployer (with manager role) can access only granted restricted functions
-        address caller = accessAdminAddress;
         bool allowed;
+        (allowed,) = accessManager.canCall(accessAdminAddress, target, Selector.unwrap(increaseCounter1.selector));
+        assertTrue(allowed, "accessAdminAddress (admin role) can't access (unlocked) increaseCounter1 (a)");
+        (allowed,) = accessManager.canCall(accessAdminDeployer, target, Selector.unwrap(increaseCounter1.selector));
+        assertFalse(allowed, "accessAdminDeployer (manager role) can't access (unlocked) increaseCounter1 (a)");
 
-        allowed = accessAdmin.canCall(accessAdminAddress, target, increaseCounter1.selector);
-        assertTrue(allowed, "accessAdminAddress (admin role) can't access (unlocked) increaseCounter1");
-        allowed = accessAdmin.canCall(accessAdminDeployer, target, increaseCounter1.selector);
-        assertFalse(allowed, "accessAdminDeployer (manager role) can't access (unlocked) increaseCounter1");
-
-        allowed = accessAdmin.canCall(accessAdminAddress, target, increaseCounter2.selector);
-        assertFalse(allowed, "accessAdminAddress (admin role) can't access (unlocked) increaseCounter2");
-        allowed = accessAdmin.canCall(accessAdminDeployer, target, increaseCounter2.selector);
-        assertTrue(allowed, "accessAdminDeployer (manager role) can't access (unlocked) increaseCounter2");
+        (allowed,) = accessManager.canCall(accessAdminAddress, target, Selector.unwrap(increaseCounter2.selector));
+        assertFalse(allowed, "accessAdminAddress (admin role) can't access (unlocked) increaseCounter2 (a)");
+        (allowed,) = accessManager.canCall(accessAdminDeployer, target, Selector.unwrap(increaseCounter2.selector));
+        assertTrue(allowed, "accessAdminDeployer (manager role) can't access (unlocked) increaseCounter2 (a)");
 
         // print target setup after given
         _printTarget(accessAdmin, target);
@@ -271,15 +271,15 @@ contract AccessAdminManageMockTest is AccessAdminBaseTest {
         // THEN
         assertTrue(accessAdmin.isTargetLocked(target), "target not closed");
 
-        allowed = accessAdmin.canCall(accessAdminAddress, target, increaseCounter1.selector);
-        assertFalse(allowed, "accessAdminAddress (admin role) can access (locked) increaseCounter1");
-        allowed = accessAdmin.canCall(accessAdminDeployer, target, increaseCounter1.selector);
-        assertFalse(allowed, "accessAdminDeployer (manager role) can access (locked) increaseCounter1");
+        (allowed,) = accessManager.canCall(accessAdminAddress, target, Selector.unwrap(increaseCounter1.selector));
+        assertFalse(allowed, "accessAdminAddress (admin role) can access (locked) increaseCounter1 (b)");
+        (allowed,) = accessManager.canCall(accessAdminDeployer, target, Selector.unwrap(increaseCounter1.selector));
+        assertFalse(allowed, "accessAdminDeployer (manager role) can access (locked) increaseCounter1 (b)");
 
-        allowed = accessAdmin.canCall(accessAdminAddress, target, increaseCounter2.selector);
-        assertFalse(allowed, "accessAdminAddress (admin role) can access (locked) increaseCounter2");
-        allowed = accessAdmin.canCall(accessAdminDeployer, target, increaseCounter2.selector);
-        assertFalse(allowed, "accessAdminDeployer (manager role) can access (locked) increaseCounter2");
+        (allowed,) = accessManager.canCall(accessAdminAddress, target, Selector.unwrap(increaseCounter2.selector));
+        assertFalse(allowed, "accessAdminAddress (admin role) can access (locked) increaseCounter2 (b)");
+        (allowed,) = accessManager.canCall(accessAdminDeployer, target, Selector.unwrap(increaseCounter2.selector));
+        assertFalse(allowed, "accessAdminDeployer (manager role) can access (locked) increaseCounter2 (b)");
 
         // WHEN - unlock mock target again
         vm.startPrank(accessAdminDeployer);
@@ -289,15 +289,15 @@ contract AccessAdminManageMockTest is AccessAdminBaseTest {
         // THEN - admin must be able again to call
         assertFalse(accessAdmin.isTargetLocked(target), "target is closed");
 
-        allowed = accessAdmin.canCall(accessAdminAddress, target, increaseCounter1.selector);
-        assertTrue(allowed, "accessAdminAddress (admin role) can't access (unlocked) increaseCounter1");
-        allowed = accessAdmin.canCall(accessAdminDeployer, target, increaseCounter1.selector);
-        assertFalse(allowed, "accessAdminDeployer (manager role) can't access (unlocked) increaseCounter1");
+        (allowed,) = accessManager.canCall(accessAdminAddress, target, Selector.unwrap(increaseCounter1.selector));
+        assertTrue(allowed, "accessAdminAddress (admin role) can't access (unlocked) increaseCounter1 (c)");
+        (allowed,) = accessManager.canCall(accessAdminDeployer, target, Selector.unwrap(increaseCounter1.selector));
+        assertFalse(allowed, "accessAdminDeployer (manager role) can't access (unlocked) increaseCounter1 (c)");
 
-        allowed = accessAdmin.canCall(accessAdminAddress, target, increaseCounter2.selector);
-        assertFalse(allowed, "accessAdminAddress (admin role) can't access (unlocked) increaseCounter2");
-        allowed = accessAdmin.canCall(accessAdminDeployer, target, increaseCounter2.selector);
-        assertTrue(allowed, "accessAdminDeployer (manager role) can't access (unlocked) increaseCounter2");
+        (allowed,) = accessManager.canCall(accessAdminAddress, target, Selector.unwrap(increaseCounter2.selector));
+        assertFalse(allowed, "accessAdminAddress (admin role) can't access (unlocked) increaseCounter2 (c)");
+        (allowed,) = accessManager.canCall(accessAdminDeployer, target, Selector.unwrap(increaseCounter2.selector));
+        assertTrue(allowed, "accessAdminDeployer (manager role) can't access (unlocked) increaseCounter2 (c)");
     }
 
     function _checkAccessAdmin(
@@ -366,8 +366,6 @@ contract AccessAdminManageMockTest is AccessAdminBaseTest {
         RoleId missingRoleId = RoleIdLib.toRoleId(1313);
         assertFalse(aa.roleExists(missingRoleId), "missing role exists"); 
 
-        assertFalse(aa.getRoleForName(StrLib.toStr("NoSuchRole")).exists, "NoSuchRole exists");
-
         // minimal check on access manager of access admin
         AccessManager accessManager = AccessManager(aa.authority());
         bool isMember;
@@ -395,11 +393,6 @@ contract AccessAdminManageMockTest is AccessAdminBaseTest {
         assertEq(info.adminRoleId.toInt(), expectedAdminRoleId.toInt(), "unexpected admin role (role info)");
         assertEq(info.name.toString(), expectedName, "unexpected role name");
         assertTrue(info.createdAt.gtz(), "role does not exist");
-
-        Str roleName = StrLib.toStr(expectedName);
-        IAccessAdmin.RoleNameInfo memory nameInfo = aa.getRoleForName(roleName);
-        assertTrue(nameInfo.exists, "role name info missing");
-        assertEq(nameInfo.roleId.toInt(), roleId.toInt(), "unexpected role name rold id");
     }
 
     function _printRoleMembers(AccessAdmin aa, RoleId roleId) internal {

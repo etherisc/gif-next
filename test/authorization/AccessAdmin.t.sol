@@ -9,6 +9,7 @@ import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.s
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
 import {AccessAdmin} from "../../contracts/authorization/AccessAdmin.sol";
+import {AccessAdminLib} from "../../contracts/authorization/AccessAdminLib.sol";
 import {AccessManagerCloneable} from "../../contracts/authorization/AccessManagerCloneable.sol";
 import {AccessManagedMock} from "../mock/AccessManagedMock.sol";
 import {IAccess} from "../../contracts/authorization/IAccess.sol";
@@ -56,7 +57,7 @@ contract AccessAdminForTesting is AccessAdmin {
         _managerRoleId = RoleIdLib.toRoleId(MANAGER_ROLE);
         _createRole(
             _managerRoleId, 
-            toRole(
+            AccessAdminLib.toRole(
                 getAdminRole(),
                 RoleType.Custom,
                 3, // max accounts with this role
@@ -65,20 +66,20 @@ contract AccessAdminForTesting is AccessAdmin {
         // grant public role access to grant and revoke, renounce
         FunctionInfo[] memory functions;
         functions = new FunctionInfo[](4);
-        functions[0] = toFunction(AccessAdminForTesting.grantManagerRole.selector, "grantManagerRole");
-        functions[1] = toFunction(AccessAdminForTesting.grantRole.selector, "grantRole");
-        functions[2] = toFunction(AccessAdminForTesting.revokeRole.selector, "revokeRole");
-        functions[3] = toFunction(AccessAdminForTesting.renounceRole.selector, "renounceRole");
+        functions[0] = AccessAdminLib.toFunction(AccessAdminForTesting.grantManagerRole.selector, "grantManagerRole");
+        functions[1] = AccessAdminLib.toFunction(AccessAdminForTesting.grantRole.selector, "grantRole");
+        functions[2] = AccessAdminLib.toFunction(AccessAdminForTesting.revokeRole.selector, "revokeRole");
+        functions[3] = AccessAdminLib.toFunction(AccessAdminForTesting.renounceRole.selector, "renounceRole");
         _authorizeTargetFunctions(address(this), getPublicRole(), functions);
 
         // grant manager role access to the specified functions 
         functions = new FunctionInfo[](6);
-        functions[0] = toFunction(AccessAdminForTesting.createRole.selector, "createRole");
-        functions[1] = toFunction(AccessAdminForTesting.createRoleExtended.selector, "createRoleExtended");
-        functions[2] = toFunction(AccessAdminForTesting.createTarget.selector, "createTarget");
-        functions[3] = toFunction(AccessAdminForTesting.setTargetLocked.selector, "setTargetLocked");
-        functions[4] = toFunction(AccessAdminForTesting.authorizeFunctions.selector, "authorizeFunctions");
-        functions[5] = toFunction(AccessAdminForTesting.unauthorizeFunctions.selector, "unauthorizeFunctions");
+        functions[0] = AccessAdminLib.toFunction(AccessAdminForTesting.createRole.selector, "createRole");
+        functions[1] = AccessAdminLib.toFunction(AccessAdminForTesting.createRoleExtended.selector, "createRoleExtended");
+        functions[2] = AccessAdminLib.toFunction(AccessAdminForTesting.createTarget.selector, "createTarget");
+        functions[3] = AccessAdminLib.toFunction(AccessAdminForTesting.setTargetLocked.selector, "setTargetLocked");
+        functions[4] = AccessAdminLib.toFunction(AccessAdminForTesting.authorizeFunctions.selector, "authorizeFunctions");
+        functions[5] = AccessAdminLib.toFunction(AccessAdminForTesting.unauthorizeFunctions.selector, "unauthorizeFunctions");
         _authorizeTargetFunctions(address(this), getManagerRole(), functions);
 
         _grantRoleToAccount(_managerRoleId, _deployer);
@@ -104,7 +105,7 @@ contract AccessAdminForTesting is AccessAdmin {
     {
         _createRole(
             roleId,
-            toRole(
+            AccessAdminLib.toRole(
                 adminRoleId, 
                 RoleType.Custom, 
                 type(uint32).max, 
@@ -123,7 +124,7 @@ contract AccessAdminForTesting is AccessAdmin {
     {
         _createRole(
             roleId, 
-            toRole(
+            AccessAdminLib.toRole(
                 adminRoleId, 
                 roleType, 
                 maxOneRoleMember, 
@@ -136,7 +137,7 @@ contract AccessAdminForTesting is AccessAdmin {
     )
         external
         virtual
-        onlyRoleAdmin(roleId) 
+        onlyRoleAdmin(roleId, msg.sender) 
         restricted()
     {
         _grantRoleToAccount(roleId, account);
@@ -148,8 +149,8 @@ contract AccessAdminForTesting is AccessAdmin {
     )
         external
         virtual
-        onlyRoleAdmin(roleId)
         restricted()
+        onlyRoleAdmin(roleId, msg.sender)
     {
         _revokeRoleFromAccount(roleId, account);
     }
@@ -159,8 +160,8 @@ contract AccessAdminForTesting is AccessAdmin {
     )
         external
         virtual
-        onlyRoleMember(roleId)
         restricted()
+        onlyRoleMember(roleId, msg.sender)
     {
         _revokeRoleFromAccount(roleId, msg.sender);
     }
@@ -796,7 +797,8 @@ contract AccessAdminTest is AccessAdminBaseTest {
         vm.expectRevert(
             abi.encodeWithSelector(
                 IAccessAdmin.ErrorAccessAdminNotAdminOfRole.selector, 
-                newAdminRoleId));
+                newAdminRoleId,
+                accessAdminDeployer));
 
         vm.startPrank(accessAdminDeployer);
         accessAdmin.grantRole(account1, newRoleId);
@@ -847,7 +849,8 @@ contract AccessAdminTest is AccessAdminBaseTest {
         vm.expectRevert(
             abi.encodeWithSelector(
                 IAccessAdmin.ErrorAccessAdminNotAdminOfRole.selector, 
-                newAdminRoleId));
+                newAdminRoleId,
+                roleAdmin));
 
         vm.startPrank(roleAdmin);
         accessAdmin.grantRole(account1, newRoleId);
@@ -963,11 +966,12 @@ contract AccessAdminTest is AccessAdminBaseTest {
 
         vm.startPrank(account1);
 
-        // remove role account1 no longer has
+        // attempt to renounce role account1 no longer has
         vm.expectRevert(
             abi.encodeWithSelector(
                 IAccessAdmin.ErrorAccessAdminNotRoleOwner.selector,
-                newRoleId));
+                newRoleId,
+                account1));
 
         accessAdmin.renounceRole(newRoleId);
 
@@ -987,7 +991,8 @@ contract AccessAdminTest is AccessAdminBaseTest {
         vm.expectRevert(
             abi.encodeWithSelector(
                 IAccessAdmin.ErrorAccessAdminNotRoleOwner.selector,
-                newRoleId));
+                newRoleId,
+                account2));
 
         accessAdmin.renounceRole(newRoleId);
 
@@ -1052,7 +1057,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         // renouncing non existent role -> role unknown
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessAdmin.ErrorAccessAdminNotRoleOwner.selector,
+                IAccessAdmin.ErrorAccessAdminRoleUnknown.selector,
                 missingRoleId));
 
         accessAdmin.renounceRole(missingRoleId);
@@ -1283,8 +1288,6 @@ contract AccessAdminTest is AccessAdminBaseTest {
         RoleId missingRoleId = RoleIdLib.toRoleId(1313);
         assertFalse(aa.roleExists(missingRoleId), "missing role exists"); 
 
-        assertFalse(aa.getRoleForName(StrLib.toStr("NoSuchRole")).exists, "NoSuchRole exists");
-
         // minimal check on access manager of access admin
         AccessManager accessManager = AccessManager(aa.authority());
         bool isMember;
@@ -1327,18 +1330,12 @@ contract AccessAdminTest is AccessAdminBaseTest {
         console.log("checking role", expectedName);
 
         assertTrue(aa.roleExists(roleId), "role does not exist");
-        assertEq(aa.getRoleForName(StrLib.toStr(expectedName)).roleId.toInt(), roleId.toInt(), "unexpected roleId for getRoleForName");
 
         IAccessAdmin.RoleInfo memory info = aa.getRoleInfo(roleId);
         assertEq(info.adminRoleId.toInt(), expectedAdminRoleId.toInt(), "unexpected admin role (role info)");
         assertEq(info.name.toString(), expectedName, "unexpected role name");
         assertEq(info.maxMemberCount, expectedMaxMemberCount, "unexpected maxMemberCount");
         assertTrue(info.createdAt.gtz(), "role does not exist");
-
-        Str roleName = StrLib.toStr(expectedName);
-        IAccessAdmin.RoleNameInfo memory nameInfo = aa.getRoleForName(roleName);
-        assertTrue(nameInfo.exists, "role name info missing");
-        assertEq(nameInfo.roleId.toInt(), roleId.toInt(), "unexpected role name rold id");
     }
 
     function _printRoleMembers(AccessAdmin aa, RoleId roleId) internal {

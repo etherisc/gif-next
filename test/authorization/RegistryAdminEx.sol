@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {IAuthorization} from "../../contracts/authorization/IAuthorization.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 
+import {AccessAdminLib} from "../../contracts/authorization/AccessAdminLib.sol";
 import {AccessManagedMock} from "../mock/AccessManagedMock.sol";
 import {PUBLIC_ROLE} from "../../contracts/type/RoleId.sol";
 import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
@@ -36,7 +37,7 @@ contract RegistryAdminEx is RegistryAdmin {
         // grant permissions to public role for access managed mock
         FunctionInfo[] memory functions;
         functions = new FunctionInfo[](1);
-        functions[0] = toFunction(AccessManagedMock.increaseCounter1.selector, "increaseCounter1");
+        functions[0] = AccessAdminLib.toFunction(AccessManagedMock.increaseCounter1.selector, "increaseCounter1");
         _authorizeTargetFunctions(address(accessManagedMock), PUBLIC_ROLE(), functions);
     }
 }

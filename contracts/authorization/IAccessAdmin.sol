@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 
 import {IAccess} from "./IAccess.sol";
+import {IAuthorization} from "./IAuthorization.sol";
 import {IRegistryLinked} from "../shared/IRegistryLinked.sol";
 import {IRelease} from "../registry/IRelease.sol";
 
@@ -33,10 +34,10 @@ interface IAccessAdmin is
     error ErrorAccessAdminNotDeployer();
 
     // only role admin modifier
-    error ErrorAccessAdminNotAdminOfRole(RoleId adminRoleId);
+    error ErrorAccessAdminNotAdminOfRole(RoleId adminRoleId, address account);
 
     // only role owner modifier
-    error ErrorAccessAdminNotRoleOwner(RoleId roleId);
+    error ErrorAccessAdminNotRoleOwner(RoleId roleId, address account);
 
     // initialization
     error ErrorAccessAdminNotRegistry(address registry);
@@ -135,6 +136,7 @@ interface IAccessAdmin is
 
     //--- view functions ----------------------------------------------------//
 
+    function getAuthorization() external view returns (IAuthorization authorization);
     function getLinkedNftId() external view returns (NftId linkedNftId);
     function getLinkedOwner() external view returns (address linkedOwner);
 
@@ -146,8 +148,8 @@ interface IAccessAdmin is
     function getPublicRole() external view returns (RoleId roleId);
 
     function roleExists(RoleId roleId) external view returns (bool exists); 
+    function getRoleForName(string memory name) external view returns (RoleId roleId);
     function getRoleInfo(RoleId roleId) external view returns (RoleInfo memory roleInfo);
-    function getRoleForName(Str name) external view returns (RoleNameInfo memory);
 
     function hasRole(address account, RoleId roleId) external view returns (bool);
     function hasAdminRole(address account, RoleId roleId) external view returns (bool);
@@ -155,17 +157,14 @@ interface IAccessAdmin is
     function getRoleMember(RoleId roleId, uint256 idx) external view returns (address account);
 
     function targetExists(address target) external view returns (bool exists);
-    function isTargetLocked(address target) external view returns (bool locked);
+    function getTargetForName(Str name) external view returns (address target);
     function targets() external view returns (uint256 numberOfTargets);
     function getTargetAddress(uint256 idx) external view returns (address target);
     function getTargetInfo(address target) external view returns (TargetInfo memory targetInfo);
-    function getTargetForName(Str name) external view returns (address target);
+    function isTargetLocked(address target) external view returns (bool locked);
 
     function authorizedFunctions(address target) external view returns (uint256 numberOfFunctions);
     function getAuthorizedFunction(address target, uint256 idx) external view returns (FunctionInfo memory func, RoleId roleId);
-    function canCall(address caller, address target, Selector selector) external view returns (bool can);
 
-    function toRole(RoleId adminRoleId, RoleType roleType, uint32 maxMemberCount, string memory name) external view returns (RoleInfo memory);
-    function toFunction(bytes4 selector, string memory name) external view returns (FunctionInfo memory);
     function deployer() external view returns (address);
 }

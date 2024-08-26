@@ -6,6 +6,7 @@ import {
     Dip,
     Registry,
     RegistryAdmin,
+    RegistryAuthorization,
     ReleaseRegistry,
     ServiceAuthorizationV3,
     Staking, StakingManager,
@@ -35,6 +36,9 @@ export type RegistryAddresses = {
 
     chainNftAddress: AddressLike;
     chainNft: ChainNft;
+
+    registryAuthorizationAddress : AddressLike;
+    registryAuthorization: RegistryAuthorization;
 
     releaseRegistryAddress : AddressLike;
     releaseRegistry: ReleaseRegistry;
@@ -77,6 +81,25 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     const dip = dipBaseContract as Dip;
     // const dipMainnetAddress = "0xc719d010b63e5bbf2c0551872cd5316ed26acd83";
 
+    logger.info("-------- Starting deployment Registry Authorization ----------------");
+
+    const { address: registryAuthorizationAddress, contract: registryAuthorizationBaseContract } = await deployContract(
+        "RegistryAuthorization",
+        owner,
+        [
+        ],
+        {
+            libraries: {
+                ObjectTypeLib: libraries.objectTypeLibAddress,
+                RoleIdLib: libraries.roleIdLibAddress,
+                SelectorLib: libraries.selectorLibAddress,
+                StrLib: libraries.strLibAddress,
+                TimestampLib: libraries.timestampLibAddress,
+                VersionPartLib: libraries.versionPartLibAddress,
+            }
+        });
+
+    const registryAuthorization = registryAuthorizationBaseContract as RegistryAuthorization;
 
     logger.info("-------- Starting deployment Registry Admin ----------------");
 
@@ -86,6 +109,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         [], 
         {
             libraries: {
+                AccessAdminLib: libraries.accessAdminLibAddress,
                 ContractLib: libraries.contractLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
@@ -128,16 +152,18 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         [registryAddress], 
         {
             libraries: {
+                AccessAdminLib: libraries.accessAdminLibAddress,
                 ContractLib: libraries.contractLibAddress,
-                StateIdLib: libraries.stateIdLibAddress,
-                TimestampLib: libraries.timestampLibAddress,
-                VersionLib: libraries.versionLibAddress,
-                VersionPartLib: libraries.versionPartLibAddress,
+                NftIdLib: libraries.nftIdLibAddress,
                 ObjectTypeLib: libraries.objectTypeLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
                 SelectorLib: libraries.selectorLibAddress,
                 SelectorSetLib: libraries.selectorSetLibAddress,
+                StateIdLib: libraries.stateIdLibAddress,
                 StrLib: libraries.strLibAddress,
+                TimestampLib: libraries.timestampLibAddress,
+                VersionLib: libraries.versionLibAddress,
+                VersionPartLib: libraries.versionPartLibAddress,
             }
         });
 
@@ -245,7 +271,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     );
 
     await executeTx(
-        async () => await registryAdmin.completeSetup(registry, owner, owner, getTxOpts()),
+        async () => await registryAdmin.completeSetup(registry, registryAuthorization, owner, owner, getTxOpts()),
         "registryAdmin.completeSetup",
         [registryAdmin.interface]
     );
@@ -275,6 +301,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     
 
     logger.info(`Dip deployed at ${dipAddress}`);
+    logger.info(`RegistryAuthorization deployeqd at ${registryAuthorizationAddress}`);
     logger.info(`RegistryAdmin deployeqd at ${registryAdmin}`);
     logger.info(`Registry deployed at ${registryAddress}`);
     logger.info(`ChainNft deployed at ${chainNftAddress}`);
@@ -319,6 +346,9 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
 
         chainNftAddress: chainNftAddress,
         chainNft: chainNft,
+
+        registryAuthorizationAddress: registryAuthorizationAddress,
+        registryAuthorization: registryAuthorization,
 
         releaseRegistryAddress: releaseRegistryAddress,
         releaseRegistry: releaseRegistry,

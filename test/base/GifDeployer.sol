@@ -155,7 +155,6 @@ contract GifDeployer is Test {
 
         // 2) deploy registry admin
         registryAdmin = new RegistryAdmin();
-        // registryAdmin.initialize();
 
         // 3) deploy registry
         registry = new Registry(registryAdmin, globalRegistry);

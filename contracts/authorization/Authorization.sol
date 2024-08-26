@@ -5,7 +5,7 @@ import {IAccess} from "./IAccess.sol";
 import {IAuthorization} from "./IAuthorization.sol";
 
 import {InitializableERC165} from "../shared/InitializableERC165.sol";
-import {ObjectType, ObjectTypeLib, PRODUCT, ORACLE, DISTRIBUTION, POOL} from "../type/ObjectType.sol";
+import {ObjectType, ObjectTypeLib} from "../type/ObjectType.sol";
 import {RoleId, RoleIdLib, ADMIN_ROLE} from "../type/RoleId.sol";
 import {SelectorLib} from "../type/Selector.sol";
 import {Str, StrLib} from "../type/String.sol";
@@ -28,7 +28,7 @@ contract Authorization is
     string internal _mainTargetName = "Component";
     string internal _tokenHandlerName = "ComponentTH";
 
-    ObjectType _domain;
+    ObjectType internal _domain;
     Str internal _mainTarget;
     Str internal _tokenHandlerTarget;
     Str[] internal _targets;

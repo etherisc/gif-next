@@ -9,6 +9,7 @@ import {IAccessAdmin} from "./IAccessAdmin.sol";
 import {IAuthorization} from "./IAuthorization.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 
+import {AccessAdminLib} from "./AccessAdminLib.sol";
 import {AccessManagerCloneable} from "./AccessManagerCloneable.sol";
 import {ContractLib} from "../shared/ContractLib.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
@@ -98,18 +99,20 @@ contract AccessAdmin is
         _;
     }
 
-    modifier onlyRoleAdmin(RoleId roleId) {
+    modifier onlyRoleMember(RoleId roleId, address account) {
         _checkRoleExists(roleId, false);
 
-        if (!hasAdminRole(msg.sender, roleId)) {
-            revert ErrorAccessAdminNotAdminOfRole(_roleInfo[roleId].adminRoleId);
+        if (!hasRole(account, roleId)) {
+            revert ErrorAccessAdminNotRoleOwner(roleId, account);
         }
         _;
     }
 
-    modifier onlyRoleMember(RoleId roleId) {
-        if (!hasRole(msg.sender, roleId)) {
-            revert ErrorAccessAdminNotRoleOwner(roleId);
+    modifier onlyRoleAdmin(RoleId roleId, address account) {
+        _checkRoleExists(roleId, false);
+
+        if (!hasAdminRole(account, roleId)) {
+            revert ErrorAccessAdminNotAdminOfRole(_roleInfo[roleId].adminRoleId, account);
         }
         _;
     }
@@ -127,7 +130,7 @@ contract AccessAdmin is
     }
 
     modifier onlyExistingTarget(address target) {
-        _checkTarget(target);
+        _checkTargetExists(target);
         _;
     }
 
@@ -191,92 +194,6 @@ contract AccessAdmin is
     }
 
 
-    /// @dev check if target exists and reverts if it doesn't
-    function _checkTarget(
-        address target
-    )
-        internal
-        view
-    {
-        // check not yet created
-        if (!targetExists(target)) {
-            revert ErrorAccessAdminTargetNotCreated(target);
-        }
-    }
-
-    function _checkIsRegistered(
-        address registry,
-        address target,
-        ObjectType expectedType
-    )
-        internal
-        view 
-    {
-        ObjectType tagetType = IRegistry(registry).getObjectInfo(target).objectType;
-        if (tagetType.eqz()) {
-            revert ErrorAccessAdminNotRegistered(target);
-        }
-
-        if (tagetType != expectedType) {
-            revert ErrorAccessAdminTargetTypeMismatch(target, expectedType, tagetType);
-        }
-    }
-
-    /// @dev check if target exists and and has expected type, reverts if it doesn't
-    function _checkTargetWithType(
-        address target,
-        ObjectType expectedType
-    )
-        internal
-        view
-    {
-        // check target exists
-        _checkTarget(target);
-
-        // check target type 
-        ObjectType tagetType = _authority.getRegistry().getObjectInfo(target).objectType;
-        if (tagetType != expectedType) {
-            revert ErrorAccessAdminTargetTypeMismatch(target, expectedType, tagetType);
-        }
-
-        // target release is checked during component/instance registration
-    }
-
-
-    function _checkAuthorization(
-        address authorization,
-        ObjectType expectedDomain, 
-        VersionPart expectedRelease,
-        bool checkAlreadyInitialized
-    )
-        internal
-        view
-    {
-        // checks
-        // check not yet initialized
-        if (checkAlreadyInitialized && address(_authorization) != address(0)) {
-            revert ErrorAccessAdminAlreadyInitialized(address(_authorization));
-        }
-
-        // check contract type matches
-        if (!ContractLib.supportsInterface(authorization, type(IAuthorization).interfaceId)) {  
-            revert ErrorAccessAdminNotAuthorization(authorization);
-        }
-
-        // check domain matches
-        ObjectType domain = IAuthorization(authorization).getDomain();
-        if (domain != expectedDomain) {
-            revert ErrorAccessAdminDomainMismatch(authorization, expectedDomain, domain);
-        }
-
-        // check release matches
-        VersionPart authorizationRelease = IAuthorization(authorization).getRelease();
-        if (authorizationRelease != expectedRelease) {
-            revert ErrorAccessAdminReleaseMismatch(authorization, getRelease(), authorizationRelease);
-        }
-    }
-
-
     function getRelease() public view virtual returns (VersionPart release) {
         return _authority.getRelease();
     }
@@ -297,46 +214,13 @@ contract AccessAdmin is
     }
 
 
+    function getAuthorization() public view returns (IAuthorization authorization) {
+        return _authorization;
+    }
+
 
     function isLocked() public view returns (bool locked) {
         return _authority.isLocked();
-    }
-
-    function _linkToNftOwnable(address registerable) internal {
-        if (!getRegistry().isRegistered(registerable)) {
-            revert ErrorAccessAdminNotRegistered(registerable);
-        }
-
-        _linkedNftId = getRegistry().getNftIdForAddress(registerable);
-    }
-
-    function _initializeAdminAndPublicRoles()
-        internal
-        virtual
-        onlyInitializing()
-    {
-        RoleId adminRoleId = RoleIdLib.toRoleId(_authority.ADMIN_ROLE());
-
-        // setup admin role
-        _createRoleUnchecked(
-            ADMIN_ROLE(),
-            toRole({
-                adminRoleId: ADMIN_ROLE(),
-                roleType: RoleType.Contract,
-                maxMemberCount: 1,
-                name: ADMIN_ROLE_NAME}));
-
-        // add this contract as admin role member
-        _roleMembers[adminRoleId].add(address(this));
-
-        // setup public role
-        _createRoleUnchecked(
-            PUBLIC_ROLE(),
-            toRole({
-                adminRoleId: ADMIN_ROLE(),
-                roleType: RoleType.Gif,
-                maxMemberCount: type(uint32).max,
-                name: PUBLIC_ROLE_NAME}));
     }
 
     //--- view functions for roles ------------------------------------------//
@@ -361,12 +245,12 @@ contract AccessAdmin is
         return _roleInfo[roleId].createdAt.gtz();
     }
 
-    function getRoleInfo(RoleId roleId) external view returns (RoleInfo memory) {
-        return _roleInfo[roleId];
+    function getRoleForName(string memory name) external view returns (RoleId roleId) {
+        return _roleForName[StrLib.toStr(name)].roleId;
     }
 
-    function getRoleForName(Str name) external view returns (RoleNameInfo memory) {
-        return _roleForName[name];
+    function getRoleInfo(RoleId roleId) external view returns (RoleInfo memory) {
+        return _roleInfo[roleId];
     }
 
     function roleMembers(RoleId roleId) external view returns (uint256 numberOfMembers) {
@@ -443,33 +327,48 @@ contract AccessAdmin is
                 selector.toBytes4()));
     }
 
-    function canCall(address caller, address target, Selector selector) external virtual view returns (bool can) {
-        (can, ) = _authority.canCall(caller, target, selector.toBytes4());
-    }
-
-    function toRole(RoleId adminRoleId, RoleType roleType, uint32 maxMemberCount, string memory name) public view returns (RoleInfo memory) {
-        return RoleInfo({
-            name: StrLib.toStr(name),
-            adminRoleId: adminRoleId,
-            roleType: roleType,
-            maxMemberCount: maxMemberCount,
-            createdAt: TimestampLib.blockTimestamp(),
-            pausedAt: TimestampLib.max()
-        });
-    }
-
-    function toFunction(bytes4 selector, string memory name) public view returns (FunctionInfo memory) {
-        return FunctionInfo({
-            name: StrLib.toStr(name),
-            selector: SelectorLib.toSelector(selector),
-            createdAt: TimestampLib.blockTimestamp()});
-    }
-
     function deployer() public view returns (address) {
         return _deployer;
     }
 
     //--- internal/private functions -------------------------------------------------//
+
+    function _linkToNftOwnable(address registerable) internal {
+        if (!getRegistry().isRegistered(registerable)) {
+            revert ErrorAccessAdminNotRegistered(registerable);
+        }
+
+        _linkedNftId = getRegistry().getNftIdForAddress(registerable);
+    }
+
+    function _initializeAdminAndPublicRoles()
+        internal
+        virtual
+        onlyInitializing()
+    {
+        RoleId adminRoleId = RoleIdLib.toRoleId(_authority.ADMIN_ROLE());
+
+        // setup admin role
+        _createRoleUnchecked(
+            ADMIN_ROLE(),
+            AccessAdminLib.toRole({
+                adminRoleId: ADMIN_ROLE(),
+                roleType: RoleType.Contract,
+                maxMemberCount: 1,
+                name: ADMIN_ROLE_NAME}));
+
+        // add this contract as admin role member
+        _roleMembers[adminRoleId].add(address(this));
+
+        // setup public role
+        _createRoleUnchecked(
+            PUBLIC_ROLE(),
+            AccessAdminLib.toRole({
+                adminRoleId: ADMIN_ROLE(),
+                roleType: RoleType.Gif,
+                maxMemberCount: type(uint32).max,
+                name: PUBLIC_ROLE_NAME}));
+    }
 
     function _createTargetWithRole(
         address target,
@@ -649,32 +548,21 @@ contract AccessAdmin is
     )
         internal
     {
-        // check role does not yet exist
-        if(roleExists(roleId)) {
-            revert ErrorAccessAdminRoleAlreadyCreated(
-                roleId, 
-                _roleInfo[roleId].name.toString());
-        }
-
-        // check admin role exists
-        if(!roleExists(info.adminRoleId)) {
-            revert ErrorAccessAdminRoleAdminNotExisting(info.adminRoleId);
-        }
-
-        // check role name is not empty
-        if(info.name.length() == 0) {
-            revert ErrorAccessAdminRoleNameEmpty(roleId);
-        }
-
-        // check role name is not used for another role
-        if(_roleForName[info.name].exists) {
-            revert ErrorAccessAdminRoleNameAlreadyExists(
-                roleId, 
-                info.name.toString(),
-                _roleForName[info.name].roleId);
-        }
-
+        AccessAdminLib.checkRoleCreation(this, roleId, info);
         _createRoleUnchecked(roleId, info);
+    }
+
+
+    function _createTarget(
+        address target, 
+        string memory targetName, 
+        bool checkAuthority,
+        bool custom
+    )
+        internal
+    {
+        AccessAdminLib.checkTargetCreation(this, target, targetName, checkAuthority);
+        _createTargetUnchecked(target, targetName, custom);
     }
 
 
@@ -700,49 +588,15 @@ contract AccessAdmin is
     }
 
 
-    function _createTarget(
+    function _createTargetUnchecked(
         address target, 
         string memory targetName, 
-        bool checkAuthority,
         bool custom
     )
         internal
     {
-        // check target does not yet exist
-        if(targetExists(target)) {
-            revert ErrorAccessAdminTargetAlreadyCreated(
-                target, 
-                _targetInfo[target].name.toString());
-        }
-
-        // check target name is not empty
-        Str name = StrLib.toStr(targetName);
-        if(name.length() == 0) {
-            revert ErrorAccessAdminTargetNameEmpty(target);
-        }
-
-        // check target name is not used for another target
-        if( _targetForName[name] != address(0)) {
-            revert ErrorAccessAdminTargetNameAlreadyExists(
-                target, 
-                targetName,
-                _targetForName[name]);
-        }
-
-        // check target is an access managed contract
-        if (!_isAccessManaged(target)) {
-            revert ErrorAccessAdminTargetNotAccessManaged(target);
-        }
-
-        // check target shares authority with this contract
-        if (checkAuthority) {
-            address targetAuthority = AccessManagedUpgradeable(target).authority();
-            if (targetAuthority != authority()) {
-                revert ErrorAccessAdminTargetAuthorityMismatch(authority(), targetAuthority);
-            }
-        }
-
         // create target info
+        Str name = StrLib.toStr(targetName);
         _targetInfo[target] = TargetInfo({
             name: name,
             isCustom: custom,
@@ -767,31 +621,6 @@ contract AccessAdmin is
     }
 
 
-    function _isAccessManaged(address target)
-        internal
-        view
-        returns (bool)
-    {
-        if (!ContractLib.isContract(target)) {
-            return false;
-        }
-
-        (bool success, ) = target.staticcall(
-            abi.encodeWithSelector(
-                IAccessManagedChecker.authority.selector));
-
-        return success;
-    }
-
-
-    function _getAccountName(address account) internal view returns (string memory) {
-        if (targetExists(account)) {
-            return _targetInfo[account].name.toString();
-        }
-        return "<unknown-account>";
-    }
-
-
     function _getRoleName(RoleId roleId) internal view returns (string memory) {
         if (roleExists(roleId)) {
             return _roleInfo[roleId].name.toString();
@@ -800,7 +629,25 @@ contract AccessAdmin is
     }
 
 
-    function _checkRoleExists(
+    function _checkAuthorization( 
+        address authorization,
+        ObjectType expectedDomain, 
+        VersionPart expectedRelease,
+        bool checkAlreadyInitialized
+    )
+        internal
+        view
+    {
+        AccessAdminLib.checkAuthorization(
+            address(_authorization), 
+            authorization, 
+            expectedDomain, 
+            expectedRelease, 
+            checkAlreadyInitialized);
+    }
+
+
+    function _checkRoleExists( 
         RoleId roleId, 
         bool onlyActiveRole
     )
@@ -822,6 +669,32 @@ contract AccessAdmin is
         }
     }
 
+
+
+    /// @dev check if target exists and reverts if it doesn't
+    function _checkTargetExists(
+        address target
+    )
+        internal
+        view
+    {
+        // check not yet created
+        if (!targetExists(target)) {
+            revert ErrorAccessAdminTargetNotCreated(target);
+        }
+    }
+
+
+    function _checkIsRegistered( 
+        address registry,
+        address target,
+        ObjectType expectedType
+    )
+        internal
+        view
+    {
+        AccessAdminLib.checkIsRegistered(registry, target, expectedType);
+    }
 
     function _checkRegistry(address registry) internal view {
         if (!ContractLib.isRegistry(registry)) {

@@ -4,27 +4,25 @@ pragma solidity ^0.8.20;
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManaged.sol";
 
-import {ContractLib} from "../shared/ContractLib.sol";
-import {NftId} from "../type/NftId.sol";
-import {ObjectType, ObjectTypeLib, POOL, RELEASE, REGISTRY, SERVICE, STAKING} from "../type/ObjectType.sol";
-import {TimestampLib, zeroTimestamp} from "../type/Timestamp.sol";
-import {Seconds} from "../type/Seconds.sol";
-import {StateId, SCHEDULED, DEPLOYING, DEPLOYED, SKIPPED, ACTIVE, PAUSED} from "../type/StateId.sol";
-import {VersionPart, VersionPartLib} from "../type/Version.sol";
-
-import {IService} from "../shared/IService.sol";
-
 import {IAccessAdmin} from "../authorization/IAccessAdmin.sol";
 import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
-
 import {IRegistry} from "./IRegistry.sol";
 import {IRelease} from "./IRelease.sol";
 import {IRegistryLinked} from "../shared/IRegistryLinked.sol";
+import {IService} from "../shared/IService.sol";
 import {IServiceAuthorization} from "../authorization/IServiceAuthorization.sol";
+
+import {ContractLib} from "../shared/ContractLib.sol";
+import {NftId} from "../type/NftId.sol";
+import {ObjectType, ObjectTypeLib, POOL, RELEASE, REGISTRY, SERVICE, STAKING} from "../type/ObjectType.sol";
 import {RegistryAdmin} from "./RegistryAdmin.sol";
 import {Registry} from "./Registry.sol";
-import {ReleaseLifecycle} from "./ReleaseLifecycle.sol";
 import {ReleaseAdmin} from "./ReleaseAdmin.sol";
+import {ReleaseLifecycle} from "./ReleaseLifecycle.sol";
+import {Seconds} from "../type/Seconds.sol";
+import {StateId, SCHEDULED, DEPLOYING, DEPLOYED, SKIPPED, ACTIVE, PAUSED} from "../type/StateId.sol";
+import {TimestampLib, zeroTimestamp} from "../type/Timestamp.sol";
+import {VersionPart, VersionPartLib} from "../type/Version.sol";
 
 /// @dev The ReleaseRegistry manages the lifecycle of major GIF releases and their services.
 /// The creation of a new GIF release is a multi-step process:
@@ -73,7 +71,7 @@ contract ReleaseRegistry is
     error ErrorReleaseRegistryServiceSelfRegistration(IService service);
     error ErrorReleaseRegistryServiceOwnerRegistered(IService service, address owner);
 
-    RegistryAdmin public immutable _admin;
+    RegistryAdmin public immutable _registryAdmin;
     Registry public immutable _registry;
 
     mapping(VersionPart release => IRelease.ReleaseInfo info) internal _releaseInfo;
@@ -87,6 +85,7 @@ contract ReleaseRegistry is
     uint256 internal _registeredServices = 0;
     uint256 internal _servicesToRegister = 0;
 
+    // TODO move master relase admin outside constructor (same construction as for registry admin)
     constructor(Registry registry)
         AccessManaged(msg.sender)
     {
@@ -97,10 +96,9 @@ contract ReleaseRegistry is
         setAuthority(registry.getAuthority());
 
         _registry = registry;
-        _admin = RegistryAdmin(_registry.getRegistryAdminAddress());
-
+        _registryAdmin = RegistryAdmin(_registry.getRegistryAdminAddress());
         _masterReleaseAdmin = new ReleaseAdmin(
-            address(new AccessManagerCloneable()));
+            _cloneNewAccessManager());
 
         _next = VersionPartLib.toVersionPart(INITIAL_GIF_VERSION - 1);
     }
@@ -254,16 +252,16 @@ contract ReleaseRegistry is
             revert ErrorReleaseRegistryRegistryServiceMissing(release);
         }
 
-        _admin.grantServiceRoleForAllVersions(IService(service), REGISTRY());
+        _registryAdmin.grantServiceRoleForAllVersions(IService(service), REGISTRY());
 
         service = _registry.getServiceAddress(STAKING(), release);
         if(service != address(0)) {
-            _admin.grantServiceRoleForAllVersions(IService(service), STAKING());
+            _registryAdmin.grantServiceRoleForAllVersions(IService(service), STAKING());
         }
 
         service = _registry.getServiceAddress(POOL(), release);
         if(service != address(0)) {
-            _admin.grantServiceRoleForAllVersions(IService(service), POOL());
+            _registryAdmin.grantServiceRoleForAllVersions(IService(service), POOL());
         }
 
         _setReleaseLocked(release, false);
@@ -351,7 +349,7 @@ contract ReleaseRegistry is
     }
 
     function getRegistryAdmin() external view returns (address) {
-        return address(_admin);
+        return address(_registryAdmin);
     }
 
     //--- IRegistryLinked ------------------------------------------------------//
@@ -369,16 +367,10 @@ contract ReleaseRegistry is
             _releaseInfo[release].releaseAdmin).setReleaseLocked(locked);
     }
 
-
     function _cloneNewReleaseAdmin(VersionPart release)
         private
         returns (ReleaseAdmin clonedAdmin)
     {
-        // clone release specific access manager
-        AccessManagerCloneable clonedAccessManager = AccessManagerCloneable(
-            Clones.clone(
-                _masterReleaseAdmin.authority()));
-
         // clone and setup release specific release admin
         clonedAdmin = ReleaseAdmin(
             Clones.clone(address(_masterReleaseAdmin)));
@@ -389,7 +381,7 @@ contract ReleaseRegistry is
                 release.toString()));
 
         clonedAdmin.initialize(
-            address(clonedAccessManager),
+            address(_cloneNewAccessManager()),
             releaseAdminName);
 
         clonedAdmin.completeSetup(
@@ -399,6 +391,14 @@ contract ReleaseRegistry is
 
         // lock release (remains locked until activation)
         clonedAdmin.setReleaseLocked(true);
+    }
+
+
+    function _cloneNewAccessManager()
+        private
+        returns (address accessManager)
+    {
+        return Clones.clone(address(_registryAdmin.authority()));
     }
 
 
@@ -413,7 +413,7 @@ contract ReleaseRegistry is
     {
         // authorization contract supports IServiceAuthorization interface
         if(!serviceAuthorization.supportsInterface(type(IServiceAuthorization).interfaceId)) {
-                revert ErrorReleaseRegistryNotServiceAuth(address(serviceAuthorization));
+            revert ErrorReleaseRegistryNotServiceAuth(address(serviceAuthorization));
         }
 
         // authorizaions contract version matches with release version

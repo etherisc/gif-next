@@ -35,6 +35,7 @@ export async function deployAndRegisterMasterInstance(
     registry: RegistryAddresses,
     services: ServiceAddresses,
 ): Promise<InstanceAddresses> {
+
     logger.info("======== Starting deployment of master instance ========");
 
     const { address: masterInstanceAuthorizationV3Address } = await deployContract(
@@ -53,13 +54,37 @@ export async function deployAndRegisterMasterInstance(
         }
     );
 
+    const { address: masterAccessManagerAddress, contract: masterAccessManagerBaseContract } = await deployContract(
+        "AccessManagerCloneable",
+        owner,
+        undefined,
+        { 
+            libraries: {
+                ContractLib: libraries.contractLibAddress,
+                VersionPartLib: libraries.versionPartLibAddress,
+            }
+        }
+    );
+    const masterAccessManager = masterAccessManagerBaseContract as AccessManagerCloneable;
+
+    prepareVerificationData(
+        "AccessManagerCloneable",
+        await masterAccessManager,
+        [],
+        undefined
+    );
+
     const { address: masterInstanceAdminAddress, contract: masterInstanceAdminContract } = await deployContract(
         "InstanceAdmin",
         owner,
-        [masterInstanceAuthorizationV3Address],
+        [
+            masterAccessManagerAddress
+        ],
         {
             libraries: {
+                AccessAdminLib: libraries.accessAdminLibAddress,
                 ContractLib: libraries.contractLibAddress,
+                NftIdLib: libraries.nftIdLibAddress, 
                 RoleIdLib: libraries.roleIdLibAddress,
                 SelectorLib: libraries.selectorLibAddress,
                 SelectorSetLib: libraries.selectorSetLibAddress,
@@ -70,13 +95,6 @@ export async function deployAndRegisterMasterInstance(
         }
     );
     const masterInstanceAdmin = masterInstanceAdminContract as InstanceAdmin;
-
-    prepareVerificationData(
-        "AccessManagerCloneable",
-        await masterInstanceAdmin.authority(),
-        [],
-        undefined
-    );
 
     const { address: masterInstanceStoreAddress, contract: masterInstanceStoreContract } = await deployContract(
         "InstanceStore",
@@ -175,7 +193,8 @@ export async function deployAndRegisterMasterInstance(
             masterInstanceBundleSet,
             masterInstanceRiskSet,
             masterInstanceReader,
-            registry.registryAddress, 
+            registry.registryAddress,
+            3, 
             resolveAddress(owner),
             getTxOpts()),
         "masterInstance initialize",
@@ -193,6 +212,18 @@ export async function deployAndRegisterMasterInstance(
     const logRegistrationInfo = getFieldFromTxRcptLogs(rcpt!, registry.registry.interface, "LogRegistration", "nftId");
     // nftId is the first field of the ObjectInfo struct
     const masterInstanceNfdId = (logRegistrationInfo as unknown);
+
+    // wire instance admin to registry, instance and instance authorization
+    await executeTx(
+        () => masterInstanceAdmin.completeSetup(
+            registry.registryAddress,
+            masterInstanceAddress, 
+            masterInstanceAuthorizationV3Address,
+            3,
+            getTxOpts()),
+            "masterInstanceAdmin completeSetup",
+            [masterInstanceAdmin.interface]
+        );
 
     await executeTx(
         () => registry.chainNft.transferFrom(

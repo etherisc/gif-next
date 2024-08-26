@@ -427,7 +427,6 @@ contract InstanceAdmin is
     function _setupInstanceHelperTargetsWithRoles()
         internal
     {
-        // _checkAndCreateTargetWithRole(address(_instance), INSTANCE_TARGET_NAME);
 
         // create module targets
         _checkAndCreateTargetWithRole(address(_instance.getInstanceStore()), INSTANCE_STORE_TARGET_NAME);
@@ -435,7 +434,7 @@ contract InstanceAdmin is
         _checkAndCreateTargetWithRole(address(_instance.getBundleSet()), BUNDLE_SET_TARGET_NAME);
         _checkAndCreateTargetWithRole(address(_instance.getRiskSet()), RISK_SET_TARGET_NAME);
 
-        // create targets for services that need to access the module targets
+        // create targets for services that need to access the instance targets
         ObjectType[] memory serviceDomains = _authorization.getServiceDomains();
         VersionPart release = _authorization.getRelease();
         ObjectType serviceDomain;

@@ -2,12 +2,11 @@
 pragma solidity ^0.8.20;
 
 import {AccessManagerUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagerUpgradeable.sol";
-import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 import {IAccessManager} from "@openzeppelin/contracts/access/manager/IAccessManager.sol";
 
 import {InitializableERC165} from "../shared/InitializableERC165.sol";
 import {RegistryLinked} from "../shared/RegistryLinked.sol";
-import {VersionPart, VersionLib} from "../type/Version.sol";
+import {VersionPart} from "../type/Version.sol";
 
 
 /// @dev An AccessManager based on OpenZeppelin that is cloneable and has a central lock property.

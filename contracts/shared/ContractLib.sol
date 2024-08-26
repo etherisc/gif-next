@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import {IAccessManager} from "@openzeppelin/contracts/access/manager/IAccessManager.sol";
+import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 
 // import {InstanceAdmin} from "../instance/InstanceAdmin.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
@@ -167,6 +168,23 @@ library ContractLib {
         }
 
         return supportsInterface(authority, type(IAccessManager).interfaceId);
+    }
+
+
+    function isAccessManaged(address target)
+        public
+        view
+        returns (bool)
+    {
+        if (!isContract(target)) {
+            return false;
+        }
+
+        (bool success, ) = target.staticcall(
+            abi.encodeWithSelector(
+                IAccessManaged.authority.selector));
+
+        return success;
     }
 
 
