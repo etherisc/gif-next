@@ -348,6 +348,11 @@ contract DistributionService is
             return false;
         }
 
+        // ensure the referral was created on the same distribution
+        if(info.distributionNftId != distributionNftId) {
+            revert ErrorDistributionServiceReferralDistributionMismatch(referralId, info.distributionNftId, distributionNftId);
+        }
+
         isValid = info.expiryAt.eqz() || (info.expiryAt.gtz() && TimestampLib.blockTimestamp() <= info.expiryAt);
         isValid = isValid && info.usedReferrals < info.maxReferrals;
     }

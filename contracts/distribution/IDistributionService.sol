@@ -36,6 +36,7 @@ interface IDistributionService is IService {
 
     error ErrorDistributionServiceReferralInvalid(NftId distributionNftId, ReferralId referralId);
     error ErrorDistributionServiceInvalidFeeTransferred(Amount transferredDistributionFeeAmount, Amount expectedDistributionFeeAmount);
+    error ErrorDistributionServiceReferralDistributionMismatch(ReferralId referralId, NftId referralDistributionNft, NftId distributionNftId);
 
     event LogDistributionServiceCommissionWithdrawn(NftId distributorNftId, address recipient, address tokenAddress, Amount amount);
 
