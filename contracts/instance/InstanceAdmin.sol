@@ -56,40 +56,12 @@ contract InstanceAdmin is
         _;
     }
 
-// TODO cleanup logs
-event LogDebug3(string key, string value);
-
     /// @dev Only used for master instance admin.
     constructor(address accessManager) {
-emit LogDebug3("2a", "");
         initialize(
             accessManager,
             "MasterInstanceAdmin");
-emit LogDebug3("2b", "");
     }
-
-    // TODO cleanup
-    // function initialize(
-    //     AccessManagerCloneable clonedAccessManager,
-    //     IRegistry registry,
-    //     VersionPart release
-    // )
-    //     public
-    //     initializer()
-    // {
-    //     // checks
-
-    //     // effects
-    //     __AccessAdmin_init(
-    //         address(clonedAccessManager),
-    //         "InstanceAdmin");
-
-    //     clonedAccessManager.completeSetup(
-    //         address(registry), 
-    //         release); 
-
-    //     _registry = registry;
-    // }
 
 
     /// @dev Completes the initialization of this instance admin using the provided instance, registry and version.
@@ -127,21 +99,15 @@ emit LogDebug3("2b", "");
 
         // link nft ownability to instance
         _linkToNftOwnable(instance);
-emit LogDebug3("3d", "");
 
         // create instance role and target
         _setupInstance(instance);
-emit LogDebug3("3e", "");
 
         // add instance authorization
         _createRoles(_authorization);
-emit LogDebug3("3f", "");
         // _createTargets(_authorization);
-emit LogDebug3("3g", "");
         _setupInstanceHelperTargetsWithRoles();
-emit LogDebug3("3h", "");
         _createTargetAuthorizations(_authorization);
-emit LogDebug3("3i", "");
     }
 
 
@@ -189,12 +155,9 @@ emit LogDebug3("3i", "");
         return _release;
     }
 
-    event LogDebug(string key, string value);
 
     // create instance role and target
     function _setupInstance(address instance) internal {
-
-        emit LogDebug("main target", _authorization.getMainTarget().toString());
 
         // create instance role
         RoleId instanceRoleId = _authorization.getTargetRole(

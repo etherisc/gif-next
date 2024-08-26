@@ -22,10 +22,7 @@ import {VersionPartLib} from "../../contracts/type/Version.sol";
 import {SimpleDistributionAuthorization} from "../../contracts/examples/unpermissioned/SimpleDistributionAuthorization.sol";
 import {BasicOracleAuthorization} from "../../contracts/oracle/BasicOracleAuthorization.sol";
 import {BasicProductAuthorization} from "../../contracts/product/BasicProductAuthorization.sol";
-// TODO cleanup
-// import {BasicPoolAuthorization} from "../../contracts/pool/BasicPoolAuthorization.sol";
 import {SimplePoolAuthorization} from "../../contracts/examples/unpermissioned/SimplePoolAuthorization.sol";
-// import {SimpleProductAuthorization} from "../../contracts/examples/unpermissioned/SimpleProductAuthorization.sol";
 import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
 import {ReleaseRegistry} from "../../contracts/registry/ReleaseRegistry.sol";
 import {ServiceAuthorizationV3} from "../../contracts/registry/ServiceAuthorizationV3.sol";
@@ -304,8 +301,6 @@ contract GifTest is GifDeployer {
         assertEq(releaseRegistry.getState(releaseRegistry.getLatestVersion()).toInt(), ACTIVE().toInt(), "unexpected state for releaseRegistry after activateNextRelease");
     }
 
-// TODO cleanup logs
-event LogDebugMaster(string key, string value);
 
     function _deployMasterInstance() internal 
     {
@@ -319,9 +314,7 @@ event LogDebugMaster(string key, string value);
         masterInstanceReader = new InstanceReader();
 
         // crate instance
-emit LogDebugMaster("1", "a");
         masterInstance = new Instance();
-emit LogDebugMaster("1", "b");
         masterInstance.initialize(
             masterInstanceAdmin,
             masterInstanceStore,
@@ -331,28 +324,23 @@ emit LogDebugMaster("1", "b");
             registry,
             VersionPartLib.toVersionPart(3),
             registryOwner);
-emit LogDebugMaster("1", "c");
+
         // sets master instance address in instance service
         // instance service is now ready to create cloned instances
         masterInstanceNftId = instanceService.setAndRegisterMasterInstance(address(masterInstance));
-emit LogDebugMaster("1", "d");
+
         // setup roles, targets and function grantings
         instanceAuthorizationV3 = new InstanceAuthorizationV3();
-emit LogDebugMaster("1", "e");
         masterInstanceAdmin.completeSetup(
             address(registry),
             address(masterInstance), 
             address(instanceAuthorizationV3),
             VersionPartLib.toVersionPart(3));
-emit LogDebugMaster("1", "f");
 
         require(address(masterInstanceAdmin.getRegistry()) == address(registry), "unexpected master instance registry");
-        // require(masterInstanceAdmin.getRelease().toInt() == 3, "unexpected master instance release");
+        require(masterInstanceAdmin.getRelease().toInt() == 3, "unexpected master instance release");
 
         // MUST be set after instance is set up and registered
-        // TODO consider deleting this -> master instance just provides impl code, it own state must pe mot initialized
-        //masterInstanceAdmin.initializeInstanceAuthorization(address(masterInstance));
-
         // lock master instance nft
         chainNft.transferFrom(registryOwner, NFT_LOCK_ADDRESS, masterInstanceNftId.toInt());
 

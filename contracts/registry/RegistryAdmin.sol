@@ -87,7 +87,6 @@ contract RegistryAdmin is
             "RegistryAdmin");
     }
 
-event LogDebug2(string message, uint256 value);
 
     function completeSetup(
         address registry,
@@ -100,9 +99,6 @@ event LogDebug2(string message, uint256 value);
         reinitializer(type(uint8).max)
         onlyDeployer()
     {
-        // TODO cleanup logs
-        emit LogDebug2("a", 0);
-
         // checks
         _checkRegistry(registry);
 
@@ -128,20 +124,14 @@ event LogDebug2(string message, uint256 value);
         _linkToNftOwnable(_registry);
 
         _setupRegistry(_registry);
-emit LogDebug2("b", 0);
 
         // setup authorization for registry and supporting contracts
         _createRoles(_authorization);
-emit LogDebug2("c", 0);
         _grantRoleToAccount(GIF_ADMIN_ROLE(), gifAdmin);
-emit LogDebug2("d", 0);
         _grantRoleToAccount(GIF_MANAGER_ROLE(), gifManager);
-emit LogDebug2("e", 0);
 
         _createTargets(_authorization);
-emit LogDebug2("f", 0);
         _createTargetAuthorizations(_authorization);
-emit LogDebug2("g", 0);
     }
 
 

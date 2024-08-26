@@ -131,9 +131,6 @@ contract GifDeployer is Test {
 
     mapping(ObjectType domain => DeployedServiceInfo info) public serviceForDomain;
 
-    // TODO cleanup
-    event LogDebug(string message, string value);
-
     function deployCore(
         address globalRegistry,
         address gifAdmin,
@@ -188,17 +185,14 @@ contract GifDeployer is Test {
         stakingReader.initialize(
             address(staking),
             address(stakingStore));
-emit LogDebug("F", "");
 
         // 10) intialize registry and register staking component
         registry.initialize(
             address(releaseRegistry),
             address(tokenRegistry),
             address(staking));
-emit LogDebug("G", "");
 
         staking.linkToRegisteredNftId();
-emit LogDebug("H", "");
 
         // 11) initialize registry admin
         registryAdmin.completeSetup(
@@ -206,7 +200,6 @@ emit LogDebug("H", "");
             address(new RegistryAuthorization()),
             gifAdmin,
             gifManager);
-emit LogDebug("I", "");
 
         vm.stopPrank();
     }

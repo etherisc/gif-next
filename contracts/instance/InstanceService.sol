@@ -95,8 +95,6 @@ contract InstanceService is
         IInstance(instanceAddress).getInstanceAdmin().setTargetLocked(target, locked);
     }
 
-// TODO cleanup logs
-event LogDebug4(string key, string value);
 
     function createInstance()
         external 
@@ -114,35 +112,27 @@ event LogDebug4(string key, string value);
         InstanceAdmin instanceAdmin = _cloneNewInstanceAdmin();
         instance = _createInstance(instanceAdmin, instanceOwner);
 
-emit LogDebug4("3a", "0");
         // register cloned instance with registry
         instanceNftId = _registryService.registerInstance(
             instance, instanceOwner).nftId;
 
         // MUST be set after instance is set up and registered
-emit LogDebug4("3a", "1");
         IAuthorization instanceAuthorization = InstanceAdmin(_masterInstanceAdmin).getInstanceAuthorization();
-emit LogDebug4("3a", "2");
         instanceAdmin.completeSetup(
             address(getRegistry()),
             address(instance),
             address(instanceAuthorization),
             getRelease());
-emit LogDebug4("3a", "3");
 
         // hard checks for newly cloned instance
         assert(address(instance.getRegistry()) == address(getRegistry()));
         assert(instance.getRelease() == getRelease());
-
-emit LogDebug4("3a", "4");
 
         // register cloned instance as staking target
         _stakingService.createInstanceTarget(
             instanceNftId,
             TargetManagerLib.getDefaultLockingPeriod(),
             TargetManagerLib.getDefaultRewardRate());
-
-emit LogDebug4("3a", "5");
 
         emit LogInstanceCloned(
             instanceNftId,
@@ -338,13 +328,6 @@ emit LogDebug4("3a", "5");
             getRegistry(),
             getRelease(),
             instanceOwner);
-
-        // TODO cleanup
-        // instanceAdmin.completeSetup(
-        //     address(getRegistry()), 
-        //     address(clonedInstance), 
-        //     address(instanceAdmin.getInstanceAuthorization()),
-        //     getRelease());
 
         return clonedInstance;
     }
