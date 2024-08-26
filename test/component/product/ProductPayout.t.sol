@@ -47,8 +47,7 @@ contract TestProductClaim is GifTest {
 
         // create risk
         vm.startPrank(productOwner);
-        riskId = RiskIdLib.toRiskId("Risk_1");
-        product.createRisk(riskId, "");
+        riskId = product.createRisk("Risk_1", "");
         vm.stopPrank();
 
         // create application

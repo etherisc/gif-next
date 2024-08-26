@@ -78,8 +78,7 @@ contract ReleaseProductTest is GifTest {
         vm.stopPrank();
 
         // THEN risk creation fails
-        RiskId riskId2 = RiskIdLib.toRiskId("RiskWhileReleaseInactive");
-
+        
         // product -[X]-> riskService
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -87,7 +86,7 @@ contract ReleaseProductTest is GifTest {
                 address(product)));
 
         vm.startPrank(productOwner);
-        product.createRisk(riskId2, "");
+        RiskId riskId2 = product.createRisk("RiskWhileReleaseInactive", "");
         vm.stopPrank();
 
         assertTrue(instanceReader.getRiskInfo(riskId2).createdAt.eqz(), "new risk unexpectedly created");
@@ -183,8 +182,7 @@ contract ReleaseProductTest is GifTest {
 
     function _createRisk(string memory riskName) internal returns (RiskId rskId) {
         vm.startPrank(productOwner);
-        rskId = RiskIdLib.toRiskId(riskName);
-        product.createRisk(rskId, "");
+        rskId = product.createRisk(riskName, "");
         vm.stopPrank();
     }
 

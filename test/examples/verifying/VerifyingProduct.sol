@@ -50,8 +50,7 @@ contract VerifyingProduct is
     }
 
     function init() public {
-        riskId = RiskIdLib.toRiskId("Risk1");
-        _createRisk(riskId, "Risk1");
+        riskId = _createRisk("Risk1", "Risk1");
 
         sumInsuredAmount = AmountLib.toAmount(1000);
         premiumAmount = AmountLib.toAmount(100);
