@@ -1,30 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Vm, console} from "../../../lib/forge-std/src/Test.sol";
+import {console} from "../../../lib/forge-std/src/Test.sol";
 
 import {GifTest} from "../../base/GifTest.sol";
-import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
-import {KeyId} from "../../../contracts/type/Key32.sol";
-import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
-import {SimpleProduct} from "../../../contracts/examples/unpermissioned/SimpleProduct.sol";
-import {SimplePool} from "../../../contracts/examples/unpermissioned/SimplePool.sol";
-import {IComponents} from "../../../contracts/instance/module/IComponents.sol";
+import {NftId} from "../../../contracts/type/NftId.sol";
 import {ILifecycle} from "../../../contracts/shared/ILifecycle.sol";
-import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
-import {IBundle} from "../../../contracts/instance/module/IBundle.sol";
-import {Fee, FeeLib} from "../../../contracts/type/Fee.sol";
-import {UFixedLib} from "../../../contracts/type/UFixed.sol";
-import {Seconds, SecondsLib} from "../../../contracts/type/Seconds.sol";
-import {Timestamp, TimestampLib, zeroTimestamp} from "../../../contracts/type/Timestamp.sol";
-import {IPolicyService} from "../../../contracts/product/IPolicyService.sol";
-import {IRisk} from "../../../contracts/instance/module/IRisk.sol";
-import {PayoutId, PayoutIdLib} from "../../../contracts/type/PayoutId.sol";
-import {POLICY, RISK} from "../../../contracts/type/ObjectType.sol";
+import {SecondsLib} from "../../../contracts/type/Seconds.sol";
+import {Timestamp, zeroTimestamp} from "../../../contracts/type/Timestamp.sol";
+import {RISK} from "../../../contracts/type/ObjectType.sol";
 import {RiskId, RiskIdLib, eqRiskId} from "../../../contracts/type/RiskId.sol";
 import {ReferralLib} from "../../../contracts/type/Referral.sol";
-import {SUBMITTED, ACTIVE, PAUSED, ARCHIVED, COLLATERALIZED, CONFIRMED, DECLINED, CLOSED} from "../../../contracts/type/StateId.sol";
-import {StateId} from "../../../contracts/type/StateId.sol";
+import {ACTIVE, PAUSED, ARCHIVED} from "../../../contracts/type/StateId.sol";
 
 contract TestProductRisk is GifTest {
 
@@ -78,7 +65,7 @@ contract TestProductRisk is GifTest {
         // GIVEN
         // WHEN
         // THEN
-        // solhint-disable next-line
+        // solhint-disable-next-line
         console.log("initialRiskId", initialRiskId.toInt());
 
         assertEq(instanceReader.risks(productNftId), 1, "unexpected number of risks");
@@ -384,7 +371,7 @@ contract TestProductRisk is GifTest {
 
     // create risk from string for product
     function _createRisk(string memory riskName) internal returns (RiskId riskId) {
-        // solhint-disable next-line
+        // solhint-disable-next-line
         console.log("creating risk", riskName, riskId.toInt());
 
         vm.startPrank(productOwner);

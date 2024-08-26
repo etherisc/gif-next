@@ -183,8 +183,7 @@ abstract contract Product is
 
 
     function _createRisk(
-        // TODO: bytes32
-        string memory risk,
+        bytes32 id,
         bytes memory data
     )
         internal
@@ -192,7 +191,7 @@ abstract contract Product is
         returns (RiskId riskId)
     {
         return _getProductStorage()._riskService.createRisk(
-            risk,
+            id,
             data
         );
     }

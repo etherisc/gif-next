@@ -3,32 +3,22 @@ pragma solidity ^0.8.20;
 
 import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
-import {Vm, console} from "../../../lib/forge-std/src/Test.sol";
+import {console} from "../../../lib/forge-std/src/Test.sol";
 
 import {GifTest} from "../../base/GifTest.sol";
 import {MyPolicyHolder} from "../../mock/MyPolicyHolder.sol";
 import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
-import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
+import {NftId} from "../../../contracts/type/NftId.sol";
 import {ClaimId, ClaimIdLib} from "../../../contracts/type/ClaimId.sol";
 import {ContractLib} from "../../../contracts/shared/ContractLib.sol";
-import {SimpleProduct} from "../../../contracts/examples/unpermissioned/SimpleProduct.sol";
-import {SimplePool} from "../../../contracts/examples/unpermissioned/SimplePool.sol";
-import {IComponents} from "../../../contracts/instance/module/IComponents.sol";
-import {ILifecycle} from "../../../contracts/shared/ILifecycle.sol";
 import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
 import {IPolicyHolder} from "../../../contracts/shared/IPolicyHolder.sol";
-import {IBundle} from "../../../contracts/instance/module/IBundle.sol";
-import {Fee, FeeLib} from "../../../contracts/type/Fee.sol";
-import {UFixedLib} from "../../../contracts/type/UFixed.sol";
 import {Seconds, SecondsLib} from "../../../contracts/type/Seconds.sol";
-import {Timestamp, TimestampLib, zeroTimestamp} from "../../../contracts/type/Timestamp.sol";
-import {IPolicyService} from "../../../contracts/product/IPolicyService.sol";
-import {IRisk} from "../../../contracts/instance/module/IRisk.sol";
+import {Timestamp, TimestampLib} from "../../../contracts/type/Timestamp.sol";
 import {PayoutId, PayoutIdLib} from "../../../contracts/type/PayoutId.sol";
-import {POLICY} from "../../../contracts/type/ObjectType.sol";
-import {RiskId, RiskIdLib, eqRiskId} from "../../../contracts/type/RiskId.sol";
+import {RiskId} from "../../../contracts/type/RiskId.sol";
 import {ReferralLib} from "../../../contracts/type/Referral.sol";
-import {SUBMITTED, ACTIVE, COLLATERALIZED, CONFIRMED, PAID, DECLINED, CLOSED} from "../../../contracts/type/StateId.sol";
+import {SUBMITTED, CONFIRMED} from "../../../contracts/type/StateId.sol";
 import {StateId} from "../../../contracts/type/StateId.sol";
 
 contract TestProductLifecycle
@@ -196,6 +186,7 @@ contract TestProductLifecycle
             StateId claimState
         ) = _makeClaim(policyNftId, claimAmount, false);
 
+        // solhint-disable-next-line
         console.log("claimId", claimId.toInt());
         assertEq(claimId.toInt(), claimIdExpected.toInt(), "unexpected claim id");
 
@@ -229,6 +220,7 @@ contract TestProductLifecycle
             StateId claimState
         ) = _makeClaim(policyNftId, claimAmount, true);
 
+        // solhint-disable-next-line
         console.log("claimId", claimId.toInt());
         assertEq(claimId.toInt(), claimIdExpected.toInt(), "unexpected claim id");
 

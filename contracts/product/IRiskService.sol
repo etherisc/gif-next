@@ -8,8 +8,11 @@ import {StateId} from "../type/StateId.sol";
 
 interface IRiskService is IService {
 
+    /// @dev Create a new risk with the given id and provided data. 
+    /// The key of the risk derived from the risk id in comination with the product NftId. 
+    /// Risk data is stored in the instance store. 
     function createRisk(
-        string memory risk,
+        bytes32 id,
         bytes memory data
     ) external returns (RiskId riskId);
 

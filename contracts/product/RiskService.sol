@@ -39,9 +39,9 @@ contract RiskService is
         _registerInterface(type(IRiskService).interfaceId);
     }
 
-
+    /// @inheritdoc IRiskService
     function createRisk(
-        string memory risk,
+        bytes32 id,
         bytes memory data
     )
         external 
@@ -52,7 +52,7 @@ contract RiskService is
         (NftId productNftId, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
 
         // effects
-        riskId = RiskIdLib.toRiskId(productNftId, risk);
+        riskId = RiskIdLib.toRiskId(productNftId, id);
         IRisk.RiskInfo memory riskInfo = IRisk.RiskInfo({
             productNftId: productNftId, 
             createdAt: TimestampLib.blockTimestamp(),

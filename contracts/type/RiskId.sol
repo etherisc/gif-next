@@ -42,7 +42,7 @@ library RiskIdLib {
     }
 
     // @dev Converts a risk id string with a product NftId into a risk id.
-    function toRiskId(NftId productNftId, string memory risk) public pure returns (RiskId) {
+    function toRiskId(NftId productNftId, bytes32 risk) public pure returns (RiskId) {
         return RiskId.wrap(bytes8(keccak256(abi.encode(productNftId, risk))));
     }
 

@@ -252,7 +252,7 @@ contract FireProduct is
             return _riskMapping[cityName];
         }
         _cities.push(cityName);
-        risk = _createRisk(cityName, "");
+        risk = _createRisk(bytes32(abi.encodePacked(cityName)), "");
         _riskMapping[cityName] = risk;
     }
 

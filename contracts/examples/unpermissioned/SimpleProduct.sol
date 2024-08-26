@@ -89,7 +89,7 @@ contract SimpleProduct is
         bytes memory data
     ) public returns (RiskId) {
         return _createRisk(
-            id,
+            bytes32(abi.encodePacked(id)),
             data
         );
     }
