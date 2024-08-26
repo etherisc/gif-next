@@ -93,6 +93,12 @@ contract GifClusterTest is GifTest {
     }
 
 
+    function _setupProductClusters1and2() internal {
+        _setupProductCluster1();
+        _setupProductCluster2();
+        _fundInstanceOwnerAndCreateApprovals();
+    }
+
     function _setupProductClusters1to4() internal {
         _setupProductCluster1();
         _setupProductCluster2();

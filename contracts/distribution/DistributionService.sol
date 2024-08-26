@@ -74,7 +74,6 @@ contract DistributionService is
         returns (DistributorType distributorType)
     {
         (NftId distributionNftId,, IInstance instance) = _getAndVerifyActiveComponent(DISTRIBUTION());
-        // InstanceReader instanceReader = instance.getInstanceReader();
 
         {
             NftId productNftId = _getProductNftId(distributionNftId);
@@ -120,14 +119,7 @@ contract DistributionService is
         returns (NftId distributorNftId)
     {
         (NftId distributionNftId,, IInstance instance) = _getAndVerifyActiveComponent(DISTRIBUTION());
-
-        {
-            NftId expectedDistributionNftId = instance.getInstanceReader().getDistributorTypeInfo(distributorType).distributionNftId;
-
-            if (distributionNftId != expectedDistributionNftId) {
-                revert ErrorDistributionServiceInvalidDistributorType(distributorType);
-            }
-        }
+        _checkDistributionType(instance.getInstanceReader(), distributorType, distributionNftId);
 
         distributorNftId = _registryService.registerDistributor(
             IRegistry.ObjectInfo(
@@ -157,7 +149,10 @@ contract DistributionService is
         external
         virtual
     {
-        (,, IInstance instance) = _getAndVerifyActiveComponent(DISTRIBUTION());
+        _checkNftType(distributorNftId, DISTRIBUTOR());
+        (NftId distributionNftId,, IInstance instance) = _getAndVerifyActiveComponent(DISTRIBUTION());
+        _checkDistributionType(instance.getInstanceReader(), distributorType, distributionNftId);
+        
         IDistribution.DistributorInfo memory distributorInfo = instance.getInstanceReader().getDistributorInfo(distributorNftId);
         distributorInfo.distributorType = distributorType;
         distributorInfo.data = data;
@@ -350,6 +345,18 @@ contract DistributionService is
 
         isValid = info.expiryAt.eqz() || (info.expiryAt.gtz() && TimestampLib.blockTimestamp() <= info.expiryAt);
         isValid = isValid && info.usedReferrals < info.maxReferrals;
+    }
+
+    function _checkDistributionType(InstanceReader instanceReader, DistributorType distributorType, NftId expectedDistributionNftId) 
+        internal
+        view 
+    {
+        // enfore distributor type belongs to the calling distribution
+        NftId distributorTypeDistributionNftId = instanceReader.getDistributorTypeInfo(distributorType).distributionNftId;
+
+        if (distributorTypeDistributionNftId != expectedDistributionNftId) {
+            revert ErrorDistributionServiceInvalidDistributorType(distributorType);
+        }
     }
 
     function _getInstanceForDistribution(NftId distributionNftId)
