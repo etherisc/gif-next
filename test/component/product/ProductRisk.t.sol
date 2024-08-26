@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {console} from "../../../lib/forge-std/src/Test.sol";
 
 import {GifTest} from "../../base/GifTest.sol";
+import {KeyId} from "../../../contracts/type/Key32.sol";
 import {NftId} from "../../../contracts/type/NftId.sol";
 import {ILifecycle} from "../../../contracts/shared/ILifecycle.sol";
 import {SecondsLib} from "../../../contracts/type/Seconds.sol";
@@ -44,22 +45,20 @@ contract TestProductRisk is GifTest {
         _approve();
     }
 
-    // TODO: we need this? 
-    // function test_productRiskIdLib() public view {
+    function test_productRiskIdLib() public view {
+        // GIVEN
+        RiskId riskId = RiskIdLib.toRiskId(productNftId, "Risk1");
+        KeyId keyId = RiskIdLib.toKeyId(riskId);
+        RiskId riskIdReverse = RiskIdLib.toRiskId(keyId);
 
-    //     // GIVEN
-    //     RiskId riskId = RiskIdLib.toRiskId("Risk1");
-    //     KeyId keyId = RiskIdLib.toKeyId(riskId);
-    //     RiskId riskIdReverse = RiskIdLib.toRiskId(keyId);
+        // solhint-disable
+        console.log("initialRiskId.toInt()", initialRiskId.toInt());
+        console.log("riskIdReverse.toInt()", riskIdReverse.toInt());
+        // solhint-enable
 
-    //     // solhint-disable
-    //     console.log("initialRiskId.toInt()", initialRiskId.toInt());
-    //     console.log("riskIdReverse.toInt()", riskIdReverse.toInt());
-    //     // solhint-enable
-
-    //     // THEN
-    //     assertTrue(riskId == riskIdReverse, "risk ids not same");
-    // }
+        // THEN
+        assertTrue(riskId == riskIdReverse, "risk ids not same");
+    }
 
     function test_productRiskSetUp() public {
         // GIVEN
