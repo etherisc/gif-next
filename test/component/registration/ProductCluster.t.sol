@@ -68,8 +68,6 @@ contract ProductClusterTest is GifClusterTest {
         // solhint-enable
     }
 
-    // TODO: add test with two products same riskid -> new sol file, new base class for cluster stuff
-
     function test_productClusterSetup1and4() public {
         _setupProductClusters1and4();
 
