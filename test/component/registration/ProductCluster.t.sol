@@ -100,8 +100,9 @@ contract ProductClusterTest is GifClusterTest {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                IApplicationService.ErrorApplicationServiceRiskUnknown.selector, 
+                IPricingService.ErrorPricingServiceRiskProductMismatch.selector, 
                 riskId2,
+                myProductNftId2,
                 myProductNftId1));
 
         _createApplication(myProduct1, riskId2, bundleNftId1, referralId1);
