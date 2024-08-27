@@ -1,44 +1,21 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Vm, console} from "../../../lib/forge-std/src/Test.sol";
-
-import {BasicDistributionAuthorization} from "../../../contracts/distribution/BasicDistributionAuthorization.sol";
-import {BasicOracleAuthorization} from "../../../contracts/oracle/BasicOracleAuthorization.sol";
 import {BasicPoolAuthorization} from "../../../contracts/pool/BasicPoolAuthorization.sol";
 import {BasicProductAuthorization} from "../../../contracts/product/BasicProductAuthorization.sol";
 import {GifTest} from "../../base/GifTest.sol";
-import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
-import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
-import {ClaimId} from "../../../contracts/type/ClaimId.sol";
+import {NftId} from "../../../contracts/type/NftId.sol";
 import {SimpleProduct} from "../../../contracts/examples/unpermissioned/SimpleProduct.sol";
 import {SimplePool} from "../../../contracts/examples/unpermissioned/SimplePool.sol";
-import {IAuthorization} from "../../../contracts/authorization/IAuthorization.sol";
 import {IComponents} from "../../../contracts/instance/module/IComponents.sol";
 import {IComponentService} from "../../../contracts/shared/IComponentService.sol";
-import {Registerable} from "../../../contracts/shared/Registerable.sol";
-import {IRegisterable} from "../../../contracts/shared/IRegisterable.sol";
-import {IRelease} from "../../../contracts/registry/IRelease.sol";
-import {IInstanceLinkedComponent} from "../../../contracts/shared/IInstanceLinkedComponent.sol";
-import {ILifecycle} from "../../../contracts/shared/ILifecycle.sol";
 import {INftOwnable} from "../../../contracts/shared/INftOwnable.sol";
-import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
-import {IBundle} from "../../../contracts/instance/module/IBundle.sol";
-import {Fee, FeeLib} from "../../../contracts/type/Fee.sol";
-import {UFixedLib} from "../../../contracts/type/UFixed.sol";
-import {VersionPart, VersionPartLib} from "../../../contracts/type/Version.sol";
-import {Seconds, SecondsLib} from "../../../contracts/type/Seconds.sol";
-import {Timestamp, TimestampLib, zeroTimestamp} from "../../../contracts/type/Timestamp.sol";
-import {IPolicyService} from "../../../contracts/product/IPolicyService.sol";
-import {IRisk} from "../../../contracts/instance/module/IRisk.sol";
-import {PayoutId, PayoutIdLib} from "../../../contracts/type/PayoutId.sol";
-import {POLICY, PRODUCT, POOL} from "../../../contracts/type/ObjectType.sol";
-import {RiskId, RiskIdLib, eqRiskId} from "../../../contracts/type/RiskId.sol";
-import {ReferralLib} from "../../../contracts/type/Referral.sol";
-import {SUBMITTED, ACTIVE, COLLATERALIZED, CONFIRMED, DECLINED, CLOSED} from "../../../contracts/type/StateId.sol";
-import {StateId} from "../../../contracts/type/StateId.sol";
+import {PRODUCT, POOL} from "../../../contracts/type/ObjectType.sol";
+import {SimpleProductV4} from "./SimpleProductV4.sol";
 import {Usdc} from "../../mock/Usdc.sol";
 
+
+// solhint-disable func-name-mixedcase
 contract TestProductRegistration is GifTest {
 
     address public myProductOwner = makeAddr("myProductOwner");
@@ -86,7 +63,7 @@ contract TestProductRegistration is GifTest {
         SimpleProduct myProduct = _deployProductDefault("MyProduct");
 
         vm.startPrank(instanceOwner);
-        NftId myNftId = instance.registerProduct(address(myProduct), address(token));
+        instance.registerProduct(address(myProduct), address(token));
         vm.stopPrank();
 
         // WHEN + THEN
@@ -96,7 +73,7 @@ contract TestProductRegistration is GifTest {
                 address(myProduct)));
 
         vm.startPrank(instanceOwner);
-        NftId myNftId2nd = instance.registerProduct(address(myProduct), address(token));
+        instance.registerProduct(address(myProduct), address(token));
         vm.stopPrank();
     }
 
@@ -113,7 +90,7 @@ contract TestProductRegistration is GifTest {
                 myProductOwner));
 
         vm.startPrank(myProductOwner);
-        NftId myNftId = instance.registerProduct(address(myProduct), address(token));
+        instance.registerProduct(address(myProduct), address(token));
         vm.stopPrank();
     }
 
@@ -130,7 +107,7 @@ contract TestProductRegistration is GifTest {
                 address(instanceOwner)));
 
         vm.startPrank(instanceOwner);
-        NftId myNftId = componentService.registerProduct(address(myProduct), address(token));
+        componentService.registerProduct(address(myProduct), address(token));
         vm.stopPrank();
     }
 
@@ -157,7 +134,7 @@ contract TestProductRegistration is GifTest {
                 instance.getRelease()));
 
         vm.startPrank(instanceOwner);
-        NftId myNftId = instance.registerProduct(address(myProductV4), address(token));
+        instance.registerProduct(address(myProductV4), address(token));
         vm.stopPrank();
     }
 
@@ -170,7 +147,7 @@ contract TestProductRegistration is GifTest {
         vm.expectRevert();
 
         vm.startPrank(instanceOwner);
-        NftId myNftId = instance.registerProduct(address(token), address(token));
+        instance.registerProduct(address(token), address(token));
         vm.stopPrank();
     }
 
@@ -195,7 +172,7 @@ contract TestProductRegistration is GifTest {
                 POOL()));
 
         vm.startPrank(instanceOwner);
-        NftId myNftId = instance.registerProduct(address(myPool), address(token));
+        instance.registerProduct(address(myPool), address(token));
         vm.stopPrank();
     }
 
@@ -262,30 +239,3 @@ contract TestProductRegistration is GifTest {
 }
 
 
-
-
-contract SimpleProductV4 is SimpleProduct {
-
-    constructor(
-        address registry,
-        NftId instanceNftId,
-        IComponents.ProductInfo memory productInfo,
-        IComponents.FeeInfo memory feeInfo,
-        IAuthorization authorization,
-        address initialOwner
-    )
-        SimpleProduct(
-            registry,
-            instanceNftId,
-            "SimpleProductV4",
-            productInfo,
-            feeInfo,
-            authorization,
-            initialOwner
-        )
-    { }
-
-    function getRelease() public override(IRelease, Registerable) pure returns (VersionPart release) {
-        return VersionPartLib.toVersionPart(4);
-    }
-}
