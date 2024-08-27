@@ -30,7 +30,7 @@ export type LibraryAddresses = {
     referralLibAddress: AddressLike;
     requestIdLibAddress: AddressLike;
     targetManagerLibAddress: AddressLike;
-    stakeManagerLibAddress: AddressLike;
+    stakingLibAddress: AddressLike;
     selectorLibAddress: AddressLike;
     selectorSetLibAddress: AddressLike;
     strLibAddress: AddressLike;
@@ -174,8 +174,8 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         });
     LIBRARY_ADDRESSES.set("TargetManagerLib", targetManagerLibAddress);
 
-    const { address: stakeManagerLibAddress } = await deployContract(
-        "StakeManagerLib",
+    const { address: stakingLibAddress } = await deployContract(
+        "StakingLib",
         owner, 
         undefined,
         {
@@ -186,7 +186,7 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
                 UFixedLib: uFixedLibAddress,
             }
         });
-    LIBRARY_ADDRESSES.set("StakeManagerLib", stakeManagerLibAddress);
+    LIBRARY_ADDRESSES.set("StakingLib", stakingLibAddress);
 
     const { address: stateIdLibAddress } = await deployContract(
         "StateIdLib",
@@ -374,7 +374,7 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         referralLibAddress,
         requestIdLibAddress,
         targetManagerLibAddress,
-        stakeManagerLibAddress,
+        stakingLibAddress,
         selectorLibAddress,
         selectorSetLibAddress,
         strLibAddress,

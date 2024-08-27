@@ -12,7 +12,7 @@ import {IStakingService} from "../../contracts/staking/IStakingService.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {STAKE} from "../../contracts/type/ObjectType.sol";
 import {Seconds, SecondsLib} from "../../contracts/type/Seconds.sol";
-import {StakeManagerLib} from "../../contracts/staking/StakeManagerLib.sol";
+import {StakingLib} from "../../contracts/staking/StakingLib.sol";
 import {StakingStore} from "../../contracts/staking/StakingStore.sol";
 import {TargetManagerLib} from "../../contracts/staking/TargetManagerLib.sol";
 import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
@@ -206,7 +206,7 @@ contract StakingTest is GifTest {
         assertEq(_times1000(rewardRate), expectedRewardIncrementInFullDip, "unexpected instance reward rate");
 
         // check expected reward increase (version 1)
-        Amount expectedRewardIncrease = StakeManagerLib.calculateRewardAmount(
+        Amount expectedRewardIncrease = StakingLib.calculateRewardAmount(
             rewardRate,
             SecondsLib.oneYear(),
             dipAmount);
@@ -217,7 +217,7 @@ contract StakingTest is GifTest {
         // check expected reward increase (version 2)
         (
             Amount rewardIncrease,
-        ) = StakeManagerLib.calculateRewardIncrease(
+        ) = StakingLib.calculateRewardIncrease(
             stakingReader,
             stakeNftId,
             rewardRate);
@@ -274,12 +274,12 @@ contract StakingTest is GifTest {
         (
             Amount rewardIncrease,
             Amount totalDipAmount
-        ) = StakeManagerLib.calculateRewardIncrease(
+        ) = StakingLib.calculateRewardIncrease(
             stakingReader,
             stakeNftId,
             rewardRate);
         
-        Amount expectedRewardIncrease = StakeManagerLib.calculateRewardAmount(
+        Amount expectedRewardIncrease = StakingLib.calculateRewardAmount(
             rewardRate,
             SecondsLib.oneYear(),
             dipAmount);
@@ -337,12 +337,12 @@ contract StakingTest is GifTest {
         (
             Amount rewardIncrease,
             Amount totalDipAmount
-        ) = StakeManagerLib.calculateRewardIncrease(
+        ) = StakingLib.calculateRewardIncrease(
             stakingReader,
             stakeNftId,
             rewardRate);
         
-        Amount expectedRewardIncrease = StakeManagerLib.calculateRewardAmount(
+        Amount expectedRewardIncrease = StakingLib.calculateRewardAmount(
             rewardRate,
             SecondsLib.oneYear(),
             dipAmount);

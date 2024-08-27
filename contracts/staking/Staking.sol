@@ -16,7 +16,7 @@ import {NftId} from "../type/NftId.sol";
 import {ObjectType, STAKE, STAKING} from "../type/ObjectType.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {Registerable} from "../shared/Registerable.sol";
-import {StakeManagerLib} from "./StakeManagerLib.sol";
+import {StakingLib} from "./StakingLib.sol";
 import {StakingReader} from "./StakingReader.sol";
 import {StakingStore} from "./StakingStore.sol";
 import {TargetManagerLib} from "./TargetManagerLib.sol";
@@ -275,7 +275,7 @@ contract Staking is
         restricted() // only staking service
     {
         StakingStorage storage $ = _getStakingStorage();
-        Timestamp lockedUntil = StakeManagerLib.checkCreateParameters(
+        Timestamp lockedUntil = StakingLib.checkCreateParameters(
             $._reader,
             targetNftId,
             stakeAmount);
@@ -305,7 +305,7 @@ contract Staking is
         returns (Amount stakeBalance)
     {
         StakingStorage storage $ = _getStakingStorage();
-        stakeBalance = StakeManagerLib.stake(
+        stakeBalance = StakingLib.stake(
             getRegistry(),
             $._reader,
             $._store,
@@ -329,7 +329,7 @@ contract Staking is
 
         // TODO add check that allows additional staking amount
         StakingStorage storage $ = _getStakingStorage();
-        newStakeBalance = StakeManagerLib.restake(
+        newStakeBalance = StakingLib.restake(
             $._reader,
             $._store,
             stakeNftId,
@@ -384,7 +384,7 @@ contract Staking is
     {
         StakingStorage storage $ = _getStakingStorage();
         
-        StakeManagerLib.checkUnstakeParameters($._reader, stakeNftId);
+        StakingLib.checkUnstakeParameters($._reader, stakeNftId);
         
         // update rewards since last update
         NftId targetNftId = _updateRewards($._reader, $._store, stakeNftId);
@@ -456,7 +456,7 @@ contract Staking is
         UFixed rewardRate;
 
         (targetNftId, rewardRate) = reader.getTargetRewardRate(stakeNftId);
-        (Amount rewardIncrement, ) = StakeManagerLib.calculateRewardIncrease(
+        (Amount rewardIncrement, ) = StakingLib.calculateRewardIncrease(
             reader, 
             stakeNftId,
             rewardRate);

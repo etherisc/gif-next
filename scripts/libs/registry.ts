@@ -216,7 +216,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
                 AmountLib: libraries.amountLibAddress, 
                 ContractLib: libraries.contractLibAddress,
                 NftIdLib: libraries.nftIdLibAddress, 
-                StakeManagerLib: libraries.stakeManagerLibAddress, 
+                StakingLib: libraries.stakingLibAddress, 
                 TargetManagerLib: libraries.targetManagerLibAddress, 
                 TimestampLib: libraries.timestampLibAddress,
                 TokenHandlerDeployerLib: libraries.tokenHandlerDeployerLibAddress,

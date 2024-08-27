@@ -11,7 +11,7 @@ import {IStakingService} from "../../contracts/staking/IStakingService.sol";
 import {NftId} from "../../contracts/type/NftId.sol";
 import {INSTANCE, PROTOCOL, SERVICE, STAKE, STAKING} from "../../contracts/type/ObjectType.sol";
 import {Seconds, SecondsLib} from "../../contracts/type/Seconds.sol";
-import {StakeManagerLib} from "../../contracts/staking/StakeManagerLib.sol";
+import {StakingLib} from "../../contracts/staking/StakingLib.sol";
 import {TargetManagerLib} from "../../contracts/staking/TargetManagerLib.sol";
 import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
 import {TokenHandler} from "../../contracts/shared/TokenHandler.sol";

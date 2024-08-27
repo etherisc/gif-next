@@ -12,7 +12,7 @@ import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
 import {UFixed, UFixedLib} from "../type/UFixed.sol";
 
 
-library StakeManagerLib {
+library StakingLib {
 
     function stake(
         IRegistry registry,
