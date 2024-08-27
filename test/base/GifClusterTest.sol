@@ -42,6 +42,7 @@ contract GifClusterTest is GifTest {
     SimplePool public myPool1;
     NftId public myProductNftId1;
     NftId public myDistributionNftId1;
+    NftId public myDistributorNftId1;
     NftId public myPoolNftId1;
 
     // product cluster 2
@@ -51,6 +52,7 @@ contract GifClusterTest is GifTest {
     SimplePool public myPool2;
     NftId public myProductNftId2;
     NftId public myDistributionNftId2;
+    NftId public myDistributorNftId2;
     NftId public myOracleNftId2;
     NftId public myPoolNftId2;
 
@@ -118,7 +120,7 @@ contract GifClusterTest is GifTest {
         myPoolNftId1 = myProduct1.registerComponent(address(myPool1));
         vm.stopPrank();
 
-        _prepareDistributor(myDistribution1);
+        myDistributorNftId1 = _prepareDistributor(myDistribution1);
     }
 
 
@@ -134,7 +136,7 @@ contract GifClusterTest is GifTest {
         myPoolNftId2 = myProduct2.registerComponent(address(myPool2));
         vm.stopPrank();
 
-        _prepareDistributor(myDistribution2);
+        myDistributorNftId2 = _prepareDistributor(myDistribution2);
     }
 
 

@@ -60,6 +60,7 @@ contract TestProductClusterTest is GifClusterTest {
 
         vm.startPrank(distributorFromProduct1);
         ReferralId referralId = myDistribution1.createReferral(
+            distributorNftId,
             "GET_A_DISCOUNT",
             UFixedLib.toUFixed(10, -2),
             5,

@@ -95,7 +95,7 @@ contract BasicDistribution is
      * referral codes need to be unique
      */
     function createReferral(
-        // FIXME: switch to nft
+        NftId distributorNftId,
         string memory code,
         UFixed discountPercentage,
         uint32 maxReferrals,
@@ -105,9 +105,10 @@ contract BasicDistribution is
         external
         virtual
         restricted()
+        onlyNftOwner(distributorNftId)
         returns (ReferralId referralId)
     {
-        NftId distributorNftId = NftIdLib.zero();
+        _checkNftType(distributorNftId, DISTRIBUTOR());
         return _createReferral(
             distributorNftId,
             code,

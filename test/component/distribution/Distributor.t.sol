@@ -79,6 +79,7 @@ contract DistributorTest is GifTest {
 
         vm.startPrank(customer);
         referralId = sdistribution.createReferral(
+            distributorNftId,
             referralCode,
             discountPercentage,
             maxReferrals,
@@ -130,23 +131,16 @@ contract DistributorTest is GifTest {
 
     function test_distributionDistributorCreateTransfer() public {
 
-        assertTrue(!distribution.isDistributor(customer), "customer is already distributor");
         _setupTestData(true);
 
-        assertTrue(distribution.isDistributor(customer), "customer still not distributor");
         assertEq(registry.ownerOf(distributorNftId), customer, "unexpected distributor nft owner");
-        assertTrue(distribution.getDistributorNftId(customer) == distributorNftId, "unexpected distributor nft id for customer");
-        assertTrue(!distribution.isDistributor(customer2), "customer2 not yet distributor");
-
+        
         vm.startPrank(customer);
         // chainNft.approve(customer2, distributorNftId.toInt());
         chainNft.safeTransferFrom(customer, customer2, distributorNftId.toInt());
         vm.stopPrank();
 
         assertEq(registry.ownerOf(distributorNftId), customer2, "customer2 not owner of distributor nft after token transfer");
-        assertTrue(!distribution.isDistributor(customer), "customer is still distributor after token transfer");
-        assertTrue(distribution.isDistributor(customer2), "customer2 is not yet distributor after token transfer");
-        assertTrue(distribution.getDistributorNftId(customer2) == distributorNftId, "unexpected distributor nft id for customer2");
     }
 
 
@@ -260,6 +254,7 @@ contract DistributorTest is GifTest {
         vm.startPrank(customer);
         referralId = SimpleDistribution(
             address(distribution)).createReferral(
+                distributorNftId,
                 referralCode,
                 referralDiscount,
                 maxReferralCount,

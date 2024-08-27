@@ -35,6 +35,7 @@ contract ReferralTest is ReferralTestBase {
 
         vm.startPrank(customer);
         referralId = sdistribution.createReferral(
+            distributorNftId,
             referralCode,
             discountPercentage,
             maxReferrals,
@@ -55,6 +56,7 @@ contract ReferralTest is ReferralTestBase {
 
         vm.startPrank(customer);
         referralId = sdistribution.createReferral(
+            distributorNftId,
             referralCode,
             discountPercentage,
             maxReferrals,
@@ -94,6 +96,7 @@ contract ReferralTest is ReferralTestBase {
         token.approve(address(componentInfo.tokenHandler), 1000);
 
         referralId = distribution.createReferral(
+            distributorNftId,
             referralCode,
             UFixedLib.toUFixed(5, -2),
             maxReferrals,
@@ -192,6 +195,7 @@ contract ReferralTest is ReferralTestBase {
         token.approve(address(componentInfo.tokenHandler), 1000);
 
         referralId = distribution.createReferral(
+            distributorNftId,
             referralCode,
             UFixedLib.toUFixed(5, -2),
             maxReferrals,
@@ -262,6 +266,7 @@ contract ReferralTest is ReferralTestBase {
 
         vm.startPrank(distributor);
         ReferralId referralId2 = distribution.createReferral(
+            distributorNftId2,
             "SAVE2!!!",
             UFixedLib.toUFixed(5, -2),
             maxReferrals,
