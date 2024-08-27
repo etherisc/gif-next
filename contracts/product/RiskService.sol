@@ -84,7 +84,7 @@ contract RiskService is
         IRisk.RiskInfo memory riskInfo = instanceReader.getRiskInfo(riskId);
 
         if (riskInfo.productNftId != productNftId) {
-            revert IRiskServiceRiskProductMismatch(riskId, riskInfo.productNftId, productNftId);
+            revert ErrorRiskServiceRiskProductMismatch(riskId, riskInfo.productNftId, productNftId);
         }
 
         riskInfo.data = data;
@@ -104,7 +104,7 @@ contract RiskService is
 
         NftId riskProductNftId = instance.getInstanceReader().getRiskInfo(riskId).productNftId;
         if (riskProductNftId != productNftId) {
-            revert IRiskServiceRiskProductMismatch(riskId, riskProductNftId, productNftId);
+            revert ErrorRiskServiceRiskProductMismatch(riskId, riskProductNftId, productNftId);
         }
 
         // effects

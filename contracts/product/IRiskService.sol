@@ -9,7 +9,7 @@ import {StateId} from "../type/StateId.sol";
 
 interface IRiskService is IService {
 
-    error IRiskServiceRiskProductMismatch(RiskId riskId, NftId riskProductNftId, NftId productNftId);
+    error ErrorRiskServiceRiskProductMismatch(RiskId riskId, NftId riskProductNftId, NftId productNftId);
 
     /// @dev Create a new risk with the given id and provided data. 
     /// The key of the risk derived from the risk id in comination with the product NftId. 
