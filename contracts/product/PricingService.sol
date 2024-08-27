@@ -88,7 +88,7 @@ contract PricingService is
             reader = instance.getInstanceReader();
 
             NftId riskProductNftId = reader.getRiskInfo(riskId).productNftId;
-            if (!productNftId.eq(riskProductNftId)) {
+            if (productNftId != riskProductNftId) {
                 revert ErrorPricingServiceRiskProductMismatch(riskId, riskProductNftId, productNftId);
             }
 

@@ -72,7 +72,7 @@ contract ApplicationService is
         if (!active) { revert ErrorApplicationServiceRiskPaused(riskId, productNftId); }
 
         NftId riskProductNftId = instanceReader.getRiskInfo(riskId).productNftId;
-        if (!productNftId.eq(riskProductNftId)) {
+        if (productNftId != riskProductNftId) {
             revert ErrorApplicationServiceRiskProductMismatch(riskId, riskProductNftId, productNftId);
         }
 
