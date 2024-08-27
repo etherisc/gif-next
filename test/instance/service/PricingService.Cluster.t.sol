@@ -61,7 +61,7 @@ contract PricingServiceClusterTest is GifClusterTest {
             "");
         vm.stopPrank();
 
-        RiskId riskId = RiskIdLib.toRiskId(productNftId, "42x4711");
+        RiskId riskId2 = myProduct2.createRisk("42x4711", "");
         Amount sumInsured = AmountLib.toAmount(1000);
         Seconds lifetime = SecondsLib.toSeconds(300);
 
@@ -75,7 +75,7 @@ contract PricingServiceClusterTest is GifClusterTest {
         // WHEN
         pricingService.calculatePremium(
             myProductNftId2, 
-            riskId, 
+            riskId2, 
             sumInsured, 
             lifetime, 
             "",
