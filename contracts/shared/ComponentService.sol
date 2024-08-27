@@ -519,7 +519,6 @@ contract ComponentService is
         // deploy and wire token handler
         {
             IComponents.ComponentInfo memory componentInfo = component.getInitialComponentInfo();
-            // TODO: check if token is whitelisted
             componentInfo.tokenHandler = TokenHandlerDeployerLib.deployTokenHandler(
                 address(getRegistry()),
                 componentAddress, // initially, component is its own wallet

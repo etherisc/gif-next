@@ -37,6 +37,7 @@ import {RiskId, RiskIdLib, eqRiskId} from "../../../contracts/type/RiskId.sol";
 import {ReferralLib} from "../../../contracts/type/Referral.sol";
 import {SUBMITTED, ACTIVE, COLLATERALIZED, CONFIRMED, DECLINED, CLOSED} from "../../../contracts/type/StateId.sol";
 import {StateId} from "../../../contracts/type/StateId.sol";
+import {Usdc} from "../../mock/Usdc.sol";
 
 contract TestProductRegistration is GifTest {
 
@@ -60,8 +61,7 @@ contract TestProductRegistration is GifTest {
     }
 
 
-    // TODO fix + re-enable
-    function skip_test_productRegisterTwoProductsHappyCase() public {
+    function test_productRegisterTwoProductsHappyCase() public {
         // GIVEN
         SimpleProduct myProduct1 = _deployProductDefault("MyProduct1");
         SimpleProduct myProduct2 = _deployProductDefault("MyProduct2");
@@ -197,6 +197,22 @@ contract TestProductRegistration is GifTest {
         vm.startPrank(instanceOwner);
         NftId myNftId = instance.registerProduct(address(myPool), address(token));
         vm.stopPrank();
+    }
+
+    function test_productRegister_tokenNotWhitelisted() public {
+        // GIVEN
+        SimpleProduct myProduct = _deployProductDefault("MyProduct");
+        Usdc notWhitelistedToken = new Usdc();
+
+        vm.startPrank(instanceOwner);
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IComponentService.ErrorComponentServiceTokenInvalid.selector, 
+            notWhitelistedToken));
+
+        // WHEN
+        instance.registerProduct(address(myProduct), address(notWhitelistedToken));
     }
 
     function _deployProductDefault(string memory name) internal returns(SimpleProduct) {
