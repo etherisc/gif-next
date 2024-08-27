@@ -51,7 +51,7 @@ contract ComponentTrackingTest is GifTest {
         // WHEN
         SimpleProduct myProduct = _deployProduct("MyProduct", instanceOwner, true, 1);
         vm.startPrank(instanceOwner);
-        NftId myProductNftId = instance.registerProduct(address(myProduct));
+        NftId myProductNftId = instance.registerProduct(address(myProduct), address(token));
         vm.stopPrank();
 
         // THEN
@@ -70,7 +70,7 @@ contract ComponentTrackingTest is GifTest {
         vm.startPrank(instanceOwner);
 
         SimpleProduct myProduct = _deployProduct("MyProduct", instanceOwner, true, 1);
-        NftId myProductNftId = instance.registerProduct(address(myProduct));
+        NftId myProductNftId = instance.registerProduct(address(myProduct), address(token));
 
         SimpleDistribution myDistribution = _deployDistribution("MyDistribution", myProductNftId, instanceOwner);
         SimpleOracle myOracle = _deployOracle("MyOracle", myProductNftId, instanceOwner);
@@ -97,13 +97,13 @@ contract ComponentTrackingTest is GifTest {
         // WHEN
         vm.startPrank(instanceOwner);
         SimpleProduct myProduct1 = _deployProduct("MyProduct1", instanceOwner, true, 1);
-        NftId myProductNftId1 = instance.registerProduct(address(myProduct1));
+        NftId myProductNftId1 = instance.registerProduct(address(myProduct1), address(token));
 
         SimpleProduct myProduct2 = _deployProduct("MyProduct2", instanceOwner, true, 1);
-        NftId myProductNftId2 = instance.registerProduct(address(myProduct2));
+        NftId myProductNftId2 = instance.registerProduct(address(myProduct2), address(token));
 
         SimpleProduct myProduct3 = _deployProduct("MyProduct3", instanceOwner, true, 1);
-        NftId myProductNftId3 = instance.registerProduct(address(myProduct3));
+        NftId myProductNftId3 = instance.registerProduct(address(myProduct3), address(token));
         vm.stopPrank();
 
         // THEN
@@ -123,19 +123,19 @@ contract ComponentTrackingTest is GifTest {
         // WHEN
         vm.startPrank(instanceOwner);
         SimpleProduct myProduct1 = _deployProduct("MyProduct1", instanceOwner, false, 0);
-        NftId myProductNftId1 = instance.registerProduct(address(myProduct1));
+        NftId myProductNftId1 = instance.registerProduct(address(myProduct1), address(token));
         SimplePool myPool1 = _deployPool("MyPool1", myProductNftId1, instanceOwner);
         myProduct1.registerComponent(address(myPool1));
 
         SimpleProduct myProduct2 = _deployProduct("MyProduct2", instanceOwner, true, 0);
-        NftId myProductNftId2 = instance.registerProduct(address(myProduct2));
+        NftId myProductNftId2 = instance.registerProduct(address(myProduct2), address(token));
         SimpleDistribution myDistribution2 = _deployDistribution("MyDistribution2", myProductNftId2, instanceOwner);
         SimplePool myPool2 = _deployPool("MyPool2", myProductNftId2, instanceOwner);
         myProduct2.registerComponent(address(myDistribution2));
         myProduct2.registerComponent(address(myPool2));
 
         SimpleProduct myProduct3 = _deployProduct("MyProduct3", instanceOwner, false, 2);
-        NftId myProductNftId3 = instance.registerProduct(address(myProduct3));
+        NftId myProductNftId3 = instance.registerProduct(address(myProduct3), address(token));
         SimpleOracle myOracle3a = _deployOracle("MyOracle3a", myProductNftId3, instanceOwner);
         SimpleOracle myOracle3b = _deployOracle("MyOracle3b", myProductNftId3, instanceOwner);
         SimplePool myPool3 = _deployPool("MyPool3", myProductNftId3, instanceOwner);
@@ -171,7 +171,6 @@ contract ComponentTrackingTest is GifTest {
             address(registry),
             instanceNftId, 
             name,
-            address(token),
             productInfo,
             feeInfo,
             new BasicProductAuthorization(name),
@@ -190,8 +189,7 @@ contract ComponentTrackingTest is GifTest {
             address(registry),
             productNftId,
             new BasicDistributionAuthorization(name),
-            owner,
-            address(token));
+            owner);
     }
 
     function _deployOracle(
@@ -206,8 +204,7 @@ contract ComponentTrackingTest is GifTest {
             address(registry),
             productNftId,
             new BasicOracleAuthorization(name),
-            owner,
-            address(token));
+            owner);
     }
 
     function _deployPool(
@@ -221,7 +218,6 @@ contract ComponentTrackingTest is GifTest {
         return new SimplePool(
             address(registry),
             productNftId,
-            address(token),
             _getDefaultSimplePoolInfo(),
             new BasicPoolAuthorization(name),
             owner);

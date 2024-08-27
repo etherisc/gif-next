@@ -51,7 +51,7 @@ contract TestProductRegistration is GifTest {
 
         // WHEN
         vm.startPrank(instanceOwner);
-        NftId myNftId = instance.registerProduct(address(myProduct));
+        NftId myNftId = instance.registerProduct(address(myProduct), address(token));
         vm.stopPrank();
 
         // THEN
@@ -68,8 +68,8 @@ contract TestProductRegistration is GifTest {
 
         // WHEN
         vm.startPrank(instanceOwner);
-        NftId myNftId1 = instance.registerProduct(address(myProduct1));
-        NftId myNftId2 = instance.registerProduct(address(myProduct2));
+        NftId myNftId1 = instance.registerProduct(address(myProduct1), address(token));
+        NftId myNftId2 = instance.registerProduct(address(myProduct2), address(token));
         vm.stopPrank();
 
         // THEN
@@ -86,7 +86,7 @@ contract TestProductRegistration is GifTest {
         SimpleProduct myProduct = _deployProductDefault("MyProduct");
 
         vm.startPrank(instanceOwner);
-        NftId myNftId = instance.registerProduct(address(myProduct));
+        NftId myNftId = instance.registerProduct(address(myProduct), address(token));
         vm.stopPrank();
 
         // WHEN + THEN
@@ -96,7 +96,7 @@ contract TestProductRegistration is GifTest {
                 address(myProduct)));
 
         vm.startPrank(instanceOwner);
-        NftId myNftId2nd = instance.registerProduct(address(myProduct));
+        NftId myNftId2nd = instance.registerProduct(address(myProduct), address(token));
         vm.stopPrank();
     }
 
@@ -113,7 +113,7 @@ contract TestProductRegistration is GifTest {
                 myProductOwner));
 
         vm.startPrank(myProductOwner);
-        NftId myNftId = instance.registerProduct(address(myProduct));
+        NftId myNftId = instance.registerProduct(address(myProduct), address(token));
         vm.stopPrank();
     }
 
@@ -130,7 +130,7 @@ contract TestProductRegistration is GifTest {
                 address(instanceOwner)));
 
         vm.startPrank(instanceOwner);
-        NftId myNftId = componentService.registerProduct(address(myProduct));
+        NftId myNftId = componentService.registerProduct(address(myProduct), address(token));
         vm.stopPrank();
     }
 
@@ -141,7 +141,6 @@ contract TestProductRegistration is GifTest {
         SimpleProduct myProductV4 = new SimpleProductV4(
             address(registry),
             instanceNftId, 
-            address(token),
             _getSimpleProductInfo(),
             _getSimpleFeeInfo(),
             new BasicProductAuthorization("MyProductV4"),
@@ -158,7 +157,7 @@ contract TestProductRegistration is GifTest {
                 instance.getRelease()));
 
         vm.startPrank(instanceOwner);
-        NftId myNftId = instance.registerProduct(address(myProductV4));
+        NftId myNftId = instance.registerProduct(address(myProductV4), address(token));
         vm.stopPrank();
     }
 
@@ -171,7 +170,7 @@ contract TestProductRegistration is GifTest {
         vm.expectRevert();
 
         vm.startPrank(instanceOwner);
-        NftId myNftId = instance.registerProduct(address(token));
+        NftId myNftId = instance.registerProduct(address(token), address(token));
         vm.stopPrank();
     }
 
@@ -182,7 +181,7 @@ contract TestProductRegistration is GifTest {
         SimpleProduct myProduct = _deployProductDefault("MyProduct");
 
         vm.startPrank(instanceOwner);
-        NftId myProdNftId = instance.registerProduct(address(myProduct));
+        NftId myProdNftId = instance.registerProduct(address(myProduct), address(token));
         vm.stopPrank();
 
         SimplePool myPool = _deployPool("MyPool", myProdNftId, myPoolOwner);
@@ -196,7 +195,7 @@ contract TestProductRegistration is GifTest {
                 POOL()));
 
         vm.startPrank(instanceOwner);
-        NftId myNftId = instance.registerProduct(address(myPool));
+        NftId myNftId = instance.registerProduct(address(myPool), address(token));
         vm.stopPrank();
     }
 
@@ -223,7 +222,6 @@ contract TestProductRegistration is GifTest {
             address(registry),
             instanceNftId, 
             name,
-            address(token),
             productInfo,
             feeInfo,
             new BasicProductAuthorization(name),
@@ -241,7 +239,6 @@ contract TestProductRegistration is GifTest {
         return new SimplePool(
             address(registry),
             productNftId,
-            address(token),
             _getDefaultSimplePoolInfo(),
             new BasicPoolAuthorization(name),
             owner);
@@ -256,7 +253,6 @@ contract SimpleProductV4 is SimpleProduct {
     constructor(
         address registry,
         NftId instanceNftId,
-        address token,
         IComponents.ProductInfo memory productInfo,
         IComponents.FeeInfo memory feeInfo,
         IAuthorization authorization,
@@ -266,7 +262,6 @@ contract SimpleProductV4 is SimpleProduct {
             registry,
             instanceNftId,
             "SimpleProductV4",
-            token,
             productInfo,
             feeInfo,
             authorization,
