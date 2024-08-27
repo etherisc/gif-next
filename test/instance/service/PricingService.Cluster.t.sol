@@ -8,7 +8,7 @@ import {FeeLib} from "../../../contracts/type/Fee.sol";
 import {UFixedLib} from "../../../contracts/type/UFixed.sol";
 import {DistributorType} from "../../../contracts/type/DistributorType.sol";
 import {ReferralId} from "../../../contracts/type/Referral.sol";
-import {RiskId, RiskIdLib} from "../../../contracts/type/RiskId.sol";
+import {RiskId} from "../../../contracts/type/RiskId.sol";
 import {Seconds, SecondsLib} from "../../../contracts/type/Seconds.sol";
 import {TimestampLib} from "../../../contracts/type/Timestamp.sol";
 import {IDistributionService} from "../../../contracts/distribution/IDistributionService.sol";
@@ -61,7 +61,7 @@ contract PricingServiceClusterTest is GifClusterTest {
             "");
         vm.stopPrank();
 
-        RiskId riskId = RiskIdLib.toRiskId(productNftId, "42x4711");
+        RiskId riskId2 = myProduct2.createRisk("42x4711", "");
         Amount sumInsured = AmountLib.toAmount(1000);
         Seconds lifetime = SecondsLib.toSeconds(300);
 
@@ -75,7 +75,7 @@ contract PricingServiceClusterTest is GifClusterTest {
         // WHEN
         pricingService.calculatePremium(
             myProductNftId2, 
-            riskId, 
+            riskId2, 
             sumInsured, 
             lifetime, 
             "",
