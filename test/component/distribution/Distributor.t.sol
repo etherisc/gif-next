@@ -128,28 +128,6 @@ contract DistributorTest is GifTest {
             "unexpected data for referral");
     }
 
-
-    function test_distributionDistributorCreateTwice() public {
-
-        assertTrue(!distribution.isDistributor(customer), "customer is already distributor");
-        _setupTestData(true);
-        assertTrue(distribution.isDistributor(customer), "customer not yet distributor");
-
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                IDistributionComponent.ErrorDistributionAlreadyDistributor.selector, 
-                customer, // distributor
-                distributorNftId)); // existing distributor nft id
-
-        vm.startPrank(distributionOwner);
-        distributorNftId = distribution.createDistributor(
-            customer,
-            distributorType,
-            distributorData);
-        vm.stopPrank();
-    }
-
-
     function test_distributionDistributorCreateTransfer() public {
 
         assertTrue(!distribution.isDistributor(customer), "customer is already distributor");
@@ -212,7 +190,7 @@ contract DistributorTest is GifTest {
         // GIVEN
         _createDistributorType();
         _createDistributorType2();
-        _createDistributor();
+        distributorNftId = _createDistributor(customer, distributorType);
 
         assertTrue(distributorNftId.gtz(), "distributor nft zero");
 
@@ -233,10 +211,30 @@ contract DistributorTest is GifTest {
         assertEq(DistributorType.unwrap(distributorInfoAfter.distributorType), DistributorType.unwrap(distributorType2), "unexpected distributor type after");
     }
 
+    /// @dev test creation of two different distributor nfts (different types) with the same address
+    function test_DistributorCreate_oneAddressTwoTypes() public {
+        // GIVEN
+        _createDistributorType();
+        _createDistributorType2();
+        
+        // WHEN
+        distributorNftId = _createDistributor(customer, distributorType);
+        NftId distributorNftId2 = _createDistributor(customer, distributorType2);
+        
+        // THEN
+        assertTrue(distributorNftId.gtz(), "distributor nft zero");
+        assertTrue(distributorNftId2.gtz(), "distributor nft 2 zero");
+        assertTrue(distributorNftId != distributorNftId2, "distributor nft ids are the same");
+
+        IDistribution.DistributorInfo memory distributorInfo = instanceReader.getDistributorInfo(distributorNftId);
+        IDistribution.DistributorInfo memory distributorInfo2 = instanceReader.getDistributorInfo(distributorNftId2);
+        assertTrue(distributorInfo.distributorType != distributorInfo2.distributorType, "distributor types are the same");
+    }
+
     function test_changeDistributorType() public {
 
         _createDistributorType();
-        _createDistributor();
+        distributorNftId = _createDistributor(customer, distributorType);
 
         assertTrue(distributorNftId.gtz(), "distributor nft zero");
 
@@ -249,7 +247,7 @@ contract DistributorTest is GifTest {
         // GIVEN
 
         _createDistributorType();
-        _createDistributor();
+        distributorNftId = _createDistributor(customer, distributorType);
 
         referralCode = "saveNow";
         UFixed referralDiscount = UFixedLib.toUFixed(5, -2);
@@ -339,14 +337,15 @@ contract DistributorTest is GifTest {
         vm.stopPrank();
     }
 
-    function _createDistributor() internal {
+    function _createDistributor(address distAddr, DistributorType distType) internal returns (NftId) {
         vm.startPrank(distributionOwner);
         distributorData = "..";
-        distributorNftId = distribution.createDistributor(
-            customer,
-            distributorType,
+        NftId nftId = distribution.createDistributor(
+            distAddr,
+            distType,
             distributorData);
         vm.stopPrank();
+        return nftId;
     }
 
     function _setupTestData(bool createDistributor) internal {
@@ -359,7 +358,7 @@ contract DistributorTest is GifTest {
         referralData = "...";
 
         if (createDistributor) {
-            _createDistributor();
+            distributorNftId = _createDistributor(customer, distributorType);
         }
     }
 }

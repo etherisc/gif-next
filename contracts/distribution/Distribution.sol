@@ -215,9 +215,6 @@ abstract contract Distribution is
         returns(NftId distributorNftId)
     {
         DistributionStorage storage $ = _getDistributionStorage();
-        if($._distributorNftId[distributor].gtz()) {
-            revert ErrorDistributionAlreadyDistributor(distributor, $._distributorNftId[distributor]);
-        }
 
         distributorNftId = $._distributionService.createDistributor(
             distributor,

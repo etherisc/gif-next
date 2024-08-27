@@ -10,7 +10,6 @@ import {UFixed} from "../type/UFixed.sol";
 interface IDistributionComponent is IInstanceLinkedComponent {
 
     error ErrorDistributionNotDistributor(address distributor);
-    error ErrorDistributionAlreadyDistributor(address distributor, NftId distributorNftId);
 
     event LogDistributorUpdated(address to, address operator);
 
