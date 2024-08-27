@@ -160,8 +160,8 @@ contract ProductClusterTest is GifClusterTest {
         riskId1 = _createAndCheckRisk(myProduct1, "Risk1");
         riskId2 = _createAndCheckRisk(myProduct2, "Risk2"); // TODO fix bug #621
 
-        referralId1 = _createReferral(myDistribution1, "SAVE!!!");
-        referralId2 = _createReferral(myDistribution2, "SAVE!!!");
+        referralId1 = _createReferral(myDistribution1, myDistributorNftId1, "SAVE!!!");
+        referralId2 = _createReferral(myDistribution2, myDistributorNftId2, "SAVE!!!");
 
         bundleNftId1 = _createBundle(myPool1);
         bundleNftId2 = _createBundle(myPool2);
@@ -212,9 +212,10 @@ contract ProductClusterTest is GifClusterTest {
     }
 
 
-    function _createReferral(SimpleDistribution dist, string memory referralCode) internal returns (ReferralId referralId) {
+    function _createReferral(SimpleDistribution dist, NftId distributorNftId, string memory referralCode) internal returns (ReferralId referralId) {
         vm.startPrank(instanceOwner);
         referralId = dist.createReferral(
+            distributorNftId,
             referralCode,
             DISCOUNT, // 10% discount
             MAX_REFERRALS, // max referrals

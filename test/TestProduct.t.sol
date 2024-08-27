@@ -371,6 +371,7 @@ contract TestProduct is GifTest {
 
         vm.startPrank(customer2);
         ReferralId referralId = distribution.createReferral(
+            distributorNftId,
             "GET_A_DISCOUNT",
             UFixedLib.toUFixed(2, -2),
             5,
@@ -492,6 +493,7 @@ contract TestProduct is GifTest {
 
         vm.startPrank(customer2);
         ReferralId referralId = distribution.createReferral(
+            distributorNftId,
             "GET_A_DISCOUNT",
             UFixedLib.toUFixed(2, -2),
             5,
@@ -600,6 +602,7 @@ contract TestProduct is GifTest {
         // create short lived referral
         vm.startPrank(customer2);
         ReferralId referralId = distribution.createReferral(
+            distributorNftId,
             "GET_A_DISCOUNT",
             UFixedLib.toUFixed(2, -2),
             5,

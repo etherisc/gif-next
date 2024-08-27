@@ -721,6 +721,7 @@ contract TestFees is GifTest {
             vm.stopPrank();
             vm.startPrank(distributor);
             referralId = distribution.createReferral(
+                distributorNftId,
                 "DEAL", 
                 instanceReader.toUFixed(5, -2), 
                 10, 
