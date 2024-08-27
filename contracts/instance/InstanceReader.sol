@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
+import {IAccess} from "../authorization/IAccess.sol";
 import {IBundle} from "../instance/module/IBundle.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {IDistribution} from "../instance/module/IDistribution.sol";
@@ -27,7 +28,7 @@ import {ReferralId, ReferralStatus, ReferralLib, REFERRAL_OK, REFERRAL_ERROR_UNK
 import {RequestId} from "../type/RequestId.sol";
 import {RiskId} from "../type/RiskId.sol";
 import {RiskSet} from "./RiskSet.sol";
-import {RoleId} from "../type/RoleId.sol";
+import {RoleId, INSTANCE_OWNER_ROLE} from "../type/RoleId.sol";
 import {StateId} from "../type/StateId.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {UFixed, UFixedLib} from "../type/UFixed.sol";
@@ -560,6 +561,26 @@ contract InstanceReader {
             info.discountPercentage,
             REFERRAL_OK()
         );
+    }
+
+
+    function roles() public view returns (uint256) {
+        return _instance.getInstanceAdmin().roles();
+    }
+
+
+    function getInstanceOwnerRole() public view returns (RoleId roleId) {
+        return INSTANCE_OWNER_ROLE();
+    }
+
+
+    function getRoleId(uint256 idx) public view returns (RoleId roleId) {
+        return _instance.getInstanceAdmin().getRoleId(uint64(idx));
+    }
+
+
+    function getRoleInfo(RoleId roleId) public view returns (IAccess.RoleInfo memory roleInfo) { 
+        return _instance.getInstanceAdmin().getRoleInfo(roleId);
     }
 
 

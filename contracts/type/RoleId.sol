@@ -59,6 +59,9 @@ function GIF_REMOTE_MANAGER_ROLE() pure returns (RoleId) { return RoleIdLib.toRo
 /// @dev role assigned to release registry, release specfic to lock/unlock a release
 function RELEASE_REGISTRY_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(4); }
 
+/// @dev role assigned to every instance owner
+function INSTANCE_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(5); }  
+
 //--- GIF core contract roles (range: 200 - 9'900) --------------------------//
 // created and assigned during initial deployment for registry and staking
 // granting for instances and components in instance service

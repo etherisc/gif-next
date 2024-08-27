@@ -74,7 +74,11 @@ interface IInstance is
 
     ///--- authz ------------------------------------------------------------//
 
-    function createRole(string memory roleName, string memory adminName) external returns (RoleId roleId, RoleId admin);
+    /// @dev Creates a new custom role for the calling instance.
+    /// Custom roles are intended to be used for access control of custom components and its helper contracts.
+    /// Custom roles are not intended to be used as target roles for custom contracts.
+    function createRole(string memory roleName, RoleId adminRoleId, uint32 maxMemberCount) external returns (RoleId roleId);
+
     function grantRole(RoleId roleId, address account) external;
     function revokeRole(RoleId roleId, address account) external;
 

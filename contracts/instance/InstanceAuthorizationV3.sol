@@ -3,13 +3,14 @@ pragma solidity ^0.8.20;
 
 import {IAccess} from "../authorization/IAccess.sol";
 
+import {AccessAdminLib} from "../authorization/AccessAdminLib.sol";
 import {Authorization} from "../authorization/Authorization.sol";
 import {ACCOUNTING, ORACLE, POOL, INSTANCE, COMPONENT, DISTRIBUTION, APPLICATION, POLICY, CLAIM, BUNDLE, RISK} from "../../contracts/type/ObjectType.sol";
 import {BundleSet} from "../instance/BundleSet.sol";
 import {Instance} from "../instance/Instance.sol";
 import {InstanceAdmin} from "../instance/InstanceAdmin.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
-import {PUBLIC_ROLE} from "../type/RoleId.sol";
+import {ADMIN_ROLE, INSTANCE_OWNER_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {RiskSet} from "../instance/RiskSet.sol"; 
 
 
@@ -18,6 +19,7 @@ contract InstanceAuthorizationV3
 {
 
      string public constant INSTANCE_ROLE_NAME = "InstanceRole";
+     string public constant INSTANCE_OWNER_ROLE_NAME = "InstanceOwnerRole";
 
      string public constant INSTANCE_TARGET_NAME = "Instance";
      string public constant INSTANCE_STORE_TARGET_NAME = "InstanceStore";
@@ -44,12 +46,24 @@ contract InstanceAuthorizationV3
           _addServiceTargetWithRole(CLAIM());
      }
 
+     function _setupRoles()
+          internal
+          override
+     {
+          _addRole(
+               INSTANCE_OWNER_ROLE(),
+               AccessAdminLib.toRole(
+                    ADMIN_ROLE(),
+                    RoleType.Custom,
+                    0, // max member count special case: instance nft owner is sole role owner
+                    INSTANCE_OWNER_ROLE_NAME));
+     }
+
      function _setupTargets()
           internal
           override
      {
           // instance supporting targets
-          // _addGifContractTarget(INSTANCE_ADMIN_TARGET_NAME);
           _addTarget(INSTANCE_ADMIN_TARGET_NAME);
           _addTarget(INSTANCE_STORE_TARGET_NAME);
           _addTarget(BUNDLE_SET_TARGET_NAME);
@@ -141,6 +155,10 @@ contract InstanceAuthorizationV3
 
           // authorize component service role
           functions = _authorizeForTarget(INSTANCE_ADMIN_TARGET_NAME, getServiceRole(INSTANCE()));
+          _authorize(functions, InstanceAdmin.createRole.selector, "createRole");
+          _authorize(functions, InstanceAdmin.grantRole.selector, "grantRole");
+          _authorize(functions, InstanceAdmin.revokeRole.selector, "revokeRole");
+
           _authorize(functions, InstanceAdmin.setInstanceLocked.selector, "setInstanceLocked");
           _authorize(functions, InstanceAdmin.setTargetLocked.selector, "setTargetLocked");
 

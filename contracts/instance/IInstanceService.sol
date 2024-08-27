@@ -6,6 +6,7 @@ import {IInstance} from "./IInstance.sol";
 import {IService} from "../shared/IService.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType} from "../type/ObjectType.sol";
+import {RoleId} from "../type/RoleId.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {UFixed} from "../type/UFixed.sol";
 import {VersionPart} from "../type/Version.sol";
@@ -52,6 +53,15 @@ interface IInstanceService is IService {
     error ErrorInstanceServiceInvalidComponentType(address componentAddress, ObjectType expectedType, ObjectType componentType);
     
     event LogInstanceCloned(NftId instanceNftId, address instance);
+
+    /// @dev creates a new role for the calling instance.
+    function createRole(string memory roleName, RoleId adminRoleId, uint32 maxMemberCount) external returns (RoleId roleId);
+
+    /// @dev grants the specified role to the specified account for the calling instance.
+    function grantRole(RoleId roleId, address account) external; 
+
+    /// @dev revokes the specified role from the specified account for the calling instance.
+    function revokeRole(RoleId roleId, address account) external; 
 
     /// @dev Locks the complete instance, including all its components.
     function setInstanceLocked(bool locked) external;

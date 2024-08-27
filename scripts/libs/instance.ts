@@ -44,6 +44,7 @@ export async function deployAndRegisterMasterInstance(
         [],
         {
             libraries: {
+                AccessAdminLib: libraries.accessAdminLibAddress,
                 ObjectTypeLib: libraries.objectTypeLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
                 SelectorLib: libraries.selectorLibAddress,
@@ -166,6 +167,7 @@ export async function deployAndRegisterMasterInstance(
                 ReferralLib: libraries.referralLibAddress,
                 RequestIdLib: libraries.requestIdLibAddress,
                 RiskIdLib: libraries.riskIdLibAddress,
+                RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
                 UFixedLib: libraries.uFixedLibAddress,
             }

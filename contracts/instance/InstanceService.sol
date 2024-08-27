@@ -73,6 +73,44 @@ contract InstanceService is
     }
 
     /// @inheritdoc IInstanceService
+    function createRole(
+        string memory roleName, 
+        RoleId adminRoleId,
+        uint32 maxMemberCount
+    )
+        external
+        restricted()
+        onlyInstance()
+        returns (RoleId roleId)
+    {
+        IInstance instance = IInstance(msg.sender);
+        roleId = instance.getInstanceAdmin().createRole(
+            roleName, 
+            adminRoleId, 
+            maxMemberCount);
+    }
+
+    /// @inheritdoc IInstanceService
+    function grantRole(RoleId roleId, address account)
+        external
+        restricted()
+        onlyInstance()
+    {
+        IInstance instance = IInstance(msg.sender);
+        instance.getInstanceAdmin().grantRole(roleId, account);
+    }
+
+    /// @inheritdoc IInstanceService
+    function revokeRole(RoleId roleId, address account) 
+        external 
+        restricted()
+        onlyInstance()
+    {
+        IInstance instance = IInstance(msg.sender);
+        instance.getInstanceAdmin().revokeRole(roleId, account);
+    }
+
+    /// @inheritdoc IInstanceService
     function setInstanceLocked(bool locked)
         external
         virtual

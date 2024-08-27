@@ -14,6 +14,7 @@ import {ObjectType, INSTANCE, ORACLE} from "../type/ObjectType.sol";
 import {RoleId, RoleIdLib} from "../type/RoleId.sol";
 import {Str, StrLib} from "../type/String.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
+import {TimestampLib} from "../type/Timestamp.sol";
 import {VersionPart, VersionPartLib} from "../type/Version.sol";
 
 
@@ -25,8 +26,6 @@ contract InstanceAdmin is
     string public constant INSTANCE_STORE_TARGET_NAME = "InstanceStore";
     string public constant BUNDLE_SET_TARGET_NAME = "BundleSet";
     string public constant RISK_SET_TARGET_NAME = "RiskSet";
-
-    uint64 public constant CUSTOM_ROLE_ID_MIN = 10000; // MUST be even
 
     error ErrorInstanceAdminNotInstanceService(address caller);
 
@@ -95,7 +94,7 @@ contract InstanceAdmin is
         _instance = IInstance(instance);
         _authorization = IAuthorization(authorization);
         _components = 0;
-        _customIdNext = CUSTOM_ROLE_ID_MIN;
+        _customIdNext = 0;
 
         // link nft ownability to instance
         _linkToNftOwnable(instance);
@@ -180,14 +179,27 @@ contract InstanceAdmin is
             instance);
     }
 
-    /// @dev Creates a custom role
-    // TODO implement
-    // function createRole()
-    //     external
-    //     restricted()
-    // {
-
-    // }
+    /// @dev Creates a custom role.
+    function createRole(
+        string memory roleName,
+        RoleId adminRoleId,
+        uint32 maxMemberCount
+    )
+        external
+        restricted()
+        returns (RoleId roleId)
+    {
+        roleId = RoleIdLib.toCustomRoleId(_customIdNext++);
+        _createRole(
+            roleId, 
+            RoleInfo({
+                adminRoleId: adminRoleId, 
+                roleType: IAccess.RoleType.Custom, 
+                maxMemberCount: maxMemberCount, 
+                name: StrLib.toStr(roleName), 
+                createdAt: TimestampLib.zero(), 
+                pausedAt: TimestampLib.zero()}));
+    }
 
     /// @dev Grants the provided role to the specified account
     function grantRole(
@@ -197,6 +209,16 @@ contract InstanceAdmin is
         restricted()
     {
         _grantRoleToAccount(roleId, account);
+    }
+
+    /// @dev Revokes the provided role from the specified account
+    function revokeRole(
+        RoleId roleId, 
+        address account)
+        external
+        restricted()
+    {
+        _revokeRoleFromAccount(roleId, account);
     }
 
 

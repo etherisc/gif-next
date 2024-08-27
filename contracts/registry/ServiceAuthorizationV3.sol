@@ -58,7 +58,6 @@ contract ServiceAuthorizationV3
           _setupIRegistryServiceAuthorization();
           _setupStakingServiceAuthorization();
           _setupInstanceServiceAuthorization();
-          _setupInstanceServiceAuthorization();
           _setupAccountingServiceAuthorization();
           _setupComponentServiceAuthorization();
           _setupClaimServiceAuthorization();
@@ -130,6 +129,10 @@ contract ServiceAuthorizationV3
      {
           IAccess.FunctionInfo[] storage functions;
           functions = _authorizeForService(INSTANCE(), ALL());
+          _authorize(functions, IInstanceService.createRole.selector, "createRole");
+          _authorize(functions, IInstanceService.grantRole.selector, "grantRole");
+          _authorize(functions, IInstanceService.revokeRole.selector, "revokeRole");
+
           _authorize(functions, IInstanceService.setInstanceLocked.selector, "setInstanceLocked");
           _authorize(functions, IInstanceService.setTargetLocked.selector, "setTargetLocked");
 

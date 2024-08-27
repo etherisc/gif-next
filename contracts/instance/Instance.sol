@@ -36,14 +36,6 @@ contract Instance is
     InstanceStore internal _instanceStore;
     NftId [] internal _products;
 
-    // TODO cleanup
-    // modifier onlyChainNft() {
-    //     if(msg.sender != getRegistry().getChainNftAddress()) {
-    //         revert();
-    //     }
-    //     _;
-    // }
-
     function initialize(
         InstanceAdmin instanceAdmin, 
         InstanceStore instanceStore,
@@ -167,14 +159,18 @@ contract Instance is
 
     //--- Roles ------------------------------------------------------------//
 
-    function createRole(string memory roleName, string memory adminName)
+    /// @inheritdoc IInstance
+    function createRole(
+        string memory roleName, 
+        RoleId adminRoleId,
+        uint32 maxMemberCount
+    )
         external
         restricted()
         onlyOwner()
-        returns (RoleId roleId, RoleId admin)
+        returns (RoleId roleId)
     {
-        // TODO refactor
-        // (roleId, admin) = _instanceAdmin.createRole(roleName, adminName);
+        return _instanceService.createRole(roleName, adminRoleId, maxMemberCount);
     }
 
     function grantRole(RoleId roleId, address account) 

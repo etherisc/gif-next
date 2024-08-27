@@ -574,6 +574,7 @@ contract AccessAdmin is
     {
         // create role info
         info.createdAt = TimestampLib.blockTimestamp();
+        info.pausedAt = TimestampLib.max();
         _roleInfo[roleId] = info;
 
         // create role name info
