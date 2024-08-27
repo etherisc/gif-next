@@ -8,7 +8,7 @@ import {FeeLib} from "../../../contracts/type/Fee.sol";
 import {UFixedLib} from "../../../contracts/type/UFixed.sol";
 import {DistributorType} from "../../../contracts/type/DistributorType.sol";
 import {ReferralId} from "../../../contracts/type/Referral.sol";
-import {RiskId, RiskIdLib} from "../../../contracts/type/RiskId.sol";
+import {RiskId} from "../../../contracts/type/RiskId.sol";
 import {Seconds, SecondsLib} from "../../../contracts/type/Seconds.sol";
 import {TimestampLib} from "../../../contracts/type/Timestamp.sol";
 import {IDistributionService} from "../../../contracts/distribution/IDistributionService.sol";

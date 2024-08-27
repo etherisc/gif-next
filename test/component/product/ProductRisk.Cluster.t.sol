@@ -1,20 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {console} from "../../../lib/forge-std/src/Test.sol";
 
 import {GifClusterTest} from "../../base/GifClusterTest.sol";
 import {IRiskService} from "../../../contracts/product/IRiskService.sol";
-import {KeyId} from "../../../contracts/type/Key32.sol";
 import {NftId} from "../../../contracts/type/NftId.sol";
-import {ILifecycle} from "../../../contracts/shared/ILifecycle.sol";
-import {SecondsLib} from "../../../contracts/type/Seconds.sol";
-import {Timestamp, zeroTimestamp} from "../../../contracts/type/Timestamp.sol";
-import {RISK} from "../../../contracts/type/ObjectType.sol";
-import {RiskId, RiskIdLib, eqRiskId} from "../../../contracts/type/RiskId.sol";
-import {ReferralLib} from "../../../contracts/type/Referral.sol";
-import {ACTIVE, PAUSED, ARCHIVED} from "../../../contracts/type/StateId.sol";
+import {RiskId} from "../../../contracts/type/RiskId.sol";
+import {PAUSED} from "../../../contracts/type/StateId.sol";
 
+// solhint-disable func-name-mixedcase
 contract ProductRiskClusterTest is GifClusterTest {
 
     uint256 public constant BUNDLE_CAPITAL = 5000;
