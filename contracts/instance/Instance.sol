@@ -36,12 +36,13 @@ contract Instance is
     InstanceStore internal _instanceStore;
     NftId [] internal _products;
 
-    modifier onlyChainNft() {
-        if(msg.sender != getRegistry().getChainNftAddress()) {
-            revert();
-        }
-        _;
-    }
+    // TODO cleanup
+    // modifier onlyChainNft() {
+    //     if(msg.sender != getRegistry().getChainNftAddress()) {
+    //         revert();
+    //     }
+    //     _;
+    // }
 
     function initialize(
         InstanceAdmin instanceAdmin, 
@@ -63,14 +64,14 @@ contract Instance is
         _instanceAdmin = instanceAdmin;
 
         // setup instance object info
-        __Registerable_init(
-            instanceAdmin.authority(),
-            address(registry), 
-            registry.getNftId(), 
-            INSTANCE(), 
-            true, 
-            initialOwner, 
-            "");
+        __Registerable_init({
+            authority: instanceAdmin.authority(),
+            registry: address(registry), 
+            parentNftId: registry.getNftId(), 
+            objectType: INSTANCE(), 
+            isInterceptor: false, 
+            initialOwner: initialOwner, 
+            data: ""});
 
         // store instance supporting contracts
         _instanceStore = instanceStore;
@@ -224,13 +225,6 @@ contract Instance is
     {
         // TODO refactor
         // _instanceAdmin.setTargetFunctionRoleByInstance(targetName, selectors, roleId);
-    }
-
-    //--- ITransferInterceptor ----------------------------------------------//
-
-    function nftTransferFrom(address from, address to, uint256 tokenId, address operator) external onlyChainNft {
-        // TODO refactor
-        // _instanceAdmin.transferInstanceOwnerRole(from, to);
     }
 
     //--- initial setup functions -------------------------------------------//
