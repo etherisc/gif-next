@@ -206,6 +206,7 @@ contract RegistryAuthorization
           _authorize(functions, IStaking.registerTarget.selector, "registerTarget");
           _authorize(functions, IStaking.setLockingPeriod.selector, "setLockingPeriod");
           _authorize(functions, IStaking.setRewardRate.selector, "setRewardRate");
+          _authorize(functions, IStaking.setMaxStakedAmount.selector, "setMaxStakedAmount");
           _authorize(functions, IStaking.refillRewardReserves.selector, "refillRewardReserves");
           _authorize(functions, IStaking.withdrawRewardReserves.selector, "withdrawRewardReserves");
           _authorize(functions, IStaking.createStake.selector, "createStake");
