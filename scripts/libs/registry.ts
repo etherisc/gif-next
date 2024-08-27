@@ -249,6 +249,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
                 TokenHandlerDeployerLib: libraries.tokenHandlerDeployerLibAddress,
                 VersionLib: libraries.versionLibAddress,
                 VersionPartLib: libraries.versionPartLibAddress,
+                ObjectTypeLib: libraries.objectTypeLibAddress,
             }
         });
 
