@@ -18,7 +18,7 @@ interface IInstance is
     IRegisterable
 {
     error ErrorInstanceInstanceAdminZero();
-    error ErrorInstanceInstanceAdminAlreadySet(address InstanceAdmin);
+    error ErrorInstanceInstanceAdminAlreadySet(address instanceAdmin);
     error ErrorInstanceInstanceAdminAuthorityMismatch(address instanceAuthority);
 
     error ErrorInstanceBundleSetAlreadySet(address instanceBundleSet);
@@ -58,6 +58,9 @@ interface IInstance is
     /// @dev Sets the staking reward rate [apr] for this instance.
     function setStakingRewardRate(UFixed rewardRate) external;
 
+    /// @dev Sets the maximum staked amount for this instance.
+    function setStakingMaxAmount(Amount maxStakedAmount) external;
+
     /// @dev Refills the staking reward reserves for the specified target.
     function refillStakingRewardReserves(Amount dipAmount) external;
 
@@ -80,7 +83,6 @@ interface IInstance is
 
     function createTarget(address target, string memory name) external;
     function setTargetFunctionRole(string memory targetName, bytes4[] calldata selectors, RoleId roleId) external;
-
 
     //--- getters -----------------------------------------------------------//
 

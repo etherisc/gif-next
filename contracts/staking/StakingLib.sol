@@ -46,6 +46,11 @@ library StakingLib {
         // TODO check that additional dip, rewards and rewards increment 
         // are still ok with max target staking amount
         NftId targetNftId = registry.getParentNftId(stakeNftId);
+        Amount maxStakedAmount = stakingReader.getTargetMaxStakedAmount(targetNftId);
+
+        if (stakeBalance > maxStakedAmount) {
+            revert IStaking.ErrorStakingTargetMaxStakedAmountExceeded(targetNftId, maxStakedAmount, stakeBalance);
+        }
 
         stakingStore.restakeRewards(
             stakeNftId, 
@@ -211,14 +216,17 @@ library StakingLib {
         Amount dipAmount
     )
         public 
-        pure 
+        view 
     {
         // check stake amount > 0
         if (dipAmount.eqz()) {
             revert IStaking.ErrorStakingStakeAmountZero(targetNftId);
         }
 
-        // TODO add check for target specific max dip amount (min stake + tvl * stake rate + buffer)
+        Amount maxStakedAmount = stakingReader.getTargetMaxStakedAmount(targetNftId);
+        if (dipAmount > maxStakedAmount) {
+            revert IStaking.ErrorStakingTargetMaxStakedAmountExceeded(targetNftId, maxStakedAmount, dipAmount);
+        }
     }
 
     function calculateRewardIncrease(

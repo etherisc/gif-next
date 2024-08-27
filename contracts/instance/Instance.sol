@@ -146,6 +146,13 @@ contract Instance is
         _instanceService.setStakingRewardRate(rewardRate);
     }
 
+    function setStakingMaxAmount(Amount maxStakedAmount)
+        external
+        onlyOwner()
+    {
+        _instanceService.setStakingMaxAmount(maxStakedAmount);
+    }
+
     function refillStakingRewardReserves(Amount dipAmount)
         external
         restricted()

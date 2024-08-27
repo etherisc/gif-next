@@ -150,6 +150,30 @@ contract StakingTest is GifTest {
         assertEq(stakingReader.getBalanceUpdatedIn(instanceNftId).toInt(), block.number, "unexpected instance last updated in");
     }
 
+    function test_stakeExceedsMaxStakedAmount() public {
+        // GIVEN
+        (, Amount dipAmount) = _prepareAccount(staker2, 3000);
+
+        vm.startPrank(instanceOwner);
+        Amount maxStakedAmount = dipAmount - AmountLib.toAmount(500);
+        instance.setStakingMaxAmount(maxStakedAmount);
+        vm.stopPrank();
+
+        vm.startPrank(staker2);
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IStaking.ErrorStakingTargetMaxStakedAmountExceeded.selector, 
+            instanceNftId,
+            maxStakedAmount,
+            dipAmount));
+
+        // WHEN - create instance stake
+        stakingService.create(
+            instanceNftId, 
+            dipAmount);
+    }
+
     function test_stakingUpdateInstanceLockingPeriod() public {
         Seconds lockingPeriod = stakingReader.getTargetInfo(instanceNftId).lockingPeriod;
         assertEq(lockingPeriod.toInt(), TargetManagerLib.getDefaultLockingPeriod().toInt(), "unexpected locking period");
@@ -379,6 +403,32 @@ contract StakingTest is GifTest {
         Timestamp lockedUntilAfter = stakingReader.getStakeInfo(stakeNftId).lockedUntil;
         Timestamp expectedLockedUntil = timestampNow.addSeconds(lockingPeriod);
         assertEq(lockedUntilAfter.toInt(), expectedLockedUntil.toInt(), "unexpected updated lockedUntil");
+    }
+
+    function test_stakingStakeIncrease_maxStakedAmountExceeded() public {
+        (
+            ,
+            Amount dipAmount,
+            NftId stakeNftId
+        ) = _prepareStake(staker, instanceNftId, 1000);
+
+        vm.startPrank(instanceOwner);
+        instance.setStakingMaxAmount(dipAmount);
+        vm.stopPrank();
+
+        // increase stakes and restake rewards
+        (, Amount stakeIncreaseAmount) = _prepareAccount(staker, 1500, true, true);
+
+        vm.startPrank(staker);
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IStaking.ErrorStakingTargetMaxStakedAmountExceeded.selector, 
+            instanceNftId,
+            dipAmount,
+            dipAmount + stakeIncreaseAmount));
+
+        stakingService.stake(stakeNftId, stakeIncreaseAmount);
     }
 
 
@@ -850,6 +900,45 @@ contract StakingTest is GifTest {
             IStaking.ErrorStakingStakeLocked.selector, 
             stakeNftId,
             TimestampLib.blockTimestamp().addSeconds(lockingPeriod)));
+
+        // WHEN - restake to new target
+        stakingService.restakeToNewTarget(stakeNftId, instanceNftId2);
+    }
+
+    /// @dev test restaking and exceeding the max staked amount
+    // solhint-disable-next-line func-name-mixedcase
+    function test_restake_maxStakedAmountExceeded() public {
+        // GIVEN
+
+        (, Amount dipAmount) = _prepareAccount(staker, 3000);
+
+        vm.startPrank(instanceOwner);
+        instance.setStakingRewardRate(UFixedLib.zero()); // no rewards
+        vm.stopPrank();
+
+        // create a second instance - restake target
+        vm.startPrank(instanceOwner2);
+        (instance2, instanceNftId2) = instanceService.createInstance();
+        Amount instance2MaxStakedAmount = dipAmount - AmountLib.toAmount(1000);
+        instance2.setStakingMaxAmount(instance2MaxStakedAmount);
+        vm.stopPrank();
+
+        vm.startPrank(staker);
+
+        // create initial instance stake
+        NftId stakeNftId = stakingService.create(
+            instanceNftId, 
+            dipAmount);
+
+        _wait(SecondsLib.oneYear());
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IStaking.ErrorStakingTargetMaxStakedAmountExceeded.selector, 
+            instanceNftId2,
+            instance2MaxStakedAmount,
+            dipAmount));
+            
 
         // WHEN - restake to new target
         stakingService.restakeToNewTarget(stakeNftId, instanceNftId2);

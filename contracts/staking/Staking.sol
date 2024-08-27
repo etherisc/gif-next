@@ -146,7 +146,8 @@ contract Staking is
                 objectType: expectedObjectType,
                 chainId: chainId,
                 lockingPeriod: initialLockingPeriod,
-                rewardRate: initialRewardRate}));
+                rewardRate: initialRewardRate,
+                maxStakedAmount: AmountLib.max()}));
     }
 
 
@@ -192,6 +193,21 @@ contract Staking is
         _getStakingStorage()._store.updateTarget(targetNftId, targetInfo);
 
         emit LogStakingRewardRateSet(targetNftId, oldRewardRate, rewardRate);
+    }
+
+    function setMaxStakedAmount(NftId targetNftId, Amount maxStakedAmount)
+        external
+        virtual
+        restricted()
+        onlyTarget(targetNftId)
+    {
+        IStaking.TargetInfo memory targetInfo = getStakingReader().getTargetInfo(targetNftId);
+
+        targetInfo.maxStakedAmount = maxStakedAmount;
+        
+        _getStakingStorage()._store.updateTarget(targetNftId, targetInfo);
+
+        emit LogStakingMaxStakedAmountSet(targetNftId, maxStakedAmount);
     }
 
 
