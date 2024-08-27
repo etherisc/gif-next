@@ -41,7 +41,6 @@ contract TestPool is GifTest {
         newPool = new SimplePool(
             address(registry),
             productNftId,
-            address(token),
             _getDefaultSimplePoolInfo(),
             new BasicPoolAuthorization("NewSimplePool"),
             poolOwner
@@ -73,7 +72,7 @@ contract TestPool is GifTest {
 
         // solhint-disable
         console.log("pool name: ", componentInfo.name);
-        console.log("pool token: ", componentInfo.token.symbol());
+        console.log("pool token: ", componentInfo.tokenHandler.TOKEN().symbol());
         console.log("pool token handler at: ", address(componentInfo.tokenHandler));
         console.log("pool wallet: ", componentInfo.tokenHandler.getWallet());
         // solhint-enable
@@ -85,8 +84,7 @@ contract TestPool is GifTest {
 
         // check token
         assertEq(componentInfo.name, "SimplePool", "unexpected pool name (2)");
-        assertEq(address(componentInfo.token), address(token), "unexpected token address (2)");
-
+        
         // check token handler
         assertTrue(address(componentInfo.tokenHandler) != address(0), "token handler zero");
         assertEq(address(componentInfo.tokenHandler.TOKEN()), address(pool.getToken()), "unexpected token for token handler");

@@ -128,7 +128,6 @@ export async function deployFireComponentContracts(libraries: LibraryAddresses, 
             await instance.getRegistry(),
             instanceNftId,
             fireProductName,
-            fireUsdAddress,
             fireProductAuthAddress,
         ],
         {
@@ -149,7 +148,7 @@ export async function deployFireComponentContracts(libraries: LibraryAddresses, 
 
     logger.info(`registering FireProduct on Instance`);
     await executeTx(async () => 
-        await instance.registerProduct(fireProductAddress, getTxOpts()),
+        await instance.registerProduct(fireProductAddress, fireUsdAddress, getTxOpts()),
         "fire ex - registerProduct",
         [IInstance__factory.createInterface()]
     );
@@ -179,7 +178,6 @@ export async function deployFireComponentContracts(libraries: LibraryAddresses, 
             await instance.getRegistry(),
             fireProductNftId,
             firePoolName,
-            fireUsdAddress,
             firePoolAuthAddress,
         ],
         {

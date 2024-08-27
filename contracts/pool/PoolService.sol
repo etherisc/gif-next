@@ -466,9 +466,7 @@ contract PoolService is
             payoutAmount);
 
         // update value locked with staking service
-        TokenHandler poolTokenHandler = TokenHandler(
-            instanceReader.getTokenHandler(
-                poolNftId));
+        TokenHandler poolTokenHandler = instanceReader.getTokenHandler(poolNftId);
 
         _staking.decreaseTotalValueLocked(
             instanceReader.getInstanceNftId(), 

@@ -16,6 +16,8 @@ import {VersionPart} from "../type/Version.sol";
 interface IComponentService is 
     IService
 {
+    error ErrorComponentServiceTokenInvalid(address token);
+
     error ErrorComponentServiceNotInstanceLinkedComponent(address component);
     error ErrorComponentServiceSenderNotRegistered(address sender);
     error ErrorComponentServiceNotComponent(address component);
@@ -85,7 +87,7 @@ interface IComponentService is
     //-------- product ------------------------------------------------------//
 
     /// @dev Registers the specified product component for the instance (sender)
-    function registerProduct(address product) external returns (NftId productNftId);
+    function registerProduct(address product, address token) external returns (NftId productNftId);
 
     function setProductFees(
         Fee memory productFee, // product fee on net premium

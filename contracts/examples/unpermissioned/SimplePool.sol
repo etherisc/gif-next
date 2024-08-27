@@ -19,7 +19,6 @@ contract SimplePool is
     constructor(
         address registry,
         NftId productNftId,
-        address token,
         IComponents.PoolInfo memory poolInfo,
         IAuthorization authorization,
         address initialOwner
@@ -28,7 +27,6 @@ contract SimplePool is
         initialize(
             registry,
             productNftId,
-            token,
             poolInfo,
             authorization,
             initialOwner
@@ -39,7 +37,6 @@ contract SimplePool is
     function initialize(
         address registry,
         NftId productNftId,
-        address token,
         IComponents.PoolInfo memory poolInfo,
         IAuthorization authorization,
         address initialOwner
@@ -52,7 +49,6 @@ contract SimplePool is
             registry,
             productNftId,
             "SimplePool",
-            token,
             poolInfo,
             authorization,
             initialOwner);

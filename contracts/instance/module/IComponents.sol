@@ -13,7 +13,6 @@ interface IComponents {
 
     struct ComponentInfo {
         string name; // component name (needs to be unique per instance)
-        IERC20Metadata token;
         TokenHandler tokenHandler;
         bytes data; // will hold component type specific additional info (eg encoded pool info)
     }

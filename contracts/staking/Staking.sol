@@ -70,10 +70,11 @@ contract Staking is
         }
 
         StakingStorage storage $ = _getStakingStorage();
+        address dipToken = _getStakingStorage()._tokenRegistry.getDipTokenAddress();
         $._tokenHandler = TokenHandlerDeployerLib.deployTokenHandler(
             address(getRegistry()),
             address(this),
-            address(getToken()), 
+            dipToken, 
             getRegistry().getAuthority());
     }
 
@@ -527,7 +528,6 @@ contract Staking is
             registryAddress, 
             registry.getNftId(), // parent nft id
             CONTRACT_NAME,
-            dipTokenAddress,
             STAKING(), 
             false, // is interceptor
             stakingOwner, 

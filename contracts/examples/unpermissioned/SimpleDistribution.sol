@@ -20,8 +20,7 @@ contract SimpleDistribution is
         address registry,
         NftId productNftId,
         IAuthorization authorization,
-        address initialOwner,
-        address token
+        address initialOwner
     ) 
     {
         initialize(
@@ -29,8 +28,7 @@ contract SimpleDistribution is
             productNftId,
             authorization,
             initialOwner,
-            "SimpleDistribution",
-            token);
+            "SimpleDistribution");
     }
 
     function initialize(
@@ -38,8 +36,7 @@ contract SimpleDistribution is
         NftId productNftId,
         IAuthorization authorization,
         address initialOwner,
-        string memory name,
-        address token
+        string memory name
     )
         public
         virtual
@@ -50,8 +47,7 @@ contract SimpleDistribution is
             productNftId,
             authorization,
             initialOwner,
-            name,
-            token);
+            name);
     }
 
     function approveTokenHandler(IERC20Metadata token, Amount amount) external restricted() onlyOwner() { _approveTokenHandler(token, amount); }

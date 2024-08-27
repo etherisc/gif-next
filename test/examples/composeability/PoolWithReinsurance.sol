@@ -38,14 +38,12 @@ contract PoolWithReinsurance is
     constructor(
         address registry,
         NftId instanceNftId,
-        address token,
         IAuthorization authorization,
         address initialOwner
     ) 
         SimplePool(
             registry,
             instanceNftId,
-            token,
             IComponents.PoolInfo({
                 maxBalanceAmount: AmountLib.max(),
                 isInterceptingBundleTransfers: false,

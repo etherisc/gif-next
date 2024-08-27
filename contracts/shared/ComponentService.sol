@@ -19,6 +19,7 @@ import {IRegisterable} from "../shared/IRegisterable.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegistryService} from "../registry/IRegistryService.sol";
 
+import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {ContractLib} from "../shared/ContractLib.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
@@ -98,15 +99,18 @@ contract ComponentService is
         returns (NftId componentNftId)
     {
         // type specific registration
-        ObjectType componentType = IInstanceLinkedComponent(component).getInitialInfo().objectType;
+        IRegistry.ObjectInfo memory componentObjectInfo = IInstanceLinkedComponent(component).getInitialInfo();
+        ObjectType componentType = componentObjectInfo.objectType;        
+        IComponent productComponent = IComponent(getRegistry().getObjectAddress(componentObjectInfo.parentNftId));
+
         if (componentType == POOL()) {
-            return _registerPool(component);
+            return _registerPool(component, address(productComponent.getToken()));
         }
         if (componentType == DISTRIBUTION()) {
-            return _registerDistribution(component);
+            return _registerDistribution(component, address(productComponent.getToken()));
         }
         if (componentType == ORACLE()) {
-            return _registerOracle(component);
+            return _registerOracle(component, address(productComponent.getToken()));
         }
 
         // fail
@@ -210,7 +214,7 @@ contract ComponentService is
 
     //-------- product ------------------------------------------------------//
 
-    function registerProduct(address productAddress)
+    function registerProduct(address productAddress, address token)
         external
         virtual
         nonReentrant()
@@ -222,7 +226,8 @@ contract ComponentService is
         InstanceStore instanceStore;
         (, instanceAdmin, instanceStore,, productNftId) = _register(
             productAddress,
-            PRODUCT());
+            PRODUCT(),
+            token);
 
         // get product
         IProductComponent product = IProductComponent(productAddress);
@@ -280,7 +285,7 @@ contract ComponentService is
     //-------- distribution -------------------------------------------------//
 
     /// @dev registers the sending component as a distribution component
-    function _registerDistribution(address distributioAddress)
+    function _registerDistribution(address distributioAddress, address token)
         internal
         virtual
         nonReentrant()
@@ -293,7 +298,8 @@ contract ComponentService is
         NftId productNftId;
         (instanceReader, instanceAdmin, instanceStore, productNftId, distributionNftId) = _register(
             distributioAddress,
-            DISTRIBUTION());
+            DISTRIBUTION(),
+            token);
 
         // check product is still expecting a distribution registration
         IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
@@ -344,7 +350,7 @@ contract ComponentService is
 
     //-------- oracle -------------------------------------------------------//
 
-    function _registerOracle(address oracleAddress)
+    function _registerOracle(address oracleAddress, address token)
         internal
         virtual
         returns (NftId oracleNftId)
@@ -357,7 +363,8 @@ contract ComponentService is
 
         (instanceReader, instanceAdmin, instanceStore, productNftId, oracleNftId) = _register(
             oracleAddress,
-            ORACLE());
+            ORACLE(),
+            token);
 
         // check product is still expecting an oracle registration
         IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
@@ -376,7 +383,7 @@ contract ComponentService is
 
     //-------- pool ---------------------------------------------------------//
 
-    function _registerPool(address poolAddress)
+    function _registerPool(address poolAddress, address token)
         internal
         virtual
         returns (NftId poolNftId)
@@ -389,7 +396,8 @@ contract ComponentService is
 
         (instanceReader, instanceAdmin, instanceStore, productNftId, poolNftId) = _register(
             poolAddress,
-            POOL());
+            POOL(),
+            token);
 
         // check product is still expecting a pool registration
         IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
@@ -453,7 +461,8 @@ contract ComponentService is
     /// @dev Registers the component represented by the provided address.
     function _register(
         address componentAddress, // address of component to register
-        ObjectType requiredType // required type for component for registration
+        ObjectType requiredType, // required type for component for registration
+        address token
     )
         internal
         virtual
@@ -481,6 +490,18 @@ contract ComponentService is
             componentAddress,
             requiredType);
 
+        {
+            // check if provided token is whitelisted and active
+            if (!ContractLib.isActiveToken(
+                getRegistry().getTokenRegistryAddress(), 
+                token, 
+                block.chainid, 
+                AccessManagerCloneable(authority()).getRelease())
+            ) {
+                revert ErrorComponentServiceTokenInvalid(token);
+            }
+        }
+
         // get instance supporting contracts (as function return values)
         instanceReader = instance.getInstanceReader();
         instanceAdmin = instance.getInstanceAdmin();
@@ -496,10 +517,8 @@ contract ComponentService is
         }
 
         // deploy and wire token handler
-        address token;
         {
             IComponents.ComponentInfo memory componentInfo = component.getInitialComponentInfo();
-            token = address(componentInfo.token);
             componentInfo.tokenHandler = TokenHandlerDeployerLib.deployTokenHandler(
                 address(getRegistry()),
                 componentAddress, // initially, component is its own wallet

@@ -123,8 +123,7 @@ contract BasicDistribution is
         NftId instanceNftId,
         IAuthorization authorization, 
         address initialOwner,
-        string memory name,
-        address token
+        string memory name
     )
         internal
         virtual
@@ -137,7 +136,6 @@ contract BasicDistribution is
             false,
             initialOwner, 
             name, 
-            token, 
             ""); // component specifc data
     }
 }

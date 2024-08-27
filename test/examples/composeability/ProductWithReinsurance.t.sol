@@ -359,7 +359,6 @@ contract ProductWithReinsuranceTest is
         productRe = new ProductWithReinsurance(
             address(registry),
             instanceNftId,
-            address(token),
             _getProductWithReinsuranceProductInfo(),
             _getSimpleFeeInfo(),
             new ProductWithReinsuranceAuthorization(),
@@ -369,7 +368,7 @@ contract ProductWithReinsuranceTest is
 
         // instance owner registeres product with instance (and registry)
         vm.startPrank(instanceOwner);
-        productReNftId = instance.registerProduct(address(productRe));
+        productReNftId = instance.registerProduct(address(productRe), address(token));
         vm.stopPrank();
 
         // solhint-disable
@@ -384,7 +383,6 @@ contract ProductWithReinsuranceTest is
         poolRe = new PoolWithReinsurance(
             address(registry),
             productReNftId,
-            address(token),
             new PoolWithReinsuranceAuthorization(),
             poolOwner
         );
