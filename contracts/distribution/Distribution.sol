@@ -28,16 +28,7 @@ abstract contract Distribution is
     struct DistributionStorage {
         IComponentService _componentService;
         IDistributionService _distributionService;
-        mapping(address distributor => NftId distributorNftId) _distributorNftId;
     }
-
-    modifier onlyDistributor() {
-        if (!isDistributor(msg.sender)) {
-            revert ErrorDistributionNotDistributor(msg.sender);
-        }
-        _;
-    }
-
 
     function processRenewal(
         ReferralId referralId,
@@ -56,34 +47,12 @@ abstract contract Distribution is
         external 
         virtual
         restricted()
-        onlyDistributor()
         onlyNftOfType(distributorNftId, DISTRIBUTOR())
         onlyNftOwner(distributorNftId)
         returns (Amount withdrawnAmount) 
     {
         return _withdrawCommission(distributorNftId, amount);
     }
-
-
-    function isDistributor(address candidate)
-        public
-        view
-        returns (bool)
-    {
-        DistributionStorage storage $ = _getDistributionStorage();
-        return $._distributorNftId[candidate].gtz();
-    }
-
-
-    function getDistributorNftId(address distributor)
-        public
-        view
-        returns (NftId distributorNftId)
-    {
-        DistributionStorage storage $ = _getDistributionStorage();
-        return $._distributorNftId[distributor];
-    }
-
 
     function getDiscountPercentage(string memory referralCode)
         external
@@ -220,8 +189,6 @@ abstract contract Distribution is
             distributor,
             distributorType,
             data);
-
-        $._distributorNftId[distributor] = distributorNftId;
     }
 
     /// @dev Uptates the distributor type for the specified distributor.
@@ -273,9 +240,6 @@ abstract contract Distribution is
     function _nftTransferFrom(address from, address to, uint256 tokenId, address operator) internal virtual override {
         // keep track of distributor nft owner
         emit LogDistributorUpdated(to, operator);
-        DistributionStorage storage $ = _getDistributionStorage();
-        $._distributorNftId[from] = NftIdLib.zero();
-        $._distributorNftId[to] = NftIdLib.toNftId(tokenId);
     }
 
     function _getDistributionStorage() private pure returns (DistributionStorage storage $) {

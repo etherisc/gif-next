@@ -9,15 +9,7 @@ import {UFixed} from "../type/UFixed.sol";
 
 interface IDistributionComponent is IInstanceLinkedComponent {
 
-    error ErrorDistributionNotDistributor(address distributor);
-
     event LogDistributorUpdated(address to, address operator);
-
-    /// @dev Returns true iff the provided address is registered as a distributor with this distribution component.
-    function isDistributor(address candidate) external view returns (bool);
-
-    /// @dev Returns the distributor Nft Id for the provided address
-    function getDistributorNftId(address distributor) external view returns (NftId distributorNftId);
 
     function getDiscountPercentage(
         string memory referralCode
