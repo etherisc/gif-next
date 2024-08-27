@@ -140,7 +140,7 @@ contract ServiceAuthorizationV3
 
           _authorize(functions, IInstanceService.setStakingLockingPeriod.selector, "setStakingLockingPeriod");
           _authorize(functions, IInstanceService.setStakingRewardRate.selector, "setStakingRewardRate");
-          _authorize(functions, IInstanceService.setStakingMaxStakedAmount.selector, "setStakingMaxStakedAmount");
+          _authorize(functions, IInstanceService.setStakingMaxAmount.selector, "setStakingMaxAmount");
           _authorize(functions, IInstanceService.refillStakingRewardReserves.selector, "refillStakingRewardReserves");
           _authorize(functions, IInstanceService.withdrawStakingRewardReserves.selector, "withdrawStakingRewardReserves");
      }

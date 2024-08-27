@@ -156,7 +156,7 @@ contract StakingTest is GifTest {
 
         vm.startPrank(instanceOwner);
         Amount maxStakedAmount = dipAmount - AmountLib.toAmount(500);
-        instance.setStakingMaxStakedAmount(maxStakedAmount);
+        instance.setStakingMaxAmount(maxStakedAmount);
         vm.stopPrank();
 
         vm.startPrank(staker2);
@@ -413,7 +413,7 @@ contract StakingTest is GifTest {
         ) = _prepareStake(staker, instanceNftId, 1000);
 
         vm.startPrank(instanceOwner);
-        instance.setStakingMaxStakedAmount(dipAmount);
+        instance.setStakingMaxAmount(dipAmount);
         vm.stopPrank();
 
         // increase stakes and restake rewards
@@ -920,7 +920,7 @@ contract StakingTest is GifTest {
         vm.startPrank(instanceOwner2);
         (instance2, instanceNftId2) = instanceService.createInstance();
         Amount instance2MaxStakedAmount = dipAmount - AmountLib.toAmount(1000);
-        instance2.setStakingMaxStakedAmount(instance2MaxStakedAmount);
+        instance2.setStakingMaxAmount(instance2MaxStakedAmount);
         vm.stopPrank();
 
         vm.startPrank(staker);

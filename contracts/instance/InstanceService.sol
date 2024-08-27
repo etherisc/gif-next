@@ -165,7 +165,7 @@ contract InstanceService is
             rewardRate);
     }
 
-    function setStakingMaxStakedAmount(Amount maxStakedAmount)
+    function setStakingMaxAmount(Amount maxStakedAmount)
         external
         virtual
         restricted()
