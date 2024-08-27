@@ -61,7 +61,7 @@ interface IDistributionService is IService {
 
     function changeDistributorType(
         NftId distributorNftId,
-        DistributorType distributorType,
+        DistributorType newDistributorType,
         bytes memory data
     ) external;
 

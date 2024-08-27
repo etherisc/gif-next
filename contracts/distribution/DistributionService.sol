@@ -143,7 +143,7 @@ contract DistributionService is
 
     function changeDistributorType(
         NftId distributorNftId,
-        DistributorType distributorType,
+        DistributorType newDistributorType,
         bytes memory data
     )
         external
@@ -151,10 +151,10 @@ contract DistributionService is
     {
         _checkNftType(distributorNftId, DISTRIBUTOR());
         (NftId distributionNftId,, IInstance instance) = _getAndVerifyActiveComponent(DISTRIBUTION());
-        _checkDistributionType(instance.getInstanceReader(), distributorType, distributionNftId);
+        _checkDistributionType(instance.getInstanceReader(), newDistributorType, distributionNftId);
         
         IDistribution.DistributorInfo memory distributorInfo = instance.getInstanceReader().getDistributorInfo(distributorNftId);
-        distributorInfo.distributorType = distributorType;
+        distributorInfo.distributorType = newDistributorType;
         distributorInfo.data = data;
         instance.getInstanceStore().updateDistributor(distributorNftId, distributorInfo, KEEP_STATE());
     }
