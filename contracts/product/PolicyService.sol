@@ -130,7 +130,7 @@ contract PolicyService is
 
         // optional activation of policy
         if(activateAt.gtz()) {
-            applicationInfo = _activate(applicationNftId, applicationInfo, activateAt);
+            applicationInfo = PolicyServiceLib.activate(applicationNftId, applicationInfo, activateAt);
         }
 
         // update policy and set state to collateralized
@@ -235,7 +235,7 @@ contract PolicyService is
 
         // optionally activate policy
         if(activateAt.gtz()) {
-            policyInfo = _activate(policyNftId, policyInfo, activateAt);
+            policyInfo = PolicyServiceLib.activate(policyNftId, policyInfo, activateAt);
         }
 
         instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, KEEP_STATE());
@@ -263,7 +263,7 @@ contract PolicyService is
         ) = _getAndVerifyCallerForPolicy(policyNftId);
 
         // effects
-        policyInfo = _activate(policyNftId, policyInfo, activateAt);
+        policyInfo = PolicyServiceLib.activate(policyNftId, policyInfo, activateAt);
         instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, KEEP_STATE());
 
         // log policy activation before interactions with policy holder
@@ -430,19 +430,12 @@ contract PolicyService is
         internal
         returns (Timestamp)
     {
-        PolicyServiceLib.checkExpiration(
-            expireAt,
+        policyInfo = PolicyServiceLib.expire(
+            instance.getInstanceReader(),
             policyNftId,
-            instance.getInstanceReader().getPolicyState(policyNftId),
-            policyInfo);
+            policyInfo,
+            expireAt);
 
-        // effects
-        // update policyInfo with new expiredAt timestamp
-        if (expireAt.gtz()) {
-            policyInfo.expiredAt = expireAt;
-        } else {
-            policyInfo.expiredAt = TimestampLib.blockTimestamp();
-        }
         instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, KEEP_STATE());
 
         emit LogPolicyServicePolicyExpirationUpdated(policyNftId, policyInfo.expiredAt);
@@ -453,32 +446,31 @@ contract PolicyService is
         return policyInfo.expiredAt;
     }
 
-
-    function _activate(
-        NftId policyNftId, 
-        IPolicy.PolicyInfo memory policyInfo,
-        Timestamp activateAt
-    )
-        internal
-        virtual
-        view 
-        returns (IPolicy.PolicyInfo memory)
-    {
+    //function _activate(
+    //    NftId policyNftId, 
+    //    IPolicy.PolicyInfo memory policyInfo,
+    //    Timestamp activateAt
+    //)
+    //    internal
+    //    virtual
+    //    view 
+    //    returns (IPolicy.PolicyInfo memory)
+    //{
         // fail if policy has already been activated and activateAt is different
-        if(! policyInfo.activatedAt.eqz() && activateAt != policyInfo.activatedAt) {
-            revert ErrorPolicyServicePolicyAlreadyActivated(policyNftId);
-        }
+    //    if(! policyInfo.activatedAt.eqz() && activateAt != policyInfo.activatedAt) {
+    //        revert ErrorPolicyServicePolicyAlreadyActivated(policyNftId);
+    //    }
 
         // ignore if policy has already been activated and activateAt is the same
-        if (policyInfo.activatedAt == activateAt) {
-            return policyInfo;
-        }
+    //    if (policyInfo.activatedAt == activateAt) {
+    //        return policyInfo;
+    //    }
 
-        policyInfo.activatedAt = activateAt;
-        policyInfo.expiredAt = activateAt.addSeconds(policyInfo.lifetime);
+    //    policyInfo.activatedAt = activateAt;
+    //    policyInfo.expiredAt = activateAt.addSeconds(policyInfo.lifetime);
 
-        return policyInfo;
-    }
+    //    return policyInfo;
+    //}
 
     /// @dev update counters by calling the involved services
     function _processSale(

@@ -10,13 +10,67 @@ import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
 
 library PolicyServiceLib {
 
+    function activate(
+        NftId policyNftId, 
+        IPolicy.PolicyInfo memory policyInfo,
+        Timestamp activateAt
+    )
+        external
+        pure 
+        returns (IPolicy.PolicyInfo memory)
+    {
+        // fail if policy has already been activated and activateAt is different
+        if(! policyInfo.activatedAt.eqz() && activateAt != policyInfo.activatedAt) {
+            revert IPolicyService.ErrorPolicyServicePolicyAlreadyActivated(policyNftId);
+        }
+
+        // ignore if policy has already been activated and activateAt is the same
+        if (policyInfo.activatedAt == activateAt) {
+            return policyInfo;
+        }
+
+        policyInfo.activatedAt = activateAt;
+        policyInfo.expiredAt = activateAt.addSeconds(policyInfo.lifetime);
+
+        return policyInfo;
+    }
+
+    function expire(
+        InstanceReader instanceReader,
+        NftId policyNftId,
+        IPolicy.PolicyInfo memory policyInfo,
+        Timestamp expireAt
+    )
+        external
+        view
+        returns (IPolicy.PolicyInfo memory)
+    {
+        StateId policyState = instanceReader.getPolicyState(policyNftId);
+
+        checkExpiration(
+            expireAt,
+            policyNftId,
+            policyState,
+            policyInfo);
+
+        // effects
+        // update policyInfo with new expiredAt timestamp
+        if (expireAt.gtz()) {
+            policyInfo.expiredAt = expireAt;
+        } else {
+            policyInfo.expiredAt = TimestampLib.blockTimestamp();
+        }
+
+        return policyInfo;
+    }
+
     function checkExpiration(
         Timestamp newExpiredAt,
         NftId policyNftId,
         StateId policyState,
         IPolicy.PolicyInfo memory policyInfo
     )
-        external 
+        public 
         view
     {
         if (policyState != COLLATERALIZED()) { 

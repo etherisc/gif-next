@@ -15,6 +15,8 @@ import {InstanceReader} from "../instance/InstanceReader.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType, BUNDLE, POOL} from "../type/ObjectType.sol";
+import {PayoutId} from "../type/PayoutId.sol";
+import {TokenHandler} from "../shared/TokenHandler.sol";
 import {UFixed} from "../type/UFixed.sol";
 
 library PoolLib {
@@ -105,7 +107,7 @@ library PoolLib {
         Amount payoutAmount,
         address payoutBeneficiary
     )
-        external
+        public
         view
         returns (
             Amount netPayoutAmount,
@@ -212,5 +214,96 @@ library PoolLib {
         if(!registry.isObjectType(nftId, expectedObjectType)) {
             revert INftOwnable.ErrorNftOwnableInvalidType(nftId, expectedObjectType);
         }
+    }
+
+    function transferTokenAndNotifyPolicyHolder(
+        IRegistry registry,
+        InstanceReader instanceReader,
+        TokenHandler poolTokenHandler,
+        NftId productNftId,
+        NftId policyNftId,
+        PayoutId payoutId,
+        Amount payoutAmount,
+        address payoutBeneficiary
+    )
+        external
+    {
+        (
+            Amount netPayoutAmount,
+            Amount processingFeeAmount,
+            address beneficiary
+        ) = calculatePayoutAmounts(
+            registry,
+            instanceReader,
+            productNftId, 
+            policyNftId,
+            payoutAmount,
+            payoutBeneficiary);
+
+        // 1st token tx to payout to beneficiary
+        poolTokenHandler.pushToken(
+            beneficiary, 
+            netPayoutAmount);
+
+        // 2nd token tx to transfer processing fees to product wallet
+        // if processingFeeAmount > 0
+        if (processingFeeAmount.gtz()) {
+            poolTokenHandler.pushToken(
+                instanceReader.getWallet(productNftId), 
+                processingFeeAmount);
+        }
+
+        // callback to policy holder if applicable
+        policyHolderPayoutExecuted(
+            registry,
+            policyNftId, 
+            payoutId, 
+            beneficiary, 
+            netPayoutAmount);
+    }
+
+    function policyHolderPayoutExecuted(
+        IRegistry registry,
+        NftId policyNftId, 
+        PayoutId payoutId,
+        address beneficiary,
+        Amount payoutAmount
+    )
+        private
+    {
+        IPolicyHolder policyHolder = getPolicyHolder(registry, policyNftId);
+        if(address(policyHolder) != address(0)) {
+            policyHolder.payoutExecuted(policyNftId, payoutId, payoutAmount, beneficiary);
+        }
+    }
+
+    /// @dev Transfers the specified amount from the "from account" to the pool's wallet
+    function pullStakingAmount(
+        InstanceReader reader,
+        NftId poolNftId,
+        address from,
+        Amount amount
+    )
+        external
+    {
+        IComponents.ComponentInfo memory info = reader.getComponentInfo(poolNftId);
+        info.tokenHandler.pullToken(
+            from,
+            amount);
+    }
+
+    /// @dev Transfers the specified amount from the pool's wallet to the "to account"
+    function pushUnstakingAmount(
+        InstanceReader reader,
+        NftId poolNftId,
+        address to,
+        Amount amount
+    )
+        external
+    {
+        IComponents.ComponentInfo memory info = reader.getComponentInfo(poolNftId);
+        info.tokenHandler.pushToken(
+            to, 
+            amount);
     }
 }
