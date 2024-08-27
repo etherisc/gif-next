@@ -71,6 +71,11 @@ contract ApplicationService is
         if (!exists) { revert ErrorApplicationServiceRiskUnknown(riskId, productNftId); }
         if (!active) { revert ErrorApplicationServiceRiskPaused(riskId, productNftId); }
 
+        NftId riskProductNftId = instanceReader.getRiskInfo(riskId).productNftId;
+        if (!productNftId.eq(riskProductNftId)) {
+            revert ErrorApplicationServiceRiskProductMismatch(riskId, riskProductNftId, productNftId);
+        }
+
         // check bundle with pool
         IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
         {
