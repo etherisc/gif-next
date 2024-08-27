@@ -489,7 +489,7 @@ contract InstanceReader {
     }
 
     function isReferralValid(NftId distributionNftId, ReferralId referralId)
-        public
+        external
         view
         returns (bool isValid)
     {

@@ -83,7 +83,7 @@ contract ApplicationService is
         // check referral with distribution
         {
             if (productInfo.hasDistribution && ! referralId.eqz()) {
-                if (!instanceReader.isReferralValid(productInfo.distributionNftId, referralId)) {
+                if (!_distributionService.referralIsValid(productInfo.distributionNftId, referralId)) {
                     revert ErrorApplicationServiceReferralInvalid(productNftId, productInfo.distributionNftId, referralId);
                 }
             }
