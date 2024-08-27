@@ -19,6 +19,7 @@ import {IRegisterable} from "../shared/IRegisterable.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegistryService} from "../registry/IRegistryService.sol";
 
+import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {ContractLib} from "../shared/ContractLib.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
@@ -488,6 +489,18 @@ contract ComponentService is
             getRegistry(),
             componentAddress,
             requiredType);
+
+        {
+            // check if provided token is whitelisted and active
+            if (!ContractLib.isActiveToken(
+                getRegistry().getTokenRegistryAddress(), 
+                token, 
+                block.chainid, 
+                AccessManagerCloneable(authority()).getRelease())
+            ) {
+                revert ErrorComponentServiceTokenInvalid(token);
+            }
+        }
 
         // get instance supporting contracts (as function return values)
         instanceReader = instance.getInstanceReader();

@@ -16,6 +16,8 @@ import {VersionPart} from "../type/Version.sol";
 interface IComponentService is 
     IService
 {
+    error ErrorComponentServiceTokenInvalid(address token);
+
     error ErrorComponentServiceNotInstanceLinkedComponent(address component);
     error ErrorComponentServiceSenderNotRegistered(address sender);
     error ErrorComponentServiceNotComponent(address component);
