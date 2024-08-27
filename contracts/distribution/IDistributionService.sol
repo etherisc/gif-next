@@ -13,7 +13,6 @@ import {Timestamp} from "../type/Timestamp.sol";
 
 
 interface IDistributionService is IService {
-
     error ErrorDistributionServiceCallerNotRegistered(address caller);
     error ErrorDistributionServiceParentNftIdNotInstance(NftId nftId, NftId parentNftId);
     error ErrorDistributionServiceCallerNotDistributor(address caller);
@@ -26,6 +25,8 @@ interface IDistributionService is IService {
     error ErrorDistributionServiceExpirationInvalid(Timestamp expiryAt);
     error ErrorDistributionServiceCommissionTooHigh(uint256 commissionPercentage, uint256 maxCommissionPercentage);
     error ErrorDistributionServiceMinFeeTooHigh(uint256 minFee, uint256 limit);
+    error ErrorDistributionServiceDistributorTypeDistributionMismatch(DistributorType distributorType, NftId distributorTypeDistributionNftId, NftId distributionNftId);
+    error ErrorDistributionServiceDistributorDistributionMismatch(NftId distributorNftId, NftId distributorDistributionNftId, NftId distributionNftId);
 
     error ErrorDistributionServiceCommissionWithdrawAmountExceedsLimit(Amount amount, Amount limit);
     
@@ -34,6 +35,7 @@ interface IDistributionService is IService {
 
     error ErrorDistributionServiceReferralInvalid(NftId distributionNftId, ReferralId referralId);
     error ErrorDistributionServiceInvalidFeeTransferred(Amount transferredDistributionFeeAmount, Amount expectedDistributionFeeAmount);
+    error ErrorDistributionServiceReferralDistributionMismatch(ReferralId referralId, NftId referralDistributionNft, NftId distributionNftId);
 
     event LogDistributionServiceCommissionWithdrawn(NftId distributorNftId, address recipient, address tokenAddress, Amount amount);
 
@@ -59,7 +61,7 @@ interface IDistributionService is IService {
 
     function changeDistributorType(
         NftId distributorNftId,
-        DistributorType distributorType,
+        DistributorType newDistributorType,
         bytes memory data
     ) external;
 

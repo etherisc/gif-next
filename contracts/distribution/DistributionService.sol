@@ -74,7 +74,6 @@ contract DistributionService is
         returns (DistributorType distributorType)
     {
         (NftId distributionNftId,, IInstance instance) = _getAndVerifyActiveComponent(DISTRIBUTION());
-        // InstanceReader instanceReader = instance.getInstanceReader();
 
         {
             NftId productNftId = _getProductNftId(distributionNftId);
@@ -96,6 +95,7 @@ contract DistributionService is
         distributorType = DistributorTypeLib.toDistributorType(distributionNftId, name);
         IDistribution.DistributorTypeInfo memory info = IDistribution.DistributorTypeInfo(
             name,
+            distributionNftId,
             minDiscountPercentage,
             maxDiscountPercentage,
             commissionPercentage,
@@ -119,6 +119,7 @@ contract DistributionService is
         returns (NftId distributorNftId)
     {
         (NftId distributionNftId,, IInstance instance) = _getAndVerifyActiveComponent(DISTRIBUTION());
+        _checkDistributionType(instance.getInstanceReader(), distributorType, distributionNftId);
 
         distributorNftId = _registryService.registerDistributor(
             IRegistry.ObjectInfo(
@@ -142,15 +143,18 @@ contract DistributionService is
 
     function changeDistributorType(
         NftId distributorNftId,
-        DistributorType distributorType,
+        DistributorType newDistributorType,
         bytes memory data
     )
         external
         virtual
     {
-        (,, IInstance instance) = _getAndVerifyActiveComponent(DISTRIBUTION());
+        _checkNftType(distributorNftId, DISTRIBUTOR());
+        (NftId distributionNftId,, IInstance instance) = _getAndVerifyActiveComponent(DISTRIBUTION());
+        _checkDistributionType(instance.getInstanceReader(), newDistributorType, distributionNftId);
+        
         IDistribution.DistributorInfo memory distributorInfo = instance.getInstanceReader().getDistributorInfo(distributorNftId);
-        distributorInfo.distributorType = distributorType;
+        distributorInfo.distributorType = newDistributorType;
         distributorInfo.data = data;
         instance.getInstanceStore().updateDistributor(distributorNftId, distributorInfo, KEEP_STATE());
     }
@@ -178,6 +182,11 @@ contract DistributionService is
             revert ErrorDistributionServiceExpirationInvalid(expiryAt);
         }
 
+        NftId distributorDistributionNftId = getRegistry().getParentNftId(distributorNftId);
+        if (distributorDistributionNftId != distributionNftId) {
+            revert ErrorDistributionServiceDistributorDistributionMismatch(distributorNftId, distributorDistributionNftId, distributionNftId);
+        }
+
         {
             InstanceReader instanceReader = instance.getInstanceReader();
             DistributorType distributorType = instanceReader.getDistributorInfo(distributorNftId).distributorType;
@@ -200,6 +209,7 @@ contract DistributionService is
         {
             referralId = ReferralLib.toReferralId(distributionNftId, code);
             IDistribution.ReferralInfo memory info = IDistribution.ReferralInfo(
+                distributionNftId,
                 distributorNftId,
                 code,
                 discountPercentage,
@@ -338,8 +348,25 @@ contract DistributionService is
             return false;
         }
 
+        // ensure the referral was created on the same distribution
+        if(info.distributionNftId != distributionNftId) {
+            revert ErrorDistributionServiceReferralDistributionMismatch(referralId, info.distributionNftId, distributionNftId);
+        }
+
         isValid = info.expiryAt.eqz() || (info.expiryAt.gtz() && TimestampLib.blockTimestamp() <= info.expiryAt);
         isValid = isValid && info.usedReferrals < info.maxReferrals;
+    }
+
+    function _checkDistributionType(InstanceReader instanceReader, DistributorType distributorType, NftId expectedDistributionNftId) 
+        internal
+        view 
+    {
+        // enfore distributor type belongs to the calling distribution
+        NftId distributorTypeDistributionNftId = instanceReader.getDistributorTypeInfo(distributorType).distributionNftId;
+
+        if (distributorTypeDistributionNftId != expectedDistributionNftId) {
+            revert ErrorDistributionServiceDistributorTypeDistributionMismatch(distributorType, distributorTypeDistributionNftId, expectedDistributionNftId);
+        }
     }
 
     function _getInstanceForDistribution(NftId distributionNftId)

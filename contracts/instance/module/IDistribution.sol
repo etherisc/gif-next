@@ -12,6 +12,7 @@ interface IDistribution {
 
     struct DistributorTypeInfo {
         string name;
+        NftId distributionNftId;
         UFixed minDiscountPercentage;
         UFixed maxDiscountPercentage;
         UFixed commissionPercentage;
@@ -29,7 +30,8 @@ interface IDistribution {
         uint32 numPoliciesSold;
     }
 
-    struct ReferralInfo {   
+    struct ReferralInfo {
+        NftId distributionNftId;
         NftId distributorNftId;
         string referralCode;
         UFixed discountPercentage;
