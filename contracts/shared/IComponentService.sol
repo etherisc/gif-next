@@ -85,7 +85,7 @@ interface IComponentService is
     //-------- product ------------------------------------------------------//
 
     /// @dev Registers the specified product component for the instance (sender)
-    function registerProduct(address product) external returns (NftId productNftId);
+    function registerProduct(address product, address token) external returns (NftId productNftId);
 
     function setProductFees(
         Fee memory productFee, // product fee on net premium

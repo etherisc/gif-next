@@ -81,7 +81,6 @@ abstract contract Oracle is
         IAuthorization authorization,
         address initialOwner,
         string memory name,
-        address token,
         bytes memory componentData // component specifidc data 
     )
         internal
@@ -92,7 +91,6 @@ abstract contract Oracle is
             registry, 
             productNftId, 
             name, 
-            token, 
             ORACLE(), 
             authorization,
             true, 

@@ -118,13 +118,13 @@ contract Instance is
 
     //--- ProductRegistration ----------------------------------------------//
 
-    function registerProduct(address product)
+    function registerProduct(address product, address token)
         external
         restricted()
         onlyOwner()
         returns (NftId productNftId)
     {
-        productNftId = _componentService.registerProduct(product);
+        productNftId = _componentService.registerProduct(product, token);
         _products.push(productNftId);
     }
 

@@ -73,7 +73,7 @@ interface IInstance is
     function setTargetLocked(address target, bool locked) external;
 
     /// @dev Register a product with the instance.
-    function registerProduct(address product) external returns (NftId productNftId);
+    function registerProduct(address product, address token) external returns (NftId productNftId);
 
     ///--- authz ------------------------------------------------------------//
 

@@ -34,8 +34,7 @@ contract SimpleOracle is
         address registry,
         NftId productNftId,
         IAuthorization authorization,
-        address initialOwner,
-        address token
+        address initialOwner
     ) 
     {
         initialize(
@@ -43,8 +42,7 @@ contract SimpleOracle is
             productNftId,
             authorization,
             initialOwner,
-            "SimpleOracle",
-            token
+            "SimpleOracle"
         );
     }
 
@@ -53,8 +51,7 @@ contract SimpleOracle is
         NftId productNftId,
         IAuthorization authorization,
         address initialOwner,
-        string memory name,
-        address token
+        string memory name
     )
         public
         virtual
@@ -65,8 +62,7 @@ contract SimpleOracle is
             productNftId,
             authorization,
             initialOwner,
-            name,
-            token);
+            name);
     }
 
     /// @dev use case specific handling of oracle requests

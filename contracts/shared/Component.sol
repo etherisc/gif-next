@@ -27,7 +27,6 @@ abstract contract Component is
 
     struct ComponentStorage {
         string _name; // unique (per instance) component name
-        IERC20Metadata _token; // token for this component
         bool _isInterceptor;
         bytes _data;
         IComponentService _componentService;
@@ -54,7 +53,6 @@ abstract contract Component is
         address registry,
         NftId parentNftId,
         string memory name,
-        address token,
         ObjectType componentType,
         bool isInterceptor,
         address initialOwner,
@@ -72,11 +70,12 @@ abstract contract Component is
         // GIF core contract setup is complete. at that time token registry 
         // is not yet available. therefore we skip the check for staking.
         if (componentType != STAKING()) {
-
+            
+            // FIXME: move to component registration
             // check if provided token is whitelisted and active
-            if (!ContractLib.isActiveToken(tokenRegistry, token, block.chainid, release)) {
-                revert ErrorComponentTokenInvalid(token);
-            }
+            // if (!ContractLib.isActiveToken(tokenRegistry, token, block.chainid, release)) {
+            //     revert ErrorComponentTokenInvalid(token);
+            // }
         }
 
         if (bytes(name).length == 0) {
@@ -95,7 +94,6 @@ abstract contract Component is
         // set component state
         ComponentStorage storage $ = _getComponentStorage();
         $._name = name;
-        $._token = IERC20Metadata(token);
         $._isInterceptor = isInterceptor;
         $._data = componentData;
         $._componentService = IComponentService(_getServiceAddress(COMPONENT()));
@@ -125,7 +123,7 @@ abstract contract Component is
     }
 
     function getToken() public view virtual returns (IERC20Metadata token) {
-        return getComponentInfo().token;
+        return getTokenHandler().TOKEN();
     }
 
     function getName() public view override returns(string memory name) {
@@ -213,7 +211,6 @@ abstract contract Component is
         
         return IComponents.ComponentInfo({
             name: $._name,
-            token: $._token,
             tokenHandler: TokenHandler(address(0)),
             data: $._data // user specific component data
         });
