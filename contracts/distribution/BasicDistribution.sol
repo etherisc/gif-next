@@ -134,6 +134,7 @@ contract BasicDistribution is
             registry, 
             instanceNftId, 
             authorization,
+            false,
             initialOwner, 
             name, 
             token, 

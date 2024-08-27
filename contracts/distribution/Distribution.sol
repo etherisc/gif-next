@@ -10,7 +10,7 @@ import {Amount} from "../type/Amount.sol";
 import {COMPONENT, DISTRIBUTION, DISTRIBUTOR} from "../type/ObjectType.sol";
 import {DistributorType} from "../type/DistributorType.sol";
 import {Fee} from "../type/Fee.sol";
-import {NftId, NftIdLib} from "../type/NftId.sol";
+import {NftId} from "../type/NftId.sol";
 import {ReferralId, ReferralStatus, ReferralLib} from "../type/Referral.sol";
 import {InstanceLinkedComponent} from "../shared/InstanceLinkedComponent.sol";
 import {Seconds} from "../type/Seconds.sol";
@@ -104,6 +104,7 @@ abstract contract Distribution is
         address registry,
         NftId productNftId,
         IAuthorization authorization, 
+        bool isInterceptor,
         address initialOwner,
         string memory name,
         address token,
@@ -117,10 +118,10 @@ abstract contract Distribution is
             registry, 
             productNftId, 
             name, 
-            token, 
+            token,
             DISTRIBUTION(), 
             authorization,
-            true, 
+            isInterceptor,
             initialOwner, 
             componentData);
 
@@ -235,11 +236,6 @@ abstract contract Distribution is
         returns (Amount withdrawnAmount) 
     {
         return _getDistributionStorage()._distributionService.withdrawCommission(distributorNftId, amount);
-    }
-
-    function _nftTransferFrom(address from, address to, uint256 tokenId, address operator) internal virtual override {
-        // keep track of distributor nft owner
-        emit LogDistributorUpdated(to, operator);
     }
 
     function _getDistributionStorage() private pure returns (DistributionStorage storage $) {
