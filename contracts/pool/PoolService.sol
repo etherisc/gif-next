@@ -69,6 +69,7 @@ contract PoolService is
     function setMaxBalanceAmount(Amount maxBalanceAmount)
         external
         virtual
+        restricted()
     {
         (NftId poolNftId, IInstance instance) = _getAndVerifyActivePool();
         InstanceReader instanceReader = instance.getInstanceReader();
@@ -84,6 +85,7 @@ contract PoolService is
 
     function closeBundle(NftId bundleNftId)
         external
+        restricted()
         virtual
     {
         _checkNftType(bundleNftId, BUNDLE());
@@ -119,6 +121,7 @@ contract PoolService is
         Amount availableAmount
     ) 
         external
+        restricted()
         virtual
     {
         _checkNftType(policyNftId, POLICY());
@@ -175,7 +178,7 @@ contract PoolService is
     function stake(NftId bundleNftId, Amount amount) 
         external 
         virtual
-        // TODO: restricted() (once #462 is done)
+        restricted()
         returns(
             Amount netAmount
         ) 
@@ -235,7 +238,7 @@ contract PoolService is
     function unstake(NftId bundleNftId, Amount amount) 
         external 
         virtual
-        // TODO: restricted() (once #462 is done)
+        restricted()
         returns(Amount netAmount) 
     {
         (
@@ -281,7 +284,7 @@ contract PoolService is
     function fundPoolWallet(Amount amount)
         external
         virtual
-        // restricted()
+        restricted()
     {
         (
             NftId poolNftId,
@@ -308,7 +311,7 @@ contract PoolService is
     function defundPoolWallet(Amount amount)
         external
         virtual
-        // restricted()
+        restricted()
     {
         (
             NftId poolNftId,

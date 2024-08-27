@@ -71,6 +71,7 @@ contract DistributionService is
         bytes memory data
     )
         external
+        restricted()
         returns (DistributorType distributorType)
     {
         (NftId distributionNftId,, IInstance instance) = _getAndVerifyActiveComponent(DISTRIBUTION());
@@ -116,6 +117,7 @@ contract DistributionService is
     )
         external 
         virtual
+        restricted()
         returns (NftId distributorNftId)
     {
         (NftId distributionNftId,, IInstance instance) = _getAndVerifyActiveComponent(DISTRIBUTION());
@@ -148,6 +150,7 @@ contract DistributionService is
     )
         external
         virtual
+        restricted()
     {
         _checkNftType(distributorNftId, DISTRIBUTOR());
         (NftId distributionNftId,, IInstance instance) = _getAndVerifyActiveComponent(DISTRIBUTION());
@@ -170,6 +173,7 @@ contract DistributionService is
     )
         external
         virtual
+        restricted()
         onlyNftOfType(distributorNftId, DISTRIBUTOR())
         returns (ReferralId referralId)
     {
@@ -290,7 +294,7 @@ contract DistributionService is
     function withdrawCommission(NftId distributorNftId, Amount amount) 
         public 
         virtual
-        // TODO: restricted() (once #462 is done)
+        restricted()
         onlyNftOfType(distributorNftId, DISTRIBUTOR())
         returns (Amount withdrawnAmount) 
     {

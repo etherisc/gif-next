@@ -108,7 +108,7 @@ contract ReleaseProductTest is GifTest {
         vm.expectRevert(
             abi.encodeWithSelector(
                 IAccessManaged.AccessManagedUnauthorized.selector, 
-                address(applicationService)));
+                address(product)));
 
         NftId newApplNftId =_createApplication(); 
         assertTrue(newApplNftId.eqz(), "new application nft id not zero");
@@ -136,7 +136,7 @@ contract ReleaseProductTest is GifTest {
         vm.expectRevert(
             abi.encodeWithSelector(
                 IAccessManaged.AccessManagedUnauthorized.selector, 
-                address(policyService)));
+                address(product)));
 
         product.createPolicy(applNftId2, false, activateAt); 
         assertEq(instanceReader.getPolicyState(applNftId1).toInt(), COLLATERALIZED().toInt(), "1 not collateralized (after)");
@@ -147,7 +147,7 @@ contract ReleaseProductTest is GifTest {
         vm.expectRevert(
             abi.encodeWithSelector(
                 IAccessManaged.AccessManagedUnauthorized.selector, 
-                address(policyService)));
+                address(product)));
 
         product.collectPremium(applNftId1, activateAt);
     }

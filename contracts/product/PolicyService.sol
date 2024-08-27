@@ -73,6 +73,7 @@ contract PolicyService is
     )
         external
         virtual
+        restricted()
         nonReentrant()
     {
         // checks
@@ -100,6 +101,7 @@ contract PolicyService is
     )
         external 
         virtual
+        restricted()
         nonReentrant()
         returns (Amount premiumAmount)
     {
@@ -186,6 +188,7 @@ contract PolicyService is
     )
         external 
         virtual
+        restricted()
         nonReentrant()
     {
         // checks
@@ -250,6 +253,7 @@ contract PolicyService is
     function activate(NftId policyNftId, Timestamp activateAt)
         external
         virtual
+        restricted()
         nonReentrant()
     {
         // checks
@@ -277,6 +281,7 @@ contract PolicyService is
     )
         external
         virtual
+        restricted()
         nonReentrant()
     {
         // checks
@@ -317,6 +322,7 @@ contract PolicyService is
     )
         external
         virtual
+        restricted()
         nonReentrant()
         returns (Timestamp expiredAt)
     {
@@ -344,6 +350,7 @@ contract PolicyService is
     )
         external
         virtual
+        restricted()
         nonReentrant()
         returns (Timestamp expiredAt)
     {
@@ -368,6 +375,7 @@ contract PolicyService is
     )
         external 
         virtual
+        restricted()
         nonReentrant()
     {
         // checks

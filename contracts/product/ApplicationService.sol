@@ -149,6 +149,7 @@ contract ApplicationService is
     )
         external
         virtual
+        restricted()
         nonReentrant()
         returns (NftId applicationNftId)
     {
@@ -227,6 +228,7 @@ contract ApplicationService is
     )
         external
         virtual
+        restricted()
         nonReentrant()
         returns (NftId applicationNftId)
     {
@@ -247,6 +249,7 @@ contract ApplicationService is
     )
         external
         virtual
+        restricted()
         nonReentrant()
     {
         _checkNftType(applicationNftId, POLICY());
@@ -257,6 +260,7 @@ contract ApplicationService is
     function revoke(NftId applicationNftId)
         external
         virtual
+        restricted()
         nonReentrant()
     {
         _checkNftType(applicationNftId, POLICY());
