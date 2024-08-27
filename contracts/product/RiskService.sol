@@ -82,6 +82,11 @@ contract RiskService is
         // effects
         InstanceReader instanceReader = instance.getInstanceReader();
         IRisk.RiskInfo memory riskInfo = instanceReader.getRiskInfo(riskId);
+
+        if (riskInfo.productNftId != productNftId) {
+            revert IRiskServiceRiskProductMismatch(riskId, riskInfo.productNftId, productNftId);
+        }
+
         riskInfo.data = data;
         instance.getInstanceStore().updateRisk(riskId, riskInfo, KEEP_STATE());
     }
@@ -96,6 +101,11 @@ contract RiskService is
     {
         // checks
         (NftId productNftId, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
+
+        NftId riskProductNftId = instance.getInstanceReader().getRiskInfo(riskId).productNftId;
+        if (riskProductNftId != productNftId) {
+            revert IRiskServiceRiskProductMismatch(riskId, riskProductNftId, productNftId);
+        }
 
         // effects
         instance.getInstanceStore().updateRiskState(riskId, state);
