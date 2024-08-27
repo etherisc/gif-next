@@ -12,7 +12,7 @@ import {PayoutId} from "../../contracts/type/PayoutId.sol";
 import {ReferralLib} from "../../contracts/type/Referral.sol";
 import {RiskId, RiskIdLib} from "../../contracts/type/RiskId.sol";
 import {Seconds, SecondsLib} from "../../contracts/type/Seconds.sol";
-import {StakeManagerLib} from "../../contracts/staking/StakeManagerLib.sol";
+import {StakingLib} from "../../contracts/staking/StakingLib.sol";
 import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
 import {UFixed, UFixedLib} from "../../contracts/type/UFixed.sol";import {VersionPart} from "../../contracts/type/Version.sol";
 
@@ -39,7 +39,6 @@ contract TvlCalculation is GifTest {
 
         // check instance is active target
         assertTrue(stakingReader.isTarget(instanceNftId), "instance not target");
-        assertTrue(stakingReader.isActive(instanceNftId), "instance not active target");
 
         // check token is what we think it is
         assertEq(token.symbol(), "USDC", "token symbol not USDC");

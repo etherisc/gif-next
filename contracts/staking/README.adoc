@@ -13,7 +13,7 @@ Contains all staking related interfaces and contracts.
 {{StakingLifecycle}}
 {{StakingService}}
 
-{{StakeManagerLib}}
+{{StakingLib}}
 {{TargetManagerLib}}
 
 {{StakingManager}}
