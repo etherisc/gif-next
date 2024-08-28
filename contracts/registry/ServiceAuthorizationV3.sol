@@ -130,6 +130,7 @@ contract ServiceAuthorizationV3
           IAccess.FunctionInfo[] storage functions;
           functions = _authorizeForService(INSTANCE(), ALL());
           _authorize(functions, IInstanceService.createRole.selector, "createRole");
+          _authorize(functions, IInstanceService.setRoleActive.selector, "setRoleActive");
           _authorize(functions, IInstanceService.grantRole.selector, "grantRole");
           _authorize(functions, IInstanceService.revokeRole.selector, "revokeRole");
 

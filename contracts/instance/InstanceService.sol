@@ -91,6 +91,17 @@ contract InstanceService is
     }
 
     /// @inheritdoc IInstanceService
+    function setRoleActive(RoleId roleId, bool active)
+        external
+        restricted()
+        onlyInstance()
+    {
+        IInstance instance = IInstance(msg.sender);
+        instance.getInstanceAdmin().setRoleActive(roleId, active);
+    }
+
+
+    /// @inheritdoc IInstanceService
     function grantRole(RoleId roleId, address account)
         external
         restricted()

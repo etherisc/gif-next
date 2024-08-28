@@ -578,19 +578,32 @@ contract InstanceReader {
         return _instance.getInstanceAdmin().getRoleId(uint64(idx));
     }
 
+    function roleExists(RoleId roleId) public view returns (bool exists) {
+        return _instance.getInstanceAdmin().roleExists(roleId);
+    }
 
     function getRoleInfo(RoleId roleId) public view returns (IAccess.RoleInfo memory roleInfo) { 
         return _instance.getInstanceAdmin().getRoleInfo(roleId);
     }
 
 
-    function hasRole(address account, RoleId roleId) public view returns (bool isMember) {
-        return _instance.getInstanceAdmin().hasRole(account, roleId);
+    function isRoleCustom(RoleId roleId) public view returns (bool isCustom) {
+        return _instance.getInstanceAdmin().isRoleCustom(roleId);
     }
 
 
-    function hasAdminRole(address account, RoleId roleId) public view returns (bool isMember) {
-        return _instance.getInstanceAdmin().hasAdminRole(account, roleId);
+    function isRoleActive(RoleId roleId) public view returns (bool isActive) {
+        return _instance.getInstanceAdmin().isRoleActive(roleId);
+    }
+
+
+    function isRoleMember(address account, RoleId roleId) public view returns (bool isMember) {
+        return _instance.getInstanceAdmin().isRoleMember(account, roleId);
+    }
+
+
+    function isRoleAdmin(address account, RoleId roleId) public view returns (bool isMember) {
+        return _instance.getInstanceAdmin().isRoleAdmin(account, roleId);
     }
 
 

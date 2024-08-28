@@ -234,7 +234,8 @@ contract RegistryAdmin is
                     authorizedRole,
                     authorization.getAuthorizedFunctions(
                         target, 
-                        authorizedRole));
+                        authorizedRole),
+                    true);
             }
         }
     }

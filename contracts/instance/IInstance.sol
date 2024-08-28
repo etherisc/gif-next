@@ -17,6 +17,10 @@ import {UFixed} from "../type/UFixed.sol";
 interface IInstance is 
     IRegisterable
 {
+    // modifier is onlyRoleAdmin
+    error ErrorInstanceNotCustomRole(RoleId roleId);
+    error ErrorInstanceNotRoleAdmin(RoleId roleId, address account);
+
     error ErrorInstanceInstanceAdminZero();
     error ErrorInstanceInstanceAdminAlreadySet(address InstanceAdmin);
     error ErrorInstanceInstanceAdminAuthorityMismatch(address instanceAuthority);
@@ -79,7 +83,17 @@ interface IInstance is
     /// Custom roles are not intended to be used as target roles for custom contracts.
     function createRole(string memory roleName, RoleId adminRoleId, uint32 maxMemberCount) external returns (RoleId roleId);
 
+    /// @dev Activates/deactivates the specified role.
+    /// Only instance owner or account with role admin role can call this function.
+    function setRoleActive(RoleId roleId, bool active) external;
+
+    /// @dev Grants the specified role to the account.
+    /// Only active roles can be granted.
+    /// Only instance owner or account with role admin role can call this function.
     function grantRole(RoleId roleId, address account) external;
+
+    /// @dev Revokes the specified role from the account.
+    /// Only instance owner or account with role admin role can call this function.
     function revokeRole(RoleId roleId, address account) external;
 
     function createTarget(address target, string memory name) external;

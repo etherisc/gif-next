@@ -57,6 +57,9 @@ interface IInstanceService is IService {
     /// @dev creates a new role for the calling instance.
     function createRole(string memory roleName, RoleId adminRoleId, uint32 maxMemberCount) external returns (RoleId roleId);
 
+    /// @dev sets the specified role as active or inactive for the calling instance.
+    function setRoleActive(RoleId roleId, bool active) external;
+
     /// @dev grants the specified role to the specified account for the calling instance.
     function grantRole(RoleId roleId, address account) external; 
 

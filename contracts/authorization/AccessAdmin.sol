@@ -86,6 +86,7 @@ contract AccessAdmin is
     /// @dev temporary dynamic functions array
     bytes4[] private _functions;
 
+
     modifier onlyDeployer() {
         // special case for cloned AccessAdmin contracts
         // IMPORTANT cloning and initialize authority needs to be done in a single transaction
@@ -99,23 +100,6 @@ contract AccessAdmin is
         _;
     }
 
-    modifier onlyRoleMember(RoleId roleId, address account) {
-        _checkRoleExists(roleId, false);
-
-        if (!hasRole(account, roleId)) {
-            revert ErrorAccessAdminNotRoleOwner(roleId, account);
-        }
-        _;
-    }
-
-    modifier onlyRoleAdmin(RoleId roleId, address account) {
-        _checkRoleExists(roleId, false);
-
-        if (!hasAdminRole(account, roleId)) {
-            revert ErrorAccessAdminNotAdminOfRole(_roleInfo[roleId].adminRoleId, account);
-        }
-        _;
-    }
 
     modifier onlyExistingRole(
         RoleId roleId, 
@@ -128,6 +112,7 @@ contract AccessAdmin is
         }
         _;
     }
+
 
     modifier onlyExistingTarget(address target) {
         _checkTargetExists(target);
@@ -253,6 +238,14 @@ contract AccessAdmin is
         return _roleInfo[roleId];
     }
 
+    function isRoleActive(RoleId roleId) external view returns (bool isActive) {
+        return _roleInfo[roleId].pausedAt > TimestampLib.blockTimestamp();
+    }
+
+    function isRoleCustom(RoleId roleId) external view returns (bool isActive) {
+        return _roleInfo[roleId].roleType == RoleType.Custom;
+    }
+
     function roleMembers(RoleId roleId) external view returns (uint256 numberOfMembers) {
         return _roleMembers[roleId].length();
     }
@@ -262,20 +255,20 @@ contract AccessAdmin is
     }
 
     // TODO false because not role member or because role not exists?
-    function hasRole(address account, RoleId roleId) public view returns (bool) {
+    function isRoleMember(address account, RoleId roleId) public view returns (bool) {
         (bool isMember, ) = _authority.hasRole(
             RoleId.unwrap(roleId), 
             account);
         return isMember;
     }
 
-    function hasAdminRole(address account, RoleId roleId)
+    function isRoleAdmin(address account, RoleId roleId)
         public 
         virtual
         view 
         returns (bool)
     {
-        return hasRole(account, _roleInfo[roleId].adminRoleId);
+        return isRoleMember(account, _roleInfo[roleId].adminRoleId);
     }
 
     //--- view functions for targets ----------------------------------------//
@@ -384,110 +377,122 @@ contract AccessAdmin is
     function _authorizeTargetFunctions(
         address target, 
         RoleId roleId, 
-        FunctionInfo[] memory functions
+        FunctionInfo[] memory functions,
+        bool addFunctions
     )
         internal
     {
-        if (roleId == getAdminRole()) {
+        if (addFunctions && roleId == getAdminRole()) {
             revert ErrorAccessAdminAuthorizeForAdminRoleInvalid(target);
         }
-
-        (
-            bytes4[] memory functionSelectors,
-            string[] memory functionNames
-        ) = _processFunctionSelectors(target, functions, true);
 
         // apply authz via access manager
         _grantRoleAccessToFunctions(
             target, 
             roleId, 
-            functionSelectors,
-            functionNames, 
-            false); // allow locked roles
+            functions,
+            addFunctions); // add functions
     }
 
-    function _unauthorizeTargetFunctions(
-        address target, 
-        FunctionInfo[] memory functions
-    )
-        internal
-    {
-        (
-            bytes4[] memory functionSelectors,
-            string[] memory functionNames
-        ) = _processFunctionSelectors(target, functions, false);
+    // function _unauthorizeTargetFunctions(
+    //     address target, 
+    //     FunctionInfo[] memory functions
+    // )
+    //     internal
+    // {
+    //     _grantRoleAccessToFunctions(
+    //         target, 
+    //         getAdminRole(), 
+    //         functions,
+    //         false);  // addFunctions
+    // }
 
-        _grantRoleAccessToFunctions(
-            target, 
-            getAdminRole(), 
-            functionSelectors, 
-            functionNames, 
-            true);  // allowLockedRoles
-    }
+    // function _processFunctionSelectors(
+    //     address target,
+    //     FunctionInfo[] memory functions,
+    //     bool addFunctions
+    // )
+    //     internal
+    //     onlyExistingTarget(target)
+    //     returns (
+    //         bytes4[] memory functionSelectors,
+    //         string[] memory functionNames
+    //     )
+    // {
+    //     uint256 n = functions.length;
+    //     functionSelectors = new bytes4[](n);
+    //     functionNames = new string[](n);
+    //     FunctionInfo memory func;
+    //     Selector selector;
 
-    function _processFunctionSelectors(
-        address target,
-        FunctionInfo[] memory functions,
-        bool addFunctions
-    )
-        internal
-        onlyExistingTarget(target)
-        returns (
-            bytes4[] memory functionSelectors,
-            string[] memory functionNames
-        )
-    {
-        uint256 n = functions.length;
-        functionSelectors = new bytes4[](n);
-        functionNames = new string[](n);
-        FunctionInfo memory func;
-        Selector selector;
+    //     for (uint256 i = 0; i < n; i++) {
+    //         func = functions[i];
+    //         selector = func.selector;
 
-        for (uint256 i = 0; i < n; i++) {
-            func = functions[i];
-            selector = func.selector;
+    //         // add function selector to target selector set if not in set
+    //         if (addFunctions) { SelectorSetLib.add(_targetFunctions[target], selector); } 
+    //         else { SelectorSetLib.remove(_targetFunctions[target], selector); }
 
-            // add function selector to target selector set if not in set
-            if (addFunctions) { SelectorSetLib.add(_targetFunctions[target], selector); } 
-            else { SelectorSetLib.remove(_targetFunctions[target], selector); }
+    //         // set function name
+    //         _functionInfo[target][selector] = func;
 
-            // set function name
-            _functionInfo[target][selector] = func;
-
-            // add bytes4 selector to function selector array
-            functionSelectors[i] = selector.toBytes4();
-            functionNames[i] = func.name.toString();
-        }
-    }
+    //         // add bytes4 selector to function selector array
+    //         functionSelectors[i] = selector.toBytes4();
+    //         functionNames[i] = func.name.toString();
+    //     }
+    // }
 
     /// @dev grant the specified role access to all functions in the provided selector list
     function _grantRoleAccessToFunctions(
         address target,
         RoleId roleId, 
-        bytes4[] memory functionSelectors,
-        string[] memory functionNames,
-        bool allowLockedRoles // admin and public roles are locked
+        FunctionInfo[] memory functions,
+        bool addFunctions
     )
         internal
         onlyExistingTarget(target)
-        onlyExistingRole(roleId, true, allowLockedRoles)
+        onlyExistingRole(roleId, true, !addFunctions)
     {
-
         _authority.setTargetFunctionRole(
             target,
-            functionSelectors,
+            AccessAdminLib.getSelectors(functions),
             RoleId.unwrap(roleId));
 
-        // log function grantings
-        for (uint256 i = 0; i < functionSelectors.length; i++) {
-            emit LogAccessAdminFunctionGranted(
-                _adminName, 
+        // update function set and log function grantings
+        for (uint256 i = 0; i < functions.length; i++) {
+            _updateFunctionAccess(
                 target, 
-                string(abi.encodePacked(
-                    functionNames[i], 
-                    "(): ",
-                    _getRoleName(roleId))));
+                roleId,
+                functions[i], 
+                addFunctions);
         }
+    }
+
+
+    function _updateFunctionAccess(
+        address target, 
+        RoleId roleId,
+        FunctionInfo memory func, 
+        bool addFunction
+    )
+        internal
+    {
+        // update functions info
+        Selector selector = func.selector;
+        _functionInfo[target][selector] = func;
+
+        // update function sets
+        if (addFunction) { SelectorSetLib.add(_targetFunctions[target], selector); } 
+        else { SelectorSetLib.remove(_targetFunctions[target], selector); }
+
+        // logging
+        emit LogAccessAdminFunctionGranted(
+            _adminName, 
+            target, 
+            string(abi.encodePacked(
+                func.name.toString(), 
+                "(): ",
+                _getRoleName(roleId))));
     }
 
 
@@ -550,6 +555,19 @@ contract AccessAdmin is
     {
         AccessAdminLib.checkRoleCreation(this, roleId, info);
         _createRoleUnchecked(roleId, info);
+    }
+
+
+    /// @dev Activates or deactivates role.
+    /// The role activ property is indirectly controlled over the pausedAt timestamp.
+    function _setRoleActive(RoleId roleId, bool active)
+        internal
+    {
+        if (active) {
+            _roleInfo[roleId].pausedAt = TimestampLib.max();
+        } else {
+            _roleInfo[roleId].pausedAt = TimestampLib.blockTimestamp();
+        }
     }
 
 

@@ -222,7 +222,8 @@ contract ReleaseAdmin is
             _authorizeTargetFunctions(
                     address(service), 
                     authorizedRoleId, 
-                    authorizatedFunctions);
+                    authorizatedFunctions,
+                    true);
         }
     }
 
@@ -246,7 +247,7 @@ contract ReleaseAdmin is
         functions = new FunctionInfo[](2);
         functions[0] = AccessAdminLib.toFunction(ReleaseAdmin.authorizeService.selector, "authorizeService");
         functions[1] = AccessAdminLib.toFunction(ReleaseAdmin.setServiceLocked.selector, "setServiceLocked");
-        _authorizeTargetFunctions(address(this), RELEASE_REGISTRY_ROLE(), functions);
+        _authorizeTargetFunctions(address(this), RELEASE_REGISTRY_ROLE(), functions, true);
 
         _grantRoleToAccount(RELEASE_REGISTRY_ROLE(), releaseRegistry);
     }

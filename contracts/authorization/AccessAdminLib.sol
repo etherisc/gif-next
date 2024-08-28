@@ -19,6 +19,22 @@ import {VersionPart} from "../type/Version.sol";
 
 library AccessAdminLib { // ACCESS_ADMIN_LIB
 
+
+    function getSelectors(
+        IAccess.FunctionInfo[] memory functions
+    )
+        public
+        returns (
+            bytes4[] memory selectors
+        )
+    {
+        uint256 n = functions.length;
+        selectors = new bytes4[](n);
+        for (uint256 i = 0; i < n; i++) {
+            selectors[i] = functions[i].selector.toBytes4();
+        }
+    }
+
     function checkRoleCreation(
         IAccessAdmin accessAdmin,
         RoleId roleId, 
@@ -154,7 +170,12 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
         }
     }
 
-    function toRole(RoleId adminRoleId, IAccessAdmin.RoleType roleType, uint32 maxMemberCount, string memory name)
+    function toRole(
+        RoleId adminRoleId, 
+        IAccessAdmin.RoleType roleType, 
+        uint32 maxMemberCount, 
+        string memory name
+    )
         public 
         view 
         returns (IAccess.RoleInfo memory)
@@ -169,7 +190,10 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
         });
     }
 
-    function toFunction(bytes4 selector, string memory name) 
+    function toFunction(
+        bytes4 selector, 
+        string memory name
+    ) 
         public 
         view 
         returns (IAccess.FunctionInfo memory) 

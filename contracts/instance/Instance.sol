@@ -36,6 +36,23 @@ contract Instance is
     InstanceStore internal _instanceStore;
     NftId [] internal _products;
 
+
+    modifier onlyRoleAdmin(RoleId roleId) {
+        if (!_instanceAdmin.isRoleCustom(roleId)) {
+            revert ErrorInstanceNotCustomRole(roleId);
+        }
+
+        // instance owner can always act as role admin
+        address account = msg.sender;
+        if (account != getOwner()) {
+            if (!_instanceAdmin.isRoleAdmin(account, roleId)) {
+                revert ErrorInstanceNotRoleAdmin(roleId, account);
+            }
+        }
+        _;
+    }
+
+
     function initialize(
         InstanceAdmin instanceAdmin, 
         InstanceStore instanceStore,
@@ -173,21 +190,34 @@ contract Instance is
         return _instanceService.createRole(roleName, adminRoleId, maxMemberCount);
     }
 
+
+    /// @inheritdoc IInstance
+    function setRoleActive(RoleId roleId, bool active)
+        external 
+        restricted()
+        onlyRoleAdmin(roleId)
+    {
+        _instanceService.setRoleActive(roleId, active);
+    }
+
+
+    /// @inheritdoc IInstance
     function grantRole(RoleId roleId, address account) 
         external 
         restricted()
-        onlyOwner()
+        onlyRoleAdmin(roleId)
     {
-        _instanceAdmin.grantRole(roleId, account);
+        _instanceService.grantRole(roleId, account);
     }
 
+
+    /// @inheritdoc IInstance
     function revokeRole(RoleId roleId, address account) 
         external 
         restricted()
-        onlyOwner()
+        onlyRoleAdmin(roleId)
     {
-        // TODO refactor
-        // AccessManagerExtendedInitializeable(authority()).revokeRole(roleId.toInt(), account);
+        _instanceService.grantRole(roleId, account);
     }
 
     //--- Targets ------------------------------------------------------------//
@@ -276,4 +306,12 @@ contract Instance is
     }
 
     //--- internal view/pure functions --------------------------------------//
+
+
+    function _checkCustomRole(RoleId roleId, bool exists) internal view {
+        if (!_instanceAdmin.isRoleCustom(roleId)) {
+            revert ErrorInstanceNotCustomRole(roleId);
+        }
+    }
+
 }

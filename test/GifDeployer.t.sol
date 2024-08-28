@@ -115,8 +115,8 @@ contract GifDeployerTest is GifDeployer {
         assertEq(registryAdmin.authority(), registryAdmin.authority(), "unexpected release manager authority");
 
         // check initial roles assignments
-        assertTrue(registryAdmin.hasRole(gifAdmin, GIF_ADMIN_ROLE()), "registry owner not admin");
-        assertTrue(registryAdmin.hasRole(gifManager, GIF_MANAGER_ROLE()), "registry owner not manager");
+        assertTrue(registryAdmin.isRoleMember(gifAdmin, GIF_ADMIN_ROLE()), "registry owner not admin");
+        assertTrue(registryAdmin.isRoleMember(gifManager, GIF_MANAGER_ROLE()), "registry owner not manager");
 
         // check sample admin access
         IAccessManager authority = IAccessManager(registryAdmin.authority());

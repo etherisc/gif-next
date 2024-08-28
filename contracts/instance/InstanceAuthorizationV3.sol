@@ -137,6 +137,7 @@ contract InstanceAuthorizationV3
 
           // custom authz
           _authorize(functions, Instance.createRole.selector, "createRole");
+          _authorize(functions, Instance.setRoleActive.selector, "setRoleActive");
           _authorize(functions, Instance.grantRole.selector, "grantRole");
           _authorize(functions, Instance.revokeRole.selector, "revokeRole");
           _authorize(functions, Instance.createTarget.selector, "createTarget");
@@ -156,6 +157,7 @@ contract InstanceAuthorizationV3
           // authorize component service role
           functions = _authorizeForTarget(INSTANCE_ADMIN_TARGET_NAME, getServiceRole(INSTANCE()));
           _authorize(functions, InstanceAdmin.createRole.selector, "createRole");
+          _authorize(functions, InstanceAdmin.setRoleActive.selector, "setRoleActive");
           _authorize(functions, InstanceAdmin.grantRole.selector, "grantRole");
           _authorize(functions, InstanceAdmin.revokeRole.selector, "revokeRole");
 

@@ -8,6 +8,7 @@ import {IRegistry} from "../registry/IRegistry.sol";
 import {IInstance} from "./IInstance.sol";
 
 import {AccessAdmin} from "../authorization/AccessAdmin.sol";
+import {AccessAdminLib} from "../authorization/AccessAdminLib.sol";
 import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType, INSTANCE, ORACLE} from "../type/ObjectType.sol";
@@ -192,14 +193,22 @@ contract InstanceAdmin is
         roleId = RoleIdLib.toCustomRoleId(_customIdNext++);
         _createRole(
             roleId, 
-            RoleInfo({
-                adminRoleId: adminRoleId, 
-                roleType: IAccess.RoleType.Custom, 
-                maxMemberCount: maxMemberCount, 
-                name: StrLib.toStr(roleName), 
-                createdAt: TimestampLib.zero(), 
-                pausedAt: TimestampLib.zero()}));
+            AccessAdminLib.toRole(
+                adminRoleId, 
+                IAccess.RoleType.Custom, 
+                maxMemberCount, 
+                roleName));
     }
+
+
+    /// @dev Activtes/pauses the specified role.
+    function setRoleActive(RoleId roleId, bool active)
+        external
+        restricted()
+    {
+        _setRoleActive(roleId, active);
+    }
+
 
     /// @dev Grants the provided role to the specified account
     function grantRole(
@@ -415,7 +424,8 @@ contract InstanceAdmin is
                     authorizedRole,
                     authorization.getAuthorizedFunctions(
                         target, 
-                        authorizedRole));
+                        authorizedRole),
+                    true);
             }
         }
     }

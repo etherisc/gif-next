@@ -38,6 +38,6 @@ contract RegistryAdminEx is RegistryAdmin {
         FunctionInfo[] memory functions;
         functions = new FunctionInfo[](1);
         functions[0] = AccessAdminLib.toFunction(AccessManagedMock.increaseCounter1.selector, "increaseCounter1");
-        _authorizeTargetFunctions(address(accessManagedMock), PUBLIC_ROLE(), functions);
+        _authorizeTargetFunctions(address(accessManagedMock), PUBLIC_ROLE(), functions, true);
     }
 }
