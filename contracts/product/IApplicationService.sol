@@ -16,10 +16,13 @@ import {Seconds} from "../type/Seconds.sol";
 interface IApplicationService is IService {
     
     // _checkLinkedApplicationParameters
+    error ErrorApplicationServiceRiskProductMismatch(RiskId riskId, NftId riskProductNftId, NftId productNftId);
     error ErrorApplicationServiceRiskUnknown(RiskId riskId, NftId productNftId);
     error ErrorApplicationServiceRiskPaused(RiskId riskId, NftId productNftId);
     error ErrorApplicationServiceBundleUnknown(NftId bundleNftId, NftId poolNftId);
     error ErrorApplicationServiceBundleLocked(NftId bundleNftId, NftId poolNftId);
+    error ErrorApplicationServiceReferralInvalid(NftId productNftId, NftId distributionNftId, ReferralId referralId);
+    
 
     /// @dev creates a new application based on the specified attributes
     /// may only be called by a product component

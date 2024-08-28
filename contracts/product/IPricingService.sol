@@ -14,6 +14,7 @@ interface IPricingService is IService
 {
 
     error ErrorPricingServiceTargetWalletAmountsMismatch();
+    error ErrorPricingServiceRiskProductMismatch(RiskId riskId, NftId riskProductNftId, NftId productNftId);
     error ErrorPricingServiceBundlePoolMismatch(NftId bundleNftId, NftId bundlePoolNftId, NftId poolNftId);
     error ErrorPricingServiceFeeCalculationMismatch(
         Amount distributionFeeFixAmount,

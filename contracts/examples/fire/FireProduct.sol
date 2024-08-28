@@ -68,7 +68,6 @@ contract FireProduct is
         address registry,
         NftId instanceNftid,
         string memory componentName,
-        address token,
         IAuthorization authorization
     )
     {
@@ -78,7 +77,6 @@ contract FireProduct is
             registry,
             instanceNftid,
             componentName,
-            token,
             authorization,
             initialOwner);
     }
@@ -87,7 +85,6 @@ contract FireProduct is
         address registry,
         NftId instanceNftId,
         string memory componentName,
-        address token,
         IAuthorization authorization,
         address initialOwner
     )
@@ -98,7 +95,6 @@ contract FireProduct is
             registry,
             instanceNftId,
             componentName,
-            token,
             IComponents.ProductInfo({
                 isProcessingFundedClaims: false,
                 isInterceptingPolicyTransfers: false,

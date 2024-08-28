@@ -11,7 +11,7 @@ import {IStakingService} from "../../contracts/staking/IStakingService.sol";
 import {NftId} from "../../contracts/type/NftId.sol";
 import {INSTANCE, PROTOCOL, SERVICE, STAKE, STAKING} from "../../contracts/type/ObjectType.sol";
 import {Seconds, SecondsLib} from "../../contracts/type/Seconds.sol";
-import {StakeManagerLib} from "../../contracts/staking/StakeManagerLib.sol";
+import {StakingLib} from "../../contracts/staking/StakingLib.sol";
 import {TargetManagerLib} from "../../contracts/staking/TargetManagerLib.sol";
 import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
 import {TokenHandler} from "../../contracts/shared/TokenHandler.sol";
@@ -48,8 +48,6 @@ contract StakingSetupTest is GifTest {
 
         console.log("staking targets:", stakingReader.targets());
         console.log("staking target nft [0]:", stakingReader.getTargetNftId(0).toInt());
-        console.log("staking targets (active):", stakingReader.activeTargets());
-        console.log("staking target nft (active) [0]:", stakingReader.getActiveTargetNftId(0).toInt());
         // solhint-enable
     }
 
@@ -119,14 +117,11 @@ contract StakingSetupTest is GifTest {
         // check protocol target
         uint256 protocolNftIdInt = 1101;
         assertEq(stakingReader.targets(), 2, "unexpected number of initial targets");
-        assertEq(stakingReader.activeTargets(), 2, "unexpected number of initial active targets");
         assertEq(stakingReader.getTargetNftId(0).toInt(), protocolNftIdInt, "unexpected protocol nft id (all)");
-        assertEq(stakingReader.getActiveTargetNftId(0).toInt(), protocolNftIdInt, "unexpected protocol nft id (active)");
 
         // check protocol target
         NftId protocolNftId = stakingReader.getTargetNftId(0);
         assertTrue(stakingReader.isTarget(protocolNftId), "protocol not target");
-        assertTrue(stakingReader.isActive(protocolNftId), "protocol target not active");
 
         IStaking.TargetInfo memory targetInfo = stakingReader.getTargetInfo(protocolNftId);
         assertEq(targetInfo.objectType.toInt(), PROTOCOL().toInt(), "unexpected protocol object type");
@@ -135,9 +130,7 @@ contract StakingSetupTest is GifTest {
 
         // check instance target
         assertEq(stakingReader.getTargetNftId(1).toInt(), instanceNftId.toInt(), "unexpected instance nft id (all)");
-        assertEq(stakingReader.getActiveTargetNftId(1).toInt(), instanceNftId.toInt(), "unexpected instance nft id (active)");
         assertTrue(stakingReader.isTarget(instanceNftId), "instance not target");
-        assertTrue(stakingReader.isActive(instanceNftId), "instance target not active");
 
         IStaking.TargetInfo memory instanceTargetInfo = stakingReader.getTargetInfo(instanceNftId);
         assertEq(instanceTargetInfo.objectType.toInt(), INSTANCE().toInt(), "unexpected instance object type");

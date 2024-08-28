@@ -31,14 +31,12 @@ contract ExternallyManagedPool is
     constructor(
         address registry,
         NftId productNftId,
-        address token,
         IComponents.PoolInfo memory poolInfo,
         address initialOwner
     ) 
         SimplePool(
             registry,
             productNftId,
-            token,
             poolInfo,
             new BasicPoolAuthorization("ExternallyManagedPool"),
             initialOwner

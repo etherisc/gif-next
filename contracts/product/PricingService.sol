@@ -87,6 +87,11 @@ contract PricingService is
             // get instance reader from local instance variable
             reader = instance.getInstanceReader();
 
+            NftId riskProductNftId = reader.getRiskInfo(riskId).productNftId;
+            if (productNftId != riskProductNftId) {
+                revert ErrorPricingServiceRiskProductMismatch(riskId, riskProductNftId, productNftId);
+            }
+
             // calculate net premium
             netPremiumAmount = IProductComponent(registryInfo.objectAddress).calculateNetPremium(
                 sumInsuredAmount,

@@ -7,7 +7,7 @@ import {Distribution} from "./Distribution.sol";
 import {DistributorType} from "../type/DistributorType.sol";
 import {DISTRIBUTOR} from "../type/ObjectType.sol";
 import {Fee} from "../type/Fee.sol";
-import {NftId} from "../type/NftId.sol";
+import {NftId, NftIdLib} from "../type/NftId.sol";
 import {ReferralId} from "../type/Referral.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {Timestamp} from "../type/Timestamp.sol";
@@ -95,6 +95,7 @@ contract BasicDistribution is
      * referral codes need to be unique
      */
     function createReferral(
+        NftId distributorNftId,
         string memory code,
         UFixed discountPercentage,
         uint32 maxReferrals,
@@ -104,10 +105,10 @@ contract BasicDistribution is
         external
         virtual
         restricted()
-        onlyDistributor()
+        onlyNftOwner(distributorNftId)
         returns (ReferralId referralId)
     {
-        NftId distributorNftId = getDistributorNftId(msg.sender);
+        _checkNftType(distributorNftId, DISTRIBUTOR());
         return _createReferral(
             distributorNftId,
             code,
@@ -122,8 +123,7 @@ contract BasicDistribution is
         NftId instanceNftId,
         IAuthorization authorization, 
         address initialOwner,
-        string memory name,
-        address token
+        string memory name
     )
         internal
         virtual
@@ -133,9 +133,9 @@ contract BasicDistribution is
             registry, 
             instanceNftId, 
             authorization,
+            false,
             initialOwner, 
             name, 
-            token, 
             ""); // component specifc data
     }
 }

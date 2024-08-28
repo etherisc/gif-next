@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {console} from "forge-std/Test.sol";
 
 import {IApplicationService} from "../../../contracts/product/IApplicationService.sol";
+import {IDistributionService} from "../../../contracts/distribution/IDistributionService.sol";
 import {IPricingService} from "../../../contracts/product/IPricingService.sol";
 import {IPolicyService} from "../../../contracts/product/IPolicyService.sol";
 
@@ -99,8 +100,9 @@ contract ProductClusterTest is GifClusterTest {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                IApplicationService.ErrorApplicationServiceRiskUnknown.selector, 
+                IPricingService.ErrorPricingServiceRiskProductMismatch.selector, 
                 riskId2,
+                myProductNftId2,
                 myProductNftId1));
 
         _createApplication(myProduct1, riskId2, bundleNftId1, referralId1);
@@ -126,12 +128,12 @@ contract ProductClusterTest is GifClusterTest {
         _setupProductClusters1to4();
         _createProductSpecificObjects1and2();
 
-        // TODO re-enable after fixing bug #623
-        // vm.expectRevert(
-        //     abi.encodeWithSelector(
-        //         IPricingService.ErrorPricingServiceBundlePoolMismatch.selector, 
-        //         riskId2,
-        //         myProductNftId1));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IDistributionService.ErrorDistributionServiceReferralDistributionMismatch.selector, 
+                referralId2,
+                myDistributionNftId2,
+                myDistributionNftId1));
 
         _createApplication(myProduct1, riskId1, bundleNftId1, referralId2);
     }
@@ -158,8 +160,8 @@ contract ProductClusterTest is GifClusterTest {
         riskId1 = _createAndCheckRisk(myProduct1, "Risk1");
         riskId2 = _createAndCheckRisk(myProduct2, "Risk2"); // TODO fix bug #621
 
-        referralId1 = _createReferral(myDistribution1, "SAVE!!!");
-        referralId2 = _createReferral(myDistribution2, "SAVE!!!");
+        referralId1 = _createReferral(myDistribution1, myDistributorNftId1, "SAVE!!!");
+        referralId2 = _createReferral(myDistribution2, myDistributorNftId2, "SAVE!!!");
 
         bundleNftId1 = _createBundle(myPool1);
         bundleNftId2 = _createBundle(myPool2);
@@ -210,9 +212,10 @@ contract ProductClusterTest is GifClusterTest {
     }
 
 
-    function _createReferral(SimpleDistribution dist, string memory referralCode) internal returns (ReferralId referralId) {
+    function _createReferral(SimpleDistribution dist, NftId distributorNftId, string memory referralCode) internal returns (ReferralId referralId) {
         vm.startPrank(instanceOwner);
         referralId = dist.createReferral(
+            distributorNftId,
             referralCode,
             DISCOUNT, // 10% discount
             MAX_REFERRALS, // max referrals

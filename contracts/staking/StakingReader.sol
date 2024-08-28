@@ -77,21 +77,6 @@ contract StakingReader is
     }
 
 
-    function isActive(NftId targetNftId) external view returns (bool) {
-        return _store.getTargetNftIdSet().isActive(targetNftId);
-    }
-
-
-    function activeTargets() external view returns (uint256) {
-        return _store.getTargetNftIdSet().activeNftIds();
-    }
-
-
-    function getActiveTargetNftId(uint256 idx) external view returns (NftId) {
-        return _store.getTargetNftIdSet().getActiveNftId(idx);
-    }
-
-
     function getTargetNftId(NftId stakeNftId) public view returns (NftId targetNftId) {
         return _registry.getParentNftId(stakeNftId);
     }
@@ -117,6 +102,11 @@ contract StakingReader is
     function getTargetRewardRate(NftId stakeNftId) external view returns (NftId targetNftId, UFixed rewardRate) {
         targetNftId = getTargetNftId(stakeNftId);
         rewardRate = getTargetInfo(targetNftId).rewardRate;
+    }
+
+    /// @dev get the max staked amount allowed for the specified target nft id.
+    function getTargetMaxStakedAmount(NftId targetNftId) external view returns (Amount maxStakedAmount) {
+        return getTargetInfo(targetNftId).maxStakedAmount;
     }
 
 

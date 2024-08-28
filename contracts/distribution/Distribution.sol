@@ -10,7 +10,7 @@ import {Amount} from "../type/Amount.sol";
 import {COMPONENT, DISTRIBUTION, DISTRIBUTOR} from "../type/ObjectType.sol";
 import {DistributorType} from "../type/DistributorType.sol";
 import {Fee} from "../type/Fee.sol";
-import {NftId, NftIdLib} from "../type/NftId.sol";
+import {NftId} from "../type/NftId.sol";
 import {ReferralId, ReferralStatus, ReferralLib} from "../type/Referral.sol";
 import {InstanceLinkedComponent} from "../shared/InstanceLinkedComponent.sol";
 import {Seconds} from "../type/Seconds.sol";
@@ -28,16 +28,7 @@ abstract contract Distribution is
     struct DistributionStorage {
         IComponentService _componentService;
         IDistributionService _distributionService;
-        mapping(address distributor => NftId distributorNftId) _distributorNftId;
     }
-
-    modifier onlyDistributor() {
-        if (!isDistributor(msg.sender)) {
-            revert ErrorDistributionNotDistributor(msg.sender);
-        }
-        _;
-    }
-
 
     function processRenewal(
         ReferralId referralId,
@@ -56,34 +47,12 @@ abstract contract Distribution is
         external 
         virtual
         restricted()
-        onlyDistributor()
         onlyNftOfType(distributorNftId, DISTRIBUTOR())
         onlyNftOwner(distributorNftId)
         returns (Amount withdrawnAmount) 
     {
         return _withdrawCommission(distributorNftId, amount);
     }
-
-
-    function isDistributor(address candidate)
-        public
-        view
-        returns (bool)
-    {
-        DistributionStorage storage $ = _getDistributionStorage();
-        return $._distributorNftId[candidate].gtz();
-    }
-
-
-    function getDistributorNftId(address distributor)
-        public
-        view
-        returns (NftId distributorNftId)
-    {
-        DistributionStorage storage $ = _getDistributionStorage();
-        return $._distributorNftId[distributor];
-    }
-
 
     function getDiscountPercentage(string memory referralCode)
         external
@@ -135,9 +104,9 @@ abstract contract Distribution is
         address registry,
         NftId productNftId,
         IAuthorization authorization, 
+        bool isInterceptor,
         address initialOwner,
         string memory name,
-        address token,
         bytes memory componentData // component specifidc data 
     )
         internal
@@ -148,10 +117,9 @@ abstract contract Distribution is
             registry, 
             productNftId, 
             name, 
-            token, 
             DISTRIBUTION(), 
             authorization,
-            true, 
+            isInterceptor,
             initialOwner, 
             componentData);
 
@@ -215,16 +183,11 @@ abstract contract Distribution is
         returns(NftId distributorNftId)
     {
         DistributionStorage storage $ = _getDistributionStorage();
-        if($._distributorNftId[distributor].gtz()) {
-            revert ErrorDistributionAlreadyDistributor(distributor, $._distributorNftId[distributor]);
-        }
 
         distributorNftId = $._distributionService.createDistributor(
             distributor,
             distributorType,
             data);
-
-        $._distributorNftId[distributor] = distributorNftId;
     }
 
     /// @dev Uptates the distributor type for the specified distributor.
@@ -271,14 +234,6 @@ abstract contract Distribution is
         returns (Amount withdrawnAmount) 
     {
         return _getDistributionStorage()._distributionService.withdrawCommission(distributorNftId, amount);
-    }
-
-    function _nftTransferFrom(address from, address to, uint256 tokenId, address operator) internal virtual override {
-        // keep track of distributor nft owner
-        emit LogDistributorUpdated(to, operator);
-        DistributionStorage storage $ = _getDistributionStorage();
-        $._distributorNftId[from] = NftIdLib.zero();
-        $._distributorNftId[to] = NftIdLib.toNftId(tokenId);
     }
 
     function _getDistributionStorage() private pure returns (DistributionStorage storage $) {

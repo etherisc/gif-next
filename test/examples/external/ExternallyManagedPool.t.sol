@@ -35,7 +35,7 @@ contract ExternallyManagedPoolTest is GifTest {
         _deployProduct(); // simple product setup
 
         vm.startPrank(instanceOwner);
-        emProductNftId = instance.registerProduct(address(emProduct));
+        emProductNftId = instance.registerProduct(address(emProduct), address(token));
         emProduct.init();
         vm.stopPrank();
 
@@ -419,7 +419,6 @@ contract ExternallyManagedPoolTest is GifTest {
         emProduct = new ExternallyManagedProduct(
             address(registry),
             instanceNftId,
-            address(token),
             productInfo,
             feeInfo,
             productOwner
@@ -441,7 +440,6 @@ contract ExternallyManagedPoolTest is GifTest {
         emPool = new ExternallyManagedPool(
             address(registry),
             prdNftId,
-            address(token),
             poolInfo,
             poolOwner
         );

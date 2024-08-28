@@ -27,8 +27,7 @@ contract BasicOracle is
         NftId instanceNftId,
         IAuthorization authorization,
         address initialOwner,
-        string memory name,
-        address token
+        string memory name
     )
         internal
         virtual
@@ -41,7 +40,6 @@ contract BasicOracle is
             authorization,
             initialOwner,
             name,
-            token,
             "");
     }
 }

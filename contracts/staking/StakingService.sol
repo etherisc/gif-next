@@ -98,6 +98,17 @@ contract StakingService is
             rewardRate);
     }
 
+    function setInstanceMaxStakedAmount(NftId instanceNftId, Amount maxStakingAmount)
+        external
+        virtual
+        restricted()
+    {
+        _checkNftType(instanceNftId, INSTANCE());
+        _getStakingServiceStorage()._staking.setMaxStakedAmount(
+            instanceNftId, 
+            maxStakingAmount);
+    }
+
 
     function refillInstanceRewardReserves(NftId instanceNftId, address rewardProvider, Amount dipAmount)
         external
@@ -227,13 +238,36 @@ contract StakingService is
         restricted()
         onlyNftOwner(stakeNftId)
         returns (
-            NftId newStakeNftId
+            NftId newStakeNftId,
+            Amount newStakeBalance
         )
     {
         _checkNftType(stakeNftId, STAKE());
 
         StakingServiceStorage storage $ = _getStakingServiceStorage();
-        // TODO implement
+        address stakeOwner = msg.sender;
+
+        if (! getRegistry().isRegistered(newTargetNftId)) {
+            revert ErrorStakingServiceTargetUnknown(newTargetNftId);
+        }
+
+        // register new stake object with registry
+        newStakeNftId = $._registryService.registerStake(
+            IRegistry.ObjectInfo({
+                nftId: NftIdLib.zero(),
+                parentNftId: newTargetNftId,
+                objectType: STAKE(),
+                isInterceptor: false,
+                objectAddress: address(0),
+                initialOwner: stakeOwner,
+                data: ""
+            }));
+
+        newStakeBalance = $._staking.restake(
+            stakeNftId, 
+            newStakeNftId);
+
+        emit LogStakingServiceStakeRestaked(stakeOwner, stakeNftId, newStakeNftId, newTargetNftId, newStakeBalance);
     } 
 
 

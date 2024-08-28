@@ -1,16 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {console} from "../../../lib/forge-std/src/Script.sol";
 import {GifTest} from "../../base/GifTest.sol";
-import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
+import {NftId} from "../../../contracts/type/NftId.sol";
 import {AmountLib} from "../../../contracts/type/Amount.sol";
-import {Pool} from "../../../contracts/pool/Pool.sol";
 import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
-import {IRegistry} from "../../../contracts/registry/IRegistry.sol";
 import {Fee, FeeLib} from "../../../contracts/type/Fee.sol";
 import {UFixedLib} from "../../../contracts/type/UFixed.sol";
-import {ComponentService} from "../../../contracts/shared/ComponentService.sol";
 import {DistributorType} from "../../../contracts/type/DistributorType.sol";
 import {ReferralId, ReferralLib} from "../../../contracts/type/Referral.sol";
 import {RiskId, RiskIdLib} from "../../../contracts/type/RiskId.sol";
@@ -18,7 +14,9 @@ import {SecondsLib} from "../../../contracts/type/Seconds.sol";
 import {SimpleDistribution} from "../../../contracts/examples/unpermissioned/SimpleDistribution.sol";
 import {TimestampLib} from "../../../contracts/type/Timestamp.sol";
 
-contract TestPricingService is GifTest {
+
+// solhint-disable func-name-mixedcase
+contract PricingServiceTest is GifTest {
 
     function test_pricingServiceCalculatePremiumNoFees() public {
         _createAndRegisterDistributionPoolProductWithFees(
@@ -29,7 +27,7 @@ contract TestPricingService is GifTest {
             FeeLib.zero()
         );
 
-        RiskId riskId = RiskIdLib.toRiskId(productNftId, "42x4711");
+        RiskId riskId = product.createRisk("42x4711", "");
         IPolicy.PremiumInfo memory premium = pricingService.calculatePremium(
             productNftId, 
             riskId, 
@@ -54,7 +52,7 @@ contract TestPricingService is GifTest {
             FeeLib.toFee(UFixedLib.zero(), 10)
         );
 
-        RiskId riskId = RiskIdLib.toRiskId(productNftId, "42x4711");
+        RiskId riskId = product.createRisk("42x4711", "");
         IPolicy.PremiumInfo memory premium = pricingService.calculatePremium(
             productNftId, 
             riskId, 
@@ -88,7 +86,7 @@ contract TestPricingService is GifTest {
             FeeLib.toFee(UFixedLib.toUFixed(5, -2), 0)
         );
 
-        RiskId riskId = RiskIdLib.toRiskId(productNftId, "42x4711");
+        RiskId riskId = product.createRisk("42x4711", "");
         IPolicy.PremiumInfo memory premium = pricingService.calculatePremium(
             productNftId, 
             riskId, 
@@ -122,7 +120,7 @@ contract TestPricingService is GifTest {
             FeeLib.toFee(UFixedLib.toUFixed(5, -2), 6)
         );
 
-        RiskId riskId = RiskIdLib.toRiskId(productNftId, "42x4711");
+        RiskId riskId = product.createRisk("42x4711", "");
         IPolicy.PremiumInfo memory premium = pricingService.calculatePremium(
             productNftId, 
             riskId, 
@@ -177,6 +175,7 @@ contract TestPricingService is GifTest {
 
         vm.startPrank(customer);
         ReferralId referralId = distribution.createReferral(
+            distributorNftId,
             "GET_A_DISCOUNT",
             UFixedLib.toUFixed(10, -2),
             5,
@@ -184,7 +183,7 @@ contract TestPricingService is GifTest {
             "");
         vm.stopPrank();
 
-        RiskId riskId = RiskIdLib.toRiskId(productNftId, "42x4711");
+        RiskId riskId = product.createRisk("42x4711", "");
         IPolicy.PremiumInfo memory premium = pricingService.calculatePremium(
             productNftId, 
             riskId, 
@@ -241,6 +240,7 @@ contract TestPricingService is GifTest {
 
         vm.startPrank(customer);
         ReferralId referralId = distribution.createReferral(
+            distributorNftId,
             "GET_A_DISCOUNT",
             UFixedLib.toUFixed(0, -2),
             5,
@@ -248,7 +248,7 @@ contract TestPricingService is GifTest {
             "");
         vm.stopPrank();
 
-        RiskId riskId = RiskIdLib.toRiskId(productNftId, "42x4711");
+        RiskId riskId = product.createRisk("42x4711", "");
         IPolicy.PremiumInfo memory premium = pricingService.calculatePremium(
             productNftId, 
             riskId, 
@@ -305,6 +305,7 @@ contract TestPricingService is GifTest {
         // distributor creates referral
         vm.startPrank(customer);
         ReferralId referralId = sdistribution.createReferral(
+            distributorNftId,
             "GET_A_DISCOUNT",
             UFixedLib.toUFixed(10, -2),
             5,
@@ -312,7 +313,7 @@ contract TestPricingService is GifTest {
             "");
         vm.stopPrank();
 
-        RiskId riskId = RiskIdLib.toRiskId(productNftId, "42x4711");
+        RiskId riskId = product.createRisk("42x4711", "");
         IPolicy.PremiumInfo memory premium = pricingService.calculatePremium(
             productNftId, 
             riskId, 

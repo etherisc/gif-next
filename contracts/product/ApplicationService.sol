@@ -71,13 +71,28 @@ contract ApplicationService is
         if (!exists) { revert ErrorApplicationServiceRiskUnknown(riskId, productNftId); }
         if (!active) { revert ErrorApplicationServiceRiskPaused(riskId, productNftId); }
 
-        // check bundle with pool
-        NftId poolNftId = instanceReader.getProductInfo(productNftId).poolNftId;
-        (exists, active) = instanceReader.getBundleSet().checkBundle(poolNftId, bundleNftId);
-        if (!exists) { revert ErrorApplicationServiceBundleUnknown(bundleNftId, poolNftId); }
-        if (!active) { revert ErrorApplicationServiceBundleLocked(bundleNftId, poolNftId); }
+        NftId riskProductNftId = instanceReader.getRiskInfo(riskId).productNftId;
+        if (productNftId != riskProductNftId) {
+            revert ErrorApplicationServiceRiskProductMismatch(riskId, riskProductNftId, productNftId);
+        }
 
-        // TODO check referral with distribution
+        // check bundle with pool
+        IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
+        {
+            NftId poolNftId = productInfo.poolNftId;
+            (exists, active) = instanceReader.getBundleSet().checkBundle(poolNftId, bundleNftId);
+            if (!exists) { revert ErrorApplicationServiceBundleUnknown(bundleNftId, poolNftId); }
+            if (!active) { revert ErrorApplicationServiceBundleLocked(bundleNftId, poolNftId); }
+        }
+
+        // check referral with distribution
+        {
+            if (productInfo.hasDistribution && ! referralId.eqz()) {
+                if (!_distributionService.referralIsValid(productInfo.distributionNftId, referralId)) {
+                    revert ErrorApplicationServiceReferralInvalid(productNftId, productInfo.distributionNftId, referralId);
+                }
+            }
+        }
     }
 
 

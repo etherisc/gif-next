@@ -15,9 +15,6 @@ interface IComponent is
     IRegisterable,
     ITransferInterceptor
 {
-
-    error ErrorComponentTokenInvalid(address token);
-
     error ErrorComponentProductNftIdZero();
     error ErrorComponentProductNftIdNonzero();
     error ErrorComponentNameLengthZero();

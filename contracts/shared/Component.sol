@@ -5,17 +5,14 @@ import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessMana
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {Amount} from "../type/Amount.sol";
-import {ContractLib} from "./ContractLib.sol";
 import {IComponent} from "./IComponent.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {IComponentService} from "./IComponentService.sol";
-import {IRegistry} from "../registry/IRegistry.sol";
-import {IRelease} from "../registry/IRelease.sol";
 import {NftId} from "../type/NftId.sol";
-import {ObjectType, COMPONENT, STAKING} from "../type/ObjectType.sol";
+import {ObjectType, COMPONENT} from "../type/ObjectType.sol";
 import {Registerable} from "../shared/Registerable.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
-import {Version, VersionLib, VersionPart} from "../type/Version.sol";
+import {Version, VersionLib} from "../type/Version.sol";
 
 
 abstract contract Component is
@@ -27,7 +24,6 @@ abstract contract Component is
 
     struct ComponentStorage {
         string _name; // unique (per instance) component name
-        IERC20Metadata _token; // token for this component
         bool _isInterceptor;
         bytes _data;
         IComponentService _componentService;
@@ -43,6 +39,7 @@ abstract contract Component is
 
 
     function _getComponentStorage() private pure returns (ComponentStorage storage $) {
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             $.slot := COMPONENT_LOCATION_V1
         }
@@ -54,7 +51,6 @@ abstract contract Component is
         address registry,
         NftId parentNftId,
         string memory name,
-        address token,
         ObjectType componentType,
         bool isInterceptor,
         address initialOwner,
@@ -65,20 +61,6 @@ abstract contract Component is
         virtual
         onlyInitializing()
     {
-        address tokenRegistry = IRegistry(registry).getTokenRegistryAddress();
-        VersionPart release = IRelease(authority).getRelease();
-
-        // special case for staking: component intitialization happens before
-        // GIF core contract setup is complete. at that time token registry 
-        // is not yet available. therefore we skip the check for staking.
-        if (componentType != STAKING()) {
-
-            // check if provided token is whitelisted and active
-            if (!ContractLib.isActiveToken(tokenRegistry, token, block.chainid, release)) {
-                revert ErrorComponentTokenInvalid(token);
-            }
-        }
-
         if (bytes(name).length == 0) {
             revert ErrorComponentNameLengthZero();
         }
@@ -95,7 +77,6 @@ abstract contract Component is
         // set component state
         ComponentStorage storage $ = _getComponentStorage();
         $._name = name;
-        $._token = IERC20Metadata(token);
         $._isInterceptor = isInterceptor;
         $._data = componentData;
         $._componentService = IComponentService(_getServiceAddress(COMPONENT()));
@@ -125,7 +106,7 @@ abstract contract Component is
     }
 
     function getToken() public view virtual returns (IERC20Metadata token) {
-        return getComponentInfo().token;
+        return getTokenHandler().TOKEN();
     }
 
     function getName() public view override returns(string memory name) {
@@ -183,7 +164,10 @@ abstract contract Component is
     function _nftTransferFrom(address from, address to, uint256 tokenId, address operator)
         internal
         virtual
-    { }
+    // solhint-disable-next-line no-empty-blocks
+    { 
+        // empty default implementation
+    }
 
 
     /// @dev Sets the components wallet to the specified address.
@@ -213,7 +197,6 @@ abstract contract Component is
         
         return IComponents.ComponentInfo({
             name: $._name,
-            token: $._token,
             tokenHandler: TokenHandler(address(0)),
             data: $._data // user specific component data
         });

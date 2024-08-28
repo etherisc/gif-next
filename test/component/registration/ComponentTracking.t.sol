@@ -1,45 +1,20 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Vm, console} from "../../../lib/forge-std/src/Test.sol";
-
 import {BasicDistributionAuthorization} from "../../../contracts/distribution/BasicDistributionAuthorization.sol";
 import {BasicOracleAuthorization} from "../../../contracts/oracle/BasicOracleAuthorization.sol";
 import {BasicPoolAuthorization} from "../../../contracts/pool/BasicPoolAuthorization.sol";
 import {BasicProductAuthorization} from "../../../contracts/product/BasicProductAuthorization.sol";
 import {GifTest} from "../../base/GifTest.sol";
-import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
-import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
-import {ClaimId} from "../../../contracts/type/ClaimId.sol";
+import {NftId} from "../../../contracts/type/NftId.sol";
 import {SimpleProduct} from "../../../contracts/examples/unpermissioned/SimpleProduct.sol";
 import {SimpleDistribution} from "../../../contracts/examples/unpermissioned/SimpleDistribution.sol";
 import {SimpleOracle} from "../../../contracts/examples/unpermissioned/SimpleOracle.sol";
 import {SimplePool} from "../../../contracts/examples/unpermissioned/SimplePool.sol";
-import {IAuthorization} from "../../../contracts/authorization/IAuthorization.sol";
 import {IComponents} from "../../../contracts/instance/module/IComponents.sol";
-import {IComponentService} from "../../../contracts/shared/IComponentService.sol";
-import {Registerable} from "../../../contracts/shared/Registerable.sol";
-import {IRegisterable} from "../../../contracts/shared/IRegisterable.sol";
-import {IRelease} from "../../../contracts/registry/IRelease.sol";
-import {IInstanceLinkedComponent} from "../../../contracts/shared/IInstanceLinkedComponent.sol";
-import {ILifecycle} from "../../../contracts/shared/ILifecycle.sol";
-import {INftOwnable} from "../../../contracts/shared/INftOwnable.sol";
-import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
-import {IBundle} from "../../../contracts/instance/module/IBundle.sol";
-import {Fee, FeeLib} from "../../../contracts/type/Fee.sol";
-import {UFixedLib} from "../../../contracts/type/UFixed.sol";
-import {VersionPart, VersionPartLib} from "../../../contracts/type/Version.sol";
-import {Seconds, SecondsLib} from "../../../contracts/type/Seconds.sol";
-import {Timestamp, TimestampLib, zeroTimestamp} from "../../../contracts/type/Timestamp.sol";
-import {IPolicyService} from "../../../contracts/product/IPolicyService.sol";
-import {IRisk} from "../../../contracts/instance/module/IRisk.sol";
-import {PayoutId, PayoutIdLib} from "../../../contracts/type/PayoutId.sol";
-import {POLICY, PRODUCT, POOL} from "../../../contracts/type/ObjectType.sol";
-import {RiskId, RiskIdLib, eqRiskId} from "../../../contracts/type/RiskId.sol";
-import {ReferralLib} from "../../../contracts/type/Referral.sol";
-import {SUBMITTED, ACTIVE, COLLATERALIZED, CONFIRMED, DECLINED, CLOSED} from "../../../contracts/type/StateId.sol";
-import {StateId} from "../../../contracts/type/StateId.sol";
 
+
+// solhint-disable func-name-mixedcase
 contract ComponentTrackingTest is GifTest {
 
 
@@ -51,7 +26,7 @@ contract ComponentTrackingTest is GifTest {
         // WHEN
         SimpleProduct myProduct = _deployProduct("MyProduct", instanceOwner, true, 1);
         vm.startPrank(instanceOwner);
-        NftId myProductNftId = instance.registerProduct(address(myProduct));
+        NftId myProductNftId = instance.registerProduct(address(myProduct), address(token));
         vm.stopPrank();
 
         // THEN
@@ -70,7 +45,7 @@ contract ComponentTrackingTest is GifTest {
         vm.startPrank(instanceOwner);
 
         SimpleProduct myProduct = _deployProduct("MyProduct", instanceOwner, true, 1);
-        NftId myProductNftId = instance.registerProduct(address(myProduct));
+        NftId myProductNftId = instance.registerProduct(address(myProduct), address(token));
 
         SimpleDistribution myDistribution = _deployDistribution("MyDistribution", myProductNftId, instanceOwner);
         SimpleOracle myOracle = _deployOracle("MyOracle", myProductNftId, instanceOwner);
@@ -97,13 +72,13 @@ contract ComponentTrackingTest is GifTest {
         // WHEN
         vm.startPrank(instanceOwner);
         SimpleProduct myProduct1 = _deployProduct("MyProduct1", instanceOwner, true, 1);
-        NftId myProductNftId1 = instance.registerProduct(address(myProduct1));
+        NftId myProductNftId1 = instance.registerProduct(address(myProduct1), address(token));
 
         SimpleProduct myProduct2 = _deployProduct("MyProduct2", instanceOwner, true, 1);
-        NftId myProductNftId2 = instance.registerProduct(address(myProduct2));
+        NftId myProductNftId2 = instance.registerProduct(address(myProduct2), address(token));
 
         SimpleProduct myProduct3 = _deployProduct("MyProduct3", instanceOwner, true, 1);
-        NftId myProductNftId3 = instance.registerProduct(address(myProduct3));
+        NftId myProductNftId3 = instance.registerProduct(address(myProduct3), address(token));
         vm.stopPrank();
 
         // THEN
@@ -123,19 +98,19 @@ contract ComponentTrackingTest is GifTest {
         // WHEN
         vm.startPrank(instanceOwner);
         SimpleProduct myProduct1 = _deployProduct("MyProduct1", instanceOwner, false, 0);
-        NftId myProductNftId1 = instance.registerProduct(address(myProduct1));
+        NftId myProductNftId1 = instance.registerProduct(address(myProduct1), address(token));
         SimplePool myPool1 = _deployPool("MyPool1", myProductNftId1, instanceOwner);
         myProduct1.registerComponent(address(myPool1));
 
         SimpleProduct myProduct2 = _deployProduct("MyProduct2", instanceOwner, true, 0);
-        NftId myProductNftId2 = instance.registerProduct(address(myProduct2));
+        NftId myProductNftId2 = instance.registerProduct(address(myProduct2), address(token));
         SimpleDistribution myDistribution2 = _deployDistribution("MyDistribution2", myProductNftId2, instanceOwner);
         SimplePool myPool2 = _deployPool("MyPool2", myProductNftId2, instanceOwner);
         myProduct2.registerComponent(address(myDistribution2));
         myProduct2.registerComponent(address(myPool2));
 
         SimpleProduct myProduct3 = _deployProduct("MyProduct3", instanceOwner, false, 2);
-        NftId myProductNftId3 = instance.registerProduct(address(myProduct3));
+        NftId myProductNftId3 = instance.registerProduct(address(myProduct3), address(token));
         SimpleOracle myOracle3a = _deployOracle("MyOracle3a", myProductNftId3, instanceOwner);
         SimpleOracle myOracle3b = _deployOracle("MyOracle3b", myProductNftId3, instanceOwner);
         SimplePool myPool3 = _deployPool("MyPool3", myProductNftId3, instanceOwner);
@@ -171,7 +146,6 @@ contract ComponentTrackingTest is GifTest {
             address(registry),
             instanceNftId, 
             name,
-            address(token),
             productInfo,
             feeInfo,
             new BasicProductAuthorization(name),
@@ -190,8 +164,7 @@ contract ComponentTrackingTest is GifTest {
             address(registry),
             productNftId,
             new BasicDistributionAuthorization(name),
-            owner,
-            address(token));
+            owner);
     }
 
     function _deployOracle(
@@ -206,8 +179,7 @@ contract ComponentTrackingTest is GifTest {
             address(registry),
             productNftId,
             new BasicOracleAuthorization(name),
-            owner,
-            address(token));
+            owner);
     }
 
     function _deployPool(
@@ -221,7 +193,6 @@ contract ComponentTrackingTest is GifTest {
         return new SimplePool(
             address(registry),
             productNftId,
-            address(token),
             _getDefaultSimplePoolInfo(),
             new BasicPoolAuthorization(name),
             owner);

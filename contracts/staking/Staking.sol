@@ -4,7 +4,6 @@ pragma solidity ^0.8.20;
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {IRegistry} from "../registry/IRegistry.sol";
-import {IRegistryService} from "../registry/IRegistryService.sol";
 import {IRelease} from "../registry/IRelease.sol";
 import {IStaking} from "./IStaking.sol";
 import {IVersionable} from "../upgradeability/IVersionable.sol";
@@ -14,10 +13,10 @@ import {Component} from "../shared/Component.sol";
 import {IComponent} from "../shared/IComponent.sol";
 import {IComponentService} from "../shared/IComponentService.sol";
 import {NftId} from "../type/NftId.sol";
-import {ObjectType, COMPONENT, STAKING} from "../type/ObjectType.sol";
+import {ObjectType, STAKE, STAKING} from "../type/ObjectType.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {Registerable} from "../shared/Registerable.sol";
-import {StakeManagerLib} from "./StakeManagerLib.sol";
+import {StakingLib} from "./StakingLib.sol";
 import {StakingReader} from "./StakingReader.sol";
 import {StakingStore} from "./StakingStore.sol";
 import {TargetManagerLib} from "./TargetManagerLib.sol";
@@ -71,10 +70,11 @@ contract Staking is
         }
 
         StakingStorage storage $ = _getStakingStorage();
+        address dipToken = _getStakingStorage()._tokenRegistry.getDipTokenAddress();
         $._tokenHandler = TokenHandlerDeployerLib.deployTokenHandler(
             address(getRegistry()),
             address(this),
-            address(getToken()), 
+            dipToken, 
             getRegistry().getAuthority());
     }
 
@@ -147,7 +147,8 @@ contract Staking is
                 objectType: expectedObjectType,
                 chainId: chainId,
                 lockingPeriod: initialLockingPeriod,
-                rewardRate: initialRewardRate}));
+                rewardRate: initialRewardRate,
+                maxStakedAmount: AmountLib.max()}));
     }
 
 
@@ -193,6 +194,21 @@ contract Staking is
         _getStakingStorage()._store.updateTarget(targetNftId, targetInfo);
 
         emit LogStakingRewardRateSet(targetNftId, oldRewardRate, rewardRate);
+    }
+
+    function setMaxStakedAmount(NftId targetNftId, Amount maxStakedAmount)
+        external
+        virtual
+        restricted()
+        onlyTarget(targetNftId)
+    {
+        IStaking.TargetInfo memory targetInfo = getStakingReader().getTargetInfo(targetNftId);
+
+        targetInfo.maxStakedAmount = maxStakedAmount;
+        
+        _getStakingStorage()._store.updateTarget(targetNftId, targetInfo);
+
+        emit LogStakingMaxStakedAmountSet(targetNftId, maxStakedAmount);
     }
 
 
@@ -276,7 +292,7 @@ contract Staking is
         restricted() // only staking service
     {
         StakingStorage storage $ = _getStakingStorage();
-        Timestamp lockedUntil = StakeManagerLib.checkCreateParameters(
+        Timestamp lockedUntil = StakingLib.checkCreateParameters(
             $._reader,
             targetNftId,
             stakeAmount);
@@ -306,7 +322,7 @@ contract Staking is
         returns (Amount stakeBalance)
     {
         StakingStorage storage $ = _getStakingStorage();
-        stakeBalance = StakeManagerLib.stake(
+        stakeBalance = StakingLib.stake(
             getRegistry(),
             $._reader,
             $._store,
@@ -317,20 +333,25 @@ contract Staking is
 
     function restake(
         NftId stakeNftId, 
-        NftId newTargetNftId
+        NftId newStakeNftId
     )
         external
         virtual
         restricted() // only staking service
         onlyStake(stakeNftId)
-        returns (NftId newStakeNftId)
+        returns (Amount newStakeBalance)
     {
+        _checkNftType(stakeNftId, STAKE());
+        _checkNftType(newStakeNftId, STAKE());
+
         // TODO add check that allows additional staking amount
         StakingStorage storage $ = _getStakingStorage();
-
-        // TODO implement
+        newStakeBalance = StakingLib.restake(
+            $._reader,
+            $._store,
+            stakeNftId,
+            newStakeNftId);    
     }
-
 
     function updateRewards(NftId stakeNftId)
         external
@@ -380,7 +401,7 @@ contract Staking is
     {
         StakingStorage storage $ = _getStakingStorage();
         
-        StakeManagerLib.checkUnstakeParameters($._reader, stakeNftId);
+        StakingLib.checkUnstakeParameters($._reader, stakeNftId);
         
         // update rewards since last update
         NftId targetNftId = _updateRewards($._reader, $._store, stakeNftId);
@@ -452,7 +473,7 @@ contract Staking is
         UFixed rewardRate;
 
         (targetNftId, rewardRate) = reader.getTargetRewardRate(stakeNftId);
-        (Amount rewardIncrement, ) = StakeManagerLib.calculateRewardIncrease(
+        (Amount rewardIncrement, ) = StakingLib.calculateRewardIncrease(
             reader, 
             stakeNftId,
             rewardRate);
@@ -507,7 +528,6 @@ contract Staking is
             registryAddress, 
             registry.getNftId(), // parent nft id
             CONTRACT_NAME,
-            dipTokenAddress,
             STAKING(), 
             false, // is interceptor
             stakingOwner, 

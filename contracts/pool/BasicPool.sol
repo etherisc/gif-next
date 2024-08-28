@@ -21,7 +21,6 @@ abstract contract BasicPool is
         address registry,
         NftId productNftId,
         string memory name,
-        address token,
         IComponents.PoolInfo memory poolInfo,
         IAuthorization authorization,
         address initialOwner
@@ -34,7 +33,6 @@ abstract contract BasicPool is
             registry, 
             productNftId, 
             name, 
-            token, 
             poolInfo, 
             authorization,
             initialOwner, 

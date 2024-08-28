@@ -49,6 +49,7 @@ contract InstanceReader {
     InstanceStore internal _store;
     BundleSet internal _bundleSet;
     RiskSet internal _riskSet;
+    IDistributionService internal _distributionService;
 
     /// @dev This initializer needs to be called from the instance itself.
     function initialize() public {
@@ -73,6 +74,7 @@ contract InstanceReader {
         _store = _instance.getInstanceStore();
         _bundleSet = _instance.getBundleSet();
         _riskSet = _instance.getRiskSet();
+        _distributionService = IDistributionService(_registry.getServiceAddress(DISTRIBUTION(), _instance.getRelease()));
     }
 
 
@@ -485,6 +487,16 @@ contract InstanceReader {
         if (data.length > 0) {
             return abi.decode(data, (IDistribution.ReferralInfo));
         }
+    }
+
+    function isReferralValid(NftId distributionNftId, ReferralId referralId)
+        external
+        view
+        returns (bool isValid)
+    {
+        return _distributionService.referralIsValid(
+            distributionNftId,
+            referralId);
     }
 
     function getRequestInfo(RequestId requestId)

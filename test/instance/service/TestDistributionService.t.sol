@@ -26,8 +26,7 @@ contract TestDistributionService is GifTest {
             address(registry),
             testProdNftId,
             new BasicDistributionAuthorization("SimpleDistribution"),
-            distributionOwner,
-            address(token)
+            distributionOwner
         );
         vm.stopPrank();
 
