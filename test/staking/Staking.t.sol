@@ -336,7 +336,6 @@ contract StakingTest is GifTest {
         UFixed rewardRate = stakingReader.getTargetInfo(instanceNftId).rewardRate;
         (
             Amount rewardIncrease,
-            Amount totalDipAmount
         ) = StakeManagerLib.calculateRewardIncrease(
             stakingReader,
             stakeNftId,
@@ -391,7 +390,7 @@ contract StakingTest is GifTest {
 
         uint256 lastUpdateAt = block.timestamp;
 
-        (, Amount reserveAmount,) = _addRewardReserves(instanceNftId, instanceOwner, 500);
+        (, Amount reserveAmount) = _addRewardReserves(instanceNftId, instanceOwner, 500);
         assertEq(stakingReader.getReserveBalance(instanceNftId).toInt(), reserveAmount.toInt(), "unexpected reserve balance (initial)");
 
         // dip balance of staker after staking
@@ -447,15 +446,11 @@ contract StakingTest is GifTest {
     function test_stakingStakeUnstake_stakeLocked() public {
 
         // GIVEN
-        (
-            ,
-            Amount stakeAmount,
-            NftId stakeNftId
-        ) = _prepareStake(staker, instanceNftId, 1000);
+        (,, NftId stakeNftId) = _prepareStake(staker, instanceNftId, 1000);
 
         uint256 lastUpdateAt = block.timestamp;
 
-        (, Amount reserveAmount,) = _addRewardReserves(instanceNftId, instanceOwner, 500);
+        (, Amount reserveAmount) = _addRewardReserves(instanceNftId, instanceOwner, 500);
         assertEq(stakingReader.getReserveBalance(instanceNftId).toInt(), reserveAmount.toInt(), "unexpected reserve balance (initial)");
 
         // dip balance of staker after staking
@@ -485,7 +480,7 @@ contract StakingTest is GifTest {
 
         uint256 lastUpdateAt = block.timestamp;
 
-        (, Amount reserveAmount,) = _addRewardReserves(instanceNftId, instanceOwner, 500);
+        (, Amount reserveAmount) = _addRewardReserves(instanceNftId, instanceOwner, 500);
         assertEq(stakingReader.getReserveBalance(instanceNftId).toInt(), reserveAmount.toInt(), "unexpected reserve balance (initial)");
 
         // dip balance of staker after staking
@@ -546,7 +541,7 @@ contract StakingTest is GifTest {
 
         uint256 lastUpdateAt = block.timestamp;
 
-        (, Amount reserveAmount,) = _addRewardReserves(instanceNftId, instanceOwner, 10);
+        (, Amount reserveAmount) = _addRewardReserves(instanceNftId, instanceOwner, 10);
         assertEq(stakingReader.getReserveBalance(instanceNftId).toInt(), reserveAmount.toInt(), "unexpected reserve balance (initial)");
 
         // dip balance of staker after staking
@@ -582,15 +577,14 @@ contract StakingTest is GifTest {
 
 
     function _addRewardReserves(
-        NftId instanceNftId, 
+        NftId, 
         address instanceOwner, 
         uint256 amount
     )
         internal
         returns(
             TokenHandler tokenHandler,
-            Amount dipAmount,
-            NftId stakeNftId
+            Amount dipAmount
         )
     {
         (tokenHandler, dipAmount) = _prepareAccount(instanceOwner, amount);

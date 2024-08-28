@@ -20,10 +20,6 @@ interface IDistributionComponent is IInstanceLinkedComponent {
     /// @dev Returns the distributor Nft Id for the provided address
     function getDistributorNftId(address distributor) external view returns (NftId distributorNftId);
 
-    function getDiscountPercentage(
-        string memory referralCode
-    ) external view returns (UFixed discountPercentage, ReferralStatus status);
-
     function getReferralId(
         string memory referralCode
     ) external returns (ReferralId referralId);

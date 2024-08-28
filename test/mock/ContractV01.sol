@@ -27,7 +27,7 @@ contract ContractV01 is Versionable {
 
     function getDataV01() 
         external 
-        view 
+        pure 
         returns(bytes memory) 
     {
         return "hi from version 1";

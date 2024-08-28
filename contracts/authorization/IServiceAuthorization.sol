@@ -22,7 +22,7 @@ interface IServiceAuthorization is IERC165 {
           returns(VersionPart release);
 
      /// @dev Returns the service domain for the provided index.
-     function getServiceDomain(uint idx) external view returns(ObjectType serviceDomain);
+     function getServiceDomain(uint256 idx) external view returns(ObjectType serviceDomain);
 
      /// @dev Returns the full list of service domains for this release.
      /// Services need to be registered for the release in revers order of this list.

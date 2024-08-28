@@ -23,7 +23,7 @@ contract ContractV02 is ContractV01 {
         return VersionLib.toVersion(1, 0, 1);
     }
 
-    function getDataV02() external view returns(bytes memory) {
+    function getDataV02() external pure returns(bytes memory) {
         return "hi from version 2";
     }
 

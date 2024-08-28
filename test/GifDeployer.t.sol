@@ -47,13 +47,13 @@ contract GifDeployerTest is GifDeployer {
     address public stakingOwner = registryOwner;
 
 
-    function test_deployerCoreDip() public {
+    function test_deployerCoreDip() public view {
         assertTrue(address(dip) != address(0), "dip address zero");
         assertEq(dip.decimals(), 18, "unexpected decimals for dip");
     }
 
 
-    function test_deployerCoreRegistry() public {
+    function test_deployerCoreRegistry() public view {
         assertTrue(address(registry) != address(0), "registry address zero");
 
         // check registry
@@ -81,7 +81,7 @@ contract GifDeployerTest is GifDeployer {
     }
 
 
-    function test_deployerCoreTokenRegistry() public {
+    function test_deployerCoreTokenRegistry() public view {
         assertTrue(address(tokenRegistry) != address(0), "token registry address zero");
 
         assertEq(address(tokenRegistry.getDipToken()), address(dip), "unexpected dip address");
@@ -92,7 +92,7 @@ contract GifDeployerTest is GifDeployer {
     }
 
 
-    function test_deployerCoreReleaseRegistry() public {
+    function test_deployerCoreReleaseRegistry() public view {
         assertTrue(address(releaseRegistry) != address(0), "release manager address zero");
 
         // check authority
@@ -136,7 +136,7 @@ contract GifDeployerTest is GifDeployer {
         // TODO amend once full gif setup is streamlined
     }
 
-    function test_deployerCoreStakingManager() public {
+    function test_deployerCoreStakingManager() public view {
         assertTrue(address(stakingManager) != address(0), "staking manager address zero");
 
         // assertEq(stakingOwner, registryOwner, "unexpected staking owner");
@@ -146,7 +146,7 @@ contract GifDeployerTest is GifDeployer {
     }
 
 
-    function test_deployerCoreStakingContract() public {
+    function test_deployerCoreStakingContract() public view {
         assertTrue(address(staking) != address(0), "staking address zero");
 
         // check nft id
@@ -184,7 +184,7 @@ contract GifDeployerTest is GifDeployer {
     }
 
 
-    function test_deployerCoreStakingStore() public {
+    function test_deployerCoreStakingStore() public view {
         StakingStore store = StakingStore(staking.getStakingStore());
 
         // check authority

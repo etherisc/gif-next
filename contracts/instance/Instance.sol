@@ -226,23 +226,27 @@ contract Instance is
 
     //--- Targets ------------------------------------------------------------//
 
+    /// @inheritdoc IInstance
+    function createTarget(address target, RoleId targetRoleId, string memory name) 
+        external 
+        restricted()
+        onlyOwner()
+    {
+        _instanceService.createTarget(target, targetRoleId, name);
+        emit LogInstanceCustomTargetCreated(target, targetRoleId, name);
+    }
 
+
+    /// @inheritdoc IInstance
     function setTargetLocked(address target, bool locked)
         external 
         // not restricted(): instance owner may need to be able to unlock targets on an locked instance
         onlyOwner()
     {
         _instanceService.setTargetLocked(target, locked);
+        emit LogInstanceTargetLocked(target, locked);
     }
 
-    function createTarget(address target, string memory name) 
-        external 
-        restricted()
-        onlyOwner()
-    {
-        // TODO refactor
-        // _instanceAdmin.createTarget(target, name);
-    }
 
     function setTargetFunctionRole(
         string memory targetName,

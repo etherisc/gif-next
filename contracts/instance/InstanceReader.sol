@@ -7,6 +7,7 @@ import {IAccess} from "../authorization/IAccess.sol";
 import {IBundle} from "../instance/module/IBundle.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {IDistribution} from "../instance/module/IDistribution.sol";
+import {IDistributionService} from "../distribution/IDistributionService.sol";
 import {IInstance} from "./IInstance.sol";
 import {IKeyValueStore} from "../shared/IKeyValueStore.sol";
 import {IOracle} from "../oracle/IOracle.sol";
@@ -24,7 +25,7 @@ import {InstanceStore} from "./InstanceStore.sol";
 import {Key32} from "../type/Key32.sol";
 import {NftId} from "../type/NftId.sol";
 import {PayoutId, PayoutIdLib} from "../type/PayoutId.sol";
-import {ReferralId, ReferralStatus, ReferralLib, REFERRAL_OK, REFERRAL_ERROR_UNKNOWN, REFERRAL_ERROR_EXPIRED, REFERRAL_ERROR_EXHAUSTED} from "../type/Referral.sol";
+import {ReferralId, ReferralStatus, ReferralLib} from "../type/Referral.sol";
 import {RequestId} from "../type/RequestId.sol";
 import {RiskId} from "../type/RiskId.sol";
 import {RiskSet} from "./RiskSet.sol";
@@ -208,7 +209,7 @@ contract InstanceReader {
 
     function getClaimId(uint idx)
         public
-        view
+        pure
         returns (ClaimId claimId)
     {
         return ClaimIdLib.toClaimId(idx + 1);
@@ -246,7 +247,7 @@ contract InstanceReader {
 
     function getPayoutId(ClaimId claimId, uint24 idx)
         public
-        view
+        pure
         returns (PayoutId payoutId)
     {
         return PayoutIdLib.toPayoutId(claimId, idx + 1);
@@ -497,6 +498,7 @@ contract InstanceReader {
         }
     }
 
+
     function getMetadata(Key32 key)
         public 
         view 
@@ -504,6 +506,7 @@ contract InstanceReader {
     {
         return _store.getMetadata(key);
     }
+
 
     function getState(Key32 key)
         public 
@@ -536,31 +539,39 @@ contract InstanceReader {
             ReferralStatus status
         )
     {
-        IDistribution.ReferralInfo memory info = getReferralInfo(
-            referralId);        
+        return IDistributionService(
+            _registry.getServiceAddress(
+                DISTRIBUTION(),
+                _instance.getRelease())).getDiscountPercentage(
+                    this, // instance reader
+                    referralId);
 
-        if (info.expiryAt.eqz()) {
-            return (
-                UFixedLib.zero(),
-                REFERRAL_ERROR_UNKNOWN());
-        }
+        // TODO cleanup
+            // IDistribution.ReferralInfo memory info = getReferralInfo(
+        //     referralId);        
 
-        if (info.expiryAt < TimestampLib.blockTimestamp()) {
-            return (
-                UFixedLib.zero(),
-                REFERRAL_ERROR_EXPIRED());
-        }
+        // if (info.expiryAt.eqz()) {
+        //     return (
+        //         UFixedLib.zero(),
+        //         REFERRAL_ERROR_UNKNOWN());
+        // }
 
-        if (info.usedReferrals >= info.maxReferrals) {
-            return (
-                UFixedLib.zero(),
-                REFERRAL_ERROR_EXHAUSTED());
-        }
+        // if (info.expiryAt < TimestampLib.blockTimestamp()) {
+        //     return (
+        //         UFixedLib.zero(),
+        //         REFERRAL_ERROR_EXPIRED());
+        // }
 
-        return (
-            info.discountPercentage,
-            REFERRAL_OK()
-        );
+        // if (info.usedReferrals >= info.maxReferrals) {
+        //     return (
+        //         UFixedLib.zero(),
+        //         REFERRAL_ERROR_EXHAUSTED());
+        // }
+
+        // return (
+        //     info.discountPercentage,
+        //     REFERRAL_OK()
+        // );
     }
 
 
@@ -569,7 +580,7 @@ contract InstanceReader {
     }
 
 
-    function getInstanceOwnerRole() public view returns (RoleId roleId) {
+    function getInstanceOwnerRole() public pure returns (RoleId roleId) {
         return INSTANCE_OWNER_ROLE();
     }
 
@@ -596,13 +607,16 @@ contract InstanceReader {
         return _instance.getInstanceAdmin().isRoleActive(roleId);
     }
 
+
     function roleMembers(RoleId roleId) public view returns (uint256 numberOfMembers) {
         return _instance.getInstanceAdmin().roleMembers(roleId);
     }
 
+
     function getRoleMember(RoleId roleId, uint256 idx) public view returns (address account) {
         return _instance.getInstanceAdmin().getRoleMember(roleId, idx);
     }
+
 
     function isRoleMember(RoleId roleId, address account) public view returns (bool isMember) {
         return _instance.getInstanceAdmin().isRoleMember(roleId, account);
@@ -614,63 +628,96 @@ contract InstanceReader {
     }
 
 
+    function targets() public view returns (uint256 targetCount) {
+        return _instance.getInstanceAdmin().targets();
+    }
+
+
+    function getTargetAddress(uint256 idx) public view returns (address target) {
+        return _instance.getInstanceAdmin().getTargetAddress(idx);
+    }
+
+
+    function targetExists(address target) public view returns (bool exists) {
+        return _instance.getInstanceAdmin().targetExists(target);
+    }
+
+
+    function getTargetInfo(address target) public view returns (IAccess.TargetInfo memory targetInfo) {
+        return _instance.getInstanceAdmin().getTargetInfo(target);
+    }
+
+
     function isLocked(address target) public view returns (bool) {
         return _instance.getInstanceAdmin().isTargetLocked(target);
     }
+
 
     function toPolicyKey(NftId policyNftId) public pure returns (Key32) { 
         return policyNftId.toKey32(POLICY());
     }
 
+
     function toPremiumKey(NftId policyNftId) public pure returns (Key32) { 
         return policyNftId.toKey32(PREMIUM());
     }
+
 
     function toDistributorKey(NftId distributorNftId) public pure returns (Key32) { 
         return distributorNftId.toKey32(DISTRIBUTOR());
     }
 
+
     function toBundleKey(NftId poolNftId) public pure returns (Key32) { 
         return poolNftId.toKey32(BUNDLE());
     }
+
 
     function toComponentKey(NftId componentNftId) public pure returns (Key32) { 
         return componentNftId.toKey32(COMPONENT());
     }
 
+
     function toDistributionKey(NftId distributionNftId) public pure returns (Key32) { 
         return distributionNftId.toKey32(DISTRIBUTION());
     }
+
 
     function toPoolKey(NftId poolNftId) public pure returns (Key32) { 
         return poolNftId.toKey32(POOL());
     }
 
+
     function toProductKey(NftId productNftId) public pure returns (Key32) { 
         return productNftId.toKey32(PRODUCT());
     }
+
 
     function toFeeKey(NftId productNftId) public pure returns (Key32) { 
         return productNftId.toKey32(FEE());
     }
 
-    // low level function
+    //--- low level function ----------------------------------------------------//
 
     function getInstanceStore() external view returns (IKeyValueStore store) {
         return _store;
     }
 
+
     function getBundleSet() external view returns (BundleSet bundleSet) {
         return _bundleSet;
     }
+
 
     function getRiskSet() external view returns (RiskSet riskSet) {
         return _riskSet;
     }
 
+
     function toUFixed(uint256 value, int8 exp) public pure returns (UFixed) {
         return UFixedLib.toUFixed(value, exp);
     }
+
 
     function toInt(UFixed value) public pure returns (uint256) {
         return UFixedLib.toInt(value);

@@ -23,6 +23,11 @@ interface IInstance is
     event LogInstanceCustomRoleGranted(RoleId roleId, address account, address caller);
     event LogInstanceCustomRoleRevoked(RoleId roleId, address account, address caller);
 
+    // target handling
+    event LogInstanceCustomTargetCreated(address target, RoleId targetRoleId, string name);
+    event LogInstanceTargetLocked(address target, bool locked);
+    event LogInstanceCustomTargetFunctionRoleSet(address target, bytes4[] selectors, RoleId roleId);
+
     // modifier is onlyRoleAdmin
     error ErrorInstanceNotCustomRole(RoleId roleId);
     error ErrorInstanceNotRoleAdmin(RoleId roleId, address account);
@@ -102,7 +107,11 @@ interface IInstance is
     /// Only instance owner or account with role admin role can call this function.
     function revokeRole(RoleId roleId, address account) external;
 
-    function createTarget(address target, string memory name) external;
+    /// @dev Creates a new custom target.
+    /// Custom targets are intended to be used for access control helper contracts of components.
+    /// Custom targets are not intended to be used for components.
+    function createTarget(address target, RoleId targetRoleId, string memory name) external;
+
     function setTargetFunctionRole(string memory targetName, bytes4[] calldata selectors, RoleId roleId) external;
 
 

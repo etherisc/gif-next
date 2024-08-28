@@ -20,10 +20,10 @@ import {KEEP_STATE} from "../type/StateId.sol";
 import {ObjectType, ACCOUNTING, COMPONENT, DISTRIBUTION, INSTANCE, DISTRIBUTION, DISTRIBUTOR, REGISTRY} from "../type/ObjectType.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
-import {ReferralId, ReferralLib} from "../type/Referral.sol";
+import {ReferralId, ReferralStatus, ReferralLib, REFERRAL_OK, REFERRAL_ERROR_UNKNOWN, REFERRAL_ERROR_EXPIRED, REFERRAL_ERROR_EXHAUSTED} from "../type/Referral.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
-import {UFixed} from "../type/UFixed.sol";
+import {UFixed, UFixedLib} from "../type/UFixed.sol";
 
 
 contract DistributionService is
@@ -341,6 +341,48 @@ contract DistributionService is
         isValid = info.expiryAt.eqz() || (info.expiryAt.gtz() && TimestampLib.blockTimestamp() <= info.expiryAt);
         isValid = isValid && info.usedReferrals < info.maxReferrals;
     }
+
+
+    function getDiscountPercentage(
+        InstanceReader instanceReader,
+        ReferralId referralId
+    )
+        external
+        virtual
+        view 
+        returns (
+            UFixed discountPercentage, 
+            ReferralStatus status
+        )
+    { 
+        IDistribution.ReferralInfo memory info = instanceReader.getReferralInfo(
+            referralId);        
+
+        if (info.expiryAt.eqz()) {
+            return (
+                UFixedLib.zero(),
+                REFERRAL_ERROR_UNKNOWN());
+        }
+
+        if (info.expiryAt < TimestampLib.blockTimestamp()) {
+            return (
+                UFixedLib.zero(),
+                REFERRAL_ERROR_EXPIRED());
+        }
+
+        if (info.usedReferrals >= info.maxReferrals) {
+            return (
+                UFixedLib.zero(),
+                REFERRAL_ERROR_EXHAUSTED());
+        }
+
+        return (
+            info.discountPercentage,
+            REFERRAL_OK()
+        );
+
+    }
+
 
     function _getInstanceForDistribution(NftId distributionNftId)
         internal

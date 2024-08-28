@@ -1,15 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Amount} from "../type/Amount.sol";
-import {NftId} from "../type/NftId.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
 import {IService} from "../shared/IService.sol";
-import {UFixed} from "../type/UFixed.sol";
+
+import {Amount} from "../type/Amount.sol";
 import {DistributorType} from "../type/DistributorType.sol";
-import {ReferralId} from "../type/Referral.sol";
+import {InstanceReader} from "../instance/InstanceReader.sol";
+import {NftId} from "../type/NftId.sol";
+import {ReferralId, ReferralStatus} from "../type/Referral.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {Timestamp} from "../type/Timestamp.sol";
+import {UFixed} from "../type/UFixed.sol";
 
 
 interface IDistributionService is IService {
@@ -98,4 +100,8 @@ interface IDistributionService is IService {
     /// @param amount the amount to withdraw. If set to AMOUNT_MAX, the full commission available is withdrawn
     /// @return withdrawnAmount the effective withdrawn amount
     function withdrawCommission(NftId distributorNftId, Amount amount) external returns (Amount withdrawnAmount);
+
+    /// @dev Returns the discount percentage for the provided referral code.
+    /// The function retuns both the percentage and the status of the referral code.
+    function getDiscountPercentage(InstanceReader instanceReader, ReferralId referralId) external view returns (UFixed discountPercentage, ReferralStatus status);
 }

@@ -57,7 +57,7 @@ contract ReleaseAdmin is
     {
 
         // checks
-        _checkRegistry(registry);
+        AccessAdminLib.checkRegistry(registry);
 
         AccessManagerCloneable(
             authority()).completeSetup(

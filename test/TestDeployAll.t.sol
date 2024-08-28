@@ -69,7 +69,7 @@ contract TestDeployAll is GifTest {
     }
 
 
-    function test_deployServicesOverview() public {
+    function test_deployServicesOverview() public view {
         assertEq(registry.getObjectCount(), 25, "invalid object count for base setup");
 
         // validate registry service
@@ -139,7 +139,7 @@ contract TestDeployAll is GifTest {
         assertTrue(address(instanceReader) != address(0), "instance reader is zero address");
     }
 
-    function test_deployAllInstanceOwner() public {
+    function test_deployAllInstanceOwner() public view {
         NftId nftId = registry.getNftIdForAddress(address(instance));
         assertEq(
             registry.ownerOf(nftId),
@@ -148,7 +148,7 @@ contract TestDeployAll is GifTest {
         );
     }
 
-    function test_deployAllInstanceLifecycles() public {
+    function test_deployAllInstanceLifecycles() public view {
         assertTrue(instance.getInstanceStore().hasLifecycle(BUNDLE()), "instance misses bundle lifecycle");
         assertTrue(instance.getInstanceStore().hasLifecycle(COMPONENT()), "instance misses component lifecycle");
         assertTrue(instance.getInstanceStore().hasLifecycle(POLICY()), "instance misses policy lifecycle");
@@ -166,6 +166,7 @@ contract TestDeployAll is GifTest {
         address componentOwner
     )
         internal
+        view
     {
         // check params against unexpected 0 values
         assertTrue(address(component) != address(0), "component address 0");

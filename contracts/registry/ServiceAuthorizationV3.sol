@@ -134,8 +134,9 @@ contract ServiceAuthorizationV3
           _authorize(functions, IInstanceService.grantRole.selector, "grantRole");
           _authorize(functions, IInstanceService.revokeRole.selector, "revokeRole");
 
-          _authorize(functions, IInstanceService.setInstanceLocked.selector, "setInstanceLocked");
+          _authorize(functions, IInstanceService.createTarget.selector, "createTarget");
           _authorize(functions, IInstanceService.setTargetLocked.selector, "setTargetLocked");
+          _authorize(functions, IInstanceService.setInstanceLocked.selector, "setInstanceLocked");
 
           _authorize(functions, IInstanceService.createInstance.selector, "createInstance");
           _authorize(functions, IInstanceService.upgradeInstanceReader.selector, "upgradeInstanceReader");

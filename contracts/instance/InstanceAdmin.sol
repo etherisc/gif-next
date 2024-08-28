@@ -30,8 +30,9 @@ contract InstanceAdmin is
 
     error ErrorInstanceAdminNotInstanceService(address caller);
 
+    error ErrorInstanceAdminNotCustomRole(RoleId roleId);
+
     error ErrorInstanceAdminNotRegistered(address instance);
-    error ErrorInstanceAdminNotInstance(address instance);
     error ErrorInstanceAdminAlreadyAuthorized(address instance);
 
     error ErrorInstanceAdminNotComponentRole(RoleId roleId);
@@ -48,6 +49,7 @@ contract InstanceAdmin is
 
     mapping(address target => RoleId roleId) internal _targetRoleId;
     uint64 internal _components;
+
 
     modifier onlyInstanceService() {
         if (msg.sender != _registry.getServiceAddress(INSTANCE(), getRelease())) {
@@ -78,8 +80,7 @@ contract InstanceAdmin is
         onlyDeployer()
     {
         // checks
-        _checkRegistry(registry);
-        _checkIsRegistered(registry, instance, INSTANCE());
+        AccessAdminLib.checkIsRegistered(registry, instance, INSTANCE());
 
         AccessManagerCloneable(
             authority()).completeSetup(
@@ -105,7 +106,6 @@ contract InstanceAdmin is
 
         // add instance authorization
         _createRoles(_authorization);
-        // _createTargets(_authorization);
         _setupInstanceHelperTargetsWithRoles();
         _createTargetAuthorizations(_authorization);
     }
@@ -131,7 +131,7 @@ contract InstanceAdmin is
         restricted()
     {
         // checks
-        _checkIsRegistered(address(getRegistry()), componentAddress, expectedType);
+        AccessAdminLib.checkIsRegistered(address(getRegistry()), componentAddress, expectedType);
 
         IInstanceLinkedComponent component = IInstanceLinkedComponent(componentAddress);
         IAuthorization authorization = component.getAuthorization();
@@ -180,6 +180,7 @@ contract InstanceAdmin is
             instance);
     }
 
+
     /// @dev Creates a custom role.
     function createRole(
         string memory roleName,
@@ -220,6 +221,7 @@ contract InstanceAdmin is
         _grantRoleToAccount(roleId, account);
     }
 
+
     /// @dev Revokes the provided role from the specified account
     function revokeRole(
         RoleId roleId, 
@@ -228,6 +230,34 @@ contract InstanceAdmin is
         restricted()
     {
         _revokeRoleFromAccount(roleId, account);
+    }
+
+
+    /// @dev Create a new custom target.
+    /// The target needs to be an access managed contract.
+    /// The target role parameter is optional, set to zero if not required.
+    /// Only custom roles may be assigned to custom targets.
+    function createTarget(
+        address target, 
+        RoleId targetRoleId,
+        string memory name
+    )
+        external
+        restricted()
+    {
+        _createTarget(
+            target, 
+            name, 
+            true, // checkAuthority
+            true); // custom
+
+        if (targetRoleId != RoleIdLib.zero()) {
+            if (getRoleInfo(targetRoleId).roleType != IAccess.RoleType.Custom) {
+                revert ErrorInstanceAdminNotCustomRole(targetRoleId);
+            }
+
+            _grantRoleToAccount(targetRoleId, target);
+        }
     }
 
 

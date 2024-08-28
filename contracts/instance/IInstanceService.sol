@@ -54,23 +54,27 @@ interface IInstanceService is IService {
     
     event LogInstanceCloned(NftId instanceNftId, address instance);
 
-    /// @dev creates a new role for the calling instance.
+    /// @dev Creates a new custom role for the calling instance.
     function createRole(string memory roleName, RoleId adminRoleId, uint32 maxMemberCount) external returns (RoleId roleId);
 
-    /// @dev sets the specified role as active or inactive for the calling instance.
+    /// @dev Sets the specified custom role as active or inactive for the calling instance.
     function setRoleActive(RoleId roleId, bool active) external;
 
-    /// @dev grants the specified role to the specified account for the calling instance.
+    /// @dev Grants the specified custom role to the specified account for the calling instance.
     function grantRole(RoleId roleId, address account) external; 
 
-    /// @dev revokes the specified role from the specified account for the calling instance.
+    /// @dev Revokes the specified custom role from the specified account for the calling instance.
     function revokeRole(RoleId roleId, address account) external; 
 
-    /// @dev Locks the complete instance, including all its components.
-    function setInstanceLocked(bool locked) external;
+    /// @dev Creates a new custom target for the calling instance.
+    /// Optionally, a target role can be specified that will be assigned to the target.
+    function createTarget(address target, RoleId targetRoleId, string memory name) external;
 
     /// @dev Locks/unlocks the specified target constrolled by the corresponding instance admin.
     function setTargetLocked(address target, bool locked) external;
+
+    /// @dev Locks the complete instance, including all its components.
+    function setInstanceLocked(bool locked) external;
 
     /// @dev Creates a new instance.
     /// The caller becomes the owner of the new instance.

@@ -38,7 +38,7 @@ contract TestProduct is GifTest {
         sec30 = SecondsLib.toSeconds(30);
     }
 
-    function test_productSetupInfo() public {
+    function test_productSetupInfo() public view {
 
         // check nft id (components -> product)
         uint256 productNftIdInt = product.getNftId().toInt();

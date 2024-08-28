@@ -56,21 +56,22 @@ contract InstanceService is
     }
 
 
-    modifier onlyInstanceOwner(NftId instanceNftId) {        
-        if(msg.sender != getRegistry().ownerOf(instanceNftId)) {
-            revert ErrorInstanceServiceRequestUnauhorized(msg.sender);
-        }
-        _;
-    }
+    // TODO cleanup
+    // modifier onlyInstanceOwner(NftId instanceNftId) {        
+    //     if(msg.sender != getRegistry().ownerOf(instanceNftId)) {
+    //         revert ErrorInstanceServiceRequestUnauhorized(msg.sender);
+    //     }
+    //     _;
+    // }
 
+    // // TODO check component - service - instance version match
+    // modifier onlyComponent() {
+    //     if (! getRegistry().isRegisteredComponent(msg.sender)) {
+    //         revert ErrorInstanceServiceRequestUnauhorized(msg.sender);
+    //     }
+    //     _;
+    // }
 
-    // TODO check component - service - instance version match
-    modifier onlyComponent() {
-        if (! getRegistry().isRegisteredComponent(msg.sender)) {
-            revert ErrorInstanceServiceRequestUnauhorized(msg.sender);
-        }
-        _;
-    }
 
     /// @inheritdoc IInstanceService
     function createRole(
@@ -89,6 +90,7 @@ contract InstanceService is
             adminRoleId, 
             maxMemberCount);
     }
+
 
     /// @inheritdoc IInstanceService
     function setRoleActive(RoleId roleId, bool active)
@@ -111,6 +113,7 @@ contract InstanceService is
         instance.getInstanceAdmin().grantRole(roleId, account);
     }
 
+
     /// @inheritdoc IInstanceService
     function revokeRole(RoleId roleId, address account) 
         external 
@@ -121,15 +124,15 @@ contract InstanceService is
         instance.getInstanceAdmin().revokeRole(roleId, account);
     }
 
+
     /// @inheritdoc IInstanceService
-    function setInstanceLocked(bool locked)
+    function createTarget(address target, RoleId targetRoleId, string memory name)
         external
-        virtual
         restricted()
         onlyInstance()
     {
-        address instanceAddress = msg.sender;
-        IInstance(instanceAddress).getInstanceAdmin().setInstanceLocked(locked);
+        IInstance instance = IInstance(msg.sender);
+        instance.getInstanceAdmin().createTarget(target, targetRoleId, name);
     }
 
 
@@ -142,6 +145,18 @@ contract InstanceService is
     {
         address instanceAddress = msg.sender;
         IInstance(instanceAddress).getInstanceAdmin().setTargetLocked(target, locked);
+    }
+
+
+    /// @inheritdoc IInstanceService
+    function setInstanceLocked(bool locked)
+        external
+        virtual
+        restricted()
+        onlyInstance()
+    {
+        address instanceAddress = msg.sender;
+        IInstance(instanceAddress).getInstanceAdmin().setInstanceLocked(locked);
     }
 
 

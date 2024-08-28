@@ -1147,6 +1147,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         Timestamp expectedCreatedAt
     )
         internal
+        view
     {
         // solhint-disable-next-line
         console.log("checking role", expectedName);

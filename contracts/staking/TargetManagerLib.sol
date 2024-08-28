@@ -160,7 +160,7 @@ library TargetManagerLib {
         UFixed stakingRate
     )
         public
-        view
+        pure
         returns (Amount dipAmount)
     {
         dipAmount = tokenAmount.multiplyWith(stakingRate);

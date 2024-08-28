@@ -197,7 +197,7 @@ contract GifTest is GifDeployer {
     }
 
     /// @dev Helper function to assert that a given NftId is equal to the expected NftId.
-    function assertNftId(NftId actualNftId, NftId expectedNftId, string memory message) public {
+    function assertNftId(NftId actualNftId, NftId expectedNftId, string memory message) public view {
         if(block.chainid == 31337) {
             assertEq(actualNftId.toInt(), expectedNftId.toInt(), message);
         } else {
@@ -207,7 +207,7 @@ contract GifTest is GifDeployer {
     }
 
     /// @dev Helper function to assert that a given NftId is equal to zero.
-    function assertNftIdZero(NftId nftId, string memory message) public {
+    function assertNftIdZero(NftId nftId, string memory message) public view {
         if(block.chainid == 31337) {
             assertTrue(nftId.eqz(), message);
         } else {
@@ -517,7 +517,7 @@ contract GifTest is GifDeployer {
 
     function _getSimpleProductInfo()
         internal
-        view
+        pure
         returns (IComponents.ProductInfo memory productInfo)
     {
         return IComponents.ProductInfo({
@@ -534,7 +534,7 @@ contract GifTest is GifDeployer {
 
     function _getSimpleFeeInfo()
         internal
-        view
+        pure
         returns (IComponents.FeeInfo memory feeInfo)
     {
         return IComponents.FeeInfo({
@@ -730,7 +730,7 @@ contract GifTest is GifDeployer {
         assertTrue(nftId1.eq(nftId2), message);
     }
 
-    function assertEq(Timestamp ts1, Timestamp ts2, string memory message) internal {
+    function assertEq(Timestamp ts1, Timestamp ts2, string memory message) internal pure {
         assertEq(ts1.toInt(), ts2.toInt(), message);
     }
 }

@@ -91,7 +91,7 @@ contract RegistryAdmin is
         onlyDeployer()
     {
         // checks
-        _checkRegistry(registry);
+        AccessAdminLib.checkRegistry(registry);
 
         VersionPart release = VersionPartLib.toVersionPart(3);
         AccessManagerCloneable(
@@ -141,11 +141,11 @@ contract RegistryAdmin is
 
     //--- view functions ----------------------------------------------------//
 
-    function getGifAdminRole() external view returns (RoleId) {
+    function getGifAdminRole() external pure returns (RoleId) {
         return GIF_ADMIN_ROLE();
     }
 
-    function getGifManagerRole() external view returns (RoleId) {
+    function getGifManagerRole() external pure returns (RoleId) {
         return GIF_MANAGER_ROLE();
     }
 

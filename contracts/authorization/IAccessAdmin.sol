@@ -14,6 +14,7 @@ import {RoleId} from "../type/RoleId.sol";
 import {Str} from "../type/String.sol";
 import {VersionPart} from "../type/Version.sol";
 
+/// @dev Base interface for registry admin, release admin, and instance admin 
 interface IAccessAdmin is 
     IAccessManaged,
     IAccess,
@@ -94,47 +95,6 @@ interface IAccessAdmin is
 
     // check target
     error ErrorAccessAdminTargetUnknown(address target);
-
-    /// @dev Set the disabled status of the speicified role.
-    /// Role disabling only prevents the role from being granted to new accounts.
-    /// Existing role members may still execute functions that are authorized for that role.
-    /// Permissioned: the caller must have the manager role (getManagerRole).
-    // TODO move to instance admin
-    // function setRoleDisabled(RoleId roleId, bool disabled) external;
-
-    /// @dev Grant the specified account the provided role.
-    /// Permissioned: the caller must have the roles admin role.
-    // TODO move to instance admin
-    // function grantRole(address account, RoleId roleId) external;
-
-    /// @dev Revoke the provided role from the specified account.
-    /// Permissioned: the caller must have the roles admin role.
-    // TODO move to instance admin
-    // function revokeRole(address account, RoleId roleId) external;
-
-    /// @dev Removes the provided role from the caller
-    // TODO move to instance admin
-    // function renounceRole(RoleId roleId) external;
-
-    /// @dev Set the locked status of the speicified contract.
-    /// IMPORTANT: using this function the AccessManager might itself be put into locked state from which it cannot be unlocked again.
-    /// Overwrite this function if a different use case specific behaviour is required.
-    /// Alternatively, add specific function to just unlock this contract without a restricted() modifier.
-    /// Permissioned: the caller must have the manager role (getManagerRole).
-    // TODO move to instance admin
-    // function setTargetLocked(address target, bool locked) external;
-
-    /// @dev Specifies which functions of the target can be accessed by the provided role.
-    /// Previously existing authorizations will be overwritten.
-    /// Authorizing the admin role is not allowed, use function unauthorizedFunctions for this.
-    /// Permissioned: the caller must have the manager role (getManagerRole).
-    // TODO move to instance admin
-    // function authorizeFunctions(address target, RoleId roleId, FunctionInfo[] memory functions) external;
-
-    /// @dev Specifies for which functionss to remove any previous authorization
-    /// Permissioned: the caller must have the manager role (getManagerRole).
-    // TODO move to instance admin
-    // function unauthorizeFunctions(address target, FunctionInfo[] memory functions) external;
 
     //--- view functions ----------------------------------------------------//
 

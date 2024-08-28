@@ -48,7 +48,7 @@ contract ServiceAuthorization is
           return _serviceDomains;
      }
 
-     function getServiceDomain(uint idx) external view returns(ObjectType serviceDomain) {
+     function getServiceDomain(uint256 idx) external view returns(ObjectType serviceDomain) {
           return _serviceDomains[idx];
      }
 
@@ -74,9 +74,11 @@ contract ServiceAuthorization is
 
 
      /// @dev Overwrite this function for a specific realease.
+     // solhint-disable-next-line no-empty-blocks
      function _setupDomains() internal virtual {}
 
      /// @dev Overwrite this function for a specific realease.
+     // solhint-disable-next-line no-empty-blocks
      function _setupDomainAuthorizations() internal virtual {}
 
      /// @dev Use this method to to add an authorized domain.

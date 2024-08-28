@@ -11,6 +11,7 @@ import {INftOwnable} from "../../../contracts/shared/INftOwnable.sol";
 import {ComponentService} from "../../../contracts/shared/ComponentService.sol";
 import {GifTest} from "../../base/GifTest.sol";
 import {FeeLib} from "../../../contracts/type/Fee.sol";
+import {InstanceAuthzBaseTest} from "./InstanceAuthzBase.t.sol";
 import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
 import {RoleId,RoleIdLib, ADMIN_ROLE, INSTANCE_OWNER_ROLE} from "../../../contracts/type/RoleId.sol";
 import {SimplePool} from "../../../contracts/examples/unpermissioned/SimplePool.sol";
@@ -18,9 +19,9 @@ import {SimpleProduct} from "../../../contracts/examples/unpermissioned/SimplePr
 import {TimestampLib} from "../../../contracts/type/Timestamp.sol";
 import {UFixedLib} from "../../../contracts/type/UFixed.sol";
 
-contract InstanceAuthzRolesTest is GifTest {
+contract InstanceAuthzRolesTest is InstanceAuthzBaseTest {
 
-    function test_instanceAuthzSetup() public {
+    function test_instanceAuthzRolesSetup() public {
         _printRoles();
 
         // check initial roles
@@ -627,23 +628,5 @@ contract InstanceAuthzRolesTest is GifTest {
         // THEN nothing happened
         assertTrue(instanceReader.isRoleMember(myCustomRoleId, someAccount), "some account not role member (before)");
         assertEq(instanceReader.roleMembers(myCustomRoleId), 1, "unexpected role member count (before)");
-    }
-
-
-    //--- helper functions ----------------------------------------------------//
-
-    function _createRole(string memory roleName, RoleId adminRole, uint32 maxMemberCount) internal returns (RoleId) {
-        vm.prank(instanceOwner);
-        return instance.createRole(roleName, adminRole, maxMemberCount);
-    }
-
-
-    function _printRoles() internal {
-        // print roles
-        for(uint256 i = 0; i < instanceReader.roles(); i++) {
-            RoleId roleId = instanceReader.getRoleId(i);
-            IAccess.RoleInfo memory roleInfo = instanceReader.getRoleInfo(roleId);
-            console.log("role", i, roleId.toInt(), roleInfo.name.toString());
-        }
     }
 }

@@ -107,7 +107,7 @@ contract Authorization is
         return _serviceDomains;
     }
 
-    function getComponentRole(ObjectType componentDomain) public view returns(RoleId roleId) {
+    function getComponentRole(ObjectType componentDomain) public pure returns(RoleId roleId) {
         return RoleIdLib.toComponentRoleId(componentDomain, 0);
     }
 
@@ -149,7 +149,7 @@ contract Authorization is
         return _tokenHandlerTarget;
     }
 
-    function getTarget(string memory targetName) public view returns(Str target) {
+    function getTarget(string memory targetName) public pure returns(Str target) {
         return StrLib.toStr(targetName);
     }
 

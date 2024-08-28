@@ -234,7 +234,7 @@ contract AccessAdmin is
         return _roleForName[StrLib.toStr(name)].roleId;
     }
 
-    function getRoleInfo(RoleId roleId) external view returns (RoleInfo memory) {
+    function getRoleInfo(RoleId roleId) public view returns (RoleInfo memory) {
         return _roleInfo[roleId];
     }
 
@@ -702,21 +702,21 @@ contract AccessAdmin is
         }
     }
 
+    // TODO cleanup
+    // function _checkIsRegistered( 
+    //     address registry,
+    //     address target,
+    //     ObjectType expectedType
+    // )
+    //     internal
+    //     view
+    // {
+    //     AccessAdminLib.checkIsRegistered(registry, target, expectedType);
+    // }
 
-    function _checkIsRegistered( 
-        address registry,
-        address target,
-        ObjectType expectedType
-    )
-        internal
-        view
-    {
-        AccessAdminLib.checkIsRegistered(registry, target, expectedType);
-    }
-
-    function _checkRegistry(address registry) internal view {
-        if (!ContractLib.isRegistry(registry)) {
-            revert ErrorAccessAdminNotRegistry(registry);
-        }
-    }
+    // function _checkRegistry(address registry) internal view {
+    //     if (!ContractLib.isRegistry(registry)) {
+    //         revert ErrorAccessAdminNotRegistry(registry);
+    //     }
+    // }
 }

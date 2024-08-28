@@ -24,6 +24,7 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
         IAccess.FunctionInfo[] memory functions
     )
         public
+        pure
         returns (
             bytes4[] memory selectors
         )
@@ -113,7 +114,6 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
                 revert IAccessAdmin.ErrorAccessAdminTargetAuthorityMismatch(accessAdmin.authority(), targetAuthority);
             }
         }
-
     }
 
 
@@ -160,6 +160,8 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
         public
         view 
     {
+        checkRegistry(registry);
+
         ObjectType tagetType = IRegistry(registry).getObjectInfo(target).objectType;
         if (tagetType.eqz()) {
             revert IAccessAdmin.ErrorAccessAdminNotRegistered(target);
@@ -167,6 +169,18 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
 
         if (tagetType != expectedType) {
             revert IAccessAdmin.ErrorAccessAdminTargetTypeMismatch(target, expectedType, tagetType);
+        }
+    }
+
+
+    function checkRegistry(
+        address registry
+    )
+        public
+        view
+    {
+        if (!ContractLib.isRegistry(registry)) {
+            revert IAccessAdmin.ErrorAccessAdminNotRegistry(registry);
         }
     }
 
