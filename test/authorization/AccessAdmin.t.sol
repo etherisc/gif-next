@@ -296,8 +296,8 @@ contract AccessAdminTest is AccessAdminBaseTest {
         // WHEN (empty)
         // THEN
         RoleId adminRole = accessAdmin.getAdminRole();
-        assertTrue(accessAdmin.isRoleMember(address(accessAdmin), adminRole), "access admin contract does not have admin role");
-        assertFalse(accessAdmin.isRoleMember(accessAdminDeployer, adminRole), "access admin deployer does have admin role");
+        assertTrue(accessAdmin.isRoleMember(adminRole, address(accessAdmin)), "access admin contract does not have admin role");
+        assertFalse(accessAdmin.isRoleMember(adminRole, accessAdminDeployer), "access admin deployer does have admin role");
 
         // some more checks on access admin
         _checkAccessAdmin(accessAdmin, accessAdminDeployer);
@@ -680,7 +680,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         vm.stopPrank();
 
         // THEN
-        assertTrue(accessAdmin.isRoleMember(roleAdmin, newAdminRoleId), "roleAdmin not having new role admin role");
+        assertTrue(accessAdmin.isRoleMember(newAdminRoleId, roleAdmin), "roleAdmin not having new role admin role");
 
         _checkRole(
             accessAdmin,
@@ -734,7 +734,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
             roleNameBase);
 
         // THEN
-        assertTrue(accessAdmin.isRoleMember(roleAdmin, newAdminRoleId), "roleAdmin not having new role admin role");
+        assertTrue(accessAdmin.isRoleMember(newAdminRoleId, roleAdmin), "roleAdmin not having new role admin role");
 
         _checkRole(
             accessAdmin,
@@ -1008,9 +1008,9 @@ contract AccessAdminTest is AccessAdminBaseTest {
     {
         // GIVEN
         RoleId adminRoleId = aa.getRoleInfo(roleId).adminRoleId;
-        assertFalse(aa.isRoleMember(account1, roleId), "account1 already has role");
-        assertFalse(aa.isRoleMember(account1, adminRoleId), "account1 is role admin");
-        assertTrue(aa.isRoleMember(roleAdmin, adminRoleId), "role admin is not role admin");
+        assertFalse(aa.isRoleMember(roleId, account1), "account1 already has role");
+        assertFalse(aa.isRoleMember(adminRoleId, account1), "account1 is role admin");
+        assertTrue(aa.isRoleMember(adminRoleId, roleAdmin), "role admin is not role admin");
 
         // WHEN - grant role
         vm.startPrank(roleAdmin);
@@ -1019,10 +1019,10 @@ contract AccessAdminTest is AccessAdminBaseTest {
         vm.stopPrank();
 
         // THEN (grant)
-        assertTrue(aa.isRoleMember(account1, roleId), "outsider has not been granted role");
-        assertTrue(aa.isRoleMember(account2, roleId), "outsider2 has not been granted role");
-        assertFalse(aa.isRoleMember(account1, adminRoleId), "outsider is role admin");
-        assertFalse(aa.isRoleMember(account2, adminRoleId), "outsider2 is role admin");
+        assertTrue(aa.isRoleMember(roleId, account1), "outsider has not been granted role");
+        assertTrue(aa.isRoleMember(roleId, account2), "outsider2 has not been granted role");
+        assertFalse(aa.isRoleMember(adminRoleId, account1), "outsider is role admin");
+        assertFalse(aa.isRoleMember(adminRoleId, account2), "outsider2 is role admin");
 
         // WHEN - revoke role
         vm.startPrank(roleAdmin);
@@ -1030,8 +1030,8 @@ contract AccessAdminTest is AccessAdminBaseTest {
         vm.stopPrank();
 
         // THEN (revoke)
-        assertFalse(aa.isRoleMember(account1, roleId), "outsider still has role");
-        assertFalse(aa.isRoleMember(account1, adminRoleId), "outsider is role admin");
+        assertFalse(aa.isRoleMember(roleId, account1), "outsider still has role");
+        assertFalse(aa.isRoleMember(adminRoleId, account1), "outsider is role admin");
 
         // WHEN - renounce role
         vm.startPrank(account2);
@@ -1039,8 +1039,8 @@ contract AccessAdminTest is AccessAdminBaseTest {
         vm.stopPrank();
 
         // THEN (renounce)
-        assertFalse(aa.isRoleMember(account2, roleId), "outsider2 still has role");
-        assertFalse(aa.isRoleMember(account2, adminRoleId), "outsider2 is role admin");
+        assertFalse(aa.isRoleMember(roleId, account2), "outsider2 still has role");
+        assertFalse(aa.isRoleMember(adminRoleId, account2), "outsider2 is role admin");
     }
 
 
@@ -1056,19 +1056,19 @@ contract AccessAdminTest is AccessAdminBaseTest {
         assertEq(aa.deployer(), expectedDeployer, "unexpected deployer");
 
         // check aa roles
-        assertTrue(aa.isRoleMember(address(aa), aa.getAdminRole()), "access admin missing admin role");
-        assertFalse(aa.isRoleMember(address(aa), aa.getManagerRole()), "access admin has manager role");
-        assertTrue(aa.isRoleMember(address(aa), aa.getPublicRole()), "access admin missing public role");
+        assertTrue(aa.isRoleMember(aa.getAdminRole(), address(aa)), "access admin missing admin role");
+        assertFalse(aa.isRoleMember(aa.getManagerRole(), address(aa)), "access admin has manager role");
+        assertTrue(aa.isRoleMember(aa.getPublicRole(), address(aa)), "access admin missing public role");
 
         // check deployer roles
-        assertFalse(aa.isRoleMember(expectedDeployer, aa.getAdminRole()), "deployer has admin role");
-        assertTrue(aa.isRoleMember(expectedDeployer, aa.getManagerRole()), "deployer missing manager role");
-        assertTrue(aa.isRoleMember(expectedDeployer, aa.getPublicRole()), "deployer missing public role");
+        assertFalse(aa.isRoleMember(aa.getAdminRole(), expectedDeployer), "deployer has admin role");
+        assertTrue(aa.isRoleMember(aa.getManagerRole(), expectedDeployer), "deployer missing manager role");
+        assertTrue(aa.isRoleMember(aa.getPublicRole(), expectedDeployer), "deployer missing public role");
 
         // check outsider roles
-        assertFalse(aa.isRoleMember(outsider, aa.getAdminRole()), "outsider has admin role");
-        assertFalse(aa.isRoleMember(outsider, aa.getManagerRole()), "outsider has manager role");
-        assertTrue(aa.isRoleMember(outsider, aa.getPublicRole()), "outsider missing public role");
+        assertFalse(aa.isRoleMember(aa.getAdminRole(), outsider), "outsider has admin role");
+        assertFalse(aa.isRoleMember(aa.getManagerRole(), outsider), "outsider has manager role");
+        assertTrue(aa.isRoleMember(aa.getPublicRole(), outsider), "outsider missing public role");
 
         // count roles and check role ids
         assertEq(aa.roles(), 3, "unexpected number of roles for freshly initialized access admin");

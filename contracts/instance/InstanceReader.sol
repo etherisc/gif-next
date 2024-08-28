@@ -596,14 +596,21 @@ contract InstanceReader {
         return _instance.getInstanceAdmin().isRoleActive(roleId);
     }
 
+    function roleMembers(RoleId roleId) public view returns (uint256 numberOfMembers) {
+        return _instance.getInstanceAdmin().roleMembers(roleId);
+    }
 
-    function isRoleMember(address account, RoleId roleId) public view returns (bool isMember) {
-        return _instance.getInstanceAdmin().isRoleMember(account, roleId);
+    function getRoleMember(RoleId roleId, uint256 idx) public view returns (address account) {
+        return _instance.getInstanceAdmin().getRoleMember(roleId, idx);
+    }
+
+    function isRoleMember(RoleId roleId, address account) public view returns (bool isMember) {
+        return _instance.getInstanceAdmin().isRoleMember(roleId, account);
     }
 
 
-    function isRoleAdmin(address account, RoleId roleId) public view returns (bool isMember) {
-        return _instance.getInstanceAdmin().isRoleAdmin(account, roleId);
+    function isRoleAdmin(RoleId roleId, address account) public view returns (bool isMember) {
+        return _instance.getInstanceAdmin().isRoleAdmin(roleId, account);
     }
 
 

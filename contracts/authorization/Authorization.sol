@@ -179,22 +179,27 @@ contract Authorization is
 
     /// @dev Sets up the relevant service targets for the component.
     /// Overwrite this function for use case specific authorizations.
+    // solhint-disable-next-line no-empty-blocks
     function _setupServiceTargets() internal virtual { }
 
     /// @dev Sets up the relevant (non-service) targets for the component.
     /// Overwrite this function for use case specific authorizations.
+    // solhint-disable-next-line no-empty-blocks
     function _setupTargets() internal virtual { }
 
     /// @dev Sets up the relevant roles for the component.
     /// Overwrite this function for use case specific authorizations.
+    // solhint-disable-next-line no-empty-blocks
     function _setupRoles() internal virtual {}
 
     /// @dev Sets up the relevant component's token handler authorizations.
     /// Overwrite this function for use case specific authorizations.
+    // solhint-disable-next-line no-empty-blocks
     function _setupTokenHandlerAuthorizations() internal virtual {}
 
     /// @dev Sets up the relevant target authorizations for the component.
     /// Overwrite this function for use case specific authorizations.
+    // solhint-disable-next-line no-empty-blocks
     function _setupTargetAuthorizations() internal virtual {}
 
     function _addGifContractTarget(string memory contractName) internal {

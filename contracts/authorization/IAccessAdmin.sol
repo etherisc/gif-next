@@ -11,7 +11,6 @@ import {IRelease} from "../registry/IRelease.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType} from "../type/ObjectType.sol";
 import {RoleId} from "../type/RoleId.sol";
-import {Selector} from "../type/Selector.sol";
 import {Str} from "../type/String.sol";
 import {VersionPart} from "../type/Version.sol";
 
@@ -156,8 +155,8 @@ interface IAccessAdmin is
     function isRoleActive(RoleId roleId) external view returns (bool isActive);
     function isRoleCustom(RoleId roleId) external view returns (bool isCustom);
 
-    function isRoleMember(address account, RoleId roleId) external view returns (bool);
-    function isRoleAdmin(address account, RoleId roleId) external view returns (bool);
+    function isRoleMember(RoleId roleId, address account) external view returns (bool);
+    function isRoleAdmin(RoleId roleId, address account) external view returns (bool);
     function roleMembers(RoleId roleId) external view returns (uint256 numberOfMembers);
     function getRoleMember(RoleId roleId, uint256 idx) external view returns (address account);
 

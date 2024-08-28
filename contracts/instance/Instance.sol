@@ -37,7 +37,7 @@ contract Instance is
     NftId [] internal _products;
 
 
-    modifier onlyRoleAdmin(RoleId roleId) {
+    modifier onlyCustomRoleAdmin(RoleId roleId) {
         if (!_instanceAdmin.isRoleCustom(roleId)) {
             revert ErrorInstanceNotCustomRole(roleId);
         }
@@ -45,7 +45,7 @@ contract Instance is
         // instance owner can always act as role admin
         address account = msg.sender;
         if (account != getOwner()) {
-            if (!_instanceAdmin.isRoleAdmin(account, roleId)) {
+            if (!_instanceAdmin.isRoleAdmin(roleId, account)) {
                 revert ErrorInstanceNotRoleAdmin(roleId, account);
             }
         }
@@ -187,7 +187,8 @@ contract Instance is
         onlyOwner()
         returns (RoleId roleId)
     {
-        return _instanceService.createRole(roleName, adminRoleId, maxMemberCount);
+        roleId = _instanceService.createRole(roleName, adminRoleId, maxMemberCount);
+        emit LogInstanceCustomRoleCreated(roleId, roleName, adminRoleId, maxMemberCount);
     }
 
 
@@ -195,9 +196,10 @@ contract Instance is
     function setRoleActive(RoleId roleId, bool active)
         external 
         restricted()
-        onlyRoleAdmin(roleId)
+        onlyCustomRoleAdmin(roleId)
     {
         _instanceService.setRoleActive(roleId, active);
+        emit LogInstanceCustomRoleActiveSet(roleId, active, msg.sender);
     }
 
 
@@ -205,9 +207,10 @@ contract Instance is
     function grantRole(RoleId roleId, address account) 
         external 
         restricted()
-        onlyRoleAdmin(roleId)
+        onlyCustomRoleAdmin(roleId)
     {
         _instanceService.grantRole(roleId, account);
+        emit LogInstanceCustomRoleGranted(roleId, account, msg.sender);
     }
 
 
@@ -215,9 +218,10 @@ contract Instance is
     function revokeRole(RoleId roleId, address account) 
         external 
         restricted()
-        onlyRoleAdmin(roleId)
+        onlyCustomRoleAdmin(roleId)
     {
-        _instanceService.grantRole(roleId, account);
+        _instanceService.revokeRole(roleId, account);
+        emit LogInstanceCustomRoleRevoked(roleId, account, msg.sender);
     }
 
     //--- Targets ------------------------------------------------------------//

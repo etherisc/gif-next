@@ -15,7 +15,7 @@ import {ContractLib} from "../shared/ContractLib.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
 import {ObjectType} from "../type/ObjectType.sol";
 import {RoleId, RoleIdLib, ADMIN_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
-import {Selector, SelectorLib, SelectorSetLib} from "../type/Selector.sol";
+import {Selector, SelectorSetLib} from "../type/Selector.sol";
 import {Str, StrLib} from "../type/String.sol";
 import {TimestampLib} from "../type/Timestamp.sol";
 import {VersionPart} from "../type/Version.sol";
@@ -254,21 +254,20 @@ contract AccessAdmin is
         return _roleMembers[roleId].at(idx);
     }
 
-    // TODO false because not role member or because role not exists?
-    function isRoleMember(address account, RoleId roleId) public view returns (bool) {
+    function isRoleMember(RoleId roleId, address account) public view returns (bool) {
         (bool isMember, ) = _authority.hasRole(
             RoleId.unwrap(roleId), 
             account);
         return isMember;
     }
 
-    function isRoleAdmin(address account, RoleId roleId)
+    function isRoleAdmin(RoleId roleId, address account)
         public 
         virtual
         view 
         returns (bool)
     {
-        return isRoleMember(account, _roleInfo[roleId].adminRoleId);
+        return isRoleMember(_roleInfo[roleId].adminRoleId, account);
     }
 
     //--- view functions for targets ----------------------------------------//
@@ -514,7 +513,7 @@ contract AccessAdmin is
             revert ErrorAccessAdminRoleMemberNotContract(roleId, account);
         }
 
-        // TODO check account already have roleId
+        // effects
         _roleMembers[roleId].add(account);
         _authority.grantRole(
             RoleId.unwrap(roleId), 
@@ -535,7 +534,7 @@ contract AccessAdmin is
             revert ErrorAccessAdminRoleMemberRemovalDisabled(roleId, account);
         }
 
-        // TODO check account have roleId?
+        // effects
         _roleMembers[roleId].remove(account);
         _authority.revokeRole(
             RoleId.unwrap(roleId), 

@@ -17,6 +17,12 @@ import {UFixed} from "../type/UFixed.sol";
 interface IInstance is 
     IRegisterable
 {
+    // role handling
+    event LogInstanceCustomRoleCreated(RoleId roleId, string roleName, RoleId adminRoleId, uint32 maxMemberCount);
+    event LogInstanceCustomRoleActiveSet(RoleId roleId, bool active, address caller);
+    event LogInstanceCustomRoleGranted(RoleId roleId, address account, address caller);
+    event LogInstanceCustomRoleRevoked(RoleId roleId, address account, address caller);
+
     // modifier is onlyRoleAdmin
     error ErrorInstanceNotCustomRole(RoleId roleId);
     error ErrorInstanceNotRoleAdmin(RoleId roleId, address account);
