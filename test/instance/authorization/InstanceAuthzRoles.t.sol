@@ -555,6 +555,81 @@ contract InstanceAuthzRolesTest is GifTest {
         assertEq(instanceReader.roleMembers(myCustomRoleId), 0, "unexpected role member count (after)");
     }
 
+
+    function test_instanceAuthzRolesRevokeRoleAdminHappyCase() public {
+        // GIVEN 
+        RoleId myCustomAdminRoleId = _createRole("MyCustomAdminRole", INSTANCE_OWNER_ROLE(), 1);
+        RoleId myCustomRoleId = _createRole("MyCustomRole", myCustomAdminRoleId, 42);
+        address someAdminAccount = makeAddr("someAdminAccount");
+        address someAccount1 = makeAddr("someAccount1");
+        address someAccount2 = makeAddr("someAccount2");
+
+        vm.prank(instanceOwner);
+        instance.grantRole(myCustomAdminRoleId, someAdminAccount);
+
+        vm.startPrank(someAdminAccount);
+        instance.grantRole(myCustomRoleId, someAccount1);
+        instance.grantRole(myCustomRoleId, someAccount2);
+        vm.stopPrank();
+
+        assertTrue(instanceReader.isRoleMember(myCustomAdminRoleId, someAdminAccount), "some admin account unexpectedly role member (before)");
+        assertTrue(instanceReader.isRoleMember(myCustomRoleId, someAccount1), "some account1 unexpectedly role member (before)");
+        assertTrue(instanceReader.isRoleMember(myCustomRoleId, someAccount2), "some account2 unexpectedly role member (before)");
+        assertEq(instanceReader.roleMembers(myCustomAdminRoleId), 1, "unexpected admin role member count (before)");
+        assertEq(instanceReader.roleMembers(myCustomRoleId), 2, "unexpected role member count (before)");
+
+        // WHEN revoke by role admin
+        vm.prank(someAdminAccount);
+        instance.revokeRole(myCustomRoleId, someAccount1);
+
+        // THEN
+        assertTrue(instanceReader.isRoleMember(myCustomAdminRoleId, someAdminAccount), "some admin account unexpectedly role member (after1)");
+        assertFalse(instanceReader.isRoleMember(myCustomRoleId, someAccount1), "some account1 unexpectedly role member (after1)");
+        assertTrue(instanceReader.isRoleMember(myCustomRoleId, someAccount2), "some account2 unexpectedly role member (after1)");
+        assertEq(instanceReader.roleMembers(myCustomAdminRoleId), 1, "unexpected admin role member count (after1)");
+        assertEq(instanceReader.roleMembers(myCustomRoleId), 1, "unexpected role member count (after1)");
+
+        // WHEN revoke by instance owner
+        vm.prank(instanceOwner);
+        instance.revokeRole(myCustomRoleId, someAccount2);
+
+        // THEN
+        assertTrue(instanceReader.isRoleMember(myCustomAdminRoleId, someAdminAccount), "some admin account unexpectedly role member (after2)");
+        assertFalse(instanceReader.isRoleMember(myCustomRoleId, someAccount1), "some account1 unexpectedly role member (after2)");
+        assertFalse(instanceReader.isRoleMember(myCustomRoleId, someAccount2), "some account2 unexpectedly role member (after2)");
+        assertEq(instanceReader.roleMembers(myCustomAdminRoleId), 1, "unexpected admin role member count (after2)");
+        assertEq(instanceReader.roleMembers(myCustomRoleId), 0, "unexpected role member count (after2)");
+    }
+
+
+    function test_instanceAuthzRolesRevokeNotRoleAdmin() public {
+        // GIVEN 
+        RoleId myCustomRoleId = _createRole("MyCustomRole", INSTANCE_OWNER_ROLE(), 42);
+        address someAdminAccount = makeAddr("someAdminAccount");
+        address someAccount = makeAddr("someAccount");
+
+        vm.prank(instanceOwner);
+        instance.grantRole(myCustomRoleId, someAccount);
+
+        assertTrue(instanceReader.isRoleMember(myCustomRoleId, someAccount), "some account not role member (before)");
+        assertEq(instanceReader.roleMembers(myCustomRoleId), 1, "unexpected role member count (before)");
+
+        // WHEN + THEN
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IInstance.ErrorInstanceNotRoleAdmin.selector,
+                myCustomRoleId, 
+                someAdminAccount));
+
+        vm.prank(someAdminAccount);
+        instance.revokeRole(myCustomRoleId, someAccount);
+
+        // THEN nothing happened
+        assertTrue(instanceReader.isRoleMember(myCustomRoleId, someAccount), "some account not role member (before)");
+        assertEq(instanceReader.roleMembers(myCustomRoleId), 1, "unexpected role member count (before)");
+    }
+
+
     //--- helper functions ----------------------------------------------------//
 
     function _createRole(string memory roleName, RoleId adminRole, uint32 maxMemberCount) internal returns (RoleId) {
