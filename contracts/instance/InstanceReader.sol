@@ -25,6 +25,7 @@ import {InstanceStore} from "./InstanceStore.sol";
 import {Key32} from "../type/Key32.sol";
 import {NftId} from "../type/NftId.sol";
 import {PayoutId, PayoutIdLib} from "../type/PayoutId.sol";
+import {PolicyServiceLib} from "../product/PolicyServiceLib.sol";
 import {ReferralId, ReferralStatus, ReferralLib} from "../type/Referral.sol";
 import {RequestId} from "../type/RequestId.sol";
 import {RiskId} from "../type/RiskId.sol";
@@ -190,14 +191,15 @@ contract InstanceReader {
         view
         returns (bool isCloseable)
     {
-        IPolicy.PolicyInfo memory info = getPolicyInfo(policyNftId);
+        // TODO cleanup
+        // IPolicy.PolicyInfo memory info = getPolicyInfo(policyNftId);
 
-        if (info.productNftId.eqz()) { return false; } // not closeable: policy does not exist (or does not belong to this instance)
-        if (info.activatedAt.eqz()) { return false; } // not closeable: not yet activated
-        if (info.activatedAt > TimestampLib.blockTimestamp()) { return false; } // not yet active
-        if (info.expiredAt <= TimestampLib.blockTimestamp()) { return false; } // already expired
+        // if (info.productNftId.eqz()) { return false; } // not closeable: policy does not exist (or does not belong to this instance)
+        // if (info.activatedAt.eqz()) { return false; } // not closeable: not yet activated
+        // if (info.activatedAt > TimestampLib.blockTimestamp()) { return false; } // not yet active
+        // if (info.expiredAt <= TimestampLib.blockTimestamp()) { return false; } // already expired
 
-        return true;
+        return PolicyServiceLib.policyIsActive(this, policyNftId);
     }
 
     function claims(NftId policyNftId)

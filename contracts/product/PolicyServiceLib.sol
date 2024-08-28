@@ -10,6 +10,27 @@ import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
 
 library PolicyServiceLib {
 
+    function policyIsActive(InstanceReader instanceReader, NftId policyNftId)
+        external 
+        view
+        returns (bool isActive)
+    {
+        // policy not collateralized
+        if (instanceReader.getPolicyState(policyNftId) != COLLATERALIZED()) {
+            return false;
+        }
+
+        IPolicy.PolicyInfo memory info = instanceReader.getPolicyInfo(policyNftId);
+
+        if (info.productNftId.eqz()) { return false; } // not closeable: policy does not exist (or does not belong to this instance)
+        if (info.activatedAt.eqz()) { return false; } // not closeable: not yet activated
+        if (info.activatedAt > TimestampLib.blockTimestamp()) { return false; } // not yet active
+        if (info.expiredAt <= TimestampLib.blockTimestamp()) { return false; } // already expired
+
+        return true;
+    }
+
+
     function checkExpiration(
         Timestamp newExpiredAt,
         NftId policyNftId,

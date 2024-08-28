@@ -362,7 +362,7 @@ contract StakingTest is GifTest {
         UFixed rewardRate = stakingReader.getTargetInfo(instanceNftId).rewardRate;
         (
             Amount rewardIncrease,
-        ) = StakeManagerLib.calculateRewardIncrease(
+        ) = StakingLib.calculateRewardIncrease(
             stakingReader,
             stakeNftId,
             rewardRate);

@@ -164,11 +164,11 @@ export async function deployAndRegisterMasterInstance(
                 DistributorTypeLib: libraries.distributorTypeLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
                 PayoutIdLib: libraries.payoutIdLibAddress,
+                PolicyServiceLib: libraries.policyServiceLibAddress,
                 ReferralLib: libraries.referralLibAddress,
                 RequestIdLib: libraries.requestIdLibAddress,
                 RiskIdLib: libraries.riskIdLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
-                TimestampLib: libraries.timestampLibAddress,
                 UFixedLib: libraries.uFixedLibAddress,
             }
         }
