@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 /// @dev UFixed is a fixed point number with 18 decimals precision.
-type UFixed is uint256;
+type UFixed is uint256; // TODO: change to 128-bit for storage optimization
 
 using {
     addUFixed as +,
