@@ -2,6 +2,7 @@ import { ValidateUpdateRequiresKindError } from "@openzeppelin/upgrades-core";
 import { logger } from "./logger";
 import { exec } from "child_process";
 import fs from "fs";
+import { ITokenRegistryHelper__factory } from "../typechain-types";
 
 async function main() {
     exec('forge inspect MockStorageLayout storageLayout',
@@ -31,6 +32,22 @@ function prettyPrintStorageLayout(storageLayoutRawJson: string) {
     types.forEach((type) => {
         logger.info(`${type.id} - ${type.name} - ${type.size}`);
     });
+
+    // types to CSV
+    let csv = 'id,name,size,member_name,offset,slot,type\n';
+    types.forEach((type) => {
+        csv += `${type.id},${type.name},${type.size}`;
+        if (type.hasMembers) {
+            csv += `,,,\n`;
+            for (let member of type.members) {
+                csv += `,,,${member.name},${member.offset},${member.slot},${member.type}\n`;
+            }
+        } else {
+            csv += `,,,\n`;
+        }
+    });
+
+    fs.writeFileSync('storage_layout.csv', csv);
 }
 
 function getFields(storageLayout: any) {
@@ -55,17 +72,20 @@ function getTypes(storageLayout: any) {
             name: value.label,
             size: value.numberOfBytes,
             hasMembers: false,
-            members: {},
+            members: [] as any[],
         };
         if (value.members) {
-            // logger.debug(value.members);
-            t.hasMembers = true;
-            t.members = {
-                name: value.members.label,
-                offset: value.members.offset,
-                slot: value.members.slot,
-                type: value.members
-            };
+            for (let member in value.members) {
+                // logger.debug(member);
+                let memberValue = value.members[member];
+                t.hasMembers = true;
+                t.members.push({
+                    name: memberValue.label,
+                    offset: memberValue.offset,
+                    slot: memberValue.slot,
+                    type: memberValue.type,
+                });
+            }
         }
         types.push(t);
     }
