@@ -67,11 +67,11 @@ interface IPolicy {
     struct ClaimInfo {
         Amount claimAmount;
         Amount paidAmount;
+        Timestamp closedAt; // payment of confirmed claim amount (or declinedAt)
         uint24 payoutsCount;
         uint24 openPayoutsCount;
         bytes submissionData; // use case specific claim submission data, no changes after submitting the claim
         bytes processData; // use case specific data that may include information supporting confirm or decline
-        Timestamp closedAt; // payment of confirmed claim amount (or declinedAt)
     }
 
     // claimId neeeds to be encoded policyNftId:claimId combination
