@@ -192,6 +192,19 @@ contract TestProductRegistration is GifTest {
         instance.registerProduct(address(myProduct), address(notWhitelistedToken));
     }
 
+    function test_productRegister_tokenNotWhitelistedCheckDisabled() public {
+        // GIVEN - a new instance with token registry disabled
+        vm.startPrank(instanceOwner);
+
+        (instance, instanceNftId) = instanceService.createInstance(true);
+
+        SimpleProduct myProduct = _deployProductDefault("MyProduct");
+        Usdc notWhitelistedToken = new Usdc();
+
+        // WHEN + THEN (no revert)
+        instance.registerProduct(address(myProduct), address(notWhitelistedToken));
+    }
+
     function _deployProductDefault(string memory name) internal returns(SimpleProduct) {
         return _deployProduct(name, myProductOwner, false, 0);
     }
