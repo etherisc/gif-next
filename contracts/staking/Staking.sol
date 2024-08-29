@@ -38,8 +38,8 @@ contract Staking is
 {
     string public constant CONTRACT_NAME = "Staking";
 
-    // keccak256(abi.encode(uint256(keccak256("gif-next.contracts.component.Staking.sol")) - 1)) & ~bytes32(uint256(0xff));
-    bytes32 public constant STAKING_LOCATION_V1 = 0xafe8d4462b2ed26a47154f4b8f6d1497d2f772496965791d25bd456e342b7f00;
+    // keccak256(abi.encode(uint256(keccak256("etherisc.gif.Staking@3.0.0")) - 1)) & ~bytes32(uint256(0xff));
+    bytes32 public constant STAKING_STORAGE_LOCATION_V3_0 = 0x17325792392c6ffb9e46de8a113aab40b12e7804b80f435c7c40612bd5653400;
 
     struct StakingStorage {
         TokenRegistry _tokenRegistry;
@@ -791,7 +791,7 @@ contract Staking is
 
     function _getStakingStorage() private pure returns (StakingStorage storage $) {
         assembly {
-            $.slot := STAKING_LOCATION_V1
+            $.slot := STAKING_STORAGE_LOCATION_V3_0
         }
     }
 }

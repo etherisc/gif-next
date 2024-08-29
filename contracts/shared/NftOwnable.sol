@@ -12,8 +12,8 @@ contract NftOwnable is
     RegistryLinked,
     INftOwnable
 {
-    // keccak256(abi.encode(uint256(keccak256("etherisc.storage.NftOwnable")) - 1)) & ~bytes32(uint256(0xff));
-    bytes32 public constant NFT_OWNABLE_STORAGE_LOCATION_V1 = 0x07ebcf49758b6ed3af50fa146bec0abe157c0218fe65dc0874c286e9d5da4f00;
+    // keccak256(abi.encode(uint256(keccak256("etherisc.storage.NftOwnable@3.0.0")) - 1)) & ~bytes32(uint256(0xff));
+    bytes32 public constant NFT_OWNABLE_STORAGE_LOCATION_V3_0 = 0x75a854a54bf614cac5ba72c2235143229b43a26f8eb448270fb97a467532e300;
 
     struct NftOwnableStorage {
         NftId _nftId;
@@ -123,7 +123,7 @@ contract NftOwnable is
     function _getNftOwnableStorage() private pure returns (NftOwnableStorage storage $) {
         // solhint-disable-next-line no-inline-assembly
         assembly {
-            $.slot := NFT_OWNABLE_STORAGE_LOCATION_V1
+            $.slot := NFT_OWNABLE_STORAGE_LOCATION_V3_0
         }
     }
 }
