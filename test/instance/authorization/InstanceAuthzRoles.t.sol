@@ -25,8 +25,8 @@ contract InstanceAuthzRolesTest is InstanceAuthzBaseTest {
         _printRoles();
 
         // check initial roles
-        assertEq(instanceAdmin.roles(), 15, "unexpected initial instance roles count (admin)");
-        assertEq(instanceReader.roles(), 15, "unexpected initial instance roles count (reader)");
+        assertEq(instanceAdmin.roles(), 19, "unexpected initial instance roles count (admin)");
+        assertEq(instanceReader.roles(), 19, "unexpected initial instance roles count (reader)");
     }
 
     //--- role creation ----------------------------------------------------//

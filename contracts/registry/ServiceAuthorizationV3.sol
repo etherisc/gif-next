@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {
-     ALL, ACCOUNTING, REGISTRY, RISK, ORACLE, POOL, INSTANCE, COMPONENT, DISTRIBUTION, APPLICATION, POLICY, CLAIM, BUNDLE, STAKING, PRICE
+     ALL, RELEASE, ACCOUNTING, REGISTRY, RISK, ORACLE, POOL, INSTANCE, COMPONENT, DISTRIBUTION, APPLICATION, POLICY, CLAIM, BUNDLE, STAKING, PRICE
 } from "../../contracts/type/ObjectType.sol";
 
 import {IAccess} from "../authorization/IAccess.sol";
@@ -19,6 +19,7 @@ import {IPoolService} from "../pool/IPoolService.sol";
 import {IStakingService} from "../staking/IStakingService.sol";
 import {IRegistryService} from "./IRegistryService.sol";
 import {IRiskService} from "../product/IRiskService.sol";
+
 import {ServiceAuthorization} from "../authorization/ServiceAuthorization.sol";
 
 
@@ -27,27 +28,31 @@ contract ServiceAuthorizationV3
 {
 
      constructor(string memory commitHash)
-          ServiceAuthorization(commitHash, 3)
+          ServiceAuthorization(
+               "ReleaseAdmin",
+               RELEASE(),
+               3,
+               commitHash)
      {}
 
      function _setupDomains()
           internal
           override
      {
-          _authorizeDomain(REGISTRY(), address(1));
-          _authorizeDomain(STAKING(), address(2));
-          _authorizeDomain(INSTANCE(), address(3));
-          _authorizeDomain(ACCOUNTING(), address(4));
-          _authorizeDomain(COMPONENT(), address(5));
-          _authorizeDomain(DISTRIBUTION(), address(6));
-          _authorizeDomain(PRICE(), address(7));
-          _authorizeDomain(BUNDLE(), address(8));
-          _authorizeDomain(POOL(), address(9));
-          _authorizeDomain(ORACLE(), address(10));
-          _authorizeDomain(RISK(), address(11));
-          _authorizeDomain(POLICY(), address(12));
-          _authorizeDomain(CLAIM(), address(13));
-          _authorizeDomain(APPLICATION(), address(14));
+          _authorizeServiceDomain(REGISTRY(), address(1));
+          _authorizeServiceDomain(STAKING(), address(2));
+          _authorizeServiceDomain(INSTANCE(), address(3));
+          _authorizeServiceDomain(ACCOUNTING(), address(4));
+          _authorizeServiceDomain(COMPONENT(), address(5));
+          _authorizeServiceDomain(DISTRIBUTION(), address(6));
+          _authorizeServiceDomain(PRICE(), address(7));
+          _authorizeServiceDomain(BUNDLE(), address(8));
+          _authorizeServiceDomain(POOL(), address(9));
+          _authorizeServiceDomain(ORACLE(), address(10));
+          _authorizeServiceDomain(RISK(), address(11));
+          _authorizeServiceDomain(POLICY(), address(12));
+          _authorizeServiceDomain(CLAIM(), address(13));
+          _authorizeServiceDomain(APPLICATION(), address(14));
      }
 
 
@@ -55,7 +60,7 @@ contract ServiceAuthorizationV3
           internal
           override
      {
-          _setupIRegistryServiceAuthorization();
+          _setupRegistryServiceAuthorization();
           _setupStakingServiceAuthorization();
           _setupInstanceServiceAuthorization();
           _setupAccountingServiceAuthorization();
@@ -73,7 +78,7 @@ contract ServiceAuthorizationV3
 
      /// @dev registry service authorization.
      /// authorized functions MUST be implemented with a restricted modifier
-     function _setupIRegistryServiceAuthorization()
+     function _setupRegistryServiceAuthorization()
           internal
      {
           IAccess.FunctionInfo[] storage functions;

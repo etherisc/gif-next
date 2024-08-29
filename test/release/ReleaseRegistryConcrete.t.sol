@@ -45,20 +45,26 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
     // keep identical to IRegistry events
     event LogServiceRegistration(VersionPart majorVersion, ObjectType serviceDomain);
 
-    address public globalRegistry = makeAddr("globalRegistry"); // address of global registry when not on mainnet
-    address public gifAdmin = makeAddr("gifAdmin");
-    address public gifManager = makeAddr("gifManager");
-    address public stakingOwner = makeAddr("stakingOwner");
+    // TODO cleanup
+    // address public globalRegistry = makeAddr("globalRegistry"); // address of global registry when not on mainnet
+    // address public gifAdmin = makeAddr("gifAdmin");
+    // address public gifManager = makeAddr("gifManager");
+    // address public stakingOwner = makeAddr("stakingOwner");
     address public outsider = makeAddr("outsider");
 
-    RegistryAdmin registryAdmin;
-    IRegistry registry;
-    ChainNft chainNft;
-    ReleaseRegistry releaseRegistry;
-    NftId registryNftId;
+    // TODO cleanup
+    // RegistryAdmin registryAdmin;
+    // IRegistry registry;
+    // ChainNft chainNft;
+    // ReleaseRegistry releaseRegistry;
+    // NftId registryNftId;
 
     function setUp() public virtual
     {
+        gifAdmin = makeAddr("gifAdmin");
+        gifManager = makeAddr("gifManager");
+        stakingOwner = makeAddr("stakingOwner");
+
         (
             ,//dip,
             registry,
@@ -516,7 +522,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 NftId serviceNftId = releaseRegistry.registerService(service);
 
                 nextReleaseInfo.state = DEPLOYED();
-                RoleId expectedServiceRoleId = RoleIdLib.roleForTypeAndVersion(REGISTRY(), nextVersion);
+                RoleId expectedServiceRoleId = RoleIdLib.toServiceRoleId(REGISTRY(), nextVersion);
 
                 // check registration
                 assertEq(serviceNftId.toInt(), expectedNftId, "registerService() return unexpected value");
@@ -656,7 +662,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 NftId serviceNftId = releaseRegistry.registerService(service);
 
                 nextReleaseInfo.state = DEPLOYED();
-                RoleId expectedServiceRoleId = RoleIdLib.roleForTypeAndVersion(REGISTRY(), nextVersion);
+                RoleId expectedServiceRoleId = RoleIdLib.toServiceRoleId(REGISTRY(), nextVersion);
 
                 // check registration
                 assertEq(serviceNftId.toInt(), expectedNftId, "registerService() return unexpected value");
@@ -694,7 +700,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 nextReleaseInfo.state = ACTIVE();
                 nextReleaseInfo.activatedAt = TimestampLib.blockTimestamp();
                 nextReleaseInfo.disabledAt = TimestampLib.max();
-                RoleId expectedServiceRoleIdForAllVersions = RoleIdLib.roleForTypeAndAllVersions(REGISTRY());
+                RoleId expectedServiceRoleIdForAllVersions = RoleIdLib.toGenericServiceRoleId(REGISTRY());
 
                 // check activation
                 assertFalse(AccessManagerCloneable(
@@ -816,7 +822,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 NftId serviceNftId = releaseRegistry.registerService(service);
 
                 nextReleaseInfo.state = DEPLOYED();
-                RoleId expectedServiceRoleId = RoleIdLib.roleForTypeAndVersion(REGISTRY(), nextVersion);
+                RoleId expectedServiceRoleId = RoleIdLib.toServiceRoleId(REGISTRY(), nextVersion);
 
                 // check registration
                 assertEq(serviceNftId.toInt(), expectedNftId, "registerService() return unexpected value");
@@ -849,7 +855,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 nextReleaseInfo.state = ACTIVE();
                 nextReleaseInfo.activatedAt = TimestampLib.blockTimestamp();
                 nextReleaseInfo.disabledAt = TimestampLib.max();
-                RoleId expectedServiceRoleIdForAllVersions = RoleIdLib.roleForTypeAndAllVersions(REGISTRY());
+                RoleId expectedServiceRoleIdForAllVersions = RoleIdLib.toGenericServiceRoleId(REGISTRY());
 
                 // check activation 
                 assertFalse(AccessManagerCloneable(ReleaseAdmin(nextReleaseInfo.releaseAdmin)
@@ -982,7 +988,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 NftId serviceNftId = releaseRegistry.registerService(service);
 
                 nextReleaseInfo.state = DEPLOYED();
-                RoleId expectedServiceRoleId = RoleIdLib.roleForTypeAndVersion(REGISTRY(), nextVersion);
+                RoleId expectedServiceRoleId = RoleIdLib.toServiceRoleId(REGISTRY(), nextVersion);
 
                 // check registration
                 assertEq(serviceNftId.toInt(), expectedNftId, "registerService() return unexpected value");
@@ -1016,7 +1022,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
                 nextReleaseInfo.state = ACTIVE();
                 nextReleaseInfo.activatedAt = TimestampLib.blockTimestamp();
                 nextReleaseInfo.disabledAt = TimestampLib.max();
-                RoleId expectedServiceRoleIdForAllVersions = RoleIdLib.roleForTypeAndAllVersions(REGISTRY());
+                RoleId expectedServiceRoleIdForAllVersions = RoleIdLib.toGenericServiceRoleId(REGISTRY());
 
                 // check activation 
                 assertFalse(AccessManagerCloneable(ReleaseAdmin(nextReleaseInfo.releaseAdmin)

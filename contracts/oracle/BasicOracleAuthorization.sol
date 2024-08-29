@@ -14,9 +14,25 @@ contract BasicOracleAuthorization
      is Authorization
 {
 
-     constructor(string memory componentName)
-          Authorization(componentName, ORACLE(), true, false)
+     constructor(
+          string memory componentName,
+          string memory commitHash
+     )
+          Authorization(
+               componentName, 
+               ORACLE(), 
+               3, 
+               commitHash, 
+               true, 
+               false)
      {}
+
+     function _setupServiceTargets()
+          internal
+          virtual override
+     {
+          _authorizeServiceDomain(ORACLE(), address(15));
+     }
 
      function _setupTargetAuthorizations()
           internal

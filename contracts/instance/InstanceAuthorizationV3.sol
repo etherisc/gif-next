@@ -28,22 +28,28 @@ contract InstanceAuthorizationV3
      string public constant RISK_SET_TARGET_NAME = "RiskSet";
 
      constructor()
-          Authorization(INSTANCE_TARGET_NAME, INSTANCE(), false, false)
+          Authorization(
+               INSTANCE_TARGET_NAME, 
+               INSTANCE(), 
+               3, 
+               COMMIT_HASH,
+               false, 
+               false)
      { }
 
      function _setupServiceTargets() internal virtual override {
           // service targets relevant to instance
-          _addServiceTargetWithRole(INSTANCE());
-          _addServiceTargetWithRole(ACCOUNTING());
-          _addServiceTargetWithRole(COMPONENT());
-          _addServiceTargetWithRole(DISTRIBUTION());
-          _addServiceTargetWithRole(ORACLE());
-          _addServiceTargetWithRole(POOL());
-          _addServiceTargetWithRole(BUNDLE());
-          _addServiceTargetWithRole(RISK());
-          _addServiceTargetWithRole(APPLICATION());
-          _addServiceTargetWithRole(POLICY());
-          _addServiceTargetWithRole(CLAIM());
+          _authorizeServiceDomain(INSTANCE(), address(10));
+          _authorizeServiceDomain(ACCOUNTING(), address(11));
+          _authorizeServiceDomain(COMPONENT(), address(12));
+          _authorizeServiceDomain(DISTRIBUTION(), address(13));
+          _authorizeServiceDomain(ORACLE(), address(14));
+          _authorizeServiceDomain(POOL(), address(15));
+          _authorizeServiceDomain(BUNDLE(), address(16));
+          _authorizeServiceDomain(RISK(), address(17));
+          _authorizeServiceDomain(APPLICATION(), address(18));
+          _authorizeServiceDomain(POLICY(), address(19));
+          _authorizeServiceDomain(CLAIM(), address(20));
      }
 
      function _setupRoles()

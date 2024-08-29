@@ -24,7 +24,7 @@ interface IAccessAdmin is
 
     // roles, targets and functions
     event LogAccessAdminRoleCreated(string admin, RoleId roleId, RoleType roleType, RoleId roleAdminId, string name);
-    event LogAccessAdminTargetCreated(string admin, address target, string name);
+    event LogAccessAdminTargetCreated(string admin, string name, bool managed, address target, RoleId roleId);
 
     event LogAccessAdminRoleGranted(string admin, address account, string roleName);
     event LogAccessAdminRoleRevoked(string admin, address account, string roleName);
@@ -49,6 +49,8 @@ interface IAccessAdmin is
     error ErrorAccessAdminAccessManagerEmptyName();
 
     // check target
+    error ErrorAccessAdminInvalidTargetType(address target, TargetType targetType);
+    error ErrorAccessAdminInvalidServiceType(address target, TargetType serviceTargetType);
     error ErrorAccessAdminTargetNotCreated(address target);
     error ErrorAccessAdminTargetNotRegistered(address target);
     error ErrorAccessAdminTargetTypeMismatch(address target, ObjectType expectedType, ObjectType actualType);

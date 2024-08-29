@@ -6,18 +6,37 @@ import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/acce
 import {IAccess} from "./IAccess.sol";
 import {IAccessAdmin} from "./IAccessAdmin.sol";
 import {IAuthorization} from "./IAuthorization.sol";
+import {IComponent} from "../shared/IComponent.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
+import {IService} from "../shared/IService.sol";
 
 import {ContractLib} from "../shared/ContractLib.sol";
 import {ObjectType} from "../type/ObjectType.sol";
-import {RoleId} from "../type/RoleId.sol";
+import {RoleId, RoleIdLib} from "../type/RoleId.sol";
 import {SelectorLib} from "../type/Selector.sol";
 import {Str, StrLib} from "../type/String.sol";
 import {TimestampLib} from "../type/Timestamp.sol";
-import {VersionPart} from "../type/Version.sol";
+import {VersionPart, VersionPartLib} from "../type/Version.sol";
 
 
 library AccessAdminLib { // ACCESS_ADMIN_LIB
+
+    string public constant TOKEN_HANDLER_SUFFIX = "Th";
+    string public constant ROLE_SUFFIX = "_Role";
+
+    uint64 public constant SERVICE_DOMAIN_ROLE_FACTOR = 100;
+    uint64 public constant COMPONENT_ROLE_FACTOR = 1000;
+    uint64 public constant COMPONENT_ROLE_MAX = 19000;
+
+    uint64 public constant CORE_ROLE_MIN        =     100;
+    uint64 public constant SERVICE_ROLE_MIN     =    1000; // + service domain * SERVICE_ROLE_FACTOR + release
+    uint64 public constant SERVICE_ROLE_FACTOR  =    1000; 
+    uint64 public constant INSTANCE_ROLE_MIN    =  100000;
+
+    // MUST match with Authorization.COMPONENT_ROLE_MIN
+    uint64 public constant COMPONENT_ROLE_MIN   =  110000;
+
+    uint64 public constant CUSTOM_ROLE_MIN      = 1000000;
 
 
     function getSelectors(
@@ -35,6 +54,7 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
             selectors[i] = functions[i].selector.toBytes4();
         }
     }
+
 
     function checkRoleCreation(
         IAccessAdmin accessAdmin,
@@ -70,6 +90,7 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
                 roleIdForName);
         }
     }
+
 
     function checkTargetCreation(
         IAccessAdmin accessAdmin,
@@ -183,6 +204,143 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
             revert IAccessAdmin.ErrorAccessAdminNotRegistry(registry);
         }
     }
+
+
+    function getServiceRoleId(
+        address serviceAddress,
+        IAccess.TargetType serviceTargetType
+    )
+        public
+        view
+        returns (RoleId serviceRoleId)
+    {
+        IService service = IService(serviceAddress);
+
+        if (serviceTargetType == IAccess.TargetType.Service) {
+            return RoleIdLib.toServiceRoleId(service.getDomain(), service.getRelease());
+        } else if (serviceTargetType == IAccess.TargetType.GenericService) {
+            return RoleIdLib.toGenericServiceRoleId(service.getDomain());
+        }
+
+        revert IAccessAdmin.ErrorAccessAdminInvalidServiceType(serviceAddress, serviceTargetType);
+    }
+
+
+    function getVersionedServiceRoleId(
+        ObjectType serviceDomain,
+        VersionPart release
+    )
+        public
+        pure
+        returns (RoleId serviceRoleId)
+    {
+        return RoleIdLib.toRoleId(
+            SERVICE_ROLE_MIN + SERVICE_ROLE_FACTOR * serviceDomain.toInt() + release.toInt());
+    }
+
+
+    function getGenericServiceRoleId(
+        ObjectType serviceDomain
+    )
+        public
+        pure
+        returns (RoleId serviceRoleId)
+    {
+        return RoleIdLib.toRoleId(
+            SERVICE_ROLE_MIN + SERVICE_ROLE_FACTOR * serviceDomain.toInt() + VersionPartLib.releaseMax().toInt());
+    }
+
+
+    function getCustomRoleId(uint64 index)
+        public 
+        view 
+        returns (RoleId customRoleId)
+    {
+        return RoleIdLib.toRoleId(CUSTOM_ROLE_MIN + index);
+    }
+
+
+    function isCustomRole(RoleId roleId)
+        public
+        pure
+        returns (bool)
+    {
+        return roleId.toInt() >= CUSTOM_ROLE_MIN;
+    }
+
+
+    function getTargetRoleId(
+        address target,
+        IAccess.TargetType targetType,
+        uint64 index
+    )
+        public 
+        view
+        returns (RoleId targetRoleId)
+    {
+        if (targetType == IAccess.TargetType.Core) {
+            return RoleIdLib.toRoleId(CORE_ROLE_MIN + index);
+        }
+
+        if (targetType == IAccess.TargetType.Service || targetType == IAccess.TargetType.GenericService ) { 
+            return getServiceRoleId(target, targetType);
+        }
+
+        if (targetType == IAccess.TargetType.Instance) { 
+            return RoleIdLib.toRoleId(INSTANCE_ROLE_MIN + index);
+        }
+
+        if (targetType == IAccess.TargetType.Component) { 
+            return RoleIdLib.toRoleId(COMPONENT_ROLE_MIN + index);
+        }
+
+        if (targetType == IAccess.TargetType.Custom) { 
+            return RoleIdLib.toRoleId(CUSTOM_ROLE_MIN + index);
+        }
+
+        revert IAccessAdmin.ErrorAccessAdminInvalidTargetType(target, targetType);
+    }
+
+
+    function getTokenHandler(
+        address target, 
+        string memory targetName, 
+        IAccess.TargetType targetType
+    )
+        public
+        view
+        returns (
+            address tokenHandler,
+            string memory tokenHandlerName
+        )
+    {
+        // not component or core (we need to check core because of staking)
+        if (targetType != IAccess.TargetType.Component && targetType != IAccess.TargetType.Core) {
+            return (address(0), "");
+        }
+
+        // not contract
+        if (!ContractLib.isContract(target)) {
+            return (address(0), "");
+        }
+
+        // not component
+        if (!ContractLib.supportsInterface(target, type(IComponent).interfaceId)) {
+            return (address(0), "");
+        }
+
+        tokenHandler = address(IComponent(target).getTokenHandler());
+        tokenHandlerName = string(abi.encodePacked(targetName, TOKEN_HANDLER_SUFFIX));
+    }
+
+
+    function toRoleName(string memory name) public view returns (string memory) {
+        return string(
+            abi.encodePacked(
+                name,
+                ROLE_SUFFIX));
+    }
+
 
     function toRole(
         RoleId adminRoleId, 

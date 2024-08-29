@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IAccess} from "../../contracts/authorization/IAccess.sol";
 import {IAuthorization} from "../../contracts/authorization/IAuthorization.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 
@@ -32,7 +33,10 @@ contract RegistryAdminEx is RegistryAdmin {
         accessManagedMock = new AccessManagedMock(address(authority()));
 
         // create target for access managed mock
-        _createTarget(address(accessManagedMock), "AccessManagedMock", false, false);
+        _createUncheckedTarget(
+            address(accessManagedMock), 
+            "AccessManagedMock", 
+            IAccess.TargetType.Component); // check authority
 
         // grant permissions to public role for access managed mock
         FunctionInfo[] memory functions;

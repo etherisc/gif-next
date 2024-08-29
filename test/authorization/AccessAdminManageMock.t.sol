@@ -8,7 +8,7 @@ import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
-import {AccessAdmin} from "../../contracts/authorization/AccessAdmin.sol";
+import {AccessAdmin, ADMIN_ROLE_NAME, PUBLIC_ROLE_NAME} from "../../contracts/authorization/AccessAdmin.sol";
 import {AccessAdminLib} from "../../contracts/authorization/AccessAdminLib.sol";
 import {AccessAdminForTesting} from "./AccessAdmin.t.sol";
 import {AccessManagedMock} from "../mock/AccessManagedMock.sol";
@@ -327,20 +327,20 @@ contract AccessAdminManageMockTest is AccessAdminBaseTest {
         assertTrue(aa.isRoleMember(aa.getPublicRole(), outsider), "outsider missing public role");
 
         // count roles and check role ids
-        assertEq(aa.roles(), 3, "unexpected number of roles for freshly initialized access admin");
+        assertEq(aa.roles(), 5, "unexpected number of roles for freshly initialized access admin");
         assertEq(aa.getRoleId(0).toInt(), aa.getAdminRole().toInt(), "unexpected admin role id");
         assertEq(aa.getRoleId(0).toInt(), type(uint64).min, "unexpected admin role id (absolute)");
         assertEq(aa.getRoleId(1).toInt(), aa.getPublicRole().toInt(), "unexpected public role id");
         assertEq(aa.getRoleId(1).toInt(), type(uint64).max, "unexpected public role id (absolute)");
-        assertEq(aa.getRoleId(2).toInt(), aa.getManagerRole().toInt(), "unexpected manager role id");
-        assertEq(aa.getRoleId(2).toInt(), 1, "unexpected manager role id (absolute)");
+        assertEq(aa.getRoleId(3).toInt(), aa.getManagerRole().toInt(), "unexpected manager role id");
+        assertEq(aa.getRoleId(3).toInt(), 1, "unexpected manager role id (absolute)");
 
         // check admin role
         _checkRole(
             aa,
             aa.getAdminRole(), 
             aa.getAdminRole(),
-            aa.ADMIN_ROLE_NAME(),
+            ADMIN_ROLE_NAME(),
             TimestampLib.max(), 
             TimestampLib.blockTimestamp());
 
@@ -349,7 +349,7 @@ contract AccessAdminManageMockTest is AccessAdminBaseTest {
             aa,
             aa.getPublicRole(), 
             aa.getAdminRole(),
-            aa.PUBLIC_ROLE_NAME(),
+            PUBLIC_ROLE_NAME(),
             TimestampLib.max(), 
             TimestampLib.blockTimestamp());
 

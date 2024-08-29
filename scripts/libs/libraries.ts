@@ -105,7 +105,6 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         {
             libraries: {
                 ObjectTypeLib: objectTypeLibAddress,
-                Key32Lib: key32LibAddress,
                 VersionPartLib: versionPartLibAddress,
             }
         });
@@ -362,6 +361,7 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
                 SelectorLib: selectorLibAddress,
                 StrLib: strLibAddress,
                 TimestampLib: timestampLibAddress,
+                VersionPartLib: versionPartLibAddress,
             }
         });
     LIBRARY_ADDRESSES.set("AccessAdminLib", accessAdminLibAddress);

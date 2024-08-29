@@ -3,13 +3,13 @@ pragma solidity ^0.8.20;
 
 import {console} from "../../../lib/forge-std/src/Test.sol";
 
-import {AccessManagedMock} from "../../mock/AccessManagedMock.sol";
 import {IAccess} from "../../../contracts/authorization/IAccess.sol";
 import {IAccessAdmin} from "../../../contracts/authorization/IAccessAdmin.sol";
 import {IInstance} from "../../../contracts/instance/IInstance.sol";
-import {INftOwnable} from "../../../contracts/shared/INftOwnable.sol";
 
+import {AccessManagedMock} from "../../mock/AccessManagedMock.sol";
 import {InstanceAuthzBaseTest} from "./InstanceAuthzBase.t.sol";
+import {INftOwnable} from "../../../contracts/shared/INftOwnable.sol";
 import {RoleId, RoleIdLib, ADMIN_ROLE, INSTANCE_OWNER_ROLE} from "../../../contracts/type/RoleId.sol";
 import {TimestampLib} from "../../../contracts/type/Timestamp.sol";
 
@@ -21,8 +21,8 @@ contract InstanceAuthzTargetsTest is InstanceAuthzBaseTest {
         _printTargets();
 
         // check initial roles
-        assertEq(instanceAdmin.targets(), 16, "unexpected initial instance target count (admin)");
-        assertEq(instanceReader.targets(), 16, "unexpected initial instance target count (reader)");
+        assertEq(instanceAdmin.targets(), 5, "unexpected initial instance target count (admin)");
+        assertEq(instanceReader.targets(), 5, "unexpected initial instance target count (reader)");
     }
 
 
@@ -47,7 +47,7 @@ contract InstanceAuthzTargetsTest is InstanceAuthzBaseTest {
 
         IAccess.TargetInfo memory targetInfo = instanceReader.getTargetInfo(address(target));
         assertEq(targetInfo.name.toString(), "MyTarget", "unexpected target name");
-        assertTrue(targetInfo.isCustom, "target type not custom");
+        assertTrue(targetInfo.targetType == IAccess.TargetType.Custom, "target type not custom");
         assertEq(targetInfo.createdAt.toInt(), TimestampLib.blockTimestamp().toInt(), "unexpected target creation time");
     }
 

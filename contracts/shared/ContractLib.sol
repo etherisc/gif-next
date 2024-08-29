@@ -6,8 +6,10 @@ import {IAccessManager} from "@openzeppelin/contracts/access/manager/IAccessMana
 import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 
 // import {InstanceAdmin} from "../instance/InstanceAdmin.sol";
-import {IRegistry} from "../registry/IRegistry.sol";
 import {IPolicyHolder} from "../shared/IPolicyHolder.sol";
+import {IRegistry} from "../registry/IRegistry.sol";
+import {IService} from "../shared/IService.sol";
+
 import {NftId} from "../type/NftId.sol";
 import {ObjectType, PRODUCT, DISTRIBUTION, ORACLE, POOL, STAKING} from "../type/ObjectType.sol";
 import {VersionPart} from "../type/Version.sol";
@@ -195,6 +197,15 @@ library ContractLib {
         }
 
         return IRegistry(registry).getObjectInfo(nftId).objectType == expectedType;
+    }
+
+
+    function isService(address service) public view returns (bool) {
+        if (!isContract(service)) {
+            return false;
+        }
+
+        return supportsInterface(service, type(IService).interfaceId);
     }
 
 

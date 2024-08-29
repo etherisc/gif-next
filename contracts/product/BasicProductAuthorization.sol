@@ -14,17 +14,22 @@ import {TokenHandler} from "../shared/TokenHandler.sol";
 contract BasicProductAuthorization
      is Authorization
 {
-
      constructor(string memory componentName)
-          Authorization(componentName, PRODUCT(), true, true)
+          Authorization(
+               componentName, 
+               PRODUCT(), 
+               3,
+               COMMIT_HASH,
+               true, 
+               true)
      {}
 
      function _setupServiceTargets()
           internal
           virtual override
      {
-          _addServiceTargetWithRole(COMPONENT());
-          _addServiceTargetWithRole(POLICY());
+          _authorizeServiceDomain(COMPONENT(), address(10));
+          _authorizeServiceDomain(POLICY(), address(11));
      }
 
      function _setupTokenHandlerAuthorizations() internal virtual override {

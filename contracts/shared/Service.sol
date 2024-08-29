@@ -7,7 +7,7 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/ut
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IService} from "./IService.sol";
 import {IVersionable} from "../upgradeability/IVersionable.sol";
-import {ObjectType, REGISTRY, SERVICE} from "../type/ObjectType.sol";
+import {ObjectType, ObjectTypeLib, REGISTRY, SERVICE} from "../type/ObjectType.sol";
 import {Registerable} from "./Registerable.sol";
 import {RoleId, RoleIdLib} from "../type/RoleId.sol";
 import {Version, VersionLib, VersionPartLib} from "../type/Version.sol";
@@ -53,8 +53,9 @@ abstract contract Service is
         return VersionLib.toVersion(3, 0, 0);
     }
 
+    // TODO cleanup
     function getRoleId() external virtual view returns(RoleId serviceRoleId) {
-        return RoleIdLib.roleForTypeAndVersion(_getDomain(), getRelease());
+        return RoleIdLib.toServiceRoleId(_getDomain(), getRelease());
     }
 
     function _getDomain() internal virtual pure returns (ObjectType);

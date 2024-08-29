@@ -10,6 +10,7 @@ using {
     eqObjectType as ==,
     neObjectType as !=,
     ObjectTypeLib.toInt,
+    ObjectTypeLib.toName,
     ObjectTypeLib.eqz,
     ObjectTypeLib.eq,
     ObjectTypeLib.gtz
@@ -143,7 +144,16 @@ function REFERRAL() pure returns (ObjectType) {
     return ObjectType.wrap(49);
 }
 
+/// @dev Object type for GIF core target roles.
+function CORE() pure returns (ObjectType) {
+    return ObjectType.wrap(97);
+}
 
+/// @dev Object type for target roles of contracts outside the GIF framework.
+/// Example: Custom supporting contracts for a product component.
+function CUSTOM() pure returns (ObjectType) {
+    return ObjectType.wrap(98);
+}
 
 /// @dev Object type that includes any other object type.
 /// Note that eq()/'==' does not take this property into account.
@@ -203,6 +213,8 @@ library ObjectTypeLib {
             return "Registry";
         } else if (objectType == STAKING()) {
             return "Staking";
+        } else if (objectType == RELEASE()) {
+            return "Release";
         } else if (objectType == INSTANCE()) {
             return "Instance";
         } else if (objectType == COMPONENT()) {
@@ -239,6 +251,7 @@ library ObjectTypeLib {
                     toInt(objectType))));
     }
 
+    // TODO move to IService
     function toVersionedName(
         string memory name, 
         string memory suffix, 
@@ -248,10 +261,10 @@ library ObjectTypeLib {
         pure
         returns (string memory versionedName)
     {
-        string memory versionName = "_v0";
+        string memory versionName = "V0";
 
         if (release.toInt() >= 10) {
-            versionName = "_v";
+            versionName = "V";
         }
 
         versionedName = string(

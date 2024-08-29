@@ -8,7 +8,7 @@ import {Authorization} from "../authorization/Authorization.sol";
 import {BasicDistribution} from "./BasicDistribution.sol"; 
 import {Distribution} from "./Distribution.sol";
 import {COMPONENT, DISTRIBUTION} from "../type/ObjectType.sol";
-import {RoleId, PUBLIC_ROLE} from "../type/RoleId.sol";
+import {PUBLIC_ROLE} from "../type/RoleId.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 
 
@@ -16,15 +16,22 @@ contract BasicDistributionAuthorization
      is Authorization
 {
 
-     constructor(string memory distributionlName)
-          Authorization(distributionlName, DISTRIBUTION(), true, true)
+     constructor(string memory distributionName)
+          Authorization(
+               distributionName, 
+               DISTRIBUTION(), 
+               3,
+               COMMIT_HASH,
+               true, 
+               true)
      {}
 
      function _setupServiceTargets()
           internal
           virtual override
      {
-          _addServiceTargetWithRole(COMPONENT());
+          _authorizeServiceDomain(COMPONENT(), address(11));
+          _authorizeServiceDomain(DISTRIBUTION(), address(11));
      }
 
      function _setupTokenHandlerAuthorizations() internal virtual override {

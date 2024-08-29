@@ -68,8 +68,7 @@ contract ClaimService is
     {
         // checks
         (
-            ,
-            IInstance instance,,
+            ,,,
             InstanceStore instanceStore,
             IPolicy.PolicyInfo memory policyInfo
         ) = _verifyCallerWithPolicy(policyNftId);
@@ -229,8 +228,7 @@ contract ClaimService is
         _checkNftType(policyNftId, POLICY());
         
         (
-            ,
-            IInstance instance,
+            ,,
             InstanceReader instanceReader,
             InstanceStore instanceStore,
             IPolicy.PolicyInfo memory policyInfo

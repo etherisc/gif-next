@@ -1,14 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IAccess} from "../authorization/IAccess.sol";
+import {IAuthorization} from "../authorization/IAuthorization.sol";
+import {IService} from "../shared/IService.sol";
+import {IServiceAuthorization} from "../authorization/IServiceAuthorization.sol";
+
 import {AccessAdmin} from "../authorization/AccessAdmin.sol";
 import {AccessAdminLib} from "../authorization/AccessAdminLib.sol";
 import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
-import {IAccess} from "../authorization/IAccess.sol";
-import {IService} from "../shared/IService.sol";
-import {IServiceAuthorization} from "../authorization/IServiceAuthorization.sol";
 import {ObjectType, ObjectTypeLib, ALL} from "../type/ObjectType.sol";
 import {RoleId, RoleIdLib, ADMIN_ROLE, RELEASE_REGISTRY_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
+import {Str, StrLib} from "../type/String.sol";
 import {VersionPart} from "../type/Version.sol";
 
 /// @dev The ReleaseAdmin contract implements the central authorization for the services of a specific release.
@@ -25,7 +28,7 @@ contract ReleaseAdmin is
     error ErrorReleaseAdminReleaseLockAlreadySetTo(bool locked);
 
     /// @dev release core roles
-    string public constant RELEASE_REGISTRY_ROLE_NAME = "ReleaseRegistryRole";
+    string public constant RELEASE_REGISTRY_ROLE_NAME = "ReleaseRegistry_Role";
 
     /// @dev release core targets
     string public constant RELEASE_ADMIN_TARGET_NAME = "ReleaseAdmin";
@@ -145,33 +148,34 @@ contract ReleaseAdmin is
         string memory serviceTargetName = ObjectTypeLib.toVersionedName(
             baseName, "Service", release);
 
-        _createTarget(
-            address(service), 
-            serviceTargetName,
-            true,
-            false);
+        _createUncheckedTarget(address(service), serviceTargetName, TargetType.Service);
 
-        // create service role
-        RoleId serviceRoleId = RoleIdLib.roleForTypeAndVersion(
-            serviceDomain, 
-            release);
+        // _createManagedTarget(
+        //     address(service), 
+        //     serviceTargetName,
+        //     IAccess.TargetType.Service);
 
-        if(!roleExists(serviceRoleId)) {
-            _createRole(
-                serviceRoleId, 
-                AccessAdminLib.toRole({
-                    adminRoleId: ADMIN_ROLE(),
-                    roleType: RoleType.Contract,
-                    maxMemberCount: 1,
-                    name: ObjectTypeLib.toVersionedName(
-                        baseName, 
-                        "ServiceRole", 
-                        release)}));
-        }
+        // // create service role
+        // RoleId serviceRoleId = RoleIdLib.toServiceRoleId(
+        //     serviceDomain, 
+        //     release);
 
-        _grantRoleToAccount( 
-            serviceRoleId,
-            address(service)); 
+        // if(!roleExists(serviceRoleId)) {
+        //     _createRole(
+        //         serviceRoleId, 
+        //         AccessAdminLib.toRole({
+        //             adminRoleId: ADMIN_ROLE(),
+        //             roleType: RoleType.Contract,
+        //             maxMemberCount: 1,
+        //             name: ObjectTypeLib.toVersionedName(
+        //                 baseName, 
+        //                 "ServiceRole", 
+        //                 release)}));
+        // }
+
+        // _grantRoleToAccount( 
+        //     serviceRoleId,
+        //     address(service)); 
     }
 
 
@@ -186,54 +190,64 @@ contract ReleaseAdmin is
         ObjectType authorizedDomain;
         RoleId authorizedRoleId;
 
-        ObjectType[] memory authorizedDomains = serviceAuthorization.getAuthorizedDomains(serviceDomain);
+        Str serviceTarget = serviceAuthorization.getServiceTarget(serviceDomain);
+        RoleId[] memory authorizedRoles = serviceAuthorization.getAuthorizedRoles(serviceTarget);
 
-        for (uint256 i = 0; i < authorizedDomains.length; i++) {
-            authorizedDomain = authorizedDomains[i];
+        for (uint256 i = 0; i < authorizedRoles.length; i++) {
+            // authorizedDomain = authorizedDomains[i];
 
-            // derive authorized role from authorized domain
-            if (authorizedDomain == ALL()) {
-                authorizedRoleId = PUBLIC_ROLE();
-            } else {
-                authorizedRoleId = RoleIdLib.roleForTypeAndVersion(
-                authorizedDomain, 
-                release);
-            }
+            // // derive authorized role from authorized domain
+            // if (authorizedDomain == ALL()) {
+            //     authorizedRoleId = PUBLIC_ROLE();
+            // } else {
+            //     authorizedRoleId = RoleIdLib.toServiceRoleId(
+            //     authorizedDomain, 
+            //     release);
+            // }
 
-            if(!roleExists(authorizedRoleId)) {
-                // create role for authorized domain
-                _createRole(
-                    authorizedRoleId, 
-                    AccessAdminLib.toRole({
-                        adminRoleId: ADMIN_ROLE(),
-                        roleType: RoleType.Contract,
-                        maxMemberCount: 1,
-                        name: ObjectTypeLib.toVersionedName(
-                            ObjectTypeLib.toName(authorizedDomain), 
-                            "Role", 
-                            release)}));
-            }
+            // Str target = StrLib.toStr(ObjectTypeLib.toName(service.getDomain()));
 
-            // get authorized functions for authorized domain
-            IAccess.FunctionInfo[] memory authorizatedFunctions = serviceAuthorization.getAuthorizedFunctions(
-                serviceDomain, 
-                authorizedDomain);
+            _authorizeFunctions(
+                IAuthorization(address(serviceAuthorization)), 
+                serviceTarget, 
+                authorizedRoles[i]);
 
-            _authorizeTargetFunctions(
-                    address(service), 
-                    authorizedRoleId, 
-                    authorizatedFunctions,
-                    true);
+            // TODO cleanup
+        //     if(!roleExists(authorizedRoleId)) {
+        //         // create role for authorized domain
+        //         _createRole(
+        //             authorizedRoleId, 
+        //             AccessAdminLib.toRole({
+        //                 adminRoleId: ADMIN_ROLE(),
+        //                 roleType: RoleType.Contract,
+        //                 maxMemberCount: 1,
+        //                 name: ObjectTypeLib.toVersionedName(
+        //                     ObjectTypeLib.toName(authorizedDomain), 
+        //                     "Role", 
+        //                     release)}));
+        //     }
+
+        //     // get authorized functions for authorized domain
+        //     IAccess.FunctionInfo[] memory authorizatedFunctions = serviceAuthorization.getAuthorizedFunctions(
+        //         serviceDomain, 
+        //         authorizedDomain);
+
+        //     _authorizeTargetFunctions(
+        //             address(service), 
+        //             authorizedRoleId, 
+        //             authorizatedFunctions,
+        //             true);
         }
     }
 
     //--- private initialization functions -------------------------------------------//
 
+    // TODO check if this can be moved to a standard Authorization setup
     function _setupReleaseRegistry(address releaseRegistry)
         private 
         onlyInitializing()
     {
-        _createTarget(address(this), RELEASE_ADMIN_TARGET_NAME, false, false);
+        _createManagedTarget(address(this), RELEASE_ADMIN_TARGET_NAME, IAccess.TargetType.Core);
 
         _createRole(
             RELEASE_REGISTRY_ROLE(), 

@@ -10,23 +10,34 @@ interface IAccess {
 
     enum RoleType {
         Undefined, // no role must have this type
+        Core, // GIF core roles
         Contract, // roles assigned to contracts, cannot be revoked
-        Gif, // framework roles that may be freely assigned and revoked
+        Custom // use case specific rules for components
+    }
+
+    enum TargetType {
+        Undefined, // no target must have this type
+        Core, // GIF core contracts
+        GenericService, // release independent service contracts
+        Service, // service contracts
+        Instance, // instance contracts
+        Component, // instance contracts
         Custom // use case specific rules for components
     }
 
     struct RoleInfo {
+        Str name;
         RoleId adminRoleId;
         RoleType roleType;
         uint32 maxMemberCount;
-        Str name;
         Timestamp createdAt;
         Timestamp pausedAt;
     }
 
     struct TargetInfo {
         Str name;
-        bool isCustom;
+        TargetType targetType;
+        RoleId roleId;
         Timestamp createdAt;
     }
 

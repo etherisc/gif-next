@@ -716,7 +716,6 @@ contract StakingTest is GifTest {
 
         // wait some time
         _wait(SecondsLib.oneYear());
-        NftId zeroNftId = NftIdLib.zero();
         
         // WHEN - restake to new target
         (NftId stakeNftId2, Amount restakedAmount) = stakingService.restakeToNewTarget(stakeNftId, instanceNftId2);
@@ -832,7 +831,7 @@ contract StakingTest is GifTest {
         Seconds lockingPeriod2 = stakingReader.getTargetInfo(instanceNftId2).lockingPeriod;
         vm.stopPrank();
 
-        (, Amount dipAmount) = _prepareAccount(staker, 3000);
+        _prepareAccount(staker, 3000);
 
         vm.startPrank(instanceOwner);
 
@@ -853,10 +852,10 @@ contract StakingTest is GifTest {
         // create a second instance - restake target
         vm.startPrank(instanceOwner2);
         (instance2, instanceNftId2) = instanceService.createInstance();
-        Seconds lockingPeriod2 = stakingReader.getTargetInfo(instanceNftId2).lockingPeriod;
+        stakingReader.getTargetInfo(instanceNftId2).lockingPeriod;
         vm.stopPrank();
 
-        (, Amount dipAmount) = _prepareAccount(staker, 3000);
+        _prepareAccount(staker, 3000);
 
         vm.startPrank(staker);
 
@@ -947,7 +946,7 @@ contract StakingTest is GifTest {
         // create a second instance - restake target
         vm.startPrank(instanceOwner2);
         (instance2, instanceNftId2) = instanceService.createInstance();
-        Seconds lockingPeriod = stakingReader.getTargetInfo(instanceNftId).lockingPeriod;
+        stakingReader.getTargetInfo(instanceNftId).lockingPeriod;
         vm.stopPrank();
 
         (, Amount dipAmount) = _prepareAccount(staker, 3000);

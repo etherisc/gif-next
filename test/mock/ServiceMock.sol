@@ -39,7 +39,7 @@ contract ServiceMock is RegisterableMockWithAuthority, IService {
     }
 
     function getRoleId() external virtual override pure returns(RoleId serviceRoleId) {
-        return RoleIdLib.roleForTypeAndVersion(getDomain(), VersionPartLib.toVersionPart(3));
+        return RoleIdLib.toServiceRoleId(getDomain(), VersionPartLib.toVersionPart(3));
     }
 
     // from IVersionable
@@ -73,7 +73,7 @@ contract SelfOwnedServiceMock is ServiceMock {
     }
 
     function getRoleId() external virtual override pure returns(RoleId serviceRoleId) {
-        return RoleIdLib.roleForTypeAndVersion(getDomain(), VersionPartLib.toVersionPart(3));
+        return RoleIdLib.toServiceRoleId(getDomain(), VersionPartLib.toVersionPart(3));
     }
 }
 
@@ -105,7 +105,7 @@ contract ServiceMockWithRandomInvalidType is ServiceMock {
     }
 
     function getRoleId() external virtual override pure returns(RoleId serviceRoleId) {
-        return RoleIdLib.roleForTypeAndVersion(getDomain(), VersionPartLib.toVersionPart(3));
+        return RoleIdLib.toServiceRoleId(getDomain(), VersionPartLib.toVersionPart(3));
     }
 }
 
@@ -137,7 +137,7 @@ contract ServiceMockWithRandomInvalidAddress is ServiceMock {
     }
 
     function getRoleId() external virtual override pure returns(RoleId serviceRoleId) {
-        return RoleIdLib.roleForTypeAndVersion(getDomain(), VersionPartLib.toVersionPart(3));
+        return RoleIdLib.toServiceRoleId(getDomain(), VersionPartLib.toVersionPart(3));
     }
 }
 
@@ -157,7 +157,7 @@ contract ServiceMockOldVersion is ServiceMock {
     }
 
     function getRoleId() external virtual override pure returns(RoleId serviceRoleId) {
-        return RoleIdLib.roleForTypeAndVersion(getDomain(), VersionPartLib.toVersionPart(2));
+        return RoleIdLib.toServiceRoleId(getDomain(), VersionPartLib.toVersionPart(2));
     }
 
     function getRelease() public pure override(IRelease, RegisterableMockWithAuthority) returns(VersionPart) {
@@ -185,7 +185,7 @@ contract ServiceMockNewVersion is ServiceMock {
     }
 
     function getRoleId() external virtual override pure returns(RoleId serviceRoleId) {
-        return RoleIdLib.roleForTypeAndVersion(getDomain(), VersionPartLib.toVersionPart(4));
+        return RoleIdLib.toServiceRoleId(getDomain(), VersionPartLib.toVersionPart(4));
     }
 
     function getVersion() public pure override returns(Version) {
@@ -211,7 +211,7 @@ contract ServiceMockWithRegistryDomainV4 is ServiceMockWithRegistryDomainV3
     {}
 
     function getRoleId() external virtual override pure returns(RoleId serviceRoleId) {
-        return RoleIdLib.roleForTypeAndVersion(getDomain(), VersionPartLib.toVersionPart(4));
+        return RoleIdLib.toServiceRoleId(getDomain(), VersionPartLib.toVersionPart(4));
     }
 
     function getVersion() public pure override returns(Version) {
@@ -226,7 +226,7 @@ contract ServiceMockWithRegistryDomainV5 is ServiceMockWithRegistryDomainV3
     {}
 
     function getRoleId() external virtual override pure returns(RoleId serviceRoleId) {
-        return RoleIdLib.roleForTypeAndVersion(getDomain(), VersionPartLib.toVersionPart(5));
+        return RoleIdLib.toServiceRoleId(getDomain(), VersionPartLib.toVersionPart(5));
     }
 
     function getVersion() public pure override returns(Version) {

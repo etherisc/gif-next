@@ -42,23 +42,28 @@ contract ReleaseRegistryTest is GifDeployer, FoundryRandom {
     // keep identical to IRegistry events
     event LogServiceRegistration(VersionPart majorVersion, ObjectType serviceDomain);
 
-    address public globalRegistry = makeAddr("globalRegistry"); // address of global registry when not on mainnet
-    address public gifAdmin = makeAddr("gifAdmin");
-    address public gifManager = makeAddr("gifManager");
-    address public stakingOwner = makeAddr("stakingOwner");
+    // TODO cleanup
+    // address public globalRegistry = makeAddr("globalRegistry"); // address of global registry when not on mainnet
+    // address public gifAdmin = makeAddr("gifAdmin");
+    // address public gifManager = makeAddr("gifManager");
+    // address public stakingOwner = makeAddr("stakingOwner");
     address public outsider = makeAddr("outsider");
 
-    RegistryAdmin registryAdmin;
-    IRegistry registry;
-    ChainNft chainNft;
-    ReleaseRegistry releaseRegistry;
-    NftId registryNftId;
+    // RegistryAdmin registryAdmin;
+    // IRegistry registry;
+    // ChainNft chainNft;
+    // ReleaseRegistry releaseRegistry;
+    // NftId registryNftId;
 
     mapping(VersionPart version => IService) serviceByVersion;
 
 
     function setUp() public virtual
     {
+        gifAdmin = makeAddr("gifAdmin");
+        gifManager = makeAddr("gifManager");
+        stakingOwner = makeAddr("stakingOwner");
+
         (
             ,//dip,
             registry,

@@ -8,7 +8,7 @@ import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
-import {AccessAdmin} from "../../contracts/authorization/AccessAdmin.sol";
+import {AccessAdmin, ADMIN_ROLE_NAME, PUBLIC_ROLE_NAME} from "../../contracts/authorization/AccessAdmin.sol";
 import {AccessAdminLib} from "../../contracts/authorization/AccessAdminLib.sol";
 import {AccessManagerCloneable} from "../../contracts/authorization/AccessManagerCloneable.sol";
 import {AccessManagedMock} from "../mock/AccessManagedMock.sol";
@@ -51,7 +51,7 @@ contract AccessAdminForTesting is AccessAdmin {
             release);
 
         // create targets for testing
-        _createTarget(address(this), "AccessAdmin", false, true);
+        _createUncheckedTarget(address(this), "AccessAdmin", IAccess.TargetType.Core);
 
         // setup manager role
         _managerRoleId = RoleIdLib.toRoleId(MANAGER_ROLE);
@@ -173,9 +173,10 @@ contract AccessAdminForTesting is AccessAdmin {
         virtual
         restricted()
     {
+        bool createRole = true;
+        bool customTarget = true;
         bool checkAuthoritiy = true;
-        bool custom = true;
-        _createTarget(target, name, checkAuthoritiy, custom);
+        _createManagedTarget(target, name, IAccess.TargetType.Custom);
     }
 
     function authorizeFunctions(
@@ -413,7 +414,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
     function test_accessAdminCreateRoleHappyCase() public {
 
         // GIVEN (just setup)
-        RoleId newRoleId = RoleIdLib.toRoleId(100);
+        RoleId newRoleId = RoleIdLib.toRoleId(123456789);
         RoleId adminRoleId = accessAdmin.getManagerRole();
         string memory newRoleName = "NewRole";
 
@@ -447,7 +448,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
     function test_accessAdminCreateRoleWithSingleMember() public {
 
         // GIVEN (just setup)
-        RoleId newRoleId = RoleIdLib.toRoleId(100);
+        RoleId newRoleId = RoleIdLib.toRoleId(123456789);
         RoleId adminRoleId = accessAdmin.getManagerRole();
         string memory newRoleName = "NewRole";
 
@@ -566,7 +567,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
 
     function test_accessAdminCreateRoleTwice() public {
         // GIVEN
-        RoleId newRoleId = RoleIdLib.toRoleId(100);
+        RoleId newRoleId = RoleIdLib.toRoleId(123456789);
         RoleId adminRoleId = accessAdmin.getManagerRole();
         string memory newRoleName = "NewRole";
 
@@ -611,7 +612,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
 
     function test_accessAdminCreateEmptyNameMissingAdminRole() public {
         // GIVEN
-        RoleId newRoleId = RoleIdLib.toRoleId(100);
+        RoleId newRoleId = RoleIdLib.toRoleId(123456789);
         RoleId missingAdminRoleId = RoleIdLib.toRoleId(111);
         RoleId adminRoleId = accessAdmin.getManagerRole();
         string memory newRoleName = "NewRole";
@@ -652,7 +653,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         address account2 = makeAddr("account2");
 
         RoleId adminRoleId = accessAdmin.getManagerRole();
-        RoleId newAdminRoleId = RoleIdLib.toRoleId(100);
+        RoleId newAdminRoleId = RoleIdLib.toRoleId(123456789);
         string memory newRoleAdminName = "NewRoleAdmin";
 
         RoleId newRoleId = RoleIdLib.toRoleId(101);
@@ -826,7 +827,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
 
     function test_accessAdminCreateRoleUnauthorized() public {
         // GIVEN (just setup)
-        RoleId newRoleId = RoleIdLib.toRoleId(100);
+        RoleId newRoleId = RoleIdLib.toRoleId(123456789);
         RoleId adminRoleId = accessAdmin.getAdminRole();
         string memory newRoleName = "NewRole";
 
@@ -1071,20 +1072,20 @@ contract AccessAdminTest is AccessAdminBaseTest {
         assertTrue(aa.isRoleMember(aa.getPublicRole(), outsider), "outsider missing public role");
 
         // count roles and check role ids
-        assertEq(aa.roles(), 3, "unexpected number of roles for freshly initialized access admin");
+        assertEq(aa.roles(), 4, "unexpected number of roles for freshly initialized access admin");
         assertEq(aa.getRoleId(0).toInt(), aa.getAdminRole().toInt(), "unexpected admin role id");
         assertEq(aa.getRoleId(0).toInt(), type(uint64).min, "unexpected admin role id (absolute)");
         assertEq(aa.getRoleId(1).toInt(), aa.getPublicRole().toInt(), "unexpected public role id");
         assertEq(aa.getRoleId(1).toInt(), type(uint64).max, "unexpected public role id (absolute)");
-        assertEq(aa.getRoleId(2).toInt(), aa.getManagerRole().toInt(), "unexpected manager role id");
-        assertEq(aa.getRoleId(2).toInt(), 1, "unexpected manager role id (absolute)");
+        assertEq(aa.getRoleId(3).toInt(), aa.getManagerRole().toInt(), "unexpected manager role id");
+        assertEq(aa.getRoleId(3).toInt(), 1, "unexpected manager role id (absolute)");
 
         // check admin role
         _checkRole(
             aa,
             aa.getAdminRole(), 
             aa.getAdminRole(),
-            aa.ADMIN_ROLE_NAME(),
+            ADMIN_ROLE_NAME(),
             1, // only one admin ! (aa contract is sole admin role member)
             TimestampLib.blockTimestamp());
 
@@ -1093,7 +1094,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
             aa,
             aa.getPublicRole(), 
             aa.getAdminRole(),
-            aa.PUBLIC_ROLE_NAME(),
+            PUBLIC_ROLE_NAME(),
             type(uint32).max, // every account is public role member
             TimestampLib.blockTimestamp());
 

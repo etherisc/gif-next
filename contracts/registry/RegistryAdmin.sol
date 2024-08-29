@@ -44,14 +44,16 @@ contract RegistryAdmin is
     /// @dev gif core roles
     string public constant GIF_ADMIN_ROLE_NAME = "GifAdminRole";
     string public constant GIF_MANAGER_ROLE_NAME = "GifManagerRole";
-    string public constant RELEASE_REGISTRY_ROLE_NAME = "ReleaseRegistryRole";
-    string public constant STAKING_ROLE_NAME = "StakingRole";
+
+    // cleanup
+    // string public constant RELEASE_REGISTRY_ROLE_NAME = "ReleaseRegistryRole";
+    // string public constant STAKING_ROLE_NAME = "StakingRole";
 
     /// @dev gif roles for external contracts
-    string public constant REGISTRY_SERVICE_ROLE_NAME = "RegistryServiceRole";
-    string public constant COMPONENT_SERVICE_ROLE_NAME = "ComponentServiceRole";
-    string public constant POOL_SERVICE_ROLE_NAME = "PoolServiceRole";
-    string public constant STAKING_SERVICE_ROLE_NAME = "StakingServiceRole";
+    // string public constant REGISTRY_SERVICE_ROLE_NAME = "RegistryServiceRole";
+    // string public constant COMPONENT_SERVICE_ROLE_NAME = "ComponentServiceRole";
+    // string public constant POOL_SERVICE_ROLE_NAME = "PoolServiceRole";
+    // string public constant STAKING_SERVICE_ROLE_NAME = "StakingServiceRole";
 
     /// @dev gif core targets
     string public constant REGISTRY_ADMIN_TARGET_NAME = "RegistryAdmin";
@@ -114,17 +116,18 @@ contract RegistryAdmin is
         // link nft ownability to registry
         _linkToNftOwnable(_registry);
 
-        _setupRegistry(_registry);
+        // _setupRegistry(_registry);
+
+        // TODO check if targets should be registerd first
+        _createTargets(_authorization);
 
         // setup authorization for registry and supporting contracts
         _createRoles(_authorization);
         _grantRoleToAccount(GIF_ADMIN_ROLE(), gifAdmin);
         _grantRoleToAccount(GIF_MANAGER_ROLE(), gifManager);
 
-        _createTargets(_authorization);
         _createTargetAuthorizations(_authorization);
     }
-
 
 
     function grantServiceRoleForAllVersions(
@@ -135,7 +138,7 @@ contract RegistryAdmin is
         restricted()
     {
         _grantRoleToAccount( 
-            RoleIdLib.roleForTypeAndAllVersions(domain),
+            RoleIdLib.toGenericServiceRoleId(domain),
             address(service)); 
     }
 
@@ -151,50 +154,52 @@ contract RegistryAdmin is
 
     //--- private initialization functions -------------------------------------------//
 
-    // create registry role and target
-    function _setupRegistry(address registry) internal {
+    // TODO cleanup
+    // // create registry role and target
+    // function _setupRegistry(address registry) internal {
 
-        // create registry role
-        RoleId roleId = _authorization.getTargetRole(
-            _authorization.getMainTarget());
+    //     // create registry role
+    //     RoleId roleId = _authorization.getTargetRole(
+    //         _authorization.getMainTarget());
 
-        _createRole(
-            roleId,
-            _authorization.getRoleInfo(roleId));
+    //     _createRole(
+    //         roleId,
+    //         _authorization.getRoleInfo(roleId));
 
-        // create registry target
-        _createTarget(
-            registry, 
-            _authorization.getMainTargetName(), 
-            true, // checkAuthority
-            false); // custom
+    //     // create registry target
+    //     _createTarget(
+    //         registry, 
+    //         _authorization.getMainTargetName(), 
+    //         true, // checkAuthority
+    //         false); // custom
 
-        // assign registry role to registry
-        _grantRoleToAccount(
-            roleId, 
-            registry);
-    }
+    //     // assign registry role to registry
+    //     _grantRoleToAccount(
+    //         roleId, 
+    //         registry);
+    // }
 
+    // TODO cleanup
+    event LogAccessAdminDebugRole(string name, RoleId roleId, bool exists);
 
     function _createRoles(IAuthorization authorization)
         internal
     {
         RoleId[] memory roles = authorization.getRoles();
-        RoleId mainTargetRoleId = authorization.getTargetRole(
-            authorization.getMainTarget());
-
-        RoleId roleId;
-        RoleInfo memory roleInfo;
 
         for(uint256 i = 0; i < roles.length; i++) {
+            RoleId roleId = roles[i];
+            RoleInfo memory roleInfo = authorization.getRoleInfo(roleId);
 
-            roleId = roles[i];
+            // create role if not exists
+            bool exists = roleExists(roleInfo.name);
 
-            // skip main target role, create role if not exists
-            if (roleId != mainTargetRoleId && !roleExists(roleId)) {
+emit LogAccessAdminDebugRole(roleInfo.name.toString(), roleId, exists);
+
+            if (!exists) {
                 _createRole(
                     roleId,
-                    authorization.getRoleInfo(roleId));
+                    roleInfo);
             }
         }
     }
@@ -203,17 +208,26 @@ contract RegistryAdmin is
     function _createTargets(IAuthorization authorization)
         internal
     {
+        // TODO cleanup
         // registry
-        _createTargetWithRole(address(this), REGISTRY_ADMIN_TARGET_NAME, authorization.getTargetRole(StrLib.toStr(REGISTRY_ADMIN_TARGET_NAME)));
-        _createTargetWithRole(_releaseRegistry, RELEASE_REGISTRY_TARGET_NAME, authorization.getTargetRole(StrLib.toStr(RELEASE_REGISTRY_TARGET_NAME)));
-        _createTargetWithRole(_tokenRegistry, TOKEN_REGISTRY_TARGET_NAME, authorization.getTargetRole(StrLib.toStr(TOKEN_REGISTRY_TARGET_NAME)));
+        // _createTargetWithRole(address(this), REGISTRY_ADMIN_TARGET_NAME, authorization.getTargetRole(StrLib.toStr(REGISTRY_ADMIN_TARGET_NAME)));
+        // _createTargetWithRole(_releaseRegistry, RELEASE_REGISTRY_TARGET_NAME, authorization.getTargetRole(StrLib.toStr(RELEASE_REGISTRY_TARGET_NAME)));
+        // _createTargetWithRole(_tokenRegistry, TOKEN_REGISTRY_TARGET_NAME, authorization.getTargetRole(StrLib.toStr(TOKEN_REGISTRY_TARGET_NAME)));
+
+        _createUncheckedTarget(_registry, authorization.getMainTargetName(), TargetType.Core);
+        _createUncheckedTarget(address(this), REGISTRY_ADMIN_TARGET_NAME, TargetType.Core);
+        _createUncheckedTarget(_releaseRegistry, RELEASE_REGISTRY_TARGET_NAME, TargetType.Core);
+        _createUncheckedTarget(_tokenRegistry, TOKEN_REGISTRY_TARGET_NAME, TargetType.Core);
 
         // staking
-        _createTargetWithRole(_staking, STAKING_TARGET_NAME, authorization.getTargetRole(StrLib.toStr(STAKING_TARGET_NAME)));
-        _createTarget(_stakingStore, STAKING_STORE_TARGET_NAME, true, false);
-        _createTarget(address(IComponent(_staking).getTokenHandler()), STAKING_TH_TARGET_NAME, true, false);
+        // _createTargetWithRole(_staking, STAKING_TARGET_NAME, authorization.getTargetRole(StrLib.toStr(STAKING_TARGET_NAME)));
+        // _createTarget(_stakingStore, STAKING_STORE_TARGET_NAME, true, false);
+        // _createTarget(address(IComponent(_staking).getTokenHandler()), STAKING_TH_TARGET_NAME, true, false);
+        _createUncheckedTarget(_staking, STAKING_TARGET_NAME, TargetType.Core);
+        _createUncheckedTarget(_stakingStore, STAKING_STORE_TARGET_NAME, TargetType.Core);
     }
 
+    // TODO cleanup
 
     function _createTargetAuthorizations(IAuthorization authorization)
         internal
@@ -224,36 +238,54 @@ contract RegistryAdmin is
         for(uint256 i = 0; i < targets.length; i++) {
             target = targets[i];
             RoleId[] memory authorizedRoles = authorization.getAuthorizedRoles(target);
-            RoleId authorizedRole;
 
             for(uint256 j = 0; j < authorizedRoles.length; j++) {
-                authorizedRole = authorizedRoles[j];
-
-                _authorizeTargetFunctions(
-                    getTargetForName(target),
-                    authorizedRole,
-                    authorization.getAuthorizedFunctions(
-                        target, 
-                        authorizedRole),
-                    true);
+                _authorizeFunctions(authorization, target, authorizedRoles[j]);
             }
         }
     }
 
+    // TODO cleanup
+// event LogAccessAdminDebugTarget(string name, address target, RoleId roleId);
+//     function _authorizeFunctions(IAuthorization authorization, RoleId roleId)
+//         internal
+//     {
+//         RoleId authorizedRoleId = _getAuthorizedRoleId(authorization, roleId);
+//         address getTargetAddress = getTargetForName(target);
+// emit LogAccessAdminDebugTarget(target.toString(), getTargetAddress, authorizedRoleId);
 
-    function _createTargets(address authorization)
-        private 
-        onlyInitializing()
-    {
-        IStaking staking = IStaking(_staking);
-        address tokenHandler = address(staking.getTokenHandler());
+//         _authorizeTargetFunctions(
+//             getTargetForName(target),
+//             authorizedRoleId,
+//             authorization.getAuthorizedFunctions(
+//                 target, 
+//                 roleId),
+//             true);
+//     }
 
-        _createTarget(address(this), REGISTRY_ADMIN_TARGET_NAME, false, false);
-        _createTarget(_registry, REGISTRY_TARGET_NAME, true, false);
-        _createTarget(_releaseRegistry, RELEASE_REGISTRY_TARGET_NAME, true, false);
-        _createTarget(_staking, STAKING_TARGET_NAME, true, false);
-        _createTarget(_stakingStore, STAKING_STORE_TARGET_NAME, true, false);
-        _createTarget(_tokenRegistry, TOKEN_REGISTRY_TARGET_NAME, true, false);
-        _createTarget(tokenHandler, TOKEN_HANDLER_TARGET_NAME, true, false);
-    }
+//     function _getAuthorizedRoleId(IAuthorization authorization, RoleId roleId)
+//         internal
+//         view
+//         returns (RoleId authorizedRoleId)
+//     {
+//         string memory roleName = authorization.getRoleInfo(roleId).name.toString();
+//         return authorizedRoleId = getRoleForName(roleName);
+//     }
+
+    // TODO cleanup
+    // function _createTargets(address authorization)
+    //     private 
+    //     onlyInitializing()
+    // {
+    //     IStaking staking = IStaking(_staking);
+    //     address tokenHandler = address(staking.getTokenHandler());
+
+    //     _createTarget(address(this), REGISTRY_ADMIN_TARGET_NAME, false, false, false);
+    //     _createTarget(_registry, REGISTRY_TARGET_NAME, true, false, false);
+    //     _createTarget(_releaseRegistry, RELEASE_REGISTRY_TARGET_NAME, true, false);
+    //     _createTarget(_staking, STAKING_TARGET_NAME, true, false);
+    //     _createTarget(_stakingStore, STAKING_STORE_TARGET_NAME, true, false);
+    //     _createTarget(_tokenRegistry, TOKEN_REGISTRY_TARGET_NAME, true, false);
+    //     _createTarget(tokenHandler, TOKEN_HANDLER_TARGET_NAME, true, false);
+    // }
 }
