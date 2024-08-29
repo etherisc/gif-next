@@ -490,7 +490,7 @@ contract ComponentService is
             componentAddress,
             requiredType);
 
-        {
+        if (! instance.isTokenRegistryDisabled()) {
             // check if provided token is whitelisted and active
             if (!ContractLib.isActiveToken(
                 getRegistry().getTokenRegistryAddress(), 
