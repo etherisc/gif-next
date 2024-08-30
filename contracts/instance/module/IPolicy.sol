@@ -12,29 +12,38 @@ import {Timestamp} from "../../type/Timestamp.sol";
 interface IPolicy {
 
     struct PremiumInfo {
+        // slot 0
         // premium splitting per target wallet
         Amount productFeeAmount;
         Amount distributionFeeAndCommissionAmount;
+        // slot 1
         Amount poolPremiumAndFeeAmount;
 
         // detailed positions
         // this is the net premium calculated by the product 
         Amount netPremiumAmount;
+        // slot 2
         // fullPremium = netPremium + all fixed amounts + all variable amounts (excl commission and minDistribtuionOwnerFee variable part)
         Amount fullPremiumAmount;
         // effective premium = fullPremium - discount 
         Amount premiumAmount;
+        // slot 3
         Amount productFeeFixAmount;
         Amount poolFeeFixAmount;
+        // slot 4
         Amount bundleFeeFixAmount;
         Amount distributionFeeFixAmount;
+        // slot 5
         Amount productFeeVarAmount;
         Amount poolFeeVarAmount;
+        // slot 6
         Amount bundleFeeVarAmount;
         Amount distributionFeeVarAmount;
+        // slot 7
         Amount distributionOwnerFeeFixAmount;
         // this is the remaining amount when the commission and discount are subtracted from the distribution fee variable part (must be at least the minDistributionOwnerFee)
         Amount distributionOwnerFeeVarAmount;
+        // slot 8
         // this value is based on distributor type referenced in the referral 
         Amount commissionAmount;
         // this is based on referral used
