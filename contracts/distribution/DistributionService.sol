@@ -132,11 +132,11 @@ contract DistributionService is
                 ""
             ));
 
-        IDistribution.DistributorInfo memory info = IDistribution.DistributorInfo(
-            distributorType,
-            true, // active
-            data,
-            0);
+        IDistribution.DistributorInfo memory info = IDistribution.DistributorInfo({
+            distributorType: distributorType,
+            active: true, 
+            numPoliciesSold: 0,
+            data: data});
 
         instance.getInstanceStore().createDistributor(distributorNftId, info);
     }

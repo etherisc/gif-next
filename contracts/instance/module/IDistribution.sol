@@ -26,8 +26,8 @@ interface IDistribution {
     struct DistributorInfo {
         DistributorType distributorType;
         bool active;
-        bytes data;
         uint32 numPoliciesSold;
+        bytes data;
     }
 
     struct ReferralInfo {
