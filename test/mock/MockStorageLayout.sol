@@ -8,6 +8,7 @@ import {IDistribution} from "../../contracts/instance/module/IDistribution.sol";
 import {IOracle} from "../../contracts/oracle/IOracle.sol";
 import {IPolicy} from "../../contracts/instance/module/IPolicy.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
+import {IRelease} from "../../contracts/registry/IRelease.sol";
 import {IRisk} from "../../contracts/instance/module/IRisk.sol";
 
 contract MockStorageLayout {
@@ -38,4 +39,6 @@ contract MockStorageLayout {
     IAccess.TargeNameInfo private _targetNameInfo;
 
     IOracle.RequestInfo private _requestInfo;
+
+    IRelease.ReleaseInfo private _releaseInfo;
 }

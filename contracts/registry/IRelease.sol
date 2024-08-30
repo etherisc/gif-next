@@ -11,13 +11,16 @@ import {VersionPart} from "../type/Version.sol";
 interface IRelease {
 
     struct ReleaseInfo {
+        // slot 0
+        address releaseAdmin;
         StateId state;
         VersionPart version;
-        bytes32 salt;
-        IServiceAuthorization auth;
-        address releaseAdmin;
         Timestamp activatedAt;
         Timestamp disabledAt;
+        // slot 1
+        IServiceAuthorization auth;
+        // slot 2
+        bytes32 salt;
     }
 
     /// @dev Registers a registry contract for a specified chain.

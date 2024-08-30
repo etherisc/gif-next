@@ -574,6 +574,7 @@ New structs must be added to `MockStorageLayout` to be included in analysis.
 | StateId | 1 byte |
 | Str | 32 bytes |
 | Timestamp | 5 bytes |
+| VersionPart | 1 byte |
 | UFixed | 20 bytes |
 | address | 20 bytes |
 | uint256 | 32 bytes |
