@@ -298,7 +298,7 @@ contract DistributionService is
         InstanceReader reader = instance.getInstanceReader();
         
         IComponents.ComponentInfo memory distributionInfo = reader.getComponentInfo(distributionNftId);
-        address distributionWallet = distributionInfo.tokenHandler.getWallet();
+        // address distributionWallet = distributionInfo.tokenHandler.getWallet();
         
         Amount commissionAmount = reader.getFeeAmount(distributorNftId);
         
