@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IAccess} from "../../contracts/authorization/IAccess.sol";
 import {IBundle} from "../../contracts/instance/module/IBundle.sol";
 import {IComponents} from "../../contracts/instance/module/IComponents.sol";
 import {IDistribution} from "../../contracts/instance/module/IDistribution.sol";
@@ -28,4 +29,10 @@ contract MockStorageLayout {
     IPolicy.PayoutInfo private _payoutInfo;
 
     IRisk.RiskInfo private _riskInfo;
+
+    IAccess.RoleInfo private _roleInfo;
+    IAccess.TargetInfo private _targetInfo;
+    IAccess.FunctionInfo private _functionInfo;
+    IAccess.RoleNameInfo private _roleNameInfo;
+    IAccess.TargeNameInfo private _targetNameInfo;
 }
