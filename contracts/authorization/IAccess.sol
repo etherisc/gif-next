@@ -16,32 +16,40 @@ interface IAccess {
     }
 
     struct RoleInfo {
-        RoleId adminRoleId;
-        RoleType roleType;
-        uint32 maxMemberCount;
+        // slot 0
+        RoleId adminRoleId; 
+        RoleType roleType; 
+        uint32 maxMemberCount; 
+        Timestamp createdAt; 
+        Timestamp pausedAt; 
+        // slot 1
         Str name;
-        Timestamp createdAt;
-        Timestamp pausedAt;
     }
 
     struct TargetInfo {
+        // slot 0
         Str name;
+        // slot 1
         bool isCustom;
         Timestamp createdAt;
     }
 
     struct FunctionInfo {
+        // slot 0
         Str name; // function name
+        // slot 1
         Selector selector; // function selector
         Timestamp createdAt;
     }
 
     struct RoleNameInfo {
+        // slot 0
         RoleId roleId;
         bool exists;
     }
 
     struct TargeNameInfo {
+        // slot 0
         address target;
         bool exists;
     }

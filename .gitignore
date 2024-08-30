@@ -33,3 +33,4 @@ lcov.info
 deployments/
 soljson*.js
 deployment.env
+storage_layout.*

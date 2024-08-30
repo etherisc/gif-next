@@ -52,12 +52,16 @@ interface IRegistry is
     error ErrorRegistryContractAlreadyRegistered(address objectAddress);
 
     struct ObjectInfo {
+        // slot 0
         NftId nftId;
         NftId parentNftId;
         ObjectType objectType;
         bool isInterceptor;
+        // slot 1
         address objectAddress;
+        // slot 2
         address initialOwner;
+        // slot 3
         bytes data;
     }
 

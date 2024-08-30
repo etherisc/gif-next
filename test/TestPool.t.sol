@@ -116,15 +116,15 @@ contract TestPool is GifTest {
 
         Fee memory poolFee = feeInfo.poolFee;
         assertEq(poolFee.fractionalFee.toInt(), 0, "pool fee not 0 (fractional)");
-        assertEq(poolFee.fixedFee, 0, "pool fee not 0 (fixed)");
+        assertEq(poolFee.fixedFee.toInt(), 0, "pool fee not 0 (fixed)");
 
         Fee memory stakingFee = feeInfo.stakingFee;
         assertEq(stakingFee.fractionalFee.toInt(), 0, "staking fee not 0 (fractional)");
-        assertEq(stakingFee.fixedFee, 0, "staking fee not 0 (fixed)");
+        assertEq(stakingFee.fixedFee.toInt(), 0, "staking fee not 0 (fixed)");
 
         Fee memory performanceFee = feeInfo.performanceFee;
         assertEq(performanceFee.fractionalFee.toInt(), 0, "performance fee not 0 (fractional)");
-        assertEq(performanceFee.fixedFee, 0, "performance fee fee not 0 (fixed)");
+        assertEq(performanceFee.fixedFee.toInt(), 0, "performance fee fee not 0 (fixed)");
 
         Fee memory newPoolFee = FeeLib.toFee(UFixedLib.toUFixed(111,0), 222);
         Fee memory newStakingFee = FeeLib.toFee(UFixedLib.toUFixed(333,0), 444);
@@ -140,11 +140,11 @@ contract TestPool is GifTest {
         performanceFee = feeInfo.performanceFee;
 
         assertEq(poolFee.fractionalFee.toInt(), 111, "pool fee not 111 (fractional)");
-        assertEq(poolFee.fixedFee, 222, "pool fee not 222 (fixed)");
+        assertEq(poolFee.fixedFee.toInt(), 222, "pool fee not 222 (fixed)");
         assertEq(stakingFee.fractionalFee.toInt(), 333, "staking fee not 333 (fractional)");
-        assertEq(stakingFee.fixedFee, 444, "staking fee not 444 (fixed)");
+        assertEq(stakingFee.fixedFee.toInt(), 444, "staking fee not 444 (fixed)");
         assertEq(performanceFee.fractionalFee.toInt(), 555, "performance fee not 555 (fractional)");
-        assertEq(performanceFee.fixedFee, 666, "performance fee not 666 (fixed)");
+        assertEq(performanceFee.fixedFee.toInt(), 666, "performance fee not 666 (fixed)");
     }
 
     function test_poolCreateBundle() public {
@@ -299,7 +299,7 @@ contract TestPool is GifTest {
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
         assertEq(bundleInfo.poolNftId.toInt(), poolNftId.toInt(), "unexpected pool nft id");
         assertEq(bundleInfo.fee.fractionalFee.toInt(), initialStakingFee.fractionalFee.toInt(), "unexpected fractional bundle fee");
-        assertEq(bundleInfo.fee.fixedFee, initialStakingFee.fixedFee, "unexpected fixed bundle fee");
+        assertEq(bundleInfo.fee.fixedFee.toInt(), initialStakingFee.fixedFee.toInt(), "unexpected fixed bundle fee");
 
         assertEq(netStakedAmount, 9000, "net staked amount not 9000");
 
@@ -433,7 +433,7 @@ contract TestPool is GifTest {
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
         Fee memory bundleFee = bundleInfo.fee;
         assertEq(bundleFee.fractionalFee.toInt(), 111, "bundle fee not 111");
-        assertEq(bundleFee.fixedFee, 222, "bundle fee not 222");
+        assertEq(bundleFee.fixedFee.toInt(), 222, "bundle fee not 222");
     }
 
     function _createBundle() internal returns (NftId bundleNftId) {
