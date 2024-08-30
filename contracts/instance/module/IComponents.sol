@@ -19,6 +19,7 @@ interface IComponents {
     }
 
     struct ProductInfo {
+        // slot 0
         bool isProcessingFundedClaims; // custom logic to react to pool events for funded claims
         bool isInterceptingPolicyTransfers; // custom logic for policy nft transfers
         bool hasDistribution; // flag to indicate if distribution is enabled
@@ -26,6 +27,7 @@ interface IComponents {
         uint8 numberOfOracles; // actual number of oracles
         NftId poolNftId; // mandatory
         NftId distributionNftId; // 0..1 (optional)
+        // slot 1
         NftId [] oracleNftId; // 0..n (optional)
     }
 
