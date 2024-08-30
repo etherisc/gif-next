@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-
 import {Amount} from "../../type/Amount.sol";
 import {Fee} from "../../type/Fee.sol";
 import {NftId} from "../../type/NftId.sol";

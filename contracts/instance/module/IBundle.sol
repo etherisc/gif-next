@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Amount} from "../../type/Amount.sol";
 import {NftId} from "../../type/NftId.sol";
 import {Fee} from "../../type/Fee.sol";
-import {Seconds} from "../../type/Seconds.sol";
 import {Timestamp} from "../../type/Timestamp.sol";
 
 interface IBundle {
