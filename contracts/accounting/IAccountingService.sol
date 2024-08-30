@@ -17,9 +17,9 @@ interface IAccountingService is
         NftId nftId, 
         string feeName, 
         UFixed previousFractionalFee, 
-        uint256 previousFixedFee,
+        Amount previousFixedFee,
         UFixed newFractionalFee, 
-        uint256 newFixedFee
+        Amount newFixedFee
     );
 
     function decreaseComponentFees(InstanceStore instanceStore, NftId componentNftId, Amount feeAmount) external;
