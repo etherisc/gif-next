@@ -11,6 +11,7 @@ import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {IRelease} from "../../contracts/registry/IRelease.sol";
 import {IRisk} from "../../contracts/instance/module/IRisk.sol";
 import {IStaking} from "../../contracts/staking/IStaking.sol";
+import {ProxyManager} from "../../contracts/upgradeability/ProxyManager.sol";
 import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
 
 contract MockStorageLayout {
@@ -47,4 +48,6 @@ contract MockStorageLayout {
     TokenRegistry.TokenInfo private _tokenInfo;
 
     IStaking.TargetInfo private _stakingTargetInfo;
+
+    ProxyManager.VersionInfo private _versionInfo;
 }
