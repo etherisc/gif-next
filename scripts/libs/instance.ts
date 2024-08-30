@@ -65,14 +65,6 @@ export async function deployAndRegisterMasterInstance(
             }
         }
     );
-    const masterAccessManager = masterAccessManagerBaseContract as AccessManagerCloneable;
-
-    prepareVerificationData(
-        "AccessManagerCloneable",
-        await masterAccessManager,
-        [],
-        undefined
-    );
 
     const { address: masterInstanceAdminAddress, contract: masterInstanceAdminContract } = await deployContract(
         "InstanceAdmin",
