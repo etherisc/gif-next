@@ -556,6 +556,14 @@ hh run scripts/analyze_storage_layout.ts
 Analyses contract `MockStorageLayout.sol` and writes the storage layout to `storage_layout.json` and `storage_layout.csv`.
 New structs must be added to `MockStorageLayout` to be included in analysis. 
 
+Storage layout details:
+- Items fill up the current slot if possible
+- If not enough space is left in the current slot, the item is placed in the next slot
+- Stucts and arrays always start a new slot
+- Items following a struct or array always start a new slot
+
+More at https://docs.soliditylang.org/en/latest/internals/layout_in_storage.html
+
 ### Custom types sizes
 
 | Type | Size |
