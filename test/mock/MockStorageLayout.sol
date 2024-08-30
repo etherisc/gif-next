@@ -5,6 +5,7 @@ import {IAccess} from "../../contracts/authorization/IAccess.sol";
 import {IBundle} from "../../contracts/instance/module/IBundle.sol";
 import {IComponents} from "../../contracts/instance/module/IComponents.sol";
 import {IDistribution} from "../../contracts/instance/module/IDistribution.sol";
+import {IOracle} from "../../contracts/oracle/IOracle.sol";
 import {IPolicy} from "../../contracts/instance/module/IPolicy.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {IRisk} from "../../contracts/instance/module/IRisk.sol";
@@ -35,4 +36,6 @@ contract MockStorageLayout {
     IAccess.FunctionInfo private _functionInfo;
     IAccess.RoleNameInfo private _roleNameInfo;
     IAccess.TargeNameInfo private _targetNameInfo;
+
+    IOracle.RequestInfo private _requestInfo;
 }
