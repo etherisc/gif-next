@@ -308,7 +308,8 @@ contract GifTest is GifDeployer {
             masterInstanceReader,
             registry,
             VersionPartLib.toVersionPart(3),
-            registryOwner);
+            registryOwner,
+            false);
 
         // sets master instance address in instance service
         // instance service is now ready to create cloned instances
@@ -350,7 +351,7 @@ console.log("j");
         ( 
             instance,
             instanceNftId
-        ) = instanceService.createInstance();
+        ) = instanceService.createInstance(false);
 
         instanceAdmin = instance.getInstanceAdmin();
         instanceReader = instance.getInstanceReader();

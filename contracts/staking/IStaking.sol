@@ -60,15 +60,19 @@ interface IStaking is
 
     // info for individual stake
     struct StakeInfo {
+        // slot 0
         Timestamp lockedUntil;
     }
 
     struct TargetInfo {
-        ObjectType objectType;
-        uint256 chainId;
-        Seconds lockingPeriod;
+        // Slot 0
         UFixed rewardRate;
         Amount maxStakedAmount;
+        // Slot 1
+        ObjectType objectType;
+        Seconds lockingPeriod;
+        // Slot 2
+        uint256 chainId;
     }
 
     function initializeTokenHandler() external;

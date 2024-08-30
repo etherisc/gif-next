@@ -5,16 +5,16 @@ import {Amount, AmountLib} from "./Amount.sol";
 import {UFixed, UFixedLib} from "./UFixed.sol";
 
 struct Fee {
+    // slot 0
     UFixed fractionalFee;
-    // TODO migrate fixed fee to Amount
-    uint256 fixedFee;
+    Amount fixedFee;
 }
 
 library FeeLib {
 
     /// @dev Return a zero fee struct (0, 0)
     function zero() public pure returns (Fee memory fee) {
-        return Fee(UFixed.wrap(0), 0);
+        return Fee(UFixed.wrap(0), AmountLib.zero());
     }
 
     /// @dev Converts the uint256 to a fee struct.
@@ -22,7 +22,7 @@ library FeeLib {
         UFixed fractionalFee,
         uint256 fixedFee
     ) public pure returns (Fee memory fee) {
-        return Fee(fractionalFee, fixedFee);
+        return Fee(fractionalFee, AmountLib.toAmount(fixedFee));
     }
 
     /// @dev Calculates fee and net amounts for the provided parameters
@@ -41,14 +41,14 @@ library FeeLib {
         if(gtz(fee)) {
             UFixed fractionalAmount = 
                 amount.toUFixed() * fee.fractionalFee;
-            feeAmount = AmountLib.toAmount(fractionalAmount.toInt() + fee.fixedFee);
+            feeAmount = AmountLib.toAmount(fractionalAmount.toInt()) + fee.fixedFee;
             netAmount = netAmount - feeAmount;
         }
     }
 
     /// @dev Return the percent fee struct (x%, 0)
     function percentageFee(uint8 percent) public pure returns (Fee memory fee) {
-        return Fee(UFixedLib.toUFixed(percent, -2), 0);
+        return Fee(UFixedLib.toUFixed(percent, -2), AmountLib.zero());
     }
 
     // pure free functions for operators
@@ -57,10 +57,10 @@ library FeeLib {
     }
 
     function gtz(Fee memory fee) public pure returns (bool) {
-        return UFixed.unwrap(fee.fractionalFee) > 0 || fee.fixedFee > 0;
+        return UFixed.unwrap(fee.fractionalFee) > 0 || fee.fixedFee.gtz();
     }
 
     function eqz(Fee memory fee) public pure returns (bool) {
-        return fee.fixedFee == 0 && UFixed.unwrap(fee.fractionalFee) == 0;
+        return fee.fixedFee.eqz() && UFixed.unwrap(fee.fractionalFee) == 0;
     }
 }

@@ -35,10 +35,13 @@ contract TokenRegistry is
     error ErrorTokenRegistryMajorVersionInvalid(VersionPart majorVersion);
 
     struct TokenInfo {
+        // slot 0
         uint256 chainId;
+        // slot 1
+        string symbol;
+        // slot 2
         address token;
         uint8 decimals;
-        string symbol;
         bool active;
     }
 

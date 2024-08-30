@@ -59,7 +59,7 @@ contract RewardCalculation is GifTest {
 
         Seconds oneHourDuration = SecondsLib.toSeconds(3600);
         // 1 / (365 * 24) = 0.00011415525114155251
-        UFixed oneHFraction = UFixedLib.toUFixed(114155251141, -15);
+        UFixed oneHFraction = UFixedLib.toUFixed(114155251, -12);
         UFixed fractionOneH = StakingLib.getYearFraction(oneHourDuration);
         assertEq(_times1e9(fractionOneH), 114155, "unexpected 1h fraction (x1e9)");
         assertTrue(UFixedLib.delta(fractionOneH, oneHFraction) < epsilon, "unexpected 1h fraction (equals)");

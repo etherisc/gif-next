@@ -26,14 +26,17 @@ interface IAccess {
     }
 
     struct RoleInfo {
+        // slot 0
+        RoleId adminRoleId; 
+        RoleType roleType; 
+        uint32 maxMemberCount; 
+        Timestamp createdAt; 
+        Timestamp pausedAt; 
+        // slot 1
         Str name;
-        RoleId adminRoleId;
-        RoleType roleType;
-        uint32 maxMemberCount;
-        Timestamp createdAt;
-        Timestamp pausedAt;
     }
 
+    // TODO recalc slot allocation
     struct TargetInfo {
         Str name;
         TargetType targetType;
@@ -42,17 +45,21 @@ interface IAccess {
     }
 
     struct FunctionInfo {
+        // slot 0
         Str name; // function name
+        // slot 1
         Selector selector; // function selector
         Timestamp createdAt;
     }
 
     struct RoleNameInfo {
+        // slot 0
         RoleId roleId;
         bool exists;
     }
 
     struct TargeNameInfo {
+        // slot 0
         address target;
         bool exists;
     }

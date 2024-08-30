@@ -297,15 +297,15 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         await staking.getTokenHandler(), 
         [
             registryAddress, // reg
-            stakingAddress, // compo
+            await stakingManager.getProxy(), // compo
             dipAddress, // token
-            registryAdminAddress  // authority
+            await registryAdmin.authority(), // authority
         ], 
         undefined);
     
 
     logger.info(`Dip deployed at ${dipAddress}`);
-    logger.info(`RegistryAuthorization deployeqd at ${registryAuthorizationAddress}`);
+    logger.info(`RegistryAuthorization deployed at ${registryAuthorizationAddress}`);
     logger.info(`RegistryAdmin deployeqd at ${registryAdmin}`);
     logger.info(`Registry deployed at ${registryAddress}`);
     logger.info(`ChainNft deployed at ${chainNftAddress}`);

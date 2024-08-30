@@ -160,6 +160,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
             assertTrue(info.activatedAt.eqz(), "Test error: unexpected activatedAt #6");
             assertTrue(info.disabledAt.eqz(), "Test error: unexpected disabledAt #6");
         } else {
+            // solhint-disable-next-line
             console.log("Unexpected state ", info.state.toInt());
             assertTrue(false, "Test error: unexpected state");
         }        
@@ -1157,15 +1158,15 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
 
         _assert_releaseRegistry_getters(
             expectedVersion,
-            IRelease.ReleaseInfo(
-                    DEPLOYING(),
-                    preparedVersion,
-                    preparedSalt,
-                    serviceAuth,
-                    address(preparedAdmin),
-                    TimestampLib.zero(),
-                    TimestampLib.zero()
-                ));
+            IRelease.ReleaseInfo({
+                state: DEPLOYING(),
+                version: preparedVersion,
+                salt: preparedSalt,
+                auth: serviceAuth,
+                releaseAdmin: address(preparedAdmin),
+                activatedAt: TimestampLib.zero(),
+                disabledAt: TimestampLib.zero()
+            }));
         _assert_releaseRegistry_getters(
             VersionPartLib.toVersionPart(releaseRegistry.INITIAL_GIF_VERSION() - 1),
             zeroReleaseInfo());

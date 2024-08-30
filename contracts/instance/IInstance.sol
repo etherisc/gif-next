@@ -135,4 +135,5 @@ interface IInstance is
     function getRiskSet() external view returns (RiskSet);
     function getInstanceAdmin() external view returns (InstanceAdmin);
     function getInstanceStore() external view returns (InstanceStore);
+    function isTokenRegistryDisabled() external view returns (bool);
 }

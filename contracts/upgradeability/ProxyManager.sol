@@ -18,11 +18,13 @@ contract ProxyManager is
 {
 
     struct VersionInfo {
-        Version version;
+        // slot 0
         address implementation;
-        address activatedBy;
         Timestamp activatedAt;
         Blocknumber activatedIn;
+        Version version;
+        // slot 1
+        address activatedBy;
     }
 
     event LogProxyManagerVersionableDeployed(address indexed proxy, address initialImplementation);
@@ -221,12 +223,12 @@ contract ProxyManager is
 
         // update version history
         _versions.push(newVersion);
-        _versionHistory[newVersion] = VersionInfo(
-            newVersion,
-            implementation,
-            activatedBy,
-            TimestampLib.blockTimestamp(),
-            blockNumber()
-        );
+        _versionHistory[newVersion] = VersionInfo({
+            version: newVersion,
+            implementation: implementation,
+            activatedBy: activatedBy,
+            activatedAt: TimestampLib.blockTimestamp(),
+            activatedIn: blockNumber()
+        });
     }
 }

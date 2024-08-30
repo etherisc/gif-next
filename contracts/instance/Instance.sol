@@ -35,6 +35,7 @@ contract Instance is
     RiskSet internal _riskSet;
     InstanceStore internal _instanceStore;
     NftId [] internal _products;
+    bool internal _tokenRegistryDisabled;
 
 
     modifier onlyCustomRoleAdmin(RoleId roleId) {
@@ -61,7 +62,8 @@ contract Instance is
         InstanceReader instanceReader,
         IRegistry registry, 
         VersionPart release,
-        address initialOwner
+        address initialOwner,
+        bool tokenRegistryDisabled
     ) 
         external 
         initializer()
@@ -103,6 +105,8 @@ contract Instance is
             getRegistry().getServiceAddress(
                 INSTANCE(), 
                 release));
+
+        _tokenRegistryDisabled = tokenRegistryDisabled;
 
         _registerInterface(type(IInstance).interfaceId);    
     }
@@ -318,6 +322,10 @@ contract Instance is
 
     function getInstanceStore() external view returns (InstanceStore) {
         return _instanceStore;
+    }
+
+    function isTokenRegistryDisabled() external view returns (bool) {
+        return _tokenRegistryDisabled;
     }
 
     //--- internal view/pure functions --------------------------------------//

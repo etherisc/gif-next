@@ -81,7 +81,11 @@ interface IInstanceService is IService {
     /// Creation of a new instance is achieved by this service through the creation and registration 
     /// of a new clone of the master instance and then setting up the initial wiring and authorization 
     /// of the necessary components.
-    function createInstance()
+    /// @param allowAnyToken specifies whether the new instance is allowed to use any token or 
+    /// only tokens that are registered in the `TokenRegistry`. Use of tokens **not** registered in the
+    /// `TokenRegistry` may result in problems with token handline and is therefor not recommended. The 
+    /// use of such instances **is not supported** by Etherisc. 
+    function createInstance(bool allowAnyToken)
         external 
         returns (
             IInstance instance,
