@@ -574,6 +574,7 @@ New structs must be added to `MockStorageLayout` to be included in analysis.
 | uint256 | 32 bytes |
 | uint128 | 16 bytes |
 | uint160 | 20 bytes |
+| uint32 | 4 bytes |
 | uint16  | 2 bytes  |
 | string  | 32 bytes |
 | bytes   | 32 bytes |

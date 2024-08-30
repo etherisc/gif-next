@@ -37,13 +37,17 @@ interface IDistribution {
     }
 
     struct ReferralInfo {
+        // slot 0
         NftId distributionNftId;
         NftId distributorNftId;
-        string referralCode;
-        UFixed discountPercentage;
         uint32 maxReferrals;
         uint32 usedReferrals;
+        // slot 1
+        UFixed discountPercentage;
         Timestamp expiryAt;
+        // slot 2
+        string referralCode;
+        // slot 3
         bytes data;
     }
 

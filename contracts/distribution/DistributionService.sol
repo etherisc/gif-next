@@ -208,16 +208,16 @@ contract DistributionService is
 
         {
             referralId = ReferralLib.toReferralId(distributionNftId, code);
-            IDistribution.ReferralInfo memory info = IDistribution.ReferralInfo(
-                distributionNftId,
-                distributorNftId,
-                code,
-                discountPercentage,
-                maxReferrals,
-                0, // used referrals
-                expiryAt,
-                data
-            );
+            IDistribution.ReferralInfo memory info = IDistribution.ReferralInfo({
+                distributionNftId: distributionNftId,
+                distributorNftId: distributorNftId,
+                referralCode: code,
+                discountPercentage: discountPercentage,
+                maxReferrals: maxReferrals,
+                usedReferrals: 0, 
+                expiryAt: expiryAt,
+                data: data
+            });
 
             instance.getInstanceStore().createReferral(referralId, info);
         }
