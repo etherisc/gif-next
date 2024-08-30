@@ -47,12 +47,14 @@ interface IComponents {
     }
 
     struct PoolInfo {
+        // slot 0
         Amount maxBalanceAmount; // max balance amount allowed for pool
+        UFixed collateralizationLevel; // factor to calculate collateral for sum insurance (default 100%)
+        // slot 1
+        UFixed retentionLevel; // amount of collateral held in pool (default 100%)
         bool isInterceptingBundleTransfers; // custom logic for bundle nft transfers
         bool isProcessingConfirmedClaims; // custom logic for claims confirmation
         bool isExternallyManaged; // funding bundles is restricted to book keeping, actual funds may be provided as needed to support payouts
         bool isVerifyingApplications; // underwriting requires the pool component checks/confirms the applications 
-        UFixed collateralizationLevel; // factor to calculate collateral for sum insurance (default 100%)
-        UFixed retentionLevel; // amount of collateral held in pool (default 100%)
     }
 }
