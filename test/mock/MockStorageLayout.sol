@@ -10,6 +10,7 @@ import {IPolicy} from "../../contracts/instance/module/IPolicy.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {IRelease} from "../../contracts/registry/IRelease.sol";
 import {IRisk} from "../../contracts/instance/module/IRisk.sol";
+import {IStaking} from "../../contracts/staking/IStaking.sol";
 import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
 
 contract MockStorageLayout {
@@ -44,4 +45,6 @@ contract MockStorageLayout {
     IRelease.ReleaseInfo private _releaseInfo;
 
     TokenRegistry.TokenInfo private _tokenInfo;
+
+    IStaking.TargetInfo private _stakingTargetInfo;
 }
