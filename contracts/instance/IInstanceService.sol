@@ -67,8 +67,8 @@ interface IInstanceService is IService {
     function revokeRole(RoleId roleId, address account) external; 
 
     /// @dev Creates a new custom target for the calling instance.
-    /// Optionally, a target role can be specified that will be assigned to the target.
-    function createTarget(address target, RoleId targetRoleId, string memory name) external;
+    /// All custom trargets are created with a corresponding contract role.
+    function createTarget(address target, string memory name) external returns (RoleId contractRoleId);
 
     /// @dev Locks/unlocks the specified target constrolled by the corresponding instance admin.
     function setTargetLocked(address target, bool locked) external;

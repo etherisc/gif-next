@@ -124,15 +124,15 @@ contract InstanceService is
         instance.getInstanceAdmin().revokeRole(roleId, account);
     }
 
-    // TODO refactor to not use targetRoleId
     /// @inheritdoc IInstanceService
-    function createTarget(address target, RoleId targetRoleId, string memory name)
+    function createTarget(address target, string memory name)
         external
         restricted()
         onlyInstance()
+        returns (RoleId contractRoleId)
     {
         IInstance instance = IInstance(msg.sender);
-        instance.getInstanceAdmin().createTarget(target, name);
+        return instance.getInstanceAdmin().createTarget(target, name);
     }
 
 

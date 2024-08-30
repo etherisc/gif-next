@@ -238,12 +238,13 @@ contract Instance is
     //--- Targets ------------------------------------------------------------//
 
     /// @inheritdoc IInstance
-    function createTarget(address target, RoleId targetRoleId, string memory name) 
+    function createTarget(address target, string memory name) 
         external 
         restricted()
         onlyOwner()
+        returns (RoleId targetRoleId)
     {
-        _instanceService.createTarget(target, targetRoleId, name);
+        targetRoleId = _instanceService.createTarget(target, name);
         emit LogInstanceCustomTargetCreated(target, targetRoleId, name);
     }
 

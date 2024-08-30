@@ -26,34 +26,52 @@ contract InstanceAuthzTargetsTest is InstanceAuthzBaseTest {
     }
 
 
-    function test_instanceAuthzTargetsCreateNoRoleHappyCase() public {
+    function test_instanceAuthzTargetsCreateHappyCase() public {
         // GIVEN
         AccessManagedMock target = _deployAccessManagedMock();
-        RoleId zeroRoleId = RoleIdLib.zero();
+        RoleId expectedRoleId = RoleIdLib.toRoleId(1000000);
         string memory targetName = "MyTarget";
+
         uint256 initialTargetCount = instanceAdmin.targets();
+        uint256 initialRoleCount = instanceAdmin.roles();
 
         // WHEN + THEN
         vm.expectEmit(address(instance));
-        emit IInstance.LogInstanceCustomTargetCreated(address(target), zeroRoleId, targetName);
+        emit IInstance.LogInstanceCustomTargetCreated(address(target), expectedRoleId, targetName);
 
         vm.prank(instanceOwner);
-        instance.createTarget(address(target), zeroRoleId, targetName);
+        RoleId myTargetRoleId = instance.createTarget(address(target), targetName);
 
         // THEN
-        assertTrue(instanceReader.targetExists(address(target)), "target not existing after create");
         assertEq(instanceAdmin.targets(), initialTargetCount + 1, "unexpected target count after create (admin)");
         assertEq(instanceReader.targets(), initialTargetCount + 1, "unexpected target count after create (reader)");
+        assertEq(instanceReader.roles(), initialRoleCount + 1, "unexpected role count after create (reader)");
 
+        assertTrue(instanceReader.targetExists(address(target)), "target not existing after create");
+        assertTrue(instanceReader.roleExists(myTargetRoleId), "role not existing after create");
+        assertEq(myTargetRoleId.toInt(), expectedRoleId.toInt(), "unexpected target role id");
+
+        // check target info
+        assertTrue(instanceReader.targetExists(address(target)), "target not existing after create");
         IAccess.TargetInfo memory targetInfo = instanceReader.getTargetInfo(address(target));
         assertEq(targetInfo.name.toString(), "MyTarget", "unexpected target name");
         assertTrue(targetInfo.targetType == IAccess.TargetType.Custom, "target type not custom");
+        assertEq(targetInfo.roleId.toInt(), expectedRoleId.toInt(), "unexpected target role id");
         assertEq(targetInfo.createdAt.toInt(), TimestampLib.blockTimestamp().toInt(), "unexpected target creation time");
+
+        // check role
+        assertTrue(instanceReader.roleExists(targetInfo.roleId), "role not existing after create");
+        assertFalse(instanceReader.isRoleCustom(targetInfo.roleId), "role is custom");
+        assertEq(instanceReader.roleMembers(targetInfo.roleId), 1, "unexpected role member count");
+        assertEq(instanceReader.getRoleMember(targetInfo.roleId, 0), address(target), "target not role member");
+
+        IAccess.RoleInfo memory roleInfo = instanceReader.getRoleInfo(targetInfo.roleId);
+        assertEq(roleInfo.name.toString(), "MyTarget_Role", "unexpected role name");
+        assertTrue(roleInfo.roleType == IAccess.RoleType.Contract, "unexpected role type");
+        assertEq(roleInfo.maxMemberCount, 1, "unexpected max member count");
+        assertEq(roleInfo.createdAt.toInt(), TimestampLib.blockTimestamp().toInt(), "unexpected role creation time");
+        assertEq(roleInfo.pausedAt.toInt(), TimestampLib.max().toInt(), "unexpected role pausing time");
     }
-
-
-    function test_instanceAuthzTargetsCreateWithRoleHappyCase() public {
-    }   
 
 
     function test_instanceAuthzTargetsSetTargetLockedHappyCase() public {

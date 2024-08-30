@@ -113,7 +113,7 @@ interface IInstance is
     /// @dev Creates a new custom target.
     /// Custom targets are intended to be used for access control helper contracts of components.
     /// Custom targets are not intended to be used for components.
-    function createTarget(address target, RoleId targetRoleId, string memory name) external;
+    function createTarget(address target, string memory name) external returns (RoleId contractRoleId);
 
     function setTargetFunctionRole(string memory targetName, bytes4[] calldata selectors, RoleId roleId) external;
 

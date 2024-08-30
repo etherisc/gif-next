@@ -641,8 +641,9 @@ emit LogAccessAdminDebugTarget(target.toString(), getTargetAddress, roleId, auth
         TargetType targetType
     )
         internal
+        returns (RoleId contractRoleId)
     {
-        _createTarget(target, targetName, targetType, true);
+        return _createTarget(target, targetName, targetType, true);
     }
 
 
@@ -664,12 +665,13 @@ emit LogAccessAdminDebugTarget(target.toString(), getTargetAddress, roleId, auth
         bool checkAuthority
     )
         private
+        returns (RoleId contractRoleId)
     {
         // checks
         AccessAdminLib.checkTargetCreation(this, target, targetName, checkAuthority);
 
         // effects
-        _createTargetUnchecked(
+        contractRoleId = _createTargetUnchecked(
             target, 
             targetName, 
             targetType,
@@ -722,12 +724,11 @@ emit LogAccessAdminDebugTarget(target.toString(), getTargetAddress, roleId, auth
         bool managed
     )
         internal
+        returns (RoleId targetRoleId)
     {
         // create target role (if not existing)
-        (
-            RoleId targetRoleId,
-            string memory roleName
-        ) = _getOrCreateTargetRoleIdAndName(target, targetName, targetType);
+        string memory roleName;
+        (targetRoleId, roleName) = _getOrCreateTargetRoleIdAndName(target, targetName, targetType);
 
         if (!roleExists(targetRoleId)) {
             _createRole(

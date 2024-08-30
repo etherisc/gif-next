@@ -290,8 +290,9 @@ contract InstanceAdmin is
     )
         external
         restricted()
+        returns (RoleId contractRoleId)
     {
-        _createManagedTarget(
+        return _createManagedTarget(
             target, 
             name, 
             TargetType.Custom);

@@ -204,6 +204,50 @@ library PoolLib {
         instance = IInstance(instanceAddress);
     }
 
+
+    function getAndVerifyActiveComponent(
+        IRegistry registry,
+        address sender,
+        ObjectType expectedComponentType
+    )
+        public
+        view
+        returns (
+            NftId componentNftId,
+            IInstance instance
+        )
+    {
+        (
+            IRegistry.ObjectInfo memory info, 
+            address instanceAddress
+        ) = ContractLib.getAndVerifyComponent(
+            registry, 
+            sender,
+            expectedComponentType,
+            true); // only active components
+
+        componentNftId = info.nftId;
+        instance = IInstance(instanceAddress);
+    }
+
+
+    function getInstanceForComponent(
+        IRegistry registry,
+        NftId componentNftId
+    )
+        public
+        view
+        returns (
+            IInstance instance
+        )
+    {
+        NftId productNftId = registry.getParentNftId(componentNftId);
+        NftId instanceNftId = registry.getParentNftId(productNftId);
+        address instanceAddress = registry.getObjectAddress(instanceNftId);
+        return IInstance(instanceAddress);
+    }
+
+
     function checkNftType(
         IRegistry registry, 
         NftId nftId, 

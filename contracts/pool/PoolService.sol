@@ -726,28 +726,6 @@ contract PoolService is
         return PoolLib.getAndVerifyActivePool(getRegistry(), msg.sender);
     }
 
-    // function _getAndVerifyActivePool()
-    //     internal
-    //     virtual
-    //     view
-    //     returns (
-    //         NftId poolNftId,
-    //         IInstance instance
-    //     )
-    // {
-    //     (
-    //         IRegistry.ObjectInfo memory info, 
-    //         address instanceAddress
-    //     ) = ContractLib.getAndVerifyComponent(
-    //         getRegistry(), 
-    //         msg.sender,
-    //         POOL(),
-    //         true); // only active pools
-
-    //     poolNftId = info.nftId;
-    //     instance = IInstance(instanceAddress);
-    // }
-
 
     function _getDomain() internal pure override returns(ObjectType) {
         return POOL();

@@ -86,7 +86,11 @@ contract ServiceAuthorization is
           _release = release;
           _commitHash = commitHash;
 
-          _setupAdminAndPublicRoles();
+          // setup of roles defined in OpenZeppelin AccessManager
+          _addRole(ADMIN_ROLE(), _toRoleInfo(ADMIN_ROLE(), RoleType.Core, 1, ADMIN_ROLE_NAME()));
+          _addRole(PUBLIC_ROLE(), _toRoleInfo(ADMIN_ROLE(), RoleType.Core, 1, PUBLIC_ROLE_NAME()));
+
+          // defines service domains relevant for the authorization
           _setupDomains();
           _setupDomainAuthorizations();
      }
@@ -187,22 +191,10 @@ contract ServiceAuthorization is
           return _authorizedFunctions[target][roleId];
      }
 
-     // TODO cleanup
-     // // ERC165
-     // function supportsInterface(bytes4 interfaceId) public pure returns (bool) {
-     //      return (
-     //           interfaceId == type(IServiceAuthorization).interfaceId || 
-     //           interfaceId == type(IERC165).interfaceId
-     //      );
-     // }
-
-
-     function _setupAdminAndPublicRoles() internal {
-          _addRole(ADMIN_ROLE(), _toRoleInfo(ADMIN_ROLE(), RoleType.Core, 1, ADMIN_ROLE_NAME()));
-          _addRole(PUBLIC_ROLE(), _toRoleInfo(ADMIN_ROLE(), RoleType.Core, 1, PUBLIC_ROLE_NAME()));
-     }
-
-     /// @dev Overwrite this function for a specific realease.
+     /// @dev Defines service domains relevant for the authorization.
+     /// When used for ReleaseAdmin the list defines the services to be registered for the release.
+     /// IMPORTANT: Both the list of the service domains as well as the ordering of the domains is important.
+     /// Trying to register services not in this list or register services in a different order will result in an error.
      // solhint-disable-next-line no-empty-blocks
      function _setupDomains() internal virtual {}
 

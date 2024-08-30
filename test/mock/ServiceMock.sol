@@ -33,13 +33,18 @@ contract ServiceMock is RegisterableMockWithAuthority, IService {
         _registerInterface(type(IService).interfaceId);
     }
 
+    // from IRegisterable / IService
+    function getRelease() public pure virtual override (IRelease, RegisterableMockWithAuthority) returns(VersionPart) {
+        return VersionPartLib.toVersionPart(3);
+    }
+
     // from IService
     function getDomain() public pure virtual returns(ObjectType) {
         return PRODUCT();
     }
 
     function getRoleId() external virtual override pure returns(RoleId serviceRoleId) {
-        return RoleIdLib.toServiceRoleId(getDomain(), VersionPartLib.toVersionPart(3));
+        return RoleIdLib.toServiceRoleId(getDomain(), getRelease());
     }
 
     // from IVersionable
@@ -49,12 +54,12 @@ contract ServiceMock is RegisterableMockWithAuthority, IService {
         virtual override// (IVersionable, Versionable)
         returns(Version)
     {
-        return VersionLib.toVersion(3,0,0);
+        return VersionLib.toVersion(uint8(getRelease().toInt()),0,0);
     }
     
     // from IVersionable, DON NOT USE
-    function initializeVersionable(address activatedBy, bytes memory activationData) external { revert(); }
-    function upgradeVersionable(bytes memory upgradeData) external { revert(); }
+    function initializeVersionable(address activatedBy, bytes memory activationData) external { revert("not implemented"); }
+    function upgradeVersionable(bytes memory upgradeData) external { revert("not implemented"); }
 }
 
 contract SelfOwnedServiceMock is ServiceMock {
@@ -70,10 +75,6 @@ contract SelfOwnedServiceMock is ServiceMock {
 
     function getDomain() public pure override returns(ObjectType) {
         return DISTRIBUTION();
-    }
-
-    function getRoleId() external virtual override pure returns(RoleId serviceRoleId) {
-        return RoleIdLib.toServiceRoleId(getDomain(), VersionPartLib.toVersionPart(3));
     }
 }
 
@@ -152,21 +153,7 @@ contract ServiceMockOldVersion is ServiceMock {
             initialAuthority)
     {}
 
-    function getDomain() public pure override returns(ObjectType) {
-        return PRODUCT(); // same as ServiceMock
-    }
-
-    function getRoleId() external virtual override pure returns(RoleId serviceRoleId) {
-        return RoleIdLib.toServiceRoleId(getDomain(), VersionPartLib.toVersionPart(2));
-    }
-
-    function getRelease() public pure override(IRelease, RegisterableMockWithAuthority) returns(VersionPart) {
-        return VersionPartLib.toVersionPart(2);
-    }
-
-    function getVersion() public pure override returns(Version) {
-        return VersionLib.toVersion(2,0,0);
-    }
+    function getRelease() public pure virtual override returns(VersionPart) { return VersionPartLib.toVersionPart(2); }
 }
 
 contract ServiceMockNewVersion is ServiceMock {
@@ -179,18 +166,6 @@ contract ServiceMockNewVersion is ServiceMock {
             initialOwner,
             initialAuthority)
     {}
-
-    function getDomain() public pure override returns(ObjectType) {
-        return PRODUCT(); // same as ServiceMock
-    }
-
-    function getRoleId() external virtual override pure returns(RoleId serviceRoleId) {
-        return RoleIdLib.toServiceRoleId(getDomain(), VersionPartLib.toVersionPart(4));
-    }
-
-    function getVersion() public pure override returns(Version) {
-        return VersionLib.toVersion(4,0,0);
-    }
 }
 
 contract ServiceMockWithRegistryDomainV3 is ServiceMock {
@@ -199,37 +174,25 @@ contract ServiceMockWithRegistryDomainV3 is ServiceMock {
         ServiceMock(nftId, registryNftId, isInterceptor, initialOwner, initialAuthority)
     {}
 
-    function getDomain() public pure virtual override returns(ObjectType) {
-        return REGISTRY();
-    }
+    function getDomain() public pure virtual override returns(ObjectType) { return REGISTRY(); }
 }
 
-contract ServiceMockWithRegistryDomainV4 is ServiceMockWithRegistryDomainV3 
+contract ServiceMockWithRegistryDomainV4 is ServiceMock 
 {
     constructor(NftId nftId, NftId registryNftId, bool isInterceptor, address initialOwner, address initialAuthority)
-        ServiceMockWithRegistryDomainV3(nftId, registryNftId, isInterceptor, initialOwner, initialAuthority)
+        ServiceMock(nftId, registryNftId, isInterceptor, initialOwner, initialAuthority)
     {}
 
-    function getRoleId() external virtual override pure returns(RoleId serviceRoleId) {
-        return RoleIdLib.toServiceRoleId(getDomain(), VersionPartLib.toVersionPart(4));
-    }
-
-    function getVersion() public pure override returns(Version) {
-        return VersionLib.toVersion(4,0,0);
-    }
+    function getRelease() public pure virtual override returns(VersionPart) { return VersionPartLib.toVersionPart(4); }
+    function getDomain() public pure virtual override returns(ObjectType) { return REGISTRY(); }
 }
 
-contract ServiceMockWithRegistryDomainV5 is ServiceMockWithRegistryDomainV3 
+contract ServiceMockWithRegistryDomainV5 is ServiceMock 
 {
     constructor(NftId nftId, NftId registryNftId, bool isInterceptor, address initialOwner, address initialAuthority)
-        ServiceMockWithRegistryDomainV3(nftId, registryNftId, isInterceptor, initialOwner, initialAuthority)
+        ServiceMock(nftId, registryNftId, isInterceptor, initialOwner, initialAuthority)
     {}
 
-    function getRoleId() external virtual override pure returns(RoleId serviceRoleId) {
-        return RoleIdLib.toServiceRoleId(getDomain(), VersionPartLib.toVersionPart(5));
-    }
-
-    function getVersion() public pure override returns(Version) {
-        return VersionLib.toVersion(5,0,0);
-    }
+    function getRelease() public pure virtual override returns(VersionPart) { return VersionPartLib.toVersionPart(5); }
+    function getDomain() public pure virtual override returns(ObjectType) { return REGISTRY(); }
 }
