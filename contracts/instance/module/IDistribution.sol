@@ -11,15 +11,15 @@ import {UFixed} from "../../type/UFixed.sol";
 interface IDistribution {
 
     struct DistributorTypeInfo {
-        string name;
-        NftId distributionNftId;
         UFixed minDiscountPercentage;
         UFixed maxDiscountPercentage;
-        UFixed commissionPercentage;
         uint32 maxReferralCount;
         Seconds maxReferralLifetime;
         bool allowSelfReferrals;
         bool allowRenewals;
+        UFixed commissionPercentage;
+        NftId distributionNftId;
+        string name;                
         bytes data;
     }
 

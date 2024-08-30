@@ -93,17 +93,17 @@ contract DistributionService is
         }
 
         distributorType = DistributorTypeLib.toDistributorType(distributionNftId, name);
-        IDistribution.DistributorTypeInfo memory info = IDistribution.DistributorTypeInfo(
-            name,
-            distributionNftId,
-            minDiscountPercentage,
-            maxDiscountPercentage,
-            commissionPercentage,
-            maxReferralCount,
-            maxReferralLifetime,
-            allowSelfReferrals,
-            allowRenewals,
-            data);
+        IDistribution.DistributorTypeInfo memory info = IDistribution.DistributorTypeInfo({
+            name: name,
+            distributionNftId: distributionNftId,
+            minDiscountPercentage: minDiscountPercentage,
+            maxDiscountPercentage: maxDiscountPercentage,
+            commissionPercentage: commissionPercentage,
+            maxReferralCount: maxReferralCount,
+            maxReferralLifetime: maxReferralLifetime,
+            allowSelfReferrals: allowSelfReferrals,
+            allowRenewals: allowRenewals,
+            data: data});
 
         instance.getInstanceStore().createDistributorType(distributorType, info);
     }
