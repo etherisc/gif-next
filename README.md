@@ -543,3 +543,39 @@ contracts
     NftId.sol
     ObjectType.sol
 
+## Storage layout
+
+### Analysis tool
+
+Command line call
+
+```bash
+hh run scripts/analyze_storage_layout.ts
+```
+
+Analyses contract `MockStorageLayout.sol` and writes the storage layout to `storage_layout.json` and `storage_layout.csv`.
+New structs must be added to `MockStorageLayout` to be included in analysis. 
+
+### Custom types sizes
+
+| Type | Size |
+| --- | --- |
+| Amount | 12 bytes |
+| ClaimId | 2 bytes |
+| DistributorType | 8 bytes |
+| NftId | 12 bytes |
+| ObjectType | 1 byte |
+| ReferralId | 8 bytes |
+| RiskId | 8 bytes |
+| Seconds | 5 bytes |
+| Timestamp | 5 bytes |
+| UFixed | 20 bytes |
+| address | 20 bytes |
+| uint256 | 32 bytes |
+| uint128 | 16 bytes |
+| uint160 | 20 bytes |
+| uint16  | 2 bytes  |
+| string  | 32 bytes |
+| bytes   | 32 bytes |
+| bytes8  | 8 byte  |
+| bool    | 1 byte  |
