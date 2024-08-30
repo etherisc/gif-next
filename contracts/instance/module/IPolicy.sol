@@ -43,24 +43,28 @@ interface IPolicy {
 
     /// @dev policy data for the full policy lifecycle
     struct PolicyInfo {
-        // application data, no changes after applying for a policy
+        // slot 0
         NftId productNftId;
         NftId bundleNftId;
-        ReferralId referralId;
         RiskId riskId;
+        // slot 1
         Amount sumInsuredAmount;
         Amount premiumAmount; // expected premium at application time
-        Seconds lifetime;
-        bytes applicationData;
-        // policy data that may change during the lifecycle
-        bytes processData;
+        ReferralId referralId;
+        // slot 2
         uint16 claimsCount;
         uint16 openClaimsCount;
         Amount claimAmount; // sum of confirmed claim amounts (max = sum insured amount)
         Amount payoutAmount; // sum of payouts (max = sum confirmed claim amountst)
+        // slot 3
         Timestamp activatedAt; // time of underwriting
+        Seconds lifetime;
         Timestamp expiredAt; // no new claims (activatedAt + lifetime)
         Timestamp closedAt; // no locked capital (or declinedAt)
+        // slot 4
+        bytes applicationData;
+        // slot 5
+        bytes processData;
     }
 
     // claimId neeeds to be encoded policyNftId:claimId combination
