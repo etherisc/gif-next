@@ -69,21 +69,28 @@ interface IPolicy {
 
     // claimId neeeds to be encoded policyNftId:claimId combination
     struct ClaimInfo {
+        // slot 0
         Amount claimAmount;
         Amount paidAmount;
         Timestamp closedAt; // payment of confirmed claim amount (or declinedAt)
         uint24 payoutsCount;
+        // slot 1
         uint24 openPayoutsCount;
+        // slot 2
         bytes submissionData; // use case specific claim submission data, no changes after submitting the claim
+        // slot 3
         bytes processData; // use case specific data that may include information supporting confirm or decline
     }
 
     // claimId neeeds to be encoded policyNftId:claimId combination
     struct PayoutInfo {
+        // slot 0
         ClaimId claimId;
         Amount amount;
         Timestamp paidAt; // timestamp for actual payout
+        // slot 1
         address beneficiary; // for address(0) beneficiary is policy nft owner
+        // slot 2
         bytes data; // use case specific supporting data
     }
 }

@@ -5,6 +5,7 @@ import {Amount, AmountLib} from "./Amount.sol";
 import {UFixed, UFixedLib} from "./UFixed.sol";
 
 struct Fee {
+    // slot 0
     UFixed fractionalFee;
     Amount fixedFee;
 }

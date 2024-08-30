@@ -10,22 +10,29 @@ import {UFixed} from "../../type/UFixed.sol";
 interface IDistribution {
 
     struct DistributorTypeInfo {
+        // slot 0
         UFixed minDiscountPercentage;
+        NftId distributionNftId;
+        // slot 1
         UFixed maxDiscountPercentage;
         uint32 maxReferralCount;
         Seconds maxReferralLifetime;
         bool allowSelfReferrals;
         bool allowRenewals;
+        // slot 2
         UFixed commissionPercentage;
-        NftId distributionNftId;
+        // slot 3
         string name;                
+        // slot 4
         bytes data;
     }
 
     struct DistributorInfo {
+        // slot 0
         DistributorType distributorType;
         bool active;
         uint32 numPoliciesSold;
+        // slot 1
         bytes data;
     }
 

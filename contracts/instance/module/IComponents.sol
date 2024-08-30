@@ -12,8 +12,11 @@ import {UFixed} from "../../type/UFixed.sol";
 interface IComponents {
 
     struct ComponentInfo {
+        // slot 0
         string name; // component name (needs to be unique per instance)
+        // slot 1
         TokenHandler tokenHandler;
+        // slot 2
         bytes data; // will hold component type specific additional info (eg encoded pool info)
     }
 
@@ -29,12 +32,19 @@ interface IComponents {
     }
 
     struct FeeInfo {
+        // slot 0
         Fee productFee; // product fee on net premium
+        // slot 1
         Fee processingFee; // product fee on payout amounts        
+        // slot 2
         Fee distributionFee; // distribution fee for sales that do not include commissions
+        // slot 3
         Fee minDistributionOwnerFee; // min fee required by distribution owner (not including commissions for distributors)
+        // slot 4
         Fee poolFee; // pool fee on net premium
+        // slot 5
         Fee stakingFee; // pool fee on staked capital from investor
+        // slot 6
         Fee performanceFee; // pool fee on profits from capital investors
     }
 
