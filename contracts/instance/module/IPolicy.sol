@@ -78,8 +78,8 @@ interface IPolicy {
     struct PayoutInfo {
         ClaimId claimId;
         Amount amount;
+        Timestamp paidAt; // timestamp for actual payout
         address beneficiary; // for address(0) beneficiary is policy nft owner
         bytes data; // use case specific supporting data
-        Timestamp paidAt; // timestamp for actual payout
     }
 }
