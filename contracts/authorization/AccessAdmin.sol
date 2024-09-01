@@ -303,7 +303,7 @@ contract AccessAdmin is
     }
 
     function isTargetLocked(address target) public view returns (bool locked) {
-        return _authority.isTargetClosed(target);
+        return _authority.isLocked() || _authority.isTargetClosed(target);
     }
 
     function authorizedFunctions(address target) external view returns (uint256 numberOfFunctions) {

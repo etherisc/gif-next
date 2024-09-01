@@ -68,8 +68,8 @@ contract TestInstance is GifTest {
 
         // THEN
         assertTrue(instance.isInstanceLocked(), "instance is not locked");
-        assertFalse(instance.isTargetLocked(address(pool)), "pool is locked");
-        assertFalse(instance.isTargetLocked(address(distribution)), "distribution is locked");
+        assertTrue(instance.isTargetLocked(address(pool)), "pool is not locked");
+        assertTrue(instance.isTargetLocked(address(distribution)), "distribution is not locked");
 
         // WHEN + THEN
         vm.expectRevert(abi.encodeWithSelector(IAccessManaged.AccessManagedUnauthorized.selector, address(poolOwner)));
@@ -108,7 +108,7 @@ contract TestInstance is GifTest {
         instance.setInstanceLocked(true);
 
         assertTrue(instance.isInstanceLocked(), "instance is not locked (before)");
-        assertFalse(instance.isTargetLocked(address(pool)), "pool is locked (before)");
+        assertTrue(instance.isTargetLocked(address(pool)), "pool is not locked (before)");
 
         // WHEN  lock pool while instance is locked
         vm.prank(instanceOwner);
@@ -124,7 +124,15 @@ contract TestInstance is GifTest {
 
         // THEN
         assertTrue(instance.isInstanceLocked(), "instance is not locked (after 2)");
-        assertFalse(instance.isTargetLocked(address(pool)), "pool is locked (after 2)");
+        assertTrue(instance.isTargetLocked(address(pool)), "pool is not locked (after 2)");
+
+        // WHEN  unlock instance
+        vm.prank(instanceOwner);
+        instance.setInstanceLocked(false);
+
+        // THEN
+        assertFalse(instance.isInstanceLocked(), "instance is not locked (after 3)");
+        assertFalse(instance.isTargetLocked(address(pool)), "pool is not locked (after 3)");
     }
 
 

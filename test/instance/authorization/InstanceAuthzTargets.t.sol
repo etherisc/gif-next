@@ -53,6 +53,7 @@ contract InstanceAuthzTargetsTest is InstanceAuthzBaseTest {
 
         // check target info
         assertTrue(instanceReader.targetExists(address(target)), "target not existing after create");
+        assertFalse(instanceReader.isLocked(address(target)), "target locked");
         IAccess.TargetInfo memory targetInfo = instanceReader.getTargetInfo(address(target));
         assertEq(targetInfo.name.toString(), "MyTarget", "unexpected target name");
         assertTrue(targetInfo.targetType == IAccess.TargetType.Custom, "target type not custom");
@@ -74,7 +75,38 @@ contract InstanceAuthzTargetsTest is InstanceAuthzBaseTest {
     }
 
 
+    // check locking of custom targets works the same as for targets created via authorization spec
     function test_instanceAuthzTargetsSetTargetLockedHappyCase() public {
+        // GIVEN
+        AccessManagedMock target = _deployAccessManagedMock();
+        string memory targetName = "MyTarget";
+
+        vm.prank(instanceOwner);
+        RoleId myTargetRoleId = instance.createTarget(address(target), targetName);
+
+        assertTrue(instanceReader.targetExists(address(target)), "target not existing after create");
+        assertFalse(instanceReader.isLocked(address(target)), "target locked");
+
+        // WHEN - lock target
+        vm.prank(instanceOwner);
+        instance.setTargetLocked(address(target), true);
+
+        // THEN
+        assertTrue(instanceReader.isLocked(address(target)), "target not locked after set locked");
+
+        // WHEN - unlock target 
+        vm.prank(instanceOwner);
+        instance.setTargetLocked(address(target), false);
+
+        // THEN
+        assertFalse(instanceReader.isLocked(address(target)), "target locked (2)");
+
+        // WHEN - lock target via instance lock
+        vm.prank(instanceOwner);
+        instance.setInstanceLocked(true);
+
+        // THEN
+        assertTrue(instanceReader.isLocked(address(target)), "target not locked after locking instance");
     }
 
     //--- helper functions ----------------------------------------------------//
