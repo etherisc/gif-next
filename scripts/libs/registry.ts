@@ -275,7 +275,13 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     );
 
     await executeTx(
-        async () => await registryAdmin.completeSetup(registry, registryAuthorization, owner, owner, getTxOpts()),
+        async () => await registryAdmin.completeSetup(
+            registry, 
+            registryAuthorization, 
+            3,
+            owner, 
+            owner, 
+            getTxOpts()),
         "registryAdmin.completeSetup",
         [registryAdmin.interface]
     );

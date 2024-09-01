@@ -212,9 +212,9 @@ export async function deployAndRegisterMasterInstance(
     await executeTx(
         () => masterInstanceAdmin.completeSetup(
             registry.registryAddress,
-            masterInstanceAddress, 
             masterInstanceAuthorizationV3Address,
             3,
+            masterInstanceAddress, 
             getTxOpts()),
             "masterInstanceAdmin completeSetup",
             [masterInstanceAdmin.interface]
