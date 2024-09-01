@@ -55,33 +55,16 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
     RegistryServiceManagerMock public registryServiceManagerMock;
     RegistryServiceMock public registryServiceMock;
 
-    // TODO cleanup
-    // IERC20Metadata public dip;
-    // address public globalRegistry = makeAddr("globalRegistry"); // address of global registry when not on mainnet
-    // address public registryOwner = makeAddr("registryOwner");
     address public outsider = makeAddr("outsider");
-    // address public gifAdmin = registryOwner;
-    // address public gifManager = registryOwner;
-    // address public stakingOwner = registryOwner;
 
     AccessManager public accessManager;
-    // RegistryAdmin public registryAdmin;
-    // Registry public registry;
-    // ChainNft public chainNft;
-    // ReleaseRegistry public releaseRegistry;
-    // TokenRegistry public tokenRegistry;
-    // StakingManager public stakingManager;
-    // Staking public staking;
     StakingStore public stakingStore;
-    // StakingReader public stakingReader;
 
     address public _sender; // use with _startPrank(), _stopPrank()
     uint public _nextId; // use with chainNft.calculateId()
 
     NftId public protocolNftId = NftIdLib.toNftId(1101);
     NftId public globalRegistryNftId = NftIdLib.toNftId(2101);
-    // NftId public registryNftId; // chainId dependent
-    // NftId public stakingNftId; // chainId dependent
 
     IRegistry.ObjectInfo public protocolInfo;
     IRegistry.ObjectInfo public globalRegistryInfo; // chainId dependent

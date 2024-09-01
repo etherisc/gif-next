@@ -45,16 +45,6 @@ contract RegistryAdmin is
     string public constant GIF_ADMIN_ROLE_NAME = "GifAdminRole";
     string public constant GIF_MANAGER_ROLE_NAME = "GifManagerRole";
 
-    // cleanup
-    // string public constant RELEASE_REGISTRY_ROLE_NAME = "ReleaseRegistryRole";
-    // string public constant STAKING_ROLE_NAME = "StakingRole";
-
-    /// @dev gif roles for external contracts
-    // string public constant REGISTRY_SERVICE_ROLE_NAME = "RegistryServiceRole";
-    // string public constant COMPONENT_SERVICE_ROLE_NAME = "ComponentServiceRole";
-    // string public constant POOL_SERVICE_ROLE_NAME = "PoolServiceRole";
-    // string public constant STAKING_SERVICE_ROLE_NAME = "StakingServiceRole";
-
     /// @dev gif core targets
     string public constant REGISTRY_ADMIN_TARGET_NAME = "RegistryAdmin";
     string public constant REGISTRY_TARGET_NAME = "Registry";
@@ -116,10 +106,8 @@ contract RegistryAdmin is
         // link nft ownability to registry
         _linkToNftOwnable(_registry);
 
-        // _setupRegistry(_registry);
-
-        // TODO check if targets should be registerd first
-        _createTargets(_authorization);
+        // register core targets
+        _createCoreTargets(_authorization.getMainTargetName());
 
         // setup authorization for registry and supporting contracts
         _createRoles(_authorization);
@@ -154,34 +142,6 @@ contract RegistryAdmin is
 
     //--- private initialization functions -------------------------------------------//
 
-    // TODO cleanup
-    // // create registry role and target
-    // function _setupRegistry(address registry) internal {
-
-    //     // create registry role
-    //     RoleId roleId = _authorization.getTargetRole(
-    //         _authorization.getMainTarget());
-
-    //     _createRole(
-    //         roleId,
-    //         _authorization.getRoleInfo(roleId));
-
-    //     // create registry target
-    //     _createTarget(
-    //         registry, 
-    //         _authorization.getMainTargetName(), 
-    //         true, // checkAuthority
-    //         false); // custom
-
-    //     // assign registry role to registry
-    //     _grantRoleToAccount(
-    //         roleId, 
-    //         registry);
-    // }
-
-    // TODO cleanup
-    event LogAccessAdminDebugRole(string name, RoleId roleId, bool exists);
-
     function _createRoles(IAuthorization authorization)
         internal
     {
@@ -192,11 +152,7 @@ contract RegistryAdmin is
             RoleInfo memory roleInfo = authorization.getRoleInfo(roleId);
 
             // create role if not exists
-            bool exists = roleExists(roleInfo.name);
-
-emit LogAccessAdminDebugRole(roleInfo.name.toString(), roleId, exists);
-
-            if (!exists) {
+            if (!roleExists(roleInfo.name)) {
                 _createRole(
                     roleId,
                     roleInfo);
@@ -205,29 +161,20 @@ emit LogAccessAdminDebugRole(roleInfo.name.toString(), roleId, exists);
     }
 
 
-    function _createTargets(IAuthorization authorization)
+    function _createCoreTargets(string memory registryTargetName)
         internal
     {
-        // TODO cleanup
         // registry
-        // _createTargetWithRole(address(this), REGISTRY_ADMIN_TARGET_NAME, authorization.getTargetRole(StrLib.toStr(REGISTRY_ADMIN_TARGET_NAME)));
-        // _createTargetWithRole(_releaseRegistry, RELEASE_REGISTRY_TARGET_NAME, authorization.getTargetRole(StrLib.toStr(RELEASE_REGISTRY_TARGET_NAME)));
-        // _createTargetWithRole(_tokenRegistry, TOKEN_REGISTRY_TARGET_NAME, authorization.getTargetRole(StrLib.toStr(TOKEN_REGISTRY_TARGET_NAME)));
-
-        _createUncheckedTarget(_registry, authorization.getMainTargetName(), TargetType.Core);
+        _createUncheckedTarget(_registry, registryTargetName, TargetType.Core);
         _createUncheckedTarget(address(this), REGISTRY_ADMIN_TARGET_NAME, TargetType.Core);
         _createUncheckedTarget(_releaseRegistry, RELEASE_REGISTRY_TARGET_NAME, TargetType.Core);
         _createUncheckedTarget(_tokenRegistry, TOKEN_REGISTRY_TARGET_NAME, TargetType.Core);
 
         // staking
-        // _createTargetWithRole(_staking, STAKING_TARGET_NAME, authorization.getTargetRole(StrLib.toStr(STAKING_TARGET_NAME)));
-        // _createTarget(_stakingStore, STAKING_STORE_TARGET_NAME, true, false);
-        // _createTarget(address(IComponent(_staking).getTokenHandler()), STAKING_TH_TARGET_NAME, true, false);
         _createUncheckedTarget(_staking, STAKING_TARGET_NAME, TargetType.Core);
         _createUncheckedTarget(_stakingStore, STAKING_STORE_TARGET_NAME, TargetType.Core);
     }
 
-    // TODO cleanup
 
     function _createTargetAuthorizations(IAuthorization authorization)
         internal
@@ -244,48 +191,4 @@ emit LogAccessAdminDebugRole(roleInfo.name.toString(), roleId, exists);
             }
         }
     }
-
-    // TODO cleanup
-// event LogAccessAdminDebugTarget(string name, address target, RoleId roleId);
-//     function _authorizeFunctions(IAuthorization authorization, RoleId roleId)
-//         internal
-//     {
-//         RoleId authorizedRoleId = _getAuthorizedRoleId(authorization, roleId);
-//         address getTargetAddress = getTargetForName(target);
-// emit LogAccessAdminDebugTarget(target.toString(), getTargetAddress, authorizedRoleId);
-
-//         _authorizeTargetFunctions(
-//             getTargetForName(target),
-//             authorizedRoleId,
-//             authorization.getAuthorizedFunctions(
-//                 target, 
-//                 roleId),
-//             true);
-//     }
-
-//     function _getAuthorizedRoleId(IAuthorization authorization, RoleId roleId)
-//         internal
-//         view
-//         returns (RoleId authorizedRoleId)
-//     {
-//         string memory roleName = authorization.getRoleInfo(roleId).name.toString();
-//         return authorizedRoleId = getRoleForName(roleName);
-//     }
-
-    // TODO cleanup
-    // function _createTargets(address authorization)
-    //     private 
-    //     onlyInitializing()
-    // {
-    //     IStaking staking = IStaking(_staking);
-    //     address tokenHandler = address(staking.getTokenHandler());
-
-    //     _createTarget(address(this), REGISTRY_ADMIN_TARGET_NAME, false, false, false);
-    //     _createTarget(_registry, REGISTRY_TARGET_NAME, true, false, false);
-    //     _createTarget(_releaseRegistry, RELEASE_REGISTRY_TARGET_NAME, true, false);
-    //     _createTarget(_staking, STAKING_TARGET_NAME, true, false);
-    //     _createTarget(_stakingStore, STAKING_STORE_TARGET_NAME, true, false);
-    //     _createTarget(_tokenRegistry, TOKEN_REGISTRY_TARGET_NAME, true, false);
-    //     _createTarget(tokenHandler, TOKEN_HANDLER_TARGET_NAME, true, false);
-    // }
 }

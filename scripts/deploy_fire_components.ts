@@ -1,5 +1,5 @@
 import { resolveAddress, Signer } from "ethers";
-import { FirePool, FireProduct, FireProduct__factory, IInstance__factory, IInstanceService__factory, IRegistry__factory, TokenRegistry__factory } from "../typechain-types";
+import { FirePool, FireProduct, FireProduct__factory, AccessAdmin__factory, IInstance__factory, IInstanceService__factory, IRegistry__factory, TokenRegistry__factory } from "../typechain-types";
 import { getNamedAccounts } from "./libs/accounts";
 import { deployContract } from "./libs/deployment";
 import { LibraryAddresses } from "./libs/libraries";

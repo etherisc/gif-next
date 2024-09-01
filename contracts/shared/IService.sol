@@ -17,7 +17,6 @@ interface IService is
     /// In any GIF release only one service for any given domain may be deployed.
     function getDomain() external pure returns(ObjectType serviceDomain);
 
-    // TODO cleanup
     /// @dev returns the GIF release specific role id.
     /// These role ids are used to authorize service to service communication.
     function getRoleId() external view returns(RoleId serviceRoleId);

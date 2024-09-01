@@ -23,10 +23,8 @@ contract Authorization is
     uint64 public constant COMPONENT_ROLE_MIN = 110000;
 
     uint64 internal _nextGifContractRoleId;
-    // mapping(ObjectType domain => Str target) internal _serviceTarget;
 
     string internal _tokenHandlerName = "ComponentTh";
-
     Str internal _tokenHandlerTarget;
 
 
@@ -77,12 +75,6 @@ contract Authorization is
     }
 
 
-    // TODO cleanup
-    // function roleExists(RoleId roleId) public view returns(bool exists) {
-    //     return _roleInfo[roleId].roleType != RoleType.Undefined;
-    // }
-
-
     function getTokenHandlerName() public view returns(string memory) {
         return _tokenHandlerName;
     }
@@ -102,19 +94,6 @@ contract Authorization is
     function targetExists(Str target) external view returns(bool exists) {
         return target == _mainTarget || _targetExists[target];
     }
-
-    // TODO cleanup
-    // function getTargetRole(Str target) public view returns(RoleId roleId) {
-    //     return _targetRole[target];
-    // }
-
-    // function getAuthorizedRoles(Str target) external view returns(RoleId[] memory roleIds) {
-    //     return _authorizedRoles[target];
-    // }
-
-    // function getAuthorizedFunctions(Str target, RoleId roleId) external view returns(IAccess.FunctionInfo[] memory authorizatedFunctions) {
-    //     return _authorizedFunctions[target][roleId];
-    // }
 
     /// @dev Sets up the relevant service targets for the component.
     /// Overwrite this function for use case specific authorizations.
@@ -141,65 +120,6 @@ contract Authorization is
     // solhint-disable-next-line no-empty-blocks
     function _setupTargetAuthorizations() internal virtual {}
 
-    function _addGifTarget(string memory contractName) internal {
-
-        RoleId contractRoleId = RoleIdLib.toRoleId(_nextGifContractRoleId++);
-        string memory contractRoleName = string(
-            abi.encodePacked(
-                contractName,
-                ROLE_NAME_SUFFIX));
-
-        _addTargetWithRole(
-            contractName,
-            contractRoleId,
-            contractRoleName);
-    }
-
-    // TODO cleanup
-    // /// @dev Add the service target role for the specified service domain
-    // function _addServiceTargetWithRole(ObjectType serviceDomain) internal {
-    //     // add service domain
-    //     _serviceDomains.push(serviceDomain);
-
-    //     // get versioned target name
-    //     string memory serviceTargetName = ObjectTypeLib.toVersionedName(
-    //             ObjectTypeLib.toName(serviceDomain), 
-    //             "Service", 
-    //             getRelease());
-
-    //     // _serviceTarget[serviceDomain] = StrLib.toStr(serviceTargetName);
-
-    //     RoleId serviceRoleId = getServiceRole(serviceDomain);
-    //     string memory serviceRoleName = ObjectTypeLib.toVersionedName(
-    //             ObjectTypeLib.toName(serviceDomain), 
-    //             "ServiceRole", 
-    //             getRelease());
-
-    //     _addTargetWithRole(
-    //         serviceTargetName,
-    //         serviceRoleId,
-    //         serviceRoleName);
-    // }
-
-
-    // /// @dev Use this method to to add an authorized role.
-    // function _addRole(RoleId roleId, RoleInfo memory info) internal {
-    //     _roles.push(roleId);
-    //     _roleInfo[roleId] = info;
-    // }
-
-
-    // /// @dev Add a contract role for the provided role id and name.
-    // function _addContractRole(RoleId roleId, string memory name) internal {
-    //     _addRole(
-    //         roleId,
-    //         _toRoleInfo(
-    //             ADMIN_ROLE(),
-    //             RoleType.Contract,
-    //             1,
-    //             name));
-    // }
-
 
     /// @dev Add a contract role for the provided role id and name.
     function _addCustomRole(RoleId roleId, RoleId adminRoleId, uint32 maxMemberCount, string memory name) internal {
@@ -212,24 +132,28 @@ contract Authorization is
                 name));
     }
 
+    /// @dev Add a gif target with its corresponding contract role
+    function _addGifTarget(string memory contractName) internal {
+        RoleId contractRoleId = RoleIdLib.toRoleId(_nextGifContractRoleId++);
+        string memory contractRoleName = string(
+            abi.encodePacked(
+                contractName,
+                ROLE_NAME_SUFFIX));
+
+        _addTargetWithRole(
+            contractName,
+            contractRoleId,
+            contractRoleName);
+    }
+
 
     /// @dev Use this method to to add an authorized target.
     function _addTarget(string memory name) internal {
         _addTargetWithRole(name, RoleIdLib.zero(), "");
     }
 
-    // TODO cleanup
-    // /// @dev Use this method to authorize a specific function authorization
-    // function _authorize(IAccess.FunctionInfo[] storage functions, bytes4 selector, string memory name) internal {
-    //     functions.push(
-    //         IAccess.FunctionInfo({
-    //             selector: SelectorLib.toSelector(selector),
-    //             name: StrLib.toStr(name),
-    //             createdAt: TimestampLib.blockTimestamp()}));
-    // }
 
-
-    /// @dev role id for targets registry, staking and instance
+    /// @dev Role id for targets registry, staking and instance
     function _toTargetRoleId(ObjectType targetDomain) 
         internal
         pure
@@ -239,23 +163,12 @@ contract Authorization is
     }
 
 
+    /// @dev Returns the role name for the specified target name
     function _toTargetRoleName(string memory targetName) internal pure returns (string memory) {
         return string(
             abi.encodePacked(
                 targetName,
                 ROLE_NAME_SUFFIX));
     }
-
-    // TODO cleanup
-    // /// @dev creates a role info object from the provided parameters
-    // function _toRoleInfo(RoleId adminRoleId, RoleType roleType, uint32 maxMemberCount, string memory name) internal view returns (RoleInfo memory info) {
-    //     return RoleInfo({
-    //         name: StrLib.toStr(name),
-    //         adminRoleId: adminRoleId,
-    //         roleType: roleType,
-    //         maxMemberCount: maxMemberCount,
-    //         createdAt: TimestampLib.blockTimestamp(),
-    //         pausedAt: TimestampLib.max()});
-    // }
 }
 

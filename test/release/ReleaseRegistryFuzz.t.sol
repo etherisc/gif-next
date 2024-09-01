@@ -1,35 +1,23 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IAccessManager} from "@openzeppelin/contracts/access/manager/IAccessManager.sol";
-import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 import {FoundryRandom} from "foundry-random/FoundryRandom.sol";
 import {console} from "../../lib/forge-std/src/Test.sol";
 
-import {VersionPart, VersionPartLib} from "../../contracts/type/Version.sol";
-import {StateIdLib, SCHEDULED, DEPLOYING, DEPLOYED, SKIPPED, ACTIVE, PAUSED} from "../../contracts/type/StateId.sol";
-import {TimestampLib, Timestamp, gteTimestamp} from "../../contracts/type/Timestamp.sol";
-import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
-import {RoleId, RoleIdLib} from "../../contracts/type/RoleId.sol";
-import {ObjectType, RELEASE, REGISTRY, SERVICE, PRODUCT} from "../../contracts/type/ObjectType.sol";
-
-import {ILifecycle} from "../../contracts/shared/Lifecycle.sol";
-import {IService} from "../../contracts/shared/IService.sol";
-
-import {IServiceAuthorization} from "../../contracts/authorization/IServiceAuthorization.sol";
-
-import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {IRelease} from "../../contracts/registry/IRelease.sol";
-import {ReleaseRegistry} from "../../contracts/registry/ReleaseRegistry.sol";
+import {IService} from "../../contracts/shared/IService.sol";
+
 import {ChainNft} from "../../contracts/registry/ChainNft.sol";
-
 import {GifDeployer} from "../base/GifDeployer.sol";
+import {NftIdLib} from "../../contracts/type/NftId.sol";
+import {ObjectType, SERVICE} from "../../contracts/type/ObjectType.sol";
+import {ReleaseRegistry} from "../../contracts/registry/ReleaseRegistry.sol";
+import {ServiceMockWithRegistryDomainV3, ServiceMockWithRegistryDomainV4, ServiceMockWithRegistryDomainV5} from "../mock/ServiceMock.sol";
+import {StateIdLib, SCHEDULED, DEPLOYING, DEPLOYED, SKIPPED, ACTIVE, PAUSED} from "../../contracts/type/StateId.sol";
+import {TimestampLib, gteTimestamp} from "../../contracts/type/Timestamp.sol";
+import {VersionPart, VersionPartLib} from "../../contracts/type/Version.sol";
 
-import {ServiceAuthorizationMock, ServiceAuthorizationMockWithRegistryService} from "../mock/ServiceAuthorizationMock.sol";
-import {NftOwnableMock} from "../mock/NftOwnableMock.sol";
-import {ServiceMock, ServiceMockWithRegistryDomainV3, ServiceMockWithRegistryDomainV4, ServiceMockWithRegistryDomainV5} from "../mock/ServiceMock.sol";
-import {Usdc} from "../mock/Usdc.sol";
 
 contract ReleaseRegistryTest is GifDeployer, FoundryRandom {
 
@@ -42,20 +30,8 @@ contract ReleaseRegistryTest is GifDeployer, FoundryRandom {
     // keep identical to IRegistry events
     event LogServiceRegistration(VersionPart majorVersion, ObjectType serviceDomain);
 
-    // TODO cleanup
-    // address public globalRegistry = makeAddr("globalRegistry"); // address of global registry when not on mainnet
-    // address public gifAdmin = makeAddr("gifAdmin");
-    // address public gifManager = makeAddr("gifManager");
-    // address public stakingOwner = makeAddr("stakingOwner");
     address public outsider = makeAddr("outsider");
-
-    // RegistryAdmin registryAdmin;
-    // IRegistry registry;
-    // ChainNft chainNft;
-    // ReleaseRegistry releaseRegistry;
-    // NftId registryNftId;
-
-    mapping(VersionPart version => IService) serviceByVersion;
+    mapping(VersionPart version => IService) public serviceByVersion;
 
 
     function setUp() public virtual
@@ -80,7 +56,7 @@ contract ReleaseRegistryTest is GifDeployer, FoundryRandom {
 
         chainNft = ChainNft(registry.getChainNftAddress());
         registryNftId = registry.getNftId();
-       
+
         vm.startPrank(gifManager);
 
         serviceByVersion[VersionPartLib.toVersionPart(3)] = new ServiceMockWithRegistryDomainV3(
@@ -206,6 +182,7 @@ contract ReleaseRegistryTest is GifDeployer, FoundryRandom {
             assertTrue(info.activatedAt.eqz(), "Test error: unexpected activatedAt #6");
             assertTrue(info.disabledAt.eqz(), "Test error: unexpected disabledAt #6");
         } else {
+            // solhint-disable next-line
             console.log("Unexpected state ", info.state.toInt());
             assertTrue(false, "Test error: unexpected state");
         }        
@@ -224,7 +201,7 @@ contract ReleaseRegistryTest is GifDeployer, FoundryRandom {
 
     function test_releaseRegistry_setUp() public view
     {
-        for(uint i = 0; i <= releaseRegistry.INITIAL_GIF_VERSION() + 1; i++) {
+        for(uint256 i = 0; i <= releaseRegistry.INITIAL_GIF_VERSION() + 1; i++) {
             _assert_releaseRegistry_getters(VersionPartLib.toVersionPart(i), zeroReleaseInfo());
         }
 
@@ -238,9 +215,6 @@ contract ReleaseRegistryTest is GifDeployer, FoundryRandom {
         assertEq(address(releaseRegistry.getRegistry()), address(registry), "getRegistry() return unexpected value");
     }
 
-    // TODO how to fuzz? can not parametrize service version and domain because of pure modifier
-    // TODO testFuzz_verifyServiceInfo() harness
-    // TODO testFuzz_releaseRegistry_registerService_whenReleaseDeploying(NftId nftId, NftId parentNftId, ObjectType objectType, address objectAddress, address initialOwner, bytes memory data, ObjectType domain, VersionPart version) public
 
     function testFuzz_releaseRegistry_prepareRelease_verifyServiceInfo() public
     {

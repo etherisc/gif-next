@@ -223,53 +223,6 @@ contract GifTest is GifDeployer {
         console.log(message, gasDelta);
     }
 
-    // TODO cleanup
-    // function _deployCore(
-    //     address gifAdmin,
-    //     address gifManager
-    // )
-    //     internal
-    // {
-    //     (
-    //         dip,
-    //         registry,
-    //         tokenRegistry,
-    //         releaseRegistry,
-    //         registryAdmin,
-    //         stakingManager,
-    //         staking
-    //     ) = deployCore(
-    //         globalRegistry,
-    //         gifAdmin,
-    //         gifManager,
-    //         stakingOwner);
-
-    //     // obtain some references
-    //     registryAddress = address(registry);
-    //     chainNft = ChainNft(registry.getChainNftAddress());
-    //     registryNftId = registry.getNftIdForAddress(registryAddress);
-    //     stakingNftId = registry.getNftIdForAddress(address(staking));
-    //     stakingReader = staking.getStakingReader();
-
-    //     // solhint-disable
-    //     console.log("registry deployed at", address(registry));
-    //     console.log("registry owner", registryOwner);
-
-    //     console.log("token registry deployed at", address(tokenRegistry));
-    //     console.log("release manager deployed at", address(releaseRegistry));
-
-    //     console.log("registry access manager deployed:", address(registryAdmin));
-    //     console.log("registry access manager authority", registryAdmin.authority());
-
-    //     console.log("staking manager deployed at", address(stakingManager));
-
-    //     console.log("staking nft id", registry.getNftIdForAddress(address(staking)).toInt());
-    //     console.log("staking deployed at", address(staking));
-    //     console.log("staking owner (opt 1)", registry.ownerOf(address(staking)));
-    //     console.log("staking owner (opt 2)", staking.getOwner());
-    //     // solhint-enable
-    // }
-
 
     function _deployAndRegisterServices(
         address gifAdmin,

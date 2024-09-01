@@ -36,7 +36,8 @@ import {TokenHandler} from "../shared/TokenHandler.sol";
 import {UFixed, UFixedLib} from "../type/UFixed.sol";
 
 
-
+/// @dev Central reader contract for a specific instance.
+/// Should provide convenient reading functions for all instance and related component data.
 contract InstanceReader {
 
     error ErrorInstanceReaderAlreadyInitialized();
@@ -191,14 +192,6 @@ contract InstanceReader {
         view
         returns (bool isCloseable)
     {
-        // TODO cleanup
-        // IPolicy.PolicyInfo memory info = getPolicyInfo(policyNftId);
-
-        // if (info.productNftId.eqz()) { return false; } // not closeable: policy does not exist (or does not belong to this instance)
-        // if (info.activatedAt.eqz()) { return false; } // not closeable: not yet activated
-        // if (info.activatedAt > TimestampLib.blockTimestamp()) { return false; } // not yet active
-        // if (info.expiredAt <= TimestampLib.blockTimestamp()) { return false; } // already expired
-
         return PolicyServiceLib.policyIsActive(this, policyNftId);
     }
 
@@ -559,33 +552,6 @@ contract InstanceReader {
                 _instance.getRelease())).getDiscountPercentage(
                     this, // instance reader
                     referralId);
-
-        // TODO cleanup
-            // IDistribution.ReferralInfo memory info = getReferralInfo(
-        //     referralId);        
-
-        // if (info.expiryAt.eqz()) {
-        //     return (
-        //         UFixedLib.zero(),
-        //         REFERRAL_ERROR_UNKNOWN());
-        // }
-
-        // if (info.expiryAt < TimestampLib.blockTimestamp()) {
-        //     return (
-        //         UFixedLib.zero(),
-        //         REFERRAL_ERROR_EXPIRED());
-        // }
-
-        // if (info.usedReferrals >= info.maxReferrals) {
-        //     return (
-        //         UFixedLib.zero(),
-        //         REFERRAL_ERROR_EXHAUSTED());
-        // }
-
-        // return (
-        //     info.discountPercentage,
-        //     REFERRAL_OK()
-        // );
     }
 
 

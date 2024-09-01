@@ -253,7 +253,7 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
 
     function getCustomRoleId(uint64 index)
         public 
-        view 
+        pure 
         returns (RoleId customRoleId)
     {
         return RoleIdLib.toRoleId(CUSTOM_ROLE_MIN + index);
@@ -334,7 +334,7 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
     }
 
 
-    function toRoleName(string memory name) public view returns (string memory) {
+    function toRoleName(string memory name) public pure returns (string memory) {
         return string(
             abi.encodePacked(
                 name,

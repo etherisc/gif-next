@@ -13,8 +13,6 @@ import {IComponents} from "../instance/module/IComponents.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
 
 import {Amount, AmountLib} from "../type/Amount.sol";
-// TODO cleanup
-// import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
 import {DistributorType, DistributorTypeLib} from "../type/DistributorType.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
 import {KEEP_STATE} from "../type/StateId.sol";
@@ -411,12 +409,12 @@ contract DistributionService is
     }
 
 
-    // TODO cleanup
     function _getInstanceForDistribution(IRegistry registry, NftId distributionNftId)
         internal
         view
         returns(IInstance instance)
     {
+        // TODO refactor to ComponentLib or similar
         return PoolLib.getInstanceForComponent(registry, distributionNftId);
     }
 

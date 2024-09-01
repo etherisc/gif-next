@@ -102,13 +102,9 @@ contract InstanceAdmin is
         // link nft ownability to instance
         _linkToNftOwnable(instance);
 
-        // TODO cleanup
-        // // create instance role and target
-        // _setupInstance(instance);
-
         _setupServiceRoles(_authorization);
 
-        _createTargets(_authorization);
+        _createInstanceTargets(_authorization.getMainTargetName());
 
         // add instance authorization
         _createRoles(_authorization);
@@ -150,16 +146,10 @@ contract InstanceAdmin is
     }
 
 
-    function _createTargets(IAuthorization authorization)
+    function _createInstanceTargets(string memory instanceTargetName)
         internal
     {
-        // TODO cleanup
-        // _createTargetWithRole(address(this), INSTANCE_ADMIN_TARGET_NAME, authorization.getTargetRole(StrLib.toStr(INSTANCE_ADMIN_TARGET_NAME)));
-        // _createTargetWithRole(address(_instance.getInstanceStore()), INSTANCE_STORE_TARGET_NAME, authorization.getTargetRole(StrLib.toStr(INSTANCE_STORE_TARGET_NAME)));
-        // _createTargetWithRole(address(_instance.getBundleSet()), BUNDLE_SET_TARGET_NAME, authorization.getTargetRole(StrLib.toStr(BUNDLE_SET_TARGET_NAME)));
-        // _createTargetWithRole(address(_instance.getRiskSet()), RISK_SET_TARGET_NAME, authorization.getTargetRole(StrLib.toStr(RISK_SET_TARGET_NAME)));
-
-        _createManagedTarget(address(_instance), authorization.getMainTargetName(), TargetType.Instance); 
+        _createManagedTarget(address(_instance), instanceTargetName, TargetType.Instance); 
         _createManagedTarget(address(this), INSTANCE_ADMIN_TARGET_NAME, TargetType.Instance); 
         _createManagedTarget(address(_instance.getInstanceStore()), INSTANCE_STORE_TARGET_NAME, TargetType.Instance); 
         _createManagedTarget(address(_instance.getBundleSet()), BUNDLE_SET_TARGET_NAME, TargetType.Instance); 
@@ -200,31 +190,6 @@ contract InstanceAdmin is
     {
         return _release;
     }
-
-    // TODO cleanup
-    // // create instance role and target
-    // function _setupInstance(address instance) internal {
-
-    //     // create instance role
-    //     RoleId instanceRoleId = _authorization.getTargetRole(
-    //         _authorization.getMainTarget());
-
-    //     _createRole(
-    //         instanceRoleId,
-    //         _authorization.getRoleInfo(instanceRoleId));
-
-    //     // create instance target
-    //     _createTarget(
-    //         instance, 
-    //         _authorization.getMainTargetName(), 
-    //         true, // checkAuthority
-    //         false); // custom
-
-    //     // assign instance role to instance
-    //     _grantRoleToAccount(
-    //         instanceRoleId, 
-    //         instance);
-    // }
 
 
     /// @dev Creates a custom role.
@@ -296,15 +261,6 @@ contract InstanceAdmin is
             target, 
             name, 
             TargetType.Custom);
-
-        // TODO cleanup
-        // if (targetRoleId != RoleIdLib.zero()) {
-        //     if (getRoleInfo(targetRoleId).roleType != IAccess.RoleType.Custom) {
-        //         revert ErrorInstanceAdminNotCustomRole(targetRoleId);
-        //     }
-
-        //     _grantRoleToAccount(targetRoleId, target);
-        // }
     }
 
 
@@ -354,100 +310,6 @@ contract InstanceAdmin is
 
     // ------------------- Internal functions ------------------- //
 
-    // TODO cleanup
-    // function _setupComponentAndTokenHandler(
-    //     IInstanceLinkedComponent component,
-    //     ObjectType componentType
-    // )
-    //     internal
-    // {
-
-    //     IAuthorization authorization = component.getAuthorization();
-    //     string memory targetName = authorization.getMainTargetName();
-
-    //     // create component role and target
-    //     RoleId componentRoleId = _createComponentRoleId(component, authorization);
-
-    //     // create component's target
-    //     _createTarget(
-    //         address(component), 
-    //         targetName, 
-    //         true, // checkAuthority
-    //         false); // custom
-
-    //     // create component's token handler target if app
-    //     if (componentType != ORACLE()) {
-    //         NftId componentNftId = _registry.getNftIdForAddress(address(component));
-    //         address tokenHandler = address(
-    //             _instance.getInstanceReader().getComponentInfo(
-    //                 componentNftId).tokenHandler);
-
-    //         _createTarget(
-    //             tokenHandler, 
-    //             authorization.getTokenHandlerName(), 
-    //             true, 
-    //             false);
-
-    //         // token handler does not require its own role
-    //         // token handler is not calling other components
-    //     }
-
-    //     // assign component role to component
-    //     _grantRoleToAccount(
-    //         componentRoleId, 
-    //         address(component));
-    // }
-
-
-    // function _createComponentRoleId(
-    //     IInstanceLinkedComponent component,
-    //     IAuthorization authorization
-    // )
-    //     internal 
-    //     returns (RoleId componentRoleId)
-    // {
-    //     // checks
-    //     // check component is not yet authorized
-    //     if (_targetRoleId[address(component)].gtz()) {
-    //         revert ErrorInstanceAdminAlreadyAuthorized(address(component));
-    //     }
-
-    //     // check generic component role
-    //     RoleId genericComponentRoleId = authorization.getTargetRole(
-    //         authorization.getMainTarget());
-
-    //     if (!genericComponentRoleId.isComponentRole()) {
-    //         revert ErrorInstanceAdminNotComponentRole(genericComponentRoleId);
-    //     }
-
-    //     // check component role does not exist
-    //     componentRoleId = toComponentRole(
-    //         genericComponentRoleId, 
-    //         _components);
-
-    //     if (roleExists(componentRoleId)) {
-    //         revert ErrorInstanceAdminRoleAlreadyExists(componentRoleId);
-    //     }
-
-    //     // check role info
-    //     IAccess.RoleInfo memory roleInfo = authorization.getRoleInfo(
-    //         genericComponentRoleId);
-
-    //     if (roleInfo.roleType != IAccess.RoleType.Contract) {
-    //         revert ErrorInstanceAdminRoleTypeNotContract(
-    //             componentRoleId,
-    //             roleInfo.roleType);
-    //     }
-
-    //     // effects
-    //     _targetRoleId[address(component)] = componentRoleId;
-    //     _components++;
-
-    //     _createRole(
-    //         componentRoleId,
-    //         roleInfo);
-    // }
-
 
     function _createRoles(IAuthorization authorization)
         internal
@@ -482,27 +344,6 @@ contract InstanceAdmin is
     function _createTargetAuthorizations(IAuthorization authorization)
         internal
     {
-        // TODO cleanup
-        // Str[] memory targets = authorization.getTargets();
-        // Str target;
-
-        // for(uint256 i = 0; i < targets.length; i++) {
-        //     target = targets[i];
-        //     RoleId[] memory authorizedRoles = authorization.getAuthorizedRoles(target);
-        //     RoleId authorizedRole;
-
-        //     for(uint256 j = 0; j < authorizedRoles.length; j++) {
-        //         authorizedRole = authorizedRoles[j];
-
-        //         _authorizeTargetFunctions(
-        //             getTargetForName(target),
-        //             authorizedRole,
-        //             authorization.getAuthorizedFunctions(
-        //                 target, 
-        //                 authorizedRole),
-        //             true);
-        //     }
-        // }
         Str[] memory targets = authorization.getTargets();
         Str target;
 
@@ -515,55 +356,4 @@ contract InstanceAdmin is
             }
         }
     }
-
-    // TODO cleanup
-    // function _checkAndCreateTargetWithRole(
-    //     address target,
-    //     string memory targetName
-    // )
-    //     internal
-    // {
-    //     // check that target name is defined in authorization specification
-    //     Str name = StrLib.toStr(targetName);
-    //     if (!_authorization.targetExists(name)) {
-    //         revert ErrorInstanceAdminExpectedTargetMissing(targetName);
-    //     }
-
-    //     // create named target
-    //     _createTarget(
-    //         target, 
-    //         targetName, 
-    //         false, // check authority TODO check normal targets, don't check service targets (they share authority with release admin)
-    //         false);
-
-    //     // assign target role if defined
-    //     RoleId targetRoleId = _authorization.getTargetRole(name);
-    //     if (targetRoleId != RoleIdLib.zero()) {
-    //         _grantRoleToAccount(targetRoleId, target);
-    //     }
-    // }
-
-    // function _setupInstanceHelperTargetsWithRoles()
-    //     internal
-    // {
-
-    //     // create module targets
-    //     _checkAndCreateTargetWithRole(address(_instance.getInstanceStore()), INSTANCE_STORE_TARGET_NAME);
-    //     _checkAndCreateTargetWithRole(address(_instance.getInstanceAdmin()), INSTANCE_ADMIN_TARGET_NAME);
-    //     _checkAndCreateTargetWithRole(address(_instance.getBundleSet()), BUNDLE_SET_TARGET_NAME);
-    //     _checkAndCreateTargetWithRole(address(_instance.getRiskSet()), RISK_SET_TARGET_NAME);
-
-    //     // create targets for services that need to access the instance targets
-    //     ObjectType[] memory serviceDomains = _authorization.getServiceDomains();
-    //     VersionPart release = _authorization.getRelease();
-    //     ObjectType serviceDomain;
-
-    //     for (uint256 i = 0; i < serviceDomains.length; i++) {
-    //         serviceDomain = serviceDomains[i];
-
-    //         _checkAndCreateTargetWithRole(
-    //             _registry.getServiceAddress(serviceDomain, release),
-    //             _authorization.getServiceTarget(serviceDomain).toString());
-    //     }
-    // }
 }

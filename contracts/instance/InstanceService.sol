@@ -56,23 +56,6 @@ contract InstanceService is
     }
 
 
-    // TODO cleanup
-    // modifier onlyInstanceOwner(NftId instanceNftId) {        
-    //     if(msg.sender != getRegistry().ownerOf(instanceNftId)) {
-    //         revert ErrorInstanceServiceRequestUnauhorized(msg.sender);
-    //     }
-    //     _;
-    // }
-
-    // // TODO check component - service - instance version match
-    // modifier onlyComponent() {
-    //     if (! getRegistry().isRegisteredComponent(msg.sender)) {
-    //         revert ErrorInstanceServiceRequestUnauhorized(msg.sender);
-    //     }
-    //     _;
-    // }
-
-
     /// @inheritdoc IInstanceService
     function createRole(
         string memory roleName, 
@@ -123,6 +106,7 @@ contract InstanceService is
         IInstance instance = IInstance(msg.sender);
         instance.getInstanceAdmin().revokeRole(roleId, account);
     }
+
 
     /// @inheritdoc IInstanceService
     function createTarget(address target, string memory name)
@@ -339,6 +323,7 @@ contract InstanceService is
         masterInstanceNftId = info.nftId;
     }
 
+
     function upgradeMasterInstanceReader(address instanceReaderAddress)
         external
         onlyOwner
@@ -353,9 +338,13 @@ contract InstanceService is
         _masterInstanceReader = instanceReaderAddress;
     }
 
+    //--- view functions ------------------------------------------------------------//
+
     function getMasterInstanceReader() external view returns (address) {
         return _masterInstanceReader;
     }
+
+    //--- internal functions --------------------------------------------------------//
 
     /// @dev create new cloned instance admin
     /// function used to setup a new instance
@@ -435,7 +424,8 @@ contract InstanceService is
             // instanceAdmin.setTargetFunctionRoleByService(targetName, selectors[roleIdx], roles[roleIdx]);
         }
     }
-    
+
+
     /// @dev top level initializer
     function _initialize(
         address owner, 

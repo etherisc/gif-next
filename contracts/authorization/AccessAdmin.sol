@@ -9,7 +9,6 @@ import {IAccess} from "./IAccess.sol";
 import {IAccessAdmin} from "./IAccessAdmin.sol";
 import {IAuthorization} from "./IAuthorization.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
-import {IService} from "../shared/IService.sol";
 
 import {ADMIN_ROLE_NAME, PUBLIC_ROLE_NAME} from "./AccessAdmin.sol";
 import {AccessAdminLib} from "./AccessAdminLib.sol";
@@ -22,10 +21,6 @@ import {Selector, SelectorSetLib} from "../type/Selector.sol";
 import {Str, StrLib} from "../type/String.sol";
 import {TimestampLib} from "../type/Timestamp.sol";
 import {VersionPart} from "../type/Version.sol";
-
-interface IAccessManagedChecker {
-    function authority() external view returns (address);
-}
 
 function ADMIN_ROLE_NAME() pure returns (string memory) { return "AdminRole"; }
 function PUBLIC_ROLE_NAME() pure returns (string memory) { return "PublicRole"; }
@@ -127,8 +122,6 @@ contract AccessAdmin is
 
     //-------------- initialization functions ------------------------------//
 
-    // event LogAccessAdminDebug(string message);
-
     /// @dev Initializes this admin with the provided accessManager (and authorization specification).
     /// Internally initializes access manager with this admin and creates basic role setup.
     function initialize(
@@ -184,6 +177,7 @@ contract AccessAdmin is
         _initializeAdminAndPublicRoles();
     }
 
+    //--- view functions for access amdin ---------------------------------------//
 
     function getRelease() public view virtual returns (VersionPart release) {
         return _authority.getRelease();
@@ -282,12 +276,7 @@ contract AccessAdmin is
         return isMember;
     }
 
-    function isRoleAdmin(RoleId roleId, address account)
-        public 
-        virtual
-        view 
-        returns (bool)
-    {
+    function isRoleAdmin(RoleId roleId, address account) public virtual view returns (bool) {
         return isRoleMember(_roleInfo[roleId].adminRoleId, account);
     }
 
@@ -354,6 +343,7 @@ contract AccessAdmin is
         _linkedNftId = getRegistry().getNftIdForAddress(registerable);
     }
 
+
     function _initializeAdminAndPublicRoles()
         internal
         virtual
@@ -382,36 +372,19 @@ contract AccessAdmin is
                 name: PUBLIC_ROLE_NAME()}));
     }
 
-    // TODO cleanup
-    // function _createTargetWithRole(
-    //     address target,
-    //     string memory targetName,
-    //     RoleId targetRoleId
-    // )
-    //     internal
-    // {
-    //     _createTarget(target, targetName, true, false);
-    //     _grantRoleToAccount(targetRoleId, target);
-    // }
-
-    // TODO refactor / cleanup
-event LogAccessAdminDebugTarget(string name, address target, RoleId roleId, RoleId authorizedRoleId);
 
     function _authorizeFunctions(IAuthorization authorization, Str target, RoleId roleId)
         internal
     {
-        RoleId authorizedRoleId = _toAuthorizedRoleId(authorization, roleId);
-        address getTargetAddress = getTargetForName(target);
-emit LogAccessAdminDebugTarget(target.toString(), getTargetAddress, roleId, authorizedRoleId);
-
         _authorizeTargetFunctions(
             getTargetForName(target),
-            authorizedRoleId,
+            _toAuthorizedRoleId(authorization, roleId),
             authorization.getAuthorizedFunctions(
                 target, 
                 roleId),
             true);
     }
+
 
     function _toAuthorizedRoleId(IAuthorization authorization, RoleId roleId)
         internal
@@ -438,6 +411,7 @@ emit LogAccessAdminDebugTarget(target.toString(), getTargetAddress, roleId, auth
         return authorizedRoleId = getRoleForName(roleName);
     }
 
+
     function _authorizeTargetFunctions(
         address target, 
         RoleId roleId, 
@@ -458,53 +432,6 @@ emit LogAccessAdminDebugTarget(target.toString(), getTargetAddress, roleId, auth
             addFunctions); // add functions
     }
 
-    // function _unauthorizeTargetFunctions(
-    //     address target, 
-    //     FunctionInfo[] memory functions
-    // )
-    //     internal
-    // {
-    //     _grantRoleAccessToFunctions(
-    //         target, 
-    //         getAdminRole(), 
-    //         functions,
-    //         false);  // addFunctions
-    // }
-
-    // function _processFunctionSelectors(
-    //     address target,
-    //     FunctionInfo[] memory functions,
-    //     bool addFunctions
-    // )
-    //     internal
-    //     onlyExistingTarget(target)
-    //     returns (
-    //         bytes4[] memory functionSelectors,
-    //         string[] memory functionNames
-    //     )
-    // {
-    //     uint256 n = functions.length;
-    //     functionSelectors = new bytes4[](n);
-    //     functionNames = new string[](n);
-    //     FunctionInfo memory func;
-    //     Selector selector;
-
-    //     for (uint256 i = 0; i < n; i++) {
-    //         func = functions[i];
-    //         selector = func.selector;
-
-    //         // add function selector to target selector set if not in set
-    //         if (addFunctions) { SelectorSetLib.add(_targetFunctions[target], selector); } 
-    //         else { SelectorSetLib.remove(_targetFunctions[target], selector); }
-
-    //         // set function name
-    //         _functionInfo[target][selector] = func;
-
-    //         // add bytes4 selector to function selector array
-    //         functionSelectors[i] = selector.toBytes4();
-    //         functionNames[i] = func.name.toString();
-    //     }
-    // }
 
     /// @dev grant the specified role access to all functions in the provided selector list
     function _grantRoleAccessToFunctions(
@@ -587,6 +514,7 @@ emit LogAccessAdminDebugTarget(target.toString(), getTargetAddress, roleId, auth
         
         emit LogAccessAdminRoleGranted(_adminName, account, _getRoleName(roleId));
     }
+
 
     /// @dev revoke the specified role from the provided account
     function _revokeRoleFromAccount(RoleId roleId, address account)
@@ -714,6 +642,7 @@ emit LogAccessAdminDebugTarget(target.toString(), getTargetAddress, roleId, auth
 
         emit LogAccessAdminRoleCreated(_adminName, roleId, info.roleType, info.adminRoleId, info.name.toString());
     }
+
 
     /// @dev Creates a new target and a corresponding contract role.
     /// The function assigns the role to the target and logs the creation.
@@ -854,22 +783,4 @@ emit LogAccessAdminDebugTarget(target.toString(), getTargetAddress, roleId, auth
             revert ErrorAccessAdminTargetNotCreated(target);
         }
     }
-
-    // TODO cleanup
-    // function _checkIsRegistered( 
-    //     address registry,
-    //     address target,
-    //     ObjectType expectedType
-    // )
-    //     internal
-    //     view
-    // {
-    //     AccessAdminLib.checkIsRegistered(registry, target, expectedType);
-    // }
-
-    // function _checkRegistry(address registry) internal view {
-    //     if (!ContractLib.isRegistry(registry)) {
-    //         revert ErrorAccessAdminNotRegistry(registry);
-    //     }
-    // }
 }
