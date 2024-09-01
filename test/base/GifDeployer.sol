@@ -69,6 +69,7 @@ import {StakingServiceManager} from "../../contracts/staking/StakingServiceManag
 
 contract GifDeployer is Test {
 
+    uint8 public constant GIF_RELEASE = 3;
     string public constant COMMIT_HASH = "1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a";
 
     struct DeployedServiceInfo {
@@ -176,30 +177,93 @@ contract GifDeployer is Test {
             Staking staking
         )
     {
+        // solhint-disable 
         vm.startPrank(gifManager);
 
-        // 1) deploy dip token
+        console.log("1) deploy dip token");
         dip = new Dip();
 
-        // 2) deploy registry admin
+        console.log("2) deploy registry contracts");
+        (
+            registry,
+            tokenRegistry,
+            releaseRegistry,
+            registryAdmin
+        ) = _deployRegistry(dip);
+
+        console.log("3) deploy staking contracts");
+        (
+            stakingManager,
+            staking
+        ) = _deployStaking(registry, tokenRegistry);
+
+        console.log("4) complete setup for GIF core contracts");
+
+        console.log("   a) initialize registry");
+        registry.initialize(
+            address(releaseRegistry),
+            address(tokenRegistry),
+            address(staking));
+
+        console.log("   b) link staking to its registered nft id");
+        staking.linkToRegisteredNftId();
+
+        console.log("   c) complete registry admin setup");
+        registryAdmin.completeSetup(
+            address(registry),
+            address(new RegistryAuthorization(COMMIT_HASH)),
+            VersionPartLib.toVersionPart(GIF_RELEASE),
+            gifAdmin,
+            gifManager);
+
+        console.log("GIF core contracts deployd and setup completed");
+
+        vm.stopPrank();
+        // solhint-disable enable
+    }
+
+
+    function _deployRegistry(IERC20Metadata dip)
+        internal
+        returns (
+            Registry registry,
+            TokenRegistry tokenRegistry,
+            ReleaseRegistry releaseRegistry,
+            RegistryAdmin registryAdmin
+        )
+    {
+
+        console.log("   a) deploy registry admin");
         registryAdmin = new RegistryAdmin();
 
-        // 3) deploy registry
+        console.log("   b) deploy registry");
         registry = new Registry(registryAdmin, globalRegistry);
 
-        // 4) deploy release manager
+        console.log("   c) deploy release registry");
         releaseRegistry = new ReleaseRegistry(registry);
 
-        // 5) deploy token registry
+        console.log("   d) deploy token registry");
         tokenRegistry = new TokenRegistry(registry, dip);
+    }
 
-        // 6) deploy staking reader
+
+    function _deployStaking(
+        Registry registry,
+        TokenRegistry tokenRegistry
+    )
+        internal 
+        returns (
+            StakingManager stakingManager,
+            Staking staking
+        )
+    {
+        console.log("   a) deploy staking reader");
         StakingReader stakingReader = new StakingReader(registry);
 
-        // 7) deploy staking store
+        console.log("   b) deploy staking store");
         StakingStore stakingStore = new StakingStore(registry, stakingReader);
 
-        // 8) deploy staking manager and staking component
+        console.log("   c) deploy staking manager (including upgradeable staking)");
         stakingManager = new StakingManager(
             address(registry),
             address(tokenRegistry),
@@ -208,27 +272,10 @@ contract GifDeployer is Test {
             bytes32("")); // salt
         staking = stakingManager.getStaking();
 
-        // 9) initialize instance reader
+        console.log("   d) initialize staking reader");
         stakingReader.initialize(
             address(staking),
             address(stakingStore));
-
-        // 10) intialize registry and register staking component
-        registry.initialize(
-            address(releaseRegistry),
-            address(tokenRegistry),
-            address(staking));
-
-        staking.linkToRegisteredNftId();
-
-        // 11) initialize registry admin
-        registryAdmin.completeSetup(
-            address(registry),
-            address(new RegistryAuthorization(COMMIT_HASH)),
-            gifAdmin,
-            gifManager);
-
-        vm.stopPrank();
     }
 
 

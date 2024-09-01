@@ -9,6 +9,7 @@ import {IAuthorization} from "./IAuthorization.sol";
 import {IComponent} from "../shared/IComponent.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IService} from "../shared/IService.sol";
+import {IServiceAuthorization} from "./IServiceAuthorization.sol";
 
 import {ContractLib} from "../shared/ContractLib.sol";
 import {ObjectType} from "../type/ObjectType.sol";
@@ -143,6 +144,7 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
         address authorization,
         ObjectType expectedDomain, 
         VersionPart expectedRelease,
+        bool expectServiceAuthorization,
         bool checkAlreadyInitialized
     )
         public
@@ -155,8 +157,14 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
         }
 
         // check contract type matches
-        if (!ContractLib.supportsInterface(authorization, type(IAuthorization).interfaceId)) {  
-            revert IAccessAdmin.ErrorAccessAdminNotAuthorization(authorization);
+        if (expectServiceAuthorization) {
+            if (!ContractLib.supportsInterface(authorization, type(IServiceAuthorization).interfaceId)) {
+                revert IAccessAdmin.ErrorAccessAdminNotServiceAuthorization(authorization);
+            }
+        } else {
+            if (!ContractLib.supportsInterface(authorization, type(IAuthorization).interfaceId)) {  
+                revert IAccessAdmin.ErrorAccessAdminNotAuthorization(authorization);
+            }
         }
 
         // check domain matches

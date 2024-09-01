@@ -10,13 +10,10 @@ import {IInstance} from "./IInstance.sol";
 import {AccessAdmin} from "../authorization/AccessAdmin.sol";
 import {AccessAdminLib} from "../authorization/AccessAdminLib.sol";
 import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
-import {NftId} from "../type/NftId.sol";
-import {ObjectType, INSTANCE, ORACLE} from "../type/ObjectType.sol";
+import {ObjectType, INSTANCE} from "../type/ObjectType.sol";
 import {RoleId, RoleIdLib, ADMIN_ROLE} from "../type/RoleId.sol";
-import {Str, StrLib} from "../type/String.sol";
-import {TokenHandler} from "../shared/TokenHandler.sol";
-import {TimestampLib} from "../type/Timestamp.sol";
-import {VersionPart, VersionPartLib} from "../type/Version.sol";
+import {Str} from "../type/String.sol";
+import {VersionPart} from "../type/Version.sol";
 
 
 contract InstanceAdmin is
@@ -72,9 +69,9 @@ contract InstanceAdmin is
     /// Important: The instance MUST be registered and all instance supporting contracts must be wired to this instance.
     function completeSetup(
         address registry,
-        address instance,
         address authorization,
-        VersionPart release
+        VersionPart release,
+        address instance
     )
         external
         reinitializer(uint64(release.toInt()))
@@ -88,7 +85,7 @@ contract InstanceAdmin is
                 registry, 
                 release); 
 
-        _checkAuthorization(authorization, INSTANCE(), release, true);
+        _checkAuthorization(authorization, INSTANCE(), release, false, true);
 
         // effects
         _registry = IRegistry(registry);
@@ -102,14 +99,14 @@ contract InstanceAdmin is
         // link nft ownability to instance
         _linkToNftOwnable(instance);
 
-        _setupServiceRoles(_authorization);
-
+        // setup instance targets
         _createInstanceTargets(_authorization.getMainTargetName());
 
-        // add instance authorization
+        // setup non-contract roles
+        _setupServiceRoles(_authorization);
         _createRoles(_authorization);
 
-        // _setupInstanceHelperTargetsWithRoles();
+        // authorize functions of instance contracts
         _createTargetAuthorizations(_authorization);
     }
 
@@ -171,7 +168,7 @@ contract InstanceAdmin is
 
         IInstanceLinkedComponent component = IInstanceLinkedComponent(componentAddress);
         IAuthorization authorization = component.getAuthorization();
-        _checkAuthorization(address(authorization), expectedType, getRelease(), false);
+        _checkAuthorization(address(authorization), expectedType, getRelease(), false, false);
 
         // effects
         _createRoles(authorization);
@@ -309,7 +306,6 @@ contract InstanceAdmin is
     }
 
     // ------------------- Internal functions ------------------- //
-
 
     function _createRoles(IAuthorization authorization)
         internal

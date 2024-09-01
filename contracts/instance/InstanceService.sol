@@ -169,9 +169,9 @@ contract InstanceService is
         IAuthorization instanceAuthorization = InstanceAdmin(_masterInstanceAdmin).getInstanceAuthorization();
         instanceAdmin.completeSetup(
             address(getRegistry()),
-            address(instance),
             address(instanceAuthorization),
-            getRelease());
+            getRelease(),
+            address(instance));
 
         // hard checks for newly cloned instance
         assert(address(instance.getRegistry()) == address(getRegistry()));

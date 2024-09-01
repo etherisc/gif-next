@@ -150,7 +150,7 @@ contract ReleaseRegistry is
         uint256 serviceDomainsCount = _verifyServiceAuthorization(serviceAuthorization, releaseVersion, salt);
 
         // create and initialize release admin
-        releaseAdmin = _cloneNewReleaseAdmin(releaseVersion);
+        releaseAdmin = _cloneNewReleaseAdmin(serviceAuthorization, releaseVersion);
         releaseSalt = salt;
 
         // ensures unique salt
@@ -216,7 +216,6 @@ contract ReleaseRegistry is
         ReleaseAdmin releaseAdmin = ReleaseAdmin(_releaseInfo[releaseVersion].releaseAdmin);
         releaseAdmin.setReleaseLocked(false);
         releaseAdmin.authorizeService(
-            releaseAuthz, 
             service,
             serviceDomain,
             releaseVersion);
@@ -367,7 +366,10 @@ contract ReleaseRegistry is
             _releaseInfo[release].releaseAdmin).setReleaseLocked(locked);
     }
 
-    function _cloneNewReleaseAdmin(VersionPart release)
+    function _cloneNewReleaseAdmin(
+        IServiceAuthorization serviceAuthorization,
+        VersionPart release
+    )
         private
         returns (ReleaseAdmin clonedAdmin)
     {
@@ -377,7 +379,7 @@ contract ReleaseRegistry is
 
         string memory releaseAdminName = string(
             abi.encodePacked(
-                "ReleaseAdmin_v", 
+                "ReleaseAdminV", 
                 release.toString()));
 
         clonedAdmin.initialize(
@@ -386,8 +388,9 @@ contract ReleaseRegistry is
 
         clonedAdmin.completeSetup(
             address(_registry), 
-            address(this), // release registry (this contract)
-            release);
+            address(serviceAuthorization),
+            release,
+            address(this)); // release registry (this contract)
 
         // lock release (remains locked until activation)
         clonedAdmin.setReleaseLocked(true);

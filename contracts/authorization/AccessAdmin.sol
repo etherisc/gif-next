@@ -373,6 +373,7 @@ contract AccessAdmin is
     }
 
 
+    /// @dev Authorize the functions of the target for the specified role.
     function _authorizeFunctions(IAuthorization authorization, Str target, RoleId roleId)
         internal
     {
@@ -733,6 +734,7 @@ contract AccessAdmin is
         address authorization,
         ObjectType expectedDomain, 
         VersionPart expectedRelease,
+        bool expectServiceAuthorization,
         bool checkAlreadyInitialized
     )
         internal
@@ -743,6 +745,7 @@ contract AccessAdmin is
             authorization, 
             expectedDomain, 
             expectedRelease, 
+            expectServiceAuthorization,
             checkAlreadyInitialized);
     }
 

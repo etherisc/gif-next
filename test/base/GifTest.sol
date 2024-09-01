@@ -268,16 +268,13 @@ contract GifTest is GifDeployer {
         // instance service is now ready to create cloned instances
         masterInstanceNftId = instanceService.setAndRegisterMasterInstance(address(masterInstance));
 
-console.log("g");
         // setup roles, targets and function grantings
         instanceAuthorizationV3 = new InstanceAuthorizationV3();
-console.log("h");
         masterInstanceAdmin.completeSetup(
             address(registry),
-            address(masterInstance), 
             address(instanceAuthorizationV3),
-            VersionPartLib.toVersionPart(3));
-console.log("i");
+            VersionPartLib.toVersionPart(3),
+            address(masterInstance));
 
         require(address(masterInstanceAdmin.getRegistry()) == address(registry), "unexpected master instance registry");
         require(masterInstanceAdmin.getRelease().toInt() == 3, "unexpected master instance release");
@@ -285,7 +282,6 @@ console.log("i");
         // MUST be set after instance is set up and registered
         // lock master instance nft
         chainNft.transferFrom(registryOwner, NFT_LOCK_ADDRESS, masterInstanceNftId.toInt());
-console.log("j");
 
         // solhint-disable
         console.log("master instance deployed at", address(masterInstance));

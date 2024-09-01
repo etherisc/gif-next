@@ -2,14 +2,12 @@
 pragma solidity ^0.8.20;
 
 import {IAccess} from "../../contracts/authorization/IAccess.sol";
-import {IAuthorization} from "../../contracts/authorization/IAuthorization.sol";
-import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 
 import {AccessAdminLib} from "../../contracts/authorization/AccessAdminLib.sol";
 import {AccessManagedMock} from "../mock/AccessManagedMock.sol";
 import {PUBLIC_ROLE} from "../../contracts/type/RoleId.sol";
 import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
-import {RegistryAuthorization} from "../../contracts/registry/RegistryAuthorization.sol";
+import {VersionPart} from "../../contracts/type/Version.sol";
 
 contract RegistryAdminEx is RegistryAdmin {
 
@@ -18,6 +16,7 @@ contract RegistryAdminEx is RegistryAdmin {
     function completeSetup(
         address registry,
         address authorization,
+        VersionPart release,
         address gifAdmin, 
         address gifManager
     )
@@ -27,6 +26,7 @@ contract RegistryAdminEx is RegistryAdmin {
         super.completeSetup(
             registry, 
             authorization,
+            release,
             gifAdmin, 
             gifManager);
 

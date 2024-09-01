@@ -58,6 +58,7 @@ interface IAccessAdmin is
     // check authorization
     error ErrorAccessAdminAlreadyInitialized(address authorization);
     error ErrorAccessAdminNotAuthorization(address authorization);
+    error ErrorAccessAdminNotServiceAuthorization(address serviceAuthorization);
     error ErrorAccessAdminDomainMismatch(address authorization, ObjectType expectedDomain, ObjectType actualDomain);
     error ErrorAccessAdminReleaseMismatch(address authorization, VersionPart expectedRelease, VersionPart actualRelease);
 

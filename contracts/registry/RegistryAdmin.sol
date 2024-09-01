@@ -2,7 +2,6 @@
 pragma solidity ^0.8.20;
 
 import {IAuthorization} from "../authorization/IAuthorization.sol";
-import {IComponent} from "../shared/IComponent.sol";
 import {IRegistry} from "./IRegistry.sol";
 import {IService} from "../shared/IService.sol";
 import {IStaking} from "../staking/IStaking.sol";
@@ -10,16 +9,10 @@ import {IStaking} from "../staking/IStaking.sol";
 import {AccessAdmin} from "../authorization/AccessAdmin.sol";
 import {AccessAdminLib} from "../authorization/AccessAdminLib.sol";
 import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
-import {ContractLib} from "../shared/ContractLib.sol";
-import {ObjectType, REGISTRY, STAKING, POOL, RELEASE} from "../type/ObjectType.sol";
-import {ReleaseRegistry} from "./ReleaseRegistry.sol";
-import {RoleId, RoleIdLib, ADMIN_ROLE, GIF_MANAGER_ROLE, GIF_ADMIN_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
-import {Staking} from "../staking/Staking.sol";
-import {Str, StrLib} from "../type/String.sol";
-import {StakingStore} from "../staking/StakingStore.sol";
-import {TokenHandler} from "../shared/TokenHandler.sol";
-import {TokenRegistry} from "./TokenRegistry.sol";
-import {VersionPart, VersionPartLib} from "../type/Version.sol";
+import {ObjectType, REGISTRY} from "../type/ObjectType.sol";
+import {RoleId, RoleIdLib, GIF_MANAGER_ROLE, GIF_ADMIN_ROLE} from "../type/RoleId.sol";
+import {Str} from "../type/String.sol";
+import {VersionPart} from "../type/Version.sol";
 
 /*
     1) GIF_MANAGER_ROLE
@@ -74,6 +67,7 @@ contract RegistryAdmin is
     function completeSetup(
         address registry,
         address authorization,
+        VersionPart release,
         address gifAdmin, 
         address gifManager
     )
@@ -85,13 +79,12 @@ contract RegistryAdmin is
         // checks
         AccessAdminLib.checkRegistry(registry);
 
-        VersionPart release = VersionPartLib.toVersionPart(3);
         AccessManagerCloneable(
             authority()).completeSetup(
                 registry, 
                 release); 
 
-        _checkAuthorization(authorization, REGISTRY(), release, true);
+        _checkAuthorization(authorization, REGISTRY(), release, false, true);
 
         _registry = registry;
         _authorization = IAuthorization(authorization);
@@ -106,14 +99,15 @@ contract RegistryAdmin is
         // link nft ownability to registry
         _linkToNftOwnable(_registry);
 
-        // register core targets
+        // setup registry core targets
         _createCoreTargets(_authorization.getMainTargetName());
 
-        // setup authorization for registry and supporting contracts
+        // setup non-contract roles
         _createRoles(_authorization);
         _grantRoleToAccount(GIF_ADMIN_ROLE(), gifAdmin);
         _grantRoleToAccount(GIF_MANAGER_ROLE(), gifManager);
 
+        // authorize functions of registry and staking contracts
         _createTargetAuthorizations(_authorization);
     }
 

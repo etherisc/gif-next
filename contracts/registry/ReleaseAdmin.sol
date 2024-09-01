@@ -9,7 +9,7 @@ import {IServiceAuthorization} from "../authorization/IServiceAuthorization.sol"
 import {AccessAdmin} from "../authorization/AccessAdmin.sol";
 import {AccessAdminLib} from "../authorization/AccessAdminLib.sol";
 import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
-import {ObjectType, ObjectTypeLib} from "../type/ObjectType.sol";
+import {ObjectType, ObjectTypeLib, RELEASE} from "../type/ObjectType.sol";
 import {RoleId, ADMIN_ROLE, RELEASE_REGISTRY_ROLE} from "../type/RoleId.sol";
 import {Str} from "../type/String.sol";
 import {VersionPart} from "../type/Version.sol";
@@ -34,6 +34,8 @@ contract ReleaseAdmin is
     /// @dev release core targets
     string public constant RELEASE_ADMIN_TARGET_NAME = "ReleaseAdmin";
 
+    IServiceAuthorization internal _serviceAuthorization;
+
 
     modifier onlyReleaseRegistry() {
         (bool isMember, ) = _authority.hasRole(RELEASE_REGISTRY_ROLE().toInt(), msg.sender);
@@ -54,8 +56,9 @@ contract ReleaseAdmin is
 
     function completeSetup(
         address registry,
-        address releaseRegistry,
-        VersionPart release
+        address authorization,
+        VersionPart release,
+        address releaseRegistry
     )
         external
         reinitializer(uint64(release.toInt()))
@@ -67,12 +70,19 @@ contract ReleaseAdmin is
         AccessManagerCloneable(
             authority()).completeSetup(
                 registry, 
-                release); 
+                release);
+
+        IServiceAuthorization serviceAuthorization = IServiceAuthorization(authorization);
+        _checkAuthorization(address(serviceAuthorization), RELEASE(), release, true, true);
+        _serviceAuthorization = serviceAuthorization;
 
         // link nft ownability to registry
         _linkToNftOwnable(registry);
 
+        // setup release contract
         _setupReleaseRegistry(releaseRegistry);
+
+        // relase services will be authorized one by one via authorizeService()
     }
 
 
@@ -80,7 +90,6 @@ contract ReleaseAdmin is
     /// For all authorized services its authorized functions are enabled.
     /// Permissioned function: Access is restricted to release registry.
     function authorizeService(
-        IServiceAuthorization serviceAuthorization,
         IService service,
         ObjectType serviceDomain,
         VersionPart release
@@ -91,12 +100,12 @@ contract ReleaseAdmin is
         _createServiceTargetAndRole(service, serviceDomain, release);
 
         // authorize functions of service
-        Str serviceTarget = serviceAuthorization.getServiceTarget(serviceDomain);
-        RoleId[] memory authorizedRoles = serviceAuthorization.getAuthorizedRoles(serviceTarget);
+        Str serviceTarget = _serviceAuthorization.getServiceTarget(serviceDomain);
+        RoleId[] memory authorizedRoles = _serviceAuthorization.getAuthorizedRoles(serviceTarget);
 
         for (uint256 i = 0; i < authorizedRoles.length; i++) {
             _authorizeFunctions(
-                IAuthorization(address(serviceAuthorization)), 
+                IAuthorization(address(_serviceAuthorization)), 
                 serviceTarget, 
                 authorizedRoles[i]);
         }
