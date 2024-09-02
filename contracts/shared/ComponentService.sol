@@ -68,6 +68,7 @@ contract ComponentService is
     function registerComponent(address componentAddress)
         external
         virtual
+        restricted()
         returns (NftId componentNftId)
     {
         // checks
@@ -102,6 +103,7 @@ contract ComponentService is
     )
         external
         virtual
+        restricted()
     {
         // checks
         (NftId componentNftId, IInstance instance) = _getAndVerifyComponent(COMPONENT(), true);
@@ -117,6 +119,7 @@ contract ComponentService is
     function setWallet(address newWallet)
         external
         virtual
+        restricted()
     {
         // checks
         (NftId componentNftId, IInstance instance) = _getAndVerifyComponent(COMPONENT(), true);
@@ -199,6 +202,7 @@ contract ComponentService is
     function registerProduct(address productAddress, address token)
         external
         virtual
+        restricted()
         nonReentrant()
         returns (NftId productNftId)
     {
@@ -230,6 +234,7 @@ contract ComponentService is
     )
         external
         virtual
+        restricted()
         nonReentrant()
     {
         (NftId productNftId, IInstance instance) = _getAndVerifyComponent(PRODUCT(), true);
@@ -318,6 +323,7 @@ contract ComponentService is
     )
         external
         virtual
+        restricted()
     {
         (NftId distributionNftId, IInstance instance) = _getAndVerifyComponent(DISTRIBUTION(), true);
         (NftId productNftId, IComponents.FeeInfo memory feeInfo) = _getLinkedFeeInfo(
@@ -406,6 +412,7 @@ contract ComponentService is
     )
         external
         virtual
+        restricted()
     {
         (NftId poolNftId, IInstance instance) = _getAndVerifyComponent(POOL(), true);
 

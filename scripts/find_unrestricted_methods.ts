@@ -7,13 +7,16 @@ async function main() {
 }
 
 const RELEVANT_BASE_CONTRACTS = [
-    'Service',
     'AccessManagedUpgradeable',
     'AccessManaged',
-    'ObjectManager',
+    'AccessAdmin',
+    'IAccessAdmin',
+    'Registerable',
+    'Service',
     'Component',
     'InstanceLinkedComponent',
-    'ComponentVerifyingService'
+    'ComponentVerifyingService',
+    'ObjectSet'
 ];
 
 class RestrictedMissingListener extends SolidityFileListener {
@@ -97,7 +100,7 @@ class RestrictedMissingListener extends SolidityFileListener {
     public exitModifierInvocation = (ctx: ModifierInvocationContext) => {
         // console.log(`--2`);
         // console.log(ctx.getText());
-        if (ctx.getText() === "restricted()") {
+        if (ctx.getText() === "restricted()" || ctx.getText() === "restricted") {
             this.isRestricted = true;
         }
         // console.log(`--3`);

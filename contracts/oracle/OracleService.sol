@@ -48,7 +48,7 @@ contract OracleService is
     )
         external 
         virtual 
-        // restricted() // add authz
+        restricted()
         onlyNftOfType(oracleNftId, ORACLE())
         returns (RequestId requestId) 
     {
@@ -104,7 +104,7 @@ contract OracleService is
     )
         external
         virtual
-        // restricted() // add authz
+        restricted()
         returns (bool success)
     {
         (
@@ -153,7 +153,7 @@ contract OracleService is
     function resend(RequestId requestId)
         external 
         virtual 
-        // restricted() // add authz
+        restricted()
     {
         (
             IRegistry.ObjectInfo memory info, 
@@ -192,7 +192,7 @@ contract OracleService is
     function cancel(RequestId requestId)
         external 
         virtual 
-        // restricted() // add authz
+        restricted()
     {
         (
             IRegistry.ObjectInfo memory info, 
