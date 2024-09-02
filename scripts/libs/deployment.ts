@@ -81,6 +81,8 @@ export async function deployProxyManagerContract(
     const proxyAddress = await proxyManager.getProxy();
     const proxy = UpgradableProxyWithAdmin__factory.connect(proxyAddress, signer);
     const serviceImplAddress = await getImplementationAddress(ethers.provider, proxyAddress);
+
+    logger.debug("-------- preparing verification data for implementation and proxy --------");
     
     // verify service implementation 
     await prepareVerificationData(

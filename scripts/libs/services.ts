@@ -21,7 +21,7 @@ import {
     StakingService, StakingServiceManager, StakingService__factory
 } from "../../typechain-types";
 import { logger } from "../logger";
-import { deployContract } from "./deployment";
+import { deployContract, deployProxyManagerContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
 import { RegistryAddresses } from "./registry";
 import { createRelease } from "./release";
@@ -114,8 +114,9 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     logger.info("======== Starting deployment of services ========");
     logger.info("-------- registry service --------");
     const authority = await release.admin.authority();
-    const { address: registryServiceManagerAddress, contract: registryServiceManagerBaseContract } = await deployContract(
+    const { address: registryServiceManagerAddress, contract: registryServiceManagerBaseContract, proxyAddress: registryServiceAddress } = await deployProxyManagerContract(
         "RegistryServiceManager",
+        "RegistryService",
         owner,
         [
             authority, // address itself can be a salt like value
@@ -130,16 +131,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
                 VersionLib: libraries.versionLibAddress,
             }});
 
-    const registryServiceManager = registryServiceManagerBaseContract as RegistryServiceManager;
-    const registryServiceAddress = await registryServiceManager.getRegistryService();
     const registryService = RegistryService__factory.connect(registryServiceAddress, owner);
-
-    // verify service implementation 
-    prepareVerificationData(
-        "RegistryService", 
-        await getImplementationAddress(hhEthers.provider, await registryServiceManager.getProxy()), 
-        [], 
-        undefined);
 
     const rcptRs = await executeTx(
         async () => await registry.releaseRegistry.registerService(registryServiceAddress, getTxOpts()),
@@ -154,8 +146,9 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     logger.info(`registryServiceManager deployed - registryServiceAddress: ${registryServiceAddress} registryServiceManagerAddress: ${registryServiceManagerAddress} nftId: ${registryServiceNfdId}`);
 
     logger.info("-------- staking service --------");
-    const { address: stakingServiceManagerAddress, contract: stakingServiceManagerBaseContract, } = await deployContract(
+    const { address: stakingServiceManagerAddress, contract: stakingServiceManagerBaseContract, proxyAddress: stakingServiceAddress } = await deployProxyManagerContract(
         "StakingServiceManager",
+        "StakingService",
         owner,
         [
             authority,
@@ -172,15 +165,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         }});
 
     const stakingServiceManager = stakingServiceManagerBaseContract as StakingServiceManager;
-    const stakingServiceAddress = await stakingServiceManager.getStakingService();
     const stakingService = StakingService__factory.connect(stakingServiceAddress, owner);
-
-    // verify service implementation 
-    prepareVerificationData(
-        "StakingService", 
-        await getImplementationAddress(hhEthers.provider, await stakingServiceManager.getProxy()), 
-        [], 
-        undefined);
 
     const rcptStk = await executeTx(
         async () => await registry.releaseRegistry.registerService(stakingServiceAddress, getTxOpts()),
@@ -195,8 +180,9 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     logger.info(`stakingServiceManager deployed - stakingServiceAddress: ${stakingServiceAddress} stakingServiceManagerAddress: ${stakingServiceManagerAddress} nftId: ${stakingServiceNftId}`);
 
     logger.info("-------- instance service --------");
-    const { address: instanceServiceManagerAddress, contract: instanceServiceManagerBaseContract, } = await deployContract(
+    const { address: instanceServiceManagerAddress, contract: instanceServiceManagerBaseContract, proxyAddress: instanceServiceAddress } = await deployProxyManagerContract(
         "InstanceServiceManager",
+        "InstanceService",
         owner,
         [
             authority,
@@ -214,15 +200,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         }});
 
     const instanceServiceManager = instanceServiceManagerBaseContract as InstanceServiceManager;
-    const instanceServiceAddress = await instanceServiceManager.getInstanceService();
     const instanceService = InstanceService__factory.connect(instanceServiceAddress, owner);
-
-    // verify service implementation 
-    prepareVerificationData(
-        "InstanceService", 
-        await getImplementationAddress(hhEthers.provider, await instanceServiceManager.getProxy()), 
-        [], 
-        undefined);
 
     const rcptInst = await executeTx(
         async () => await registry.releaseRegistry.registerService(instanceServiceAddress, getTxOpts()),
@@ -237,8 +215,9 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     logger.info(`instanceServiceManager deployed - instanceServiceAddress: ${instanceServiceAddress} instanceServiceManagerAddress: ${instanceServiceManagerAddress} nftId: ${instanceServiceNfdId}`);
 
     logger.info("-------- accounting service --------");
-    const { address: accountingServiceManagerAddress, contract: accountingServiceManagerBaseContract, } = await deployContract(
+    const { address: accountingServiceManagerAddress, contract: accountingServiceManagerBaseContract, proxyAddress: accountingServiceAddress } = await deployProxyManagerContract(
         "AccountingServiceManager",
+        "AccountingService",
         owner,
         [
             authority,
@@ -255,15 +234,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         }});
     
     const accountingServiceManager = accountingServiceManagerBaseContract as AccountingServiceManager;
-    const accountingServiceAddress = await accountingServiceManager.getAccountingService();
     const accountingService = AccountingService__factory.connect(accountingServiceAddress, owner);
-
-    // verify service implementation
-    prepareVerificationData(
-        "AccountingService", 
-        await getImplementationAddress(hhEthers.provider, await accountingServiceManager.getProxy()), 
-        [], 
-        undefined);
     
     const rcptAcct = await executeTx(
         async () => await registry.releaseRegistry.registerService(accountingServiceAddress, getTxOpts()),
@@ -278,8 +249,9 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     logger.info(`accountingServiceManager deployed - accountingServiceAddress: ${accountingServiceAddress} accountingServiceManagerAddress: ${accountingServiceManagerAddress} nftId: ${accountingServiceNfdId}`);
 
     logger.info("-------- component service --------");
-    const { address: componentServiceManagerAddress, contract: componentServiceManagerBaseContract, } = await deployContract(
+    const { address: componentServiceManagerAddress, contract: componentServiceManagerBaseContract, proxyAddress: componentServiceAddress } = await deployProxyManagerContract(
         "ComponentServiceManager",
+        "ComponentService",
         owner,
         [
             authority,
@@ -298,15 +270,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         }});
 
     const componentServiceManager = componentServiceManagerBaseContract as ComponentServiceManager;
-    const componentServiceAddress = await componentServiceManager.getComponentService();
     const componentService = ComponentService__factory.connect(componentServiceAddress, owner);
-
-    // verify service implementation 
-    prepareVerificationData(
-        "ComponentService", 
-        await getImplementationAddress(hhEthers.provider, await componentServiceManager.getProxy()), 
-        [], 
-        undefined);
 
     const rcptCmpt = await executeTx(
         async () => await registry.releaseRegistry.registerService(componentServiceAddress, getTxOpts()),
@@ -317,8 +281,9 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     logger.info(`componentServiceManager deployed - componentServiceAddress: ${componentServiceAddress} componentServiceManagerAddress: ${componentServiceManagerAddress} nftId: ${componentServiceNftId}`);
 
     logger.info("-------- distribution service --------");
-    const { address: distributionServiceManagerAddress, contract: distributionServiceManagerBaseContract, } = await deployContract(
+    const { address: distributionServiceManagerAddress, contract: distributionServiceManagerBaseContract, proxyAddress: distributionServiceAddress } = await deployProxyManagerContract(
         "DistributionServiceManager",
+        "DistributionService",
         owner,
         [
             authority,
@@ -339,15 +304,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             }});
     
     const distributionServiceManager = distributionServiceManagerBaseContract as DistributionServiceManager;
-    const distributionServiceAddress = await distributionServiceManager.getDistributionService();
     const distributionService = DistributionService__factory.connect(distributionServiceAddress, owner);
-
-    // verify service implementation 
-    prepareVerificationData(
-        "DistributuonService", 
-        await getImplementationAddress(hhEthers.provider, await distributionServiceManager.getProxy()), 
-        [], 
-        undefined);
 
     const rcptDs = await executeTx(
         async () => await registry.releaseRegistry.registerService(distributionServiceAddress, getTxOpts()),
@@ -362,8 +319,9 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     logger.info(`distributionServiceManager deployed - distributionServiceAddress: ${distributionServiceAddress} distributionServiceManagerAddress: ${distributionServiceManagerAddress} nftId: ${distributionServiceNftId}`);
 
     logger.info("-------- pricing service --------");
-    const { address: pricingServiceManagerAddress, contract: pricingServiceManagerBaseContract, } = await deployContract(
+    const { address: pricingServiceManagerAddress, contract: pricingServiceManagerBaseContract, proxyAddress: pricingServiceAddress } = await deployProxyManagerContract(
         "PricingServiceManager",
+        "PricingService",
         owner,
         [
             authority,
@@ -380,15 +338,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         }});
     
     const pricingServiceManager = pricingServiceManagerBaseContract as PricingServiceManager;
-    const pricingServiceAddress = await pricingServiceManager.getPricingService();
     const pricingService = PricingService__factory.connect(pricingServiceAddress, owner);
-
-    // verify service implementation 
-    prepareVerificationData(
-        "PricingService", 
-        await getImplementationAddress(hhEthers.provider, await pricingServiceManager.getProxy()), 
-        [], 
-        undefined);
 
     const rcptPrs = await executeTx(
         async () => await registry.releaseRegistry.registerService(pricingServiceAddress, getTxOpts()),
@@ -403,8 +353,9 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     logger.info(`pricingServiceManager deployed - pricingServiceAddress: ${pricingServiceAddress} pricingServiceManagerAddress: ${pricingServiceManagerAddress} nftId: ${pricingServiceNftId}`);
 
     logger.info("-------- bundle service --------");
-    const { address: bundleServiceManagerAddress, contract: bundleServiceManagerBaseContract, } = await deployContract(
+    const { address: bundleServiceManagerAddress, contract: bundleServiceManagerBaseContract, proxyAddress: bundleServiceAddress } = await deployProxyManagerContract(
         "BundleServiceManager",
+        "BundleService",
         owner,
         [
             authority,
@@ -422,15 +373,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             }});
 
     const bundleServiceManager = bundleServiceManagerBaseContract as BundleServiceManager;
-    const bundleServiceAddress = await bundleServiceManager.getBundleService();
     const bundleService = BundleService__factory.connect(bundleServiceAddress, owner);
-
-    // verify service implementation 
-    prepareVerificationData(
-        "BundleService", 
-        await getImplementationAddress(hhEthers.provider, await bundleServiceManager.getProxy()), 
-        [], 
-        undefined);
 
     const rcptBdl = await executeTx(
         async () => await registry.releaseRegistry.registerService(bundleServiceAddress, getTxOpts()),
@@ -445,8 +388,9 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     logger.info(`bundleServiceManager deployed - bundleServiceAddress: ${bundleServiceAddress} bundleServiceManagerAddress: ${bundleServiceManagerAddress} nftId: ${bundleServiceNftId}`);
 
     logger.info("-------- pool service --------");
-    const { address: poolServiceManagerAddress, contract: poolServiceManagerBaseContract, } = await deployContract(
+    const { address: poolServiceManagerAddress, contract: poolServiceManagerBaseContract, proxyAddress: poolServiceAddress } = await deployProxyManagerContract(
         "PoolServiceManager",
+        "PoolService",
         owner,
         [
             authority,
@@ -464,15 +408,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             }});
     
     const poolServiceManager = poolServiceManagerBaseContract as PoolServiceManager;
-    const poolServiceAddress = await poolServiceManager.getPoolService();
     const poolService = PoolService__factory.connect(poolServiceAddress, owner);
-
-    // verify service implementation 
-    prepareVerificationData(
-        "PoolService", 
-        await getImplementationAddress(hhEthers.provider, await poolServiceManager.getProxy()), 
-        [], 
-        undefined);
 
     const rcptPs = await executeTx(
         async () => await registry.releaseRegistry.registerService(poolServiceAddress, getTxOpts()),
@@ -487,8 +423,9 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     logger.info(`poolServiceManager deployed - poolServiceAddress: ${poolServiceAddress} poolServiceManagerAddress: ${poolServiceManagerAddress} nftId: ${poolServiceNftId}`);
 
     logger.info("-------- oracle service --------");
-    const { address: oracleServiceManagerAddress, contract: oracleServiceManagerBaseContract, } = await deployContract(
+    const { address: oracleServiceManagerAddress, contract: oracleServiceManagerBaseContract, proxyAddress: oracleServiceAddress } = await deployProxyManagerContract(
         "OracleServiceManager",
+        "OracleService",
         owner,
         [
             authority,
@@ -505,15 +442,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             }});
     
     const oracleServiceManager = oracleServiceManagerBaseContract as OracleServiceManager;
-    const oracleServiceAddress = await oracleServiceManager.getOracleService();
     const oracleService = OracleService__factory.connect(oracleServiceAddress, owner);
-
-    // verify service implementation 
-    prepareVerificationData(
-        "OracleService", 
-        await getImplementationAddress(hhEthers.provider, await oracleServiceManager.getProxy()), 
-        [], 
-        undefined);
 
     const orclPrs = await executeTx(
         async () => await registry.releaseRegistry.registerService(oracleServiceAddress, getTxOpts()),
@@ -528,8 +457,9 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     logger.info(`oracleServiceManager deployed - oracleServiceAddress: ${oracleServiceAddress} oracleServiceManagerAddress: ${oracleServiceManagerAddress} nftId: ${oracleServiceNftId}`);
 
     logger.info("-------- product service --------");
-    const { address: riskServiceManagerAddress, contract: riskServiceManagerBaseContract, } = await deployContract(
+    const { address: riskServiceManagerAddress, contract: riskServiceManagerBaseContract, proxyAddress: riskServiceAddress } = await deployProxyManagerContract(
         "RiskServiceManager",
+        "RiskService",
         owner,
         [
             authority,
@@ -546,15 +476,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         }});
 
     const riskServiceManager = riskServiceManagerBaseContract as RiskServiceManager;
-    const riskServiceAddress = await riskServiceManager.getRiskService();
     const riskService = RiskService__factory.connect(riskServiceAddress, owner);
-
-    // verify service implementation 
-    prepareVerificationData(
-        "RiskService", 
-        await getImplementationAddress(hhEthers.provider, await riskServiceManager.getProxy()), 
-        [], 
-        undefined);
 
     const rcptPrd = await executeTx(
         async () => await registry.releaseRegistry.registerService(riskServiceAddress, getTxOpts()),
@@ -569,8 +491,9 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     logger.info(`riskServiceManager deployed - riskServiceAddress: ${riskServiceAddress} riskServiceManagerAddress: ${riskServiceManagerAddress} nftId: ${riskServiceNftId}`);
 
     logger.info("-------- policy service --------");
-    const { address: policyServiceManagerAddress, contract: policyServiceManagerBaseContract, } = await deployContract(
+    const { address: policyServiceManagerAddress, contract: policyServiceManagerBaseContract, proxyAddress: policyServiceAddress } = await deployProxyManagerContract(
         "PolicyServiceManager",
+        "PolicyService",
         owner,
         [
             authority,
@@ -588,15 +511,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         }});
 
     const policyServiceManager = policyServiceManagerBaseContract as PolicyServiceManager;
-    const policyServiceAddress = await policyServiceManager.getPolicyService();
     const policyService = PolicyService__factory.connect(policyServiceAddress, owner);
-
-    // verify service implementation 
-    prepareVerificationData(
-        "PolicyService", 
-        await getImplementationAddress(hhEthers.provider, await policyServiceManager.getProxy()), 
-        [], 
-        undefined);
 
     const rcptPol = await executeTx(
         async () => await registry.releaseRegistry.registerService(policyServiceAddress, getTxOpts()),
@@ -611,8 +526,9 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     logger.info(`policyServiceManager deployed - policyServiceAddress: ${policyServiceAddress} policyServiceManagerAddress: ${policyServiceManagerAddress} nftId: ${policyServiceNftId}`);
 
     logger.info("-------- claim service --------");
-    const { address: claimServiceManagerAddress, contract: claimServiceManagerBaseContract, } = await deployContract(
+    const { address: claimServiceManagerAddress, contract: claimServiceManagerBaseContract, proxyAddress: claimServiceAddress } = await deployProxyManagerContract(
         "ClaimServiceManager",
+        "ClaimService",
         owner,
         [
             authority,
@@ -631,15 +547,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             }});
 
     const claimServiceManager = claimServiceManagerBaseContract as ClaimServiceManager;
-    const claimServiceAddress = await claimServiceManager.getClaimService();
     const claimService = ClaimService__factory.connect(claimServiceAddress, owner);
-
-    // verify service implementation 
-    prepareVerificationData(
-        "ClaimService", 
-        await getImplementationAddress(hhEthers.provider, await claimServiceManager.getProxy()), 
-        [], 
-        undefined);
 
     const rcptClm = await executeTx(
         async () => await registry.releaseRegistry.registerService(claimServiceAddress, getTxOpts()),
@@ -654,8 +562,9 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     logger.info(`claimServiceManager deployed - claimServiceAddress: ${claimServiceAddress} claimServiceManagerAddress: ${claimServiceManagerAddress} nftId: ${claimServiceNftId}`);
 
     logger.info("-------- application service --------");
-    const { address: applicationServiceManagerAddress, contract: applicationServiceManagerBaseContract, } = await deployContract(
+    const { address: applicationServiceManagerAddress, contract: applicationServiceManagerBaseContract, proxyAddress: applicationServiceAddress } = await deployProxyManagerContract(
         "ApplicationServiceManager",
+        "ApplicationService",
         owner,
         [
             authority,
@@ -673,15 +582,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         }});
 
     const applicationServiceManager = applicationServiceManagerBaseContract as ApplicationServiceManager;
-    const applicationServiceAddress = await applicationServiceManager.getApplicationService();
     const applicationService = ApplicationService__factory.connect(applicationServiceAddress, owner);
-
-    // verify service implementation 
-    prepareVerificationData(
-        "ApplicationService", 
-        await getImplementationAddress(hhEthers.provider, await applicationServiceManager.getProxy()), 
-        [], 
-        undefined);
     
     const rcptAppl = await executeTx(
         async () => await registry.releaseRegistry.registerService(applicationServiceAddress, getTxOpts()),

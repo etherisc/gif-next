@@ -290,9 +290,6 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         ], 
         undefined);
 
-    throw Error("intermediate stop");
-    
-
     logger.info(`Dip deployed at ${dipAddress}`);
     logger.info(`RegistryAuthorization deployed at ${registryAuthorizationAddress}`);
     logger.info(`RegistryAdmin deployeqd at ${registryAdmin}`);
