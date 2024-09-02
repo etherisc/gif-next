@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IRegistry} from "../contracts/registry/IRegistry.sol";
 
 import {GifTest} from "./base/GifTest.sol";
 import {InstanceLinkedComponent} from "../contracts/shared/InstanceLinkedComponent.sol";
-import {IRegistry} from "../contracts/registry/IRegistry.sol";
-import {NftId, NftIdLib} from "../contracts/type/NftId.sol";
+import {NftId} from "../contracts/type/NftId.sol";
 import {ObjectType} from "../contracts/type/ObjectType.sol";
 import {BUNDLE, COMPONENT, DISTRIBUTION, ORACLE, POOL, PRODUCT, POLICY, RISK, REQUEST, SERVICE, STAKING} from "../contracts/type/ObjectType.sol";
-import {RoleId} from "../contracts/type/RoleId.sol";
+
 
 contract TestDeployAll is GifTest {
 
@@ -21,36 +21,6 @@ contract TestDeployAll is GifTest {
         _printAuthz(instanceAdmin, "instance with components");
         assertTrue(true);
     }
-
-    // function _getTargetText(uint256 idx) internal returns (string memory) {
-    //     address target = registryAdmin.getTargetAddress(idx);
-    //     return string(
-    //         abi.encodePacked(
-    //             "address ", 
-    //             _toString(target), 
-    //             " ", 
-    //             registryAdmin.getTargetInfo(target).name));
-    // }
-
-    // function _getRoleText(uint256 idx) internal returns (string memory) {
-    //     RoleId roleId = registryAdmin.getRoleId(idx);
-    //     return string(
-    //         abi.encodePacked(
-    //             "roleId ", 
-    //             _toString(roleId.toInt()), 
-    //             " ", 
-    //             registryAdmin.getRoleInfo(roleId).name,
-    //             " members ",
-    //             _toString(registryAdmin.roleMembers(roleId))));
-    // }
-
-    // function _toString(uint256 value) internal pure returns (string memory) {
-    //     return Strings.toString(value);
-    // }
-
-    // function _toString(address _address) internal pure returns (string memory) {
-    //     return Strings.toHexString(uint256(uint160(_address)), 20);
-    // }
 
     function test_deploySimpleProduct() public {
         _checkMockComponent(product, productNftId, instanceNftId, PRODUCT(), "SimpleProduct", productOwner);
@@ -187,5 +157,4 @@ contract TestDeployAll is GifTest {
         // check owner
         assertEq(registry.ownerOf(address(component)), componentOwner, "unexpected component owner");
     }
-
 }

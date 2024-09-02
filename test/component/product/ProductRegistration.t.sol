@@ -69,7 +69,7 @@ contract TestProductRegistration is GifTest {
         // WHEN + THEN
         vm.expectRevert(
             abi.encodeWithSelector(
-                IComponentService.ErrorComponentServiceAlreadyRegistered.selector,
+                IComponentService.ErrorComponentServiceComponentAlreadyRegistered.selector,
                 address(myProduct)));
 
         vm.startPrank(instanceOwner);
@@ -95,7 +95,6 @@ contract TestProductRegistration is GifTest {
     }
 
 
-    // check that non instance owner fails to register a product
     function test_productRegisterAttemptViaService() public {
         // GIVEN
         SimpleProduct myProduct = _deployProductDefault("MyProduct");
@@ -103,7 +102,7 @@ contract TestProductRegistration is GifTest {
         // WHEN + THEN
         vm.expectRevert(
             abi.encodeWithSelector(
-                IComponentService.ErrorComponentServiceSenderNotRegistered.selector,
+                IComponentService.ErrorComponentServiceCallerNotInstance.selector,
                 address(instanceOwner)));
 
         vm.startPrank(instanceOwner);
@@ -128,10 +127,10 @@ contract TestProductRegistration is GifTest {
         // WHEN + THEN
         vm.expectRevert(
             abi.encodeWithSelector(
-                IComponentService.ErrorComponentServiceReleaseMismatch.selector,
+                IComponentService.ErrorComponentServiceComponentReleaseMismatch.selector,
                 address(myProductV4),
-                myProductV4.getRelease(),
-                instance.getRelease()));
+                instance.getRelease(),
+                myProductV4.getRelease()));
 
         vm.startPrank(instanceOwner);
         instance.registerProduct(address(myProductV4), address(token));
@@ -166,10 +165,8 @@ contract TestProductRegistration is GifTest {
         // WHEN + THEN
         vm.expectRevert(
             abi.encodeWithSelector(
-                IComponentService.ErrorComponentServiceInvalidType.selector,
-                address(myPool),
-                PRODUCT(), 
-                POOL()));
+                IComponentService.ErrorComponentServiceNotProduct.selector,
+                address(myPool)));
 
         vm.startPrank(instanceOwner);
         instance.registerProduct(address(myPool), address(token));
