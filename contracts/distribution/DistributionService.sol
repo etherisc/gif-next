@@ -94,17 +94,17 @@ contract DistributionService is
         }
 
         distributorType = DistributorTypeLib.toDistributorType(distributionNftId, name);
-        IDistribution.DistributorTypeInfo memory info = IDistribution.DistributorTypeInfo(
-            name,
-            distributionNftId,
-            minDiscountPercentage,
-            maxDiscountPercentage,
-            commissionPercentage,
-            maxReferralCount,
-            maxReferralLifetime,
-            allowSelfReferrals,
-            allowRenewals,
-            data);
+        IDistribution.DistributorTypeInfo memory info = IDistribution.DistributorTypeInfo({
+            name: name,
+            distributionNftId: distributionNftId,
+            minDiscountPercentage: minDiscountPercentage,
+            maxDiscountPercentage: maxDiscountPercentage,
+            commissionPercentage: commissionPercentage,
+            maxReferralCount: maxReferralCount,
+            maxReferralLifetime: maxReferralLifetime,
+            allowSelfReferrals: allowSelfReferrals,
+            allowRenewals: allowRenewals,
+            data: data});
 
         instance.getInstanceStore().createDistributorType(distributorType, info);
     }
@@ -134,11 +134,11 @@ contract DistributionService is
                 ""
             ));
 
-        IDistribution.DistributorInfo memory info = IDistribution.DistributorInfo(
-            distributorType,
-            true, // active
-            data,
-            0);
+        IDistribution.DistributorInfo memory info = IDistribution.DistributorInfo({
+            distributorType: distributorType,
+            active: true, 
+            numPoliciesSold: 0,
+            data: data});
 
         instance.getInstanceStore().createDistributor(distributorNftId, info);
     }
@@ -212,16 +212,16 @@ contract DistributionService is
 
         {
             referralId = ReferralLib.toReferralId(distributionNftId, code);
-            IDistribution.ReferralInfo memory info = IDistribution.ReferralInfo(
-                distributionNftId,
-                distributorNftId,
-                code,
-                discountPercentage,
-                maxReferrals,
-                0, // used referrals
-                expiryAt,
-                data
-            );
+            IDistribution.ReferralInfo memory info = IDistribution.ReferralInfo({
+                distributionNftId: distributionNftId,
+                distributorNftId: distributorNftId,
+                referralCode: code,
+                discountPercentage: discountPercentage,
+                maxReferrals: maxReferrals,
+                usedReferrals: 0, 
+                expiryAt: expiryAt,
+                data: data
+            });
 
             instance.getInstanceStore().createReferral(referralId, info);
         }
@@ -302,7 +302,7 @@ contract DistributionService is
         InstanceReader reader = instance.getInstanceReader();
         
         IComponents.ComponentInfo memory distributionInfo = reader.getComponentInfo(distributionNftId);
-        address distributionWallet = distributionInfo.tokenHandler.getWallet();
+        // address distributionWallet = distributionInfo.tokenHandler.getWallet();
         
         Amount commissionAmount = reader.getFeeAmount(distributorNftId);
         
@@ -328,7 +328,7 @@ contract DistributionService is
         // transfer amount to distributor
         {
             address distributor = getRegistry().ownerOf(distributorNftId);
-            emit LogDistributionServiceCommissionWithdrawn(distributorNftId, distributor, address(distributionInfo.token), withdrawnAmount);
+            emit LogDistributionServiceCommissionWithdrawn(distributorNftId, distributor, address(distributionInfo.tokenHandler.TOKEN()), withdrawnAmount);
             distributionInfo.tokenHandler.pushToken(distributor, withdrawnAmount);
         }
     }

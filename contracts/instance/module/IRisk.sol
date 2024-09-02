@@ -7,8 +7,10 @@ import {Timestamp} from "../../type/Timestamp.sol";
 interface IRisk {
 
     struct RiskInfo {
+        // slot 0
         NftId productNftId;
         Timestamp createdAt;
+        // slot 1
         bytes data;
     }
 }

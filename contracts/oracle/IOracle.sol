@@ -9,14 +9,19 @@ import {Timestamp} from "../type/Timestamp.sol";
 interface IOracle {
 
     struct RequestInfo {
+        // slot 0
         NftId requesterNftId; // originator of the request
-        string callbackMethodName; // callback function of the requestor to call to provide response data
         NftId oracleNftId; // responsible oracle component
-        bytes requestData; 
-        bytes responseData; 
-        Timestamp respondedAt; // response timestamp
-        Timestamp expiredAt; // expiry timestamp
         bool isCancelled;
+        Timestamp respondedAt; // response timestamp
+        // slot 1
+        Timestamp expiredAt; // expiry timestamp
+        // slot 2
+        string callbackMethodName; // callback function of the requestor to call to provide response data
+        // slot 3
+        bytes requestData; 
+        // slot 4
+        bytes responseData; 
     }
 
 

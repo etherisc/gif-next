@@ -543,3 +543,56 @@ contracts
     NftId.sol
     ObjectType.sol
 
+## Storage layout
+
+### Analysis tool
+
+Command line call
+
+```bash
+hh run scripts/analyze_storage_layout.ts
+```
+
+Analyses contract `MockStorageLayout.sol` and writes the storage layout to `storage_layout.json` and `storage_layout.csv`.
+New structs must be added to `MockStorageLayout` to be included in analysis. 
+
+Storage layout details:
+- Items fill up the current slot if possible
+- If not enough space is left in the current slot, the item is placed in the next slot
+- Stucts and arrays always start a new slot
+- Items following a struct or array always start a new slot
+
+More at https://docs.soliditylang.org/en/latest/internals/layout_in_storage.html
+
+### Custom types sizes
+
+| Type | Size |
+| --- | --- |
+| Amount | 12 bytes |
+| Blocknumber | 4 bytes |
+| ClaimId | 2 bytes |
+| DistributorType | 8 bytes |
+| NftId | 12 bytes |
+| ObjectType | 1 byte |
+| ReferralId | 8 bytes |
+| RoleId | 1 byte |
+| RiskId | 8 bytes |
+| Seconds | 5 bytes |
+| Selector | 4 bytes |
+| StateId | 1 byte |
+| Str | 32 bytes |
+| Timestamp | 5 bytes |
+| Version | 3 byte |
+| VersionPart | 1 byte |
+| UFixed | 20 bytes |
+| address | 20 bytes |
+| uint256 | 32 bytes |
+| uint128 | 16 bytes |
+| uint160 | 20 bytes |
+| uint64 | 8 bytes |
+| uint32 | 4 bytes |
+| uint16  | 2 bytes  |
+| string  | 32 bytes |
+| bytes   | 32 bytes |
+| bytes8  | 8 byte  |
+| bool    | 1 byte  |

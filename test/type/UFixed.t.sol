@@ -8,30 +8,38 @@ contract UFixedTest is Test {
     using UFixedLib for UFixed;
 
     function testTestDecimals() public {
-        assertEq(UFixedLib.decimals(), 18);
+        assertEq(UFixedLib.decimals(), 15);
     }
 
     function testOpEqual() public {
-        UFixed a = UFixed.wrap(1 * 10 ** 18);
-        UFixed b = UFixed.wrap(1 * 10 ** 18);
+        UFixed a = UFixed.wrap(1 * 10 ** 15);
+        UFixed b = UFixed.wrap(1 * 10 ** 15);
         assertTrue(a == b);
 
-        UFixed c = UFixed.wrap(2 * 10 ** 18);
+        UFixed c = UFixed.wrap(2 * 10 ** 15);
         assertFalse(a == c);
     }
 
     function testUFixedMathLib() public {
-        UFixed a = UFixed.wrap(1 * 10 ** 18);
-        UFixed b = UFixed.wrap(1 * 10 ** 18);
+        UFixed a = UFixed.wrap(1 * 10 ** 15);
+        UFixed b = UFixed.wrap(1 * 10 ** 15);
         assertTrue(UFixedLib.eq(a, b));
 
-        UFixed c = UFixed.wrap(2 * 10 ** 18);
+        UFixed c = UFixed.wrap(2 * 10 ** 15);
         assertFalse(UFixedLib.eq(a, c));
     }
 
     function testItof() public {
-        UFixed a = UFixed.wrap(1 * 10 ** 18);
+        UFixed a = UFixed.wrap(1 * 10 ** 15);
         assertTrue(a == UFixedLib.toUFixed(1));
+    }
+
+    function testItof_max() public {
+        uint256 n = UFixedLib.max().toInt() + 1;
+        vm.expectRevert(abi.encodeWithSelector(
+            UFixedLib.UFixedLibNumberTooLarge.selector, 
+            n));
+        UFixedLib.toUFixed(n);
     }
 
     function testItofExp() public {
@@ -43,47 +51,51 @@ contract UFixedTest is Test {
         assertTrue(b.toInt() == 1);
 
         // smalltest possible value
-        UFixedLib.toUFixed(1, -18);
+        UFixedLib.toUFixed(1, -15);
         // one order of magnitude smaller reverts
-        vm.expectRevert(abi.encodeWithSelector(UFixedLib.UFixedLibExponentTooSmall.selector, -19));
-        UFixedLib.toUFixed(1, -19);
+        vm.expectRevert(abi.encodeWithSelector(UFixedLib.UFixedLibExponentTooSmall.selector, -16));
+        UFixedLib.toUFixed(1, -16);
 
-        // largest possible value -- 10 ** 46 (64 - EXP(18))
+        // largest possible value -- 10 ** 33 (48 - EXP(15))
         assertTrue(
-            UFixedLib.toUFixed(1, 46) == UFixedLib.toUFixed(1 * 10 ** 46)
+            UFixedLib.toUFixed(1, 33) == UFixedLib.toUFixed(1 * 10 ** 33)
         );
         // one order of magnitude larger reverts
-        vm.expectRevert(abi.encodeWithSelector(UFixedLib.UFixedLibExponentTooLarge.selector, 47));
-        UFixedLib.toUFixed(1, 64 - 18 + 1);
+        vm.expectRevert(abi.encodeWithSelector(UFixedLib.UFixedLibExponentTooLarge.selector, 34));
+        UFixedLib.toUFixed(1, 48 - 15 + 1);
+
+        // resulting number is too large
+        vm.expectRevert(abi.encodeWithSelector(UFixedLib.UFixedLibNumberTooLarge.selector, (1 * 10 ** 30 + 1) * 10 ** (15 + 4)));
+        UFixedLib.toUFixed(1 * 10 ** 30 + 1, 4);
     }
 
     function testFtoi() public {
-        UFixed a = UFixed.wrap(1 * 10 ** 18);
+        UFixed a = UFixed.wrap(1 * 10 ** 15);
         assertTrue(a.toInt() == 1);
     }
 
     function testFtoiRounding() public {
-        UFixed a = UFixed.wrap(4 * 10 ** 17);
+        UFixed a = UFixed.wrap(4 * 10 ** 14);
         assertTrue(UFixedLib.toIntWithRounding(a, UFixedLib.ROUNDING_UP()) == 1);
         assertTrue(UFixedLib.toIntWithRounding(a, UFixedLib.ROUNDING_DOWN()) == 0);
         assertTrue(UFixedLib.toIntWithRounding(a, UFixedLib.ROUNDING_HALF_UP()) == 0);
 
-        UFixed b = UFixed.wrap(5 * 10 ** 17);
+        UFixed b = UFixed.wrap(5 * 10 ** 14);
         assertTrue(UFixedLib.toIntWithRounding(b, UFixedLib.ROUNDING_UP()) == 1);
         assertTrue(UFixedLib.toIntWithRounding(b, UFixedLib.ROUNDING_DOWN()) == 0);
         assertTrue(UFixedLib.toIntWithRounding(b, UFixedLib.ROUNDING_HALF_UP()) == 1);
 
-        UFixed c = UFixed.wrap(6 * 10 ** 17);
+        UFixed c = UFixed.wrap(6 * 10 ** 14);
         assertTrue(UFixedLib.toIntWithRounding(c, UFixedLib.ROUNDING_UP()) == 1);
         assertTrue(UFixedLib.toIntWithRounding(c, UFixedLib.ROUNDING_DOWN()) == 0);
         assertTrue(UFixedLib.toIntWithRounding(c, UFixedLib.ROUNDING_HALF_UP()) == 1);
     }
 
     function testOpAdd() public {
-        UFixed a = UFixed.wrap(1 * 10 ** 18);
-        UFixed b = UFixed.wrap(1 * 10 ** 18);
-        UFixed c = UFixed.wrap(2 * 10 ** 18);
-        UFixed d = UFixed.wrap(3 * 10 ** 18);
+        UFixed a = UFixed.wrap(1 * 10 ** 15);
+        UFixed b = UFixed.wrap(1 * 10 ** 15);
+        UFixed c = UFixed.wrap(2 * 10 ** 15);
+        UFixed d = UFixed.wrap(3 * 10 ** 15);
         assertTrue((a + b) == c);
         assertTrue(UFixedLib.add(a, b) == c);
         assertFalse((a + b) == d);
@@ -92,7 +104,7 @@ contract UFixedTest is Test {
         assertTrue((a + c) == d);
         assertTrue(UFixedLib.add(a, c) == d);
 
-        UFixed e = UFixed.wrap(0 * 10 ** 18);
+        UFixed e = UFixed.wrap(0 * 10 ** 15);
         assertTrue((a + e) == a);
         assertTrue(UFixedLib.add(a, e) == a);
         assertTrue((e + e) == e);
@@ -100,10 +112,10 @@ contract UFixedTest is Test {
     }
 
     function testOpSub() public {
-        UFixed a = UFixed.wrap(1 * 10 ** 18);
-        UFixed b = UFixed.wrap(1 * 10 ** 18);
-        UFixed c = UFixed.wrap(2 * 10 ** 18);
-        UFixed d = UFixed.wrap(3 * 10 ** 18);
+        UFixed a = UFixed.wrap(1 * 10 ** 15);
+        UFixed b = UFixed.wrap(1 * 10 ** 15);
+        UFixed c = UFixed.wrap(2 * 10 ** 15);
+        UFixed d = UFixed.wrap(3 * 10 ** 15);
         assertTrue((c - b) == a);
         assertTrue(UFixedLib.sub(c, b) == a);
 
@@ -112,7 +124,7 @@ contract UFixedTest is Test {
         assertFalse((d - b) == b);
         assertFalse(UFixedLib.sub(d, b) == b);
 
-        UFixed e = UFixed.wrap(0 * 10 ** 18);
+        UFixed e = UFixed.wrap(0 * 10 ** 15);
         assertTrue((a - a) == e);
         assertTrue(UFixedLib.sub(a, a) == e);
         assertTrue((a - e) == a);
@@ -128,35 +140,35 @@ contract UFixedTest is Test {
 
     function testOpMul() public {
         // 1 * 1 = 1
-        UFixed a = UFixed.wrap(1 * 10 ** 18);
-        UFixed b = UFixed.wrap(1 * 10 ** 18);
-        UFixed c = UFixed.wrap(1 * 10 ** 18);
+        UFixed a = UFixed.wrap(1 * 10 ** 15);
+        UFixed b = UFixed.wrap(1 * 10 ** 15);
+        UFixed c = UFixed.wrap(1 * 10 ** 15);
         assertTrue((a * b) == c);
         assertTrue(a.mul(b).eq(c));
 
         // 1 * 2 = 2
-        UFixed d = UFixed.wrap(2 * 10 ** 18);
+        UFixed d = UFixed.wrap(2 * 10 ** 15);
         assertTrue((a * d) == d);
         assertTrue(a.mul(d).eq(d));
 
         // 2 * 2 = 4
-        UFixed e = UFixed.wrap(4 * 10 ** 18);
+        UFixed e = UFixed.wrap(4 * 10 ** 15);
         assertTrue((d * d) == e);
         assertTrue(d.mul(d).eq(e));
         assertFalse((a * d) == e);
         assertFalse(a.mul(d).eq(e));
 
         // 2 * 21 = 42
-        UFixed f = UFixed.wrap(21 * 10 ** 18);
-        UFixed g = UFixed.wrap(42 * 10 ** 18);
+        UFixed f = UFixed.wrap(21 * 10 ** 15);
+        UFixed g = UFixed.wrap(42 * 10 ** 15);
         assertTrue((d * f) == g);
         assertTrue(d.mul(f).eq(g));
     }
 
     function testOpMulFrac() public {
         // 1 * 0.5 = 0.5
-        UFixed a = UFixed.wrap(1 * 10 ** 18);
-        UFixed b = UFixed.wrap(5 * 10 ** 17);
+        UFixed a = UFixed.wrap(1 * 10 ** 15);
+        UFixed b = UFixed.wrap(5 * 10 ** 14);
 
         assertTrue((a * b) == b);
         assertTrue((a.mul(b)).eq(b));
@@ -164,7 +176,7 @@ contract UFixedTest is Test {
         assertTrue((b.mul(a)).eq(b));
 
         // 0.5 * 0.5 = 0.25
-        UFixed c = UFixed.wrap(25 * 10 ** 16);
+        UFixed c = UFixed.wrap(25 * 10 ** 13);
         assertTrue((b * b) == c);
         assertTrue((b.mul(b)).eq(c));
     }
@@ -185,11 +197,11 @@ contract UFixedTest is Test {
     }
 
     function testOpMulZero() public {
-        UFixed a = UFixed.wrap(1 * 10 ** 18);
-        UFixed b = UFixed.wrap(1 * 10 ** 18);
+        UFixed a = UFixed.wrap(1 * 10 ** 15);
+        UFixed b = UFixed.wrap(1 * 10 ** 15);
 
         // 1 * 0 = 0
-        UFixed z = UFixed.wrap(0 * 10 ** 18);
+        UFixed z = UFixed.wrap(0 * 10 ** 15);
         assertTrue((a * z) == z);
         assertTrue((a.mul(z)).eq(z));
 
@@ -206,14 +218,14 @@ contract UFixedTest is Test {
 
     function testOpDiv() public {
         // 1 / 1 = 1
-        UFixed a = UFixed.wrap(1 * 10 ** 18);
-        UFixed b = UFixed.wrap(1 * 10 ** 18);
-        UFixed c = UFixed.wrap(1 * 10 ** 18);
+        UFixed a = UFixed.wrap(1 * 10 ** 15);
+        UFixed b = UFixed.wrap(1 * 10 ** 15);
+        UFixed c = UFixed.wrap(1 * 10 ** 15);
         assertTrue((a / b) == c);
         assertTrue(a.div(b).eq(c));
 
         // 2 / 1 = 2
-        UFixed d = UFixed.wrap(2 * 10 ** 18);
+        UFixed d = UFixed.wrap(2 * 10 ** 15);
         assertTrue((d / a) == d);
         assertTrue(d.div(a).eq(d));
 
@@ -222,46 +234,46 @@ contract UFixedTest is Test {
         assertTrue(d.div(d).eq(b));
 
         // 4 / 2 = 2
-        UFixed e = UFixed.wrap(4 * 10 ** 18);
+        UFixed e = UFixed.wrap(4 * 10 ** 15);
         assertTrue((e / d) == d);
         assertTrue(e.div(d).eq(d));
 
         // 42 / 2 = 21
-        UFixed f = UFixed.wrap(21 * 10 ** 18);
-        UFixed g = UFixed.wrap(42 * 10 ** 18);
+        UFixed f = UFixed.wrap(21 * 10 ** 15);
+        UFixed g = UFixed.wrap(42 * 10 ** 15);
         assertTrue((g / d) == f);
         assertTrue(g.div(d).eq(f));
     }
 
     function testOpDivFrac() public {
-        UFixed d = UFixed.wrap(2 * 10 ** 18);
+        UFixed d = UFixed.wrap(2 * 10 ** 15);
 
         // 5 / 2 = 2.5
-        UFixed f1 = UFixed.wrap(5 * 10 ** 18);
-        UFixed ex1 = UFixed.wrap(2.5 * 10 ** 18);
+        UFixed f1 = UFixed.wrap(5 * 10 ** 15);
+        UFixed ex1 = UFixed.wrap(2.5 * 10 ** 15);
         assertTrue((f1 / d) == ex1);
         assertTrue(f1.div(d).eq(ex1));
 
         // 2 / 5 = 0.4
-        UFixed ex2 = UFixed.wrap(0.4 * 10 ** 18);
+        UFixed ex2 = UFixed.wrap(0.4 * 10 ** 15);
         assertTrue((d / f1) == ex2);
         assertTrue(d.div(f1).eq(ex2));
 
         // 2 / 0.5 = 4
-        UFixed f2 = UFixed.wrap(5 * 10 ** 17);
-        UFixed ex3 = UFixed.wrap(4 * 10 ** 18);
+        UFixed f2 = UFixed.wrap(5 * 10 ** 14);
+        UFixed ex3 = UFixed.wrap(4 * 10 ** 15);
         assertTrue((d / f2) == ex3);
         assertTrue(d.div(f2).eq(ex3));
 
         // 0.5 / 2 = 0.25
-        UFixed ex4 = UFixed.wrap(25 * 10 ** 16);
+        UFixed ex4 = UFixed.wrap(25 * 10 ** 13);
         assertTrue((f2 / d) == ex4);
         assertTrue(f2.div(d).eq(ex4));
     }
 
     function testOpDivBig() public {
-        UFixed a = UFixed.wrap(1 * 10 ** 18);
-        UFixed d = UFixed.wrap(2 * 10 ** 18);
+        UFixed a = UFixed.wrap(1 * 10 ** 15);
+        UFixed d = UFixed.wrap(2 * 10 ** 15);
 
         // bigUFixed / 1 = bigUFixed
         // bigUFixed = 1 * 10 ** 31
@@ -277,10 +289,10 @@ contract UFixedTest is Test {
     }
 
     function testOpDivZero() public {
-        UFixed a = UFixed.wrap(1 * 10 ** 18);
+        UFixed a = UFixed.wrap(1 * 10 ** 15);
 
         // 0 / 1 = 0
-        UFixed z = UFixed.wrap(0 * 10 ** 18);
+        UFixed z = UFixed.wrap(0 * 10 ** 15);
         assertTrue((z / a) == z);
         assertTrue(z.div(a).eq(z));
 
@@ -298,9 +310,9 @@ contract UFixedTest is Test {
     }
 
     function testOpGt() public {
-        UFixed a = UFixed.wrap(1 * 10 ** 18);
-        UFixed b = UFixed.wrap(1 * 10 ** 18);
-        UFixed c = UFixed.wrap(2 * 10 ** 18);
+        UFixed a = UFixed.wrap(1 * 10 ** 15);
+        UFixed b = UFixed.wrap(1 * 10 ** 15);
+        UFixed c = UFixed.wrap(2 * 10 ** 15);
         assertTrue(c > b);
         assertTrue(c.gt(b));
         assertFalse(a > b);
@@ -308,9 +320,9 @@ contract UFixedTest is Test {
     }
 
     function testOpGte() public {
-        UFixed a = UFixed.wrap(1 * 10 ** 18);
-        UFixed b = UFixed.wrap(1 * 10 ** 18);
-        UFixed c = UFixed.wrap(2 * 10 ** 18);
+        UFixed a = UFixed.wrap(1 * 10 ** 15);
+        UFixed b = UFixed.wrap(1 * 10 ** 15);
+        UFixed c = UFixed.wrap(2 * 10 ** 15);
         assertTrue(c >= b);
         assertTrue(c.gte(b));
         assertFalse(a >= c);
@@ -322,9 +334,9 @@ contract UFixedTest is Test {
     }
 
     function testOpLt() public {
-        UFixed a = UFixed.wrap(1 * 10 ** 18);
-        UFixed b = UFixed.wrap(1 * 10 ** 18);
-        UFixed c = UFixed.wrap(2 * 10 ** 18);
+        UFixed a = UFixed.wrap(1 * 10 ** 15);
+        UFixed b = UFixed.wrap(1 * 10 ** 15);
+        UFixed c = UFixed.wrap(2 * 10 ** 15);
         assertTrue(a < c);
         assertTrue(a.lt(c));
         assertFalse(b < a);
@@ -332,9 +344,9 @@ contract UFixedTest is Test {
     }
 
     function testOpLte() public {
-        UFixed a = UFixed.wrap(1 * 10 ** 18);
-        UFixed b = UFixed.wrap(1 * 10 ** 18);
-        UFixed c = UFixed.wrap(2 * 10 ** 18);
+        UFixed a = UFixed.wrap(1 * 10 ** 15);
+        UFixed b = UFixed.wrap(1 * 10 ** 15);
+        UFixed c = UFixed.wrap(2 * 10 ** 15);
         assertTrue(a <= c);
         assertTrue(a.lte(c));
         assertTrue(b <= a);
@@ -344,26 +356,26 @@ contract UFixedTest is Test {
     }
 
     function testGtz() public {
-        UFixed a = UFixed.wrap(1 * 10 ** 18);
-        UFixed b = UFixed.wrap(0 * 10 ** 18);
+        UFixed a = UFixed.wrap(1 * 10 ** 15);
+        UFixed b = UFixed.wrap(0 * 10 ** 15);
         assertTrue(a.gtz());
         assertFalse(b.gtz());
     }
 
     function testEqz() public {
-        UFixed a = UFixed.wrap(1 * 10 ** 18);
-        UFixed b = UFixed.wrap(0 * 10 ** 18);
+        UFixed a = UFixed.wrap(1 * 10 ** 15);
+        UFixed b = UFixed.wrap(0 * 10 ** 15);
         assertFalse(a.eqz());
         assertTrue(b.eqz());
     }
 
     function testDelta() public {
-        UFixed a = UFixed.wrap(1 * 10 ** 18);
-        UFixed b = UFixed.wrap(0 * 10 ** 18);
+        UFixed a = UFixed.wrap(1 * 10 ** 15);
+        UFixed b = UFixed.wrap(0 * 10 ** 15);
         assertTrue(a.delta(b).eq(UFixedLib.toUFixed(1)));
         assertTrue(b.delta(a).eq(UFixedLib.toUFixed(1)));
 
-        UFixed c = UFixed.wrap(2 * 10 ** 18);
+        UFixed c = UFixed.wrap(2 * 10 ** 15);
         assertTrue(c.delta(a).eq(UFixedLib.toUFixed(1)));
         assertTrue(a.delta(c).eq(UFixedLib.toUFixed(1)));
 

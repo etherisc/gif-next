@@ -1,4 +1,3 @@
-import { getImplementationAddress } from "@openzeppelin/upgrades-core";
 import { AddressLike, Signer, resolveAddress } from "ethers";
 import { ethers as hhEthers } from "hardhat";
 import {
@@ -16,7 +15,7 @@ import {
     TokenRegistry
 } from "../../typechain-types";
 import { logger } from "../logger";
-import { deployContract } from "./deployment";
+import { deployContract, deployProxyManagerContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
 import { executeTx, getTxOpts } from "./transaction";
 import { prepareVerificationData } from "./verification";
@@ -228,8 +227,9 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
 
     logger.info("-------- Starting deployment Staking Manager ----------------");
 
-    const { address: stakingManagerAddress, contract: stakingManagerBaseContract, } = await deployContract(
+    const { address: stakingManagerAddress, contract: stakingManagerBaseContract, proxyAddress: stakingAddress } = await deployProxyManagerContract(
         "StakingManager",
+        "Staking",
         owner,
         [
             registryAddress,
@@ -254,8 +254,6 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         });
 
     const stakingManager = stakingManagerBaseContract as StakingManager;
-
-    const stakingAddress = await stakingManager.getStaking();
     const staking = Staking__factory.connect(stakingAddress, owner);
     const stakingNftId = await registry.getNftIdForAddress(stakingAddress);
 
@@ -281,13 +279,6 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         registryAddress, 
         chainNftAddress,
         await resolveAddress(owner));
-
-    // verify staking implementation 
-    await prepareVerificationData(
-        "Staking", 
-        await getImplementationAddress(hhEthers.provider, await stakingManager.getProxy()), 
-        [], 
-        undefined);
     
     await prepareVerificationData(
         "TokenHandler", 
@@ -296,13 +287,12 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
             registryAddress, // reg
             stakingAddress, // compo
             dipAddress, // token
-            registryAdminAddress  // authority
+            await registryAdmin.authority(), // authority
         ], 
         undefined);
-    
 
     logger.info(`Dip deployed at ${dipAddress}`);
-    logger.info(`RegistryAuthorization deployeqd at ${registryAuthorizationAddress}`);
+    logger.info(`RegistryAuthorization deployed at ${registryAuthorizationAddress}`);
     logger.info(`RegistryAdmin deployeqd at ${registryAdmin}`);
     logger.info(`Registry deployed at ${registryAddress}`);
     logger.info(`ChainNft deployed at ${chainNftAddress}`);

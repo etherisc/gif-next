@@ -3,8 +3,8 @@ pragma solidity ^0.8.20;
 
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
-/// @dev UFixed is a fixed point number with 18 decimals precision.
-type UFixed is uint256;
+/// @dev UFixed is a 160-bit fixed point number with 15 decimals precision.
+type UFixed is uint160; 
 
 using {
     addUFixed as +,
@@ -41,7 +41,7 @@ function subUFixed(UFixed a, UFixed b) pure returns (UFixed) {
 
 function mulUFixed(UFixed a, UFixed b) pure returns (UFixed) {
     return
-        UFixed.wrap(Math.mulDiv(UFixed.unwrap(a), UFixed.unwrap(b), 10 ** 18));
+        UFixed.wrap(uint160(Math.mulDiv(UFixed.unwrap(a), UFixed.unwrap(b), 10 ** 15)));
 }
 
 function divUFixed(UFixed a, UFixed b) pure returns (UFixed) {
@@ -50,7 +50,7 @@ function divUFixed(UFixed a, UFixed b) pure returns (UFixed) {
     }
     
     return
-        UFixed.wrap(Math.mulDiv(UFixed.unwrap(a), 10 ** 18, UFixed.unwrap(b)));
+        UFixed.wrap(uint160(Math.mulDiv(UFixed.unwrap(a), 10 ** 15, UFixed.unwrap(b))));
 }
 
 function gtUFixed(UFixed a, UFixed b) pure returns (bool isGreaterThan) {
@@ -100,7 +100,9 @@ library UFixedLib {
     error UFixedLibExponentTooSmall(int8 exp);
     error UFixedLibExponentTooLarge(int8 exp);
 
-    int8 public constant EXP = 18;
+    error UFixedLibNumberTooLarge(uint256 number);
+
+    int8 public constant EXP = 15;
     uint256 public constant MULTIPLIER = 10 ** uint256(int256(EXP));
     uint256 public constant MULTIPLIER_HALF = MULTIPLIER / 2;
 
@@ -119,9 +121,14 @@ library UFixedLib {
         return uint8(2);
     }
 
-    /// @dev Converts the uint256 to a UFixed.
+    /// @dev Converts the uint256 to a uint160 based UFixed. 
+    /// This method reverts if the number is too large to fit in a uint160.
     function toUFixed(uint256 a) public pure returns (UFixed) {
-        return UFixed.wrap(a * MULTIPLIER);
+        uint256 n = a * MULTIPLIER;
+        if (n > type(uint160).max) {
+            revert UFixedLibNumberTooLarge(a);
+        }
+        return UFixed.wrap(uint160(n));
     }
 
     /// @dev Converts the uint256 to a UFixed with given exponent.
@@ -129,11 +136,17 @@ library UFixedLib {
         if (EXP + exp < 0) {
             revert UFixedLibExponentTooSmall(exp);
         }
-        if (EXP + exp > 64) {
+        if (EXP + exp > 48) {
             revert UFixedLibExponentTooLarge(exp);
         }
         
-        return UFixed.wrap(a * 10 ** uint8(EXP + exp));
+        uint256 n = a * 10 ** uint8(EXP + exp);
+
+        if (n > type(uint160).max) {
+            revert UFixedLibNumberTooLarge(n);
+        }
+
+        return UFixed.wrap(uint160(n));
     }
 
     /// @dev returns the decimals precision of the UFixed type
@@ -235,7 +248,11 @@ library UFixedLib {
     }
 
     function one() public pure returns (UFixed) {
-        return UFixed.wrap(MULTIPLIER);
+        return UFixed.wrap(uint160(MULTIPLIER));
+    }
+
+    function max() public pure returns (UFixed) {
+        return UFixed.wrap(type(uint160).max);
     }
 
     /// @dev return the absolute delta between two UFixed numbers

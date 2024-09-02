@@ -6,9 +6,15 @@ import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transpa
 
 contract UpgradableProxyWithAdmin is TransparentUpgradeableProxy {
 
+    bytes internal _initializationData;
+    
     constructor(address implementation, address initialProxyAdminOwner, bytes memory data)
         TransparentUpgradeableProxy(implementation, initialProxyAdminOwner, data)
-    {}
+    {
+        _initializationData = data;
+    }
 
     function getProxyAdmin() external returns (ProxyAdmin) { return ProxyAdmin(_proxyAdmin()); }
+
+    function getInitializationData() external view returns (bytes memory) { return _initializationData; }
 }

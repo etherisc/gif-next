@@ -29,7 +29,7 @@ contract VerifyingPoolTest is GifTest {
         _deployProduct();
 
         vm.startPrank(instanceOwner);
-        vProductNftId = instance.registerProduct(address(vProduct));
+        vProductNftId = instance.registerProduct(address(vProduct), address(token));
         vProduct.init();
         vm.stopPrank();
 
@@ -133,7 +133,6 @@ contract VerifyingPoolTest is GifTest {
         vProduct = new VerifyingProduct(
             address(registry),
             instanceNftId,
-            address(token),
             productInfo,
             feeInfo,
             productOwner
@@ -155,7 +154,6 @@ contract VerifyingPoolTest is GifTest {
         vPool = new VerifyingPool(
             address(registry),
             prdNftId,
-            address(token),
             poolInfo,
             poolOwner
         );

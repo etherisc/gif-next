@@ -113,7 +113,7 @@ contract GifClusterTest is GifTest {
     function _setupProductCluster1() internal {
         vm.startPrank(instanceOwner);
         myProduct1 = _deployProduct("MyProduct1", instanceOwner, true, 0);
-        myProductNftId1 = instance.registerProduct(address(myProduct1));
+        myProductNftId1 = instance.registerProduct(address(myProduct1), address(token));
         myDistribution1 = _deployDistribution("MyDistribution1", myProductNftId1, instanceOwner);
         myPool1 = _deployPool("MyPool1", myProductNftId1, instanceOwner);
         myDistributionNftId1 = myProduct1.registerComponent(address(myDistribution1));
@@ -127,7 +127,7 @@ contract GifClusterTest is GifTest {
     function _setupProductCluster2() internal {
         vm.startPrank(instanceOwner);
         myProduct2 = _deployProduct("MyProduct2", instanceOwner, true, 1);
-        myProductNftId2 = instance.registerProduct(address(myProduct2));
+        myProductNftId2 = instance.registerProduct(address(myProduct2), address(token));
         myDistribution2 = _deployDistribution("MyDistribution2", myProductNftId2, instanceOwner);
         myOracle2 = _deployOracle("MyOracle2", myProductNftId2, instanceOwner);
         myPool2 = _deployPool("MyPool2", myProductNftId2, instanceOwner);
@@ -143,7 +143,7 @@ contract GifClusterTest is GifTest {
     function _setupProductCluster3() internal {
         vm.startPrank(instanceOwner);
         myProduct3 = _deployProduct("MyProduct3", instanceOwner, false, 2);
-        myProductNftId3 = instance.registerProduct(address(myProduct3));
+        myProductNftId3 = instance.registerProduct(address(myProduct3), address(token));
         myOracle3a = _deployOracle("MyOracle3a", myProductNftId3, instanceOwner);
         myOracle3b = _deployOracle("MyOracle3b", myProductNftId3, instanceOwner);
         myPool3 = _deployPool("MyPool3", myProductNftId3, instanceOwner);
@@ -157,7 +157,7 @@ contract GifClusterTest is GifTest {
     function _setupProductCluster4() internal {
         vm.startPrank(instanceOwner);
         myProduct4 = _deployProduct("MyProduct4", instanceOwner, false, 0);
-        myProductNftId4 = instance.registerProduct(address(myProduct4));
+        myProductNftId4 = instance.registerProduct(address(myProduct4), address(token));
         myPool4 = _deployPool("MyPool4", myProductNftId4, instanceOwner);
         myPoolNftId4 = myProduct4.registerComponent(address(myPool4));
         vm.stopPrank();
@@ -181,7 +181,6 @@ contract GifClusterTest is GifTest {
             address(registry),
             instanceNftId, 
             name,
-            address(token),
             productInfo,
             feeInfo,
             new BasicProductAuthorization(name),
@@ -200,8 +199,7 @@ contract GifClusterTest is GifTest {
             address(registry),
             productNftId,
             new BasicDistributionAuthorization(name),
-            owner,
-            address(token));
+            owner);
     }
 
     function _deployOracle(
@@ -216,8 +214,7 @@ contract GifClusterTest is GifTest {
             address(registry),
             productNftId,
             new BasicOracleAuthorization(name),
-            owner,
-            address(token));
+            owner);
     }
 
     function _deployPool(
@@ -231,7 +228,6 @@ contract GifClusterTest is GifTest {
         return new SimplePool(
             address(registry),
             productNftId,
-            address(token),
             _getDefaultSimplePoolInfo(),
             new BasicPoolAuthorization(name),
             owner);

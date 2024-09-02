@@ -65,14 +65,6 @@ export async function deployAndRegisterMasterInstance(
             }
         }
     );
-    const masterAccessManager = masterAccessManagerBaseContract as AccessManagerCloneable;
-
-    prepareVerificationData(
-        "AccessManagerCloneable",
-        await masterAccessManager,
-        [],
-        undefined
-    );
 
     const { address: masterInstanceAdminAddress, contract: masterInstanceAdminContract } = await deployContract(
         "InstanceAdmin",
@@ -196,6 +188,7 @@ export async function deployAndRegisterMasterInstance(
             registry.registryAddress,
             3, 
             resolveAddress(owner),
+            false,
             getTxOpts()),
         "masterInstance initialize",
         [IInstance__factory.createInterface()]);
@@ -260,6 +253,7 @@ export async function cloneInstance(masterInstance: InstanceAddresses, libraries
 
     const cloneTx = await executeTx(
         async () => await instanceServiceAsClonedInstanceOwner.createInstance(
+            false,
             getTxOpts()),
         "instanceService createInstance",
         [InstanceService__factory.createInterface()]

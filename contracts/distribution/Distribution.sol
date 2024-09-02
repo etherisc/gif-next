@@ -107,7 +107,6 @@ abstract contract Distribution is
         bool isInterceptor,
         address initialOwner,
         string memory name,
-        address token,
         bytes memory componentData // component specifidc data 
     )
         internal
@@ -118,7 +117,6 @@ abstract contract Distribution is
             registry, 
             productNftId, 
             name, 
-            token,
             DISTRIBUTION(), 
             authorization,
             isInterceptor,

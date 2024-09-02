@@ -35,6 +35,7 @@ contract Instance is
     RiskSet internal _riskSet;
     InstanceStore internal _instanceStore;
     NftId [] internal _products;
+    bool internal _tokenRegistryDisabled;
 
     modifier onlyChainNft() {
         if(msg.sender != getRegistry().getChainNftAddress()) {
@@ -51,7 +52,8 @@ contract Instance is
         InstanceReader instanceReader,
         IRegistry registry, 
         VersionPart release,
-        address initialOwner
+        address initialOwner,
+        bool tokenRegistryDisabled
     ) 
         external 
         initializer()
@@ -94,6 +96,8 @@ contract Instance is
                 INSTANCE(), 
                 release));
 
+        _tokenRegistryDisabled = tokenRegistryDisabled;
+
         _registerInterface(type(IInstance).interfaceId);    
     }
 
@@ -118,13 +122,13 @@ contract Instance is
 
     //--- ProductRegistration ----------------------------------------------//
 
-    function registerProduct(address product)
+    function registerProduct(address product, address token)
         external
         restricted()
         onlyOwner()
         returns (NftId productNftId)
     {
-        productNftId = _componentService.registerProduct(product);
+        productNftId = _componentService.registerProduct(product, token);
         _products.push(productNftId);
     }
 
@@ -290,6 +294,10 @@ contract Instance is
 
     function getInstanceStore() external view returns (InstanceStore) {
         return _instanceStore;
+    }
+
+    function isTokenRegistryDisabled() external view returns (bool) {
+        return _tokenRegistryDisabled;
     }
 
     //--- internal view/pure functions --------------------------------------//

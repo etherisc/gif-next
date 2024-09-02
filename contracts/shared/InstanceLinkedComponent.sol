@@ -71,7 +71,6 @@ abstract contract InstanceLinkedComponent is
         address registry,
         NftId parentNftId,
         string memory name,
-        address token,
         ObjectType componentType,
         IAuthorization authorization,
         bool isInterceptor,
@@ -99,7 +98,6 @@ abstract contract InstanceLinkedComponent is
             registry, 
             parentNftId, 
             name, 
-            token,
             componentType, 
             isInterceptor, 
             initialOwner, 
@@ -112,7 +110,6 @@ abstract contract InstanceLinkedComponent is
         $._componentService = IComponentService(_getServiceAddress(COMPONENT())); 
 
         // register interfaces
-        _registerInterface(type(IAccessManaged).interfaceId);
         _registerInterface(type(IInstanceLinkedComponent).interfaceId);
     }
 

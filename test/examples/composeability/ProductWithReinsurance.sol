@@ -26,7 +26,6 @@ contract ProductWithReinsurance is
     constructor(
         address registry,
         NftId instanceNftId,
-        address token,
         IComponents.ProductInfo memory productInfo,
         IComponents.FeeInfo memory feeInfo,
         IAuthorization authorization,
@@ -36,7 +35,6 @@ contract ProductWithReinsurance is
             registry,
             instanceNftId,
             "ProductWithReinsurance", 
-            token,
             productInfo,
             feeInfo,
             authorization,

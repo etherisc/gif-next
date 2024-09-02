@@ -95,8 +95,8 @@ contract InstanceService is
         IInstance(instanceAddress).getInstanceAdmin().setTargetLocked(target, locked);
     }
 
-
-    function createInstance()
+    /// @inheritdoc IInstanceService
+    function createInstance(bool allowAnyToken)
         external 
         virtual
         restricted()
@@ -110,7 +110,7 @@ contract InstanceService is
 
         // create instance admin and instance
         InstanceAdmin instanceAdmin = _cloneNewInstanceAdmin();
-        instance = _createInstance(instanceAdmin, instanceOwner);
+        instance = _createInstance(instanceAdmin, instanceOwner, allowAnyToken);
 
         // register cloned instance with registry
         instanceNftId = _registryService.registerInstance(
@@ -318,28 +318,25 @@ contract InstanceService is
     /// function used to setup a new instance
     function _createInstance(
         InstanceAdmin instanceAdmin,
-        address instanceOwner
+        address instanceOwner,
+        bool allowAnyToken
     )
         internal
         virtual
         returns (IInstance)
     {
-        InstanceStore clonedInstanceStore = InstanceStore(Clones.clone(address(_masterInstanceStore)));
-        BundleSet clonedBundleSet = BundleSet(Clones.clone(_masterInstanceBundleSet));
-        RiskSet clonedRiskSet = RiskSet(Clones.clone(_masterInstanceRiskSet));
-        InstanceReader clonedInstanceReader = InstanceReader(Clones.clone(address(_masterInstanceReader)));
-
         // clone instance
         Instance clonedInstance = Instance(Clones.clone(_masterInstance));
         clonedInstance.initialize(
             instanceAdmin,
-            clonedInstanceStore,
-            clonedBundleSet,
-            clonedRiskSet,
-            clonedInstanceReader,
+            InstanceStore(Clones.clone(address(_masterInstanceStore))),
+            BundleSet(Clones.clone(_masterInstanceBundleSet)),
+            RiskSet(Clones.clone(_masterInstanceRiskSet)),
+            InstanceReader(Clones.clone(address(_masterInstanceReader))),
             getRegistry(),
             getRelease(),
-            instanceOwner);
+            instanceOwner,
+            allowAnyToken);
 
         return clonedInstance;
     }

@@ -323,7 +323,8 @@ contract GifTest is GifDeployer {
             masterInstanceReader,
             registry,
             VersionPartLib.toVersionPart(3),
-            registryOwner);
+            registryOwner,
+            false);
 
         // sets master instance address in instance service
         // instance service is now ready to create cloned instances
@@ -361,7 +362,7 @@ contract GifTest is GifDeployer {
         ( 
             instance,
             instanceNftId
-        ) = instanceService.createInstance();
+        ) = instanceService.createInstance(false);
 
         instanceAdmin = instance.getInstanceAdmin();
         instanceReader = instance.getInstanceReader();
@@ -492,7 +493,6 @@ contract GifTest is GifDeployer {
             address(registry),
             instanceNftId,
             "SimpleProduct",
-            address(token),
             _getSimpleProductInfo(),
             _getSimpleFeeInfo(),
             new BasicProductAuthorization(name),
@@ -505,7 +505,7 @@ contract GifTest is GifDeployer {
 
         // instance owner registeres product with instance (and registry)
         vm.startPrank(instanceOwner);
-        newNftId = instance.registerProduct(address(newProduct));
+        newNftId = instance.registerProduct(address(newProduct), address(token));
         vm.stopPrank();
 
         // solhint-disable
@@ -558,7 +558,6 @@ contract GifTest is GifDeployer {
         pool = new SimplePool(
             address(registry),
             productNftId,
-            address(token),
             _getDefaultSimplePoolInfo(),
             new SimplePoolAuthorization("SimplePool"),
             poolOwner
@@ -589,8 +588,7 @@ contract GifTest is GifDeployer {
             address(registry),
             productNftId,
             new SimpleDistributionAuthorization("SimpleDistribution"),
-            distributionOwner,
-            address(token));
+            distributionOwner);
         vm.stopPrank();
 
         distributionNftId = _registerComponent(product, address(distribution), "distribution");
@@ -608,8 +606,7 @@ contract GifTest is GifDeployer {
             address(registry),
             productNftId,
             new BasicOracleAuthorization("SimpleOracle"),
-            oracleOwner,
-            address(token));
+            oracleOwner);
         vm.stopPrank();
 
         oracleNftId = _registerComponent(product, address(oracle), "oracle");

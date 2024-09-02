@@ -55,14 +55,13 @@ contract FireTestBase is GifTest {
             address(registry),
             instanceNftId,
             "FireProduct",
-            address(fireUSD),
             productAuth
         );
         vm.stopPrank();
 
         // instance owner registeres fire product with instance (and registry)
         vm.startPrank(instanceOwner);
-        fireProductNftId = instance.registerProduct(address(fireProduct));
+        fireProductNftId = instance.registerProduct(address(fireProduct), address(fireUSD));
         vm.stopPrank();
     }
 
@@ -73,7 +72,6 @@ contract FireTestBase is GifTest {
             address(registry),
             fireProductNftId,
             "FirePool",
-            address(fireUSD),
             poolAuth
         );
         vm.stopPrank();

@@ -22,6 +22,7 @@
 				"gruntfuggly.todo-tree",
 				// "aaron-bond.better-comments",
 				"oderwat.indent-rainbow",
+				"mechatroner.rainbow-csv",
 				"johnpapa.vscode-peacock",
 				"vikas.code-navigation",
 				// "github.vscode-github-actions",
@@ -35,7 +36,7 @@
 				"bpruitt-goddard.mermaid-markdown-syntax-highlighting",
 				"asciidoctor.asciidoctor-vscode",
 				"alefragnani.bookmarks",
-				"olympixai.olympix",
+				// "olympixai.olympix",
 				"RaillyHugo.one-hunter",
 				"zhuangtongfa.Material-theme",
 				"monokai.theme-monokai-pro-vscode"

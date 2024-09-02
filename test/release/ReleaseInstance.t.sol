@@ -49,7 +49,7 @@ contract ReleaseInstanceTest is GifTest {
         (
             IInstance newInstance, 
             NftId newInstanceNftId
-        ) = instanceService.createInstance();
+        ) = instanceService.createInstance(false);
         vm.stopPrank();
 
         assertTrue(address(newInstance) != address(0), "instance creation failed");
@@ -71,7 +71,7 @@ contract ReleaseInstanceTest is GifTest {
         (
             IInstance newInstance2, 
             NftId newInstanceNftId2
-        ) = instanceService.createInstance();
+        ) = instanceService.createInstance(false);
         vm.stopPrank();
     }
 }

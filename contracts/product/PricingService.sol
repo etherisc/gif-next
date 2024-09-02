@@ -145,7 +145,7 @@ contract PricingService is
                 revert ErrorPricingServiceTargetWalletAmountsMismatch();
             }
 
-            if (premium.distributionOwnerFeeFixAmount.toInt() < feeInfo.minDistributionOwnerFee.fixedFee) {
+            if (premium.distributionOwnerFeeFixAmount < feeInfo.minDistributionOwnerFee.fixedFee) {
                 revert ErrorPricingServiceFeeCalculationMismatch( 
                     premium.distributionFeeFixAmount,
                     premium.distributionFeeVarAmount,
@@ -185,19 +185,19 @@ contract PricingService is
         premium.netPremiumAmount = netPremiumAmount;
         premium.fullPremiumAmount = netPremiumAmount;
 
-        Amount t = AmountLib.toAmount(feeInfo.productFee.fixedFee);
+        Amount t = feeInfo.productFee.fixedFee;
         premium.productFeeFixAmount = t;
         premium.fullPremiumAmount = premium.fullPremiumAmount + t;
 
-        t = AmountLib.toAmount(feeInfo.poolFee.fixedFee);
+        t = feeInfo.poolFee.fixedFee;
         premium.poolFeeFixAmount = t;
         premium.fullPremiumAmount = premium.fullPremiumAmount + t;
 
-        t = AmountLib.toAmount(bundleInfo.fee.fixedFee);
+        t = bundleInfo.fee.fixedFee;
         premium.bundleFeeFixAmount = t;
         premium.fullPremiumAmount = premium.fullPremiumAmount + t;
 
-        t = AmountLib.toAmount(feeInfo.distributionFee.fixedFee);
+        t = feeInfo.distributionFee.fixedFee;
         premium.distributionFeeFixAmount = t;
         premium.fullPremiumAmount = premium.fullPremiumAmount + t;
     }
@@ -267,7 +267,7 @@ contract PricingService is
             Amount commissionAmount = premium.netPremiumAmount.multiplyWith(distributorTypeInfo.commissionPercentage);
             premium.commissionAmount = commissionAmount;
             premium.discountAmount = premium.fullPremiumAmount.multiplyWith(referralInfo.discountPercentage);
-            premium.distributionOwnerFeeFixAmount = AmountLib.toAmount(minDistributionOwnerFee.fixedFee);
+            premium.distributionOwnerFeeFixAmount = minDistributionOwnerFee.fixedFee;
             premium.distributionOwnerFeeVarAmount = premium.distributionFeeVarAmount - commissionAmount - premium.discountAmount;
             premium.premiumAmount = premium.fullPremiumAmount - premium.discountAmount;
         }

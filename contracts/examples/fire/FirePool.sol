@@ -19,7 +19,6 @@ contract FirePool is
         address registry,
         NftId fireProductNftId,
         string memory componentName,
-        address token,
         IAuthorization authorization
     ) 
     {
@@ -28,7 +27,6 @@ contract FirePool is
             registry,
             fireProductNftId,
             componentName,
-            token,
             IComponents.PoolInfo({
                 maxBalanceAmount: AmountLib.max(),
                 isInterceptingBundleTransfers: false,
@@ -46,7 +44,6 @@ contract FirePool is
         address registry,
         NftId fireProductNftId,
         string memory componentName,
-        address token,
         IComponents.PoolInfo memory poolInfo,
         IAuthorization authorization,
         address initialOwner
@@ -58,7 +55,6 @@ contract FirePool is
             registry,
             fireProductNftId,
             componentName,
-            token,
             poolInfo,
             authorization,
             initialOwner);

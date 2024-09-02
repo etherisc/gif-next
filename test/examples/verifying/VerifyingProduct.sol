@@ -31,7 +31,6 @@ contract VerifyingProduct is
     constructor(
         address registry,
         NftId instanceNftId,
-        address token,
         IComponents.ProductInfo memory productInfo,
         IComponents.FeeInfo memory feeInfo,
         address initialOwner
@@ -40,7 +39,6 @@ contract VerifyingProduct is
             registry,
             instanceNftId,
             "VerifyingProduct", 
-            token,
             productInfo,
             feeInfo,
             new BasicProductAuthorization("VerifyingProduct"),
