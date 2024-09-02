@@ -388,7 +388,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     logger.info(`oracleServiceManager deployed - oracleServiceAddress: ${oracleServiceAddress} oracleServiceManagerAddress: ${oracleServiceManagerAddress} nftId: ${oracleServiceNftId}`);
 
     logger.info("-------- risk service --------");
-    const { address: riskServiceManagerAddress, contract: riskServiceManagerBaseContract, } = await deployContract(
+    const { address: riskServiceManagerAddress, contract: riskServiceManagerBaseContract, proxyAddress: riskServiceAddress} = await deployProxyManagerContract(
         "RiskServiceManager",
         "RiskService",
         owner,
