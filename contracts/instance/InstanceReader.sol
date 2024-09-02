@@ -14,8 +14,8 @@ import {IOracle} from "../oracle/IOracle.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRisk} from "../instance/module/IRisk.sol";
-import {TimestampLib} from "../type/Timestamp.sol";
 
+import {AccessAdminLib} from "../authorization/AccessAdminLib.sol";
 import {Amount} from "../type/Amount.sol";
 import {BundleSet} from "./BundleSet.sol";
 import {BUNDLE, COMPONENT, DISTRIBUTOR, DISTRIBUTION, FEE, PREMIUM, POLICY, POOL, PRODUCT} from "../type/ObjectType.sol";
@@ -625,6 +625,11 @@ contract InstanceReader {
 
     function getTargetInfo(address target) public view returns (IAccess.TargetInfo memory targetInfo) {
         return _instance.getInstanceAdmin().getTargetInfo(target);
+    }
+
+
+    function toFunction(bytes4 signature, string memory name) public view returns (IAccess.FunctionInfo memory) {
+        return AccessAdminLib.toFunction(signature, name);
     }
 
 

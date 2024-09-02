@@ -120,6 +120,9 @@ interface IInstance is
     /// @dev Authorizes the specified functions for the target and provided role.
     function authorizeFunctions(address target, RoleId roleId, IAccess.FunctionInfo[] memory functions) external;
 
+    /// @dev Removes any role authorization for the specified functions.
+    function unauthorizeFunctions(address target, IAccess.FunctionInfo[] memory functions) external;
+
     //--- getters -----------------------------------------------------------//
 
     /// @dev returns the overall locking state of the instance (including all components)

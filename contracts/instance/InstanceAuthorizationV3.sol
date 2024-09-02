@@ -148,6 +148,7 @@ contract InstanceAuthorizationV3
           _authorize(functions, IInstance.revokeRole.selector, "revokeRole");
           _authorize(functions, IInstance.createTarget.selector, "createTarget");
           _authorize(functions, IInstance.authorizeFunctions.selector, "authorizeFunctions");
+          _authorize(functions, IInstance.unauthorizeFunctions.selector, "unauthorizeFunctions");
 
           // authorize instance service role
           functions = _authorizeForTarget(INSTANCE_TARGET_NAME, getServiceRole(INSTANCE()));
@@ -169,6 +170,7 @@ contract InstanceAuthorizationV3
 
           _authorize(functions, InstanceAdmin.createTarget.selector, "createTarget");
           _authorize(functions, InstanceAdmin.authorizeFunctions.selector, "authorizeFunctions");
+          _authorize(functions, InstanceAdmin.unauthorizeFunctions.selector, "unauthorizeFunctions");
           _authorize(functions, InstanceAdmin.setTargetLocked.selector, "setTargetLocked");
           _authorize(functions, InstanceAdmin.setInstanceLocked.selector, "setInstanceLocked");
 

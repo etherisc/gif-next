@@ -261,6 +261,7 @@ contract Instance is
     }
 
 
+    /// @inheritdoc IInstance
     function authorizeFunctions(
         address target, 
         RoleId roleId, 
@@ -271,6 +272,19 @@ contract Instance is
         onlyOwner()
     {
         _instanceService.authorizeFunctions(target, roleId, functions);
+    }
+
+
+    /// @inheritdoc IInstance
+    function unauthorizeFunctions(
+        address target, 
+        IAccess.FunctionInfo[] memory functions
+    )
+        external 
+        restricted()
+        onlyOwner()
+    {
+        _instanceService.unauthorizeFunctions(target, functions);
     }
 
     //--- initial setup functions -------------------------------------------//

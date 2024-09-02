@@ -137,6 +137,20 @@ contract InstanceService is
 
 
     /// @inheritdoc IInstanceService
+    function unauthorizeFunctions(
+        address target, 
+        IAccess.FunctionInfo[] memory functions
+    )
+        external
+        restricted()
+        onlyInstance()
+    {
+        IInstance instance = IInstance(msg.sender);
+        return instance.getInstanceAdmin().unauthorizeFunctions(target, functions);
+    }
+
+
+    /// @inheritdoc IInstanceService
     function setTargetLocked(address target, bool locked)
         external
         virtual

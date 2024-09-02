@@ -28,18 +28,6 @@ contract InstanceAdmin is
     // onlyInstanceService
     error ErrorInstanceAdminNotInstanceService(address caller);
 
-    // error ErrorInstanceAdminNotCustomRole(RoleId roleId);
-
-    // error ErrorInstanceAdminNotRegistered(address instance);
-    // error ErrorInstanceAdminAlreadyAuthorized(address instance);
-
-    // error ErrorInstanceAdminNotComponentRole(RoleId roleId);
-    // error ErrorInstanceAdminRoleAlreadyExists(RoleId roleId);
-    // error ErrorInstanceAdminRoleTypeNotContract(RoleId roleId, IAccess.RoleType roleType);
-
-    // error ErrorInstanceAdminReleaseMismatch();
-    // error ErrorInstanceAdminExpectedTargetMissing(string targetName);
-
     // authorizeFunctions
     error ErrorInstanceAdminNotComponentOrCustomTarget(address target);
 
@@ -275,13 +263,22 @@ contract InstanceAdmin is
         restricted()
         onlyExistingTarget(target)
     {
-        // check target type
-        IAccess.TargetType targetType = getTargetInfo(target).targetType;
-        if (targetType != TargetType.Component && targetType != TargetType.Custom) {
-            revert ErrorInstanceAdminNotComponentOrCustomTarget(target);
-        }
-
+        _checkComponentOrCustomTarget(target);
         _authorizeTargetFunctions(target, roleId, functions, true);
+    }
+
+
+    /// @dev Removes function authorizations for the specified component or custom target.
+    function unauthorizeFunctions(
+        address target,
+        IAccess.FunctionInfo[] memory functions
+    )
+        external
+        restricted()
+        onlyExistingTarget(target)
+    {
+        _checkComponentOrCustomTarget(target);
+        _authorizeTargetFunctions(target, ADMIN_ROLE(), functions, false);
     }
 
 
@@ -351,15 +348,15 @@ contract InstanceAdmin is
         }
     }
 
-
-    function toComponentRole(RoleId roleId, uint64 componentIdx)
-        internal
-        pure
-        returns (RoleId)
-    {
-        return RoleIdLib.toRoleId(
-            RoleIdLib.toInt(roleId) + componentIdx);
-    }
+    // TODO cleanup
+    // function toComponentRole(RoleId roleId, uint64 componentIdx)
+    //     internal
+    //     pure
+    //     returns (RoleId)
+    // {
+    //     return RoleIdLib.toRoleId(
+    //         RoleIdLib.toInt(roleId) + componentIdx);
+    // }
 
 
     function _createTargetAuthorizations(IAuthorization authorization)
@@ -375,6 +372,17 @@ contract InstanceAdmin is
             for(uint256 j = 0; j < authorizedRoles.length; j++) {
                 _authorizeFunctions(authorization, target, authorizedRoles[j]);
             }
+        }
+    }
+
+
+    function _checkComponentOrCustomTarget(address target) 
+        internal
+        view
+    {
+        IAccess.TargetType targetType = getTargetInfo(target).targetType;
+        if (targetType != TargetType.Component && targetType != TargetType.Custom) {
+            revert ErrorInstanceAdminNotComponentOrCustomTarget(target);
         }
     }
 }

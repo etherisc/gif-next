@@ -96,6 +96,10 @@ interface IAccessAdmin is
     // authorize target functions
     error ErrorAccessAdminAuthorizeForAdminRoleInvalid(address target);
 
+    // toFunction
+    error ErrorAccessAdminSelectorZero();
+    error ErrorAccessAdminFunctionNameEmpty();
+
     // check target
     error ErrorAccessAdminTargetUnknown(address target);
 

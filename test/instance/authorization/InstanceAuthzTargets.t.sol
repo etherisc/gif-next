@@ -137,9 +137,7 @@ contract InstanceAuthzTargetsTest is InstanceAuthzBaseTest {
         // WHEN - add function authz
         RoleId publicRoleId = instance.getInstanceAdmin().getPublicRole();
         IAccess.FunctionInfo[] memory functions = new IAccess.FunctionInfo[](1);
-        functions[0] = AccessAdminLib.toFunction({
-            name: "increaseCounter1",
-            selector: AccessManagedMock.increaseCounter1.selector});
+        functions[0] = instanceReader.toFunction(AccessManagedMock.increaseCounter1.selector, "increaseCounter1");
 
         vm.prank(instanceOwner);
         instance.authorizeFunctions(address(target), publicRoleId, functions);
@@ -150,6 +148,67 @@ contract InstanceAuthzTargetsTest is InstanceAuthzBaseTest {
 
         // THEN
         assertEq(target.counter1(), 1, "unexpected counter value after increaseCounter1");
+    }
+
+
+    function test_instanceAuthzTargetsUnauthorizeFunctionsHappyCase() public {
+        // GIVEN
+        AccessManagedMock target = _deployAccessManagedMock();
+        string memory targetName = "MyTarget";
+        RoleId publicRoleId = instance.getInstanceAdmin().getPublicRole();
+        IAccess.FunctionInfo[] memory functions = new IAccess.FunctionInfo[](1);
+        functions[0] = instanceReader.toFunction(AccessManagedMock.increaseCounter1.selector, "increaseCounter1");
+
+        vm.startPrank(instanceOwner);
+        instance.createTarget(address(target), targetName);
+        instance.authorizeFunctions(address(target), publicRoleId, functions);
+        vm.stopPrank();
+
+        // must not revert
+        vm.prank(outsider);
+        target.increaseCounter1();
+
+        assertEq(target.counter1(), 1, "unexpected counter value after increaseCounter1");
+
+        // WHEN - unauthorize function
+        vm.prank(instanceOwner);
+        instance.unauthorizeFunctions(address(target), functions);
+
+        // THEN
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessManaged.AccessManagedUnauthorized.selector, 
+                outsider));
+                
+        vm.prank(outsider);
+        target.increaseCounter1();
+
+        assertEq(target.counter1(), 1, "unexpected counter value after increaseCounter1");
+    }
+
+
+    function test_instanceAuthzToTargetAll() public {
+        bytes4 signature = AccessManagedMock.increaseCounter1.selector;
+        string memory name = "increaseCounter1";
+
+        IAccess.FunctionInfo memory myFunction = instanceReader.toFunction(signature, name);
+        assertEq(myFunction.name.toString(), name, "unexpected function name");
+        assertEq(myFunction.selector.toBytes4(), signature, "unexpected function selector");
+        assertEq(myFunction.createdAt.toInt(), TimestampLib.blockTimestamp().toInt(), "unexpected function creation time");
+
+        // check signature zero check
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessAdmin.ErrorAccessAdminSelectorZero.selector));
+
+        instanceReader.toFunction(bytes4(0), name);
+
+        // check name length check
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessAdmin.ErrorAccessAdminFunctionNameEmpty.selector));
+
+        instanceReader.toFunction(signature, "");
     }
 
 

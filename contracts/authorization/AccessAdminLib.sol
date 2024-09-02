@@ -370,6 +370,7 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
         });
     }
 
+
     function toFunction(
         bytes4 selector, 
         string memory name
@@ -378,6 +379,14 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
         view 
         returns (IAccess.FunctionInfo memory) 
     { 
+        if(selector == bytes4(0)) {
+            revert IAccessAdmin.ErrorAccessAdminSelectorZero();
+        }
+
+        if(bytes(name).length == 0) {
+            revert IAccessAdmin.ErrorAccessAdminFunctionNameEmpty();
+        }
+
         return IAccess.FunctionInfo({
             name: StrLib.toStr(name),
             selector: SelectorLib.toSelector(selector),

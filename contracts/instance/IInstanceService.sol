@@ -75,6 +75,9 @@ interface IInstanceService is IService {
     /// @dev Authorizes the specified functions for the specified target.
     function authorizeFunctions(address target, RoleId roleId, IAccess.FunctionInfo[] memory functions) external; 
 
+    /// @dev Removes any role authorization for the specified functions.
+    function unauthorizeFunctions(address target, IAccess.FunctionInfo[] memory functions) external;
+
     /// @dev Locks/unlocks the specified target constrolled by the corresponding instance admin.
     function setTargetLocked(address target, bool locked) external;
 
