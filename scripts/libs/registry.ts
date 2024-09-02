@@ -13,7 +13,8 @@ import {
     StakingReader,
     StakingStore,
     Staking__factory,
-    TokenRegistry
+    TokenRegistry,
+    UpgradableProxyWithAdmin__factory
 } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
@@ -282,10 +283,24 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         await resolveAddress(owner));
 
     // verify staking implementation 
+    const stakingImplenentationAddress = await getImplementationAddress(hhEthers.provider, await stakingManager.getProxy());
     await prepareVerificationData(
         "Staking", 
-        await getImplementationAddress(hhEthers.provider, await stakingManager.getProxy()), 
+        stakingImplenentationAddress, 
         [], 
+        undefined);
+
+    // verify staking proxy
+    const stakingProxyAddress = await stakingManager.getProxy();
+    const proxy = UpgradableProxyWithAdmin__factory.connect(stakingProxyAddress, owner);
+    await prepareVerificationData(
+        "UpgradableProxyWithAdmin", 
+        stakingProxyAddress, 
+        [
+            stakingImplenentationAddress,
+            stakingManagerAddress,
+            await proxy.getInitializationData(),
+        ], 
         undefined);
     
     await prepareVerificationData(
