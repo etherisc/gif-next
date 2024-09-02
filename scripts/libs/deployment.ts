@@ -1,13 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { getImplementationAddress } from "@openzeppelin/upgrades-core";
 import { AddressLike, BaseContract, Signer, TransactionReceipt, TransactionResponse, resolveAddress } from "ethers";
 import { ethers } from "hardhat";
+import { ProxyManager, UpgradableProxyWithAdmin__factory } from "../../typechain-types";
 import { logger } from "../logger";
 import { GAS_PRICE } from "./constants";
 import { deploymentState, isResumeableDeployment } from "./deployment_state";
 import { prepareVerificationData } from "./verification";
 
-type DeploymentResult = {
+export type DeploymentResult = {
     address: AddressLike; 
     deploymentTransaction: TransactionResponse | null;
     deploymentReceipt: TransactionReceipt | null;
@@ -53,6 +55,57 @@ export async function deployContract(contractName: string, signer: Signer, const
 
         return { address, deploymentTransaction, contract, deploymentReceipt: null };
     }
+}
+
+/**
+ * Deploys a {@link ProxyManager} contract and prepares verification for the manager, the proxy 
+ * and the service implementation.
+ */
+export async function deployProxyManagerContract(
+    proxyManagerContractName: string, 
+    serviceContractName:string,
+    signer: Signer, 
+    constructorArgs?: any[] | undefined, 
+    factoryOptions?: any | undefined, 
+    sourceFileContract?: string
+): Promise<DeploymentResult & { proxyAddress: string, implementationAddress: string }> {
+    logger.debug("-------- deploying proxy manager --------");
+    const deployment = await deployContract(
+        proxyManagerContractName,
+        signer,
+        constructorArgs,
+        factoryOptions,
+        sourceFileContract);
+
+    const proxyManager = deployment.contract as ProxyManager;
+    const proxyAddress = await proxyManager.getProxy();
+    const proxy = UpgradableProxyWithAdmin__factory.connect(proxyAddress, signer);
+    const serviceImplAddress = await getImplementationAddress(ethers.provider, proxyAddress);
+
+    logger.debug("-------- preparing verification data for implementation and proxy --------");
+    
+    // verify service implementation 
+    await prepareVerificationData(
+        serviceContractName, 
+        serviceImplAddress, 
+        [], 
+        undefined);
+
+    await prepareVerificationData(
+        "UpgradableProxyWithAdmin", 
+        deployment.address, 
+        [
+            serviceImplAddress,
+            deployment.address,
+            await proxy.getInitializationData(),
+        ], 
+        undefined);
+
+    return { 
+        ...deployment,
+        proxyAddress, 
+        implementationAddress: serviceImplAddress 
+    };
 }
 
 export function delay(ms: number): Promise<void> {

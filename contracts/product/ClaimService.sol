@@ -113,6 +113,7 @@ contract ClaimService is
     )
         external
         virtual
+        restricted()
         // nonReentrant() // prevents creating a reinsurance claim in a single tx
     {
         // checks
@@ -162,6 +163,7 @@ contract ClaimService is
     )
         external
         virtual
+        restricted()
         // nonReentrant() // prevents creating a reinsurance claim in a single tx
     {
         _checkNftType(policyNftId, POLICY());
@@ -194,6 +196,7 @@ contract ClaimService is
     )
         external
         virtual
+        restricted()
         // nonReentrant() // prevents creating a reinsurance claim in a single tx
     {        
         (
@@ -223,6 +226,7 @@ contract ClaimService is
     )
         external
         virtual
+        restricted()
         // nonReentrant() // prevents creating a reinsurance claim in a single tx
     {
         _checkNftType(policyNftId, POLICY());
@@ -268,6 +272,7 @@ contract ClaimService is
     )
         external
         virtual
+        restricted()
         // nonReentrant() // prevents creating a reinsurance claim in a single tx
         returns (PayoutId payoutId)
     {
@@ -292,6 +297,7 @@ contract ClaimService is
     )
         external
         virtual
+        restricted()
         // nonReentrant() // prevents creating a reinsurance payout in a single tx
         returns (PayoutId payoutId)
     {
@@ -312,6 +318,7 @@ contract ClaimService is
     )
         external
         virtual
+        restricted()
         // nonReentrant() // prevents creating a reinsurance payout in a single tx
     {
         // checks
@@ -390,6 +397,7 @@ contract ClaimService is
     )
         external
         virtual
+        restricted()
     {
         // checks
         (

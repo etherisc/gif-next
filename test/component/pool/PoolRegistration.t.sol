@@ -3,40 +3,19 @@ pragma solidity ^0.8.20;
 
 import {Vm, console} from "../../../lib/forge-std/src/Test.sol";
 
-import {BasicDistributionAuthorization} from "../../../contracts/distribution/BasicDistributionAuthorization.sol";
-import {BasicOracleAuthorization} from "../../../contracts/oracle/BasicOracleAuthorization.sol";
 import {BasicPoolAuthorization} from "../../../contracts/pool/BasicPoolAuthorization.sol";
 import {BasicProductAuthorization} from "../../../contracts/product/BasicProductAuthorization.sol";
 import {GifTest} from "../../base/GifTest.sol";
-import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
-import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
-import {ClaimId} from "../../../contracts/type/ClaimId.sol";
+import {NftId} from "../../../contracts/type/NftId.sol";
 import {SimpleProduct} from "../../../contracts/examples/unpermissioned/SimpleProduct.sol";
 import {SimplePool} from "../../../contracts/examples/unpermissioned/SimplePool.sol";
 import {IAuthorization} from "../../../contracts/authorization/IAuthorization.sol";
 import {IComponents} from "../../../contracts/instance/module/IComponents.sol";
 import {IComponentService} from "../../../contracts/shared/IComponentService.sol";
 import {Registerable} from "../../../contracts/shared/Registerable.sol";
-import {IRegisterable} from "../../../contracts/shared/IRegisterable.sol";
 import {IRelease} from "../../../contracts/registry/IRelease.sol";
-import {IInstanceLinkedComponent} from "../../../contracts/shared/IInstanceLinkedComponent.sol";
-import {ILifecycle} from "../../../contracts/shared/ILifecycle.sol";
-import {INftOwnable} from "../../../contracts/shared/INftOwnable.sol";
-import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
-import {IBundle} from "../../../contracts/instance/module/IBundle.sol";
-import {Fee, FeeLib} from "../../../contracts/type/Fee.sol";
-import {UFixedLib} from "../../../contracts/type/UFixed.sol";
 import {VersionPart, VersionPartLib} from "../../../contracts/type/Version.sol";
-import {Seconds, SecondsLib} from "../../../contracts/type/Seconds.sol";
-import {Timestamp, TimestampLib, zeroTimestamp} from "../../../contracts/type/Timestamp.sol";
-import {IPolicyService} from "../../../contracts/product/IPolicyService.sol";
-import {IRisk} from "../../../contracts/instance/module/IRisk.sol";
-import {PayoutId, PayoutIdLib} from "../../../contracts/type/PayoutId.sol";
-import {POLICY, PRODUCT, POOL} from "../../../contracts/type/ObjectType.sol";
-import {RiskId, RiskIdLib, eqRiskId} from "../../../contracts/type/RiskId.sol";
-import {ReferralLib} from "../../../contracts/type/Referral.sol";
-import {SUBMITTED, ACTIVE, COLLATERALIZED, CONFIRMED, DECLINED, CLOSED} from "../../../contracts/type/StateId.sol";
-import {StateId} from "../../../contracts/type/StateId.sol";
+import {ContractLib} from "../../../contracts/shared/ContractLib.sol";
 
 contract TestPoolRegistration is GifTest {
 
@@ -93,7 +72,7 @@ contract TestPoolRegistration is GifTest {
         // WHEN + THEN
         vm.expectRevert(
             abi.encodeWithSelector(
-                IComponentService.ErrorComponentServiceAlreadyRegistered.selector,
+                IComponentService.ErrorComponentServiceComponentAlreadyRegistered.selector,
                 address(myPool)));
 
         vm.startPrank(myProductOwner);
@@ -141,8 +120,7 @@ contract TestPoolRegistration is GifTest {
         // vm.stopPrank();
     }
 
-
-    // check that non product owner fails to register a product
+    // check that non product fails to register a component
     function test_poolRegisterAttemptViaService() public {
         // GIVEN
         SimplePool myPool = _deployPool("MyPool", myProduct1NftId, myPoolOwner);
@@ -150,7 +128,7 @@ contract TestPoolRegistration is GifTest {
         // WHEN + THEN
         vm.expectRevert(
             abi.encodeWithSelector(
-                IComponentService.ErrorComponentServiceSenderNotRegistered.selector,
+                IComponentService.ErrorComponentServiceCallerNotProduct.selector,
                 poolOwner));
 
         vm.startPrank(poolOwner);
@@ -195,7 +173,7 @@ contract TestPoolRegistration is GifTest {
         // WHEN + THEN
         vm.expectRevert(
             abi.encodeWithSelector(
-                IComponentService.ErrorComponentServiceNotInstanceLinkedComponent.selector,
+                IComponentService.ErrorComponentServiceNotComponent.selector,
                 address(token)));
 
         vm.startPrank(myProductOwner);

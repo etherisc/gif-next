@@ -5,13 +5,13 @@ import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165C
 import {IAccessManager} from "@openzeppelin/contracts/access/manager/IAccessManager.sol";
 import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 
-// import {InstanceAdmin} from "../instance/InstanceAdmin.sol";
+import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
 import {IPolicyHolder} from "../shared/IPolicyHolder.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IService} from "../shared/IService.sol";
 
 import {NftId} from "../type/NftId.sol";
-import {ObjectType, PRODUCT, DISTRIBUTION, ORACLE, POOL, STAKING} from "../type/ObjectType.sol";
+import {ObjectType, INSTANCE, PRODUCT, DISTRIBUTION, ORACLE, POOL, STAKING} from "../type/ObjectType.sol";
 import {VersionPart} from "../type/Version.sol";
 
 interface ITargetHelper {
@@ -28,38 +28,12 @@ interface ITokenRegistryHelper {
 
 library ContractLib {
 
-    error ErrorContractLibNotRegistered(address target);
-    error ErrorContractLibNotComponent(NftId componentNftId, ObjectType objectType);
-    error ErrorContractLibNotStaking(NftId componentNftId, ObjectType objectType);
+    error ErrorContractLibCallerNotRegistered(address target);
+    error ErrorContractLibCallerNotComponent(NftId componentNftId, ObjectType objectType);
+    error ErrorContractLibParentNotInstance(NftId componentNftId, NftId parentNftId);
+    error ErrorContractLibParentNotProduct(NftId componentNftId, NftId parentNftId);
     error ErrorContractLibComponentTypeMismatch(NftId componentNftId, ObjectType expectedType, ObjectType actualType);
     error ErrorContractLibComponentInactive(NftId componentNftId);
-
-    function getAndVerifyComponent(
-        IRegistry registry, 
-        address target,
-        ObjectType expectedType,
-        bool onlyActive
-    )
-        external
-        view
-        returns (
-            IRegistry.ObjectInfo memory info, 
-            address instance
-        )
-    {
-        // check target is component
-        info = _getObjectInfo(registry, target);
-        if(info.objectType != expectedType) {
-            revert ErrorContractLibComponentTypeMismatch(
-                info.nftId,
-                expectedType,
-                info.objectType);
-        }
-
-        // get instance and check component is active
-        instance = _getInstance(registry, info);
-        _checkComponentActive(instance, target, info.nftId, onlyActive);
-    }
 
 
     function getInfoAndInstance(
@@ -75,34 +49,42 @@ library ContractLib {
         )
     {
         info = registry.getObjectInfo(componentNftId);
-        instance = _getInstance(registry, info);
-        _checkComponentActive(instance, info.objectAddress, info.nftId, onlyActive);
-    }
-
-
-    function getAndVerifyStaking(
-        IRegistry registry, 
-        address target
-    )
-        external
-        view
-        returns (
-            IRegistry.ObjectInfo memory info
-        )
-    {
-        // check target is component
-        info = _getObjectInfo(registry, target);
-        if(info.objectType != STAKING()) {
-            revert ErrorContractLibNotStaking(
-                info.nftId,
-                info.objectType);
-        }
+        return _getAndVerifyComponentAndInstance(registry, info, info.objectType, onlyActive);
     }
 
 
     function getAndVerifyAnyComponent(
         IRegistry registry, 
-        address target,
+        address caller,
+        bool onlyActive
+    )
+        external
+        view
+        returns (
+            IRegistry.ObjectInfo memory callerInfo, 
+            address instance
+        )
+    {
+        // check caller is component
+        callerInfo = _getAndVerifyObjectInfo(registry, caller);
+        if(!(callerInfo.objectType == PRODUCT()
+            || callerInfo.objectType == POOL()
+            || callerInfo.objectType == DISTRIBUTION()
+            || callerInfo.objectType == ORACLE())
+        ) {
+            revert ErrorContractLibCallerNotComponent(
+                callerInfo.nftId,
+                callerInfo.objectType);
+        }
+
+        return _getAndVerifyComponentAndInstance(registry, callerInfo, callerInfo.objectType, onlyActive);
+    }
+
+
+    function getAndVerifyComponent(
+        IRegistry registry, 
+        address caller,
+        ObjectType expectedType,
         bool onlyActive
     )
         external
@@ -112,22 +94,28 @@ library ContractLib {
             address instance
         )
     {
-        // check target is component
-        info = _getObjectInfo(registry, target);
-        if(!(info.objectType == PRODUCT()
-            || info.objectType == POOL()
-            || info.objectType == DISTRIBUTION()
-            || info.objectType == ORACLE())
-        ) {
-            revert ErrorContractLibNotComponent(
-                info.nftId,
-                info.objectType);
-        }
-
-        // get instance and check component is active
-        instance = _getInstance(registry, info);
-        _checkComponentActive(instance, target, info.nftId, onlyActive);
+        info = _getAndVerifyObjectInfo(registry, caller);
+        return _getAndVerifyComponentAndInstance(registry, info, expectedType, onlyActive);
     }
+
+
+    // TODO cleanup
+    // function getAndVerifyStaking(
+    //     IRegistry registry, 
+    //     address target
+    // )
+    //     external
+    //     view
+    //     returns (IRegistry.ObjectInfo memory info)
+    // {
+    //     // check target is component
+    //     info = _getAndVerifyObjectInfo(registry, target);
+    //     if(info.objectType != STAKING()) {
+    //         revert ErrorContractLibNotStaking(
+    //             info.nftId,
+    //             info.objectType);
+    //     }
+    // }
 
 
     function getInstanceForComponent(
@@ -159,6 +147,7 @@ library ContractLib {
                 chainId, token, release);
     }
 
+
     function isPolicyHolder(address target) external view returns (bool) {
         return ERC165Checker.supportsInterface(target, type(IPolicyHolder).interfaceId);
     }
@@ -187,6 +176,32 @@ library ContractLib {
                 IAccessManaged.authority.selector));
 
         return success;
+    }
+
+
+    function isProduct(address registry, address target)
+        public
+        view
+        returns (bool)
+    {
+        if (!isInstanceLinkedComponent(registry, target)) {
+            return false;
+        }
+
+        return IInstanceLinkedComponent(target).getInitialInfo().objectType == PRODUCT();
+    }
+
+
+    function isInstanceLinkedComponent(address registry, address target)
+        public
+        view
+        returns (bool)
+    {
+        if (!isContract(target)) {
+            return false;
+        }
+
+        return supportsInterface(target, type(IInstanceLinkedComponent).interfaceId);
     }
 
 
@@ -235,6 +250,37 @@ library ContractLib {
     }
 
 
+    function _getAndVerifyComponentAndInstance(
+        IRegistry registry, 
+        IRegistry.ObjectInfo memory info,
+        ObjectType expectedType,
+        bool onlyActive
+    )
+        internal
+        view
+        returns (
+            IRegistry.ObjectInfo memory, 
+            address instance
+        )
+    {
+        if(info.objectType != expectedType) {
+            revert ErrorContractLibComponentTypeMismatch(
+                info.nftId,
+                expectedType,
+                info.objectType);
+        }
+
+        // get instance and check component is active
+        instance = getAndVerifyInstance(registry, info);
+        _checkComponentActive(instance, info.objectAddress, info.nftId, onlyActive);
+
+        return (
+            info,
+            instance
+        );
+    }
+
+
     function _checkComponentActive(
         address instance, 
         address target, 
@@ -255,36 +301,55 @@ library ContractLib {
     }
 
 
-    function _getInstance(
+    /// @dev Given an object info the function returns the instance address.
+    /// The info may represent a product or any other component.
+    /// If the parent of the provided info is not registered with the correct type, the function reverts.
+    function getAndVerifyInstance(
         IRegistry registry,
         IRegistry.ObjectInfo memory info
     )
-        internal
+        public
         view
         returns (address instance)
     {
+        // get instance for product case
         if (info.objectType == PRODUCT()) {
-            return registry.getObjectAddress(
+            // verify that parent of product is registered instance
+            IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(info.parentNftId);
+            if (instanceInfo.objectType != INSTANCE()) {
+                revert ErrorContractLibParentNotInstance(
+                    info.nftId,
+                    info.parentNftId);
+            }
+
+            // we have verified that parent object is a registerd instance -> we return the instance address
+            return instanceInfo.objectAddress;
+        }
+
+        // not product: verify parent is registered product
+        info = registry.getObjectInfo(info.parentNftId);
+        if (info.objectType != PRODUCT()) {
+            revert ErrorContractLibParentNotProduct(
+                info.nftId,
                 info.parentNftId);
-        } 
-        
-        return registry.getObjectAddress(
-                registry.getObjectInfo(
-                    info.parentNftId).parentNftId);
+        }
+
+        // we have verified that parent is registerd product -> we can rely on registry that its parent is an instance
+        return registry.getObjectAddress(info.parentNftId);
     }
 
 
-    function _getObjectInfo(
+    function _getAndVerifyObjectInfo(
         IRegistry registry, 
-        address target
+        address caller
     )
         internal
         view
         returns (IRegistry.ObjectInfo memory info)
     {
-        NftId componentNftId = registry.getNftIdForAddress(target);
+        NftId componentNftId = registry.getNftIdForAddress(caller);
         if (componentNftId.eqz()) {
-            revert ErrorContractLibNotRegistered(target);
+            revert ErrorContractLibCallerNotRegistered(caller);
         }
 
         info = registry.getObjectInfo(componentNftId);

@@ -16,22 +16,20 @@ import {VersionPart} from "../type/Version.sol";
 interface IComponentService is 
     IService
 {
+    // registerProduct
+    error ErrorComponentServiceCallerNotInstance(address caller);
+    error ErrorComponentServiceNotProduct(address product);
     error ErrorComponentServiceTokenInvalid(address token);
 
-    error ErrorComponentServiceNotInstanceLinkedComponent(address component);
-    error ErrorComponentServiceSenderNotRegistered(address sender);
+    // registerComponent
+    error ErrorComponentServiceCallerNotProduct(address caller);
     error ErrorComponentServiceNotComponent(address component);
-    error ErrorComponentServiceTypeNotSupported(address component, ObjectType invalidType);
-    error ErrorComponentServiceInvalidType(address component, ObjectType requiredType, ObjectType componentType);
-    error ErrorComponentServiceAlreadyRegistered(address component);
-    error ErrorComponentServiceReleaseMismatch(address component, VersionPart componentRelease, VersionPart parentRelease);
-    error ErrorComponentServiceSenderNotComponentParent(NftId senderNftId, NftId compnentParentNftId);
-    error ErrorComponentServiceParentNotInstance(NftId nftId, ObjectType objectType);
-    error ErrorComponentServiceParentNotProduct(NftId nftId, ObjectType objectType);
 
-    error ErrorComponentServiceNotRegistered(address instanceAddress);
-    error ErrorComponentServiceNotInstance(address instanceAddress, ObjectType objectType);
-    error ErrorComponentServiceInstanceVersionMismatch(address instanceAddress, VersionPart instanceVersion);
+    error ErrorComponentServiceNotInstanceLinkedComponent(address component);
+    error ErrorComponentServiceComponentTypeNotSupported(address component, ObjectType invalid);
+    error ErrorComponentServiceComponentParentInvalid(address component, NftId required, NftId actual);
+    error ErrorComponentServiceComponentReleaseMismatch(address component, VersionPart serviceRelease, VersionPart componentRelease);
+    error ErrorComponentServiceComponentAlreadyRegistered(address component);
     
     error ErrorProductServiceNoDistributionExpected(NftId productNftId);
     error ErrorProductServiceDistributionAlreadyRegistered(NftId productNftId, NftId distributionNftId);

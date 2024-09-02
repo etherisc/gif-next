@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 
 import {GifTest} from "./GifTest.sol";
 import {InstanceLinkedComponent} from "../../contracts/shared/InstanceLinkedComponent.sol";
-import {IRegistry} from "../../contracts/registry/IRegistry.sol";
-import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
+import {NftId} from "../../contracts/type/NftId.sol";
 import {ObjectType} from "../../contracts/type/ObjectType.sol";
-import {BUNDLE, COMPONENT, DISTRIBUTION, ORACLE, POOL, PRODUCT, POLICY, RISK, REQUEST, SERVICE, STAKING} from "../../contracts/type/ObjectType.sol";
-import {RoleId} from "../../contracts/type/RoleId.sol";
+import {BUNDLE, COMPONENT, DISTRIBUTION, ORACLE, POOL, PRODUCT, POLICY, RISK, REQUEST} from "../../contracts/type/ObjectType.sol";
 
 contract DeployAllTest is GifTest {
 
@@ -158,5 +157,4 @@ contract DeployAllTest is GifTest {
         // check owner
         assertEq(registry.ownerOf(address(component)), componentOwner, "unexpected component owner");
     }
-
 }

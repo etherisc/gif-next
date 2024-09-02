@@ -142,6 +142,7 @@ export async function deployFireComponentContracts(libraries: LibraryAddresses, 
                 TimestampLib: timestampLibAddress,
                 UFixedLib: ufixedLibAddress,
                 VersionLib: versionLibAddress,
+                ObjectTypeLib: objectTypeLibAddress,
             }
         });
     const fireProduct = fireProductBaseContract as FireProduct;
@@ -187,6 +188,7 @@ export async function deployFireComponentContracts(libraries: LibraryAddresses, 
                 NftIdLib: nftIdLibAddress,
                 UFixedLib: ufixedLibAddress,
                 VersionLib: versionLibAddress,
+                ObjectTypeLib: objectTypeLibAddress,
             }
         });
     const firePool = firePoolBaseContract as FirePool;

@@ -41,7 +41,7 @@ contract NftOwnable is
     }
 
     function _checkNftType(NftId nftId, ObjectType expectedObjectType) internal view {
-        if(!getRegistry().isObjectType(nftId, expectedObjectType)) {
+        if(expectedObjectType.eqz() || !getRegistry().isObjectType(nftId, expectedObjectType)) {
             revert ErrorNftOwnableInvalidType(nftId, expectedObjectType);
         }
     }

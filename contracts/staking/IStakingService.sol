@@ -160,13 +160,16 @@ interface IStakingService is IService
 
     function getDipToken()
         external
+        view
         returns (IERC20Metadata dip);
 
     function getTokenHandler()
         external
+        view
         returns (TokenHandler tokenHandler);
 
     function getStaking()
         external
+        view
         returns (IStaking staking);
 }
