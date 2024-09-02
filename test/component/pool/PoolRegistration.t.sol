@@ -128,7 +128,7 @@ contract TestPoolRegistration is GifTest {
         // WHEN + THEN
         vm.expectRevert(
             abi.encodeWithSelector(
-                ContractLib.ErrorContractLibNotRegistered.selector,
+                IComponentService.ErrorComponentServiceCallerNotProduct.selector,
                 poolOwner));
 
         vm.startPrank(poolOwner);
@@ -173,7 +173,7 @@ contract TestPoolRegistration is GifTest {
         // WHEN + THEN
         vm.expectRevert(
             abi.encodeWithSelector(
-                IComponentService.ErrorComponentServiceNotInstanceLinkedComponent.selector,
+                IComponentService.ErrorComponentServiceNotComponent.selector,
                 address(token)));
 
         vm.startPrank(myProductOwner);

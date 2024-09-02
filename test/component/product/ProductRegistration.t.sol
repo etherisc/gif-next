@@ -94,22 +94,21 @@ contract TestProductRegistration is GifTest {
         vm.stopPrank();
     }
 
-    // FIXME: when proper instance verification is added to registerProduct()
-    // check that non instance fails to register a product
-    /*function test_productRegisterAttemptViaService() public {
+
+    function test_productRegisterAttemptViaService() public {
         // GIVEN
         SimpleProduct myProduct = _deployProductDefault("MyProduct");
 
         // WHEN + THEN
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessManaged.AccessManagedUnauthorized.selector,
+                IComponentService.ErrorComponentServiceCallerNotInstance.selector,
                 address(instanceOwner)));
 
         vm.startPrank(instanceOwner);
         componentService.registerProduct(address(myProduct), address(token));
         vm.stopPrank();
-    }*/
+    }
 
 
     // check that product registration fails for product with a different release than instance
@@ -166,10 +165,8 @@ contract TestProductRegistration is GifTest {
         // WHEN + THEN
         vm.expectRevert(
             abi.encodeWithSelector(
-                IComponentService.ErrorComponentServiceComponentParentInvalid.selector,
-                address(myPool),
-                instanceNftId,
-                myProdNftId));
+                IComponentService.ErrorComponentServiceNotProduct.selector,
+                address(myPool)));
 
         vm.startPrank(instanceOwner);
         instance.registerProduct(address(myPool), address(token));

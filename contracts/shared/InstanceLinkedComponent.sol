@@ -110,7 +110,6 @@ abstract contract InstanceLinkedComponent is
         $._componentService = IComponentService(_getServiceAddress(COMPONENT())); 
 
         // register interfaces
-        _registerInterface(type(IAccessManaged).interfaceId);
         _registerInterface(type(IInstanceLinkedComponent).interfaceId);
     }
 

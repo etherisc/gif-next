@@ -16,7 +16,14 @@ import {VersionPart} from "../type/Version.sol";
 interface IComponentService is 
     IService
 {
+    // registerProduct
+    error ErrorComponentServiceCallerNotInstance(address caller);
+    error ErrorComponentServiceNotProduct(address product);
     error ErrorComponentServiceTokenInvalid(address token);
+
+    // registerComponent
+    error ErrorComponentServiceCallerNotProduct(address caller);
+    error ErrorComponentServiceNotComponent(address component);
 
     error ErrorComponentServiceNotInstanceLinkedComponent(address component);
     error ErrorComponentServiceComponentTypeNotSupported(address component, ObjectType invalid);
