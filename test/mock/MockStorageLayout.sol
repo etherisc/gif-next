@@ -5,6 +5,7 @@ import {IAccess} from "../../contracts/authorization/IAccess.sol";
 import {IBundle} from "../../contracts/instance/module/IBundle.sol";
 import {IComponents} from "../../contracts/instance/module/IComponents.sol";
 import {IDistribution} from "../../contracts/instance/module/IDistribution.sol";
+import {IKeyValueStore} from "../../contracts/shared/IKeyValueStore.sol";
 import {IOracle} from "../../contracts/oracle/IOracle.sol";
 import {IPolicy} from "../../contracts/instance/module/IPolicy.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
@@ -50,4 +51,6 @@ contract MockStorageLayout {
     IStaking.TargetInfo private _stakingTargetInfo;
 
     ProxyManager.VersionInfo private _versionInfo;
+
+    IKeyValueStore.Value private _value;
 }
