@@ -1,4 +1,3 @@
-import { getImplementationAddress } from "@openzeppelin/upgrades-core";
 import { AddressLike, Signer, resolveAddress } from "ethers";
 import { ethers as hhEthers } from "hardhat";
 import {
@@ -13,11 +12,10 @@ import {
     StakingReader,
     StakingStore,
     Staking__factory,
-    TokenRegistry,
-    UpgradableProxyWithAdmin__factory
+    TokenRegistry
 } from "../../typechain-types";
 import { logger } from "../logger";
-import { deployContract } from "./deployment";
+import { deployContract, deployProxyManagerContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
 import { executeTx, getTxOpts } from "./transaction";
 import { prepareVerificationData } from "./verification";
@@ -229,8 +227,9 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
 
     logger.info("-------- Starting deployment Staking Manager ----------------");
 
-    const { address: stakingManagerAddress, contract: stakingManagerBaseContract, } = await deployContract(
+    const { address: stakingManagerAddress, contract: stakingManagerBaseContract, proxyAddress: stakingAddress } = await deployProxyManagerContract(
         "StakingManager",
+        "Staking",
         owner,
         [
             registryAddress,
@@ -254,8 +253,6 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         });
 
     const stakingManager = stakingManagerBaseContract as StakingManager;
-
-    const stakingAddress = await stakingManager.getStaking();
     const staking = Staking__factory.connect(stakingAddress, owner);
     const stakingNftId = await registry.getNftIdForAddress(stakingAddress);
 
@@ -281,38 +278,19 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         registryAddress, 
         chainNftAddress,
         await resolveAddress(owner));
-
-    // verify staking implementation 
-    const stakingImplenentationAddress = await getImplementationAddress(hhEthers.provider, await stakingManager.getProxy());
-    await prepareVerificationData(
-        "Staking", 
-        stakingImplenentationAddress, 
-        [], 
-        undefined);
-
-    // verify staking proxy
-    const stakingProxyAddress = await stakingManager.getProxy();
-    const proxy = UpgradableProxyWithAdmin__factory.connect(stakingProxyAddress, owner);
-    await prepareVerificationData(
-        "UpgradableProxyWithAdmin", 
-        stakingProxyAddress, 
-        [
-            stakingImplenentationAddress,
-            stakingManagerAddress,
-            await proxy.getInitializationData(),
-        ], 
-        undefined);
     
     await prepareVerificationData(
         "TokenHandler", 
         await staking.getTokenHandler(), 
         [
             registryAddress, // reg
-            await stakingManager.getProxy(), // compo
+            stakingAddress, // compo
             dipAddress, // token
             await registryAdmin.authority(), // authority
         ], 
         undefined);
+
+    throw Error("intermediate stop");
     
 
     logger.info(`Dip deployed at ${dipAddress}`);
