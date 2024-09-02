@@ -2,12 +2,12 @@
 pragma solidity ^0.8.20;
 
 import {IAccess} from "../authorization/IAccess.sol";
+import {IInstance} from "../instance/Instance.sol";
 
 import {AccessAdminLib} from "../authorization/AccessAdminLib.sol";
 import {Authorization} from "../authorization/Authorization.sol";
 import {ACCOUNTING, ORACLE, POOL, INSTANCE, COMPONENT, DISTRIBUTION, APPLICATION, POLICY, CLAIM, BUNDLE, RISK} from "../../contracts/type/ObjectType.sol";
 import {BundleSet} from "../instance/BundleSet.sol";
-import {Instance} from "../instance/Instance.sol";
 import {InstanceAdmin} from "../instance/InstanceAdmin.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
 import {ADMIN_ROLE, INSTANCE_OWNER_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
@@ -132,26 +132,26 @@ contract InstanceAuthorizationV3
 
           // authorize instance service role
           functions = _authorizeForTarget(INSTANCE_TARGET_NAME, PUBLIC_ROLE());
-          _authorize(functions, Instance.registerProduct.selector, "registerProduct");
-          _authorize(functions, Instance.upgradeInstanceReader.selector, "upgradeInstanceReader");
+          _authorize(functions, IInstance.registerProduct.selector, "registerProduct");
+          _authorize(functions, IInstance.upgradeInstanceReader.selector, "upgradeInstanceReader");
 
           // staking
-          _authorize(functions, Instance.setStakingLockingPeriod.selector, "setStakingLockingPeriod");
-          _authorize(functions, Instance.setStakingRewardRate.selector, "setStakingRewardRate");
-          _authorize(functions, Instance.refillStakingRewardReserves.selector, "refillStakingRewardReserves");
-          _authorize(functions, Instance.withdrawStakingRewardReserves.selector, "withdrawStakingRewardReserves");
+          _authorize(functions, IInstance.setStakingLockingPeriod.selector, "setStakingLockingPeriod");
+          _authorize(functions, IInstance.setStakingRewardRate.selector, "setStakingRewardRate");
+          _authorize(functions, IInstance.refillStakingRewardReserves.selector, "refillStakingRewardReserves");
+          _authorize(functions, IInstance.withdrawStakingRewardReserves.selector, "withdrawStakingRewardReserves");
 
           // custom authz
-          _authorize(functions, Instance.createRole.selector, "createRole");
-          _authorize(functions, Instance.setRoleActive.selector, "setRoleActive");
-          _authorize(functions, Instance.grantRole.selector, "grantRole");
-          _authorize(functions, Instance.revokeRole.selector, "revokeRole");
-          _authorize(functions, Instance.createTarget.selector, "createTarget");
-          _authorize(functions, Instance.setTargetFunctionRole.selector, "setTargetFunctionRole");
+          _authorize(functions, IInstance.createRole.selector, "createRole");
+          _authorize(functions, IInstance.setRoleActive.selector, "setRoleActive");
+          _authorize(functions, IInstance.grantRole.selector, "grantRole");
+          _authorize(functions, IInstance.revokeRole.selector, "revokeRole");
+          _authorize(functions, IInstance.createTarget.selector, "createTarget");
+          _authorize(functions, IInstance.authorizeFunctions.selector, "authorizeFunctions");
 
           // authorize instance service role
           functions = _authorizeForTarget(INSTANCE_TARGET_NAME, getServiceRole(INSTANCE()));
-          _authorize(functions, Instance.setInstanceReader.selector, "setInstanceReader");
+          _authorize(functions, IInstance.setInstanceReader.selector, "setInstanceReader");
      }
 
 
@@ -168,6 +168,7 @@ contract InstanceAuthorizationV3
           _authorize(functions, InstanceAdmin.revokeRole.selector, "revokeRole");
 
           _authorize(functions, InstanceAdmin.createTarget.selector, "createTarget");
+          _authorize(functions, InstanceAdmin.authorizeFunctions.selector, "authorizeFunctions");
           _authorize(functions, InstanceAdmin.setTargetLocked.selector, "setTargetLocked");
           _authorize(functions, InstanceAdmin.setInstanceLocked.selector, "setInstanceLocked");
 

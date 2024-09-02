@@ -294,7 +294,7 @@ contract AccessAdmin is
         return _targets[idx];
     }
 
-    function getTargetInfo(address target) external view returns (TargetInfo memory targetInfo) {
+    function getTargetInfo(address target) public view returns (TargetInfo memory targetInfo) {
         return _targetInfo[target];
     }
 

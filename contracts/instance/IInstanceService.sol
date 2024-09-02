@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Amount} from "../type/Amount.sol";
+import {IAccess} from "../authorization/IAccess.sol";
 import {IInstance} from "./IInstance.sol";
 import {IService} from "../shared/IService.sol";
+
+import {Amount} from "../type/Amount.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType} from "../type/ObjectType.sol";
 import {RoleId} from "../type/RoleId.sol";
@@ -69,6 +71,9 @@ interface IInstanceService is IService {
     /// @dev Creates a new custom target for the calling instance.
     /// All custom trargets are created with a corresponding contract role.
     function createTarget(address target, string memory name) external returns (RoleId contractRoleId);
+
+    /// @dev Authorizes the specified functions for the specified target.
+    function authorizeFunctions(address target, RoleId roleId, IAccess.FunctionInfo[] memory functions) external; 
 
     /// @dev Locks/unlocks the specified target constrolled by the corresponding instance admin.
     function setTargetLocked(address target, bool locked) external;

@@ -141,6 +141,7 @@ contract ServiceAuthorizationV3
           _authorize(functions, IInstanceService.revokeRole.selector, "revokeRole");
 
           _authorize(functions, IInstanceService.createTarget.selector, "createTarget");
+          _authorize(functions, IInstanceService.authorizeFunctions.selector, "authorizeFunctions");
           _authorize(functions, IInstanceService.setTargetLocked.selector, "setTargetLocked");
           _authorize(functions, IInstanceService.setInstanceLocked.selector, "setInstanceLocked");
 

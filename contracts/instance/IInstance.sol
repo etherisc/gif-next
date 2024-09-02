@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IAccess} from "../authorization/IAccess.sol";
+import {IRegisterable} from "../shared/IRegisterable.sol";
+
 import {Amount} from "../type/Amount.sol";
 import {BundleSet} from "./BundleSet.sol";
 import {RiskSet} from "./RiskSet.sol";
 import {InstanceAdmin} from "./InstanceAdmin.sol";
 import {InstanceReader} from "./InstanceReader.sol";
 import {InstanceStore} from "./InstanceStore.sol";
-import {IRegisterable} from "../shared/IRegisterable.sol";
 import {NftId} from "../type/NftId.sol";
 import {RoleId} from "../type/RoleId.sol";
 import {Seconds} from "../type/Seconds.sol";
@@ -115,7 +117,8 @@ interface IInstance is
     /// Custom targets are not intended to be used for components.
     function createTarget(address target, string memory name) external returns (RoleId contractRoleId);
 
-    function setTargetFunctionRole(string memory targetName, bytes4[] calldata selectors, RoleId roleId) external;
+    /// @dev Authorizes the specified functions for the target and provided role.
+    function authorizeFunctions(address target, RoleId roleId, IAccess.FunctionInfo[] memory functions) external;
 
     //--- getters -----------------------------------------------------------//
 

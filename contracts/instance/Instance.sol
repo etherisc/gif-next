@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IAccess} from "../authorization/IAccess.sol";
 import {IInstance} from "./IInstance.sol";
 import {IComponentService} from "../shared/IComponentService.sol";
 import {IInstanceService} from "./IInstanceService.sol";
@@ -260,17 +261,16 @@ contract Instance is
     }
 
 
-    function setTargetFunctionRole(
-        string memory targetName,
-        bytes4[] calldata selectors,
-        RoleId roleId
-    ) 
+    function authorizeFunctions(
+        address target, 
+        RoleId roleId, 
+        IAccess.FunctionInfo[] memory functions
+    )
         external 
         restricted()
         onlyOwner()
     {
-        // TODO refactor
-        // _instanceAdmin.setTargetFunctionRoleByInstance(targetName, selectors, roleId);
+        _instanceService.authorizeFunctions(target, roleId, functions);
     }
 
     //--- initial setup functions -------------------------------------------//

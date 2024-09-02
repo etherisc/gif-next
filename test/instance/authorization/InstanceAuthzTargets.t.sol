@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 import {console} from "../../../lib/forge-std/src/Test.sol";
 
 import {IAccess} from "../../../contracts/authorization/IAccess.sol";
 import {IAccessAdmin} from "../../../contracts/authorization/IAccessAdmin.sol";
 import {IInstance} from "../../../contracts/instance/IInstance.sol";
 
+import {AccessAdminLib} from "../../../contracts/authorization/AccessAdminLib.sol";
 import {AccessManagedMock} from "../../mock/AccessManagedMock.sol";
 import {InstanceAuthzBaseTest} from "./InstanceAuthzBase.t.sol";
 import {INftOwnable} from "../../../contracts/shared/INftOwnable.sol";
@@ -108,6 +110,48 @@ contract InstanceAuthzTargetsTest is InstanceAuthzBaseTest {
         // THEN
         assertTrue(instanceReader.isLocked(address(target)), "target not locked after locking instance");
     }
+
+    function test_instanceAuthzTargetsAuthorizeFunctionsHappyCase() public {
+        // GIVEN
+        AccessManagedMock target = _deployAccessManagedMock();
+        string memory targetName = "MyTarget";
+
+        vm.prank(instanceOwner);
+        instance.createTarget(address(target), targetName);
+
+        assertTrue(instanceReader.targetExists(address(target)), "target not existing after create");
+        assertFalse(instanceReader.isLocked(address(target)), "target locked");
+        assertEq(target.counter1(), 0, "unexpected initial counter value");
+
+        // WHEN + THEN attempt to call unauthorized function
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessManaged.AccessManagedUnauthorized.selector, 
+                outsider));
+
+        vm.prank(outsider);
+        target.increaseCounter1();
+
+        assertEq(target.counter1(), 0, "unexpected initial counter value");
+
+        // WHEN - add function authz
+        RoleId publicRoleId = instance.getInstanceAdmin().getPublicRole();
+        IAccess.FunctionInfo[] memory functions = new IAccess.FunctionInfo[](1);
+        functions[0] = AccessAdminLib.toFunction({
+            name: "increaseCounter1",
+            selector: AccessManagedMock.increaseCounter1.selector});
+
+        vm.prank(instanceOwner);
+        instance.authorizeFunctions(address(target), publicRoleId, functions);
+
+        // must not revert now
+        vm.prank(outsider);
+        target.increaseCounter1();
+
+        // THEN
+        assertEq(target.counter1(), 1, "unexpected counter value after increaseCounter1");
+    }
+
 
     //--- helper functions ----------------------------------------------------//
 

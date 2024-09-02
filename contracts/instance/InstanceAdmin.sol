@@ -25,19 +25,23 @@ contract InstanceAdmin is
     string public constant BUNDLE_SET_TARGET_NAME = "BundleSet";
     string public constant RISK_SET_TARGET_NAME = "RiskSet";
 
+    // onlyInstanceService
     error ErrorInstanceAdminNotInstanceService(address caller);
 
-    error ErrorInstanceAdminNotCustomRole(RoleId roleId);
+    // error ErrorInstanceAdminNotCustomRole(RoleId roleId);
 
-    error ErrorInstanceAdminNotRegistered(address instance);
-    error ErrorInstanceAdminAlreadyAuthorized(address instance);
+    // error ErrorInstanceAdminNotRegistered(address instance);
+    // error ErrorInstanceAdminAlreadyAuthorized(address instance);
 
-    error ErrorInstanceAdminNotComponentRole(RoleId roleId);
-    error ErrorInstanceAdminRoleAlreadyExists(RoleId roleId);
-    error ErrorInstanceAdminRoleTypeNotContract(RoleId roleId, IAccess.RoleType roleType);
+    // error ErrorInstanceAdminNotComponentRole(RoleId roleId);
+    // error ErrorInstanceAdminRoleAlreadyExists(RoleId roleId);
+    // error ErrorInstanceAdminRoleTypeNotContract(RoleId roleId, IAccess.RoleType roleType);
 
-    error ErrorInstanceAdminReleaseMismatch();
-    error ErrorInstanceAdminExpectedTargetMissing(string targetName);
+    // error ErrorInstanceAdminReleaseMismatch();
+    // error ErrorInstanceAdminExpectedTargetMissing(string targetName);
+
+    // authorizeFunctions
+    error ErrorInstanceAdminNotComponentOrCustomTarget(address target);
 
     IInstance internal _instance;
     IRegistry internal _registry;
@@ -261,6 +265,27 @@ contract InstanceAdmin is
     }
 
 
+    /// @dev Add function authorizations for the specified component or custom target.
+    function authorizeFunctions(
+        address target,
+        RoleId roleId,
+        IAccess.FunctionInfo[] memory functions
+    )
+        external
+        restricted()
+        onlyExistingTarget(target)
+    {
+        // check target type
+        IAccess.TargetType targetType = getTargetInfo(target).targetType;
+        if (targetType != TargetType.Component && targetType != TargetType.Custom) {
+            revert ErrorInstanceAdminNotComponentOrCustomTarget(target);
+        }
+
+        _authorizeTargetFunctions(target, roleId, functions, true);
+    }
+
+
+    /// @dev locks the instance and all its releated targets including component and custom targets.
     function setInstanceLocked(bool locked)
         external
         // not restricted(): need to operate on locked instances to unlock instance

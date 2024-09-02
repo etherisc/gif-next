@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 
+import {IAccess} from "../authorization/IAccess.sol";
 import {IAuthorization} from "../authorization/IAuthorization.sol";
 import {IComponentService} from "../shared/IComponentService.sol";
 import {IInstance} from "./IInstance.sol";
@@ -120,7 +121,22 @@ contract InstanceService is
     }
 
 
-    /// @dev Locks/unlocks the specified target constrolled by the corresponding instance admin.
+    /// @inheritdoc IInstanceService
+    function authorizeFunctions(
+        address target, 
+        RoleId roleId, 
+        IAccess.FunctionInfo[] memory functions
+    )
+        external 
+        restricted()
+        onlyInstance()
+    {
+        IInstance instance = IInstance(msg.sender);
+        return instance.getInstanceAdmin().authorizeFunctions(target, roleId, functions);
+    }
+
+
+    /// @inheritdoc IInstanceService
     function setTargetLocked(address target, bool locked)
         external
         virtual
