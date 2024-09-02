@@ -420,6 +420,7 @@ contract PolicyService is
         emit LogPolicyServicePolicyClosed(policyNftId);
     }
 
+
     /// @dev shared functionality for expire() and policyExpire().
     function _expire(
         IInstance instance,
@@ -446,31 +447,6 @@ contract PolicyService is
         return policyInfo.expiredAt;
     }
 
-    //function _activate(
-    //    NftId policyNftId, 
-    //    IPolicy.PolicyInfo memory policyInfo,
-    //    Timestamp activateAt
-    //)
-    //    internal
-    //    virtual
-    //    view 
-    //    returns (IPolicy.PolicyInfo memory)
-    //{
-        // fail if policy has already been activated and activateAt is different
-    //    if(! policyInfo.activatedAt.eqz() && activateAt != policyInfo.activatedAt) {
-    //        revert ErrorPolicyServicePolicyAlreadyActivated(policyNftId);
-    //    }
-
-        // ignore if policy has already been activated and activateAt is the same
-    //    if (policyInfo.activatedAt == activateAt) {
-    //        return policyInfo;
-    //    }
-
-    //    policyInfo.activatedAt = activateAt;
-    //    policyInfo.expiredAt = activateAt.addSeconds(policyInfo.lifetime);
-
-    //    return policyInfo;
-    //}
 
     /// @dev update counters by calling the involved services
     function _processSale(

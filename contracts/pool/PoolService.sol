@@ -488,50 +488,6 @@ contract PoolService is
             payoutBeneficiary);
     }
 
-    //function _transferTokenAndNotifyPolicyHolder(
-    //    InstanceReader instanceReader,
-    //    TokenHandler poolTokenHandler,
-    //    NftId productNftId,
-    //    NftId policyNftId,
-    //    PayoutId payoutId,
-    //    Amount payoutAmount,
-    //    address payoutBeneficiary
-    //)
-    //    internal
-    //{
-    //    (
-    //        Amount netPayoutAmount,
-    //        Amount processingFeeAmount,
-    //        address beneficiary
-    //    ) = PoolLib.calculatePayoutAmounts(
-    //        getRegistry(),
-    //        instanceReader,
-    //        productNftId, 
-    //        policyNftId,
-    //        payoutAmount,
-    //        payoutBeneficiary);
-
-        // 1st token tx to payout to beneficiary
-    //    poolTokenHandler.pushToken(
-    //        beneficiary, 
-    //        netPayoutAmount);
-
-        // 2nd token tx to transfer processing fees to product wallet
-        // if processingFeeAmount > 0
-    //    if (processingFeeAmount.gtz()) {
-    //        poolTokenHandler.pushToken(
-    //            instanceReader.getWallet(productNftId), 
-    //            processingFeeAmount);
-    //    }
-
-        // callback to policy holder if applicable
-    //    _policyHolderPayoutExecuted(
-    //        policyNftId, 
-    //        payoutId, 
-    //        beneficiary, 
-    //        netPayoutAmount);
-    //}
-
 
     /// @inheritdoc IPoolService
     function withdrawBundleFees(
@@ -612,110 +568,6 @@ contract PoolService is
     }
 
 
-    // function calculateRequiredCollateral(
-    //     InstanceReader instanceReader,
-    //     NftId productNftId, 
-    //     Amount sumInsuredAmount
-    // )
-    //     public
-    //     view 
-    //     returns(
-    //         NftId poolNftId,
-    //         Amount totalCollateralAmount,
-    //         Amount localCollateralAmount,
-    //         bool poolIsVerifyingApplications
-    //     )
-    // {
-    //     return CollateralLib.calculateRequiredCollateral(
-    //         instanceReader,
-    //         productNftId, 
-    //         sumInsuredAmount);
-    // }
-
-    //     _checkNftType(productNftId, PRODUCT());
-
-    //     poolNftId = instanceReader.getProductInfo(productNftId).poolNftId;
-    //     IComponents.PoolInfo memory poolInfo = instanceReader.getPoolInfo(poolNftId);
-    //     poolIsVerifyingApplications = poolInfo.isVerifyingApplications;
-
-    //     (
-    //         totalCollateralAmount,
-    //         localCollateralAmount
-    //     ) = calculateRequiredCollateral(
-    //         poolInfo.collateralizationLevel,
-    //         poolInfo.retentionLevel,
-    //         sumInsuredAmount);
-    // }
-
-
-    // function calculateRequiredCollateral(
-    //     UFixed collateralizationLevel, 
-    //     UFixed retentionLevel, 
-    //     Amount sumInsuredAmount
-    // )
-    //     public
-    //     pure 
-    //     returns(
-    //         Amount totalCollateralAmount,
-    //         Amount localCollateralAmount
-    //     )
-    // {
-    //     // collateralization is applied to sum insured
-    //     UFixed totalUFixed = collateralizationLevel * sumInsuredAmount.toUFixed();
-    //     totalCollateralAmount = AmountLib.toAmount(totalUFixed.toInt());
-
-    //     // retention level defines how much capital is required locally
-    //     localCollateralAmount = AmountLib.toAmount(
-    //         (retentionLevel * totalUFixed).toInt());
-    // }
-
-
-
-
-    //function _policyHolderPayoutExecuted(
-    //    NftId policyNftId, 
-    //    PayoutId payoutId,
-    //    address beneficiary,
-    //    Amount payoutAmount
-    //)
-    //    internal
-    //{
-    //    IPolicyHolder policyHolder = PoolLib.getPolicyHolder(getRegistry(), policyNftId);
-    //    if(address(policyHolder) != address(0)) {
-    //        policyHolder.payoutExecuted(policyNftId, payoutId, payoutAmount, beneficiary);
-    //    }
-    //}
-
-
-    //function _pullStakingAmount(
-    //    InstanceReader reader,
-    //    NftId poolNftId,
-    //    address from,
-    //    Amount amount
-    //)
-    //    internal
-    //{
-    //    IComponents.ComponentInfo memory info = reader.getComponentInfo(poolNftId);
-    //    info.tokenHandler.pullToken(
-    //        from,
-    //        amount);
-    //}
-
-    //function _pushUnstakingAmount(
-    //    InstanceReader reader,
-    //    NftId poolNftId,
-    //    address to,
-    //    Amount amount
-    //)
-    //    internal
-    //{
-    //    IComponents.ComponentInfo memory info = reader.getComponentInfo(poolNftId);
-    //    info.tokenHandler.pushToken(
-    //        to, 
-    //        amount);
-    //}
-
-
     function _getAndVerifyActivePool()
         internal
         virtual
@@ -727,28 +579,6 @@ contract PoolService is
     {
         return PoolLib.getAndVerifyActivePool(getRegistry(), msg.sender);
     }
-
-    // function _getAndVerifyActivePool()
-    //     internal
-    //     virtual
-    //     view
-    //     returns (
-    //         NftId poolNftId,
-    //         IInstance instance
-    //     )
-    // {
-    //     (
-    //         IRegistry.ObjectInfo memory info, 
-    //         address instanceAddress
-    //     ) = ContractLib.getAndVerifyComponent(
-    //         getRegistry(), 
-    //         msg.sender,
-    //         POOL(),
-    //         true); // only active pools
-
-    //     poolNftId = info.nftId;
-    //     instance = IInstance(instanceAddress);
-    // }
 
 
     function _getDomain() internal pure override returns(ObjectType) {
