@@ -138,6 +138,7 @@ contract InstanceAuthorizationV3
           // staking
           _authorize(functions, IInstance.setStakingLockingPeriod.selector, "setStakingLockingPeriod");
           _authorize(functions, IInstance.setStakingRewardRate.selector, "setStakingRewardRate");
+          _authorize(functions, IInstance.setStakingMaxAmount.selector, "setStakingMaxAmount");
           _authorize(functions, IInstance.refillStakingRewardReserves.selector, "refillStakingRewardReserves");
           _authorize(functions, IInstance.withdrawStakingRewardReserves.selector, "withdrawStakingRewardReserves");
 

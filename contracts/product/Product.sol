@@ -48,6 +48,7 @@ abstract contract Product is
     function registerComponent(address component)
         external
         virtual
+        restricted()
         onlyOwner()
         returns (NftId componentNftId)
     {

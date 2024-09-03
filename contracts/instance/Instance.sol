@@ -163,6 +163,7 @@ contract Instance is
 
     function setStakingMaxAmount(Amount maxStakedAmount)
         external
+        restricted()
         onlyOwner()
     {
         _instanceService.setStakingMaxAmount(maxStakedAmount);

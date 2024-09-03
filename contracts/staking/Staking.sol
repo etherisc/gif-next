@@ -114,6 +114,7 @@ contract Staking is
     function setStakingRate(uint256 chainId, address token, UFixed stakingRate)
         external
         virtual
+        restricted()
         onlyOwner()
     {
         StakingStorage storage $ = _getStakingStorage();
