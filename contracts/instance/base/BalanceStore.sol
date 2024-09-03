@@ -24,13 +24,12 @@ contract BalanceStore {
     mapping(NftId nftId => Amount balance) private _balanceAmount;
     mapping(NftId nftId => Amount locked) private _lockedAmount;
     mapping(NftId nftId => Amount fees) private _feeAmount;
-    mapping(NftId nftId => bool isRegistered) private _isRegistered;
 
-    // TODO check if this is made redundant by *Info struct updates
+    // used to indicate if the target has been registered as well as when it was last updated (not used externally atm)    
     mapping(NftId nftId => Blocknumber lastUpdatedIn) private _lastUpdatedIn;
 
     modifier onlyRegisteredTarget(NftId targetNftId) {
-        if (!_isRegistered[targetNftId]) {
+        if (!_lastUpdatedIn[targetNftId].gtz()) {
             revert ErrorBalanceStoreTargetNotRegistered(targetNftId);
         }
         _;
@@ -55,11 +54,10 @@ contract BalanceStore {
     }
 
     function _registerBalanceTarget(NftId targetNftId) internal {
-        if (_isRegistered[targetNftId]) {
+        if (_lastUpdatedIn[targetNftId].gtz()) {
             revert ErrorBalanceStoreTargetAlreadyRegistered(targetNftId);
         }
 
-        _isRegistered[targetNftId] = true;
         _setLastUpdatedIn(targetNftId);
 
         emit LogBalanceStoreTargetRegistered(targetNftId);
