@@ -13,6 +13,7 @@ import {IComponents} from "../instance/module/IComponents.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
 
 import {Amount, AmountLib} from "../type/Amount.sol";
+import {ContractLib} from "../shared/ContractLib.sol";
 import {DistributorType, DistributorTypeLib} from "../type/DistributorType.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
 import {KEEP_STATE} from "../type/StateId.sol";
@@ -76,7 +77,6 @@ contract DistributionService is
         restricted()
         returns (DistributorType distributorType)
     {
-        // _getAndVerifyActiveDistribution
         (NftId distributionNftId, IInstance instance) = _getAndVerifyActiveDistribution();
 
         {
@@ -241,7 +241,7 @@ contract DistributionService is
         onlyNftOfType(distributionNftId, DISTRIBUTION())
     {
         if (referralIsValid(distributionNftId, referralId)) {
-            IInstance instance = _getInstanceForDistribution(getRegistry(), distributionNftId);
+            IInstance instance = IInstance(ContractLib.getInstanceForComponent(getRegistry(), distributionNftId));
 
             // update book keeping for referral info
             IDistribution.ReferralInfo memory referralInfo = instance.getInstanceReader().getReferralInfo(referralId);
@@ -260,7 +260,7 @@ contract DistributionService is
         restricted()
         onlyNftOfType(distributionNftId, DISTRIBUTION())
     {
-        IInstance instance = _getInstanceForDistribution(getRegistry(), distributionNftId);
+        IInstance instance = IInstance(ContractLib.getInstanceForComponent(getRegistry(), distributionNftId));
         InstanceReader reader = instance.getInstanceReader();
         InstanceStore store = instance.getInstanceStore();
 
@@ -342,7 +342,7 @@ contract DistributionService is
             return false;
         }
 
-        IInstance instance = _getInstanceForDistribution(getRegistry(), distributionNftId);
+        IInstance instance = IInstance(ContractLib.getInstanceForComponent(getRegistry(), distributionNftId));
         IDistribution.ReferralInfo memory info = instance.getInstanceReader().getReferralInfo(referralId);
 
         if (info.distributorNftId.eqz()) {
@@ -412,15 +412,6 @@ contract DistributionService is
         }
     }
 
-
-    function _getInstanceForDistribution(IRegistry registry, NftId distributionNftId)
-        internal
-        view
-        returns(IInstance instance)
-    {
-        // TODO refactor to ComponentLib or similar
-        return PoolLib.getInstanceForComponent(registry, distributionNftId);
-    }
 
 
     function _getAndVerifyActiveDistribution()
