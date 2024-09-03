@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {Amount, AmountLib} from "../type/Amount.sol";
+import {ContractLib} from "../shared/ContractLib.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {UFixed, UFixedLib} from "../type/UFixed.sol";
 import {ObjectType} from "../type/ObjectType.sol";
@@ -21,14 +22,14 @@ import {IPolicy} from "../instance/module/IPolicy.sol";
 import {IBundle} from "../instance/module/IBundle.sol";
 import {IDistribution} from "../instance/module/IDistribution.sol";
 
-import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
+import {Service} from "../shared/Service.sol";
 
 import {IPricingService} from "./IPricingService.sol";
 import {IDistributionService} from "../distribution/IDistributionService.sol";
 
 
 contract PricingService is 
-    ComponentVerifyingService, 
+    Service, 
     IPricingService
 {
     IDistributionService internal _distributionService;
@@ -81,11 +82,11 @@ contract PricingService is
             // verify product
             (
                 IRegistry.ObjectInfo memory registryInfo, 
-                IInstance instance
-            ) = _getAndVerifyComponentInfo(productNftId, PRODUCT(), false);
+                address instanceAddress
+            ) = ContractLib.getInfoAndInstance(getRegistry(), productNftId, false);
 
             // get instance reader from local instance variable
-            reader = instance.getInstanceReader();
+            reader = IInstance(instanceAddress).getInstanceReader();
 
             NftId riskProductNftId = reader.getRiskInfo(riskId).productNftId;
             if (productNftId != riskProductNftId) {
