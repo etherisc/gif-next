@@ -11,6 +11,7 @@ import {IInstance} from "../../../contracts/instance/IInstance.sol";
 import {AccessManagedMock} from "../../mock/AccessManagedMock.sol";
 import {InstanceAuthzBaseTest} from "./InstanceAuthzBase.t.sol";
 import {RoleId, RoleIdLib} from "../../../contracts/type/RoleId.sol";
+import {StrLib} from "../../../contracts/type/String.sol";
 import {TimestampLib} from "../../../contracts/type/Timestamp.sol";
 
 
@@ -109,7 +110,7 @@ contract InstanceAuthzTargetsTest is InstanceAuthzBaseTest {
         assertTrue(instanceReader.isLocked(address(target)), "target not locked after locking instance");
     }
 
-    function test_instanceAuthzTargetsAuthorizeFunctionsHappyCase() public {
+    function test_instanceAuthzFunctionsAuthorizeFunctionsHappyCase() public {
         // GIVEN
         AccessManagedMock target = _deployAccessManagedMock();
         string memory targetName = "MyTarget";
@@ -119,6 +120,7 @@ contract InstanceAuthzTargetsTest is InstanceAuthzBaseTest {
 
         assertTrue(instanceReader.targetExists(address(target)), "target not existing after create");
         assertFalse(instanceReader.isLocked(address(target)), "target locked");
+        assertEq(instanceReader.authorizedFunctions(address(target)), 0, "unexpected number of authorized functions (before)");
         assertEq(target.counter1(), 0, "unexpected initial counter value");
 
         // WHEN + THEN attempt to call unauthorized function
@@ -134,28 +136,44 @@ contract InstanceAuthzTargetsTest is InstanceAuthzBaseTest {
 
         // WHEN - add function authz
         RoleId publicRoleId = instance.getInstanceAdmin().getPublicRole();
-        IAccess.FunctionInfo[] memory functions = new IAccess.FunctionInfo[](1);
+        IAccess.FunctionInfo[] memory functions = new IAccess.FunctionInfo[](2);
         functions[0] = instanceReader.toFunction(AccessManagedMock.increaseCounter1.selector, "increaseCounter1");
+        functions[1] = instanceReader.toFunction(AccessManagedMock.increaseCounter2.selector, "increaseCounter2");
 
         vm.prank(instanceOwner);
         instance.authorizeFunctions(address(target), publicRoleId, functions);
+
+        // THEN
+        assertEq(instanceReader.authorizedFunctions(address(target)), 2, "unexpected number of authorized functions (after)");
+
+        (IAccess.FunctionInfo memory func, RoleId authorizedRole) = instanceReader.getAuthorizedFunction(address(target), 0);
+        assertTrue(StrLib.eq(func.name.toString(), "increaseCounter1"), "unexpected function name");
+        assertEq(func.selector.toBytes4(), AccessManagedMock.increaseCounter1.selector, "unexpected function selector");
+        assertEq(func.createdAt.toInt(), TimestampLib.blockTimestamp().toInt(), "unexpected function creation time");
+        assertEq(authorizedRole.toInt(), publicRoleId.toInt(), "unexpected authorized role");
+
+        (func, authorizedRole) = instanceReader.getAuthorizedFunction(address(target), 1);
+        assertTrue(StrLib.eq(func.name.toString(), "increaseCounter2"), "unexpected function name");
+        assertEq(func.selector.toBytes4(), AccessManagedMock.increaseCounter2.selector, "unexpected function selector");
+        assertEq(func.createdAt.toInt(), TimestampLib.blockTimestamp().toInt(), "unexpected function creation time");
+        assertEq(authorizedRole.toInt(), publicRoleId.toInt(), "unexpected authorized role");
 
         // must not revert now
         vm.prank(outsider);
         target.increaseCounter1();
 
-        // THEN
         assertEq(target.counter1(), 1, "unexpected counter value after increaseCounter1");
     }
 
 
-    function test_instanceAuthzTargetsUnauthorizeFunctionsHappyCase() public {
+    function test_instanceAuthzFunctionsUnauthorizeFunctionsHappyCase() public {
         // GIVEN
         AccessManagedMock target = _deployAccessManagedMock();
         string memory targetName = "MyTarget";
         RoleId publicRoleId = instance.getInstanceAdmin().getPublicRole();
-        IAccess.FunctionInfo[] memory functions = new IAccess.FunctionInfo[](1);
+        IAccess.FunctionInfo[] memory functions = new IAccess.FunctionInfo[](2);
         functions[0] = instanceReader.toFunction(AccessManagedMock.increaseCounter1.selector, "increaseCounter1");
+        functions[1] = instanceReader.toFunction(AccessManagedMock.increaseCounter2.selector, "increaseCounter2");
 
         vm.startPrank(instanceOwner);
         instance.createTarget(address(target), targetName);
@@ -166,13 +184,24 @@ contract InstanceAuthzTargetsTest is InstanceAuthzBaseTest {
         vm.prank(outsider);
         target.increaseCounter1();
 
-        assertEq(target.counter1(), 1, "unexpected counter value after increaseCounter1");
+        assertEq(instanceReader.authorizedFunctions(address(target)), 2, "unexpected number of authorized functions (before)");
 
-        // WHEN - unauthorize function
+        // WHEN - unauthorize 1st function
+        functions = new IAccess.FunctionInfo[](1);
+        functions[0] = instanceReader.toFunction(AccessManagedMock.increaseCounter1.selector, "increaseCounter1");
+
         vm.prank(instanceOwner);
         instance.unauthorizeFunctions(address(target), functions);
 
         // THEN
+        assertEq(instanceReader.authorizedFunctions(address(target)), 1, "unexpected number of authorized functions (after)");
+
+        (IAccess.FunctionInfo memory func, RoleId authorizedRole) = instanceReader.getAuthorizedFunction(address(target), 0);
+        assertTrue(StrLib.eq(func.name.toString(), "increaseCounter2"), "unexpected function name");
+        assertEq(func.selector.toBytes4(), AccessManagedMock.increaseCounter2.selector, "unexpected function selector");
+        assertEq(func.createdAt.toInt(), TimestampLib.blockTimestamp().toInt(), "unexpected function creation time");
+        assertEq(authorizedRole.toInt(), publicRoleId.toInt(), "unexpected authorized role");
+
         vm.expectRevert(
             abi.encodeWithSelector(
                 IAccessManaged.AccessManagedUnauthorized.selector, 
@@ -185,7 +214,7 @@ contract InstanceAuthzTargetsTest is InstanceAuthzBaseTest {
     }
 
 
-    function test_instanceAuthzToTargetAll() public {
+    function test_instanceAuthzFunctionsToFunction() public {
         bytes4 signature = AccessManagedMock.increaseCounter1.selector;
         string memory name = "increaseCounter1";
 
@@ -211,11 +240,6 @@ contract InstanceAuthzTargetsTest is InstanceAuthzBaseTest {
 
 
     //--- helper functions ----------------------------------------------------//
-
-    // TODO cleanup
-    // function _deployAccessManagedMock() internal returns (AccessManagedMock accessManagedMock) {
-    //     return _deployAccessManagedMock();
-    // }
 
     function _deployAccessManagedMock() internal returns (AccessManagedMock accessManagedMock) {
         accessManagedMock = new AccessManagedMock(instance.authority());
