@@ -11,6 +11,7 @@ import {IPricingService} from "./IPricingService.sol";
 import {IRegistryService} from "../registry/IRegistryService.sol";
 
 import {AmountLib} from "../type/Amount.sol";
+import {ContractLib} from "../shared/ContractLib.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {zeroTimestamp} from "../type/Timestamp.sol";
 import {ObjectType, BUNDLE, DISTRIBUTION, PRODUCT, REGISTRY, APPLICATION, POLICY, PRICE} from "../type/ObjectType.sol";
@@ -19,13 +20,13 @@ import {NftId, NftIdLib} from "../type/NftId.sol";
 import {ReferralId} from "../type/Referral.sol";
 import {RiskId} from "../type/RiskId.sol";
 import {Amount, AmountLib} from "../type/Amount.sol";
-import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
+import {Service} from "../shared/Service.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 
 
 
 contract ApplicationService is 
-    ComponentVerifyingService, 
+    Service, 
     IApplicationService
 {
     IDistributionService private _distributionService;
@@ -155,7 +156,7 @@ contract ApplicationService is
     {
         _checkNftType(bundleNftId, BUNDLE());
 
-        (NftId productNftId,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
+        (NftId productNftId, IInstance instance) = _getAndVerifyActiveProduct();
 
         // check if provided references are valid and linked to calling product contract
         InstanceReader instanceReader = instance.getInstanceReader();
@@ -265,11 +266,32 @@ contract ApplicationService is
     {
         _checkNftType(applicationNftId, POLICY());
 
-        (,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
+        (, IInstance instance) = _getAndVerifyActiveProduct();
         instance.getInstanceStore().updateApplicationState(applicationNftId, REVOKED());
     }
 
     // internal functions
+
+    function _getAndVerifyActiveProduct()
+        internal
+        view
+        returns (
+            NftId productNftId,
+            IInstance instance
+        )
+    {
+        (
+            IRegistry.ObjectInfo memory info, 
+            address instanceAddress
+        ) = ContractLib.getAndVerifyComponent(
+            getRegistry(), 
+            msg.sender,
+            PRODUCT(),
+            true); // only active pools
+
+        productNftId = info.nftId;
+        instance = IInstance(instanceAddress);
+    }
 
 
     function _getDomain() internal pure override returns(ObjectType) {
