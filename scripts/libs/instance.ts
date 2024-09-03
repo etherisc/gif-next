@@ -151,6 +151,7 @@ export async function deployAndRegisterMasterInstance(
         [],
         { 
             libraries: {
+                AccessAdminLib: libraries.accessAdminLibAddress,
                 AmountLib: libraries.amountLibAddress,
                 ClaimIdLib: libraries.claimIdLibAddress,
                 DistributorTypeLib: libraries.distributorTypeLibAddress,
