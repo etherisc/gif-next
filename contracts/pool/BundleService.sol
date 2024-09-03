@@ -4,7 +4,6 @@ pragma solidity ^0.8.20;
 import {IAccountingService} from "../accounting/IAccountingService.sol";
 import {IBundle} from "../instance/module/IBundle.sol";
 import {IBundleService} from "./IBundleService.sol";
-import {IComponents} from "../instance/module/IComponents.sol";
 import {IComponentService} from "../shared/IComponentService.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegistryService} from "../registry/IRegistryService.sol";
@@ -13,19 +12,19 @@ import {InstanceStore} from "../instance/InstanceStore.sol";
 
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {BundleSet} from "../instance/BundleSet.sol";
-import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
 import {Fee} from "../type/Fee.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
 import {ObjectType, ACCOUNTING, COMPONENT, POOL, BUNDLE, POLICY, REGISTRY} from "../type/ObjectType.sol";
-import {StateId, ACTIVE, PAUSED, CLOSED, KEEP_STATE} from "../type/StateId.sol";
+import {PoolLib} from "./PoolLib.sol";
 import {Seconds} from "../type/Seconds.sol";
+import {Service} from "../shared/Service.sol";
+import {StateId, ACTIVE, PAUSED, CLOSED, KEEP_STATE} from "../type/StateId.sol";
 import {Timestamp, TimestampLib, zeroTimestamp} from "../type/Timestamp.sol";
 
-string constant BUNDLE_SERVICE_NAME = "BundleService";
 
 contract BundleService is 
-    ComponentVerifyingService, 
+    Service, 
     IBundleService 
 {
     
@@ -69,7 +68,7 @@ contract BundleService is
     {
         _checkNftType(bundleNftId, BUNDLE());
 
-        (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
+        (NftId poolNftId, IInstance instance) = PoolLib.getAndVerifyActivePool(getRegistry(), msg.sender);
         InstanceReader instanceReader = instance.getInstanceReader();
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
         if(bundleInfo.poolNftId.eqz()) {
@@ -96,7 +95,7 @@ contract BundleService is
         restricted()
         returns(NftId bundleNftId)
     {
-        (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
+        (NftId poolNftId, IInstance instance) = PoolLib.getAndVerifyActivePool(getRegistry(), msg.sender);
 
         // register bundle with registry
         bundleNftId = _registryService.registerBundle(
@@ -190,7 +189,7 @@ contract BundleService is
         // checks
         _checkNftType(bundleNftId, BUNDLE());
 
-        (,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
+        (, IInstance instance) = PoolLib.getAndVerifyActivePool(getRegistry(), msg.sender);
 
         // udpate bundle state
         instance.getInstanceStore().updateBundleState(bundleNftId, PAUSED());
@@ -212,7 +211,7 @@ contract BundleService is
         // checks
         _checkNftType(bundleNftId, BUNDLE());
 
-        (,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
+        (, IInstance instance) = PoolLib.getAndVerifyActivePool(getRegistry(), msg.sender);
 
         // effects
         // udpate bundle state
@@ -344,7 +343,7 @@ contract BundleService is
         // checks
         _checkNftType(bundleNftId, BUNDLE());
 
-        (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
+        (NftId poolNftId, IInstance instance) = PoolLib.getAndVerifyActivePool(getRegistry(), msg.sender);
         IBundle.BundleInfo memory bundleInfo = instance.getInstanceReader().getBundleInfo(bundleNftId);
         StateId bundleState = instance.getInstanceReader().getBundleState(bundleNftId);
 

@@ -2,13 +2,11 @@
 pragma solidity ^0.8.20;
 
 import {IAccountingService} from "../accounting/IAccountingService.sol";
-import {IBundle} from "../instance/module/IBundle.sol";
 import {IBundleService} from "./IBundleService.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {IComponentService} from "../shared/IComponentService.sol";
 import {IInstance} from "../instance/IInstance.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
-import {IPolicyHolder} from "../shared/IPolicyHolder.sol";
 import {IPoolComponent} from "../pool/IPoolComponent.sol";
 import {IPoolService} from "./IPoolService.sol";
 import {IProductComponent} from "../product/IProductComponent.sol";
@@ -27,9 +25,6 @@ import {PayoutId} from "../type/PayoutId.sol";
 import {PoolLib} from "./PoolLib.sol";
 import {Service} from "../shared/Service.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
-import {UFixed} from "../type/UFixed.sol";
-
-string constant POOL_SERVICE_NAME = "PoolService";
 
 
 contract PoolService is 

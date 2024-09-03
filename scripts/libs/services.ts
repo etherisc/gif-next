@@ -1,13 +1,12 @@
 
-import { getImplementationAddress } from '@openzeppelin/upgrades-core';
 import { AddressLike, BytesLike, Signer, id } from "ethers";
-import { ethers as hhEthers } from "hardhat";
 import {
     AccountingService, AccountingServiceManager, AccountingService__factory,
     ApplicationService, ApplicationServiceManager, ApplicationService__factory,
     BundleService, BundleServiceManager, BundleService__factory,
     ClaimService, ClaimServiceManager, ClaimService__factory,
-    ComponentService, ComponentServiceManager, ComponentService__factory,
+    ComponentService,
+    ComponentService__factory,
     DistributionService, DistributionServiceManager, DistributionService__factory,
     IRegistry__factory,
     InstanceService, InstanceServiceManager, InstanceService__factory,
@@ -17,19 +16,17 @@ import {
     PricingService, PricingServiceManager, PricingService__factory,
     ProxyManager,
     RegistryService,
-    RegistryServiceManager,
     RegistryService__factory,
     ReleaseRegistry,
     RiskService, RiskServiceManager, RiskService__factory,
     StakingService, StakingServiceManager, StakingService__factory
 } from "../../typechain-types";
 import { logger } from "../logger";
-import { deployContract, deployProxyManagerContract } from "./deployment";
+import { deployProxyManagerContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
 import { RegistryAddresses } from "./registry";
 import { createRelease } from "./release";
 import { executeTx, getFieldFromTxRcptLogs, getTxOpts } from "./transaction";
-import { prepareVerificationData } from './verification';
 
 
 export type ServiceAddresses = {
@@ -325,6 +322,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
                 AmountLib: libraries.amountLibAddress,
                 ContractLib: libraries.contractLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
+                PoolLib: libraries.poolLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
                 SecondsLib: libraries.secondsLibAddress,
                 TimestampLib: libraries.timestampLibAddress,

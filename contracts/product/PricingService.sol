@@ -1,34 +1,31 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Amount, AmountLib} from "../type/Amount.sol";
-import {Seconds} from "../type/Seconds.sol";
-import {UFixed, UFixedLib} from "../type/UFixed.sol";
-import {ObjectType} from "../type/ObjectType.sol";
-import {NftId} from "../type/NftId.sol";
-import {Fee} from "../type/Fee.sol";
-import {ReferralId} from "../type/Referral.sol";
-import {RiskId} from "../type/RiskId.sol";
-import {PRODUCT, BUNDLE, DISTRIBUTION, PRICE} from "../type/ObjectType.sol";
+import {IBundle} from "../instance/module/IBundle.sol";
+import {IComponents} from "../instance/module/IComponents.sol";
+import {IDistribution} from "../instance/module/IDistribution.sol";
+import {IDistributionService} from "../distribution/IDistributionService.sol";
+import {IInstance} from "../instance/IInstance.sol";
+import {IPolicy} from "../instance/module/IPolicy.sol";
+import {IPricingService} from "./IPricingService.sol";
+import {IProductComponent} from "./IProductComponent.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 
-import {IProductComponent} from "./IProductComponent.sol";
-
-import {IInstance} from "../instance/IInstance.sol";
+import {Amount} from "../type/Amount.sol";
+import {BUNDLE, DISTRIBUTION, PRICE, PRODUCT} from "../type/ObjectType.sol";
+import {ContractLib} from "../shared/ContractLib.sol";
+import {Fee} from "../type/Fee.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
-import {IComponents} from "../instance/module/IComponents.sol";
-import {IPolicy} from "../instance/module/IPolicy.sol";
-import {IBundle} from "../instance/module/IBundle.sol";
-import {IDistribution} from "../instance/module/IDistribution.sol";
-
-import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
-
-import {IPricingService} from "./IPricingService.sol";
-import {IDistributionService} from "../distribution/IDistributionService.sol";
+import {NftId} from "../type/NftId.sol";
+import {ObjectType} from "../type/ObjectType.sol";
+import {ReferralId} from "../type/Referral.sol";
+import {RiskId} from "../type/RiskId.sol";
+import {Seconds} from "../type/Seconds.sol";
+import {Service} from "../shared/Service.sol";
 
 
 contract PricingService is 
-    ComponentVerifyingService, 
+    Service, 
     IPricingService
 {
     IDistributionService internal _distributionService;
@@ -81,11 +78,11 @@ contract PricingService is
             // verify product
             (
                 IRegistry.ObjectInfo memory registryInfo, 
-                IInstance instance
-            ) = _getAndVerifyComponentInfo(productNftId, PRODUCT(), false);
+                address instanceAddress
+            ) = ContractLib.getInfoAndInstance(getRegistry(), productNftId, false);
 
             // get instance reader from local instance variable
-            reader = instance.getInstanceReader();
+            reader = IInstance(instanceAddress).getInstanceReader();
 
             NftId riskProductNftId = reader.getRiskInfo(riskId).productNftId;
             if (productNftId != riskProductNftId) {
