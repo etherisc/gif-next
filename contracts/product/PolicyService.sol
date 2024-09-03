@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-
 import {IAccountingService} from "../accounting/IAccountingService.sol";
 import {IComponentService} from "../shared/IComponentService.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
@@ -26,7 +24,6 @@ import {PolicyServiceLib} from "./PolicyServiceLib.sol";
 import {ReferralId} from "../type/Referral.sol";
 import {RiskId} from "../type/RiskId.sol";
 import {Service} from "../shared/Service.sol";
-import {StateId} from "../type/StateId.sol";
 import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {VersionPart} from "../type/Version.sol";

@@ -5,7 +5,6 @@ import {IService} from "../shared/IService.sol";
 
 import {Amount} from "../type/Amount.sol";
 import {IInstance} from "../instance/IInstance.sol";
-import {InstanceReader} from "../instance/InstanceReader.sol";
 import {NftId} from "../type/NftId.sol";
 import {StateId} from "../type/StateId.sol";
 import {Timestamp} from "../type/Timestamp.sol";

@@ -3,12 +3,13 @@ pragma solidity ^0.8.20;
 
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
+import {IPolicyHolder} from "./IPolicyHolder.sol";
+
 import {Amount} from "../type/Amount.sol";
 import {ClaimId} from "../type/ClaimId.sol";
 import {InitializableERC165} from "./InitializableERC165.sol";
-import {IPolicyHolder} from "./IPolicyHolder.sol";
 import {NftId} from "../type/NftId.sol";
-import {PayoutId, PayoutIdLib} from "../type/PayoutId.sol";
+import {PayoutId} from "../type/PayoutId.sol";
 import {RegistryLinked} from "./RegistryLinked.sol";
 import {Timestamp} from "../type/Timestamp.sol";
 

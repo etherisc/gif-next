@@ -24,7 +24,6 @@ import {Service} from "../shared/Service.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 
 
-
 contract ApplicationService is 
     Service, 
     IApplicationService
