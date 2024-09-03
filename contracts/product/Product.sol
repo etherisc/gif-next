@@ -80,6 +80,7 @@ abstract contract Product is
     )
         public 
         view 
+        virtual
         override 
         onlyNftOfType(bundleNftId, BUNDLE())
         returns (Amount premiumAmount)
