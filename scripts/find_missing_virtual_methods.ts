@@ -13,7 +13,6 @@ const RELEVANT_BASE_CONTRACTS = [
     // 'ObjectManager',
     'Component',
     'InstanceLinkedComponent',
-    'ComponentVerifyingService'
 ];
 
 class VirtualMissingListener extends SolidityFileListener {

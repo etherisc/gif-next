@@ -15,7 +15,6 @@ const RELEVANT_BASE_CONTRACTS = [
     'Service',
     'Component',
     'InstanceLinkedComponent',
-    'ComponentVerifyingService',
     'ObjectSet'
 ];
 
