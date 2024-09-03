@@ -213,7 +213,7 @@ contract TestProduct is GifTest {
         assertTrue(policyInfo.expiredAt.gtz(), "expiredAt not set");
         assertTrue(policyInfo.expiredAt.toInt() == policyInfo.activatedAt.addSeconds(sec30).toInt(), "expiredAt not activatedAt + 30");
 
-        assertEq(instanceReader.getPremiumInfoState(policyNftId).toInt(), EXPECTED().toInt(), "premium info state not CALCULATED");
+        assertEq(instanceReader.getPremiumState(policyNftId).toInt(), EXPECTED().toInt(), "premium info state not CALCULATED");
 
         // solhint-disable-next-line
         console.log("checking bundle amounts after underwriting");
@@ -318,7 +318,7 @@ contract TestProduct is GifTest {
         assertTrue(policyInfo.expiredAt.gtz(), "expiredAt not set");
         assertTrue(policyInfo.expiredAt.toInt() == policyInfo.activatedAt.addSeconds(sec30).toInt(), "expiredAt not activatedAt + 30");
 
-        assertEq(instanceReader.getPremiumInfoState(policyNftId).toInt(), PAID().toInt(), "premium info state not CALCULATED");
+        assertEq(instanceReader.getPremiumState(policyNftId).toInt(), PAID().toInt(), "premium info state not CALCULATED");
 
         // solhint-disable-next-line 
         console.log("checking token balances after underwriting");
@@ -654,7 +654,7 @@ contract TestProduct is GifTest {
 
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
         assertEq(policyInfo.premiumAmount.toInt(), 137, "unexpected premium amount from application");
-        assertEq(instanceReader.getPremiumInfoState(policyNftId).toInt(), PAID().toInt(), "unexpected premium info state");
+        assertEq(instanceReader.getPremiumState(policyNftId).toInt(), PAID().toInt(), "unexpected premium info state");
     }
 
 

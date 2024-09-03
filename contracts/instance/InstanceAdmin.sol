@@ -11,7 +11,7 @@ import {AccessAdmin} from "../authorization/AccessAdmin.sol";
 import {AccessAdminLib} from "../authorization/AccessAdminLib.sol";
 import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
 import {ObjectType, INSTANCE} from "../type/ObjectType.sol";
-import {RoleId, RoleIdLib, ADMIN_ROLE} from "../type/RoleId.sol";
+import {RoleId, ADMIN_ROLE} from "../type/RoleId.sol";
 import {Str} from "../type/String.sol";
 import {VersionPart} from "../type/Version.sol";
 
@@ -183,7 +183,7 @@ contract InstanceAdmin is
 
     /// @dev Creates a custom role.
     function createRole(
-        string memory roleName,
+        string memory name,
         RoleId adminRoleId,
         uint32 maxMemberCount
     )
@@ -191,6 +191,13 @@ contract InstanceAdmin is
         restricted()
         returns (RoleId roleId)
     {
+        // check role does not yet exist
+        if (roleExists(name)) {
+            revert ErrorAccessAdminRoleAlreadyCreated(
+                getRoleForName(name),
+                name);
+        }
+
         // create roleId
         roleId = AccessAdminLib.getCustomRoleId(_customRoleIdNext++);
 
@@ -201,7 +208,7 @@ contract InstanceAdmin is
                 adminRoleId, 
                 IAccess.RoleType.Custom, 
                 maxMemberCount, 
-                roleName));
+                name));
     }
 
 
@@ -261,7 +268,6 @@ contract InstanceAdmin is
     )
         external
         restricted()
-        onlyExistingTarget(target)
     {
         _checkComponentOrCustomTarget(target);
         _authorizeTargetFunctions(target, roleId, functions, true);
@@ -275,7 +281,6 @@ contract InstanceAdmin is
     )
         external
         restricted()
-        onlyExistingTarget(target)
     {
         _checkComponentOrCustomTarget(target);
         _authorizeTargetFunctions(target, ADMIN_ROLE(), functions, false);
@@ -347,16 +352,6 @@ contract InstanceAdmin is
             }
         }
     }
-
-    // TODO cleanup
-    // function toComponentRole(RoleId roleId, uint64 componentIdx)
-    //     internal
-    //     pure
-    //     returns (RoleId)
-    // {
-    //     return RoleIdLib.toRoleId(
-    //         RoleIdLib.toInt(roleId) + componentIdx);
-    // }
 
 
     function _createTargetAuthorizations(IAuthorization authorization)

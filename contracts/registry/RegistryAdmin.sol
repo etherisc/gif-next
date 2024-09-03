@@ -146,7 +146,7 @@ contract RegistryAdmin is
             RoleInfo memory roleInfo = authorization.getRoleInfo(roleId);
 
             // create role if not exists
-            if (!roleExists(roleInfo.name)) {
+            if (!roleExists(roleInfo.name.toString())) {
                 _createRole(
                     roleId,
                     roleInfo);

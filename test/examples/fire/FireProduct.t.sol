@@ -117,7 +117,7 @@ contract FireProductTest is FireTestBase {
         assertEq(TimestampLib.zero(), policy.closedAt, "policy.closedAt mismatch");
 
         // check premium state is PAID (product uses immediate payment) and then check the premium values
-        assertTrue(PAID().eq(instanceReader.getPremiumInfoState(policyNftId)));
+        assertTrue(PAID().eq(instanceReader.getPremiumState(policyNftId)));
         IPolicy.PremiumInfo memory premiumInfo = instanceReader.getPremiumInfo(policyNftId);
         assertEq((5000 + 100) * 10 ** 6, premiumInfo.fullPremiumAmount.toInt());
         assertEq(premium, premiumInfo.fullPremiumAmount, "premiumInfo.fullPremiumAmount mismatch");

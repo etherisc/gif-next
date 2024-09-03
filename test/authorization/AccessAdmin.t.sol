@@ -103,6 +103,20 @@ contract AccessAdminForTesting is AccessAdmin {
         external
         restricted()
     {
+        // check role does not yet exist
+        if (roleExists(roleId)) {
+            revert IAccessAdmin.ErrorAccessAdminRoleAlreadyCreated(
+                roleId,
+                getRoleInfo(roleId).name.toString());
+        }
+
+        if (roleExists(name)) {
+            revert IAccessAdmin.ErrorAccessAdminRoleNameAlreadyExists(
+                roleId,
+                name,
+                getRoleForName(name));
+        }
+
         _createRole(
             roleId,
             AccessAdminLib.toRole(
@@ -173,9 +187,6 @@ contract AccessAdminForTesting is AccessAdmin {
         virtual
         restricted()
     {
-        bool createRole = true;
-        bool customTarget = true;
-        bool checkAuthoritiy = true;
         _createManagedTarget(target, name, IAccess.TargetType.Custom);
     }
 
@@ -232,7 +243,7 @@ contract AccessAdminBaseTest is Test {
 
     RegistryAdmin public registryAdmin;
     Registry public registry;
-    VersionPart release;
+    VersionPart public release;
     AccessManagerCloneable public accessManager;
     AccessAdminForTesting public accessAdmin;
 
@@ -249,7 +260,7 @@ contract AccessAdminBaseTest is Test {
         // create registry and release version
         registryAdmin = new RegistryAdmin();
         registry = new Registry(registryAdmin, globalRegistry);
-        VersionPart release = VersionPartLib.toVersionPart(3);
+        release = VersionPartLib.toVersionPart(3);
 
         // complete setup (which links internal acccess manager to registry and release)
         // and grants manager role to deployer
@@ -578,7 +589,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
             newRoleName);
         vm.stopPrank();
 
-        // WHEN + THEN - use existing role id
+        // WHEN + THEN - use existing role id with differnt name
         vm.expectRevert(
             abi.encodeWithSelector(
                 IAccessAdmin.ErrorAccessAdminRoleAlreadyCreated.selector, 
@@ -592,7 +603,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
             "SomeOtherRule");
         vm.stopPrank();
 
-        // WHEN + THEN - use existing role name
+        // WHEN + THEN - use existing role name with different role id
         RoleId otherRoleId = RoleIdLib.toRoleId(123);
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -851,7 +862,6 @@ contract AccessAdminTest is AccessAdminBaseTest {
     function test_accessAdminGrantRevokeNonexistentRole() public {
 
         // GIVEN - setup
-        RoleId adminRoleId = accessAdmin.getAdminRole();
         RoleId missingRoleId = RoleIdLib.toRoleId(404);
 
         // WHEN + THEN grant/revoke
@@ -901,8 +911,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         console.log("attempt to grant admin role");
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessAdmin.ErrorAccessAdminRoleIsLocked.selector,
-                adminRole));
+                IAccessAdmin.ErrorAccessAdminInvalidUserOfAdminRole.selector));
 
         accessAdmin.grantRole(outsider, adminRole);
 
@@ -910,8 +919,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         console.log("attempt to revoke admin role");
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessAdmin.ErrorAccessAdminRoleIsLocked.selector,
-                adminRole));
+                IAccessAdmin.ErrorAccessAdminInvalidUserOfAdminRole.selector));
 
         accessAdmin.revokeRole(outsider, adminRole);
 
@@ -919,8 +927,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         console.log("attempt to renounce admin role");
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessAdmin.ErrorAccessAdminRoleIsLocked.selector,
-                adminRole));
+                IAccessAdmin.ErrorAccessAdminInvalidUserOfAdminRole.selector));
 
         accessAdmin.renounceRole(adminRole);
 
@@ -931,8 +938,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         console.log("attempt to grant public role");
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessManager.AccessManagerLockedRole.selector,
-                publicRole));
+                IAccessAdmin.ErrorAccessAdminInvalidUserOfPublicRole.selector));
 
         accessAdmin.grantRole(outsider, publicRole);
 
@@ -940,8 +946,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         console.log("attempt to revoke public role");
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessManager.AccessManagerLockedRole.selector,
-                publicRole));
+                IAccessAdmin.ErrorAccessAdminInvalidUserOfPublicRole.selector));
 
         accessAdmin.revokeRole(outsider, publicRole);
 
@@ -949,8 +954,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         console.log("attempt to renounce public role");
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessManager.AccessManagerLockedRole.selector,
-                publicRole));
+                IAccessAdmin.ErrorAccessAdminInvalidUserOfPublicRole.selector));
 
         accessAdmin.renounceRole(publicRole);
 

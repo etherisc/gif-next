@@ -290,7 +290,7 @@ library ObjectTypeLib {
         }
 
         bytes memory buffer = new bytes(digits);
-        uint index = digits - 1;
+        uint256 index = digits - 1;
 
         temp = value;
         while (temp != 0) {

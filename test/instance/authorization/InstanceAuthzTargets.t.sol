@@ -8,11 +8,9 @@ import {IAccess} from "../../../contracts/authorization/IAccess.sol";
 import {IAccessAdmin} from "../../../contracts/authorization/IAccessAdmin.sol";
 import {IInstance} from "../../../contracts/instance/IInstance.sol";
 
-import {AccessAdminLib} from "../../../contracts/authorization/AccessAdminLib.sol";
 import {AccessManagedMock} from "../../mock/AccessManagedMock.sol";
 import {InstanceAuthzBaseTest} from "./InstanceAuthzBase.t.sol";
-import {INftOwnable} from "../../../contracts/shared/INftOwnable.sol";
-import {RoleId, RoleIdLib, ADMIN_ROLE, INSTANCE_OWNER_ROLE} from "../../../contracts/type/RoleId.sol";
+import {RoleId, RoleIdLib} from "../../../contracts/type/RoleId.sol";
 import {TimestampLib} from "../../../contracts/type/Timestamp.sol";
 
 
@@ -84,7 +82,7 @@ contract InstanceAuthzTargetsTest is InstanceAuthzBaseTest {
         string memory targetName = "MyTarget";
 
         vm.prank(instanceOwner);
-        RoleId myTargetRoleId = instance.createTarget(address(target), targetName);
+        instance.createTarget(address(target), targetName);
 
         assertTrue(instanceReader.targetExists(address(target)), "target not existing after create");
         assertFalse(instanceReader.isLocked(address(target)), "target locked");
@@ -214,11 +212,12 @@ contract InstanceAuthzTargetsTest is InstanceAuthzBaseTest {
 
     //--- helper functions ----------------------------------------------------//
 
-    function _deployAccessManagedMock() internal returns (AccessManagedMock accessManagedMock) {
-        return _deployAccessManagedMock(instance.authority());
-    }
+    // TODO cleanup
+    // function _deployAccessManagedMock() internal returns (AccessManagedMock accessManagedMock) {
+    //     return _deployAccessManagedMock();
+    // }
 
-    function _deployAccessManagedMock(address authority) internal returns (AccessManagedMock accessManagedMock) {
+    function _deployAccessManagedMock() internal returns (AccessManagedMock accessManagedMock) {
         accessManagedMock = new AccessManagedMock(instance.authority());
     }
 }

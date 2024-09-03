@@ -279,7 +279,7 @@ contract InstanceService is
         returns (Amount newBalance)
     {
         NftId instanceNftId = getRegistry().getNftIdForAddress(msg.sender);
-        _stakingService.withdrawInstanceRewardReserves(
+        newBalance = _stakingService.withdrawInstanceRewardReserves(
             instanceNftId,
             dipAmount);
     }
@@ -426,37 +426,7 @@ contract InstanceService is
     }
 
 
-    /// all gif targets MUST be children of instanceNftId
-    function _createGifTarget(
-        NftId instanceNftId,
-        address targetAddress,
-        string memory targetName,
-        RoleId[] memory roles,
-        bytes4[][] memory selectors
-    )
-        internal
-        virtual
-    {
-        // TODO instanceAdmin will check target instance match anyway
-        (
-            IInstance instance, // or instanceInfo
-            // or targetInfo
-        ) = _validateInstanceAndComponent(instanceNftId, targetAddress);
-
-        InstanceAdmin instanceAdmin = instance.getInstanceAdmin();
-
-        // TODO refactor/implement
-        // instanceAdmin.createGifTarget(targetAddress, targetName);
-
-        // set proposed target config
-        for(uint roleIdx = 0; roleIdx < roles.length; roleIdx++) {
-            // TODO refactor/implement
-            // instanceAdmin.setTargetFunctionRoleByService(targetName, selectors[roleIdx], roles[roleIdx]);
-        }
-    }
-
-
-    /// @dev top level initializer
+    /// @dev top level initializer (upgradable contract)
     function _initialize(
         address owner, 
         bytes memory data
@@ -499,12 +469,9 @@ contract InstanceService is
             }
 
             componentNftId = componentInfo.nftId;
-        } else {
-
         }
 
-        instance = Instance(instanceInfo.objectAddress);
-        
+        instance = Instance(instanceInfo.objectAddress);        
     }
 
 

@@ -243,7 +243,7 @@ contract Staking is
         returns (Amount newBalance)
     {
         StakingStorage storage $ = _getStakingStorage();
-        uint chainId = $._reader.getTargetInfo(targetNftId).chainId;
+        uint256 chainId = $._reader.getTargetInfo(targetNftId).chainId;
         UFixed stakingRate = $._reader.getStakingRate(chainId, token);
         newBalance = $._store.increaseTotalValueLocked(targetNftId, stakingRate, token, amount);
     }
@@ -256,7 +256,7 @@ contract Staking is
         returns (Amount newBalance)
     {
         StakingStorage storage $ = _getStakingStorage();
-        uint chainId = $._reader.getTargetInfo(targetNftId).chainId;
+        uint256 chainId = $._reader.getTargetInfo(targetNftId).chainId;
         UFixed stakingRate = $._reader.getStakingRate(chainId, token);
         newBalance = $._store.decreaseTotalValueLocked(targetNftId, stakingRate, token, amount);
     }
@@ -495,8 +495,9 @@ contract Staking is
     }
 
 
+    /// @dev top level initializer (upgradable contract)
     function _initialize(
-        address owner, 
+        address, 
         bytes memory data
     )
         internal
@@ -513,8 +514,6 @@ contract Staking is
         // only admin(authority) and dip token address are set in registry at this point
         IRegistry registry = IRegistry(registryAddress);
         address authority = registry.getAuthority();
-        TokenRegistry tokenRegistry = TokenRegistry(tokenRegistryAddress);
-        address dipTokenAddress = tokenRegistry.getDipTokenAddress();
 
         // wiring to external contracts
         StakingStorage storage $ = _getStakingStorage();

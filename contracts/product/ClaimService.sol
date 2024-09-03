@@ -2,7 +2,6 @@
 pragma solidity ^0.8.20;
 
 import {IClaimService} from "./IClaimService.sol";
-import {IComponents} from "../instance/module/IComponents.sol";
 import {IInstance} from "../instance/IInstance.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
 import {IPolicyHolder} from "../shared/IPolicyHolder.sol";
@@ -14,11 +13,10 @@ import {IRegistry} from "../registry/IRegistry.sol";
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {ClaimId, ClaimIdLib} from "../type/ClaimId.sol";
 import {ContractLib} from "../shared/ContractLib.sol";
-import {FeeLib} from "../type/Fee.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
 import {NftId} from "../type/NftId.sol";
-import {ObjectType, COMPONENT, CLAIM, POLICY, POOL, PRODUCT} from "../type/ObjectType.sol";
+import {ObjectType, CLAIM, POLICY, POOL, PRODUCT} from "../type/ObjectType.sol";
 import {PayoutId, PayoutIdLib} from "../type/PayoutId.sol";
 import {Service} from "../shared/Service.sol";
 import {StateId} from "../type/StateId.sol";
@@ -169,8 +167,7 @@ contract ClaimService is
         _checkNftType(policyNftId, POLICY());
 
         (
-            ,
-            IInstance instance,
+            ,,
             InstanceReader instanceReader,
             InstanceStore instanceStore,
             IPolicy.PolicyInfo memory policyInfo
@@ -200,8 +197,7 @@ contract ClaimService is
         // nonReentrant() // prevents creating a reinsurance claim in a single tx
     {        
         (
-            ,
-            IInstance instance,
+            ,,
             InstanceReader instanceReader,
             InstanceStore instanceStore,
             IPolicy.PolicyInfo memory policyInfo
@@ -235,7 +231,6 @@ contract ClaimService is
             ,,
             InstanceReader instanceReader,
             InstanceStore instanceStore,
-            IPolicy.PolicyInfo memory policyInfo
         ) = _verifyCallerWithPolicy(policyNftId);
 
         // check/update claim info
@@ -323,8 +318,7 @@ contract ClaimService is
     {
         // checks
         (
-            NftId productNftId,,
-            // IInstance instance,
+            ,,
             InstanceReader instanceReader,
             InstanceStore instanceStore,
             IPolicy.PolicyInfo memory policyInfo
@@ -356,7 +350,8 @@ contract ClaimService is
         Amount payoutAmount = payoutInfo.amount;
         {
             ClaimId claimId = payoutId.toClaimId();
-            IPolicy.ClaimInfo memory claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
+            // TODO cleanup
+            // IPolicy.ClaimInfo memory claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
             claimInfo.paidAmount = claimInfo.paidAmount.add(payoutAmount);
             claimInfo.openPayoutsCount -= 1;
 
@@ -401,11 +396,9 @@ contract ClaimService is
     {
         // checks
         (
-            ,
-            IInstance instance,
+            ,,
             InstanceReader instanceReader,
             InstanceStore instanceStore,
-            IPolicy.PolicyInfo memory policyInfo
         ) = _verifyCallerWithPolicy(policyNftId);
 
         StateId payoutState = instanceReader.getPayoutState(policyNftId, payoutId);
@@ -528,7 +521,7 @@ contract ClaimService is
             IPolicy.PolicyInfo memory policyInfo
         )
     {
-        (productNftId, instance) = _getAndVerifyActiveComponent(PRODUCT());
+        (productNftId, instance) = _getAndVerifyActiveProduct();
         instanceReader = instance.getInstanceReader();
         instanceStore = instance.getInstanceStore();
 
@@ -542,7 +535,7 @@ contract ClaimService is
     }
 
 
-    function _getAndVerifyActiveComponent(ObjectType expectedType) 
+    function _getAndVerifyActiveProduct() 
         internal 
         view 
         returns (

@@ -39,8 +39,8 @@ contract ProxyManager is
     UpgradableProxyWithAdmin internal _proxy;
 
     // state to keep version history
-    mapping(Version version => VersionInfo info) _versionHistory;
-    Version [] _versions;
+    mapping(Version version => VersionInfo info) internal _versionHistory;
+    Version [] internal _versions;
 
     /// @dev convencience initializer
     function initialize(

@@ -342,14 +342,4 @@ contract Instance is
     function isTokenRegistryDisabled() external view returns (bool) {
         return _tokenRegistryDisabled;
     }
-
-    //--- internal view/pure functions --------------------------------------//
-
-
-    function _checkCustomRole(RoleId roleId, bool exists) internal view {
-        if (!_instanceAdmin.isRoleCustom(roleId)) {
-            revert ErrorInstanceNotCustomRole(roleId);
-        }
-    }
-
 }

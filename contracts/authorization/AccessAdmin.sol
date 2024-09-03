@@ -102,24 +102,6 @@ contract AccessAdmin is
     }
 
 
-    modifier onlyExistingRole(
-        RoleId roleId, 
-        bool onlyActiveRole,
-        bool allowLockedRoles
-    )
-    {
-        if (!allowLockedRoles) {
-            _checkRoleExists(roleId, onlyActiveRole);
-        }
-        _;
-    }
-
-
-    modifier onlyExistingTarget(address target) {
-        _checkTargetExists(target);
-        _;
-    }
-
     //-------------- initialization functions ------------------------------//
 
     /// @dev Initializes this admin with the provided accessManager (and authorization specification).
@@ -144,7 +126,7 @@ contract AccessAdmin is
         onlyDeployer()
     {
         // checks
-        // check authority is contract
+        // only contract check (authority might not yet be initialized at this time)
         if (!ContractLib.isContract(authority)) {
             revert ErrorAccessAdminAuthorityNotContract(authority);
         }
@@ -226,19 +208,13 @@ contract AccessAdmin is
         return RoleId.wrap(_authority.PUBLIC_ROLE());
     }
 
-    function roleExists(Str roleName) public view returns (bool exists) {
-        // special case admin adn public roles always exist
-        if (roleName == StrLib.toStr(ADMIN_ROLE_NAME()) || roleName == StrLib.toStr(PUBLIC_ROLE_NAME())) {
+    function roleExists(string memory name) public view returns (bool exists) {
+        // special case for admin and public roles
+        if (StrLib.eq(name, ADMIN_ROLE_NAME()) || StrLib.eq(name, PUBLIC_ROLE_NAME())) {
             return true;
         }
 
-        // check if a role id for the name exists
-        RoleId roleId = _roleForName[roleName].roleId;
-        if (roleId.eqz()) {
-            return false;
-        }
-
-        return _roleInfo[roleId].createdAt.gtz();
+        return _roleForName[StrLib.toStr(name)].roleId.gtz();
     }
 
     function roleExists(RoleId roleId) public view returns (bool exists) {
@@ -358,7 +334,9 @@ contract AccessAdmin is
                 maxMemberCount: 1,
                 name: ADMIN_ROLE_NAME()}));
 
-        // add this contract as admin role member
+        // add this contract as admin role member, as contract roles cannot be revoked
+        // and max member count is 1 for admin role this access admin contract will
+        // always be the only admin of the access manager.
         _roleMembers[
             RoleIdLib.toRoleId(_authority.ADMIN_ROLE())].add(address(this));
 
@@ -442,9 +420,10 @@ contract AccessAdmin is
         bool addFunctions
     )
         internal
-        onlyExistingTarget(target)
-        onlyExistingRole(roleId, true, !addFunctions)
     {
+        _checkTargetExists(target);
+        _checkRoleExists(roleId, true, true);
+
         _authority.setTargetFunctionRole(
             target,
             AccessAdminLib.getSelectors(functions),
@@ -491,8 +470,9 @@ contract AccessAdmin is
     /// @dev grant the specified role to the provided account
     function _grantRoleToAccount(RoleId roleId, address account)
         internal
-        onlyExistingRole(roleId, true, false)
     {
+        _checkRoleExists(roleId, true, false);
+
         // check max role members will not be exceeded
         if (_roleMembers[roleId].length() >= _roleInfo[roleId].maxMemberCount) {
             revert ErrorAccessAdminRoleMembersLimitReached(roleId, _roleInfo[roleId].maxMemberCount);
@@ -520,10 +500,10 @@ contract AccessAdmin is
     /// @dev revoke the specified role from the provided account
     function _revokeRoleFromAccount(RoleId roleId, address account)
         internal
-        onlyExistingRole(roleId, false, false)
     {
+        _checkRoleExists(roleId, false, false);
 
-        // check role removal is permitted
+        // check for attempt to revoke contract role
         if (_roleInfo[roleId].roleType == RoleType.Contract) {
             revert ErrorAccessAdminRoleMemberRemovalDisabled(roleId, account);
         }
@@ -546,6 +526,11 @@ contract AccessAdmin is
     )
         internal
     {
+        // skip admin and public roles (they are created during initialization)
+        if (roleId == ADMIN_ROLE() || roleId == PUBLIC_ROLE()) {
+            return;
+        }
+        
         AccessAdminLib.checkRoleCreation(this, roleId, info);
         _createRoleUnchecked(roleId, info);
     }
@@ -716,8 +701,8 @@ contract AccessAdmin is
 
     function _setTargetLocked(address target, bool locked)
         internal
-        onlyExistingTarget(target)
     {
+        _checkTargetExists(target);
         _authority.setTargetClosed(target, locked);
     }
 
@@ -752,7 +737,8 @@ contract AccessAdmin is
 
     function _checkRoleExists( 
         RoleId roleId, 
-        bool onlyActiveRole
+        bool onlyActiveRole,
+        bool allowAdminAndPublicRoles
     )
         internal
         view
@@ -761,9 +747,15 @@ contract AccessAdmin is
             revert ErrorAccessAdminRoleUnknown(roleId);
         }
 
-        uint64 roleIdInt = RoleId.unwrap(roleId);
-        if (roleIdInt == _authority.ADMIN_ROLE()) {
-            revert ErrorAccessAdminRoleIsLocked(roleId);
+        if (!allowAdminAndPublicRoles) {
+            if (roleId == ADMIN_ROLE()) {
+                revert ErrorAccessAdminInvalidUserOfAdminRole();
+            }
+
+            // check role is not public role
+            if (roleId == PUBLIC_ROLE()) {
+                revert ErrorAccessAdminInvalidUserOfPublicRole();
+            }
         }
 
         // check if role is disabled
@@ -771,7 +763,6 @@ contract AccessAdmin is
             revert ErrorAccessAdminRoleIsPaused(roleId);
         }
     }
-
 
 
     /// @dev check if target exists and reverts if it doesn't

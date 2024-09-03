@@ -39,7 +39,9 @@ interface IAccessAdmin is
     // only role owner modifier
     error ErrorAccessAdminNotRoleOwner(RoleId roleId, address account);
 
-    // only custom role modifier
+    // role management
+    error ErrorAccessAdminInvalidUserOfAdminRole();
+    error ErrorAccessAdminInvalidUserOfPublicRole();
     error ErrorAccessAdminRoleNotCustom(RoleId roleId);
 
     // initialization
@@ -117,6 +119,7 @@ interface IAccessAdmin is
     function getPublicRole() external view returns (RoleId roleId);
 
     function roleExists(RoleId roleId) external view returns (bool exists); 
+    function roleExists(string memory roleName) external view returns (bool exists); 
     function getRoleForName(string memory name) external view returns (RoleId roleId);
     function getRoleInfo(RoleId roleId) external view returns (RoleInfo memory roleInfo);
     function isRoleActive(RoleId roleId) external view returns (bool isActive);
