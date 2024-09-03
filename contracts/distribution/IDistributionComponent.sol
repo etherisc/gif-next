@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Amount} from "../type/Amount.sol";
 import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
+
+import {Amount} from "../type/Amount.sol";
 import {NftId} from "../type/NftId.sol";
 import {ReferralId, ReferralStatus} from "../type/Referral.sol";
 import {UFixed} from "../type/UFixed.sol";
+
 
 interface IDistributionComponent is IInstanceLinkedComponent {
 

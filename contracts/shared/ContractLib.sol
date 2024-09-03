@@ -5,12 +5,12 @@ import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165C
 import {IAccessManager} from "@openzeppelin/contracts/access/manager/IAccessManager.sol";
 import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 
-import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
 import {IPolicyHolder} from "../shared/IPolicyHolder.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
+import {IService} from "../shared/IService.sol";
 
 import {NftId} from "../type/NftId.sol";
-import {ObjectType, INSTANCE, PRODUCT, DISTRIBUTION, ORACLE, POOL, STAKING} from "../type/ObjectType.sol";
+import {ObjectType, INSTANCE, PRODUCT, DISTRIBUTION, ORACLE, POOL} from "../type/ObjectType.sol";
 import {VersionPart} from "../type/Version.sol";
 
 interface ITargetHelper {
@@ -98,25 +98,6 @@ library ContractLib {
     }
 
 
-    // TODO cleanup
-    // function getAndVerifyStaking(
-    //     IRegistry registry, 
-    //     address target
-    // )
-    //     external
-    //     view
-    //     returns (IRegistry.ObjectInfo memory info)
-    // {
-    //     // check target is component
-    //     info = _getAndVerifyObjectInfo(registry, target);
-    //     if(info.objectType != STAKING()) {
-    //         revert ErrorContractLibNotStaking(
-    //             info.nftId,
-    //             info.objectType);
-    //     }
-    // }
-
-
     function getInstanceForComponent(
         IRegistry registry, 
         NftId componentNftId
@@ -178,32 +159,6 @@ library ContractLib {
     }
 
 
-    function isProduct(address registry, address target)
-        public
-        view
-        returns (bool)
-    {
-        if (!isInstanceLinkedComponent(registry, target)) {
-            return false;
-        }
-
-        return IInstanceLinkedComponent(target).getInitialInfo().objectType == PRODUCT();
-    }
-
-
-    function isInstanceLinkedComponent(address registry, address target)
-        public
-        view
-        returns (bool)
-    {
-        if (!isContract(target)) {
-            return false;
-        }
-
-        return supportsInterface(target, type(IInstanceLinkedComponent).interfaceId);
-    }
-
-
     function isRegistered(address registry, address caller, ObjectType expectedType) public view returns (bool) {
         NftId nftId = IRegistry(registry).getNftIdForAddress(caller);
         if (nftId.eqz()) {
@@ -211,6 +166,15 @@ library ContractLib {
         }
 
         return IRegistry(registry).getObjectInfo(nftId).objectType == expectedType;
+    }
+
+
+    function isService(address service) public view returns (bool) {
+        if (!isContract(service)) {
+            return false;
+        }
+
+        return supportsInterface(service, type(IService).interfaceId);
     }
 
 

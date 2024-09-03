@@ -10,8 +10,18 @@ interface IAccess {
 
     enum RoleType {
         Undefined, // no role must have this type
+        Core, // GIF core roles
         Contract, // roles assigned to contracts, cannot be revoked
-        Gif, // framework roles that may be freely assigned and revoked
+        Custom // use case specific rules for components
+    }
+
+    enum TargetType {
+        Undefined, // no target must have this type
+        Core, // GIF core contracts
+        GenericService, // release independent service contracts
+        Service, // service contracts
+        Instance, // instance contracts
+        Component, // instance contracts
         Custom // use case specific rules for components
     }
 
@@ -26,11 +36,11 @@ interface IAccess {
         Str name;
     }
 
+    // TODO recalc slot allocation
     struct TargetInfo {
-        // slot 0
         Str name;
-        // slot 1
-        bool isCustom;
+        TargetType targetType;
+        RoleId roleId;
         Timestamp createdAt;
     }
 

@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 
+import {IAccess} from "../authorization/IAccess.sol";
 import {IAuthorization} from "../authorization/IAuthorization.sol";
 import {IComponentService} from "../shared/IComponentService.sol";
 import {IInstance} from "./IInstance.sol";
@@ -56,21 +57,110 @@ contract InstanceService is
     }
 
 
-    modifier onlyInstanceOwner(NftId instanceNftId) {        
-        if(msg.sender != getRegistry().ownerOf(instanceNftId)) {
-            revert ErrorInstanceServiceRequestUnauhorized(msg.sender);
-        }
-        _;
+    /// @inheritdoc IInstanceService
+    function createRole(
+        string memory roleName, 
+        RoleId adminRoleId,
+        uint32 maxMemberCount
+    )
+        external
+        restricted()
+        onlyInstance()
+        returns (RoleId roleId)
+    {
+        IInstance instance = IInstance(msg.sender);
+        roleId = instance.getInstanceAdmin().createRole(
+            roleName, 
+            adminRoleId, 
+            maxMemberCount);
     }
 
 
-    // TODO check component - service - instance version match
-    modifier onlyComponent() {
-        if (! getRegistry().isRegisteredComponent(msg.sender)) {
-            revert ErrorInstanceServiceRequestUnauhorized(msg.sender);
-        }
-        _;
+    /// @inheritdoc IInstanceService
+    function setRoleActive(RoleId roleId, bool active)
+        external
+        restricted()
+        onlyInstance()
+    {
+        IInstance instance = IInstance(msg.sender);
+        instance.getInstanceAdmin().setRoleActive(roleId, active);
     }
+
+
+    /// @inheritdoc IInstanceService
+    function grantRole(RoleId roleId, address account)
+        external
+        restricted()
+        onlyInstance()
+    {
+        IInstance instance = IInstance(msg.sender);
+        instance.getInstanceAdmin().grantRole(roleId, account);
+    }
+
+
+    /// @inheritdoc IInstanceService
+    function revokeRole(RoleId roleId, address account) 
+        external 
+        restricted()
+        onlyInstance()
+    {
+        IInstance instance = IInstance(msg.sender);
+        instance.getInstanceAdmin().revokeRole(roleId, account);
+    }
+
+
+    /// @inheritdoc IInstanceService
+    function createTarget(address target, string memory name)
+        external
+        restricted()
+        onlyInstance()
+        returns (RoleId contractRoleId)
+    {
+        IInstance instance = IInstance(msg.sender);
+        return instance.getInstanceAdmin().createTarget(target, name);
+    }
+
+
+    /// @inheritdoc IInstanceService
+    function authorizeFunctions(
+        address target, 
+        RoleId roleId, 
+        IAccess.FunctionInfo[] memory functions
+    )
+        external 
+        restricted()
+        onlyInstance()
+    {
+        IInstance instance = IInstance(msg.sender);
+        return instance.getInstanceAdmin().authorizeFunctions(target, roleId, functions);
+    }
+
+
+    /// @inheritdoc IInstanceService
+    function unauthorizeFunctions(
+        address target, 
+        IAccess.FunctionInfo[] memory functions
+    )
+        external
+        restricted()
+        onlyInstance()
+    {
+        IInstance instance = IInstance(msg.sender);
+        return instance.getInstanceAdmin().unauthorizeFunctions(target, functions);
+    }
+
+
+    /// @inheritdoc IInstanceService
+    function setTargetLocked(address target, bool locked)
+        external
+        virtual
+        restricted()
+        onlyInstance()
+    {
+        address instanceAddress = msg.sender;
+        IInstance(instanceAddress).getInstanceAdmin().setTargetLocked(target, locked);
+    }
+
 
     /// @inheritdoc IInstanceService
     function setInstanceLocked(bool locked)
@@ -83,17 +173,6 @@ contract InstanceService is
         IInstance(instanceAddress).getInstanceAdmin().setInstanceLocked(locked);
     }
 
-
-    /// @dev Locks/unlocks the specified target constrolled by the corresponding instance admin.
-    function setTargetLocked(address target, bool locked)
-        external
-        virtual
-        restricted()
-        onlyInstance()
-    {
-        address instanceAddress = msg.sender;
-        IInstance(instanceAddress).getInstanceAdmin().setTargetLocked(target, locked);
-    }
 
     /// @inheritdoc IInstanceService
     function createInstance(bool allowAnyToken)
@@ -120,9 +199,9 @@ contract InstanceService is
         IAuthorization instanceAuthorization = InstanceAdmin(_masterInstanceAdmin).getInstanceAuthorization();
         instanceAdmin.completeSetup(
             address(getRegistry()),
-            address(instance),
             address(instanceAuthorization),
-            getRelease());
+            getRelease(),
+            address(instance));
 
         // hard checks for newly cloned instance
         assert(address(instance.getRegistry()) == address(getRegistry()));
@@ -200,7 +279,7 @@ contract InstanceService is
         returns (Amount newBalance)
     {
         NftId instanceNftId = getRegistry().getNftIdForAddress(msg.sender);
-        _stakingService.withdrawInstanceRewardReserves(
+        newBalance = _stakingService.withdrawInstanceRewardReserves(
             instanceNftId,
             dipAmount);
     }
@@ -274,6 +353,7 @@ contract InstanceService is
         masterInstanceNftId = info.nftId;
     }
 
+
     function upgradeMasterInstanceReader(address instanceReaderAddress)
         external
         onlyOwner
@@ -288,9 +368,13 @@ contract InstanceService is
         _masterInstanceReader = instanceReaderAddress;
     }
 
+    //--- view functions ------------------------------------------------------------//
+
     function getMasterInstanceReader() external view returns (address) {
         return _masterInstanceReader;
     }
+
+    //--- internal functions --------------------------------------------------------//
 
     /// @dev create new cloned instance admin
     /// function used to setup a new instance
@@ -342,36 +426,7 @@ contract InstanceService is
     }
 
 
-    /// all gif targets MUST be children of instanceNftId
-    function _createGifTarget(
-        NftId instanceNftId,
-        address targetAddress,
-        string memory targetName,
-        RoleId[] memory roles,
-        bytes4[][] memory selectors
-    )
-        internal
-        virtual
-    {
-        // TODO instanceAdmin will check target instance match anyway
-        (
-            IInstance instance, // or instanceInfo
-            // or targetInfo
-        ) = _validateInstanceAndComponent(instanceNftId, targetAddress);
-
-        InstanceAdmin instanceAdmin = instance.getInstanceAdmin();
-
-        // TODO refactor/implement
-        // instanceAdmin.createGifTarget(targetAddress, targetName);
-
-        // set proposed target config
-        for(uint roleIdx = 0; roleIdx < roles.length; roleIdx++) {
-            // TODO refactor/implement
-            // instanceAdmin.setTargetFunctionRoleByService(targetName, selectors[roleIdx], roles[roleIdx]);
-        }
-    }
-    
-    /// @dev top level initializer
+    /// @dev top level initializer (upgradable contract)
     function _initialize(
         address owner, 
         bytes memory data
@@ -414,12 +469,9 @@ contract InstanceService is
             }
 
             componentNftId = componentInfo.nftId;
-        } else {
-
         }
 
-        instance = Instance(instanceInfo.objectAddress);
-        
+        instance = Instance(instanceInfo.objectAddress);        
     }
 
 

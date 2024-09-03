@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IAccess} from "../authorization/IAccess.sol";
+import {IRegisterable} from "../shared/IRegisterable.sol";
+
 import {Amount} from "../type/Amount.sol";
 import {BundleSet} from "./BundleSet.sol";
 import {RiskSet} from "./RiskSet.sol";
 import {InstanceAdmin} from "./InstanceAdmin.sol";
 import {InstanceReader} from "./InstanceReader.sol";
 import {InstanceStore} from "./InstanceStore.sol";
-import {IRegisterable} from "../shared/IRegisterable.sol";
 import {NftId} from "../type/NftId.sol";
 import {RoleId} from "../type/RoleId.sol";
 import {Seconds} from "../type/Seconds.sol";
@@ -17,6 +19,21 @@ import {UFixed} from "../type/UFixed.sol";
 interface IInstance is 
     IRegisterable
 {
+    // role handling
+    event LogInstanceCustomRoleCreated(RoleId roleId, string roleName, RoleId adminRoleId, uint32 maxMemberCount);
+    event LogInstanceCustomRoleActiveSet(RoleId roleId, bool active, address caller);
+    event LogInstanceCustomRoleGranted(RoleId roleId, address account, address caller);
+    event LogInstanceCustomRoleRevoked(RoleId roleId, address account, address caller);
+
+    // target handling
+    event LogInstanceCustomTargetCreated(address target, RoleId targetRoleId, string name);
+    event LogInstanceTargetLocked(address target, bool locked);
+    event LogInstanceCustomTargetFunctionRoleSet(address target, bytes4[] selectors, RoleId roleId);
+
+    // modifier is onlyRoleAdmin
+    error ErrorInstanceNotCustomRole(RoleId roleId);
+    error ErrorInstanceNotRoleAdmin(RoleId roleId, address account);
+
     error ErrorInstanceInstanceAdminZero();
     error ErrorInstanceInstanceAdminAlreadySet(address instanceAdmin);
     error ErrorInstanceInstanceAdminAuthorityMismatch(address instanceAuthority);
@@ -77,12 +94,34 @@ interface IInstance is
 
     ///--- authz ------------------------------------------------------------//
 
-    function createRole(string memory roleName, string memory adminName) external returns (RoleId roleId, RoleId admin);
+    /// @dev Creates a new custom role for the calling instance.
+    /// Custom roles are intended to be used for access control of custom components and its helper contracts.
+    /// Custom roles are not intended to be used as target roles for custom contracts.
+    function createRole(string memory roleName, RoleId adminRoleId, uint32 maxMemberCount) external returns (RoleId roleId);
+
+    /// @dev Activates/deactivates the specified role.
+    /// Only instance owner or account with role admin role can call this function.
+    function setRoleActive(RoleId roleId, bool active) external;
+
+    /// @dev Grants the specified role to the account.
+    /// Only active roles can be granted.
+    /// Only instance owner or account with role admin role can call this function.
     function grantRole(RoleId roleId, address account) external;
+
+    /// @dev Revokes the specified role from the account.
+    /// Only instance owner or account with role admin role can call this function.
     function revokeRole(RoleId roleId, address account) external;
 
-    function createTarget(address target, string memory name) external;
-    function setTargetFunctionRole(string memory targetName, bytes4[] calldata selectors, RoleId roleId) external;
+    /// @dev Creates a new custom target.
+    /// Custom targets are intended to be used for access control helper contracts of components.
+    /// Custom targets are not intended to be used for components.
+    function createTarget(address target, string memory name) external returns (RoleId contractRoleId);
+
+    /// @dev Authorizes the specified functions for the target and provided role.
+    function authorizeFunctions(address target, RoleId roleId, IAccess.FunctionInfo[] memory functions) external;
+
+    /// @dev Removes any role authorization for the specified functions.
+    function unauthorizeFunctions(address target, IAccess.FunctionInfo[] memory functions) external;
 
     //--- getters -----------------------------------------------------------//
 

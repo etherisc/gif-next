@@ -64,9 +64,12 @@ export type RegistryAddresses = {
 }
 
 export async function deployAndInitializeRegistry(owner: Signer, libraries: LibraryAddresses): Promise<RegistryAddresses> {
+
     logger.info("======== Starting deployment of registry ========");
 
     logger.info("-------- Starting deployment DIP ----------------");
+
+    const COMMIT_HASH = "1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a";
 
     const { address: dipAddress, contract: dipBaseContract } = await deployContract(
         "Dip",
@@ -86,6 +89,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         "RegistryAuthorization",
         owner,
         [
+            COMMIT_HASH,
         ],
         {
             libraries: {
@@ -270,7 +274,13 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     );
 
     await executeTx(
-        async () => await registryAdmin.completeSetup(registry, registryAuthorization, owner, owner, getTxOpts()),
+        async () => await registryAdmin.completeSetup(
+            registry, 
+            registryAuthorization, 
+            3,
+            owner, 
+            owner, 
+            getTxOpts()),
         "registryAdmin.completeSetup",
         [registryAdmin.interface]
     );
@@ -312,6 +322,8 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         [ "a41a84af9a430ef22e00d9c4a8012ce24830e7bf" ],
         { 
             libraries: { 
+                ObjectTypeLib: libraries.objectTypeLibAddress,
+                RoleIdLib: libraries.roleIdLibAddress,
                 SelectorLib: libraries.selectorLibAddress,
                 StrLib: libraries.strLibAddress,
                 TimestampLib: libraries.timestampLibAddress,

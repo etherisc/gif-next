@@ -7,6 +7,7 @@ import {FoundryRandom} from "foundry-random/FoundryRandom.sol";
 import {InitializableERC165} from "../../contracts/shared/InitializableERC165.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
+import {IRelease} from "../../contracts/registry/IRelease.sol";
 import {MockInterceptor} from "./MockInterceptor.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {ObjectType} from "../../contracts/type/ObjectType.sol";
@@ -54,7 +55,7 @@ contract RegisterableMockWithAuthority is InitializableERC165, IRegisterable, Mo
     function isActive() external view returns (bool active) { return true; }
 
     // from IRegisterable
-    function getRelease() public virtual pure returns (VersionPart release) {
+    function getRelease() public virtual override pure returns (VersionPart release) {
         return VersionPartLib.toVersionPart(3);
     }
 

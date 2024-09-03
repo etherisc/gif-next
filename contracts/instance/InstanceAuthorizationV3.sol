@@ -2,14 +2,15 @@
 pragma solidity ^0.8.20;
 
 import {IAccess} from "../authorization/IAccess.sol";
+import {IInstance} from "../instance/Instance.sol";
 
+import {AccessAdminLib} from "../authorization/AccessAdminLib.sol";
 import {Authorization} from "../authorization/Authorization.sol";
 import {ACCOUNTING, ORACLE, POOL, INSTANCE, COMPONENT, DISTRIBUTION, APPLICATION, POLICY, CLAIM, BUNDLE, RISK} from "../../contracts/type/ObjectType.sol";
 import {BundleSet} from "../instance/BundleSet.sol";
-import {Instance} from "../instance/Instance.sol";
 import {InstanceAdmin} from "../instance/InstanceAdmin.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
-import {PUBLIC_ROLE} from "../type/RoleId.sol";
+import {ADMIN_ROLE, INSTANCE_OWNER_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {RiskSet} from "../instance/RiskSet.sol"; 
 
 
@@ -18,6 +19,7 @@ contract InstanceAuthorizationV3
 {
 
      string public constant INSTANCE_ROLE_NAME = "InstanceRole";
+     string public constant INSTANCE_OWNER_ROLE_NAME = "InstanceOwnerRole";
 
      string public constant INSTANCE_TARGET_NAME = "Instance";
      string public constant INSTANCE_STORE_TARGET_NAME = "InstanceStore";
@@ -26,22 +28,41 @@ contract InstanceAuthorizationV3
      string public constant RISK_SET_TARGET_NAME = "RiskSet";
 
      constructor()
-          Authorization(INSTANCE_TARGET_NAME, INSTANCE(), false, false)
+          Authorization(
+               INSTANCE_TARGET_NAME, 
+               INSTANCE(), 
+               3, 
+               COMMIT_HASH,
+               false, 
+               false)
      { }
 
      function _setupServiceTargets() internal virtual override {
           // service targets relevant to instance
-          _addServiceTargetWithRole(INSTANCE());
-          _addServiceTargetWithRole(ACCOUNTING());
-          _addServiceTargetWithRole(COMPONENT());
-          _addServiceTargetWithRole(DISTRIBUTION());
-          _addServiceTargetWithRole(ORACLE());
-          _addServiceTargetWithRole(POOL());
-          _addServiceTargetWithRole(BUNDLE());
-          _addServiceTargetWithRole(RISK());
-          _addServiceTargetWithRole(APPLICATION());
-          _addServiceTargetWithRole(POLICY());
-          _addServiceTargetWithRole(CLAIM());
+          _authorizeServiceDomain(INSTANCE(), address(10));
+          _authorizeServiceDomain(ACCOUNTING(), address(11));
+          _authorizeServiceDomain(COMPONENT(), address(12));
+          _authorizeServiceDomain(DISTRIBUTION(), address(13));
+          _authorizeServiceDomain(ORACLE(), address(14));
+          _authorizeServiceDomain(POOL(), address(15));
+          _authorizeServiceDomain(BUNDLE(), address(16));
+          _authorizeServiceDomain(RISK(), address(17));
+          _authorizeServiceDomain(APPLICATION(), address(18));
+          _authorizeServiceDomain(POLICY(), address(19));
+          _authorizeServiceDomain(CLAIM(), address(20));
+     }
+
+     function _setupRoles()
+          internal
+          override
+     {
+          _addRole(
+               INSTANCE_OWNER_ROLE(),
+               AccessAdminLib.toRole(
+                    ADMIN_ROLE(),
+                    RoleType.Custom,
+                    0, // max member count special case: instance nft owner is sole role owner
+                    INSTANCE_OWNER_ROLE_NAME));
      }
 
      function _setupTargets()
@@ -49,7 +70,6 @@ contract InstanceAuthorizationV3
           override
      {
           // instance supporting targets
-          // _addGifContractTarget(INSTANCE_ADMIN_TARGET_NAME);
           _addTarget(INSTANCE_ADMIN_TARGET_NAME);
           _addTarget(INSTANCE_STORE_TARGET_NAME);
           _addTarget(BUNDLE_SET_TARGET_NAME);
@@ -112,25 +132,27 @@ contract InstanceAuthorizationV3
 
           // authorize instance service role
           functions = _authorizeForTarget(INSTANCE_TARGET_NAME, PUBLIC_ROLE());
-          _authorize(functions, Instance.registerProduct.selector, "registerProduct");
-          _authorize(functions, Instance.upgradeInstanceReader.selector, "upgradeInstanceReader");
+          _authorize(functions, IInstance.registerProduct.selector, "registerProduct");
+          _authorize(functions, IInstance.upgradeInstanceReader.selector, "upgradeInstanceReader");
 
           // staking
-          _authorize(functions, Instance.setStakingLockingPeriod.selector, "setStakingLockingPeriod");
-          _authorize(functions, Instance.setStakingRewardRate.selector, "setStakingRewardRate");
-          _authorize(functions, Instance.refillStakingRewardReserves.selector, "refillStakingRewardReserves");
-          _authorize(functions, Instance.withdrawStakingRewardReserves.selector, "withdrawStakingRewardReserves");
+          _authorize(functions, IInstance.setStakingLockingPeriod.selector, "setStakingLockingPeriod");
+          _authorize(functions, IInstance.setStakingRewardRate.selector, "setStakingRewardRate");
+          _authorize(functions, IInstance.refillStakingRewardReserves.selector, "refillStakingRewardReserves");
+          _authorize(functions, IInstance.withdrawStakingRewardReserves.selector, "withdrawStakingRewardReserves");
 
           // custom authz
-          _authorize(functions, Instance.createRole.selector, "createRole");
-          _authorize(functions, Instance.grantRole.selector, "grantRole");
-          _authorize(functions, Instance.revokeRole.selector, "revokeRole");
-          _authorize(functions, Instance.createTarget.selector, "createTarget");
-          _authorize(functions, Instance.setTargetFunctionRole.selector, "setTargetFunctionRole");
+          _authorize(functions, IInstance.createRole.selector, "createRole");
+          _authorize(functions, IInstance.setRoleActive.selector, "setRoleActive");
+          _authorize(functions, IInstance.grantRole.selector, "grantRole");
+          _authorize(functions, IInstance.revokeRole.selector, "revokeRole");
+          _authorize(functions, IInstance.createTarget.selector, "createTarget");
+          _authorize(functions, IInstance.authorizeFunctions.selector, "authorizeFunctions");
+          _authorize(functions, IInstance.unauthorizeFunctions.selector, "unauthorizeFunctions");
 
           // authorize instance service role
           functions = _authorizeForTarget(INSTANCE_TARGET_NAME, getServiceRole(INSTANCE()));
-          _authorize(functions, Instance.setInstanceReader.selector, "setInstanceReader");
+          _authorize(functions, IInstance.setInstanceReader.selector, "setInstanceReader");
      }
 
 
@@ -141,8 +163,16 @@ contract InstanceAuthorizationV3
 
           // authorize component service role
           functions = _authorizeForTarget(INSTANCE_ADMIN_TARGET_NAME, getServiceRole(INSTANCE()));
-          _authorize(functions, InstanceAdmin.setInstanceLocked.selector, "setInstanceLocked");
+          _authorize(functions, InstanceAdmin.createRole.selector, "createRole");
+          _authorize(functions, InstanceAdmin.setRoleActive.selector, "setRoleActive");
+          _authorize(functions, InstanceAdmin.grantRole.selector, "grantRole");
+          _authorize(functions, InstanceAdmin.revokeRole.selector, "revokeRole");
+
+          _authorize(functions, InstanceAdmin.createTarget.selector, "createTarget");
+          _authorize(functions, InstanceAdmin.authorizeFunctions.selector, "authorizeFunctions");
+          _authorize(functions, InstanceAdmin.unauthorizeFunctions.selector, "unauthorizeFunctions");
           _authorize(functions, InstanceAdmin.setTargetLocked.selector, "setTargetLocked");
+          _authorize(functions, InstanceAdmin.setInstanceLocked.selector, "setInstanceLocked");
 
           // authorize component service role
           functions = _authorizeForTarget(INSTANCE_ADMIN_TARGET_NAME, getServiceRole(COMPONENT()));

@@ -12,10 +12,12 @@ using {
     StrLib.length
 } for Str global;
 
+// pure free function needed for the operator overloading
 function StrEq(Str s1, Str s2) pure returns (bool) {
     return StrLib.eq(s1, s2);
 }
 
+// pure free function needed for the operator overloading
 function StrNe(Str s1, Str s2) pure returns (bool) {
     return StrLib.ne(s1, s2);
 }
@@ -37,6 +39,16 @@ library StrLib {
     /// @dev return true iff s1 differs from s2
     function ne(Str s1, Str s2) public pure returns (bool) {
         return Str.unwrap(s1) != Str.unwrap(s2);
+    }
+
+    /// @dev return true iff s1 equals from s2
+    function eq(string memory s1, string memory s2) public pure returns (bool) {
+        return keccak256(bytes(s1)) == keccak256(bytes(s2));
+    }
+
+    /// @dev return true iff s1 differs s2
+    function ne(string memory s1, string memory s2) public pure returns (bool) {
+        return !eq(s1, s2);
     }
 
     /// @dev converts the provided short string into a string.

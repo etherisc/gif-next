@@ -23,6 +23,14 @@ contract PoolWithReinsuranceAuthorization
           BasicPoolAuthorization("PoolWithReinsurance")
      {}
 
+     function _setupServiceTargets()
+          internal
+          virtual override
+     {
+          super._setupServiceTargets();
+          _authorizeServiceDomain(CLAIM(), address(14));
+     }
+
      function _setupTargetAuthorizations()
           internal
           virtual override

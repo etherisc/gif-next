@@ -1,16 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IRegistry} from "../contracts/registry/IRegistry.sol";
+import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 
-import {GifTest} from "./base/GifTest.sol";
-import {InstanceLinkedComponent} from "../contracts/shared/InstanceLinkedComponent.sol";
-import {NftId} from "../contracts/type/NftId.sol";
-import {ObjectType} from "../contracts/type/ObjectType.sol";
-import {BUNDLE, COMPONENT, DISTRIBUTION, ORACLE, POOL, PRODUCT, POLICY, RISK, REQUEST, SERVICE, STAKING} from "../contracts/type/ObjectType.sol";
+import {GifTest} from "./GifTest.sol";
+import {InstanceLinkedComponent} from "../../contracts/shared/InstanceLinkedComponent.sol";
+import {NftId} from "../../contracts/type/NftId.sol";
+import {ObjectType} from "../../contracts/type/ObjectType.sol";
+import {BUNDLE, COMPONENT, DISTRIBUTION, ORACLE, POOL, PRODUCT, POLICY, RISK, REQUEST} from "../../contracts/type/ObjectType.sol";
 
-
-contract TestDeployAll is GifTest {
+contract DeployAllTest is GifTest {
 
     function setUp() public override {
         super.setUp();
@@ -39,7 +38,7 @@ contract TestDeployAll is GifTest {
     }
 
 
-    function test_deployServicesOverview() public {
+    function test_deployServicesOverview() public view {
         assertEq(registry.getObjectCount(), 25, "invalid object count for base setup");
 
         // validate registry service
@@ -109,7 +108,7 @@ contract TestDeployAll is GifTest {
         assertTrue(address(instanceReader) != address(0), "instance reader is zero address");
     }
 
-    function test_deployAllInstanceOwner() public {
+    function test_deployAllInstanceOwner() public view {
         NftId nftId = registry.getNftIdForAddress(address(instance));
         assertEq(
             registry.ownerOf(nftId),
@@ -118,7 +117,7 @@ contract TestDeployAll is GifTest {
         );
     }
 
-    function test_deployAllInstanceLifecycles() public {
+    function test_deployAllInstanceLifecycles() public view {
         assertTrue(instance.getInstanceStore().hasLifecycle(BUNDLE()), "instance misses bundle lifecycle");
         assertTrue(instance.getInstanceStore().hasLifecycle(COMPONENT()), "instance misses component lifecycle");
         assertTrue(instance.getInstanceStore().hasLifecycle(POLICY()), "instance misses policy lifecycle");
@@ -136,6 +135,7 @@ contract TestDeployAll is GifTest {
         address componentOwner
     )
         internal
+        view
     {
         // check params against unexpected 0 values
         assertTrue(address(component) != address(0), "component address 0");

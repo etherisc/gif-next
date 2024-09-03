@@ -14,6 +14,7 @@ import {RoleIdLib, ADMIN_ROLE, GIF_ADMIN_ROLE, GIF_MANAGER_ROLE} from "../type/R
 import {StakingStore} from "../staking/StakingStore.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {TokenRegistry} from "../registry/TokenRegistry.sol";
+import {VersionPartLib} from "../type/Version.sol";
 
 
 contract RegistryAuthorization
@@ -39,39 +40,48 @@ contract RegistryAuthorization
      string public constant TOKEN_REGISTRY_TARGET_NAME = "TokenRegistry";
 
      string public constant STAKING_TARGET_NAME = "Staking";
-     string public constant STAKING_TH_TARGET_NAME = "StakingTH";
+     string public constant STAKING_TH_TARGET_NAME = "StakingTh";
      string public constant STAKING_STORE_TARGET_NAME = "StakingStore";
 
-     constructor()
-          Authorization(REGISTRY_TARGET_NAME, REGISTRY(), false, false)
+     constructor(string memory commitHash)
+          Authorization(
+               REGISTRY_TARGET_NAME, 
+               REGISTRY(), 
+               3, 
+               commitHash, 
+               false, // isComponent
+               false) // includeTokenHandler
      { }
 
      /// @dev Sets up the GIF admin and manager roles.
      function _setupRoles() internal override {
 
-          // service roles (for all versions)
+          // max number of versioned contracts per generic service
+          uint32 maxReleases = uint32(VersionPartLib.releaseMax().toInt());
+
+          // service roles (for all releases)
           _addRole(
-               RoleIdLib.roleForTypeAndAllVersions(REGISTRY()), 
+               RoleIdLib.toGenericServiceRoleId(REGISTRY()), 
                _toRoleInfo({
                     adminRoleId: ADMIN_ROLE(),
-                    roleType: RoleType.Gif,
-                    maxMemberCount: 999, // max member count = max 
+                    roleType: RoleType.Core,
+                    maxMemberCount: maxReleases, 
                     name: REGISTRY_SERVICE_ROLE_NAME}));
 
           _addRole(
-               RoleIdLib.roleForTypeAndAllVersions(STAKING()), 
+               RoleIdLib.toGenericServiceRoleId(STAKING()), 
                _toRoleInfo({
                     adminRoleId: ADMIN_ROLE(),
-                    roleType: RoleType.Gif,
-                    maxMemberCount: 999, // max member count = max 
+                    roleType: RoleType.Core,
+                    maxMemberCount: maxReleases, 
                     name: STAKING_SERVICE_ROLE_NAME}));
 
           _addRole(
-               RoleIdLib.roleForTypeAndAllVersions(POOL()), 
+               RoleIdLib.toGenericServiceRoleId(POOL()), 
                _toRoleInfo({
                     adminRoleId: ADMIN_ROLE(),
-                    roleType: RoleType.Gif,
-                    maxMemberCount: 999, // max member count = max 
+                    roleType: RoleType.Core,
+                    maxMemberCount: maxReleases, 
                     name: POOL_SERVICE_ROLE_NAME}));
 
           // gif admin role
@@ -79,7 +89,7 @@ contract RegistryAuthorization
                GIF_ADMIN_ROLE(),
                _toRoleInfo({
                     adminRoleId: ADMIN_ROLE(),
-                    roleType: RoleType.Gif,
+                    roleType: RoleType.Core,
                     maxMemberCount: 2, // TODO decide on max member count
                     name: GIF_ADMIN_ROLE_NAME}));
 
@@ -88,7 +98,7 @@ contract RegistryAuthorization
                GIF_MANAGER_ROLE(), 
                _toRoleInfo({
                     adminRoleId: ADMIN_ROLE(),
-                    roleType: RoleType.Gif,
+                    roleType: RoleType.Core,
                     maxMemberCount: 1, // TODO decide on max member count
                     name: GIF_MANAGER_ROLE_NAME}));
 
@@ -96,13 +106,13 @@ contract RegistryAuthorization
 
      /// @dev Sets up the relevant (non-service) targets for the registry.
      function _setupTargets() internal override {
-          _addGifContractTarget(REGISTRY_ADMIN_TARGET_NAME);
-          _addGifContractTarget(RELEASE_REGISTRY_TARGET_NAME);
-          _addGifContractTarget(TOKEN_REGISTRY_TARGET_NAME);
+          _addGifTarget(REGISTRY_ADMIN_TARGET_NAME);
+          _addGifTarget(RELEASE_REGISTRY_TARGET_NAME);
+          _addGifTarget(TOKEN_REGISTRY_TARGET_NAME);
 
-          _addGifContractTarget(STAKING_TARGET_NAME);
-          _addGifContractTarget(STAKING_TH_TARGET_NAME);
-          _addTarget(STAKING_STORE_TARGET_NAME);
+          _addGifTarget(STAKING_TARGET_NAME);
+          _addGifTarget(STAKING_TH_TARGET_NAME);
+          _addGifTarget(STAKING_STORE_TARGET_NAME);
      }
 
 
@@ -134,7 +144,7 @@ contract RegistryAuthorization
           // registry service role
           functions = _authorizeForTarget(
                REGISTRY_TARGET_NAME, 
-               RoleIdLib.roleForTypeAndAllVersions(REGISTRY()));
+               RoleIdLib.toGenericServiceRoleId(REGISTRY()));
 
           _authorize(functions, IRegistry.register.selector, "register");
           _authorize(functions, IRegistry.registerWithCustomType.selector, "registerWithCustomType");
@@ -201,7 +211,7 @@ contract RegistryAuthorization
           // staking service role
           functions = _authorizeForTarget(
                STAKING_TARGET_NAME, 
-               RoleIdLib.roleForTypeAndAllVersions(STAKING()));
+               RoleIdLib.toGenericServiceRoleId(STAKING()));
 
           _authorize(functions, IStaking.registerTarget.selector, "registerTarget");
           _authorize(functions, IStaking.setLockingPeriod.selector, "setLockingPeriod");
@@ -219,7 +229,7 @@ contract RegistryAuthorization
           // pool service role
           functions = _authorizeForTarget(
                STAKING_TARGET_NAME, 
-               RoleIdLib.roleForTypeAndAllVersions(POOL()));
+               RoleIdLib.toGenericServiceRoleId(POOL()));
 
           _authorize(functions, IStaking.increaseTotalValueLocked.selector, "increaseTotalValueLocked");
           _authorize(functions, IStaking.decreaseTotalValueLocked.selector, "decreaseTotalValueLocked");
@@ -232,7 +242,7 @@ contract RegistryAuthorization
           // staking service role
           functions = _authorizeForTarget(
                STAKING_TH_TARGET_NAME,
-               RoleIdLib.roleForTypeAndAllVersions(STAKING()));
+               RoleIdLib.toGenericServiceRoleId(STAKING()));
 
           _authorize(functions, TokenHandler.approve.selector, "approve");
           _authorize(functions, TokenHandler.pullToken.selector, "pullToken");

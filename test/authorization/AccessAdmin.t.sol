@@ -8,7 +8,7 @@ import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
-import {AccessAdmin} from "../../contracts/authorization/AccessAdmin.sol";
+import {AccessAdmin, ADMIN_ROLE_NAME, PUBLIC_ROLE_NAME} from "../../contracts/authorization/AccessAdmin.sol";
 import {AccessAdminLib} from "../../contracts/authorization/AccessAdminLib.sol";
 import {AccessManagerCloneable} from "../../contracts/authorization/AccessManagerCloneable.sol";
 import {AccessManagedMock} from "../mock/AccessManagedMock.sol";
@@ -51,7 +51,7 @@ contract AccessAdminForTesting is AccessAdmin {
             release);
 
         // create targets for testing
-        _createTarget(address(this), "AccessAdmin", false, true);
+        _createUncheckedTarget(address(this), "AccessAdmin", IAccess.TargetType.Core);
 
         // setup manager role
         _managerRoleId = RoleIdLib.toRoleId(MANAGER_ROLE);
@@ -70,7 +70,7 @@ contract AccessAdminForTesting is AccessAdmin {
         functions[1] = AccessAdminLib.toFunction(AccessAdminForTesting.grantRole.selector, "grantRole");
         functions[2] = AccessAdminLib.toFunction(AccessAdminForTesting.revokeRole.selector, "revokeRole");
         functions[3] = AccessAdminLib.toFunction(AccessAdminForTesting.renounceRole.selector, "renounceRole");
-        _authorizeTargetFunctions(address(this), getPublicRole(), functions);
+        _authorizeTargetFunctions(address(this), getPublicRole(), functions, true);
 
         // grant manager role access to the specified functions 
         functions = new FunctionInfo[](6);
@@ -80,7 +80,7 @@ contract AccessAdminForTesting is AccessAdmin {
         functions[3] = AccessAdminLib.toFunction(AccessAdminForTesting.setTargetLocked.selector, "setTargetLocked");
         functions[4] = AccessAdminLib.toFunction(AccessAdminForTesting.authorizeFunctions.selector, "authorizeFunctions");
         functions[5] = AccessAdminLib.toFunction(AccessAdminForTesting.unauthorizeFunctions.selector, "unauthorizeFunctions");
-        _authorizeTargetFunctions(address(this), getManagerRole(), functions);
+        _authorizeTargetFunctions(address(this), getManagerRole(), functions, true);
 
         _grantRoleToAccount(_managerRoleId, _deployer);
     }
@@ -103,6 +103,20 @@ contract AccessAdminForTesting is AccessAdmin {
         external
         restricted()
     {
+        // check role does not yet exist
+        if (roleExists(roleId)) {
+            revert IAccessAdmin.ErrorAccessAdminRoleAlreadyCreated(
+                roleId,
+                getRoleInfo(roleId).name.toString());
+        }
+
+        if (roleExists(name)) {
+            revert IAccessAdmin.ErrorAccessAdminRoleNameAlreadyExists(
+                roleId,
+                name,
+                getRoleForName(name));
+        }
+
         _createRole(
             roleId,
             AccessAdminLib.toRole(
@@ -137,7 +151,6 @@ contract AccessAdminForTesting is AccessAdmin {
     )
         external
         virtual
-        onlyRoleAdmin(roleId, msg.sender) 
         restricted()
     {
         _grantRoleToAccount(roleId, account);
@@ -150,7 +163,6 @@ contract AccessAdminForTesting is AccessAdmin {
         external
         virtual
         restricted()
-        onlyRoleAdmin(roleId, msg.sender)
     {
         _revokeRoleFromAccount(roleId, account);
     }
@@ -161,7 +173,6 @@ contract AccessAdminForTesting is AccessAdmin {
         external
         virtual
         restricted()
-        onlyRoleMember(roleId, msg.sender)
     {
         _revokeRoleFromAccount(roleId, msg.sender);
     }
@@ -176,9 +187,7 @@ contract AccessAdminForTesting is AccessAdmin {
         virtual
         restricted()
     {
-        bool checkAuthoritiy = true;
-        bool custom = true;
-        _createTarget(target, name, checkAuthoritiy, custom);
+        _createManagedTarget(target, name, IAccess.TargetType.Custom);
     }
 
     function authorizeFunctions(
@@ -190,7 +199,7 @@ contract AccessAdminForTesting is AccessAdmin {
         virtual
         restricted()
     {
-        _authorizeTargetFunctions(target, roleId, functions);
+        _authorizeTargetFunctions(target, roleId, functions, true);
     }
 
     function unauthorizeFunctions(
@@ -201,7 +210,7 @@ contract AccessAdminForTesting is AccessAdmin {
         virtual
         restricted()
     {
-        _unauthorizeTargetFunctions(target, functions);
+        _authorizeTargetFunctions(target, getAdminRole(), functions, false);
     }
 
 
@@ -234,7 +243,7 @@ contract AccessAdminBaseTest is Test {
 
     RegistryAdmin public registryAdmin;
     Registry public registry;
-    VersionPart release;
+    VersionPart public release;
     AccessManagerCloneable public accessManager;
     AccessAdminForTesting public accessAdmin;
 
@@ -251,7 +260,7 @@ contract AccessAdminBaseTest is Test {
         // create registry and release version
         registryAdmin = new RegistryAdmin();
         registry = new Registry(registryAdmin, globalRegistry);
-        VersionPart release = VersionPartLib.toVersionPart(3);
+        release = VersionPartLib.toVersionPart(3);
 
         // complete setup (which links internal acccess manager to registry and release)
         // and grants manager role to deployer
@@ -299,8 +308,8 @@ contract AccessAdminTest is AccessAdminBaseTest {
         // WHEN (empty)
         // THEN
         RoleId adminRole = accessAdmin.getAdminRole();
-        assertTrue(accessAdmin.hasRole(address(accessAdmin), adminRole), "access admin contract does not have admin role");
-        assertFalse(accessAdmin.hasRole(accessAdminDeployer, adminRole), "access admin deployer does have admin role");
+        assertTrue(accessAdmin.isRoleMember(adminRole, address(accessAdmin)), "access admin contract does not have admin role");
+        assertFalse(accessAdmin.isRoleMember(adminRole, accessAdminDeployer), "access admin deployer does have admin role");
 
         // some more checks on access admin
         _checkAccessAdmin(accessAdmin, accessAdminDeployer);
@@ -416,7 +425,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
     function test_accessAdminCreateRoleHappyCase() public {
 
         // GIVEN (just setup)
-        RoleId newRoleId = RoleIdLib.toRoleId(100);
+        RoleId newRoleId = RoleIdLib.toRoleId(123456789);
         RoleId adminRoleId = accessAdmin.getManagerRole();
         string memory newRoleName = "NewRole";
 
@@ -450,7 +459,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
     function test_accessAdminCreateRoleWithSingleMember() public {
 
         // GIVEN (just setup)
-        RoleId newRoleId = RoleIdLib.toRoleId(100);
+        RoleId newRoleId = RoleIdLib.toRoleId(123456789);
         RoleId adminRoleId = accessAdmin.getManagerRole();
         string memory newRoleName = "NewRole";
 
@@ -569,7 +578,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
 
     function test_accessAdminCreateRoleTwice() public {
         // GIVEN
-        RoleId newRoleId = RoleIdLib.toRoleId(100);
+        RoleId newRoleId = RoleIdLib.toRoleId(123456789);
         RoleId adminRoleId = accessAdmin.getManagerRole();
         string memory newRoleName = "NewRole";
 
@@ -580,7 +589,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
             newRoleName);
         vm.stopPrank();
 
-        // WHEN + THEN - use existing role id
+        // WHEN + THEN - use existing role id with differnt name
         vm.expectRevert(
             abi.encodeWithSelector(
                 IAccessAdmin.ErrorAccessAdminRoleAlreadyCreated.selector, 
@@ -594,7 +603,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
             "SomeOtherRule");
         vm.stopPrank();
 
-        // WHEN + THEN - use existing role name
+        // WHEN + THEN - use existing role name with different role id
         RoleId otherRoleId = RoleIdLib.toRoleId(123);
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -614,7 +623,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
 
     function test_accessAdminCreateEmptyNameMissingAdminRole() public {
         // GIVEN
-        RoleId newRoleId = RoleIdLib.toRoleId(100);
+        RoleId newRoleId = RoleIdLib.toRoleId(123456789);
         RoleId missingAdminRoleId = RoleIdLib.toRoleId(111);
         RoleId adminRoleId = accessAdmin.getManagerRole();
         string memory newRoleName = "NewRole";
@@ -655,7 +664,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         address account2 = makeAddr("account2");
 
         RoleId adminRoleId = accessAdmin.getManagerRole();
-        RoleId newAdminRoleId = RoleIdLib.toRoleId(100);
+        RoleId newAdminRoleId = RoleIdLib.toRoleId(123456789);
         string memory newRoleAdminName = "NewRoleAdmin";
 
         RoleId newRoleId = RoleIdLib.toRoleId(101);
@@ -683,7 +692,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         vm.stopPrank();
 
         // THEN
-        assertTrue(accessAdmin.hasRole(roleAdmin, newAdminRoleId), "roleAdmin not having new role admin role");
+        assertTrue(accessAdmin.isRoleMember(newAdminRoleId, roleAdmin), "roleAdmin not having new role admin role");
 
         _checkRole(
             accessAdmin,
@@ -737,7 +746,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
             roleNameBase);
 
         // THEN
-        assertTrue(accessAdmin.hasRole(roleAdmin, newAdminRoleId), "roleAdmin not having new role admin role");
+        assertTrue(accessAdmin.isRoleMember(newAdminRoleId, roleAdmin), "roleAdmin not having new role admin role");
 
         _checkRole(
             accessAdmin,
@@ -768,93 +777,6 @@ contract AccessAdminTest is AccessAdminBaseTest {
             roleAdmin,
             account1,
             account2);
-    }
-
-    function test_accessAdminCreateRole2LevelAddingMissingAdminRole() public {
-        // GIVEN
-
-        RoleId adminRoleId = accessAdmin.getManagerRole();
-        uint64 roleIdInt = 42;
-        string memory roleNameBase = "test";
-        address account1 = makeAddr("account1");
-        address account2 = makeAddr("account2");
-
-        (
-            RoleId newRoleId,
-            RoleId newAdminRoleId,
-            string memory newRoleName,
-            string memory newAdminRoleName,
-            address roleAdmin
-        ) = _createManagedRoleWithOwnAdmin(
-            roleIdInt, 
-            roleNameBase);
-
-        assertFalse(accessAdmin.hasRole(account1, newRoleId), "account1 already has new role");
-        assertTrue(accessAdmin.hasRole(roleAdmin, newAdminRoleId), "roleAdmin not having new role admin role");
-        assertFalse(accessAdmin.hasRole(accessAdminDeployer, newAdminRoleId), "accessAdminDeployer having new role admin role");
-
-        // WHEN + THEN
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                IAccessAdmin.ErrorAccessAdminNotAdminOfRole.selector, 
-                newAdminRoleId,
-                accessAdminDeployer));
-
-        vm.startPrank(accessAdminDeployer);
-        accessAdmin.grantRole(account1, newRoleId);
-        vm.stopPrank();
-
-        // WHEN
-        vm.startPrank(accessAdminDeployer);
-        accessAdmin.grantRole(accessAdminDeployer, newAdminRoleId);
-        accessAdmin.grantRole(account1, newRoleId);
-        vm.stopPrank();
-
-        // THEN
-        assertTrue(accessAdmin.hasRole(accessAdminDeployer, newAdminRoleId), "accessAdminDeployer missing new role admin role");
-        assertTrue(accessAdmin.hasRole(account1, newRoleId), "account1 missing new role");
-    }
-
-
-    function test_accessAdminCreateRole2LevelRemovingAdminRole() public {
-        // GIVEN
-
-        RoleId adminRoleId = accessAdmin.getManagerRole();
-        uint64 roleIdInt = 42;
-        string memory roleNameBase = "test";
-        address account1 = makeAddr("account1");
-        address account2 = makeAddr("account2");
-
-        (
-            RoleId newRoleId,
-            RoleId newAdminRoleId,
-            string memory newRoleName,
-            string memory newAdminRoleName,
-            address roleAdmin
-        ) = _createManagedRoleWithOwnAdmin(
-            roleIdInt, 
-            roleNameBase);
-
-        assertFalse(accessAdmin.hasRole(account1, newRoleId), "account1 already has new role");
-        assertTrue(accessAdmin.hasRole(roleAdmin, newAdminRoleId), "roleAdmin not having new role admin role");
-
-        // WHEN
-        vm.startPrank(accessAdminDeployer);
-        accessAdmin.revokeRole(roleAdmin, newAdminRoleId);
-        vm.stopPrank();
-
-        // THEN
-        assertFalse(accessAdmin.hasRole(roleAdmin, newAdminRoleId), "roleAdmin having new role admin role");
-
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                IAccessAdmin.ErrorAccessAdminNotAdminOfRole.selector, 
-                newAdminRoleId,
-                roleAdmin));
-
-        vm.startPrank(roleAdmin);
-        accessAdmin.grantRole(account1, newRoleId);
-        vm.stopPrank();
     }
 
 
@@ -914,97 +836,9 @@ contract AccessAdminTest is AccessAdminBaseTest {
     }
 
 
-    function test_accessAdminCreateRole2LevelGrantRevokeRoleMultipleTimes() public {
-        // GIVEN
-
-        RoleId adminRoleId = accessAdmin.getManagerRole();
-        uint64 roleIdInt = 42;
-        string memory roleNameBase = "test";
-        address account1 = makeAddr("account1");
-        address account2 = makeAddr("account2");
-
-        (
-            RoleId newRoleId,
-            RoleId newAdminRoleId,
-            string memory newRoleName,
-            string memory newAdminRoleName,
-            address roleAdmin
-        ) = _createManagedRoleWithOwnAdmin(
-            roleIdInt, 
-            roleNameBase);
-
-        assertFalse(accessAdmin.hasRole(account1, newRoleId), "account1 already has new role");
-        assertTrue(accessAdmin.hasRole(roleAdmin, newAdminRoleId), "roleAdmin not having new role admin role");
-
-        // WHEN + THEN add multiple times
-        vm.startPrank(roleAdmin);
-        assertEq(accessAdmin.roleMembers(newRoleId), 0);
-
-        accessAdmin.grantRole(account1, newRoleId);
-        assertEq(accessAdmin.roleMembers(newRoleId), 1);
-
-        accessAdmin.grantRole(account2, newRoleId);
-        assertEq(accessAdmin.roleMembers(newRoleId), 2);
-
-        assertTrue(accessAdmin.hasRole(account1, newRoleId), "account1 doesn't have new role");
-
-        // grant new role 2nd time to account 1
-        accessAdmin.grantRole(account1, newRoleId);
-        assertEq(accessAdmin.roleMembers(newRoleId), 2);
-        assertTrue(accessAdmin.hasRole(account1, newRoleId), "account1 doesn't have new role");
-
-        accessAdmin.revokeRole(account1, newRoleId);
-        assertEq(accessAdmin.roleMembers(newRoleId), 1);
-        assertFalse(accessAdmin.hasRole(account1, newRoleId), "account1 still has new role");
-
-        // revoke new role 2nd time from account 1
-        accessAdmin.revokeRole(account1, newRoleId);
-
-        assertEq(accessAdmin.roleMembers(newRoleId), 1);
-        assertFalse(accessAdmin.hasRole(account1, newRoleId), "account1 still has new role");
-        vm.stopPrank();
-
-        vm.startPrank(account1);
-
-        // attempt to renounce role account1 no longer has
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                IAccessAdmin.ErrorAccessAdminNotRoleOwner.selector,
-                newRoleId,
-                account1));
-
-        accessAdmin.renounceRole(newRoleId);
-
-        assertEq(accessAdmin.roleMembers(newRoleId), 1);
-        assertFalse(accessAdmin.hasRole(account1, newRoleId), "account1 still has new role");
-        vm.stopPrank();
-
-        vm.startPrank(account2);
-        assertTrue(accessAdmin.hasRole(account2, newRoleId), "account2 doesn't have new role");
-
-        // renouncing 1st time has effect
-        accessAdmin.renounceRole(newRoleId);
-        assertEq(accessAdmin.roleMembers(newRoleId), 0);
-        assertFalse(accessAdmin.hasRole(account2, newRoleId), "account2 still has new role");
-
-        // remove role account2 no longer has
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                IAccessAdmin.ErrorAccessAdminNotRoleOwner.selector,
-                newRoleId,
-                account2));
-
-        accessAdmin.renounceRole(newRoleId);
-
-        assertEq(accessAdmin.roleMembers(newRoleId), 0);
-        assertFalse(accessAdmin.hasRole(account2, newRoleId), "account2 still has new role");
-        vm.stopPrank();
-    }
-
-
     function test_accessAdminCreateRoleUnauthorized() public {
         // GIVEN (just setup)
-        RoleId newRoleId = RoleIdLib.toRoleId(100);
+        RoleId newRoleId = RoleIdLib.toRoleId(123456789);
         RoleId adminRoleId = accessAdmin.getAdminRole();
         string memory newRoleName = "NewRole";
 
@@ -1028,7 +862,6 @@ contract AccessAdminTest is AccessAdminBaseTest {
     function test_accessAdminGrantRevokeNonexistentRole() public {
 
         // GIVEN - setup
-        RoleId adminRoleId = accessAdmin.getAdminRole();
         RoleId missingRoleId = RoleIdLib.toRoleId(404);
 
         // WHEN + THEN grant/revoke
@@ -1078,8 +911,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         console.log("attempt to grant admin role");
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessAdmin.ErrorAccessAdminRoleIsLocked.selector,
-                adminRole));
+                IAccessAdmin.ErrorAccessAdminInvalidUserOfAdminRole.selector));
 
         accessAdmin.grantRole(outsider, adminRole);
 
@@ -1087,8 +919,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         console.log("attempt to revoke admin role");
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessAdmin.ErrorAccessAdminRoleIsLocked.selector,
-                adminRole));
+                IAccessAdmin.ErrorAccessAdminInvalidUserOfAdminRole.selector));
 
         accessAdmin.revokeRole(outsider, adminRole);
 
@@ -1096,8 +927,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         console.log("attempt to renounce admin role");
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessAdmin.ErrorAccessAdminRoleIsLocked.selector,
-                adminRole));
+                IAccessAdmin.ErrorAccessAdminInvalidUserOfAdminRole.selector));
 
         accessAdmin.renounceRole(adminRole);
 
@@ -1108,8 +938,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         console.log("attempt to grant public role");
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessManager.AccessManagerLockedRole.selector,
-                publicRole));
+                IAccessAdmin.ErrorAccessAdminInvalidUserOfPublicRole.selector));
 
         accessAdmin.grantRole(outsider, publicRole);
 
@@ -1117,8 +946,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         console.log("attempt to revoke public role");
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessManager.AccessManagerLockedRole.selector,
-                publicRole));
+                IAccessAdmin.ErrorAccessAdminInvalidUserOfPublicRole.selector));
 
         accessAdmin.revokeRole(outsider, publicRole);
 
@@ -1126,8 +954,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         console.log("attempt to renounce public role");
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessManager.AccessManagerLockedRole.selector,
-                publicRole));
+                IAccessAdmin.ErrorAccessAdminInvalidUserOfPublicRole.selector));
 
         accessAdmin.renounceRole(publicRole);
 
@@ -1186,9 +1013,9 @@ contract AccessAdminTest is AccessAdminBaseTest {
     {
         // GIVEN
         RoleId adminRoleId = aa.getRoleInfo(roleId).adminRoleId;
-        assertFalse(aa.hasRole(account1, roleId), "account1 already has role");
-        assertFalse(aa.hasRole(account1, adminRoleId), "account1 is role admin");
-        assertTrue(aa.hasRole(roleAdmin, adminRoleId), "role admin is not role admin");
+        assertFalse(aa.isRoleMember(roleId, account1), "account1 already has role");
+        assertFalse(aa.isRoleMember(adminRoleId, account1), "account1 is role admin");
+        assertTrue(aa.isRoleMember(adminRoleId, roleAdmin), "role admin is not role admin");
 
         // WHEN - grant role
         vm.startPrank(roleAdmin);
@@ -1197,10 +1024,10 @@ contract AccessAdminTest is AccessAdminBaseTest {
         vm.stopPrank();
 
         // THEN (grant)
-        assertTrue(aa.hasRole(account1, roleId), "outsider has not been granted role");
-        assertTrue(aa.hasRole(account2, roleId), "outsider2 has not been granted role");
-        assertFalse(aa.hasRole(account1, adminRoleId), "outsider is role admin");
-        assertFalse(aa.hasRole(account2, adminRoleId), "outsider2 is role admin");
+        assertTrue(aa.isRoleMember(roleId, account1), "outsider has not been granted role");
+        assertTrue(aa.isRoleMember(roleId, account2), "outsider2 has not been granted role");
+        assertFalse(aa.isRoleMember(adminRoleId, account1), "outsider is role admin");
+        assertFalse(aa.isRoleMember(adminRoleId, account2), "outsider2 is role admin");
 
         // WHEN - revoke role
         vm.startPrank(roleAdmin);
@@ -1208,8 +1035,8 @@ contract AccessAdminTest is AccessAdminBaseTest {
         vm.stopPrank();
 
         // THEN (revoke)
-        assertFalse(aa.hasRole(account1, roleId), "outsider still has role");
-        assertFalse(aa.hasRole(account1, adminRoleId), "outsider is role admin");
+        assertFalse(aa.isRoleMember(roleId, account1), "outsider still has role");
+        assertFalse(aa.isRoleMember(adminRoleId, account1), "outsider is role admin");
 
         // WHEN - renounce role
         vm.startPrank(account2);
@@ -1217,8 +1044,8 @@ contract AccessAdminTest is AccessAdminBaseTest {
         vm.stopPrank();
 
         // THEN (renounce)
-        assertFalse(aa.hasRole(account2, roleId), "outsider2 still has role");
-        assertFalse(aa.hasRole(account2, adminRoleId), "outsider2 is role admin");
+        assertFalse(aa.isRoleMember(roleId, account2), "outsider2 still has role");
+        assertFalse(aa.isRoleMember(adminRoleId, account2), "outsider2 is role admin");
     }
 
 
@@ -1234,35 +1061,35 @@ contract AccessAdminTest is AccessAdminBaseTest {
         assertEq(aa.deployer(), expectedDeployer, "unexpected deployer");
 
         // check aa roles
-        assertTrue(aa.hasRole(address(aa), aa.getAdminRole()), "access admin missing admin role");
-        assertFalse(aa.hasRole(address(aa), aa.getManagerRole()), "access admin has manager role");
-        assertTrue(aa.hasRole(address(aa), aa.getPublicRole()), "access admin missing public role");
+        assertTrue(aa.isRoleMember(aa.getAdminRole(), address(aa)), "access admin missing admin role");
+        assertFalse(aa.isRoleMember(aa.getManagerRole(), address(aa)), "access admin has manager role");
+        assertTrue(aa.isRoleMember(aa.getPublicRole(), address(aa)), "access admin missing public role");
 
         // check deployer roles
-        assertFalse(aa.hasRole(expectedDeployer, aa.getAdminRole()), "deployer has admin role");
-        assertTrue(aa.hasRole(expectedDeployer, aa.getManagerRole()), "deployer missing manager role");
-        assertTrue(aa.hasRole(expectedDeployer, aa.getPublicRole()), "deployer missing public role");
+        assertFalse(aa.isRoleMember(aa.getAdminRole(), expectedDeployer), "deployer has admin role");
+        assertTrue(aa.isRoleMember(aa.getManagerRole(), expectedDeployer), "deployer missing manager role");
+        assertTrue(aa.isRoleMember(aa.getPublicRole(), expectedDeployer), "deployer missing public role");
 
         // check outsider roles
-        assertFalse(aa.hasRole(outsider, aa.getAdminRole()), "outsider has admin role");
-        assertFalse(aa.hasRole(outsider, aa.getManagerRole()), "outsider has manager role");
-        assertTrue(aa.hasRole(outsider, aa.getPublicRole()), "outsider missing public role");
+        assertFalse(aa.isRoleMember(aa.getAdminRole(), outsider), "outsider has admin role");
+        assertFalse(aa.isRoleMember(aa.getManagerRole(), outsider), "outsider has manager role");
+        assertTrue(aa.isRoleMember(aa.getPublicRole(), outsider), "outsider missing public role");
 
         // count roles and check role ids
-        assertEq(aa.roles(), 3, "unexpected number of roles for freshly initialized access admin");
+        assertEq(aa.roles(), 4, "unexpected number of roles for freshly initialized access admin");
         assertEq(aa.getRoleId(0).toInt(), aa.getAdminRole().toInt(), "unexpected admin role id");
         assertEq(aa.getRoleId(0).toInt(), type(uint64).min, "unexpected admin role id (absolute)");
         assertEq(aa.getRoleId(1).toInt(), aa.getPublicRole().toInt(), "unexpected public role id");
         assertEq(aa.getRoleId(1).toInt(), type(uint64).max, "unexpected public role id (absolute)");
-        assertEq(aa.getRoleId(2).toInt(), aa.getManagerRole().toInt(), "unexpected manager role id");
-        assertEq(aa.getRoleId(2).toInt(), 1, "unexpected manager role id (absolute)");
+        assertEq(aa.getRoleId(3).toInt(), aa.getManagerRole().toInt(), "unexpected manager role id");
+        assertEq(aa.getRoleId(3).toInt(), 1, "unexpected manager role id (absolute)");
 
         // check admin role
         _checkRole(
             aa,
             aa.getAdminRole(), 
             aa.getAdminRole(),
-            aa.ADMIN_ROLE_NAME(),
+            ADMIN_ROLE_NAME(),
             1, // only one admin ! (aa contract is sole admin role member)
             TimestampLib.blockTimestamp());
 
@@ -1271,7 +1098,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
             aa,
             aa.getPublicRole(), 
             aa.getAdminRole(),
-            aa.PUBLIC_ROLE_NAME(),
+            PUBLIC_ROLE_NAME(),
             type(uint32).max, // every account is public role member
             TimestampLib.blockTimestamp());
 
@@ -1325,6 +1152,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         Timestamp expectedCreatedAt
     )
         internal
+        view
     {
         // solhint-disable-next-line
         console.log("checking role", expectedName);

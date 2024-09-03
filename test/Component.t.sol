@@ -28,7 +28,7 @@ contract TestComponent is GifTest {
         _printAuthz(instance.getInstanceAdmin(), "instance (including components)");
     }
 
-    function test_componentGetComponentInfo() public {
+    function test_componentGetComponentInfo() public view {
 
         // GIVEN - just setUp
         IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(distributionNftId);

@@ -8,7 +8,7 @@ import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
-import {AccessAdmin} from "../../contracts/authorization/AccessAdmin.sol";
+import {AccessAdmin, ADMIN_ROLE_NAME, PUBLIC_ROLE_NAME} from "../../contracts/authorization/AccessAdmin.sol";
 import {AccessAdminLib} from "../../contracts/authorization/AccessAdminLib.sol";
 import {AccessAdminForTesting} from "./AccessAdmin.t.sol";
 import {AccessManagedMock} from "../mock/AccessManagedMock.sol";
@@ -73,8 +73,8 @@ contract AccessAdminManageMockTest is AccessAdminBaseTest {
         // WHEN (empty)
         // THEN
         RoleId adminRole = accessAdmin.getAdminRole();
-        assertTrue(accessAdmin.hasRole(address(accessAdmin), adminRole), "access admin contract does not have admin role");
-        assertFalse(accessAdmin.hasRole(accessAdminDeployer, adminRole), "access admin deployer does have admin role");
+        assertTrue(accessAdmin.isRoleMember(adminRole, address(accessAdmin)), "access admin contract does not have admin role");
+        assertFalse(accessAdmin.isRoleMember(adminRole, accessAdminDeployer), "access admin deployer does have admin role");
 
         assertTrue(accessAdmin.targetExists(target));
         assertEq(accessAdmin.authorizedFunctions(target), 0, "unexpected initial number of authorized functions for target");
@@ -192,7 +192,7 @@ contract AccessAdminManageMockTest is AccessAdminBaseTest {
         // access admin is only address that has admin Role
         address accessAdminAddress = address(accessAdmin);
         assertEq(accessAdmin.roleMembers(adminRole), 1, "unexpected number of members for admin role");
-        assertTrue(accessAdmin.hasRole(accessAdminAddress, adminRole), "access admin contract does not have admin role");
+        assertTrue(accessAdmin.isRoleMember(adminRole, accessAdminAddress), "access admin contract does not have admin role");
 
         // print initial target setup
         _printTarget(accessAdmin, target);
@@ -312,35 +312,35 @@ contract AccessAdminManageMockTest is AccessAdminBaseTest {
         assertEq(aa.deployer(), expectedDeployer, "unexpected deployer");
 
         // check aa roles
-        assertTrue(aa.hasRole(address(aa), aa.getAdminRole()), "access admin missing admin role");
-        assertFalse(aa.hasRole(address(aa), aa.getManagerRole()), "access admin has manager role");
-        assertTrue(aa.hasRole(address(aa), aa.getPublicRole()), "access admin missing public role");
+        assertTrue(aa.isRoleMember(aa.getAdminRole(), address(aa)), "access admin missing admin role");
+        assertFalse(aa.isRoleMember(aa.getManagerRole(), address(aa)), "access admin has manager role");
+        assertTrue(aa.isRoleMember(aa.getPublicRole(), address(aa)), "access admin missing public role");
 
         // check deployer roles
-        assertFalse(aa.hasRole(expectedDeployer, aa.getAdminRole()), "deployer has admin role");
-        assertTrue(aa.hasRole(expectedDeployer, aa.getManagerRole()), "deployer missing manager role");
-        assertTrue(aa.hasRole(expectedDeployer, aa.getPublicRole()), "deployer missing public role");
+        assertFalse(aa.isRoleMember(aa.getAdminRole(), expectedDeployer), "deployer has admin role");
+        assertTrue(aa.isRoleMember(aa.getManagerRole(), expectedDeployer), "deployer missing manager role");
+        assertTrue(aa.isRoleMember(aa.getPublicRole(), expectedDeployer), "deployer missing public role");
 
         // check outsider roles
-        assertFalse(aa.hasRole(outsider, aa.getAdminRole()), "outsider has admin role");
-        assertFalse(aa.hasRole(outsider, aa.getManagerRole()), "outsider has manager role");
-        assertTrue(aa.hasRole(outsider, aa.getPublicRole()), "outsider missing public role");
+        assertFalse(aa.isRoleMember(aa.getAdminRole(), outsider), "outsider has admin role");
+        assertFalse(aa.isRoleMember(aa.getManagerRole(), outsider), "outsider has manager role");
+        assertTrue(aa.isRoleMember(aa.getPublicRole(), outsider), "outsider missing public role");
 
         // count roles and check role ids
-        assertEq(aa.roles(), 3, "unexpected number of roles for freshly initialized access admin");
+        assertEq(aa.roles(), 5, "unexpected number of roles for freshly initialized access admin");
         assertEq(aa.getRoleId(0).toInt(), aa.getAdminRole().toInt(), "unexpected admin role id");
         assertEq(aa.getRoleId(0).toInt(), type(uint64).min, "unexpected admin role id (absolute)");
         assertEq(aa.getRoleId(1).toInt(), aa.getPublicRole().toInt(), "unexpected public role id");
         assertEq(aa.getRoleId(1).toInt(), type(uint64).max, "unexpected public role id (absolute)");
-        assertEq(aa.getRoleId(2).toInt(), aa.getManagerRole().toInt(), "unexpected manager role id");
-        assertEq(aa.getRoleId(2).toInt(), 1, "unexpected manager role id (absolute)");
+        assertEq(aa.getRoleId(3).toInt(), aa.getManagerRole().toInt(), "unexpected manager role id");
+        assertEq(aa.getRoleId(3).toInt(), 1, "unexpected manager role id (absolute)");
 
         // check admin role
         _checkRole(
             aa,
             aa.getAdminRole(), 
             aa.getAdminRole(),
-            aa.ADMIN_ROLE_NAME(),
+            ADMIN_ROLE_NAME(),
             TimestampLib.max(), 
             TimestampLib.blockTimestamp());
 
@@ -349,7 +349,7 @@ contract AccessAdminManageMockTest is AccessAdminBaseTest {
             aa,
             aa.getPublicRole(), 
             aa.getAdminRole(),
-            aa.PUBLIC_ROLE_NAME(),
+            PUBLIC_ROLE_NAME(),
             TimestampLib.max(), 
             TimestampLib.blockTimestamp());
 

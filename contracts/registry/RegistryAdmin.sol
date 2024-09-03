@@ -2,7 +2,6 @@
 pragma solidity ^0.8.20;
 
 import {IAuthorization} from "../authorization/IAuthorization.sol";
-import {IComponent} from "../shared/IComponent.sol";
 import {IRegistry} from "./IRegistry.sol";
 import {IService} from "../shared/IService.sol";
 import {IStaking} from "../staking/IStaking.sol";
@@ -10,16 +9,10 @@ import {IStaking} from "../staking/IStaking.sol";
 import {AccessAdmin} from "../authorization/AccessAdmin.sol";
 import {AccessAdminLib} from "../authorization/AccessAdminLib.sol";
 import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
-import {ContractLib} from "../shared/ContractLib.sol";
-import {ObjectType, REGISTRY, STAKING, POOL, RELEASE} from "../type/ObjectType.sol";
-import {ReleaseRegistry} from "./ReleaseRegistry.sol";
-import {RoleId, RoleIdLib, ADMIN_ROLE, GIF_MANAGER_ROLE, GIF_ADMIN_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
-import {Staking} from "../staking/Staking.sol";
-import {Str, StrLib} from "../type/String.sol";
-import {StakingStore} from "../staking/StakingStore.sol";
-import {TokenHandler} from "../shared/TokenHandler.sol";
-import {TokenRegistry} from "./TokenRegistry.sol";
-import {VersionPart, VersionPartLib} from "../type/Version.sol";
+import {ObjectType, REGISTRY} from "../type/ObjectType.sol";
+import {RoleId, RoleIdLib, GIF_MANAGER_ROLE, GIF_ADMIN_ROLE} from "../type/RoleId.sol";
+import {Str} from "../type/String.sol";
+import {VersionPart} from "../type/Version.sol";
 
 /*
     1) GIF_MANAGER_ROLE
@@ -44,14 +37,6 @@ contract RegistryAdmin is
     /// @dev gif core roles
     string public constant GIF_ADMIN_ROLE_NAME = "GifAdminRole";
     string public constant GIF_MANAGER_ROLE_NAME = "GifManagerRole";
-    string public constant RELEASE_REGISTRY_ROLE_NAME = "ReleaseRegistryRole";
-    string public constant STAKING_ROLE_NAME = "StakingRole";
-
-    /// @dev gif roles for external contracts
-    string public constant REGISTRY_SERVICE_ROLE_NAME = "RegistryServiceRole";
-    string public constant COMPONENT_SERVICE_ROLE_NAME = "ComponentServiceRole";
-    string public constant POOL_SERVICE_ROLE_NAME = "PoolServiceRole";
-    string public constant STAKING_SERVICE_ROLE_NAME = "StakingServiceRole";
 
     /// @dev gif core targets
     string public constant REGISTRY_ADMIN_TARGET_NAME = "RegistryAdmin";
@@ -82,6 +67,7 @@ contract RegistryAdmin is
     function completeSetup(
         address registry,
         address authorization,
+        VersionPart release,
         address gifAdmin, 
         address gifManager
     )
@@ -91,15 +77,14 @@ contract RegistryAdmin is
         onlyDeployer()
     {
         // checks
-        _checkRegistry(registry);
+        AccessAdminLib.checkRegistry(registry);
 
-        VersionPart release = VersionPartLib.toVersionPart(3);
         AccessManagerCloneable(
             authority()).completeSetup(
                 registry, 
                 release); 
 
-        _checkAuthorization(authorization, REGISTRY(), release, true);
+        _checkAuthorization(authorization, REGISTRY(), release, false, true);
 
         _registry = registry;
         _authorization = IAuthorization(authorization);
@@ -114,17 +99,17 @@ contract RegistryAdmin is
         // link nft ownability to registry
         _linkToNftOwnable(_registry);
 
-        _setupRegistry(_registry);
+        // setup registry core targets
+        _createCoreTargets(_authorization.getMainTargetName());
 
-        // setup authorization for registry and supporting contracts
+        // setup non-contract roles
         _createRoles(_authorization);
         _grantRoleToAccount(GIF_ADMIN_ROLE(), gifAdmin);
         _grantRoleToAccount(GIF_MANAGER_ROLE(), gifManager);
 
-        _createTargets(_authorization);
+        // authorize functions of registry and staking contracts
         _createTargetAuthorizations(_authorization);
     }
-
 
 
     function grantServiceRoleForAllVersions(
@@ -135,83 +120,53 @@ contract RegistryAdmin is
         restricted()
     {
         _grantRoleToAccount( 
-            RoleIdLib.roleForTypeAndAllVersions(domain),
+            RoleIdLib.toGenericServiceRoleId(domain),
             address(service)); 
     }
 
     //--- view functions ----------------------------------------------------//
 
-    function getGifAdminRole() external view returns (RoleId) {
+    function getGifAdminRole() external pure returns (RoleId) {
         return GIF_ADMIN_ROLE();
     }
 
-    function getGifManagerRole() external view returns (RoleId) {
+    function getGifManagerRole() external pure returns (RoleId) {
         return GIF_MANAGER_ROLE();
     }
 
     //--- private initialization functions -------------------------------------------//
 
-    // create registry role and target
-    function _setupRegistry(address registry) internal {
-
-        // create registry role
-        RoleId roleId = _authorization.getTargetRole(
-            _authorization.getMainTarget());
-
-        _createRole(
-            roleId,
-            _authorization.getRoleInfo(roleId));
-
-        // create registry target
-        _createTarget(
-            registry, 
-            _authorization.getMainTargetName(), 
-            true, // checkAuthority
-            false); // custom
-
-        // assign registry role to registry
-        _grantRoleToAccount(
-            roleId, 
-            registry);
-    }
-
-
     function _createRoles(IAuthorization authorization)
         internal
     {
         RoleId[] memory roles = authorization.getRoles();
-        RoleId mainTargetRoleId = authorization.getTargetRole(
-            authorization.getMainTarget());
-
-        RoleId roleId;
-        RoleInfo memory roleInfo;
 
         for(uint256 i = 0; i < roles.length; i++) {
+            RoleId roleId = roles[i];
+            RoleInfo memory roleInfo = authorization.getRoleInfo(roleId);
 
-            roleId = roles[i];
-
-            // skip main target role, create role if not exists
-            if (roleId != mainTargetRoleId && !roleExists(roleId)) {
+            // create role if not exists
+            if (!roleExists(roleInfo.name.toString())) {
                 _createRole(
                     roleId,
-                    authorization.getRoleInfo(roleId));
+                    roleInfo);
             }
         }
     }
 
 
-    function _createTargets(IAuthorization authorization)
+    function _createCoreTargets(string memory registryTargetName)
         internal
     {
         // registry
-        _createTargetWithRole(address(this), REGISTRY_ADMIN_TARGET_NAME, authorization.getTargetRole(StrLib.toStr(REGISTRY_ADMIN_TARGET_NAME)));
-        _createTargetWithRole(_releaseRegistry, RELEASE_REGISTRY_TARGET_NAME, authorization.getTargetRole(StrLib.toStr(RELEASE_REGISTRY_TARGET_NAME)));
-        _createTargetWithRole(_tokenRegistry, TOKEN_REGISTRY_TARGET_NAME, authorization.getTargetRole(StrLib.toStr(TOKEN_REGISTRY_TARGET_NAME)));
+        _createUncheckedTarget(_registry, registryTargetName, TargetType.Core);
+        _createUncheckedTarget(address(this), REGISTRY_ADMIN_TARGET_NAME, TargetType.Core);
+        _createUncheckedTarget(_releaseRegistry, RELEASE_REGISTRY_TARGET_NAME, TargetType.Core);
+        _createUncheckedTarget(_tokenRegistry, TOKEN_REGISTRY_TARGET_NAME, TargetType.Core);
 
         // staking
-        _createTargetWithRole(_staking, STAKING_TARGET_NAME, authorization.getTargetRole(StrLib.toStr(STAKING_TARGET_NAME)));
-        _createTarget(_stakingStore, STAKING_STORE_TARGET_NAME, true, false);
-        _createTarget(address(IComponent(_staking).getTokenHandler()), STAKING_TH_TARGET_NAME, true, false);
+        _createUncheckedTarget(_staking, STAKING_TARGET_NAME, TargetType.Core);
+        _createUncheckedTarget(_stakingStore, STAKING_STORE_TARGET_NAME, TargetType.Core);
     }
 
 
@@ -224,35 +179,10 @@ contract RegistryAdmin is
         for(uint256 i = 0; i < targets.length; i++) {
             target = targets[i];
             RoleId[] memory authorizedRoles = authorization.getAuthorizedRoles(target);
-            RoleId authorizedRole;
 
             for(uint256 j = 0; j < authorizedRoles.length; j++) {
-                authorizedRole = authorizedRoles[j];
-
-                _authorizeTargetFunctions(
-                    getTargetForName(target),
-                    authorizedRole,
-                    authorization.getAuthorizedFunctions(
-                        target, 
-                        authorizedRole));
+                _authorizeFunctions(authorization, target, authorizedRoles[j]);
             }
         }
-    }
-
-
-    function _createTargets(address authorization)
-        private 
-        onlyInitializing()
-    {
-        IStaking staking = IStaking(_staking);
-        address tokenHandler = address(staking.getTokenHandler());
-
-        _createTarget(address(this), REGISTRY_ADMIN_TARGET_NAME, false, false);
-        _createTarget(_registry, REGISTRY_TARGET_NAME, true, false);
-        _createTarget(_releaseRegistry, RELEASE_REGISTRY_TARGET_NAME, true, false);
-        _createTarget(_staking, STAKING_TARGET_NAME, true, false);
-        _createTarget(_stakingStore, STAKING_STORE_TARGET_NAME, true, false);
-        _createTarget(_tokenRegistry, TOKEN_REGISTRY_TARGET_NAME, true, false);
-        _createTarget(tokenHandler, TOKEN_HANDLER_TARGET_NAME, true, false);
     }
 }

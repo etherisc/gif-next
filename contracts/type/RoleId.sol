@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import {Key32, KeyId, Key32Lib} from "./Key32.sol";
 import {ObjectType, ROLE} from "./ObjectType.sol";
-import {VersionPart} from "./Version.sol";
+import {VersionPart, VersionPartLib} from "./Version.sol";
 
 type RoleId is uint64;
 
@@ -12,11 +12,9 @@ using {
     eqRoleId as ==, 
     neRoleId as !=,
     RoleIdLib.toInt,
+    RoleIdLib.isServiceRole,
     RoleIdLib.eqz,
-    RoleIdLib.gtz,
-    RoleIdLib.isComponentRole,
-    RoleIdLib.isCustomRole
-    // RoleIdLib.toKey32
+    RoleIdLib.gtz
 } for RoleId global;
 
 // general pure free functions
@@ -56,9 +54,14 @@ function GIF_MANAGER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2)
 /// @dev role for registering remote staking targets and reporting remote total value locked amounts.
 function GIF_REMOTE_MANAGER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(3); } 
 
+// TODO check if/where this is really needed
 /// @dev role assigned to release registry, release specfic to lock/unlock a release
 function RELEASE_REGISTRY_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(4); }
 
+/// @dev role assigned to every instance owner
+function INSTANCE_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(5); }  
+
+// TODO upate role id ranges
 //--- GIF core contract roles (range: 200 - 9'900) --------------------------//
 // created and assigned during initial deployment for registry and staking
 // granting for instances and components in instance service
@@ -97,56 +100,72 @@ function CUSTOM_ROLE_MIN() pure returns (RoleId) { return RoleIdLib.toRoleId(100
 
 library RoleIdLib {
 
-    uint64 public constant ALL_VERSIONS = 99;
-    uint64 public constant SERVICE_DOMAIN_ROLE_FACTOR = 100;
-    uint64 public constant COMPONENT_ROLE_FACTOR = 1000;
-    uint64 public constant COMPONENT_ROLE_MIN_INT = 12000;
-    uint64 public constant COMPONENT_ROLE_MAX_INT = 19000;
-    uint64 public constant CUSTOM_ROLE_MIN_INT = 1000000;
+    error ErrorRoleIdTooBig(uint256 roleId);
+
+    // constant values need to match with AccessAdminLib.SERVICE_ROLE_*
+    uint64 public constant SERVICE_ROLE_MIN =  1000;
+    uint64 public constant SERVICE_ROLE_MAX = 99099; // 99 (max object type) * 1000 + 99
+
+    uint64 public constant SERVICE_ROLE_FACTOR = 1000;
 
     /// @dev Converts the RoleId to a uint.
     function zero() public pure returns (RoleId) {
         return RoleId.wrap(0);
     }
 
+
     /// @dev Converts an uint into a role id.
-    function toRoleId(uint64 a) public pure returns (RoleId) {
-        return RoleId.wrap(a);
+    function toRoleId(uint256 a) public pure returns (RoleId) {
+        if (a > type(uint64).max) {
+            revert ErrorRoleIdTooBig(a);
+        }
+
+        return RoleId.wrap(uint64(a));
     }
 
-    /// @dev Converts an uint into a component role id.
-    function toComponentRoleId(ObjectType objectType, uint64 index) public pure returns (RoleId) {
-        return toRoleId(COMPONENT_ROLE_FACTOR * uint64(objectType.toInt()) + index);
+
+    function isServiceRole(RoleId roleId)
+        public
+        pure
+        returns (bool)
+    {
+        uint256 roleIdInt = RoleId.unwrap(roleId);
+        return roleIdInt >= SERVICE_ROLE_MIN && roleIdInt <= SERVICE_ROLE_MAX;
     }
 
-    /// @dev Converts an uint into a custom role id.
-    function toCustomRoleId(uint64 index) public pure returns (RoleId) {
-        return toRoleId(CUSTOM_ROLE_MIN_INT + index);
+
+    function toGenericServiceRoleId(
+        ObjectType objectType
+    )
+        public 
+        pure 
+        returns (RoleId)
+    {
+        return toServiceRoleId(
+            objectType, 
+            VersionPartLib.releaseMax());
+    }
+
+
+    function toServiceRoleId(
+        ObjectType serviceDomain, 
+        VersionPart release
+    )
+        public 
+        pure 
+        returns (RoleId serviceRoleId)
+    {
+        uint256 serviceRoleIdInt = 
+            SERVICE_ROLE_MIN 
+            + SERVICE_ROLE_FACTOR * (serviceDomain.toInt() - 1)
+            + release.toInt();
+
+        return toRoleId(serviceRoleIdInt);
     }
 
     /// @dev Converts the role id to a uint.
     function toInt(RoleId a) public pure returns (uint64) {
         return uint64(RoleId.unwrap(a));
-    }
-
-    /// @dev Converts an uint into a role id.
-    /// Used for GIF core contracts.
-    function roleForType(ObjectType objectType) public pure returns (RoleId) {
-        return RoleId.wrap(SERVICE_DOMAIN_ROLE_FACTOR * uint64(objectType.toInt()));
-    }
-
-    /// @dev Converts an uint into a RoleId.
-    /// Used for GIF core contracts.
-    function roleForTypeAndVersion(ObjectType objectType, VersionPart majorVersion) public pure returns (RoleId) {
-        return RoleId.wrap(
-            uint64(SERVICE_DOMAIN_ROLE_FACTOR * objectType.toInt() + majorVersion.toInt()));
-    }
-
-    /// @dev Converts an uint into a RoleId.
-    /// Used for GIF core contracts.
-    function roleForTypeAndAllVersions(ObjectType objectType) public pure returns (RoleId) {
-        return RoleId.wrap(
-            uint64(SERVICE_DOMAIN_ROLE_FACTOR * objectType.toInt() + ALL_VERSIONS));
     }
 
     /// @dev Returns true if the value is non-zero (> 0).
@@ -157,26 +176,5 @@ library RoleIdLib {
     /// @dev Returns true if the value is zero (== 0).
     function eqz(RoleId a) public pure returns (bool) {
         return RoleId.unwrap(a) == 0;
-    }
-
-    /// @dev Returns true iff the role id is a component role.
-    function isComponentRole(RoleId roleId) public pure returns (bool) {
-        uint64 roleIdInt = RoleId.unwrap(roleId);
-        return roleIdInt >= COMPONENT_ROLE_MIN_INT && roleIdInt <= COMPONENT_ROLE_MAX_INT;
-    }
-
-    /// @dev Returns true iff the role id is a custom role.
-    function isCustomRole(RoleId roleId) public pure returns (bool) {
-        return RoleId.unwrap(roleId) >= CUSTOM_ROLE_MIN_INT;
-    }
-
-    /// @dev Returns the key32 value for the specified id and object type.
-    function toKey32(RoleId a) public pure returns (Key32 key) {
-        return Key32Lib.toKey32(ROLE(), toKeyId(a));
-    }
-
-    /// @dev Returns the key id value for the specified id
-    function toKeyId(RoleId a) public pure returns (KeyId keyId) {
-        return KeyId.wrap(bytes31(uint248(RoleId.unwrap(a))));
     }
 }

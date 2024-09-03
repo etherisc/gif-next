@@ -205,7 +205,7 @@ contract PolicyService is
         }
 
         // check if premium has already been collected
-        if (instanceReader.getPremiumInfoState(policyNftId) == PAID()) {
+        if (instanceReader.getPremiumState(policyNftId) == PAID()) {
             revert ErrorPolicyServicePremiumAlreadyPaid(policyNftId);
         }
 
@@ -395,7 +395,7 @@ contract PolicyService is
         RiskId riskId = policyInfo.riskId;
         NftId bundleNftId = policyInfo.bundleNftId;
 
-        if (instanceReader.getPremiumInfoState(policyNftId) != PAID()) {
+        if (instanceReader.getPremiumState(policyNftId) != PAID()) {
             revert ErrorPolicyServicePremiumNotPaid(policyNftId, policyInfo.premiumAmount);
         }
 

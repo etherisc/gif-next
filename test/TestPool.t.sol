@@ -58,7 +58,7 @@ contract TestPool is GifTest {
         getLocationHash("etherisc.storage.Oracle");
     }
 
-    function getLocationHash(string memory location) public returns (bytes32 locationHash) {
+    function getLocationHash(string memory location) public view returns (bytes32 locationHash) {
         locationHash = pool.getContractLocation(bytes(location));
         // solhint-disable
         console.log(location);

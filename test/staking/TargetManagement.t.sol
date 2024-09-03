@@ -115,10 +115,7 @@ contract StakingTargetManagementTest is GifTest {
         address stakingWallet = staking.getWallet();
         uint256 refillAmountFullDips = 500;
 
-        (
-            TokenHandler tokenHandler, 
-            Amount refillAmount
-        ) = _prepareAccount(instanceOwner, refillAmountFullDips);
+        (, Amount refillAmount) = _prepareAccount(instanceOwner, refillAmountFullDips);
 
         assertEq(dip.balanceOf(stakingWallet), 0, "staking wallet dip balance not 0 (after instance owner funding)");
         assertEq(refillAmount.toInt(), refillAmountFullDips * 10 ** dip.decimals(), "unexpected refill amount");
@@ -208,7 +205,6 @@ contract StakingTargetManagementTest is GifTest {
     function test_stakingTargetWithdrawRewardReservesOutsider() public {
 
         // GIVEN
-        address stakingWallet = staking.getWallet();
         uint256 refillAmountFullDips = 500;
         (, Amount refillAmount) = _addRewardReserves(instanceNftId, instanceOwner, refillAmountFullDips);
 
@@ -239,7 +235,7 @@ contract StakingTargetManagementTest is GifTest {
 
 
     function _addRewardReserves(
-        NftId instanceNftId, 
+        NftId, 
         address account, 
         uint256 amount
     )

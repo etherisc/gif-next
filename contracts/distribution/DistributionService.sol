@@ -13,21 +13,23 @@ import {IComponents} from "../instance/module/IComponents.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
 
 import {Amount, AmountLib} from "../type/Amount.sol";
-import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
 import {DistributorType, DistributorTypeLib} from "../type/DistributorType.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
 import {KEEP_STATE} from "../type/StateId.sol";
 import {ObjectType, ACCOUNTING, COMPONENT, DISTRIBUTION, INSTANCE, DISTRIBUTION, DISTRIBUTOR, REGISTRY} from "../type/ObjectType.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
-import {ReferralId, ReferralLib} from "../type/Referral.sol";
+// TODO PoolLib feels wrong, should likely go in a component type independent lib
+import {PoolLib} from "../pool/PoolLib.sol";
+import {ReferralId, ReferralStatus, ReferralLib, REFERRAL_OK, REFERRAL_ERROR_UNKNOWN, REFERRAL_ERROR_EXPIRED, REFERRAL_ERROR_EXHAUSTED} from "../type/Referral.sol";
 import {Seconds} from "../type/Seconds.sol";
+import {Service} from "../shared/Service.sol";
 import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
-import {UFixed} from "../type/UFixed.sol";
+import {UFixed, UFixedLib} from "../type/UFixed.sol";
 
 
 contract DistributionService is
-    ComponentVerifyingService,
+    Service,
     IDistributionService
 {
     IAccountingService private _accountingService;
@@ -74,10 +76,11 @@ contract DistributionService is
         restricted()
         returns (DistributorType distributorType)
     {
-        (NftId distributionNftId,, IInstance instance) = _getAndVerifyActiveComponent(DISTRIBUTION());
+        // _getAndVerifyActiveDistribution
+        (NftId distributionNftId, IInstance instance) = _getAndVerifyActiveDistribution();
 
         {
-            NftId productNftId = _getProductNftId(distributionNftId);
+            NftId productNftId = getRegistry().getParentNftId(distributionNftId);
             IComponents.FeeInfo memory feeInfo = instance.getInstanceReader().getFeeInfo(productNftId);
 
             UFixed variableDistributionFees = feeInfo.distributionFee.fractionalFee;
@@ -88,7 +91,7 @@ contract DistributionService is
             }
             UFixed maxDiscountPercentageLimit = variableDistributionFees - variableFeesPartsTotal;
 
-            if (maxDiscountPercentage.gt(maxDiscountPercentageLimit)) {
+            if (maxDiscountPercentage > maxDiscountPercentageLimit) {
                 revert ErrorDistributionServiceMaxDiscountTooHigh(maxDiscountPercentage.toInt1000(), maxDiscountPercentageLimit.toInt1000());
             }
         }
@@ -120,7 +123,7 @@ contract DistributionService is
         restricted()
         returns (NftId distributorNftId)
     {
-        (NftId distributionNftId,, IInstance instance) = _getAndVerifyActiveComponent(DISTRIBUTION());
+        (NftId distributionNftId, IInstance instance) = _getAndVerifyActiveDistribution();
         _checkDistributionType(instance.getInstanceReader(), distributorType, distributionNftId);
 
         distributorNftId = _registryService.registerDistributor(
@@ -153,7 +156,7 @@ contract DistributionService is
         restricted()
     {
         _checkNftType(distributorNftId, DISTRIBUTOR());
-        (NftId distributionNftId,, IInstance instance) = _getAndVerifyActiveComponent(DISTRIBUTION());
+        (NftId distributionNftId, IInstance instance) = _getAndVerifyActiveDistribution();
         _checkDistributionType(instance.getInstanceReader(), newDistributorType, distributionNftId);
         
         IDistribution.DistributorInfo memory distributorInfo = instance.getInstanceReader().getDistributorInfo(distributorNftId);
@@ -177,7 +180,7 @@ contract DistributionService is
         onlyNftOfType(distributorNftId, DISTRIBUTOR())
         returns (ReferralId referralId)
     {
-        (NftId distributionNftId,, IInstance instance) = _getAndVerifyActiveComponent(DISTRIBUTION());
+        (NftId distributionNftId, IInstance instance) = _getAndVerifyActiveDistribution();
 
         if (bytes(code).length == 0) {
             revert ErrorDistributionServiceInvalidReferral(code);
@@ -238,9 +241,7 @@ contract DistributionService is
         onlyNftOfType(distributionNftId, DISTRIBUTION())
     {
         if (referralIsValid(distributionNftId, referralId)) {
-            IRegistry registry = getRegistry();
-            IRegistry.ObjectInfo memory distributionInfo = registry.getObjectInfo(distributionNftId);
-            IInstance instance = _getInstanceForComponent(registry, distributionInfo.parentNftId);
+            IInstance instance = _getInstanceForDistribution(getRegistry(), distributionNftId);
 
             // update book keeping for referral info
             IDistribution.ReferralInfo memory referralInfo = instance.getInstanceReader().getReferralInfo(referralId);
@@ -259,9 +260,7 @@ contract DistributionService is
         restricted()
         onlyNftOfType(distributionNftId, DISTRIBUTION())
     {
-        IRegistry registry = getRegistry();
-        IRegistry.ObjectInfo memory distributionInfo = registry.getObjectInfo(distributionNftId);
-        IInstance instance = _getInstanceForComponent(registry, distributionInfo.parentNftId);
+        IInstance instance = _getInstanceForDistribution(getRegistry(), distributionNftId);
         InstanceReader reader = instance.getInstanceReader();
         InstanceStore store = instance.getInstanceStore();
 
@@ -298,7 +297,7 @@ contract DistributionService is
         onlyNftOfType(distributorNftId, DISTRIBUTOR())
         returns (Amount withdrawnAmount) 
     {
-        (NftId distributionNftId,, IInstance instance) = _getAndVerifyActiveComponent(DISTRIBUTION());
+        (NftId distributionNftId, IInstance instance) = _getAndVerifyActiveDistribution();
         InstanceReader reader = instance.getInstanceReader();
         
         IComponents.ComponentInfo memory distributionInfo = reader.getComponentInfo(distributionNftId);
@@ -308,10 +307,10 @@ contract DistributionService is
         
         // determine withdrawn amount
         withdrawnAmount = amount;
-        if (withdrawnAmount.gte(AmountLib.max())) {
+        if (withdrawnAmount >= AmountLib.max()) {
             withdrawnAmount = commissionAmount;
         } else {
-            if (withdrawnAmount.gt(commissionAmount)) {
+            if (withdrawnAmount > commissionAmount) {
                 revert ErrorDistributionServiceCommissionWithdrawAmountExceedsLimit(withdrawnAmount, commissionAmount);
             }
         }
@@ -343,9 +342,7 @@ contract DistributionService is
             return false;
         }
 
-        IRegistry registry = getRegistry();
-        IRegistry.ObjectInfo memory distributionInfo = registry.getObjectInfo(distributionNftId);
-        IInstance instance = _getInstanceForComponent(registry, distributionInfo.parentNftId);
+        IInstance instance = _getInstanceForDistribution(getRegistry(), distributionNftId);
         IDistribution.ReferralInfo memory info = instance.getInstanceReader().getReferralInfo(referralId);
 
         if (info.distributorNftId.eqz()) {
@@ -361,6 +358,48 @@ contract DistributionService is
         isValid = isValid && info.usedReferrals < info.maxReferrals;
     }
 
+
+    function getDiscountPercentage(
+        InstanceReader instanceReader,
+        ReferralId referralId
+    )
+        external
+        virtual
+        view 
+        returns (
+            UFixed discountPercentage, 
+            ReferralStatus status
+        )
+    { 
+        IDistribution.ReferralInfo memory info = instanceReader.getReferralInfo(
+            referralId);        
+
+        if (info.expiryAt.eqz()) {
+            return (
+                UFixedLib.zero(),
+                REFERRAL_ERROR_UNKNOWN());
+        }
+
+        if (info.expiryAt < TimestampLib.blockTimestamp()) {
+            return (
+                UFixedLib.zero(),
+                REFERRAL_ERROR_EXPIRED());
+        }
+
+        if (info.usedReferrals >= info.maxReferrals) {
+            return (
+                UFixedLib.zero(),
+                REFERRAL_ERROR_EXHAUSTED());
+        }
+
+        return (
+            info.discountPercentage,
+            REFERRAL_OK()
+        );
+
+    }
+
+
     function _checkDistributionType(InstanceReader instanceReader, DistributorType distributorType, NftId expectedDistributionNftId) 
         internal
         view 
@@ -373,15 +412,29 @@ contract DistributionService is
         }
     }
 
-    function _getInstanceForDistribution(NftId distributionNftId)
+
+    function _getInstanceForDistribution(IRegistry registry, NftId distributionNftId)
         internal
         view
         returns(IInstance instance)
     {
-        NftId instanceNftId = getRegistry().getParentNftId(distributionNftId);
-        address instanceAddress = getRegistry().getObjectAddress(instanceNftId);
-        return IInstance(instanceAddress);
+        // TODO refactor to ComponentLib or similar
+        return PoolLib.getInstanceForComponent(registry, distributionNftId);
     }
+
+
+    function _getAndVerifyActiveDistribution()
+        internal
+        virtual
+        view
+        returns (
+            NftId poolNftId,
+            IInstance instance
+        )
+    {
+        return PoolLib.getAndVerifyActiveComponent(getRegistry(), msg.sender, DISTRIBUTION());
+    }
+
 
     function _getDomain() internal pure override returns(ObjectType) {
         return DISTRIBUTION();

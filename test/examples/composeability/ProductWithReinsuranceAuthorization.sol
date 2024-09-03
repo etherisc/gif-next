@@ -22,6 +22,14 @@ contract ProductWithReinsuranceAuthorization
           BasicProductAuthorization("ProductWithReinsurance")
      {}
 
+     function _setupServiceTargets()
+          internal
+          virtual override
+     {
+          super._setupServiceTargets();
+          _authorizeServiceDomain(POOL(), address(15));
+     }
+
      function _setupTargetAuthorizations()
           internal
           virtual override

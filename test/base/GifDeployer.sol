@@ -5,6 +5,7 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
+import {IAccess} from "../../contracts/authorization/IAccess.sol";
 import {IAccessAdmin} from "../../contracts/authorization/IAccessAdmin.sol";
 import {IAuthorization} from "../../contracts/authorization/IAuthorization.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
@@ -13,14 +14,15 @@ import {IServiceAuthorization} from "../../contracts/authorization/IServiceAutho
 
 import {AmountLib} from "../../contracts/type/Amount.sol";
 import {ObjectType, ObjectTypeLib} from "../../contracts/type/ObjectType.sol";
+import {ChainNft} from "../../contracts/registry/ChainNft.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {ProxyManager} from "../../contracts/upgradeability/ProxyManager.sol";
 import {SCHEDULED, DEPLOYING} from "../../contracts/type/StateId.sol";
 import {VersionPart, VersionPartLib} from "../../contracts/type/Version.sol";
 import {RegistryAuthorization} from "../../contracts/registry/RegistryAuthorization.sol";
+import {RoleId} from "../../contracts/type/RoleId.sol";
 import {StateIdLib} from "../../contracts/type/StateId.sol";
 import {TimestampLib} from "../../contracts/type/Timestamp.sol";
-
 
 // core contracts
 import {Dip} from "../../contracts/mock/Dip.sol";
@@ -67,12 +69,38 @@ import {StakingServiceManager} from "../../contracts/staking/StakingServiceManag
 
 contract GifDeployer is Test {
 
+    uint8 public constant GIF_RELEASE = 3;
+    string public constant COMMIT_HASH = "1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a";
+
     struct DeployedServiceInfo {
         NftId nftId;
         address service;
         address proxy;
     }
 
+    // global accounts
+    address public globalRegistry = makeAddr("globalRegistry");
+    address public registryOwner = makeAddr("registryOwner");
+    address public stakingOwner = registryOwner;
+    address public gifAdmin = registryOwner;
+    address public gifManager = registryOwner;
+
+    // deploy core
+    IERC20Metadata public dip;
+    Registry public registry;
+    TokenRegistry public tokenRegistry;
+    ReleaseRegistry public releaseRegistry;
+    RegistryAdmin public registryAdmin;
+    StakingManager public stakingManager;
+    Staking public staking;
+
+    address public registryAddress;
+    ChainNft public chainNft;
+    NftId public registryNftId;
+    NftId public stakingNftId;
+    StakingReader public stakingReader;
+
+    // deploy release services
     RegistryServiceManager public registryServiceManager;
     RegistryService public registryService;
     NftId public registryServiceNftId;
@@ -131,6 +159,7 @@ contract GifDeployer is Test {
 
     mapping(ObjectType domain => DeployedServiceInfo info) public serviceForDomain;
 
+
     function deployCore(
         address globalRegistry,
         address gifAdmin,
@@ -148,30 +177,93 @@ contract GifDeployer is Test {
             Staking staking
         )
     {
+        // solhint-disable 
         vm.startPrank(gifManager);
 
-        // 1) deploy dip token
+        console.log("1) deploy dip token");
         dip = new Dip();
 
-        // 2) deploy registry admin
+        console.log("2) deploy registry contracts");
+        (
+            registry,
+            tokenRegistry,
+            releaseRegistry,
+            registryAdmin
+        ) = _deployRegistry(dip);
+
+        console.log("3) deploy staking contracts");
+        (
+            stakingManager,
+            staking
+        ) = _deployStaking(registry, tokenRegistry);
+
+        console.log("4) complete setup for GIF core contracts");
+
+        console.log("   a) initialize registry");
+        registry.initialize(
+            address(releaseRegistry),
+            address(tokenRegistry),
+            address(staking));
+
+        console.log("   b) link staking to its registered nft id");
+        staking.linkToRegisteredNftId();
+
+        console.log("   c) complete registry admin setup");
+        registryAdmin.completeSetup(
+            address(registry),
+            address(new RegistryAuthorization(COMMIT_HASH)),
+            VersionPartLib.toVersionPart(GIF_RELEASE),
+            gifAdmin,
+            gifManager);
+
+        console.log("GIF core contracts deployd and setup completed");
+
+        vm.stopPrank();
+        // solhint-disable enable
+    }
+
+
+    function _deployRegistry(IERC20Metadata dip)
+        internal
+        returns (
+            Registry registry,
+            TokenRegistry tokenRegistry,
+            ReleaseRegistry releaseRegistry,
+            RegistryAdmin registryAdmin
+        )
+    {
+
+        console.log("   a) deploy registry admin");
         registryAdmin = new RegistryAdmin();
 
-        // 3) deploy registry
+        console.log("   b) deploy registry");
         registry = new Registry(registryAdmin, globalRegistry);
 
-        // 4) deploy release manager
+        console.log("   c) deploy release registry");
         releaseRegistry = new ReleaseRegistry(registry);
 
-        // 5) deploy token registry
+        console.log("   d) deploy token registry");
         tokenRegistry = new TokenRegistry(registry, dip);
+    }
 
-        // 6) deploy staking reader
+
+    function _deployStaking(
+        Registry registry,
+        TokenRegistry tokenRegistry
+    )
+        internal 
+        returns (
+            StakingManager stakingManager,
+            Staking staking
+        )
+    {
+        console.log("   a) deploy staking reader");
         StakingReader stakingReader = new StakingReader(registry);
 
-        // 7) deploy staking store
+        console.log("   b) deploy staking store");
         StakingStore stakingStore = new StakingStore(registry, stakingReader);
 
-        // 8) deploy staking manager and staking component
+        console.log("   c) deploy staking manager (including upgradeable staking)");
         stakingManager = new StakingManager(
             address(registry),
             address(tokenRegistry),
@@ -180,49 +272,32 @@ contract GifDeployer is Test {
             bytes32("")); // salt
         staking = stakingManager.getStaking();
 
-        // 9) initialize instance reader
+        console.log("   d) initialize staking reader");
         stakingReader.initialize(
             address(staking),
             address(stakingStore));
-
-        // 10) intialize registry and register staking component
-        registry.initialize(
-            address(releaseRegistry),
-            address(tokenRegistry),
-            address(staking));
-
-        staking.linkToRegisteredNftId();
-
-        // 11) initialize registry admin
-        registryAdmin.completeSetup(
-            address(registry),
-            address(new RegistryAuthorization()),
-            gifAdmin,
-            gifManager);
-
-        vm.stopPrank();
     }
 
 
     function deployRelease(
         ReleaseRegistry releaseRegistry,
         IServiceAuthorization serviceAuthorization,
-        address gifAdmin,
-        address gifManager
+        address admin,
+        address manager
     )
         public
     {
-        vm.startPrank(gifAdmin);
+        vm.startPrank(admin);
         releaseRegistry.createNextRelease();
         vm.stopPrank();
 
-        vm.startPrank(gifManager);
+        vm.startPrank(manager);
         _deployReleaseServices(
             releaseRegistry,
             serviceAuthorization);
         vm.stopPrank();
 
-        vm.startPrank(gifAdmin);
+        vm.startPrank(admin);
         releaseRegistry.activateNextRelease();
         vm.stopPrank();
     }
@@ -473,5 +548,143 @@ contract GifDeployer is Test {
                 disabledAt: TimestampLib.zero()
             })
         );
+    }
+
+
+    function _deployCore(
+        address gifAdmin,
+        address gifManager
+    )
+        internal
+    {
+        (
+            dip,
+            registry,
+            tokenRegistry,
+            releaseRegistry,
+            registryAdmin,
+            stakingManager,
+            staking
+        ) = deployCore(
+            globalRegistry,
+            gifAdmin,
+            gifManager,
+            stakingOwner);
+
+        // obtain some references
+        registryAddress = address(registry);
+        chainNft = ChainNft(registry.getChainNftAddress());
+        registryNftId = registry.getNftIdForAddress(registryAddress);
+        stakingNftId = registry.getNftIdForAddress(address(staking));
+        stakingReader = staking.getStakingReader();
+    }
+
+
+    function _printCoreSetup() internal view {
+        // solhint-disable
+        console.log("registry deployed at", address(registry));
+        console.log("registry owner", registryOwner);
+
+        console.log("token registry deployed at", address(tokenRegistry));
+        console.log("release manager deployed at", address(releaseRegistry));
+
+        console.log("registry access manager deployed:", address(registryAdmin));
+        console.log("registry access manager authority", registryAdmin.authority());
+
+        console.log("staking manager deployed at", address(stakingManager));
+
+        console.log("staking nft id", registry.getNftIdForAddress(address(staking)).toInt());
+        console.log("staking deployed at", address(staking));
+        console.log("staking owner (opt 1)", registry.ownerOf(address(staking)));
+        console.log("staking owner (opt 2)", staking.getOwner());
+        // solhint-enable
+    }
+
+
+    function _printAuthz(
+        IAccessAdmin aa,
+        string memory aaName
+    )
+        internal
+    {
+        // solhint-disable no-console
+        console.log("==========================================");
+        console.log(aaName, registry.getObjectAddress(aa.getLinkedNftId()));
+        console.log(aaName, "nft id", aa.getLinkedNftId().toInt());
+        console.log(aaName, "owner", aa.getLinkedOwner());
+        console.log(aaName, "admin authorization");
+        console.log(aaName, "admin contract:", address(aa));
+        console.log(aaName, "admin authority:", aa.authority());
+
+        uint256 roles = aa.roles();
+        uint256 targets = aa.targets();
+
+        console.log("------------------------------------------");
+        console.log("roles", aa.roles());
+        // solhint-enable
+
+        for(uint256 i = 0; i < aa.roles(); i++) {
+            _printRoleMembers(aa, aa.getRoleId(i));
+        }
+
+        // solhint-disable no-console
+        console.log("------------------------------------------");
+        console.log("targets", aa.targets());
+        // solhint-enable
+
+        for(uint256 i = 0; i < aa.targets(); i++) {
+            _printTarget(aa, aa.getTargetAddress(i));
+        }
+    }
+
+
+    function _printRoleMembers(IAccessAdmin aa, RoleId roleId) internal {
+        IAccessAdmin.RoleInfo memory info = aa.getRoleInfo(roleId);
+        uint256 members = aa.roleMembers(roleId);
+
+        // solhint-disable no-console
+        console.log("role", info.name.toString(), "id", roleId.toInt()); 
+
+        if (members > 0) {
+            for(uint i = 0; i < members; i++) {
+                address memberAddress = aa.getRoleMember(roleId, i);
+                string memory targetName = "(not target)";
+                if (aa.targetExists(memberAddress)) {
+                    targetName = aa.getTargetInfo(memberAddress).name.toString();
+                }
+
+                console.log("-", i, aa.getRoleMember(roleId, i), targetName);
+            }
+        } else {
+            console.log("- no role members");
+        }
+
+        console.log("");
+        // solhint-enable
+    }
+
+    function _printTarget(IAccessAdmin aa, address target) internal view {
+        IAccessAdmin.TargetInfo memory info = aa.getTargetInfo(target);
+
+        // solhint-disable no-console
+        uint256 functions = aa.authorizedFunctions(target);
+        console.log("target", info.name.toString(), "address", target);
+
+        if (functions > 0) {
+            for(uint256 i = 0; i < functions; i++) {
+                (
+                    IAccess.FunctionInfo memory func,
+                    RoleId roleId
+                ) = aa.getAuthorizedFunction(target, i);
+                string memory role = aa.getRoleInfo(roleId).name.toString();
+
+                console.log("-", i, string(abi.encodePacked(func.name.toString(), "(): role ", role,":")), roleId.toInt());
+            }
+        } else {
+            console.log("- no authorized functions");
+        }
+
+        console.log("");
+        // solhint-enable
     }
 }

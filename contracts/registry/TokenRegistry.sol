@@ -3,15 +3,13 @@ pragma solidity ^0.8.20;
 
 import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManaged.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
-
-import {REGISTRY} from "../type/ObjectType.sol";
-import {VersionPart} from "../type/Version.sol";
 
 import {IRegistry} from "./IRegistry.sol";
 import {IRegistryLinked} from "../shared/IRegistryLinked.sol";
+
 import {ReleaseRegistry} from "./ReleaseRegistry.sol";
 import {RegistryAdmin} from "./RegistryAdmin.sol";
+import {VersionPart} from "../type/Version.sol";
 
 /// @dev The TokenRegistry contract is used to whitelist/manage ERC-20 of tokens per major release.
 /// Only whitelisted tokens can be used as default tokens for products, distribution and pools components.

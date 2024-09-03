@@ -37,6 +37,7 @@ abstract contract Distribution is
         external
         virtual
         restricted()
+    // solhint-disable-next-line no-empty-blocks
     {
         // default is no action
     }
@@ -81,7 +82,7 @@ abstract contract Distribution is
 
 
     function calculateRenewalFeeAmount(
-        ReferralId referralId,
+        ReferralId, // referralId
         uint256 netPremiumAmount
     )
         external

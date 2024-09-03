@@ -79,7 +79,7 @@ contract ComponentService is
         }
 
         // check provided address is product contract
-        if (!ContractLib.isInstanceLinkedComponent(address(registry), componentAddress)) {
+        if (!_isInstanceLinkedComponent(componentAddress)) {
             revert ErrorComponentServiceNotComponent(componentAddress);
         }
 
@@ -214,7 +214,7 @@ contract ComponentService is
         }
 
         // check provided address is product contract
-        if (!ContractLib.isProduct(address(registry), productAddress)) {
+        if (!_isProduct(productAddress)) {
             revert ErrorComponentServiceNotProduct(productAddress);
         }
 
@@ -224,6 +224,24 @@ contract ComponentService is
             productAddress, 
             instance.getNftId(), // instance is parent of product to be registered 
             token);
+    }
+
+
+    function _isProduct(address target) internal view virtual returns (bool) {
+        if (!_isInstanceLinkedComponent(target)) {
+            return false;
+        }
+
+        return IInstanceLinkedComponent(target).getInitialInfo().objectType == PRODUCT();
+    }
+
+
+    function _isInstanceLinkedComponent(address target) internal view virtual returns (bool) {
+        if (!ContractLib.isContract(target)) {
+            return false;
+        }
+
+        return ContractLib.supportsInterface(target, type(IInstanceLinkedComponent).interfaceId);
     }
 
 
@@ -265,8 +283,7 @@ contract ComponentService is
     function _createProduct(
         InstanceStore instanceStore,
         NftId productNftId,
-        address productAddress,
-        address token
+        address productAddress
     )
         internal
         virtual
@@ -479,7 +496,7 @@ contract ComponentService is
                 objectInfo.initialOwner).nftId;
 
             // create product info in instance store
-            _createProduct(instanceStore, componentNftId, componentAddress, token);
+            _createProduct(instanceStore, componentNftId, componentAddress);
         } else {
             // register non product component with registry
             componentNftId = _registryService.registerProductLinkedComponent(

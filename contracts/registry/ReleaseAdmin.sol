@@ -1,15 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IAccess} from "../authorization/IAccess.sol";
+import {IAuthorization} from "../authorization/IAuthorization.sol";
+import {IService} from "../shared/IService.sol";
+import {IServiceAuthorization} from "../authorization/IServiceAuthorization.sol";
+
 import {AccessAdmin} from "../authorization/AccessAdmin.sol";
 import {AccessAdminLib} from "../authorization/AccessAdminLib.sol";
 import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
-import {IAccess} from "../authorization/IAccess.sol";
-import {IService} from "../shared/IService.sol";
-import {IServiceAuthorization} from "../authorization/IServiceAuthorization.sol";
-import {ObjectType, ObjectTypeLib, ALL} from "../type/ObjectType.sol";
-import {RoleId, RoleIdLib, ADMIN_ROLE, RELEASE_REGISTRY_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
+import {ObjectType, ObjectTypeLib, RELEASE} from "../type/ObjectType.sol";
+import {RoleId, ADMIN_ROLE, RELEASE_REGISTRY_ROLE} from "../type/RoleId.sol";
+import {Str} from "../type/String.sol";
 import {VersionPart} from "../type/Version.sol";
+
 
 /// @dev The ReleaseAdmin contract implements the central authorization for the services of a specific release.
 /// There is one ReleaseAdmin contract per major GIF release.
@@ -25,10 +29,12 @@ contract ReleaseAdmin is
     error ErrorReleaseAdminReleaseLockAlreadySetTo(bool locked);
 
     /// @dev release core roles
-    string public constant RELEASE_REGISTRY_ROLE_NAME = "ReleaseRegistryRole";
+    string public constant RELEASE_REGISTRY_ROLE_NAME = "ReleaseRegistry_Role";
 
     /// @dev release core targets
     string public constant RELEASE_ADMIN_TARGET_NAME = "ReleaseAdmin";
+
+    IServiceAuthorization internal _serviceAuthorization;
 
 
     modifier onlyReleaseRegistry() {
@@ -38,6 +44,7 @@ contract ReleaseAdmin is
         }
         _;
     }
+
 
     // @dev Only used for master release admin
     constructor(address accessManager) {
@@ -49,32 +56,40 @@ contract ReleaseAdmin is
 
     function completeSetup(
         address registry,
-        address releaseRegistry,
-        VersionPart release
+        address authorization,
+        VersionPart release,
+        address releaseRegistry
     )
         external
         reinitializer(uint64(release.toInt()))
     {
 
         // checks
-        _checkRegistry(registry);
+        AccessAdminLib.checkRegistry(registry);
 
         AccessManagerCloneable(
             authority()).completeSetup(
                 registry, 
-                release); 
+                release);
+
+        IServiceAuthorization serviceAuthorization = IServiceAuthorization(authorization);
+        _checkAuthorization(address(serviceAuthorization), RELEASE(), release, true, true);
+        _serviceAuthorization = serviceAuthorization;
 
         // link nft ownability to registry
         _linkToNftOwnable(registry);
 
+        // setup release contract
         _setupReleaseRegistry(releaseRegistry);
+
+        // relase services will be authorized one by one via authorizeService()
     }
+
 
     /// @dev Sets up authorizaion for specified service.
     /// For all authorized services its authorized functions are enabled.
     /// Permissioned function: Access is restricted to release registry.
     function authorizeService(
-        IServiceAuthorization serviceAuthorization,
         IService service,
         ObjectType serviceDomain,
         VersionPart release
@@ -83,8 +98,19 @@ contract ReleaseAdmin is
         restricted()
     {
         _createServiceTargetAndRole(service, serviceDomain, release);
-        _authorizeServiceFunctions(serviceAuthorization, service, serviceDomain, release);
+
+        // authorize functions of service
+        Str serviceTarget = _serviceAuthorization.getServiceTarget(serviceDomain);
+        RoleId[] memory authorizedRoles = _serviceAuthorization.getAuthorizedRoles(serviceTarget);
+
+        for (uint256 i = 0; i < authorizedRoles.length; i++) {
+            _authorizeFunctions(
+                IAuthorization(address(_serviceAuthorization)), 
+                serviceTarget, 
+                authorizedRoles[i]);
+        }
     }
+
 
     /// @dev Locks/unlocks all release targets.
     /// For all authorized services of release its authorized functions are disabled/enabled.
@@ -106,6 +132,7 @@ contract ReleaseAdmin is
         emit LogReleaseAdminReleaseLockChanged(getRelease(), locked);
     }
 
+
     /// @dev Lock/unlock specific service of release.
     /// Permissioned function: Access is restricted to release registry.
     function setServiceLocked(IService service, bool locked)
@@ -123,13 +150,6 @@ contract ReleaseAdmin is
         emit LogReleaseAdminServiceLockChanged(service.getRelease(), address(service), locked);
     }
 
-    //--- view functions ----------------------------------------------------//
-
-/*
-    function getReleaseAdminRole() external view returns (RoleId) {
-        return GIF_ADMIN_ROLE();
-    }
-*/
     //--- private functions -------------------------------------------------//
 
     function _createServiceTargetAndRole(
@@ -145,85 +165,7 @@ contract ReleaseAdmin is
         string memory serviceTargetName = ObjectTypeLib.toVersionedName(
             baseName, "Service", release);
 
-        _createTarget(
-            address(service), 
-            serviceTargetName,
-            true,
-            false);
-
-        // create service role
-        RoleId serviceRoleId = RoleIdLib.roleForTypeAndVersion(
-            serviceDomain, 
-            release);
-
-        if(!roleExists(serviceRoleId)) {
-            _createRole(
-                serviceRoleId, 
-                AccessAdminLib.toRole({
-                    adminRoleId: ADMIN_ROLE(),
-                    roleType: RoleType.Contract,
-                    maxMemberCount: 1,
-                    name: ObjectTypeLib.toVersionedName(
-                        baseName, 
-                        "ServiceRole", 
-                        release)}));
-        }
-
-        _grantRoleToAccount( 
-            serviceRoleId,
-            address(service)); 
-    }
-
-
-    function _authorizeServiceFunctions(
-        IServiceAuthorization serviceAuthorization,
-        IService service,
-        ObjectType serviceDomain, 
-        VersionPart release
-    )
-        private
-    {
-        ObjectType authorizedDomain;
-        RoleId authorizedRoleId;
-
-        ObjectType[] memory authorizedDomains = serviceAuthorization.getAuthorizedDomains(serviceDomain);
-
-        for (uint256 i = 0; i < authorizedDomains.length; i++) {
-            authorizedDomain = authorizedDomains[i];
-
-            // derive authorized role from authorized domain
-            if (authorizedDomain == ALL()) {
-                authorizedRoleId = PUBLIC_ROLE();
-            } else {
-                authorizedRoleId = RoleIdLib.roleForTypeAndVersion(
-                authorizedDomain, 
-                release);
-            }
-
-            if(!roleExists(authorizedRoleId)) {
-                // create role for authorized domain
-                _createRole(
-                    authorizedRoleId, 
-                    AccessAdminLib.toRole({
-                        adminRoleId: ADMIN_ROLE(),
-                        roleType: RoleType.Contract,
-                        maxMemberCount: 1,
-                        name: ObjectTypeLib.toVersionedName(
-                            ObjectTypeLib.toName(authorizedDomain), 
-                            "Role", 
-                            release)}));
-            }
-
-            // get authorized functions for authorized domain
-            IAccess.FunctionInfo[] memory authorizatedFunctions = serviceAuthorization.getAuthorizedFunctions(
-                serviceDomain, 
-                authorizedDomain);
-
-            _authorizeTargetFunctions(
-                    address(service), 
-                    authorizedRoleId, 
-                    authorizatedFunctions);
-        }
+        _createUncheckedTarget(address(service), serviceTargetName, TargetType.Service);
     }
 
     //--- private initialization functions -------------------------------------------//
@@ -232,7 +174,7 @@ contract ReleaseAdmin is
         private 
         onlyInitializing()
     {
-        _createTarget(address(this), RELEASE_ADMIN_TARGET_NAME, false, false);
+        _createManagedTarget(address(this), RELEASE_ADMIN_TARGET_NAME, IAccess.TargetType.Core);
 
         _createRole(
             RELEASE_REGISTRY_ROLE(), 
@@ -246,7 +188,7 @@ contract ReleaseAdmin is
         functions = new FunctionInfo[](2);
         functions[0] = AccessAdminLib.toFunction(ReleaseAdmin.authorizeService.selector, "authorizeService");
         functions[1] = AccessAdminLib.toFunction(ReleaseAdmin.setServiceLocked.selector, "setServiceLocked");
-        _authorizeTargetFunctions(address(this), RELEASE_REGISTRY_ROLE(), functions);
+        _authorizeTargetFunctions(address(this), RELEASE_REGISTRY_ROLE(), functions, true);
 
         _grantRoleToAccount(RELEASE_REGISTRY_ROLE(), releaseRegistry);
     }

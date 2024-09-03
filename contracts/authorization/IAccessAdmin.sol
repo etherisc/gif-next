@@ -11,10 +11,10 @@ import {IRelease} from "../registry/IRelease.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType} from "../type/ObjectType.sol";
 import {RoleId} from "../type/RoleId.sol";
-import {Selector} from "../type/Selector.sol";
 import {Str} from "../type/String.sol";
 import {VersionPart} from "../type/Version.sol";
 
+/// @dev Base interface for registry admin, release admin, and instance admin 
 interface IAccessAdmin is 
     IAccessManaged,
     IAccess,
@@ -24,7 +24,7 @@ interface IAccessAdmin is
 
     // roles, targets and functions
     event LogAccessAdminRoleCreated(string admin, RoleId roleId, RoleType roleType, RoleId roleAdminId, string name);
-    event LogAccessAdminTargetCreated(string admin, address target, string name);
+    event LogAccessAdminTargetCreated(string admin, string name, bool managed, address target, RoleId roleId);
 
     event LogAccessAdminRoleGranted(string admin, address account, string roleName);
     event LogAccessAdminRoleRevoked(string admin, address account, string roleName);
@@ -39,6 +39,11 @@ interface IAccessAdmin is
     // only role owner modifier
     error ErrorAccessAdminNotRoleOwner(RoleId roleId, address account);
 
+    // role management
+    error ErrorAccessAdminInvalidUserOfAdminRole();
+    error ErrorAccessAdminInvalidUserOfPublicRole();
+    error ErrorAccessAdminRoleNotCustom(RoleId roleId);
+
     // initialization
     error ErrorAccessAdminNotRegistry(address registry);
     error ErrorAccessAdminAuthorityNotContract(address authority);
@@ -46,6 +51,8 @@ interface IAccessAdmin is
     error ErrorAccessAdminAccessManagerEmptyName();
 
     // check target
+    error ErrorAccessAdminInvalidTargetType(address target, TargetType targetType);
+    error ErrorAccessAdminInvalidServiceType(address target, TargetType serviceTargetType);
     error ErrorAccessAdminTargetNotCreated(address target);
     error ErrorAccessAdminTargetNotRegistered(address target);
     error ErrorAccessAdminTargetTypeMismatch(address target, ObjectType expectedType, ObjectType actualType);
@@ -53,6 +60,7 @@ interface IAccessAdmin is
     // check authorization
     error ErrorAccessAdminAlreadyInitialized(address authorization);
     error ErrorAccessAdminNotAuthorization(address authorization);
+    error ErrorAccessAdminNotServiceAuthorization(address serviceAuthorization);
     error ErrorAccessAdminDomainMismatch(address authorization, ObjectType expectedDomain, ObjectType actualDomain);
     error ErrorAccessAdminReleaseMismatch(address authorization, VersionPart expectedRelease, VersionPart actualRelease);
 
@@ -90,49 +98,12 @@ interface IAccessAdmin is
     // authorize target functions
     error ErrorAccessAdminAuthorizeForAdminRoleInvalid(address target);
 
+    // toFunction
+    error ErrorAccessAdminSelectorZero();
+    error ErrorAccessAdminFunctionNameEmpty();
+
     // check target
     error ErrorAccessAdminTargetUnknown(address target);
-
-    /// @dev Set the disabled status of the speicified role.
-    /// Role disabling only prevents the role from being granted to new accounts.
-    /// Existing role members may still execute functions that are authorized for that role.
-    /// Permissioned: the caller must have the manager role (getManagerRole).
-    // TODO move to instance admin
-    // function setRoleDisabled(RoleId roleId, bool disabled) external;
-
-    /// @dev Grant the specified account the provided role.
-    /// Permissioned: the caller must have the roles admin role.
-    // TODO move to instance admin
-    // function grantRole(address account, RoleId roleId) external;
-
-    /// @dev Revoke the provided role from the specified account.
-    /// Permissioned: the caller must have the roles admin role.
-    // TODO move to instance admin
-    // function revokeRole(address account, RoleId roleId) external;
-
-    /// @dev Removes the provided role from the caller
-    // TODO move to instance admin
-    // function renounceRole(RoleId roleId) external;
-
-    /// @dev Set the locked status of the speicified contract.
-    /// IMPORTANT: using this function the AccessManager might itself be put into locked state from which it cannot be unlocked again.
-    /// Overwrite this function if a different use case specific behaviour is required.
-    /// Alternatively, add specific function to just unlock this contract without a restricted() modifier.
-    /// Permissioned: the caller must have the manager role (getManagerRole).
-    // TODO move to instance admin
-    // function setTargetLocked(address target, bool locked) external;
-
-    /// @dev Specifies which functions of the target can be accessed by the provided role.
-    /// Previously existing authorizations will be overwritten.
-    /// Authorizing the admin role is not allowed, use function unauthorizedFunctions for this.
-    /// Permissioned: the caller must have the manager role (getManagerRole).
-    // TODO move to instance admin
-    // function authorizeFunctions(address target, RoleId roleId, FunctionInfo[] memory functions) external;
-
-    /// @dev Specifies for which functionss to remove any previous authorization
-    /// Permissioned: the caller must have the manager role (getManagerRole).
-    // TODO move to instance admin
-    // function unauthorizeFunctions(address target, FunctionInfo[] memory functions) external;
 
     //--- view functions ----------------------------------------------------//
 
@@ -148,11 +119,14 @@ interface IAccessAdmin is
     function getPublicRole() external view returns (RoleId roleId);
 
     function roleExists(RoleId roleId) external view returns (bool exists); 
+    function roleExists(string memory roleName) external view returns (bool exists); 
     function getRoleForName(string memory name) external view returns (RoleId roleId);
     function getRoleInfo(RoleId roleId) external view returns (RoleInfo memory roleInfo);
+    function isRoleActive(RoleId roleId) external view returns (bool isActive);
+    function isRoleCustom(RoleId roleId) external view returns (bool isCustom);
 
-    function hasRole(address account, RoleId roleId) external view returns (bool);
-    function hasAdminRole(address account, RoleId roleId) external view returns (bool);
+    function isRoleMember(RoleId roleId, address account) external view returns (bool);
+    function isRoleAdmin(RoleId roleId, address account) external view returns (bool);
     function roleMembers(RoleId roleId) external view returns (uint256 numberOfMembers);
     function getRoleMember(RoleId roleId, uint256 idx) external view returns (address account);
 

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IAccess} from "../authorization/IAccess.sol";
 import {IInstance} from "./IInstance.sol";
 import {IComponentService} from "../shared/IComponentService.sol";
 import {IInstanceService} from "./IInstanceService.sol";
@@ -37,12 +38,22 @@ contract Instance is
     NftId [] internal _products;
     bool internal _tokenRegistryDisabled;
 
-    modifier onlyChainNft() {
-        if(msg.sender != getRegistry().getChainNftAddress()) {
-            revert();
+
+    modifier onlyCustomRoleAdmin(RoleId roleId) {
+        if (!_instanceAdmin.isRoleCustom(roleId)) {
+            revert ErrorInstanceNotCustomRole(roleId);
+        }
+
+        // instance owner can always act as role admin
+        address account = msg.sender;
+        if (account != getOwner()) {
+            if (!_instanceAdmin.isRoleAdmin(roleId, account)) {
+                revert ErrorInstanceNotRoleAdmin(roleId, account);
+            }
         }
         _;
     }
+
 
     function initialize(
         InstanceAdmin instanceAdmin, 
@@ -65,14 +76,14 @@ contract Instance is
         _instanceAdmin = instanceAdmin;
 
         // setup instance object info
-        __Registerable_init(
-            instanceAdmin.authority(),
-            address(registry), 
-            registry.getNftId(), 
-            INSTANCE(), 
-            true, 
-            initialOwner, 
-            "");
+        __Registerable_init({
+            authority: instanceAdmin.authority(),
+            registry: address(registry), 
+            parentNftId: registry.getNftId(), 
+            objectType: INSTANCE(), 
+            isInterceptor: false, 
+            initialOwner: initialOwner, 
+            data: ""});
 
         // store instance supporting contracts
         _instanceStore = instanceStore;
@@ -177,71 +188,103 @@ contract Instance is
 
     //--- Roles ------------------------------------------------------------//
 
-    function createRole(string memory roleName, string memory adminName)
+    /// @inheritdoc IInstance
+    function createRole(
+        string memory roleName, 
+        RoleId adminRoleId,
+        uint32 maxMemberCount
+    )
         external
         restricted()
         onlyOwner()
-        returns (RoleId roleId, RoleId admin)
+        returns (RoleId roleId)
     {
-        // TODO refactor
-        // (roleId, admin) = _instanceAdmin.createRole(roleName, adminName);
+        roleId = _instanceService.createRole(roleName, adminRoleId, maxMemberCount);
+        emit LogInstanceCustomRoleCreated(roleId, roleName, adminRoleId, maxMemberCount);
     }
 
+
+    /// @inheritdoc IInstance
+    function setRoleActive(RoleId roleId, bool active)
+        external 
+        restricted()
+        onlyCustomRoleAdmin(roleId)
+    {
+        _instanceService.setRoleActive(roleId, active);
+        emit LogInstanceCustomRoleActiveSet(roleId, active, msg.sender);
+    }
+
+
+    /// @inheritdoc IInstance
     function grantRole(RoleId roleId, address account) 
         external 
         restricted()
-        onlyOwner()
+        onlyCustomRoleAdmin(roleId)
     {
-        _instanceAdmin.grantRole(roleId, account);
+        _instanceService.grantRole(roleId, account);
+        emit LogInstanceCustomRoleGranted(roleId, account, msg.sender);
     }
 
+
+    /// @inheritdoc IInstance
     function revokeRole(RoleId roleId, address account) 
         external 
         restricted()
-        onlyOwner()
+        onlyCustomRoleAdmin(roleId)
     {
-        // TODO refactor
-        // AccessManagerExtendedInitializeable(authority()).revokeRole(roleId.toInt(), account);
+        _instanceService.revokeRole(roleId, account);
+        emit LogInstanceCustomRoleRevoked(roleId, account, msg.sender);
     }
 
     //--- Targets ------------------------------------------------------------//
 
+    /// @inheritdoc IInstance
+    function createTarget(address target, string memory name) 
+        external 
+        restricted()
+        onlyOwner()
+        returns (RoleId targetRoleId)
+    {
+        targetRoleId = _instanceService.createTarget(target, name);
+        emit LogInstanceCustomTargetCreated(target, targetRoleId, name);
+    }
 
+
+    /// @inheritdoc IInstance
     function setTargetLocked(address target, bool locked)
         external 
         // not restricted(): instance owner may need to be able to unlock targets on an locked instance
         onlyOwner()
     {
         _instanceService.setTargetLocked(target, locked);
+        emit LogInstanceTargetLocked(target, locked);
     }
 
-    function createTarget(address target, string memory name) 
+
+    /// @inheritdoc IInstance
+    function authorizeFunctions(
+        address target, 
+        RoleId roleId, 
+        IAccess.FunctionInfo[] memory functions
+    )
         external 
         restricted()
         onlyOwner()
     {
-        // TODO refactor
-        // _instanceAdmin.createTarget(target, name);
+        _instanceService.authorizeFunctions(target, roleId, functions);
     }
 
-    function setTargetFunctionRole(
-        string memory targetName,
-        bytes4[] calldata selectors,
-        RoleId roleId
-    ) 
+
+    /// @inheritdoc IInstance
+    function unauthorizeFunctions(
+        address target, 
+        IAccess.FunctionInfo[] memory functions
+    )
         external 
         restricted()
         onlyOwner()
     {
-        // TODO refactor
-        // _instanceAdmin.setTargetFunctionRoleByInstance(targetName, selectors, roleId);
-    }
-
-    //--- ITransferInterceptor ----------------------------------------------//
-
-    function nftTransferFrom(address from, address to, uint256 tokenId, address operator) external onlyChainNft {
-        // TODO refactor
-        // _instanceAdmin.transferInstanceOwnerRole(from, to);
+        _instanceService.unauthorizeFunctions(target, functions);
     }
 
     //--- initial setup functions -------------------------------------------//
@@ -299,6 +342,4 @@ contract Instance is
     function isTokenRegistryDisabled() external view returns (bool) {
         return _tokenRegistryDisabled;
     }
-
-    //--- internal view/pure functions --------------------------------------//
 }

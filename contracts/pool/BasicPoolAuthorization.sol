@@ -18,15 +18,21 @@ contract BasicPoolAuthorization
 {
 
      constructor(string memory poolName)
-          Authorization(poolName, POOL(), true, true)
+          Authorization(
+               poolName, 
+               POOL(), 
+               3,
+               COMMIT_HASH,
+               true, 
+               true)
      {}
 
      function _setupServiceTargets()
           internal
           virtual override
      {
-          _addServiceTargetWithRole(COMPONENT());
-          _addServiceTargetWithRole(POOL());
+          _authorizeServiceDomain(COMPONENT(), address(11));
+          _authorizeServiceDomain(POOL(), address(12));
      }
 
      function _setupTokenHandlerAuthorizations() internal virtual override {

@@ -32,13 +32,7 @@ import {GifTest} from "../base/GifTest.sol";
 contract RegistryServiceHarnessTestBase is GifDeployer, FoundryRandom {
 
     address public registerableOwner = makeAddr("registerableOwner");
-
-    IRegistry public registry;
-    address public registryAddress;
-    address public globalRegistry = makeAddr("globalRegistry");
-    address public registryOwner = makeAddr("registryOwner");
     address public outsider = makeAddr("outsider");
-    ReleaseRegistry releaseRegistry;
 
     RegistryServiceManagerMockWithHarness public registryServiceManagerWithHarness;
     RegistryServiceHarness public registryServiceHarness;
@@ -46,6 +40,9 @@ contract RegistryServiceHarnessTestBase is GifDeployer, FoundryRandom {
 
     function setUp() public virtual
     {
+        globalRegistry = makeAddr("globalRegistry");
+        registryOwner = makeAddr("registryOwner");
+
         // solhint-disable-next-line
         console.log("tx origin", tx.origin);
 

@@ -6,7 +6,6 @@ import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessMana
 import {INftOwnable} from "./INftOwnable.sol";
 import {IRelease} from "../registry/IRelease.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
-import {VersionPart} from "../type/Version.sol";
 
 /// @title IRegisterable
 /// @dev Marks contracts that are intended to be registered in the registry.

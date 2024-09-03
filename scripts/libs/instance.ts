@@ -44,6 +44,7 @@ export async function deployAndRegisterMasterInstance(
         [],
         {
             libraries: {
+                AccessAdminLib: libraries.accessAdminLibAddress,
                 ObjectTypeLib: libraries.objectTypeLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
                 SelectorLib: libraries.selectorLibAddress,
@@ -150,15 +151,17 @@ export async function deployAndRegisterMasterInstance(
         [],
         { 
             libraries: {
+                AccessAdminLib: libraries.accessAdminLibAddress,
                 AmountLib: libraries.amountLibAddress,
                 ClaimIdLib: libraries.claimIdLibAddress,
                 DistributorTypeLib: libraries.distributorTypeLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
                 PayoutIdLib: libraries.payoutIdLibAddress,
+                PolicyServiceLib: libraries.policyServiceLibAddress,
                 ReferralLib: libraries.referralLibAddress,
                 RequestIdLib: libraries.requestIdLibAddress,
                 RiskIdLib: libraries.riskIdLibAddress,
-                TimestampLib: libraries.timestampLibAddress,
+                RoleIdLib: libraries.roleIdLibAddress,
                 UFixedLib: libraries.uFixedLibAddress,
             }
         }
@@ -210,9 +213,9 @@ export async function deployAndRegisterMasterInstance(
     await executeTx(
         () => masterInstanceAdmin.completeSetup(
             registry.registryAddress,
-            masterInstanceAddress, 
             masterInstanceAuthorizationV3Address,
             3,
+            masterInstanceAddress, 
             getTxOpts()),
             "masterInstanceAdmin completeSetup",
             [masterInstanceAdmin.interface]

@@ -3,57 +3,79 @@ pragma solidity ^0.8.20;
 
 import {IAccessManager} from "@openzeppelin/contracts/access/manager/IAccessManager.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import {console} from "../lib/forge-std/src/Test.sol";
+import {console} from "../../lib/forge-std/src/Test.sol";
 
-import {ChainNft} from "../contracts/registry/ChainNft.sol";
-import {Dip} from "../contracts/mock/Dip.sol";
-import {GifDeployer} from "./base/GifDeployer.sol";
-import {GIF_MANAGER_ROLE, GIF_ADMIN_ROLE} from "../contracts/type/RoleId.sol";
-import {IRegistry} from "../contracts/registry/IRegistry.sol";
-import {IServiceAuthorization} from "../contracts/authorization/IServiceAuthorization.sol";
-import {NftId, NftIdLib} from "../contracts/type/NftId.sol";
-import {Registry} from "../contracts/registry/Registry.sol";
-import {RegistryAdmin} from "../contracts/registry/RegistryAdmin.sol";
-import {ReleaseRegistry} from "../contracts/registry/ReleaseRegistry.sol";
-import {REGISTRY, STAKING} from "../contracts/type/ObjectType.sol";
-import {Selector, SelectorLib} from "../contracts/type/Selector.sol";
-import {ServiceAuthorizationV3} from "../contracts/registry/ServiceAuthorizationV3.sol";
-import {Staking} from "../contracts/staking/Staking.sol";
-import {StakingManager} from "../contracts/staking/StakingManager.sol";
-import {StakingReader} from "../contracts/staking/StakingReader.sol";
-import {StakingStore} from "../contracts/staking/StakingStore.sol";
-import {TokenRegistry} from "../contracts/registry/TokenRegistry.sol";
-import {VersionPart, VersionPartLib} from "../contracts/type/Version.sol";
+import {ChainNft} from "../../contracts/registry/ChainNft.sol";
+import {Dip} from "../../contracts/mock/Dip.sol";
+import {GifDeployer} from "./GifDeployer.sol";
+import {GIF_MANAGER_ROLE, GIF_ADMIN_ROLE} from "../../contracts/type/RoleId.sol";
+import {IRegistry} from "../../contracts/registry/IRegistry.sol";
+import {IServiceAuthorization} from "../../contracts/authorization/IServiceAuthorization.sol";
+import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
+import {Registry} from "../../contracts/registry/Registry.sol";
+import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
+import {ReleaseAdmin} from "../../contracts/registry/ReleaseAdmin.sol";
+import {ReleaseRegistry} from "../../contracts/registry/ReleaseRegistry.sol";
+import {REGISTRY, STAKING} from "../../contracts/type/ObjectType.sol";
+import {Selector, SelectorLib} from "../../contracts/type/Selector.sol";
+import {ServiceAuthorizationV3} from "../../contracts/registry/ServiceAuthorizationV3.sol";
+import {Staking} from "../../contracts/staking/Staking.sol";
+import {StakingManager} from "../../contracts/staking/StakingManager.sol";
+import {StakingReader} from "../../contracts/staking/StakingReader.sol";
+import {StakingStore} from "../../contracts/staking/StakingStore.sol";
+import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
+import {VersionPart, VersionPartLib} from "../../contracts/type/Version.sol";
 
 // solhint-disable-next-line max-states-count
 contract GifDeployerTest is GifDeployer {
 
-    IERC20Metadata public dip;
-    ChainNft public chainNft;
-    Registry public registry;
-    TokenRegistry public tokenRegistry;
-    ReleaseRegistry public releaseRegistry;
-    RegistryAdmin public registryAdmin;
-    StakingManager public stakingManager;
-    Staking public staking;
-
-    VersionPart public gifV3 = VersionPartLib.toVersionPart(3);
-    IServiceAuthorization public serviceAuthorization = new ServiceAuthorizationV3("85b428cbb5185aee615d101c2554b0a58fb64810");
-
-    address public globalRegistry = makeAddr("globalRegistry");
-    address public registryOwner = makeAddr("registryOwner");
-    address public gifAdmin = registryOwner;
-    address public gifManager = registryOwner;
-    address public stakingOwner = registryOwner;
+    VersionPart public gifV3;
+    IServiceAuthorization public serviceAuthorization;
 
 
-    function test_deployerCoreDip() public {
+    function setUp() public virtual {
+        gifV3 = VersionPartLib.toVersionPart(3);
+        serviceAuthorization = new ServiceAuthorizationV3(COMMIT_HASH);
+
+        _deployCore(gifAdmin, gifManager);
+    }
+
+
+    function test_gifDeployerSetup() public {
+        _printCoreSetup();
+        _printAuthz(registryAdmin, "registryAdmin");
+    }
+
+
+    function test_gifDeployerRegistrySetup() public {
+        // GIVEN
+        _deployRelease();
+
+        // THEN
+        _printAuthz(registryAdmin, "RegistryAdmin");
+    }
+
+
+    function test_gifDeployerReleaseSetup() public {
+        // GIVEN
+        _deployRelease();
+
+        // THEN
+        ReleaseAdmin releaseAdmin = ReleaseAdmin(
+            releaseRegistry.getReleaseInfo(
+                releaseRegistry.getLatestVersion()).releaseAdmin);
+
+        _printAuthz(releaseAdmin, "ReleaseAdmin");
+    }
+
+
+    function test_gifDeployerCoreDip() public view {
         assertTrue(address(dip) != address(0), "dip address zero");
         assertEq(dip.decimals(), 18, "unexpected decimals for dip");
     }
 
 
-    function test_deployerCoreRegistry() public {
+    function test_gifDeployerCoreRegistry() public view {
         assertTrue(address(registry) != address(0), "registry address zero");
 
         // check registry
@@ -81,7 +103,7 @@ contract GifDeployerTest is GifDeployer {
     }
 
 
-    function test_deployerCoreTokenRegistry() public {
+    function test_gifDeployerCoreTokenRegistry() public view {
         assertTrue(address(tokenRegistry) != address(0), "token registry address zero");
 
         assertEq(address(tokenRegistry.getDipToken()), address(dip), "unexpected dip address");
@@ -92,7 +114,7 @@ contract GifDeployerTest is GifDeployer {
     }
 
 
-    function test_deployerCoreReleaseRegistry() public {
+    function test_gifDeployerCoreReleaseRegistry() public view {
         assertTrue(address(releaseRegistry) != address(0), "release manager address zero");
 
         // check authority
@@ -107,7 +129,7 @@ contract GifDeployerTest is GifDeployer {
     }
 
 
-    function test_deployerCoreRegistryAccessManager() public {
+    function test_gifDeployerCoreRegistryAccessManager() public {
         assertTrue(address(registryAdmin) != address(0), "registry admin manager address zero");
         assertTrue(registryAdmin.authority() != address(0), "registry admin manager authority address zero");
 
@@ -115,8 +137,8 @@ contract GifDeployerTest is GifDeployer {
         assertEq(registryAdmin.authority(), registryAdmin.authority(), "unexpected release manager authority");
 
         // check initial roles assignments
-        assertTrue(registryAdmin.hasRole(gifAdmin, GIF_ADMIN_ROLE()), "registry owner not admin");
-        assertTrue(registryAdmin.hasRole(gifManager, GIF_MANAGER_ROLE()), "registry owner not manager");
+        assertTrue(registryAdmin.isRoleMember(GIF_ADMIN_ROLE(), gifAdmin), "registry owner not admin");
+        assertTrue(registryAdmin.isRoleMember(GIF_MANAGER_ROLE(), gifManager), "registry owner not manager");
 
         // check sample admin access
         IAccessManager authority = IAccessManager(registryAdmin.authority());
@@ -136,7 +158,7 @@ contract GifDeployerTest is GifDeployer {
         // TODO amend once full gif setup is streamlined
     }
 
-    function test_deployerCoreStakingManager() public {
+    function test_gifDeployerCoreStakingManager() public view {
         assertTrue(address(stakingManager) != address(0), "staking manager address zero");
 
         // assertEq(stakingOwner, registryOwner, "unexpected staking owner");
@@ -146,7 +168,7 @@ contract GifDeployerTest is GifDeployer {
     }
 
 
-    function test_deployerCoreStakingContract() public {
+    function test_gifDeployerCoreStakingContract() public view {
         assertTrue(address(staking) != address(0), "staking address zero");
 
         // check nft id
@@ -176,7 +198,7 @@ contract GifDeployerTest is GifDeployer {
     }
 
 
-    function test_deployerCoreStakingReader() public {
+    function test_gifDeployerCoreStakingReader() public {
         StakingReader reader = StakingReader(staking.getStakingReader());
 
         assertEq(address(reader.getRegistry()), address(registry), "unexpected registry address");
@@ -184,7 +206,7 @@ contract GifDeployerTest is GifDeployer {
     }
 
 
-    function test_deployerCoreStakingStore() public {
+    function test_gifDeployerCoreStakingStore() public view {
         StakingStore store = StakingStore(staking.getStakingStore());
 
         // check authority
@@ -192,23 +214,7 @@ contract GifDeployerTest is GifDeployer {
     }
 
 
-    function setUp() public virtual {
-        (
-            dip,
-            registry,
-            tokenRegistry,
-            releaseRegistry,
-            registryAdmin,
-            stakingManager,
-            staking
-        ) = deployCore(
-            globalRegistry,
-            gifAdmin,
-            gifManager,
-            stakingOwner);
-        
-        chainNft = ChainNft(registry.getChainNftAddress());
-
+    function _deployRelease() internal {
         deployRelease(
             releaseRegistry,
             serviceAuthorization,
