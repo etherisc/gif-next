@@ -3,9 +3,10 @@ pragma solidity ^0.8.20;
 
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import {Amount} from "../type/Amount.sol";
 import {IComponent} from "../shared/IComponent.sol";
 import {IVersionable} from "../upgradeability/IVersionable.sol";
+
+import {Amount} from "../type/Amount.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType} from "../type/ObjectType.sol";
 import {Seconds} from "../type/Seconds.sol";
@@ -20,6 +21,10 @@ interface IStaking is
 {
     // staking rate
     event LogStakingStakingRateSet(uint256 chainId, address token, UFixed oldStakingRate, UFixed newStakingRate);
+
+    // protocol parameters
+    event LogStakingProtocolLockingPeriodSet(NftId targetNftId, Seconds oldLockingPeriod, Seconds lockingPeriod);
+    event LogStakingProtocolRewardRateSet(NftId targetNftId, UFixed oldRewardRate, UFixed rewardRate);
 
     // target parameters
     event LogStakingLockingPeriodSet(NftId targetNftId, Seconds oldLockingPeriod, Seconds lockingPeriod);
@@ -77,16 +82,26 @@ interface IStaking is
 
     function initializeTokenHandler() external;
 
-    function approveTokenHandler(IERC20Metadata token, Amount amount) external;
+    //--- only owner functions -------------------------------------------//
 
-    // staking rate management 
+    /// @dev Set the protocol reward rate.
+    function setProtocolRewardRate(UFixed rewardRate) external;
 
-    /// @dev sets the rate that converts 1 token of total value locked into the
-    /// the required staked dip amount to back up the locked token value
+    /// @dev Set the stake locking period for protocol stakes to the specified duration.
+    function setProtocolLockingPeriod(Seconds lockingPeriod) external;
+
+    /// @dev Set the staking rate for the specified chain and token.
+    /// The staking rate defines the amount of staked dips required to back up 1 token of total value locked.
     function setStakingRate(uint256 chainId, address token, UFixed stakingRate) external;
 
+    /// @dev Sets/updates the staking reader contract. 
+    function setStakingReader(StakingReader stakingReader) external;
 
-    // target management
+    /// @dev Set the approval to the token handler.
+    /// Defines the max allowance from the staking wallet to the token handler.
+    function approveTokenHandler(IERC20Metadata token, Amount amount) external;
+
+    //--- target management ----------------------------------------------//
 
     function registerTarget(
         NftId targetNftId,
@@ -117,12 +132,10 @@ interface IStaking is
     /// permissioned: only the staking service may call this function
     function withdrawRewardReserves(NftId targetNftId, Amount dipAmount) external returns (Amount newBalance);
 
-
     /// @dev increases the total value locked amount for the specified target by the provided token amount.
     /// function is called when a new policy is collateralized.
     /// function restricted to the pool service.
     function increaseTotalValueLocked(NftId targetNftId, address token, Amount amount) external returns (Amount newBalance);
-
 
     /// @dev decreases the total value locked amount for the specified target by the provided token amount.
     /// function is called when a new policy is closed or payouts are executed.

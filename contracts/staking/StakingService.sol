@@ -3,12 +3,13 @@ pragma solidity ^0.8.20;
 
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import {Amount} from "../type/Amount.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
-import {RegistryService} from "../registry/RegistryService.sol";
 import {IStaking} from "./IStaking.sol";
 import {IStakingService} from "./IStakingService.sol";
+
+import {Amount} from "../type/Amount.sol";
+import {RegistryService} from "../registry/RegistryService.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
 import {ObjectType, INSTANCE, REGISTRY, STAKE, STAKING} from "../type/ObjectType.sol";
 import {Seconds} from "../type/Seconds.sol";
@@ -49,11 +50,11 @@ contract StakingService is
         virtual
         onlyStaking()
     {
-        _getStakingServiceStorage()._tokenHandler.approve(
-            token, amount);
+        _getStakingServiceStorage()._tokenHandler.approve(token, amount);
     }
 
 
+    /// @inheritdoc IStakingService
     function createInstanceTarget(
         NftId targetNftId,
         Seconds initialLockingPeriod,
