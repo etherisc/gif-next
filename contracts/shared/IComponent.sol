@@ -40,7 +40,7 @@ interface IComponent is
     function getTokenHandler() external view returns (TokenHandler tokenHandler);
 
     /// @dev defines the wallet address used to hold the ERC20 tokens related to this component
-    /// the default address is the component token address
+    /// the default address is the token handler address
     function getWallet() external view returns (address walletAddress);
 
     /// @dev returns true iff this compoent intercepts nft minting and transfers for objects registered by this component

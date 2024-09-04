@@ -10,8 +10,9 @@ import {IStaking} from "../staking/IStaking.sol";
 import {Amount} from "../type/Amount.sol";
 import {Blocknumber}  from "../type/Blocknumber.sol";
 import {NftId} from "../type/NftId.sol";
-import {STAKE, TARGET} from "../type/ObjectType.sol";
+import {Seconds} from "../type/Seconds.sol";
 import {StakingStore} from "./StakingStore.sol";
+import {STAKE, TARGET} from "../type/ObjectType.sol";
 import {Timestamp} from "../type/Timestamp.sol";
 import {UFixed} from "../type/UFixed.sol";
 
@@ -98,19 +99,33 @@ contract StakingReader is
     }
 
 
-    /// @dev get the reward rate that applies to the specified stake nft id.
+    /// @dev Get the locking period that applies to the specified stake NFT ID.
+    function getTargetLockingPeriod(NftId stakeNftId) external view returns (NftId targetNftId, Seconds lockingPeriod) {
+        targetNftId = getTargetNftId(stakeNftId);
+        lockingPeriod = getTargetInfo(targetNftId).lockingPeriod;
+    }
+
+
+    /// @dev Get the reward rate that applies to the specified stake NFT ID.
     function getTargetRewardRate(NftId stakeNftId) external view returns (NftId targetNftId, UFixed rewardRate) {
         targetNftId = getTargetNftId(stakeNftId);
         rewardRate = getTargetInfo(targetNftId).rewardRate;
     }
 
-    /// @dev get the max staked amount allowed for the specified target nft id.
+
+    /// @dev Get the max staked amount allowed for the specified target NFT ID.
     function getTargetMaxStakedAmount(NftId targetNftId) external view returns (Amount maxStakedAmount) {
         return getTargetInfo(targetNftId).maxStakedAmount;
     }
 
 
-    /// @dev get the reward rate for the specified target nft id.
+    /// @dev Get the reward rate for the specified target NFT ID.
+    function getLockingPeriod(NftId targetNftId) external view returns (Seconds lockingPeriod) {
+        return getTargetInfo(targetNftId).lockingPeriod;
+    }
+
+
+    /// @dev Get the reward rate for the specified target NFT ID.
     function getRewardRate(NftId targetNftId) external view returns (UFixed rewardRate) {
         return getTargetInfo(targetNftId).rewardRate;
     }

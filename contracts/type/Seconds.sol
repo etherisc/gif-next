@@ -45,6 +45,10 @@ library SecondsLib {
         return Seconds.wrap(24 * 3600);
     }
 
+    function fromDays(uint32 numberOfDays) public pure returns (Seconds duration) {
+        return Seconds.wrap(numberOfDays * 24 * 3600);
+    }
+
     function oneYear() public pure returns (Seconds duration) {
         return Seconds.wrap(365 * 24 * 3600);
     }

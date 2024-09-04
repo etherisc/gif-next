@@ -181,6 +181,8 @@ contract Staking is
                 lockingPeriod: initialLockingPeriod,
                 rewardRate: initialRewardRate,
                 maxStakedAmount: AmountLib.max()}));
+
+        emit LogStakingTargetRegistered(targetNftId, expectedObjectType, initialLockingPeriod, initialRewardRate, AmountLib.max());
     }
 
 
@@ -584,6 +586,10 @@ contract Staking is
             stakingOwner, 
             "", // registry data
             ""); // component data
+
+        // HINT: protocol target is created in the StakingStore constructor.
+        // This allows setting up the protocol target before the full 
+        // staking authorization setup is in place.
 
         _registerInterface(type(IStaking).interfaceId);
     }

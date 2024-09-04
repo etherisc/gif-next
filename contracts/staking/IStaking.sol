@@ -26,6 +26,9 @@ interface IStaking is
     event LogStakingProtocolLockingPeriodSet(NftId targetNftId, Seconds oldLockingPeriod, Seconds lockingPeriod);
     event LogStakingProtocolRewardRateSet(NftId targetNftId, UFixed oldRewardRate, UFixed rewardRate);
 
+    // targets
+    event LogStakingTargetRegistered(NftId targetNftId, ObjectType objectType, Seconds lockingPeriod, UFixed rewardRate, Amount maxStakedAmount);
+
     // target parameters
     event LogStakingLockingPeriodSet(NftId targetNftId, Seconds oldLockingPeriod, Seconds lockingPeriod);
     event LogStakingRewardRateSet(NftId targetNftId, UFixed oldRewardRate, UFixed rewardRate);
@@ -84,11 +87,11 @@ interface IStaking is
 
     //--- only owner functions -------------------------------------------//
 
-    /// @dev Set the protocol reward rate.
-    function setProtocolRewardRate(UFixed rewardRate) external;
-
     /// @dev Set the stake locking period for protocol stakes to the specified duration.
     function setProtocolLockingPeriod(Seconds lockingPeriod) external;
+
+    /// @dev Set the protocol reward rate.
+    function setProtocolRewardRate(UFixed rewardRate) external;
 
     /// @dev Set the staking rate for the specified chain and token.
     /// The staking rate defines the amount of staked dips required to back up 1 token of total value locked.

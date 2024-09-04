@@ -201,11 +201,14 @@ contract RegistryAuthorization
      function _setupStakingAuthorization() internal {
           IAccess.FunctionInfo[] storage functions;
 
-          // staking public role
+          // staking public role (protected by owner)
           functions = _authorizeForTarget(
                STAKING_TARGET_NAME,
                PUBLIC_ROLE());
 
+          _authorize(functions, IStaking.setProtocolLockingPeriod.selector, "setProtocolLockingPeriod");
+          _authorize(functions, IStaking.setProtocolRewardRate.selector, "setProtocolRewardRate");
+          _authorize(functions, IStaking.setStakingReader.selector, "setStakingReader");
           _authorize(functions, IStaking.approveTokenHandler.selector, "approveTokenHandler");
 
           // staking service role
