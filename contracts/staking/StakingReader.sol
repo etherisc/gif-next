@@ -58,6 +58,10 @@ contract StakingReader is
         return _staking;
     }
 
+    function getProtocolNftId() external view returns (NftId protocolNftId) {
+        return _registry.getProtocolNftId();
+    }
+
     function getStakingRate(uint256 chainId, address token) external view returns (UFixed stakingRate) { 
         return _store.getStakingRate(chainId, token); 
     }
