@@ -46,7 +46,7 @@ contract StakingTest is GifTest {
 
     function test_stakingStakeCreateProtocolStake() public {
 
-        NftId protocolNftId = stakingReader.getTargetNftId(0);
+        NftId protocolNftId = stakingReader.getProtocolNftId();
         (, Amount dipAmount) = _prepareAccount(staker, 5000);
 
         // check balances before staking
@@ -81,8 +81,15 @@ contract StakingTest is GifTest {
         assertEq(objectInfo.initialOwner, staker, "unexpected initial stake owner");
         assertEq(bytes(objectInfo.data).length, 0, "unexpected data size");
 
-        Seconds lockingPeriod = stakingReader.getTargetInfo(protocolNftId).lockingPeriod;
+        NftId stakeTargetNftId;
+        Seconds lockingPeriod;
+        UFixed rewardRate;
+        (stakeTargetNftId, lockingPeriod) = stakingReader.getTargetLockingPeriod(stakeNftId);
+        assertEq(stakeTargetNftId.toInt(), stakingReader.getProtocolNftId().toInt(), "stake target not protocol (locking period)");
         assertEq(lockingPeriod.toInt(), TargetManagerLib.getDefaultLockingPeriod().toInt(), "unexpected locking period");
+        (stakeTargetNftId, rewardRate) = stakingReader.getTargetRewardRate(stakeNftId);
+        assertEq(stakeTargetNftId.toInt(), stakingReader.getProtocolNftId().toInt(), "stake target not protocol (reward rate)");
+        assertTrue(rewardRate == TargetManagerLib.getDefaultRewardRate(), "unexpected reward rate");
 
         // check stake balance
         assertEq(stakingReader.getStakeBalance(stakeNftId).toInt(), dipAmount.toInt(), "unexpected stake amount");

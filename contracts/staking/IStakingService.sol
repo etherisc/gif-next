@@ -3,9 +3,10 @@ pragma solidity ^0.8.20;
 
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import {Amount} from "../type/Amount.sol";
 import {IService} from "../shared/IService.sol";
 import {IStaking} from "./IStaking.sol";
+
+import {Amount} from "../type/Amount.sol";
 import {NftId} from "../type/NftId.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
@@ -44,12 +45,6 @@ interface IStakingService is IService
     error ErrorStakingServiceDipBalanceInsufficient(NftId targetNftId, uint256 amount, uint256 balance);
     error ErrorStakingServiceDipAllowanceInsufficient(NftId targetNftId, address tokenHandler, uint256 amount, uint256 allowance);
 
-    /// @dev Set the protocol reward rate stake locking period to the specified duration.
-    /// Permissioned: only staking owner
-    // TODO implement
-    // function setProtocolRewardRate(UFixed rewardRate) external;
-    // function setProtocolLockingPeriod(Seconds lockingPeriod) external;
-    // TODO also make sure that protocol rewards can be refilled and withdrawn
 
     /// @dev Approves the staking token handler.
     /// Reverts if the staking token handler wallet is not the token handler itself.

@@ -62,6 +62,8 @@ contract Staking is
         _;
     }
 
+    //--- contract intitialization -------------------------------------------
+
     function initializeTokenHandler()
         external
     {
@@ -78,31 +80,37 @@ contract Staking is
             getRegistry().getAuthority());
     }
 
+    //--- staking owner functions -------------------------------------------//
 
-    function approveTokenHandler(IERC20Metadata token, Amount amount)
-        public
+    // TODO also make sure that protocol rewards can be refilled and withdrawn
+
+    /// @inheritdoc IStaking
+    function setProtocolRewardRate(UFixed rewardRate)
+        external
+        virtual
         restricted()
         onlyOwner()
     {
-        _approveTokenHandler(token, amount);
+        NftId protocolNftId = getRegistry().getProtocolNftId();
+        UFixed oldRewardRate = _updateRewardRate(protocolNftId, rewardRate);
+        emit LogStakingProtocolRewardRateSet(protocolNftId, oldRewardRate, rewardRate);
     }
 
 
-    // set/update staking reader
-    function setStakingReader(StakingReader stakingReader)
+    /// @inheritdoc IStaking
+    function setProtocolLockingPeriod(Seconds lockingPeriod)
         external
         virtual
+        restricted()
         onlyOwner()
     {
-        if(stakingReader.getStaking() != IStaking(this)) {
-            revert ErrorStakingStakingReaderStakingMismatch(address(stakingReader.getStaking()));
-        }
-
-        _getStakingStorage()._reader = stakingReader;
+        NftId protocolNftId = getRegistry().getProtocolNftId();
+        Seconds oldLockingPeriod = _updateLockingPeriod(protocolNftId, lockingPeriod);
+        emit LogStakingProtocolLockingPeriodSet(protocolNftId, oldLockingPeriod, lockingPeriod);
     }
 
 
-    // rate management 
+    /// @inheritdoc IStaking
     function setStakingRate(uint256 chainId, address token, UFixed stakingRate)
         external
         virtual
@@ -120,7 +128,31 @@ contract Staking is
         emit LogStakingStakingRateSet(chainId, token, oldStakingRate, stakingRate);
     }
 
-    // target management
+
+    /// @inheritdoc IStaking
+    function setStakingReader(StakingReader stakingReader)
+        external
+        virtual
+        onlyOwner()
+    {
+        if(stakingReader.getStaking() != IStaking(this)) {
+            revert ErrorStakingStakingReaderStakingMismatch(address(stakingReader.getStaking()));
+        }
+
+        _getStakingStorage()._reader = stakingReader;
+    }
+
+
+    /// @inheritdoc IStaking
+    function approveTokenHandler(IERC20Metadata token, Amount amount)
+        public
+        restricted()
+        onlyOwner()
+    {
+        _approveTokenHandler(token, amount);
+    }
+
+    //--- target management -------------------------------------------------//
 
     function registerTarget(
         NftId targetNftId,
@@ -149,6 +181,19 @@ contract Staking is
                 lockingPeriod: initialLockingPeriod,
                 rewardRate: initialRewardRate,
                 maxStakedAmount: AmountLib.max()}));
+
+        emit LogStakingTargetRegistered(targetNftId, expectedObjectType, initialLockingPeriod, initialRewardRate, AmountLib.max());
+    }
+
+
+    function setRewardRate(NftId targetNftId, UFixed rewardRate)
+        external
+        virtual
+        restricted()
+        onlyTarget(targetNftId)
+    {
+        UFixed oldRewardRate = _updateRewardRate(targetNftId, rewardRate);
+        emit LogStakingRewardRateSet(targetNftId, oldRewardRate, rewardRate);
     }
 
 
@@ -161,40 +206,10 @@ contract Staking is
         restricted()
         onlyTarget(targetNftId)
     {
-        (
-            Seconds oldLockingPeriod,
-            TargetInfo memory targetInfo
-        ) = TargetManagerLib.updateLockingPeriod(
-            this,
-            targetNftId,
-            lockingPeriod);
-        
-        _getStakingStorage()._store.updateTarget(targetNftId, targetInfo);
-
+        Seconds oldLockingPeriod = _updateLockingPeriod(targetNftId, lockingPeriod);
         emit LogStakingLockingPeriodSet(targetNftId, oldLockingPeriod, lockingPeriod);
     }
 
-    // TODO add function to set protocol reward rate: onlyOwner
-    // get protocol nft id (from where)
-
-    function setRewardRate(NftId targetNftId, UFixed rewardRate)
-        external
-        virtual
-        restricted()
-        onlyTarget(targetNftId)
-    {
-        (
-            UFixed oldRewardRate,
-            TargetInfo memory targetInfo
-        ) = TargetManagerLib.updateRewardRate(
-            this,
-            targetNftId,
-            rewardRate);
-        
-        _getStakingStorage()._store.updateTarget(targetNftId, targetInfo);
-
-        emit LogStakingRewardRateSet(targetNftId, oldRewardRate, rewardRate);
-    }
 
     function setMaxStakedAmount(NftId targetNftId, Amount maxStakedAmount)
         external
@@ -461,6 +476,43 @@ contract Staking is
 
     //--- internal functions ------------------------------------------------//
 
+    function _updateRewardRate(
+        NftId targetNftId, 
+        UFixed rewardRate
+    )
+        internal 
+        virtual 
+        returns (UFixed oldRewardRate) 
+    {
+
+        TargetInfo memory targetInfo;
+        (oldRewardRate, targetInfo) = TargetManagerLib.updateRewardRate(
+            this,
+            targetNftId,
+            rewardRate);
+        
+        _getStakingStorage()._store.updateTarget(targetNftId, targetInfo);
+    }
+
+
+    function _updateLockingPeriod(
+        NftId targetNftId, 
+        Seconds lockingPeriod
+    )
+        internal 
+        virtual 
+        returns (Seconds oldLockingPeriod) 
+    {
+        TargetInfo memory targetInfo;
+        (oldLockingPeriod, targetInfo) = TargetManagerLib.updateLockingPeriod(
+            this,
+            targetNftId,
+            lockingPeriod);
+        
+        _getStakingStorage()._store.updateTarget(targetNftId, targetInfo);
+    }
+
+
     function _updateRewards(
         StakingReader reader,
         StakingStore store,
@@ -485,7 +537,9 @@ contract Staking is
     }
 
 
-    function _approveTokenHandler(IERC20Metadata token, Amount amount)
+    function _approveTokenHandler(
+        IERC20Metadata token, 
+        Amount amount)
         internal
         virtual override
     {
@@ -532,6 +586,10 @@ contract Staking is
             stakingOwner, 
             "", // registry data
             ""); // component data
+
+        // HINT: protocol target is created in the StakingStore constructor.
+        // This allows setting up the protocol target before the full 
+        // staking authorization setup is in place.
 
         _registerInterface(type(IStaking).interfaceId);
     }

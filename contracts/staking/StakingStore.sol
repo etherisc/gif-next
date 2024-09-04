@@ -80,7 +80,7 @@ contract StakingStore is
         setAuthority(registry.getAuthority());
 
         // set internal variables
-        _registry = registry; //TODO if keeps registry -> RegistryLinked and checks registry address
+        _registry = registry;
         _reader = reader;
         _targetNftIdSet = new NftIdSet();
 
