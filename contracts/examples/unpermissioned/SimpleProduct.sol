@@ -146,9 +146,10 @@ contract SimpleProduct is
     function createPolicy(
         NftId applicationNftId,
         bool requirePremiumPayment,
-        Timestamp activateAt
+        Timestamp activateAt,
+        Amount maxPremiumAmount
     ) public {
-        _createPolicy(applicationNftId, activateAt);
+        _createPolicy(applicationNftId, activateAt, maxPremiumAmount);
         if (requirePremiumPayment == true) {
             _collectPremium(applicationNftId, activateAt);
         }

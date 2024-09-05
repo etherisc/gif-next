@@ -251,7 +251,8 @@ abstract contract Product is
 
     function _createPolicy(
         NftId applicationNftId,
-        Timestamp activateAt
+        Timestamp activateAt,
+        Amount maxPremiumAmount
     )
         internal
         virtual
@@ -259,7 +260,8 @@ abstract contract Product is
     {
         premiumAmount = _getProductStorage()._policyService.createPolicy(
             applicationNftId, 
-            activateAt);
+            activateAt,
+            maxPremiumAmount);
     }
 
     function _decline(
