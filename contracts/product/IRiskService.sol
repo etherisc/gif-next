@@ -9,6 +9,10 @@ import {StateId} from "../type/StateId.sol";
 
 interface IRiskService is IService {
 
+    event LogRiskServiceRiskCreated(NftId productNftId, RiskId riskId);
+    event LogRiskServiceRiskUpdated(NftId productNftId, RiskId riskId);
+    event LogRiskServiceRiskStateUpdated(NftId productNftId, RiskId riskId, StateId newState);
+
     error ErrorRiskServiceRiskProductMismatch(RiskId riskId, NftId riskProductNftId, NftId productNftId);
 
     /// @dev Create a new risk with the given id and provided data. 

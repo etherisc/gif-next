@@ -67,6 +67,8 @@ contract RiskService is
         // add risk to RiskSet
         RiskSet riskSet = instance.getRiskSet();
         riskSet.add(riskId);
+
+        emit LogRiskServiceRiskCreated(productNftId, riskId);
     }
 
 
@@ -91,6 +93,8 @@ contract RiskService is
 
         riskInfo.data = data;
         instance.getInstanceStore().updateRisk(riskId, riskInfo, KEEP_STATE());
+
+        emit LogRiskServiceRiskUpdated(productNftId, riskId);
     }
 
 
@@ -118,6 +122,8 @@ contract RiskService is
         } else if (state == PAUSED()) {
             instance.getRiskSet().pause(riskId);
         }
+
+        emit LogRiskServiceRiskStateUpdated(productNftId, riskId, state);
     }
 
     function _getAndVerifyActiveComponent(ObjectType expectedType) 
