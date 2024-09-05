@@ -28,6 +28,12 @@ interface IPoolService is IService {
 
     event LogPoolServiceProcessFundedClaim(NftId policyNftId, ClaimId claimId, Amount availableAmount);
 
+    event LogPoolServiceApplicationVerified(NftId poolNftId, NftId bundleNftId, NftId applicationNftId, Amount totalCollateralAmount);
+    event LogPoolServiceCollateralLocked(NftId poolNftId, NftId bundleNftId, NftId applicationNftId, Amount totalCollateralAmount, Amount lockedCollateralAmount);
+    event LogPoolServiceCollateralReleased(NftId bundleNftId, NftId policyNftId, Amount remainingCollateralAmount);
+    event LogPoolServiceSaleProcessed(NftId poolNftId, NftId bundleNftId, Amount bundleNetAmount, Amount bundleFeeAmount, Amount poolFeeAmount);
+    event LogPoolServicePayoutProcessed(NftId poolNftId, NftId bundleNftId, NftId policyNftId, PayoutId payoutId, Amount netPayoutAmount, Amount processingFeeAmount, address payoutBeneficiary);
+
     error ErrorPoolServicePoolNotExternallyManaged(NftId poolNftId);
     error ErrorPoolServicePolicyPoolMismatch(NftId policyNftId, NftId productNftId, NftId expectedProductNftId);
     error ErrorPoolServiceBundleOwnerRoleAlreadySet(NftId poolNftId);
