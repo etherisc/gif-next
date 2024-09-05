@@ -246,6 +246,11 @@ contract Registry is
         address objectAddress = info.objectAddress;
         ObjectType objectType = info.objectType;
 
+        // specialized functions have to be used to register registries and services
+        if(objectType == REGISTRY() || objectType == STAKING() || objectType == SERVICE()) {
+            revert ErrorRegistryObjectTypeNotSupported(objectType);
+        }
+
         // this indidirectly enforces that the parent is registered
         // parentType would be zero for a non-registered parent which is never a valid type combination
         ObjectType parentType = _info[info.parentNftId].objectType;
@@ -253,13 +258,13 @@ contract Registry is
         // check type combinations for core objects
         if(objectAddress == address(0)) {
             if(_coreObjectCombinations[objectType][parentType] == false) {
-                revert ErrorRegistryTypesCombinationInvalid(objectAddress, objectType, parentType);
+                revert ErrorRegistryTypeCombinationInvalid(objectAddress, objectType, parentType);
             }
         }
         // check type combinations for contract objects
         else {
             if(_coreContractCombinations[objectType][parentType] == false) {
-                revert ErrorRegistryTypesCombinationInvalid(objectAddress, objectType, parentType);
+                revert ErrorRegistryTypeCombinationInvalid(objectAddress, objectType, parentType);
             }
         }
 
@@ -284,9 +289,10 @@ contract Registry is
             objectType == ObjectTypeLib.zero() ||
             parentType == ObjectTypeLib.zero() ||
             parentType == PROTOCOL() ||
+            parentType == STAKING() ||
             parentType == SERVICE()
         ) {
-            revert ErrorRegistryTypesCombinationInvalid(info.objectAddress, objectType, parentType);
+            revert ErrorRegistryTypeCombinationInvalid(info.objectAddress, objectType, parentType);
         }
 
         nftId = _register(info);
