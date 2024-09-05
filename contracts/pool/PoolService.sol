@@ -361,6 +361,8 @@ contract PoolService is
             bundleNftId,
             bundleNetAmount, 
             bundleFeeAmount);
+
+        emit LogPoolServiceSaleProcessed(poolNftId, bundleNftId, bundleNetAmount, bundleFeeAmount, poolFeeAmount);
     }
 
 
@@ -419,10 +421,15 @@ contract PoolService is
                 bundleNftId, 
                 totalCollateralAmount);
 
-            // TODO add logging
+            emit LogPoolServiceApplicationVerified(poolNftId, bundleNftId, applicationNftId, totalCollateralAmount);
         }
 
-        // TODO add logging
+        emit LogPoolServiceCollateralLocked(
+            poolNftId,
+            bundleNftId, 
+            applicationNftId, 
+            totalCollateralAmount, 
+            localCollateralAmount);
     }
 
     function processPayout(
@@ -492,6 +499,15 @@ contract PoolService is
                 productNftId,
                 processingFeeAmount);
         }
+
+        emit LogPoolServicePayoutProcessed(
+            poolNftId,
+            bundleNftId, 
+            policyNftId, 
+            payoutId, 
+            netPayoutAmount, 
+            processingFeeAmount,
+            payoutBeneficiary);
     }
 
 
@@ -570,6 +586,11 @@ contract PoolService is
         _staking.decreaseTotalValueLocked(
             instanceReader.getInstanceNftId(),
             address(instanceReader.getToken(policyInfo.productNftId)),
+            remainingCollateralAmount);
+
+        emit LogPoolServiceCollateralReleased(
+            policyInfo.bundleNftId, 
+            policyNftId, 
             remainingCollateralAmount);
     }
 

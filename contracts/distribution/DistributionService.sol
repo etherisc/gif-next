@@ -111,6 +111,8 @@ contract DistributionService is
             data: data});
 
         instance.getInstanceStore().createDistributorType(distributorType, info);
+
+        emit LogDistributionServiceDistributorTypeCreated(distributionNftId, name);
     }
 
 
@@ -145,6 +147,8 @@ contract DistributionService is
             data: data});
 
         instance.getInstanceStore().createDistributor(distributorNftId, info);
+
+        emit LogDistributionServiceDistributorCreated(distributionNftId, distributorNftId, distributorType, distributor);
     }
 
     function changeDistributorType(
@@ -161,9 +165,12 @@ contract DistributionService is
         _checkDistributionType(instance.getInstanceReader(), newDistributorType, distributionNftId);
         
         IDistribution.DistributorInfo memory distributorInfo = instance.getInstanceReader().getDistributorInfo(distributorNftId);
+        DistributorType oldDistributorType = distributorInfo.distributorType;
         distributorInfo.distributorType = newDistributorType;
         distributorInfo.data = data;
         instance.getInstanceStore().updateDistributor(distributorNftId, distributorInfo, KEEP_STATE());
+
+        emit LogDistributionServiceDistributorTypeChanged(distributorNftId, oldDistributorType, newDistributorType);
     }
 
 
@@ -228,6 +235,8 @@ contract DistributionService is
             });
 
             instance.getInstanceStore().createReferral(referralId, info);
+
+            emit LogDistributionServiceReferralCreated(distributionNftId, distributorNftId, referralId, code);
         }
     }
 
@@ -248,6 +257,8 @@ contract DistributionService is
             IDistribution.ReferralInfo memory referralInfo = instance.getInstanceReader().getReferralInfo(referralId);
             referralInfo.usedReferrals += 1;
             instance.getInstanceStore().updateReferral(referralId, referralInfo, KEEP_STATE());
+
+            emit LogDistributionServiceReferralProcessed(distributionNftId, referralInfo.distributorNftId, referralId, referralInfo.usedReferrals);
         }
     }
 
@@ -288,6 +299,8 @@ contract DistributionService is
             // increase distribution balance by distribution owner fee
             _accountingService.increaseDistributionBalance(store, distributionNftId, AmountLib.zero(), distributionOwnerFee);
         }
+
+        emit LogDistributionServiceSaleProcessed(distributionNftId, referralId);
     }
 
     /// @inheritdoc IDistributionService

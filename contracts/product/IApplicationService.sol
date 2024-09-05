@@ -6,7 +6,6 @@ import {IService} from "../shared/IService.sol";
 
 import {Amount} from "../type/Amount.sol";
 import {NftId} from "../type/NftId.sol";
-import {ObjectType} from "../type/ObjectType.sol";
 import {ReferralId} from "../type/Referral.sol";
 import {RiskId} from "../type/RiskId.sol";
 import {Seconds} from "../type/Seconds.sol";
@@ -15,6 +14,26 @@ import {Seconds} from "../type/Seconds.sol";
 /// only product components may call transaction functions
 interface IApplicationService is IService {
     
+    event LogApplicationServiceApplicationCreated(
+        NftId applicationNftId,
+        NftId productNftId,
+        NftId bundleNftId, 
+        RiskId riskId,
+        ReferralId referralId,
+        address applicationOwner,
+        Amount sumInsuredAmount,
+        Amount premiumAmount,
+        Seconds lifetime);
+    event LogApplicationServiceApplicationRenewed(NftId policyNftId, NftId bundleNftId);
+    event LogApplicationServiceApplicationAdjusted(
+        NftId applicationNftId, 
+        NftId bundleNftId, 
+        RiskId riskId, 
+        ReferralId referralId, 
+        Amount sumInsuredAmount, 
+        Seconds lifetime);
+    event LogApplicationServiceApplicationRevoked(NftId applicationNftId);
+
     // _checkLinkedApplicationParameters
     error ErrorApplicationServiceRiskProductMismatch(RiskId riskId, NftId riskProductNftId, NftId productNftId);
     error ErrorApplicationServiceRiskUnknown(RiskId riskId, NftId productNftId);

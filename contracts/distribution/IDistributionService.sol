@@ -40,6 +40,12 @@ interface IDistributionService is IService {
     error ErrorDistributionServiceReferralDistributionMismatch(ReferralId referralId, NftId referralDistributionNft, NftId distributionNftId);
 
     event LogDistributionServiceCommissionWithdrawn(NftId distributorNftId, address recipient, address tokenAddress, Amount amount);
+    event LogDistributionServiceDistributorTypeCreated(NftId distributionNftId, string name);
+    event LogDistributionServiceDistributorCreated(NftId distributionNftId, NftId distributorNftId, DistributorType distributorType, address distributor);
+    event LogDistributionServiceDistributorTypeChanged(NftId distributorNftId, DistributorType oldDistributorType, DistributorType newDistributorType);
+    event LogDistributionServiceReferralCreated(NftId distributionNftId, NftId distributorNftId, ReferralId referralId, string code);
+    event LogDistributionServiceReferralProcessed(NftId distributionNftId, NftId distributorNftId, ReferralId referralId, uint32 usedReferrals);
+    event LogDistributionServiceSaleProcessed(NftId distributionNftId, ReferralId referralId);
 
     function createDistributorType(
         string memory name,
