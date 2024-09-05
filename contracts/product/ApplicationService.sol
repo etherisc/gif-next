@@ -185,7 +185,28 @@ contract ApplicationService is
             applicationNftId, 
             applicationInfo);
 
-        // TODO: add logging
+        _emitApplicationCreatedEvent(applicationNftId, applicationOwner, applicationInfo);
+    }
+
+    function _emitApplicationCreatedEvent(
+        NftId applicationNftId,
+        address applicationOwner,
+        IPolicy.PolicyInfo memory applicationInfo
+    )
+        internal
+        virtual
+    {
+        emit LogApplicationServiceApplicationCreated(
+            applicationNftId,
+            applicationInfo.productNftId,
+            applicationInfo.bundleNftId, 
+            applicationInfo.riskId,
+            applicationInfo.referralId,
+            applicationOwner,
+            applicationInfo.sumInsuredAmount,
+            applicationInfo.premiumAmount,
+            applicationInfo.lifetime
+        );
     }
 
     function _createApplicationInfo(
@@ -234,7 +255,10 @@ contract ApplicationService is
     {
         _checkNftType(policyNftId, POLICY());
         _checkNftType(bundleNftId, BUNDLE());
-        // TODO implement
+        
+        // TODO: implement
+
+        emit LogApplicationServiceApplicationRenewed(policyNftId, bundleNftId);
     }
 
 
@@ -254,7 +278,10 @@ contract ApplicationService is
     {
         _checkNftType(applicationNftId, POLICY());
         _checkNftType(bundleNftId, BUNDLE());
-        // TODO implement
+
+        // TODO: implement
+        
+        emit LogApplicationServiceApplicationAdjusted(applicationNftId, bundleNftId, riskId, referralId, sumInsuredAmount, lifetime);
     }
 
     function revoke(NftId applicationNftId)
@@ -267,6 +294,7 @@ contract ApplicationService is
 
         (, IInstance instance) = _getAndVerifyActiveProduct();
         instance.getInstanceStore().updateApplicationState(applicationNftId, REVOKED());
+        emit LogApplicationServiceApplicationRevoked(applicationNftId);
     }
 
     // internal functions
