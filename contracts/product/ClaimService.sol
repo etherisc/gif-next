@@ -255,6 +255,8 @@ contract ClaimService is
 
         claimInfo.closedAt = TimestampLib.blockTimestamp();
         instanceStore.updateClaim(policyNftId, claimId, claimInfo, CLOSED());
+
+        emit LogClaimServiceClaimClosed(policyNftId, claimId);
     }
 
 
