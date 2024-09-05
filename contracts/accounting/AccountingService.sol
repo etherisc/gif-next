@@ -63,6 +63,19 @@ contract AccountingService is
         _changeTargetBalance(INCREASE, instanceStore, productNftId, AmountLib.zero(), feeAmount);
     }
 
+    function increaseProductFeesForPool(
+        InstanceStore instanceStore,
+        NftId productNftId, 
+        Amount feeAmount
+    ) 
+        external 
+        virtual 
+        restricted()
+    {
+        _checkNftType(productNftId, PRODUCT());
+        _changeTargetBalance(INCREASE, instanceStore, productNftId, AmountLib.zero(), feeAmount);
+    }
+
 
     function decreaseProductFees(InstanceStore instanceStore, NftId productNftId, Amount feeAmount)
         external 

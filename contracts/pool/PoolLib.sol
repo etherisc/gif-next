@@ -129,7 +129,7 @@ library PoolLib {
             // calculate processing fees if applicable
             IComponents.FeeInfo memory feeInfo = instanceReader.getFeeInfo(productNftId);
             if(FeeLib.gtz(feeInfo.processingFee)) {
-                // TODO calculate and set net payout and processing fees
+                (processingFeeAmount, netPayoutAmount) = FeeLib.calculateFee(feeInfo.processingFee, payoutAmount);
             }
         }
     }
@@ -271,6 +271,9 @@ library PoolLib {
         address payoutBeneficiary
     )
         external
+        returns (
+            Amount processingFeeAmount
+        )
     {
         (
             Amount netPayoutAmount,

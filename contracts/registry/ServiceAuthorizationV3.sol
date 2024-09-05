@@ -184,6 +184,7 @@ contract ServiceAuthorizationV3
           _authorize(functions, IAccountingService.decreasePoolBalance.selector, "decreasePoolBalance");
           _authorize(functions, IAccountingService.increaseBundleBalanceForPool.selector, "increaseBundleBalanceForPool");
           _authorize(functions, IAccountingService.decreaseBundleBalanceForPool.selector, "decreaseBundleBalanceForPool");
+          _authorize(functions, IAccountingService.increaseProductFeesForPool.selector, "increaseProductFeesForPool");
 
      }
 
