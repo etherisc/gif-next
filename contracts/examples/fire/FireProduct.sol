@@ -263,7 +263,7 @@ contract FireProduct is
         onlyOwner()
         onlyNftOfType(policyNftId, POLICY())
     {
-        _createPolicy(policyNftId, activateAt);
+        _createPolicy(policyNftId, activateAt, AmountLib.max());
         _collectPremium(policyNftId, activateAt);
     }
 

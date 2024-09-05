@@ -94,7 +94,8 @@ contract PolicyService is
     /// @inheritdoc IPolicyService
     function createPolicy(
         NftId applicationNftId, // = policyNftId
-        Timestamp activateAt
+        Timestamp activateAt,
+        Amount maxPremiumAmount
     )
         external 
         virtual
@@ -149,7 +150,14 @@ contract PolicyService is
             bundleNftId,
             applicationInfo.referralId);
 
-        premiumAmount = premium.fullPremiumAmount;
+        if (premium.premiumAmount > maxPremiumAmount) {
+            revert LogPolicyServiceMaxPremiumAmountExceeded(
+                applicationNftId, 
+                maxPremiumAmount, 
+                premium.premiumAmount);
+        }
+
+        premiumAmount = premium.premiumAmount;
         instance.getInstanceStore().createPremium(
             applicationNftId,
             premium);

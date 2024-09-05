@@ -19,6 +19,7 @@ interface IPolicyService is IService {
     event LogPolicyServicePolicyExpirationUpdated(NftId policyNftId, Timestamp expiredAt);
     event LogPolicyServicePolicyClosed(NftId policyNftId);
 
+    error LogPolicyServiceMaxPremiumAmountExceeded(NftId policyNftId, Amount maxPremiumAmount, Amount premiumAmount);
     error ErrorPolicyServicePolicyProductMismatch(NftId applicationNftId, NftId expectedProductNftId, NftId actualProductNftId);
     error ErrorPolicyServicePolicyStateNotApplied(NftId applicationNftId);
     error ErrorPolicyServicePolicyStateNotCollateralized(NftId applicationNftId);
@@ -44,14 +45,21 @@ interface IPolicyService is IService {
     error ErrorPolicyServiceTransferredPremiumMismatch(NftId policyNftId, Amount expectedPremiumAmount, Amount transferredPremiumAmount);
 
     /// @dev creates the policy from {applicationNftId}. 
+    /// @param applicationNftId the application NftId
+    /// @param activateAt the timestamp when the policy should be activated
+    /// @param maxPremiumAmount the maximum premium amount that the policy holder is willing to pay
+    /// During policy creation, the effective premium amount is calculated based on the provided parameters. If this
+    /// amount is higher than the maxPremiumAmount, the function will revert.
     /// After successful completion of the function the policy can be referenced using the application NftId.
     /// Locks the sum insured amount in the pool, but does not transfer tokens. Call collectPremium to transfer tokens. 
     /// Sets the policy state to collateralized.
     /// Optionally activates the policy if activateAt is a non-zero timestamp.
     /// only the related product may create a policy from an application
+    /// @return premiumAmount the effective premium amount
     function createPolicy(
         NftId applicationNftId,
-        Timestamp activateAt
+        Timestamp activateAt,
+        Amount maxPremiumAmount
     )
         external
         returns (Amount premiumAmount);

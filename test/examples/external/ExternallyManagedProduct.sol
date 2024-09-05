@@ -77,7 +77,8 @@ contract ExternallyManagedProduct is
         
         premiumAmount = _createPolicy(
             policyNftId,
-            TimestampLib.blockTimestamp());
+            TimestampLib.blockTimestamp(),
+            AmountLib.max());
 
         _collectPremium(
             policyNftId,

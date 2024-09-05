@@ -453,6 +453,48 @@ contract TestProduct is GifTest {
         assertEq(1, referralInfo.usedReferrals, "unexpected referral count");
     }
 
+    function test_producyPolicy_maxPremiumAmountExceeded() public {
+        // GIVEN
+
+        vm.startPrank(productOwner);
+
+        Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
+        product.setFees(productFee, FeeLib.zero());
+
+        bytes memory data = "bla di blubb";
+        RiskId riskId = product.createRisk("42x4711", data);
+
+        uint sumInsuredAmount = 1000;
+        NftId policyNftId = product.createApplication(
+            customer,
+            riskId,
+            sumInsuredAmount,
+            SecondsLib.toSeconds(30),
+            "",
+            bundleNftId,
+            ReferralLib.zero()
+        );
+        assertTrue(policyNftId.gtz(), "policyNftId was zero");
+        assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
+
+        assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
+
+        Amount maxPremiumAmount = AmountLib.toAmount(100);
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IPolicyService.LogPolicyServiceMaxPremiumAmountExceeded.selector,
+            policyNftId,
+            maxPremiumAmount,
+            AmountLib.toAmount(140)
+        ));
+
+        // WHEN
+        product.createPolicy2(policyNftId, false, zeroTimestamp(), maxPremiumAmount); 
+
+        
+    }
+
     function test_productWithReferralCollateralizeWithSplitPayment() public {
         // GIVEN
         vm.startPrank(registryOwner);
