@@ -14,9 +14,8 @@ import {Service} from "../../contracts/shared/Service.sol";
 import {Version, VersionLib, VersionPart} from "../../contracts/type/Version.sol";
 
 
-function FOO_PLAIN() pure returns (ObjectType) { return ObjectType.wrap(50); }
-function FOO_CONTRACT() pure returns (ObjectType) { return ObjectType.wrap(51); }
-function BAR_FOO() pure returns (ObjectType) { return ObjectType.wrap(53); }
+function FOO() pure returns (ObjectType) { return ObjectType.wrap(50); }
+function BAR_FOO() pure returns (ObjectType) { return ObjectType.wrap(51); }
 
 
 contract RegistryServiceUpgraded is RegistryService {
@@ -58,6 +57,7 @@ contract RegistryServiceUpgraded is RegistryService {
 contract RegistryObjectTypeExtensionTest is GifTest {
 
     RegistryServiceUpgraded public registryServiceUpgraded;
+    bytes public emptyData;
 
     function setUp() public override {
         super.setUp();
@@ -86,139 +86,209 @@ contract RegistryObjectTypeExtensionTest is GifTest {
         assertEq(patch.toInt(), 0);
     }
 
+    //--- check foo type object registration with expected parent types --------------------------------------------//
 
+    /// @dev register foo type object with REGISTRY as parent
     function test_registryObjectTypeExtensionRegisterFooWithRegistryParentHappyCase() public {
         // GIVEN
-
-        IRegistry.ObjectInfo memory fooInfoIn = _toPlainObjectInfo(registryNftId, FOO_PLAIN(), outsider);
+        IRegistry.ObjectInfo memory fooInfo = _toPlainObjectInfo(registryNftId, FOO(), outsider);
 
         // WHEN
         vm.prank(outsider);
-        NftId fooNftId = registryServiceUpgraded.registerWithCustomType(fooInfoIn);
+        NftId fooNftId = registryServiceUpgraded.registerWithCustomType(fooInfo);
 
         // THEN
         assertTrue(fooNftId.gtz(), "fooNftId is zero");
 
         // check object info
-        IRegistry.ObjectInfo memory fooInfo = registry.getObjectInfo(fooNftId);
-        assertEq(fooInfo.nftId.toInt(), fooNftId.toInt(), "unexpected nftId");
-        assertEq(fooInfo.parentNftId.toInt(), registryNftId.toInt(), "parentNftId is not registryNftId");
-        assertEq(fooInfo.objectType.toInt(), FOO_PLAIN().toInt(), "unexpected objectType");
-        assertFalse(fooInfo.isInterceptor, "isInterceptor is true");
-        assertEq(fooInfo.objectAddress, address(0), "unexpected objectAddress");
-        assertEq(fooInfo.initialOwner, outsider, "unexpected initialOwner");
-        assertEq(fooInfo.data.length, 0, "unexpected data length");
+        IRegistry.ObjectInfo memory fooInfoOut = registry.getObjectInfo(fooNftId);
+        assertEq(fooInfoOut.nftId.toInt(), fooNftId.toInt(), "unexpected nftId");
+        assertEq(fooInfoOut.parentNftId.toInt(), registryNftId.toInt(), "parentNftId is not registryNftId");
+        assertEq(fooInfoOut.objectType.toInt(), FOO().toInt(), "unexpected objectType");
+        assertFalse(fooInfoOut.isInterceptor, "isInterceptor is true");
+        assertEq(fooInfoOut.objectAddress, fooInfo.objectAddress, "unexpected objectAddress");
+        assertEq(fooInfoOut.initialOwner, outsider, "unexpected initialOwner");
+        assertEq(fooInfoOut.data.length, 0, "unexpected data length");
         assertEq(registry.ownerOf(fooNftId), outsider, "unexpected owner");
     }
 
 
-    /// @dev attempt to register foo type with global registry as parent (when on mainet)
+    /// @dev register foo type object with global REGISTRY as parent (when on mainet)
     function test_registryObjectTypeExtensionRegisterFooWithGlobalRegistryParentHappyCase() public {
         // GIVEN
         NftId globalRegistryNftId = registry.getParentNftId(registryNftId);
-        IRegistry.ObjectInfo memory fooInfoIn = _toPlainObjectInfo(globalRegistryNftId, FOO_PLAIN(), outsider);
-
+        IRegistry.ObjectInfo memory fooInfo = _toPlainObjectInfo(globalRegistryNftId, FOO(), outsider);
         assertEq(globalRegistryNftId.toInt(), 2101, "unexpected globalRegistryNftId");
 
         // WHEN
         vm.chainId(1);
         vm.prank(outsider);
-        NftId fooNftId = registryServiceUpgraded.registerWithCustomType(fooInfoIn);
+        NftId fooNftId = registryServiceUpgraded.registerWithCustomType(fooInfo);
 
         // THEN
         assertTrue(fooNftId.gtz(), "fooNftId is zero");
 
         // check object info
-        IRegistry.ObjectInfo memory fooInfo = registry.getObjectInfo(fooNftId);
-        assertEq(fooInfo.nftId.toInt(), fooNftId.toInt(), "unexpected nftId");
-        assertEq(fooInfo.parentNftId.toInt(), globalRegistryNftId.toInt(), "parentNftId is not globalRegistryNftId");
-        assertEq(fooInfo.objectType.toInt(), FOO_PLAIN().toInt(), "unexpected objectType");
-        assertFalse(fooInfo.isInterceptor, "isInterceptor is true");
-        assertEq(fooInfo.objectAddress, address(0), "unexpected objectAddress");
-        assertEq(fooInfo.initialOwner, outsider, "unexpected initialOwner");
-        assertEq(fooInfo.data.length, 0, "unexpected data length");
+        IRegistry.ObjectInfo memory fooInfoOut = registry.getObjectInfo(fooNftId);
+        assertEq(fooInfoOut.nftId.toInt(), fooNftId.toInt(), "unexpected nftId");
+        assertEq(fooInfoOut.parentNftId.toInt(), globalRegistryNftId.toInt(), "parentNftId is not globalRegistryNftId");
+        assertEq(fooInfoOut.objectType.toInt(), FOO().toInt(), "unexpected objectType");
+        assertFalse(fooInfoOut.isInterceptor, "isInterceptor is true");
+        assertEq(fooInfoOut.objectAddress, fooInfo.objectAddress, "unexpected objectAddress");
+        assertEq(fooInfoOut.initialOwner, outsider, "unexpected initialOwner");
+        assertEq(fooInfoOut.data.length, 0, "unexpected data length");
         assertEq(registry.ownerOf(fooNftId), outsider, "unexpected owner");
     }
 
 
-    /// @dev attempt to register foo type with instance as parent (when on mainet)
+    /// @dev register foo type object with INSTANCE as parent
     function test_registryObjectTypeExtensionRegisterFooWithInstanceParentHappyCase() public {
         // GIVEN
-        IRegistry.ObjectInfo memory fooInfoIn = _toPlainObjectInfo(instanceNftId, FOO_PLAIN(), outsider);
-
+        IRegistry.ObjectInfo memory fooInfo = _toPlainObjectInfo(instanceNftId, FOO(), outsider);
         assertEq(instance.getNftId().toInt(), instanceNftId.toInt(), "unexpected instanceNftId");
 
         // WHEN
         vm.chainId(1);
         vm.prank(outsider);
-        NftId fooNftId = registryServiceUpgraded.registerWithCustomType(fooInfoIn);
+        NftId fooNftId = registryServiceUpgraded.registerWithCustomType(fooInfo);
 
         // THEN
         assertTrue(fooNftId.gtz(), "fooNftId is zero");
 
         // check object info
-        IRegistry.ObjectInfo memory fooInfo = registry.getObjectInfo(fooNftId);
-        assertEq(fooInfo.nftId.toInt(), fooNftId.toInt(), "unexpected nftId");
-        assertEq(fooInfo.parentNftId.toInt(), instanceNftId.toInt(), "parentNftId is not instanceNftId");
-        assertEq(fooInfo.objectType.toInt(), FOO_PLAIN().toInt(), "unexpected objectType");
-        assertFalse(fooInfo.isInterceptor, "isInterceptor is true");
-        assertEq(fooInfo.objectAddress, address(0), "unexpected objectAddress");
-        assertEq(fooInfo.initialOwner, outsider, "unexpected initialOwner");
-        assertEq(fooInfo.data.length, 0, "unexpected data length");
+        IRegistry.ObjectInfo memory fooInfoOut = registry.getObjectInfo(fooNftId);
+        assertEq(fooInfoOut.nftId.toInt(), fooNftId.toInt(), "unexpected nftId");
+        assertEq(fooInfoOut.parentNftId.toInt(), instanceNftId.toInt(), "parentNftId is not instanceNftId");
+        assertEq(fooInfoOut.objectType.toInt(), FOO().toInt(), "unexpected objectType");
+        assertFalse(fooInfoOut.isInterceptor, "isInterceptor is true");
+        assertEq(fooInfoOut.objectAddress, fooInfo.objectAddress, "unexpected objectAddress");
+        assertEq(fooInfoOut.initialOwner, outsider, "unexpected initialOwner");
+        assertEq(fooInfoOut.data.length, 0, "unexpected data length");
         assertEq(registry.ownerOf(fooNftId), outsider, "unexpected owner");
     }
 
 
-    /// @dev attempt to register foo type with staking as parent 
-    function test_registryObjectTypeExtensionRegisterFooWithStakingParent() public {
-        IRegistry.ObjectInfo memory fooInfoIn = _toPlainObjectInfo(staking.getNftId(), FOO_PLAIN(), outsider);
-        vm.expectRevert(abi.encodeWithSelector(IRegistry.ErrorRegistryTypeCombinationInvalid.selector, fooInfoIn.objectAddress, fooInfoIn.objectType, STAKING()));
+    /// @dev register foo type object with PRODUCT as parent
+    function test_registryObjectTypeExtensionRegisterFooWithProductParentHappyCase() public {
+        // GIVEN
+        _prepareProduct();  
+        IRegistry.ObjectInfo memory fooInfo = _toPlainObjectInfo(productNftId, FOO(), outsider);
+        assertEq(product.getNftId().toInt(), productNftId.toInt(), "unexpected productNftId");
+
+        // WHEN
+        vm.chainId(1);
         vm.prank(outsider);
-        NftId fooNftId = registryServiceUpgraded.registerWithCustomType(fooInfoIn);
+        NftId fooNftId = registryServiceUpgraded.registerWithCustomType(fooInfo);
+
+        // THEN
+        assertTrue(fooNftId.gtz(), "fooNftId is zero");
+
+        // check object info
+        IRegistry.ObjectInfo memory fooInfoOut = registry.getObjectInfo(fooNftId);
+        assertEq(fooInfoOut.nftId.toInt(), fooNftId.toInt(), "unexpected nftId");
+        assertEq(fooInfoOut.parentNftId.toInt(), productNftId.toInt(), "parentNftId is not productNftId");
+        assertEq(fooInfoOut.objectType.toInt(), FOO().toInt(), "unexpected objectType");
+        assertFalse(fooInfoOut.isInterceptor, "isInterceptor is true");
+        assertEq(fooInfoOut.objectAddress, fooInfo.objectAddress, "unexpected objectAddress");
+        assertEq(fooInfoOut.initialOwner, outsider, "unexpected initialOwner");
+        assertEq(fooInfoOut.data.length, 0, "unexpected data length");
+        assertEq(registry.ownerOf(fooNftId), outsider, "unexpected owner");
     }
 
+    //--- check bar type object registration with foo parent type ----------------------------------------------------//
 
-    /// @dev attempt to register foo type with global registry as parent (when not on mainet)
+    /// @dev register bar type object with FOO as parent
+    function test_registryObjectTypeExtensionRegisterBarWithFooParentHappyCase() public {
+        // GIVEN - foo object with registry as parent
+        _prepareProduct();  
+        IRegistry.ObjectInfo memory fooInfo = _toPlainObjectInfo(productNftId, FOO(), outsider);
+        vm.prank(outsider);
+        NftId fooNftId = registryServiceUpgraded.registerWithCustomType(fooInfo);
+
+        // WHEN - create bar object with foo as parent
+        IRegistry.ObjectInfo memory barInfo = _toPlainObjectInfo(fooNftId, BAR_FOO(), outsider);
+        // modify object address to ensure it is not the same as foo object
+        barInfo.objectAddress = address(123);
+
+        vm.prank(outsider);
+        NftId barNftId = registryServiceUpgraded.registerWithCustomType(barInfo);
+
+        // THEN
+        assertTrue(barNftId.gtz(), "barNftId is zero");
+
+        // check object info
+        IRegistry.ObjectInfo memory barInfoOut = registry.getObjectInfo(barNftId);
+        assertEq(barInfoOut.nftId.toInt(), barNftId.toInt(), "unexpected nftId");
+        assertEq(barInfoOut.parentNftId.toInt(), fooNftId.toInt(), "parentNftId is not fooNftId");
+        assertEq(barInfoOut.objectType.toInt(), BAR_FOO().toInt(), "unexpected objectType");
+        assertFalse(barInfoOut.isInterceptor, "isInterceptor is true");
+        assertEq(barInfoOut.objectAddress, address(123), "unexpected objectAddress");
+        assertEq(barInfoOut.initialOwner, outsider, "unexpected initialOwner");
+        assertEq(barInfoOut.data.length, 0, "unexpected data length");
+        assertEq(registry.ownerOf(barNftId), outsider, "unexpected owner");
+
+        _printObjectHierarchy(barNftId);
+    }
+
+    //--- check foo type object registration reverts with unsupported parent types -----------------------------------//
+
+
+    /// @dev attempt to register foo type object with global REGISTRY as parent (when not on mainet)
     function test_registryObjectTypeExtensionRegisterFooWithGlobalRegistryParentNotMainnet() public {
-        IRegistry.ObjectInfo memory fooInfoIn = _toPlainObjectInfo(registry.getParentNftId(registryNftId), FOO_PLAIN(), outsider);
-        vm.expectRevert(abi.encodeWithSelector(IRegistry.ErrorRegistryGlobalRegistryAsParent.selector, fooInfoIn.objectAddress, fooInfoIn.objectType));
+        IRegistry.ObjectInfo memory fooInfo = _toPlainObjectInfo(registry.getParentNftId(registryNftId), FOO(), outsider);
+        vm.expectRevert(abi.encodeWithSelector(IRegistry.ErrorRegistryGlobalRegistryAsParent.selector, fooInfo.objectAddress, fooInfo.objectType));
         vm.prank(outsider);
-        NftId fooNftId = registryServiceUpgraded.registerWithCustomType(fooInfoIn);
+        NftId fooNftId = registryServiceUpgraded.registerWithCustomType(fooInfo);
     }
 
+
+    /// @dev attempt to register foo type object with STAKING as parent 
+    function test_registryObjectTypeExtensionRegisterFooWithStakingParent() public {
+        IRegistry.ObjectInfo memory fooInfo = _toPlainObjectInfo(staking.getNftId(), FOO(), outsider);
+        vm.expectRevert(abi.encodeWithSelector(IRegistry.ErrorRegistryTypeCombinationInvalid.selector, fooInfo.objectAddress, fooInfo.objectType, STAKING()));
+        vm.prank(outsider);
+        NftId fooNftId = registryServiceUpgraded.registerWithCustomType(fooInfo);
+    }
+
+
+    /// @dev attempt to register foo type object with SERVICE as parent 
+    function test_registryObjectTypeExtensionRegisterFooWithServiceParent() public {
+        IRegistry.ObjectInfo memory fooInfo = _toPlainObjectInfo(registryService.getNftId(), FOO(), outsider);
+        vm.expectRevert(abi.encodeWithSelector(IRegistry.ErrorRegistryTypeCombinationInvalid.selector, fooInfo.objectAddress, fooInfo.objectType, SERVICE()));
+        vm.prank(outsider);
+        NftId fooNftId = registryServiceUpgraded.registerWithCustomType(fooInfo);
+    }
+
+    //--- check some corner cases -----------------------------------------------------------------------------------//
 
     /// @dev attempt to register instance type via core type register()
     function test_registryObjectTypeExtensionRegisterFooViaRegister() public {
-        IRegistry.ObjectInfo memory fooInfoIn = _toPlainObjectInfo(registryNftId, FOO_PLAIN(), outsider);
-        vm.expectRevert(abi.encodeWithSelector(IRegistry.ErrorRegistryTypeCombinationInvalid.selector, fooInfoIn.objectAddress, fooInfoIn.objectType, REGISTRY()));
+        IRegistry.ObjectInfo memory fooInfo = _toPlainObjectInfo(registryNftId, FOO(), outsider);
+        vm.expectRevert(abi.encodeWithSelector(IRegistry.ErrorRegistryTypeCombinationInvalid.selector, fooInfo.objectAddress, fooInfo.objectType, REGISTRY()));
         vm.prank(outsider);
-        NftId fooNftId = registryServiceUpgraded.register(fooInfoIn);
+        NftId fooNftId = registryServiceUpgraded.register(fooInfo);
     }
 
 
     /// @dev attempt to register instance type via core type register()
     function test_registryObjectTypeExtensionRegisterInstanceViaRegisterWithCustomType() public {
-        IRegistry.ObjectInfo memory fooInfoIn = _toPlainObjectInfo(instanceNftId, INSTANCE(), outsider);
+        IRegistry.ObjectInfo memory fooInfo = _toPlainObjectInfo(instanceNftId, INSTANCE(), outsider);
         vm.expectRevert(abi.encodeWithSelector(IRegistry.ErrorRegistryCoreTypeRegistration.selector));
         vm.prank(outsider);
-        NftId fooNftId = registryServiceUpgraded.registerWithCustomType(fooInfoIn);
+        NftId fooNftId = registryServiceUpgraded.registerWithCustomType(fooInfo);
     }
 
+    //--- helper functions -----------------------------------------------------------------------------------------//
 
     function _toPlainObjectInfo(NftId parentNftId, ObjectType objectType, address owner) internal view returns (IRegistry.ObjectInfo memory info) {
-        return _toObjectInfo(parentNftId, objectType, owner, address(0));
-    }
-
-
-    function _toObjectInfo(NftId parentNftId, ObjectType objectType, address owner, address contractAddress) internal view returns (IRegistry.ObjectInfo memory info) {
         return IRegistry.ObjectInfo({
             nftId: NftId.wrap(0),
             parentNftId: parentNftId,
             objectType: objectType,
             isInterceptor: false,
-            objectAddress: contractAddress,
+            objectAddress: address(123456789),
             initialOwner: owner,
-            data: ""
+            data: emptyData
         });
     }
 
@@ -229,5 +299,27 @@ contract RegistryObjectTypeExtensionTest is GifTest {
         vm.stopPrank();
 
         return RegistryServiceUpgraded(address(registryService));
+    }
+
+
+    function _printObjectHierarchy(NftId nftId) internal view {
+        // solhint-disable
+        console.log("");
+        console.log("object hierarchy for nftId", nftId.toInt());
+        console.log("nftId parentNftId objectType objectAddress");
+        // solhint-enable
+
+        _printObjectHierarchyInternal(nftId);
+    }
+
+
+    function _printObjectHierarchyInternal(NftId nftId) internal view {
+        if (nftId.gtz() && nftId.toInt() != 2101) {
+            _printObjectHierarchyInternal(registry.getParentNftId(nftId));
+        }
+
+        IRegistry.ObjectInfo memory info = registry.getObjectInfo(nftId);
+        // solhint-disable next-line
+        console.log(nftId.toInt(), info.parentNftId.toInt(), info.objectType.toInt(), info.objectAddress);
     }
 }
