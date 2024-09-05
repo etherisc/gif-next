@@ -3,32 +3,23 @@ pragma solidity ^0.8.20;
 
 import {Vm, console} from "../../../lib/forge-std/src/Test.sol";
 
-import {BasicProductAuthorization} from "../../../contracts/product/BasicProductAuthorization.sol";
-import {BasicPoolAuthorization} from "../../../contracts/pool/BasicPoolAuthorization.sol";
 import {GifTest} from "../../base/GifTest.sol";
 import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
-import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
+import {NftId} from "../../../contracts/type/NftId.sol";
 import {ClaimId} from "../../../contracts/type/ClaimId.sol";
-import {SimpleProduct} from "../../../contracts/examples/unpermissioned/SimpleProduct.sol";
-import {SimplePool} from "../../../contracts/examples/unpermissioned/SimplePool.sol";
 import {IClaimService} from "../../../contracts/product/IClaimService.sol";
-import {IComponents} from "../../../contracts/instance/module/IComponents.sol";
-import {ILifecycle} from "../../../contracts/shared/ILifecycle.sol";
 import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
-import {IBundle} from "../../../contracts/instance/module/IBundle.sol";
-import {Fee, FeeLib} from "../../../contracts/type/Fee.sol";
-import {UFixedLib} from "../../../contracts/type/UFixed.sol";
+import {FeeLib} from "../../../contracts/type/Fee.sol";
 import {Seconds, SecondsLib} from "../../../contracts/type/Seconds.sol";
-import {Timestamp, TimestampLib, zeroTimestamp} from "../../../contracts/type/Timestamp.sol";
-import {IPolicyService} from "../../../contracts/product/IPolicyService.sol";
-import {IRisk} from "../../../contracts/instance/module/IRisk.sol";
+import {Timestamp, TimestampLib} from "../../../contracts/type/Timestamp.sol";
 import {PayoutId, PayoutIdLib} from "../../../contracts/type/PayoutId.sol";
-import {POLICY} from "../../../contracts/type/ObjectType.sol";
-import {RiskId, RiskIdLib, eqRiskId} from "../../../contracts/type/RiskId.sol";
+import {RiskId} from "../../../contracts/type/RiskId.sol";
 import {ReferralLib} from "../../../contracts/type/Referral.sol";
-import {SUBMITTED, CANCELLED, COLLATERALIZED, CONFIRMED, DECLINED, CLOSED, EXPECTED, PAID} from "../../../contracts/type/StateId.sol";
+import {CANCELLED, COLLATERALIZED, CONFIRMED, CLOSED, EXPECTED, PAID} from "../../../contracts/type/StateId.sol";
 import {StateId} from "../../../contracts/type/StateId.sol";
 
+
+// solhint-disable func-name-mixedcase
 contract TestProductClaim is GifTest {
 
     event LogClaimTestClaimInfo(NftId policyNftId, IPolicy.PolicyInfo policyInfo, ClaimId claimId, IPolicy.ClaimInfo claimInfo);
@@ -74,7 +65,6 @@ contract TestProductClaim is GifTest {
             IPolicy.PolicyInfo memory policyInfo,
             ClaimId claimId,
             IPolicy.ClaimInfo memory claimInfo,
-            StateId claimState
         ) = _makeClaim(policyNftId, claimAmount);
 
         assertEq(policyInfo.claimsCount, 1, "claims count not 1 (before)");
@@ -139,7 +129,7 @@ contract TestProductClaim is GifTest {
             ClaimId claimId,
             StateId claimState,
             IPolicy.ClaimInfo memory claimInfo,
-            PayoutId payoutId,
+            ,
             StateId payoutState,
             IPolicy.PayoutInfo memory payoutInfo
         ) = _createClaimAndPayout(policyNftId, claimAmountInt, payoutAmountInt, payoutData, false);
@@ -258,6 +248,113 @@ contract TestProductClaim is GifTest {
         // check new token balances
         assertEq(poolBalanceBefore - poolBalanceAfter, payoutAmountInt, "unexpected pool balance after payout");
         assertEq(customerBalanceAfter - customerBalanceBefore, payoutAmountInt, "unexpected customer balance after payout");
+    }
+
+    function test_productPayoutProcessHappyCaseWithProcessingFee() public {
+        vm.startPrank(productOwner);
+        product.setFees(FeeLib.zero(), FeeLib.percentageFee(10));
+        vm.stopPrank();
+
+        // GIVEN
+        _approve();
+        _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
+
+        uint256 claimAmountInt = 500;
+        uint256 payoutAmountInt = 300;
+        bytes memory payoutData = "some sample payout data";
+
+        // record balances before
+        uint256 productBalanceBefore = product.getToken().balanceOf(product.getWallet());
+        uint256 poolBalanceBefore = product.getToken().balanceOf(pool.getWallet());
+        uint256 customerBalanceBefore = product.getToken().balanceOf(customer);
+        Amount productFeeBefore = instanceReader.getFeeAmount(productNftId);
+
+        // solhint-disable
+        console.log("payout amount:", payoutAmountInt);
+        console.log("pool balance before: ", poolBalanceBefore);
+        console.log("customer balance before: ", customerBalanceBefore);
+        // solhint-enable
+
+        // create claim and payout
+        (
+            , // IPolicy.PolicyInfo memory policyInfo,
+            ClaimId claimId,
+            , // StateId claimState,
+            , // IPolicy.ClaimInfo memory claimInfo,
+            PayoutId payoutId
+            , // StateId payoutState,
+            , // IPolicy.PayoutInfo memory payoutInfo
+        ) = _createClaimAndPayout(policyNftId, claimAmountInt, payoutAmountInt, payoutData, false);
+
+        // WHEN + THEN
+        Amount payoutAmount = AmountLib.toAmount(payoutAmountInt);
+        vm.expectEmit(address(claimService));
+        emit IClaimService.LogClaimServicePayoutProcessed(
+                policyNftId, 
+                payoutId,
+                payoutAmount);
+
+        (Amount netPayoutAmount, Amount processingFeeAmount) = product.processPayout(policyNftId, payoutId);
+        assertEq(payoutAmountInt, netPayoutAmount.toInt() + processingFeeAmount.toInt(), "net payout amount + processing fee amount not equal to payout amount");
+
+        // THEN
+        // check policy
+        {
+            IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
+
+            assertEq(policyInfo.claimsCount, 1, "claims count not 1");
+            assertEq(policyInfo.openClaimsCount, 1, "open claims count not 1");
+            assertEq(policyInfo.claimAmount.toInt(), claimAmountInt, "unexpected claim amount");
+            assertEq(policyInfo.payoutAmount.toInt(), payoutAmountInt, "unexpected payout amount");
+        }
+
+        // check claim
+        {
+            StateId claimState = instanceReader.getClaimState(policyNftId, claimId);
+            IPolicy.ClaimInfo memory claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
+
+            assertEq(claimState.toInt(), CONFIRMED().toInt(), "unexpected claim state");
+            assertEq(claimInfo.claimAmount.toInt(), claimAmountInt, "unexpected claim amount");
+            assertEq(claimInfo.paidAmount.toInt(), payoutAmountInt, "unexpected paid amount");
+            assertEq(claimInfo.payoutsCount, 1, "unexpected payouts count");
+            assertEq(claimInfo.openPayoutsCount, 0, "open payouts count not 0");
+            assertEq(claimInfo.closedAt.toInt(), 0, "unexpected closed at");
+        }
+
+        // check payout
+        {
+            StateId payoutState = instanceReader.getPayoutState(policyNftId, payoutId);
+            IPolicy.PayoutInfo memory payoutInfo = instanceReader.getPayoutInfo(policyNftId, payoutId);
+
+            assertEq(payoutState.toInt(), PAID().toInt(), "unexpected payout state");
+            assertEq(payoutInfo.claimId.toInt(), claimId.toInt(), "unexpected claim id");
+            assertEq(payoutInfo.amount.toInt(), payoutAmountInt, "unexpected payout amount");
+            assertEq(keccak256(payoutInfo.data), keccak256(payoutData), "unexpected payout data");
+            assertEq(payoutInfo.paidAt.toInt(), block.timestamp, "unexpected payout at timestamp");
+        }
+
+        // check product fees
+        {
+            Amount productFeeAfter = instanceReader.getFeeAmount(productNftId);
+            assertEq(productFeeAfter.toInt(), productFeeBefore.toInt() + processingFeeAmount.toInt(), "unexpected product fee amount");
+        }
+
+        // record balances after payout processing
+        {
+            uint256 productBalanceAfter = product.getToken().balanceOf(product.getWallet());
+            uint256 poolBalanceAfter = product.getToken().balanceOf(pool.getWallet());
+            uint256 customerBalanceAfter = product.getToken().balanceOf(customer);
+
+            // solhint-disable
+            console.log("pool balance after: ", poolBalanceAfter);
+            console.log("customer balance after: ", customerBalanceAfter);
+            // solhint-enable
+
+            // check new token balances
+            assertEq(productBalanceAfter - productBalanceBefore, processingFeeAmount.toInt(), "unexpected product balance after payout");
+            assertEq(poolBalanceBefore - poolBalanceAfter, payoutAmountInt, "unexpected pool balance after payout");
+            assertEq(customerBalanceAfter - customerBalanceBefore, netPayoutAmount.toInt(), "unexpected customer balance after payout");
+        }
     }
 
     function test_productClaimPayoutPartial() public {
@@ -460,9 +557,8 @@ contract TestProductClaim is GifTest {
         // implicit assigning of policy nft id
         (
             ClaimId claimId,
-            StateId claimState,
+            ,
             PayoutId payoutId,
-            StateId payoutState
         ) = _createPolicyWithClaimAndPayout(
             newCustomer,
             sumInsuredAmountInt,
@@ -500,9 +596,8 @@ contract TestProductClaim is GifTest {
         // implicit assigning of policy nft id
         (
             ClaimId claimId,
-            StateId claimState,
+            ,
             PayoutId payoutId,
-            StateId payoutState
         ) = _createPolicyWithClaimAndPayout(
             newCustomer,
             sumInsuredAmountInt,
@@ -696,8 +791,8 @@ contract TestProductClaim is GifTest {
         product.processPayout(policyNftId, payoutId2);
 
         // add 2nd claim
-        uint256 claimAmount2Int = 2000;
-        uint256 payoutAmount3Int = 2000;
+        // uint256 claimAmount2Int = 2000;
+        // uint256 payoutAmount3Int = 2000;
         (, ClaimId claimId2,,, PayoutId payoutId3,,) = _createClaimAndPayout(
             policyNftId,
             2000, // claim amount 2
@@ -824,10 +919,10 @@ contract TestProductClaim is GifTest {
 
         // WHEN
         (
-            IPolicy.PolicyInfo memory policyInfo,
-            ClaimId claimId,
-            StateId claimState,
-            IPolicy.ClaimInfo memory claimInfo,
+            ,
+            ,
+            ,
+            ,
             PayoutId payoutId,
             StateId payoutState,
             IPolicy.PayoutInfo memory payoutInfo
@@ -944,10 +1039,10 @@ contract TestProductClaim is GifTest {
 
         // WHEN
         (
-            IPolicy.PolicyInfo memory policyInfo,
-            ClaimId claimId,
-            StateId claimState,
-            IPolicy.ClaimInfo memory claimInfo,
+            ,
+            ,
+            ,
+            ,
             PayoutId payoutId,
             StateId payoutState,
             IPolicy.PayoutInfo memory payoutInfo

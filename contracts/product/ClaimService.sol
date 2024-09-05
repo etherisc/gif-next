@@ -315,6 +315,7 @@ contract ClaimService is
         virtual
         restricted()
         // nonReentrant() // prevents creating a reinsurance payout in a single tx
+        returns (Amount netPayoutAmount, Amount processingFeeAmount)
     {
         // checks
         (
@@ -324,30 +325,37 @@ contract ClaimService is
             IPolicy.PolicyInfo memory policyInfo
         ) = _verifyCallerWithPolicy(policyNftId);
 
-        // check that payout exists and is open
-        IPolicy.PayoutInfo memory payoutInfo = instanceReader.getPayoutInfo(policyNftId, payoutId);
-        StateId payoutState = instanceReader.getPayoutState(policyNftId, payoutId);
-        if(payoutState != EXPECTED()) {
-            revert ErrorClaimServicePayoutNotExpected(policyNftId, payoutId, payoutState);
-        }
+        IPolicy.ClaimInfo memory claimInfo;
+        address payoutBeneficiary;
+        Amount payoutAmount;
+        
+        {
+            // check that payout exists and is open
+            IPolicy.PayoutInfo memory payoutInfo = instanceReader.getPayoutInfo(policyNftId, payoutId);
+            payoutBeneficiary = payoutInfo.beneficiary;
+            payoutAmount = payoutInfo.amount;
+            StateId payoutState = instanceReader.getPayoutState(policyNftId, payoutId);
+            if(payoutState != EXPECTED()) {
+                revert ErrorClaimServicePayoutNotExpected(policyNftId, payoutId, payoutState);
+            }
 
-        // check that payout amount does not violate claim amount
-        IPolicy.ClaimInfo memory claimInfo = instanceReader.getClaimInfo(policyNftId, payoutId.toClaimId());
-        if(claimInfo.paidAmount + payoutInfo.amount > claimInfo.claimAmount) {
-            revert ErrorClaimServicePayoutExceedsClaimAmount(
-                policyNftId, 
-                payoutId.toClaimId(), 
-                claimInfo.claimAmount, 
-                claimInfo.paidAmount + payoutInfo.amount);
-        }
+            // check that payout amount does not violate claim amount
+            claimInfo = instanceReader.getClaimInfo(policyNftId, payoutId.toClaimId());
+            if(claimInfo.paidAmount + payoutInfo.amount > claimInfo.claimAmount) {
+                revert ErrorClaimServicePayoutExceedsClaimAmount(
+                    policyNftId, 
+                    payoutId.toClaimId(), 
+                    claimInfo.claimAmount, 
+                    claimInfo.paidAmount + payoutInfo.amount);
+            }
 
-        // effects
-        // update and save payout info with instance
-        payoutInfo.paidAt = TimestampLib.blockTimestamp();
-        instanceStore.updatePayout(policyNftId, payoutId, payoutInfo, PAID());
+            // effects
+            // update and save payout info with instance
+            payoutInfo.paidAt = TimestampLib.blockTimestamp();
+            instanceStore.updatePayout(policyNftId, payoutId, payoutInfo, PAID());
+        }
 
         // update and save claim info with instance
-        Amount payoutAmount = payoutInfo.amount;
         {
             ClaimId claimId = payoutId.toClaimId();
             // TODO cleanup
@@ -375,7 +383,7 @@ contract ClaimService is
 
         // effects + interactions (push tokens to beneficiary, product)
         // delegate to pool to update book keeping and moving tokens payout
-        _poolService.processPayout(
+        (netPayoutAmount, processingFeeAmount) = _poolService.processPayout(
             instanceReader,
             instanceStore, 
             policyInfo.productNftId, // product nft id 
@@ -383,7 +391,7 @@ contract ClaimService is
             policyInfo.bundleNftId, 
             payoutId,
             payoutAmount,
-            payoutInfo.beneficiary);
+            payoutBeneficiary);
     }
 
     function cancelPayout(

@@ -278,8 +278,8 @@ contract SimpleProduct is
     function processPayout(
         NftId policyNftId,
         PayoutId payoutId
-    ) public {
-        _processPayout(policyNftId, payoutId);
+    ) public returns (Amount netPayoutAmount, Amount processingFeeAmount) {
+        (netPayoutAmount, processingFeeAmount) = _processPayout(policyNftId, payoutId);
     }
 
     function createOracleRequest(

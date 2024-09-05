@@ -18,7 +18,7 @@ import {COMPONENT, PRODUCT, BUNDLE, APPLICATION, POLICY, CLAIM, PRICE } from "..
 import {PayoutId} from "../type/PayoutId.sol";
 import {COMPONENT, PRODUCT, APPLICATION, POLICY, CLAIM, PRICE, BUNDLE, RISK } from "../type/ObjectType.sol";
 import {ReferralId} from "../type/Referral.sol";
-import {RiskId, RiskIdLib} from "../type/RiskId.sol";
+import {RiskId} from "../type/RiskId.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {StateId} from "../type/StateId.sol";
 import {Timestamp} from "../type/Timestamp.sol";
@@ -445,8 +445,9 @@ abstract contract Product is
     )
         internal
         virtual
+        returns (Amount netPayoutAmount, Amount processingFeeAmount)
     {
-        _getProductStorage()._claimService.processPayout(
+        (netPayoutAmount, processingFeeAmount) = _getProductStorage()._claimService.processPayout(
             policyNftId,
             payoutId);
     }

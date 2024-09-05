@@ -27,6 +27,8 @@ interface IAccountingService is
     function increaseProductFees(InstanceStore instanceStore, NftId productNftId, Amount feeAmount) external;
     function decreaseProductFees(InstanceStore instanceStore, NftId productNftId, Amount feeAmount) external;
 
+    function increaseProductFeesForPool(InstanceStore instanceStore, NftId productNftId, Amount feeAmount) external;
+
     function increaseDistributionBalance(InstanceStore instanceStore, NftId distributionNftId, Amount amount, Amount feeAmount) external;
     function decreaseDistributionBalance(InstanceStore instanceStore, NftId distributionNftId, Amount amount, Amount feeAmount) external;
 

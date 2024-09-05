@@ -125,7 +125,7 @@ interface IClaimService is
     function processPayout(
         NftId policyNftId, 
         PayoutId payoutId
-    ) external;
+    ) external returns (Amount netPayoutAmount, Amount processingFeeAmount);
 
     /// @dev cancels the specified payout. no tokens are moved, payout is set to cancelled. 
     function cancelPayout(

@@ -11,7 +11,6 @@ import {InstanceReader} from "../instance/InstanceReader.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
 import {NftId} from "../type/NftId.sol";
 import {PayoutId} from "../type/PayoutId.sol";
-import {UFixed} from "../type/UFixed.sol";
 
 interface IPoolService is IService {
 
@@ -81,7 +80,7 @@ interface IPoolService is IService {
         PayoutId payoutId,
         Amount payoutAmount,
         address payoutBeneficiary
-    ) external;
+    ) external returns (Amount netPayoutAmount, Amount processingFeeAmount);
 
 
     /// @dev increase stakes for bundle
