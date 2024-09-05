@@ -157,7 +157,6 @@ contract PolicyService is
                 premium.premiumAmount);
         }
 
-        // TODO: effective premium 
         premiumAmount = premium.premiumAmount;
         instance.getInstanceStore().createPremium(
             applicationNftId,
