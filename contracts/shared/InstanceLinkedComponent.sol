@@ -52,12 +52,12 @@ abstract contract InstanceLinkedComponent is
     }
 
     /// @inheritdoc IInstanceLinkedComponent
-    function getInstance() public view override returns (IInstance instance) {
+    function getInstance() public view virtual override returns (IInstance instance) {
         return _getInstanceLinkedComponentStorage()._instance;
     }
 
     /// @inheritdoc IInstanceLinkedComponent
-    function getAuthorization() external view returns (IAuthorization authorization) {
+    function getAuthorization() external view virtual returns (IAuthorization authorization) {
         return _getInstanceLinkedComponentStorage()._initialAuthorization;
     }
 

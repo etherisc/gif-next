@@ -45,6 +45,7 @@ contract RiskService is
         bytes memory data
     )
         external 
+        virtual
         restricted()
         returns (RiskId riskId)
     {
@@ -74,6 +75,7 @@ contract RiskService is
         bytes memory data
     )
         external 
+        virtual
         restricted()
     {
         // checks
@@ -97,6 +99,7 @@ contract RiskService is
         StateId state
     )
         external 
+        virtual
         restricted()
     {
         // checks

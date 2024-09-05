@@ -57,6 +57,7 @@ abstract contract Distribution is
 
     function getDiscountPercentage(string memory referralCode)
         external
+        virtual
         view
         returns (
             UFixed discountPercentage, 
@@ -72,6 +73,7 @@ abstract contract Distribution is
         string memory referralCode
     )
         public
+        virtual
         view 
         returns (ReferralId referralId)
     {
@@ -96,7 +98,7 @@ abstract contract Distribution is
 
 
     /// @dev Returns true iff the component needs to be called when selling/renewing policis
-    function isVerifying() external pure returns (bool verifying) {
+    function isVerifying() external virtual pure returns (bool verifying) {
         return true;
     }
 

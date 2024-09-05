@@ -74,6 +74,7 @@ contract DistributionService is
         bytes memory data
     )
         external
+        virtual
         restricted()
         returns (DistributorType distributorType)
     {
@@ -334,6 +335,7 @@ contract DistributionService is
 
     function referralIsValid(NftId distributionNftId, ReferralId referralId) 
         public 
+        virtual
         view 
         onlyNftOfType(distributionNftId, DISTRIBUTION())
         returns (bool isValid) 

@@ -66,6 +66,7 @@ contract Staking is
 
     function initializeTokenHandler()
         external
+        virtual
     {
         if (msg.sender != address(getRegistry())) {
             revert ErrorStakingNotRegistry(msg.sender);
@@ -114,6 +115,7 @@ contract Staking is
     function setStakingRate(uint256 chainId, address token, UFixed stakingRate)
         external
         virtual
+        restricted()
         onlyOwner()
     {
         StakingStorage storage $ = _getStakingStorage();
@@ -438,15 +440,15 @@ contract Staking is
 
     //--- view functions ----------------------------------------------------//
 
-    function getStakingReader() public view returns (StakingReader reader) {
+    function getStakingReader() public virtual view returns (StakingReader reader) {
         return _getStakingStorage()._reader;
     }
 
-    function getStakingStore() external view returns (StakingStore stakingStore) {
+    function getStakingStore() external virtual view returns (StakingStore stakingStore) {
         return _getStakingStorage()._store;
     }
 
-    function getTokenRegistryAddress() external view returns (address tokenRegistry) {
+    function getTokenRegistryAddress() external virtual view returns (address tokenRegistry) {
         return address(_getStakingStorage()._tokenRegistry);
     }
 

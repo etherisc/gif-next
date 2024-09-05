@@ -11,6 +11,7 @@ import {PUBLIC_ROLE} from "../type/RoleId.sol";
 import {ReleaseRegistry} from "./ReleaseRegistry.sol";
 import {RegistryAdmin} from "./RegistryAdmin.sol";
 import {RoleIdLib, ADMIN_ROLE, GIF_ADMIN_ROLE, GIF_MANAGER_ROLE} from "../type/RoleId.sol";
+import {Staking} from "../staking/Staking.sol";
 import {StakingStore} from "../staking/StakingStore.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {TokenRegistry} from "../registry/TokenRegistry.sol";
@@ -210,6 +211,9 @@ contract RegistryAuthorization
           _authorize(functions, IStaking.setProtocolRewardRate.selector, "setProtocolRewardRate");
           _authorize(functions, IStaking.setStakingReader.selector, "setStakingReader");
           _authorize(functions, IStaking.approveTokenHandler.selector, "approveTokenHandler");
+          _authorize(functions, IStaking.approveTokenHandler.selector, "approveTokenHandler");
+          _authorize(functions, Staking.setStakingReader.selector, "setStakingReader");
+          _authorize(functions, Staking.setStakingRate.selector, "setStaking");
 
           // staking service role
           functions = _authorizeForTarget(

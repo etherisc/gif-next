@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {IAccess} from "../authorization/IAccess.sol";
 import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
+import {IProductComponent} from "./IProductComponent.sol";
 
 import {Authorization} from "../authorization/Authorization.sol";
 import {BasicProduct} from "./BasicProduct.sol"; 
@@ -55,6 +56,7 @@ contract BasicProductAuthorization
           // authorize public role (open access to any account, only allows to lock target)
           functions = _authorizeForTarget(getMainTargetName(), PUBLIC_ROLE());
           _authorize(functions, BasicProduct.setFees.selector, "setFees");
+          _authorize(functions, IProductComponent.registerComponent.selector, "registerComponent");
           _authorize(functions, IInstanceLinkedComponent.withdrawFees.selector, "withdrawFees");
      }
 }

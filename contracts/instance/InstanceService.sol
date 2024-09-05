@@ -287,6 +287,7 @@ contract InstanceService is
 
     function upgradeInstanceReader() 
         external 
+        virtual
         restricted()
         onlyInstance()
     {
@@ -303,6 +304,7 @@ contract InstanceService is
 
     function setAndRegisterMasterInstance(address instanceAddress)
         external 
+        virtual
         onlyOwner()
         returns(NftId masterInstanceNftId)
     {
@@ -356,6 +358,7 @@ contract InstanceService is
 
     function upgradeMasterInstanceReader(address instanceReaderAddress)
         external
+        virtual
         onlyOwner
     {
         if(_masterInstanceReader == address(0)) { revert ErrorInstanceServiceMasterInstanceReaderNotSet(); }
@@ -368,9 +371,7 @@ contract InstanceService is
         _masterInstanceReader = instanceReaderAddress;
     }
 
-    //--- view functions ------------------------------------------------------------//
-
-    function getMasterInstanceReader() external view returns (address) {
+    function getMasterInstanceReader() external virtual view returns (address) {
         return _masterInstanceReader;
     }
 
