@@ -11,7 +11,6 @@ import {InstanceReader} from "../instance/InstanceReader.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
 import {NftId} from "../type/NftId.sol";
 import {PayoutId} from "../type/PayoutId.sol";
-import {UFixed} from "../type/UFixed.sol";
 
 interface IPoolService is IService {
 

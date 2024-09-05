@@ -3,32 +3,23 @@ pragma solidity ^0.8.20;
 
 import {Vm, console} from "../../../lib/forge-std/src/Test.sol";
 
-import {BasicProductAuthorization} from "../../../contracts/product/BasicProductAuthorization.sol";
-import {BasicPoolAuthorization} from "../../../contracts/pool/BasicPoolAuthorization.sol";
 import {GifTest} from "../../base/GifTest.sol";
 import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
-import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
+import {NftId} from "../../../contracts/type/NftId.sol";
 import {ClaimId} from "../../../contracts/type/ClaimId.sol";
-import {SimpleProduct} from "../../../contracts/examples/unpermissioned/SimpleProduct.sol";
-import {SimplePool} from "../../../contracts/examples/unpermissioned/SimplePool.sol";
 import {IClaimService} from "../../../contracts/product/IClaimService.sol";
-import {IComponents} from "../../../contracts/instance/module/IComponents.sol";
-import {ILifecycle} from "../../../contracts/shared/ILifecycle.sol";
 import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
-import {IBundle} from "../../../contracts/instance/module/IBundle.sol";
-import {Fee, FeeLib} from "../../../contracts/type/Fee.sol";
-import {UFixedLib} from "../../../contracts/type/UFixed.sol";
+import {FeeLib} from "../../../contracts/type/Fee.sol";
 import {Seconds, SecondsLib} from "../../../contracts/type/Seconds.sol";
-import {Timestamp, TimestampLib, zeroTimestamp} from "../../../contracts/type/Timestamp.sol";
-import {IPolicyService} from "../../../contracts/product/IPolicyService.sol";
-import {IRisk} from "../../../contracts/instance/module/IRisk.sol";
+import {Timestamp, TimestampLib} from "../../../contracts/type/Timestamp.sol";
 import {PayoutId, PayoutIdLib} from "../../../contracts/type/PayoutId.sol";
-import {POLICY} from "../../../contracts/type/ObjectType.sol";
-import {RiskId, RiskIdLib, eqRiskId} from "../../../contracts/type/RiskId.sol";
+import {RiskId} from "../../../contracts/type/RiskId.sol";
 import {ReferralLib} from "../../../contracts/type/Referral.sol";
-import {SUBMITTED, CANCELLED, COLLATERALIZED, CONFIRMED, DECLINED, CLOSED, EXPECTED, PAID} from "../../../contracts/type/StateId.sol";
+import {CANCELLED, COLLATERALIZED, CONFIRMED, CLOSED, EXPECTED, PAID} from "../../../contracts/type/StateId.sol";
 import {StateId} from "../../../contracts/type/StateId.sol";
 
+
+// solhint-disable func-name-mixedcase
 contract TestProductClaim is GifTest {
 
     event LogClaimTestClaimInfo(NftId policyNftId, IPolicy.PolicyInfo policyInfo, ClaimId claimId, IPolicy.ClaimInfo claimInfo);
@@ -74,7 +65,6 @@ contract TestProductClaim is GifTest {
             IPolicy.PolicyInfo memory policyInfo,
             ClaimId claimId,
             IPolicy.ClaimInfo memory claimInfo,
-            StateId claimState
         ) = _makeClaim(policyNftId, claimAmount);
 
         assertEq(policyInfo.claimsCount, 1, "claims count not 1 (before)");
@@ -139,7 +129,7 @@ contract TestProductClaim is GifTest {
             ClaimId claimId,
             StateId claimState,
             IPolicy.ClaimInfo memory claimInfo,
-            PayoutId payoutId,
+            ,
             StateId payoutState,
             IPolicy.PayoutInfo memory payoutInfo
         ) = _createClaimAndPayout(policyNftId, claimAmountInt, payoutAmountInt, payoutData, false);
@@ -567,9 +557,8 @@ contract TestProductClaim is GifTest {
         // implicit assigning of policy nft id
         (
             ClaimId claimId,
-            StateId claimState,
+            ,
             PayoutId payoutId,
-            StateId payoutState
         ) = _createPolicyWithClaimAndPayout(
             newCustomer,
             sumInsuredAmountInt,
@@ -607,9 +596,8 @@ contract TestProductClaim is GifTest {
         // implicit assigning of policy nft id
         (
             ClaimId claimId,
-            StateId claimState,
+            ,
             PayoutId payoutId,
-            StateId payoutState
         ) = _createPolicyWithClaimAndPayout(
             newCustomer,
             sumInsuredAmountInt,
@@ -803,8 +791,8 @@ contract TestProductClaim is GifTest {
         product.processPayout(policyNftId, payoutId2);
 
         // add 2nd claim
-        uint256 claimAmount2Int = 2000;
-        uint256 payoutAmount3Int = 2000;
+        // uint256 claimAmount2Int = 2000;
+        // uint256 payoutAmount3Int = 2000;
         (, ClaimId claimId2,,, PayoutId payoutId3,,) = _createClaimAndPayout(
             policyNftId,
             2000, // claim amount 2
@@ -931,10 +919,10 @@ contract TestProductClaim is GifTest {
 
         // WHEN
         (
-            IPolicy.PolicyInfo memory policyInfo,
-            ClaimId claimId,
-            StateId claimState,
-            IPolicy.ClaimInfo memory claimInfo,
+            ,
+            ,
+            ,
+            ,
             PayoutId payoutId,
             StateId payoutState,
             IPolicy.PayoutInfo memory payoutInfo
@@ -1051,10 +1039,10 @@ contract TestProductClaim is GifTest {
 
         // WHEN
         (
-            IPolicy.PolicyInfo memory policyInfo,
-            ClaimId claimId,
-            StateId claimState,
-            IPolicy.ClaimInfo memory claimInfo,
+            ,
+            ,
+            ,
+            ,
             PayoutId payoutId,
             StateId payoutState,
             IPolicy.PayoutInfo memory payoutInfo
