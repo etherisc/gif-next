@@ -12,12 +12,9 @@ import {InstanceStore} from "../instance/InstanceStore.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {StateId} from "../type/StateId.sol";
 import {Timestamp} from "../type/Timestamp.sol";
+import {UFixed} from "../type/UFixed.sol";
 
 interface IBundleService is IService {
-
-    event LogBundleServiceBundleCreated(NftId bundleNftId, NftId poolNftId);
-    event LogBundleServiceBundleActivated(NftId bundleNftId);
-    event LogBundleServiceBundleLocked(NftId bundleNftId);
 
     error ErrorBundleServiceInsufficientAllowance(address bundleOwner, address tokenHandlerAddress, Amount amount);
     error ErrorBundleServiceBundleNotOpen(NftId bundleNftId, StateId state, Timestamp expiredAt);
@@ -33,7 +30,16 @@ interface IBundleService is IService {
 
     error ErrorBundleServiceExtensionLifetimeIsZero();
 
+    event LogBundleServiceBundleCreated(NftId bundleNftId, NftId poolNftId, Seconds lifetime);
+    event LogBundleServiceBundleClosed(NftId bundleNftId);
+    event LogBundleServiceBundleLocked(NftId bundleNftId);
+    event LogBundleServiceBundleUnlocked(NftId bundleNftId);
     event LogBundleServiceBundleExtended(NftId bundleNftId, Seconds lifetimeExtension, Timestamp extendedExpiredAt);
+    event LogBundleServiceBundleFeeUpdated(NftId bundleNftId, Amount fixedFee, UFixed fractionalFee);
+    event LogBundleServiceCollateralLocked(NftId bundleNftId, NftId policyNftId, Amount collateralAmount);
+    event LogBundleServiceCollateralReleased(NftId bundleNftId, NftId policyNftId, Amount collateralAmount);
+    event LogBundleServiceBundleStaked(NftId bundleNftId, Amount amount);
+    event LogBundleServiceBundleUnstaked(NftId bundleNftId, Amount amount);
 
     /// @dev Create a new bundle for the specified attributes.
     function create(

@@ -81,6 +81,8 @@ contract BundleService is
 
         bundleInfo.fee = fee;
         instance.getInstanceStore().updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
+
+        emit LogBundleServiceBundleFeeUpdated(bundleNftId, fee.fixedFee, fee.fractionalFee);
     }
 
 
@@ -128,7 +130,7 @@ contract BundleService is
         BundleSet bundleManager = instance.getBundleSet();
         bundleManager.add(bundleNftId);
 
-        emit LogBundleServiceBundleCreated(bundleNftId, poolNftId);
+        emit LogBundleServiceBundleCreated(bundleNftId, poolNftId, lifetime);
     }
 
 
@@ -178,6 +180,8 @@ contract BundleService is
         // effects
         // updated locked amount
         instanceStore.increaseLocked(bundleNftId, collateralAmount);
+
+        emit LogBundleServiceCollateralLocked(bundleNftId, policyNftId, collateralAmount);
     }
 
 
@@ -221,7 +225,7 @@ contract BundleService is
         BundleSet bundleManager = instance.getBundleSet();
         bundleManager.unlock(bundleNftId);
 
-        emit LogBundleServiceBundleActivated(bundleNftId);
+        emit LogBundleServiceBundleUnlocked(bundleNftId);
     }
 
 
@@ -259,6 +263,8 @@ contract BundleService is
             unstakedAmount = balanceAmountWithFees - feeAmount;
             _accountingService.decreaseBundleBalance(instanceStore, bundleNftId, unstakedAmount, feeAmount);
         }
+
+        emit LogBundleServiceBundleClosed(bundleNftId);
     }
 
     /// @inheritdoc IBundleService
@@ -290,6 +296,8 @@ contract BundleService is
             bundleNftId, 
             amount, 
             AmountLib.zero());
+
+        emit LogBundleServiceBundleStaked(bundleNftId, amount);
     }
 
     /// @inheritdoc IBundleService
@@ -331,6 +339,8 @@ contract BundleService is
             bundleNftId, 
             unstakedAmount, 
             AmountLib.zero());
+        
+        emit LogBundleServiceBundleUnstaked(bundleNftId, unstakedAmount);
     }
 
     /// @inheritdoc IBundleService
@@ -385,6 +395,8 @@ contract BundleService is
         _checkNftType(bundleNftId, BUNDLE());
 
         instanceStore.decreaseLocked(bundleNftId, collateralAmount);
+
+        emit LogBundleServiceCollateralReleased(bundleNftId, policyNftId, collateralAmount);
     }
 
 
