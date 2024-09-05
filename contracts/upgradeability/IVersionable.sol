@@ -28,6 +28,9 @@ import {Version} from "../type/Version.sol";
 
 interface IVersionable {
 
+    error ErrorVersionableInitializeNotImplemented();
+    error ErrorVersionableUpgradeNotImplemented();
+
     /**
      * @dev IMPORTANT
      * implementation MUST be guarded by initializer modifier

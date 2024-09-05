@@ -47,7 +47,7 @@ abstract contract Versionable is
         onlyInitializing()
         virtual 
     {
-        revert();
+        revert ErrorVersionableInitializeNotImplemented();
     }
 
     // IMPORTANT each version except version "1" must implement this function 
@@ -57,6 +57,6 @@ abstract contract Versionable is
         onlyInitializing
         virtual
     {
-        revert();
+        revert ErrorVersionableUpgradeNotImplemented();
     }
 }

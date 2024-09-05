@@ -4,8 +4,8 @@ pragma solidity ^0.8.20;
 import {IERC721Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 
 import {Test, Vm, console} from "../../lib/forge-std/src/Test.sol";
-import {ChainNft} from "../../contracts/registry/ChainNft.sol";
 
+import {ChainNft} from "../../contracts/registry/ChainNft.sol";
 import {MockInterceptor} from "../mock/MockInterceptor.sol";
 
 contract ChainNftTest is Test {

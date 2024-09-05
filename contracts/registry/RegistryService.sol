@@ -30,7 +30,8 @@ contract RegistryService is
     )
         internal
         virtual override
-        initializer()
+        // initializer()
+        onlyInitializing
     {
         (
             address authority,
