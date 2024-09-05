@@ -118,6 +118,18 @@ contract ProxyManager is
         emit LogProxyManagerVersionableDeployed(address(versionable), initialImplementation);
     }
 
+    /// @dev upgrade existing contract.
+    /// convenience method using empty data
+    function upgrade(address newImplementation) 
+        public
+        virtual
+        onlyOwner()
+        returns (IVersionable versionable)
+    {
+        bytes memory emptyUpgradeData;
+        return upgrade(newImplementation, emptyUpgradeData);
+    }
+
     /// @dev upgrade existing contract
     function upgrade(address newImplementation, bytes memory upgradeData)
         public

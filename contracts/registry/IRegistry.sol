@@ -26,6 +26,9 @@ interface IRegistry is
     // initialize
     error ErrorRegistryCallerNotDeployer();
 
+    // register()
+    error ErrorRegistryObjectTypeNotSupported(ObjectType objectType);
+
     // registerRegistry()
     error ErrorRegistryNotOnMainnet(uint256 chainId);
     error ErrorRegistryChainRegistryChainIdZero(NftId nftId);
@@ -36,6 +39,8 @@ interface IRegistry is
     // registerService()
     error ErrorRegistryServiceAddressZero(); 
     error ErrorRegistryServiceVersionZero(address service);
+
+    // TODO cleanup
     //error ErrorRegistryServiceVersionMismatch(address service, VersionPart serviceVersion, VersionPart releaseVersion);
     //error ErrorRegistryServiceVersionNotDeploying(address service, VersionPart version);
     error ErrorRegistryServiceDomainZero(address service, VersionPart version);
@@ -48,7 +53,7 @@ interface IRegistry is
 
     // _register()
     error ErrorRegistryGlobalRegistryAsParent(address objectAddress, ObjectType objectType);
-    error ErrorRegistryTypesCombinationInvalid(address objectAddress, ObjectType objectType, ObjectType parentType);
+    error ErrorRegistryTypeCombinationInvalid(address objectAddress, ObjectType objectType, ObjectType parentType);
     error ErrorRegistryContractAlreadyRegistered(address objectAddress);
 
     struct ObjectInfo {

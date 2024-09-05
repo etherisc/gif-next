@@ -465,7 +465,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         _errorName[IRegistry.ErrorRegistryServiceDomainAlreadyRegistered.selector] = "ErrorRegistryServiceDomainAlreadyRegistered";
         _errorName[IRegistry.ErrorRegistryCoreTypeRegistration.selector] = "ErrorRegistryCoreTypeRegistration";
         _errorName[IRegistry.ErrorRegistryGlobalRegistryAsParent.selector] = "ErrorRegistryGlobalRegistryAsParent";
-        _errorName[IRegistry.ErrorRegistryTypesCombinationInvalid.selector] = "ErrorRegistryTypesCombinationInvalid";
+        _errorName[IRegistry.ErrorRegistryTypeCombinationInvalid.selector] = "ErrorRegistryTypeCombinationInvalid";
         _errorName[IRegistry.ErrorRegistryContractAlreadyRegistered.selector] = "ErrorRegistryContractAlreadyRegistered";
         _errorName[IERC721Errors.ERC721InvalidReceiver.selector] = "ERC721InvalidReceiver";
     }
@@ -1545,12 +1545,16 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             expectRevert = true;
         } else if(info.objectAddress > address(0)) 
         {
-            //if(_coreContractTypesCombos.contains(ObjectTypePairLib.toObjectTypePair(info.objectType, parentType)) == false)
-            if(_isCoreContractTypesCombo[info.objectType][parentType] == false)
+            if(info.objectType == REGISTRY() || info.objectType == STAKING() || info.objectType == SERVICE()) {
+                expectedRevertMsg = abi.encodeWithSelector(
+                    IRegistry.ErrorRegistryObjectTypeNotSupported.selector, 
+                    info.objectType);
+                expectRevert = true;
+            } else if(_isCoreContractTypesCombo[info.objectType][parentType] == false)
             {// parent must be registered + object-parent types combo must be valid
                 //assertTrue(false, "_registerChecks() check 2 is reached");
                 expectedRevertMsg = abi.encodeWithSelector(
-                    IRegistry.ErrorRegistryTypesCombinationInvalid.selector, 
+                    IRegistry.ErrorRegistryTypeCombinationInvalid.selector, 
                     info.objectAddress,
                     info.objectType, 
                     parentType);
@@ -1563,7 +1567,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             {// parent must be registered + object-parent types combo must be valid
                 //assertTrue(false, "_registerChecks() check 3 is reached");
                 expectedRevertMsg = abi.encodeWithSelector(
-                    IRegistry.ErrorRegistryTypesCombinationInvalid.selector, 
+                    IRegistry.ErrorRegistryTypeCombinationInvalid.selector, 
                     info.objectAddress,
                     info.objectType, 
                     parentType);
@@ -1716,7 +1720,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         ) {
             //assertTrue(false, "_registerWithCustomTypeChecks() check 3 is reached"); 
             expectedRevertMsg = abi.encodeWithSelector(
-                IRegistry.ErrorRegistryTypesCombinationInvalid.selector, 
+                IRegistry.ErrorRegistryTypeCombinationInvalid.selector, 
                 info.objectAddress,
                 info.objectType, 
                 parentType);
