@@ -272,13 +272,16 @@ library PoolLib {
     )
         external
         returns (
+            Amount netPayoutAmount,
             Amount processingFeeAmount
         )
     {
+        address beneficiary;
+
         (
-            Amount netPayoutAmount,
-            Amount processingFeeAmount,
-            address beneficiary
+            netPayoutAmount,
+            processingFeeAmount,
+            beneficiary
         ) = calculatePayoutAmounts(
             registry,
             instanceReader,

@@ -81,7 +81,7 @@ interface IPoolService is IService {
         PayoutId payoutId,
         Amount payoutAmount,
         address payoutBeneficiary
-    ) external;
+    ) external returns (Amount netPayoutAmount, Amount processingFeeAmount);
 
 
     /// @dev increase stakes for bundle

@@ -438,6 +438,10 @@ contract PoolService is
         external
         virtual
         restricted()
+        returns (
+            Amount netPayoutAmount,
+            Amount processingFeeAmount
+        )
     {
         // checks
         _checkNftType(policyNftId, POLICY());
@@ -472,7 +476,7 @@ contract PoolService is
             payoutAmount);
 
         // interactions
-        Amount processingFeeAmount = PoolLib.transferTokenAndNotifyPolicyHolder(
+        (netPayoutAmount, processingFeeAmount) = PoolLib.transferTokenAndNotifyPolicyHolder(
             getRegistry(),
             instanceReader, 
             poolTokenHandler,

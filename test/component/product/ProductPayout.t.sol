@@ -260,6 +260,113 @@ contract TestProductClaim is GifTest {
         assertEq(customerBalanceAfter - customerBalanceBefore, payoutAmountInt, "unexpected customer balance after payout");
     }
 
+    function test_productPayoutProcessHappyCaseWithProcessingFee() public {
+        vm.startPrank(productOwner);
+        product.setFees(FeeLib.zero(), FeeLib.percentageFee(10));
+        vm.stopPrank();
+
+        // GIVEN
+        _approve();
+        _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
+
+        uint256 claimAmountInt = 500;
+        uint256 payoutAmountInt = 300;
+        bytes memory payoutData = "some sample payout data";
+
+        // record balances before
+        uint256 productBalanceBefore = product.getToken().balanceOf(product.getWallet());
+        uint256 poolBalanceBefore = product.getToken().balanceOf(pool.getWallet());
+        uint256 customerBalanceBefore = product.getToken().balanceOf(customer);
+        Amount productFeeBefore = instanceReader.getFeeAmount(productNftId);
+
+        // solhint-disable
+        console.log("payout amount:", payoutAmountInt);
+        console.log("pool balance before: ", poolBalanceBefore);
+        console.log("customer balance before: ", customerBalanceBefore);
+        // solhint-enable
+
+        // create claim and payout
+        (
+            , // IPolicy.PolicyInfo memory policyInfo,
+            ClaimId claimId,
+            , // StateId claimState,
+            , // IPolicy.ClaimInfo memory claimInfo,
+            PayoutId payoutId
+            , // StateId payoutState,
+            , // IPolicy.PayoutInfo memory payoutInfo
+        ) = _createClaimAndPayout(policyNftId, claimAmountInt, payoutAmountInt, payoutData, false);
+
+        // WHEN + THEN
+        Amount payoutAmount = AmountLib.toAmount(payoutAmountInt);
+        vm.expectEmit(address(claimService));
+        emit IClaimService.LogClaimServicePayoutProcessed(
+                policyNftId, 
+                payoutId,
+                payoutAmount);
+
+        (Amount netPayoutAmount, Amount processingFeeAmount) = product.processPayout(policyNftId, payoutId);
+        assertEq(payoutAmountInt, netPayoutAmount.toInt() + processingFeeAmount.toInt(), "net payout amount + processing fee amount not equal to payout amount");
+
+        // THEN
+        // check policy
+        {
+            IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
+
+            assertEq(policyInfo.claimsCount, 1, "claims count not 1");
+            assertEq(policyInfo.openClaimsCount, 1, "open claims count not 1");
+            assertEq(policyInfo.claimAmount.toInt(), claimAmountInt, "unexpected claim amount");
+            assertEq(policyInfo.payoutAmount.toInt(), payoutAmountInt, "unexpected payout amount");
+        }
+
+        // check claim
+        {
+            StateId claimState = instanceReader.getClaimState(policyNftId, claimId);
+            IPolicy.ClaimInfo memory claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
+
+            assertEq(claimState.toInt(), CONFIRMED().toInt(), "unexpected claim state");
+            assertEq(claimInfo.claimAmount.toInt(), claimAmountInt, "unexpected claim amount");
+            assertEq(claimInfo.paidAmount.toInt(), payoutAmountInt, "unexpected paid amount");
+            assertEq(claimInfo.payoutsCount, 1, "unexpected payouts count");
+            assertEq(claimInfo.openPayoutsCount, 0, "open payouts count not 0");
+            assertEq(claimInfo.closedAt.toInt(), 0, "unexpected closed at");
+        }
+
+        // check payout
+        {
+            StateId payoutState = instanceReader.getPayoutState(policyNftId, payoutId);
+            IPolicy.PayoutInfo memory payoutInfo = instanceReader.getPayoutInfo(policyNftId, payoutId);
+
+            assertEq(payoutState.toInt(), PAID().toInt(), "unexpected payout state");
+            assertEq(payoutInfo.claimId.toInt(), claimId.toInt(), "unexpected claim id");
+            assertEq(payoutInfo.amount.toInt(), payoutAmountInt, "unexpected payout amount");
+            assertEq(keccak256(payoutInfo.data), keccak256(payoutData), "unexpected payout data");
+            assertEq(payoutInfo.paidAt.toInt(), block.timestamp, "unexpected payout at timestamp");
+        }
+
+        // check product fees
+        {
+            Amount productFeeAfter = instanceReader.getFeeAmount(productNftId);
+            assertEq(productFeeAfter.toInt(), productFeeBefore.toInt() + processingFeeAmount.toInt(), "unexpected product fee amount");
+        }
+
+        // record balances after payout processing
+        {
+            uint256 productBalanceAfter = product.getToken().balanceOf(product.getWallet());
+            uint256 poolBalanceAfter = product.getToken().balanceOf(pool.getWallet());
+            uint256 customerBalanceAfter = product.getToken().balanceOf(customer);
+
+            // solhint-disable
+            console.log("pool balance after: ", poolBalanceAfter);
+            console.log("customer balance after: ", customerBalanceAfter);
+            // solhint-enable
+
+            // check new token balances
+            assertEq(productBalanceAfter - productBalanceBefore, processingFeeAmount.toInt(), "unexpected product balance after payout");
+            assertEq(poolBalanceBefore - poolBalanceAfter, payoutAmountInt, "unexpected pool balance after payout");
+            assertEq(customerBalanceAfter - customerBalanceBefore, netPayoutAmount.toInt(), "unexpected customer balance after payout");
+        }
+    }
+
     function test_productClaimPayoutPartial() public {
         address newCustomer = makeAddr("customer_test_productClaimPayoutSimple");
         uint256 sumInsuredAmountInt = 20000;

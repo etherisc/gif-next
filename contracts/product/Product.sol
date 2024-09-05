@@ -443,8 +443,9 @@ abstract contract Product is
     )
         internal
         virtual
+        returns (Amount netPayoutAmount, Amount processingFeeAmount)
     {
-        _getProductStorage()._claimService.processPayout(
+        (netPayoutAmount, processingFeeAmount) = _getProductStorage()._claimService.processPayout(
             policyNftId,
             payoutId);
     }
