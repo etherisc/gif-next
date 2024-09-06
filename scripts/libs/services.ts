@@ -137,7 +137,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         async () => await registry.releaseRegistry.registerService(registryServiceAddress, getTxOpts()),
         "registerService - registryService"
     );
-    const logRegistrationInfoRs = getFieldFromTxRcptLogs(rcptRs!, registry.registry.interface, "LogRegistration", "nftId");
+    const logRegistrationInfoRs = getFieldFromTxRcptLogs(rcptRs!, registry.registry.interface, "LogRegistryObjectRegistered", "nftId");
     const registryServiceNfdId = (logRegistrationInfoRs as string);
 
     // is not NftOwnable
@@ -249,7 +249,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         async () => await registry.releaseRegistry.registerService(componentServiceAddress, getTxOpts()),
         "registerService - componentService"
     );
-    const logRegistrationInfoCmpt = getFieldFromTxRcptLogs(rcptCmpt!, registry.registry.interface, "LogRegistration", "nftId");
+    const logRegistrationInfoCmpt = getFieldFromTxRcptLogs(rcptCmpt!, registry.registry.interface, "LogRegistryObjectRegistered", "nftId");
     const componentServiceNftId = (logRegistrationInfoCmpt as unknown);
     logger.info(`componentServiceManager deployed - componentServiceAddress: ${componentServiceAddress} componentServiceManagerAddress: ${componentServiceManagerAddress} nftId: ${componentServiceNftId}`);
 
@@ -577,7 +577,7 @@ async function registerAndLinkService(releaseRegistry: ReleaseRegistry, serviceA
         async () => await releaseRegistry.registerService(serviceAddress, getTxOpts()),
         `registerService - ${serviceAddress}`
     );
-    const logRegistrationInfo = getFieldFromTxRcptLogs(rcptBdl!, IRegistry__factory.createInterface(), "LogRegistration", "nftId");
+    const logRegistrationInfo = getFieldFromTxRcptLogs(rcptBdl!, IRegistry__factory.createInterface(), "LogRegistryObjectRegistered", "nftId");
     const serviceNftId = (logRegistrationInfo as unknown);
     await executeTx(
         async () => await proxyManager.linkToProxy(getTxOpts()),
