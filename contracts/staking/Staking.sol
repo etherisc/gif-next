@@ -80,7 +80,7 @@ contract Staking is
         }
 
         StakingStorage storage $ = _getStakingStorage();
-        address dipToken = _getStakingStorage()._tokenRegistry.getDipTokenAddress();
+        address dipToken = $._tokenRegistry.getDipTokenAddress();
         $._tokenHandler = TokenHandlerDeployerLib.deployTokenHandler(
             address(getRegistry()),
             address(this),

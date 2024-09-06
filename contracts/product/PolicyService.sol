@@ -83,9 +83,10 @@ contract PolicyService is
         (IInstance instance,,) = _getAndVerifyCallerForPolicy(applicationNftId);
 
         // check policy is in state applied
-        if (instance.getInstanceReader().getPolicyState(applicationNftId) != APPLIED()) {
-            revert ErrorPolicyServicePolicyStateNotApplied(applicationNftId);
-        }
+        // commented to reduce contract size, the only "APPLIED -> DECLINED" transition exists
+        //if (instance.getInstanceReader().getPolicyState(applicationNftId) != APPLIED()) {
+        //    revert ErrorPolicyServicePolicyStateNotApplied(applicationNftId);
+        //}
 
         // effects
         // store updated policy info
@@ -117,10 +118,11 @@ contract PolicyService is
         ) = _getAndVerifyCallerForPolicy(applicationNftId);
 
         // check policy is in state applied
+        // commented to reduce contract size, the only "APPLIED -> COLLATERALIZED" transition exists
         InstanceReader instanceReader = instance.getInstanceReader();
-        if (instanceReader.getPolicyState(applicationNftId) != APPLIED()) {
-            revert ErrorPolicyServicePolicyStateNotApplied(applicationNftId);
-        }
+        //if (instanceReader.getPolicyState(applicationNftId) != APPLIED()) {
+        //    revert ErrorPolicyServicePolicyStateNotApplied(applicationNftId);
+        //}
 
         PolicyServiceStorage storage $ = _getPolicyServiceStorage();
 

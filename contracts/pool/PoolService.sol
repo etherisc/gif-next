@@ -131,13 +131,13 @@ contract PoolService is
         (NftId poolNftId, IInstance instance) = _getAndVerifyActivePool();
         InstanceReader instanceReader = instance.getInstanceReader();
         NftId productNftId = getRegistry().getParentNftId(poolNftId);
+        NftId policyProductNftId = getRegistry().getParentNftId(policyNftId);
 
         // check policy matches with calling pool
-        IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
-        if(policyInfo.productNftId != productNftId) {
+        if(policyProductNftId != productNftId) {
             revert ErrorPoolServicePolicyPoolMismatch(
                 policyNftId, 
-                policyInfo.productNftId, 
+                policyProductNftId, 
                 productNftId);
         }
 
