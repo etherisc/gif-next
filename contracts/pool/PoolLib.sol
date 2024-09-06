@@ -232,24 +232,6 @@ library PoolLib {
         instance = IInstance(instanceAddress);
     }
 
-
-    function getInstanceForComponent(
-        IRegistry registry,
-        NftId componentNftId
-    )
-        public
-        view
-        returns (
-            IInstance instance
-        )
-    {
-        NftId productNftId = registry.getParentNftId(componentNftId);
-        NftId instanceNftId = registry.getParentNftId(productNftId);
-        address instanceAddress = registry.getObjectAddress(instanceNftId);
-        return IInstance(instanceAddress);
-    }
-
-
     function checkNftType(
         IRegistry registry, 
         NftId nftId, 

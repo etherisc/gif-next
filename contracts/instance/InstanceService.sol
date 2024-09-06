@@ -463,31 +463,6 @@ contract InstanceService is
     }
 
 
-    function _validateInstanceAndComponent(NftId instanceNftId, address componentAddress) 
-        internal
-        view
-        returns (IInstance instance, NftId componentNftId)
-    {
-        IRegistry registry = getRegistry();
-        IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(instanceNftId);
-        if(instanceInfo.objectType != INSTANCE()) {
-            revert ErrorInstanceServiceNotInstanceNftId(instanceNftId);
-        }
-
-        if (registry.getNftIdForAddress(componentAddress).gtz()) {
-            IRegistry.ObjectInfo memory componentInfo = registry.getObjectInfo(componentAddress);
-
-            if(componentInfo.parentNftId != instanceNftId) {
-                revert ErrorInstanceServiceInstanceComponentMismatch(instanceNftId, componentInfo.nftId);
-            }
-
-            componentNftId = componentInfo.nftId;
-        }
-
-        instance = Instance(instanceInfo.objectAddress);        
-    }
-
-
     function _checkInstance(
         address instanceAddress,
         VersionPart expectedRelease
