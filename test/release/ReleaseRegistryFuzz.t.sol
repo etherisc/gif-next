@@ -27,9 +27,6 @@ contract ReleaseRegistryTest is GifDeployer, FoundryRandom {
     event LogReleaseDisabled(VersionPart version);
     event LogReleaseEnabled(VersionPart version);
 
-    // keep identical to IRegistry events
-    event LogServiceRegistration(VersionPart majorVersion, ObjectType serviceDomain);
-
     address public outsider = makeAddr("outsider");
     mapping(VersionPart version => IService) public serviceByVersion;
 

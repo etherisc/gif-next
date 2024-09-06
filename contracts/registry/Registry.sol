@@ -172,7 +172,7 @@ contract Registry is
             revert ErrorRegistryChainRegistryNftIdInvalid(nftId, chainId);
         }
 
-        emit LogChainRegistryRegistration(nftId, chainId, registryAddress);
+        emit LogRegistryChainRegistryRegistered(nftId, chainId, registryAddress);
 
         _registerRegistryForNft(
             chainId,
@@ -231,7 +231,7 @@ contract Registry is
 
         _service[version][domain] = service;
 
-        emit LogServiceRegistration(version, domain);
+        emit LogRegistryServiceRegistered(version, domain);
 
         nftId = _register(info);
     }
@@ -501,7 +501,7 @@ contract Registry is
         _info[nftId] = info;
         _setAddressForNftId(nftId, objectAddress);
 
-        emit LogRegistration(nftId, parentNftId, objectType, isInterceptor, objectAddress, owner);
+        emit LogRegistryObjectRegistered(nftId, parentNftId, objectType, isInterceptor, objectAddress, owner);
 
         // calls nft receiver(1) and interceptor(2)
         uint256 mintedTokenId = CHAIN_NFT.mint(

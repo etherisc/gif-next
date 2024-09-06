@@ -7,6 +7,7 @@ import {console} from "../../lib/forge-std/src/Test.sol";
 
 import {IAccessAdmin} from "../../contracts/authorization/IAccessAdmin.sol";
 import {ILifecycle} from "../../contracts/shared/Lifecycle.sol";
+import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {IRelease} from "../../contracts/registry/IRelease.sol";
 import {IService} from "../../contracts/shared/IService.sol";
 import {IServiceAuthorization} from "../../contracts/authorization/IServiceAuthorization.sol";
@@ -36,9 +37,6 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
     event LogReleaseActivation(VersionPart version);
     event LogReleaseDisabled(VersionPart version);
     event LogReleaseEnabled(VersionPart version);
-
-    // keep identical to IRegistry events
-    event LogServiceRegistration(VersionPart majorVersion, ObjectType serviceDomain);
 
     address public outsider = makeAddr("outsider");
 
@@ -419,7 +417,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
 
                 // TODO add AccessAdmin logs
                 vm.expectEmit(address(registry));
-                emit LogServiceRegistration(nextVersion, REGISTRY());
+                emit  IRegistry.LogRegistryServiceRegistered(nextVersion, REGISTRY());
 
                 vm.prank(gifManager);
                 NftId serviceNftId = releaseRegistry.registerService(service);
@@ -565,7 +563,7 @@ console.log("block 3b, i:", i);
 
                 // TODO add AccessAdmin logs
                 vm.expectEmit(address(registry));
-                emit LogServiceRegistration(nextVersion, REGISTRY());
+                emit  IRegistry.LogRegistryServiceRegistered(nextVersion, REGISTRY());
 
                 vm.prank(gifManager);
                 NftId serviceNftId = releaseRegistry.registerService(service);
@@ -730,7 +728,7 @@ console.log("block 3g, i:", i);
 
                 // TODO add AccessAdmin logs
                 vm.expectEmit(address(registry));
-                emit LogServiceRegistration(nextVersion, REGISTRY());
+                emit  IRegistry.LogRegistryServiceRegistered(nextVersion, REGISTRY());
 
                 vm.prank(gifManager);
                 NftId serviceNftId = releaseRegistry.registerService(service);
@@ -896,7 +894,7 @@ console.log("block 3g, i:", i);
 
                 // TODO add AccessAdmin logs
                 vm.expectEmit(address(registry));
-                emit LogServiceRegistration(nextVersion, REGISTRY());
+                emit  IRegistry.LogRegistryServiceRegistered(nextVersion, REGISTRY());
 
                 vm.prank(gifManager);
                 NftId serviceNftId = releaseRegistry.registerService(service);

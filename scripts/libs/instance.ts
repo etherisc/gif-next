@@ -204,8 +204,8 @@ export async function deployAndRegisterMasterInstance(
             [InstanceService__factory.createInterface()]
         );
 
-    // this extracts the ObjectInfo struct from the LogRegistration event
-    const logRegistrationInfo = getFieldFromTxRcptLogs(rcpt!, registry.registry.interface, "LogRegistration", "nftId");
+    // this extracts the ObjectInfo struct from the LogRegistryObjectRegistered event
+    const logRegistrationInfo = getFieldFromTxRcptLogs(rcpt!, registry.registry.interface, "LogRegistryObjectRegistered", "nftId");
     // nftId is the first field of the ObjectInfo struct
     const masterInstanceNfdId = (logRegistrationInfo as unknown);
 

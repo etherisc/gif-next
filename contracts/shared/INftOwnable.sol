@@ -11,6 +11,8 @@ interface INftOwnable is
     IERC165,
     IRegistryLinked
 {
+    event LogNftOwnableNftLinkedToAddress(NftId nftId, address owner);
+    
     error ErrorNftOwnableInitialOwnerZero();
     error ErrorNftOwnableNotOwner(address account);
     error ErrorNftOwnableInvalidType(NftId nftId, ObjectType expectedObjectType);
