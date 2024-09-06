@@ -56,6 +56,8 @@ interface IInstanceService is IService {
     
     event LogInstanceServiceInstanceLocked(NftId instanceNftId, bool locked);
     event LogInstanceServiceInstanceCreated(NftId instanceNftId, address instance);
+    event LogInstanceServiceMasterInstanceReaderUpgraded(NftId instanceNfId, address newInstanceReader);
+    event LogInstanceServiceInstanceReaderUpgraded(NftId instanceNfId, address newInstanceReader);
 
     /// @dev Creates a new custom role for the calling instance.
     function createRole(string memory roleName, RoleId adminRoleId, uint32 maxMemberCount) external returns (RoleId roleId);

@@ -303,6 +303,10 @@ contract InstanceService is
 
         upgradedInstanceReaderClone.initializeWithInstance(instanceAddress);
         instance.setInstanceReader(upgradedInstanceReaderClone);
+
+        emit LogInstanceServiceInstanceReaderUpgraded(
+            getRegistry().getNftIdForAddress(instanceAddress),
+            address(upgradedInstanceReaderClone));
     }
 
 
@@ -373,6 +377,10 @@ contract InstanceService is
         if(instanceReader.getInstance() != IInstance(_masterInstance)) { revert ErrorInstanceServiceInstanceReaderInstanceMismatch(); }
 
         _masterInstanceReader = instanceReaderAddress;
+
+        emit LogInstanceServiceMasterInstanceReaderUpgraded(
+            getRegistry().getNftIdForAddress(_masterInstance),
+            instanceReaderAddress);
     }
 
     function getMasterInstanceReader() external virtual view returns (address) {
