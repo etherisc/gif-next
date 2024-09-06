@@ -71,8 +71,8 @@ export async function deployFireComponentContracts(libraries: LibraryAddresses, 
         [IInstanceService__factory.createInterface()]
     );
 
-    const instanceAddress = getFieldFromLogs(instanceCreateTx.logs, instanceService.interface, "LogInstanceCloned", "instance") as string;
-    const instanceNftId = getFieldFromLogs(instanceCreateTx.logs, instanceService.interface, "LogInstanceCloned", "instanceNftId") as string;
+    const instanceAddress = getFieldFromLogs(instanceCreateTx.logs, instanceService.interface, "LogInstanceServiceInstanceCreated", "instance") as string;
+    const instanceNftId = getFieldFromLogs(instanceCreateTx.logs, instanceService.interface, "LogInstanceServiceInstanceCreated", "instanceNftId") as string;
     logger.debug(`Instance created at ${instanceAddress} with NFT ID ${instanceNftId}`);
     const instance = IInstance__factory.connect(instanceAddress, fireOwner);
 

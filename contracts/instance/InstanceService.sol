@@ -171,6 +171,10 @@ contract InstanceService is
     {
         address instanceAddress = msg.sender;
         IInstance(instanceAddress).getInstanceAdmin().setInstanceLocked(locked);
+
+        emit LogInstanceServiceInstanceLocked(
+            getRegistry().getNftIdForAddress(instanceAddress),
+            locked);
     }
 
 
@@ -213,7 +217,7 @@ contract InstanceService is
             TargetManagerLib.getDefaultLockingPeriod(),
             TargetManagerLib.getDefaultRewardRate());
 
-        emit LogInstanceCloned(
+        emit LogInstanceServiceInstanceCreated(
             instanceNftId,
             address(instance));
     }

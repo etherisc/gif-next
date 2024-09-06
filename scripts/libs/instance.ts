@@ -262,8 +262,8 @@ export async function cloneInstance(masterInstance: InstanceAddresses, libraries
         [InstanceService__factory.createInterface()]
     );
 
-    const clonedInstanceAddress = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "instance");
-    const clonedInstanceNftId = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "instanceNftId");
+    const clonedInstanceAddress = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceServiceInstanceCreated", "instance");
+    const clonedInstanceNftId = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceServiceInstanceCreated", "instanceNftId");
     const clonedInstance = IInstance__factory.connect(clonedInstanceAddress as string, instanceOwner);
     const clonedInstanceAdminAddress = await clonedInstance.getInstanceAdmin();
     const clonedInstanceStoreAddress = await clonedInstance.getInstanceStore();

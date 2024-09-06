@@ -27,7 +27,7 @@ The payout is 25% for small fires, 50% for medium fires and 100% for large fires
 4. Switch to the `Deploy & Run Transactions` tab and connect to the network of choice (must have a GIF deployment).
 5. Connect to the existing `InstanceService` contract.
 6. Decide if you want to use a registered token or use an unregistered one (the latter allows for more flexibility during testing but will create an unsupported instance). 
-7. Call the `createInstance` function (set the `allowAnyToken` parameter according to above decision) and find the log `LogInstanceCloned` that shows the address of the new instance in field `instance` and the instance nft id in field `instanceNftId`.
+7. Call the `createInstance` function (set the `allowAnyToken` parameter according to above decision) and find the log `LogInstanceServiceInstanceCreated` that shows the address of the new instance in field `instance` and the instance nft id in field `instanceNftId`.
 8. Now compile the contracts `FireUSD.sol`, `FirePoolAuthorization`, `FirePool`, `FireProductAuthorization` and `FireProduct` in the directory `contracts/examples/fire`.
 9. Deploy the FireUSD contract and save the address. You can also use any pre-existing ERC20 Token. If you deploy a new token and have not enabled the `allowAnyToken` flag on the instance, then please ensure that the new token is registered with the token registry as well. 
 10. Deploy the FirePoolAuthorization contract with an arbitrary unique name and save the address.

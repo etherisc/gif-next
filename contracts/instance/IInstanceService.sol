@@ -54,7 +54,8 @@ interface IInstanceService is IService {
     error ErrorInstanceServiceInstanceComponentMismatch(NftId instanceNftId, NftId componentNftId);
     error ErrorInstanceServiceInvalidComponentType(address componentAddress, ObjectType expectedType, ObjectType componentType);
     
-    event LogInstanceCloned(NftId instanceNftId, address instance);
+    event LogInstanceServiceInstanceLocked(NftId instanceNftId, bool locked);
+    event LogInstanceServiceInstanceCreated(NftId instanceNftId, address instance);
 
     /// @dev Creates a new custom role for the calling instance.
     function createRole(string memory roleName, RoleId adminRoleId, uint32 maxMemberCount) external returns (RoleId roleId);
