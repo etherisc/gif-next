@@ -19,9 +19,9 @@ interface IRegistry is
     IERC165
 {
 
-    event LogRegistration(NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, address objectAddress, address initialOwner);
-    event LogServiceRegistration(VersionPart majorVersion, ObjectType domain);
-    event LogChainRegistryRegistration(NftId nftId, uint256 chainId, address chainRegistryAddress);
+    event LogRegistryObjectRegistered(NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, address objectAddress, address initialOwner);
+    event LogRegistryServiceRegistered(VersionPart majorVersion, ObjectType domain);
+    event LogRegistryChainRegistryRegistered(NftId nftId, uint256 chainId, address chainRegistryAddress);
 
     // initialize
     error ErrorRegistryCallerNotDeployer();

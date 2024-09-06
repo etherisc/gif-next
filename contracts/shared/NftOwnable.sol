@@ -114,6 +114,8 @@ contract NftOwnable is
 
         $._nftId = getRegistry().getNftIdForAddress(nftOwnableAddress);
 
+        emit LogNftOwnableNftLinkedToAddress($._nftId, getOwner());
+
         return $._nftId;
     }
 

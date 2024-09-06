@@ -39,11 +39,6 @@ import {GifDeployer} from "../base/GifDeployer.sol";
 
 contract RegistryTestBase is GifDeployer, FoundryRandom {
 
-    // keep indentical to IRegistry events
-    event LogRegistration(NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, address objectAddress, address initialOwner);
-    event LogServiceRegistration(VersionPart majorVersion, ObjectType domain);
-    event LogChainRegistryRegistration(NftId nftId, uint256 chainId, address registry);
-
     // keep identical to ChainNft events
     event LogTokenInterceptorAddress(uint256 tokenId, address interceptor);
 
@@ -1077,7 +1072,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             NftId expectedNftId = NftIdLib.toNftId(expectedId);
 
             vm.expectEmit(address(registry));
-            emit LogChainRegistryRegistration(expectedNftId, chainId, registryAddress);
+            emit IRegistry.LogRegistryChainRegistryRegistered(expectedNftId, chainId, registryAddress);
 
             vm.expectEmit(address(chainNft));
             emit Transfer(address(0), registryInfo.initialOwner, expectedId);
@@ -1276,10 +1271,10 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             );
 
             vm.expectEmit(address(registry));
-            emit LogServiceRegistration(version, domain);
+            emit IRegistry.LogRegistryServiceRegistered(version, domain);
 
             vm.expectEmit(address(registry));
-            emit LogRegistration(
+            emit IRegistry.LogRegistryObjectRegistered(
                 expectedNftId,
                 info.parentNftId, 
                 info.objectType, 
@@ -1468,7 +1463,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             );
 
             vm.expectEmit(address(registry));
-            emit LogRegistration(
+            emit IRegistry.LogRegistryObjectRegistered(
                 expectedNftId,
                 info.parentNftId, 
                 info.objectType, 
@@ -1633,7 +1628,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             );
 
             vm.expectEmit(address(registry));
-            emit LogRegistration(
+            emit IRegistry.LogRegistryObjectRegistered(
                 expectedNftId,
                 info.parentNftId, 
                 info.objectType, 
