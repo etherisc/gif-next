@@ -13,3 +13,6 @@ alias fttg='FOUNDRY_PROFILE=ci forge test --gas-report --mt'
 alias fttw='FOUNDRY_PROFILE=ci forge test -vvvv --watch --mt'
 alias ftc='FOUNDRY_PROFILE=ci forge test -vvvv --mc'
 alias ftcw='FOUNDRY_PROFILE=ci forge test -vvvv --watch --mc'
+
+alias fcf='FOUNDRY_PROFILE=ci forge coverage --nmt "_longRunning"'
+alias fcfr='FOUNDRY_PROFILE=ci forge coverage --nmt "_longRunning" --report lcov'

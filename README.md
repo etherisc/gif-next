@@ -209,9 +209,12 @@ forge coverage --report lcov
 | ft | forge test |
 | ftf | forge test --nmt "_longRunning" |
 | ftt | forge test -vvvv --mt |
+| fttg | forge test -vvvv --gas-report --mt |
 | fttw | forge test -vvvv --watch --mt |
 | ftc | forge test -vvvv --mc |
 | ftcw | forge test -vvvv --watch --mc |
+| fcf | forge coverage --nmt "_longRunning" |
+| fcfr | forge coverage --nmt "_longRunning" --report lcov |
 
 **Important**: All profiles are run using the foundry `ci` profile which disables the optimizer (for speed).
 
