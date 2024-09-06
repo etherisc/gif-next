@@ -45,7 +45,7 @@ contract PolicyService is
     )
         internal
         virtual override
-        initializer
+        onlyInitializing()
     {
         (
             address authority,

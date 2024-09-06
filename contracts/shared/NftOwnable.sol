@@ -6,6 +6,7 @@ import {INftOwnable} from "./INftOwnable.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType} from "../type/ObjectType.sol";
 import {RegistryLinked} from "./RegistryLinked.sol";
+import {VersionPart} from "../type/Version.sol";
 
 contract NftOwnable is
     InitializableERC165,
@@ -35,13 +36,13 @@ contract NftOwnable is
         _;
     }
 
-    modifier onlyNftOfType(NftId nftId, ObjectType expectedObjectType) {
-        _checkNftType(nftId, expectedObjectType);
+    modifier onlyNftOfType(NftId nftId, ObjectType expectedObjectType, VersionPart release) {
+        _checkNftType(nftId, expectedObjectType, release);
         _;
     }
 
-    function _checkNftType(NftId nftId, ObjectType expectedObjectType) internal view {
-        if(expectedObjectType.eqz() || !getRegistry().isObjectType(nftId, expectedObjectType)) {
+    function _checkNftType(NftId nftId, ObjectType expectedObjectType, VersionPart release) internal view {
+        if(expectedObjectType.eqz() || !getRegistry().isObjectType(nftId, expectedObjectType, release)) {
             revert ErrorNftOwnableInvalidType(nftId, expectedObjectType);
         }
     }

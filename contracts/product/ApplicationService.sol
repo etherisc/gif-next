@@ -38,7 +38,7 @@ contract ApplicationService is
     )
         internal
         virtual override
-        initializer()
+        onlyInitializing()
     {
         (
             address authority,
@@ -108,12 +108,11 @@ contract ApplicationService is
             NftIdLib.zero(),
             productNftId,
             POLICY(),
+            getRelease(),
             false, // intercepting property for policies is defined on product
-            address(0),
-            applicationOwner,
-            "");
+            address(0));
 
-        applicationNftId = _registryService.registerPolicy(objectInfo);
+        applicationNftId = _registryService.registerPolicy(objectInfo, applicationOwner, "");
     }
 
 

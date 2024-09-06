@@ -44,7 +44,7 @@ contract DistributionService is
     )
         internal
         virtual override
-        initializer()
+        onlyInitializing()
     {
         (
             address authority,
@@ -134,11 +134,12 @@ contract DistributionService is
                 NftIdLib.zero(), 
                 distributionNftId,
                 DISTRIBUTOR(),
+                getRelease(),
                 true, // intercepting property for bundles is defined on pool
-                address(0),
-                distributor,
-                ""
-            ));
+                address(0)),
+            distributor,
+            ""
+        );
 
         IDistribution.DistributorInfo memory info = IDistribution.DistributorInfo({
             distributorType: distributorType,
@@ -197,9 +198,11 @@ contract DistributionService is
             revert ErrorDistributionServiceExpirationInvalid(expiryAt);
         }
 
-        NftId distributorDistributionNftId = getRegistry().getParentNftId(distributorNftId);
-        if (distributorDistributionNftId != distributionNftId) {
-            revert ErrorDistributionServiceDistributorDistributionMismatch(distributorNftId, distributorDistributionNftId, distributionNftId);
+        {
+            NftId distributorDistributionNftId = getRegistry().getParentNftId(distributorNftId);
+            if (distributorDistributionNftId != distributionNftId) {
+                revert ErrorDistributionServiceDistributorDistributionMismatch(distributorNftId, distributorDistributionNftId, distributionNftId);
+            }
         }
 
         {

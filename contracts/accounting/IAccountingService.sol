@@ -13,7 +13,7 @@ import {UFixed} from "../type/UFixed.sol";
 interface IAccountingService is 
     IService
 {
-    event LogComponentServiceUpdateFee(
+    event LogAccountingServiceUpdateFee(
         NftId nftId, 
         string feeName, 
         UFixed previousFractionalFee, 

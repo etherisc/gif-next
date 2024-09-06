@@ -77,7 +77,7 @@ contract ComponentService is
         // checks
         // check sender is registered product
         IRegistry registry = getRegistry();
-        if (!registry.isObjectType(msg.sender, PRODUCT())) {
+        if (!registry.isObjectType(msg.sender, PRODUCT(), getRelease())) {
             revert ErrorComponentServiceCallerNotProduct(msg.sender);
         }
 
@@ -213,7 +213,7 @@ contract ComponentService is
         // checks
         // check sender is registered instance
         IRegistry registry = getRegistry();
-        if (!registry.isObjectType(msg.sender, INSTANCE())) {
+        if (!registry.isObjectType(msg.sender, INSTANCE(), getRelease())) {
             revert ErrorComponentServiceCallerNotInstance(msg.sender);
         }
 

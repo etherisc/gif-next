@@ -42,7 +42,7 @@ contract PoolService is
     )
         internal
         virtual override
-        initializer()
+        onlyInitializing()
     {
         (
             address authority,
@@ -184,7 +184,7 @@ contract PoolService is
             NftId instanceNftId,
             NftId poolNftId,
             IComponents.PoolInfo memory poolInfo
-        ) = PoolLib.checkAndGetPoolInfo(getRegistry(), msg.sender, bundleNftId);
+        ) = PoolLib.checkAndGetPoolInfo(getRegistry(), msg.sender, bundleNftId, getRelease());
 
         {
             Amount currentPoolBalance = instanceReader.getBalanceAmount(poolNftId);
@@ -241,7 +241,7 @@ contract PoolService is
             InstanceStore instanceStore,
             NftId instanceNftId,
             NftId poolNftId,
-        ) = PoolLib.checkAndGetPoolInfo(getRegistry(), msg.sender, bundleNftId);
+        ) = PoolLib.checkAndGetPoolInfo(getRegistry(), msg.sender, bundleNftId, getRelease());
 
         // call bundle service for bookkeeping and additional checks
         Amount unstakedAmount = _bundleService.unstake(instanceStore, bundleNftId, amount);

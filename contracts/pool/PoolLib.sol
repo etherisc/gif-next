@@ -18,6 +18,7 @@ import {ObjectType, BUNDLE, POOL} from "../type/ObjectType.sol";
 import {PayoutId} from "../type/PayoutId.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {UFixed} from "../type/UFixed.sol";
+import {VersionPart} from "../type/Version.sol";
 
 library PoolLib {
 
@@ -155,7 +156,8 @@ library PoolLib {
     function checkAndGetPoolInfo(
         IRegistry registry,
         address sender,
-        NftId bundleNftId
+        NftId bundleNftId,
+        VersionPart release
     )
         public
         view
@@ -167,7 +169,7 @@ library PoolLib {
             IComponents.PoolInfo memory poolInfo
         )
     {
-        checkNftType(registry, bundleNftId, BUNDLE());
+        checkNftType(registry, bundleNftId, BUNDLE(), release);
 
         IInstance instance;
         (poolNftId, instance) = getAndVerifyActivePool(registry, sender);
@@ -235,9 +237,10 @@ library PoolLib {
     function checkNftType(
         IRegistry registry, 
         NftId nftId, 
-        ObjectType expectedObjectType
+        ObjectType expectedObjectType,
+        VersionPart expectedRelease
     ) internal view {
-        if(!registry.isObjectType(nftId, expectedObjectType)) {
+        if(!registry.isObjectType(nftId, expectedObjectType, expectedRelease)) {
             revert INftOwnable.ErrorNftOwnableInvalidType(nftId, expectedObjectType);
         }
     }

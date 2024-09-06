@@ -3,7 +3,6 @@ pragma solidity ^0.8.20;
 
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import {IRegisterable} from "../shared/IRegisterable.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IStaking} from "./IStaking.sol";
 import {IStakingService} from "./IStakingService.sol";
@@ -158,11 +157,12 @@ contract StakingService is
                 nftId: NftIdLib.zero(),
                 parentNftId: targetNftId,
                 objectType: STAKE(),
+                release: getRelease(),
                 isInterceptor: false,
-                objectAddress: address(0),
-                initialOwner: stakeOwner,
-                data: ""
-            }));
+                objectAddress: address(0)}),
+            stakeOwner, // initialOwner
+            "" // data
+        );
 
         emit LogStakingServiceStakeObjectCreated(stakeNftId, targetNftId, stakeOwner);
     }
@@ -255,7 +255,7 @@ contract StakingService is
     )
         internal
         virtual override
-        initializer()
+        onlyInitializing()
     {
         (
             address authority,
@@ -301,7 +301,7 @@ contract StakingService is
 
         address owner = msg.sender;
         _getStakingServiceStorage()._registryService.registerStaking(
-            IRegisterable(stakingAddress),
+            IStaking(stakingAddress),
             owner);
 
         return IStaking(stakingAddress);

@@ -61,7 +61,9 @@ abstract contract Registerable is
         $._parentNftId = parentNftId;
         $._objectType = objectType;
         $._isInterceptor = isInterceptor;
-        $._data = data;
+        if(data.length > 0) { 
+            $._data = data;
+        }
 
         _registerInterface(type(IAccessManaged).interfaceId);
     }
@@ -84,17 +86,20 @@ abstract contract Registerable is
         public 
         view 
         virtual 
-        returns (IRegistry.ObjectInfo memory info) 
+        returns (IRegistry.ObjectInfo memory info, address initialOwner, bytes memory data) 
     {
         RegisterableStorage storage $ = _getRegisterableStorage();
-        return IRegistry.ObjectInfo(
-            NftIdLib.zero(),
-            $._parentNftId,
-            $._objectType,
-            $._isInterceptor,
-            address(this), 
+        return (
+            IRegistry.ObjectInfo(
+                NftIdLib.zero(),
+                $._parentNftId,
+                $._objectType,
+                getRelease(),
+                $._isInterceptor,
+                address(this)),
             getOwner(),
-            $._data);
+            $._data
+        );
     }
 
 

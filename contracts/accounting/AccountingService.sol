@@ -26,7 +26,7 @@ contract AccountingService is
     )
         internal
         virtual override
-        initializer()
+        onlyInitializing()
     {
         (
             address authority,
@@ -256,7 +256,7 @@ contract AccountingService is
         internal
         virtual
     {
-        emit LogComponentServiceUpdateFee(
+        emit LogAccountingServiceUpdateFee(
             productNftId, 
             name,
             feeBefore.fractionalFee,

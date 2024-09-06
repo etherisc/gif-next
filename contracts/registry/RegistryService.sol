@@ -42,7 +42,7 @@ contract RegistryService is
     }
 
 
-    function registerStaking(IRegisterable staking, address owner)
+    function registerStaking(IRegisterable staking, address initialOwner)
         external
         virtual
         restricted()
@@ -50,12 +50,13 @@ contract RegistryService is
             IRegistry.ObjectInfo memory info
         )
     {
-        info = _getAndVerifyContractInfo(staking, STAKING(), owner);
-        info.nftId = getRegistry().register(info);
+        bytes memory data;
+        (info, initialOwner, data) = _getAndVerifyContractInfo(staking, STAKING(), initialOwner);
+        info.nftId = getRegistry().register(info, initialOwner, data);
     }
 
 
-    function registerInstance(IRegisterable instance, address owner)
+    function registerInstance(IRegisterable instance, address initialOwner)
         external
         virtual
         restricted()
@@ -67,8 +68,9 @@ contract RegistryService is
             revert ErrorRegistryServiceNotInstance(address(instance));
         }
 
-        info = _getAndVerifyContractInfo(instance, INSTANCE(), owner);
-        info.nftId = getRegistry().register(info);
+        bytes memory data;
+        (info, initialOwner, data) = _getAndVerifyContractInfo(instance, INSTANCE(), initialOwner);
+        info.nftId = getRegistry().register(info, initialOwner, data);
 
         instance.linkToRegisteredNftId(); // asume safe
     }
@@ -88,8 +90,9 @@ contract RegistryService is
             revert ErrorRegistryServiceNotProduct(address(product));
         }
 
-        info = _getAndVerifyContractInfo(product, PRODUCT(), initialOwner);
-        info.nftId = getRegistry().register(info);
+        bytes memory data;
+        (info, initialOwner, data) = _getAndVerifyContractInfo(product, PRODUCT(), initialOwner);
+        info.nftId = getRegistry().register(info, initialOwner, data);
     }
 
     function registerProductLinkedComponent(
@@ -113,48 +116,49 @@ contract RegistryService is
             revert ErrorRegistryServiceNotProductLinkedComponent(address(component));
         }
 
-        info = _getAndVerifyContractInfo(component, objectType, initialOwner);
-        info.nftId = getRegistry().register(info);
+        bytes memory data;
+        (info, initialOwner, data) = _getAndVerifyContractInfo(component, objectType, initialOwner);
+        info.nftId = getRegistry().register(info, initialOwner, data);
     }
 
-    function registerDistributor(IRegistry.ObjectInfo memory info)
+    function registerDistributor(IRegistry.ObjectInfo memory info, address initialOwner, bytes memory data)
         external
         virtual
         restricted()
         returns(NftId nftId) 
     {
-        _verifyObjectInfo(info, DISTRIBUTOR());
-        nftId = getRegistry().register(info);
+        _verifyObjectInfo(info, initialOwner, DISTRIBUTOR());
+        nftId = getRegistry().register(info, initialOwner, data);
     }
 
-    function registerPolicy(IRegistry.ObjectInfo memory info)
+    function registerPolicy(IRegistry.ObjectInfo memory info, address initialOwner, bytes memory data)
         external
         virtual
         restricted()
         returns(NftId nftId) 
     {
-        _verifyObjectInfo(info, POLICY());
-        nftId = getRegistry().register(info);
+        _verifyObjectInfo(info, initialOwner, POLICY());
+        nftId = getRegistry().register(info, initialOwner, data);
     }
 
-    function registerBundle(IRegistry.ObjectInfo memory info)
+    function registerBundle(IRegistry.ObjectInfo memory info, address initialOwner, bytes memory data)
         external
         virtual
         restricted()
         returns(NftId nftId) 
     {
-        _verifyObjectInfo(info, BUNDLE());
-        nftId = getRegistry().register(info);
+        _verifyObjectInfo(info, initialOwner, BUNDLE());
+        nftId = getRegistry().register(info, initialOwner, data);
     }
 
-    function registerStake(IRegistry.ObjectInfo memory info)
+    function registerStake(IRegistry.ObjectInfo memory info, address initialOwner, bytes memory data)
         external
         virtual
         restricted()
         returns(NftId nftId) 
     {
-        _verifyObjectInfo(info, STAKE());
-        nftId = getRegistry().register(info);
+        _verifyObjectInfo(info, initialOwner, STAKE());
+        nftId = getRegistry().register(info, initialOwner, data);
     }
 
     // Internal
@@ -168,10 +172,12 @@ contract RegistryService is
         virtual
         view
         returns(
-            IRegistry.ObjectInfo memory info 
+            IRegistry.ObjectInfo memory info,
+            address initialOwner,
+            bytes memory data
         )
     {
-        info = registerable.getInitialInfo();
+        (info, initialOwner, data) = registerable.getInitialInfo();
 
         if(info.objectAddress != address(registerable)) {
             revert ErrorRegistryServiceRegisterableAddressInvalid(registerable, info.objectAddress);
@@ -181,27 +187,26 @@ contract RegistryService is
             revert ErrorRegistryServiceRegisterableTypeInvalid(registerable, expectedType, info.objectType);
         }
 
-        address owner = info.initialOwner;
-
-        if(owner != expectedOwner) { // registerable owner protection
-            revert ErrorRegistryServiceRegisterableOwnerInvalid(registerable, expectedOwner, owner);
+        if(initialOwner != expectedOwner) { // registerable owner protection
+            revert ErrorRegistryServiceRegisterableOwnerInvalid(registerable, expectedOwner, initialOwner);
         }
 
-        if(owner == address(registerable)) {
+        if(initialOwner == address(registerable)) {
             revert ErrorRegistryServiceRegisterableSelfRegistration(registerable);
         }
 
-        if(owner == address(0)) {
+        if(initialOwner == address(0)) {
             revert ErrorRegistryServiceRegisterableOwnerZero(registerable);
         }
         
-        if(getRegistry().isRegistered(owner)) { 
-            revert ErrorRegistryServiceRegisterableOwnerRegistered(registerable, owner);
+        if(getRegistry().isRegistered(initialOwner)) { 
+            revert ErrorRegistryServiceRegisterableOwnerRegistered(registerable, initialOwner);
         }
     }
 
     function _verifyObjectInfo(
         IRegistry.ObjectInfo memory info,
+        address initialOwner,
         ObjectType expectedType
     )
         internal
@@ -216,20 +221,18 @@ contract RegistryService is
             revert ErrorRegistryServiceObjectTypeInvalid(expectedType, info.objectType);
         }
 
-        address owner = info.initialOwner;
-
-        if(owner == address(0)) {
+        if(initialOwner == address(0)) {
             revert ErrorRegistryServiceObjectOwnerZero(info.objectType);
         }
 
-        if(owner == msg.sender) {
-            revert ErrorRegistryServiceInvalidInitialOwner(owner);
+        if(initialOwner == msg.sender) {
+            revert ErrorRegistryServiceInvalidInitialOwner(initialOwner);
         }
 
-        if(getRegistry().isRegistered(owner)) {
-            ObjectType ownerType = getRegistry().getObjectInfo(owner).objectType;
+        if(getRegistry().isRegistered(initialOwner)) {
+            ObjectType ownerType = getRegistry().getObjectInfo(initialOwner).objectType;
             if(ownerType == REGISTRY() || ownerType == STAKING() || ownerType == SERVICE() || ownerType == INSTANCE()) {
-                revert ErrorRegistryServiceObjectOwnerRegistered(info.objectType, owner);
+                revert ErrorRegistryServiceObjectOwnerRegistered(info.objectType, initialOwner);
             }
         }
     }

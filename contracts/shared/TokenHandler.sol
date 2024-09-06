@@ -10,6 +10,7 @@ import {ContractLib} from "../shared/ContractLib.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {NftId} from "../type/NftId.sol";
 import {SERVICE} from "../type/ObjectType.sol";
+import {VersionPart} from "../type/Version.sol";
 
 
 /// @dev Token specific transfer helper base contract.
@@ -49,6 +50,7 @@ contract TokenHandlerBase {
     IERC20Metadata public immutable TOKEN;
     address public immutable COMPONENT;
     NftId public immutable NFT_ID;
+    VersionPart RELEASE;
 
     address internal _wallet;
 
@@ -69,6 +71,7 @@ contract TokenHandlerBase {
         REGISTRY = IRegistry(registry);
         COMPONENT = component;
         NFT_ID = REGISTRY.getNftIdForAddress(component);
+        RELEASE = REGISTRY.getObjectRelease(NFT_ID);
 
         if (NFT_ID.eqz()) {
             revert ErrorTokenHandlerComponentNotRegistered(component);
@@ -254,7 +257,7 @@ contract TokenHandler is
     error ErrorTokenHandlerNotService(address service);
 
     modifier onlyService() {
-        if (!REGISTRY.isObjectType(msg.sender, SERVICE())) {
+        if (!REGISTRY.isObjectType(msg.sender, SERVICE(), RELEASE)) {
             revert ErrorTokenHandlerNotService(msg.sender);
         }
         _;

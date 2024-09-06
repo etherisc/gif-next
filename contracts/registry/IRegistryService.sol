@@ -40,23 +40,23 @@ interface IRegistryService is
      error ErrorRegistryServiceInvalidInitialOwner(address initialOwner);
      error ErrorRegistryServiceInvalidAddress(address registerableAddress);
 
-     function registerStake(IRegistry.ObjectInfo memory info)
+     function registerStake(IRegistry.ObjectInfo memory info, address initialOwner, bytes memory data)
           external returns(NftId nftId); 
 
-     function registerInstance(IRegisterable instance, address owner)
+     function registerInstance(IRegisterable instance, address initialOwner)
           external returns(IRegistry.ObjectInfo memory info); 
 
-     function registerProduct(IComponent product, address owner)
+     function registerProduct(IComponent product, address initialOwner)
           external returns(IRegistry.ObjectInfo memory info);
 
-     function registerProductLinkedComponent(IComponent component, ObjectType objectType, address owner)
+     function registerProductLinkedComponent(IComponent component, ObjectType objectType, address initialOwner)
           external returns(IRegistry.ObjectInfo memory info);
 
-     function registerDistributor(IRegistry.ObjectInfo memory info) external returns(NftId nftId);
+     function registerDistributor(IRegistry.ObjectInfo memory info, address initialOwner, bytes memory data) external returns(NftId nftId);
 
-     function registerPolicy(IRegistry.ObjectInfo memory info) external returns(NftId nftId);
+     function registerPolicy(IRegistry.ObjectInfo memory info, address initialOwner, bytes memory data) external returns(NftId nftId);
 
-     function registerBundle(IRegistry.ObjectInfo memory info) external returns(NftId nftId); 
+     function registerBundle(IRegistry.ObjectInfo memory info, address initialOwner, bytes memory data) external returns(NftId nftId); 
 
 }
 

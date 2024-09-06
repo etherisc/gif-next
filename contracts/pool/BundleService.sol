@@ -41,7 +41,7 @@ contract BundleService is
     )
         internal
         virtual override
-        initializer()
+        onlyInitializing()
     {
         (
             address authority,
@@ -105,11 +105,11 @@ contract BundleService is
                 NftIdLib.zero(), 
                 poolNftId,
                 BUNDLE(),
+                getRelease(),
                 false, // intercepting property for bundles is defined on pool
-                address(0),
-                owner,
-                "" // bundle data to be stored in registry
-            )
+                address(0)),
+            owner,
+            "" // bundle data to be stored in registry
         );
 
         // create bundle info in instance

@@ -26,8 +26,8 @@ contract RiskService is
         bytes memory data
     )
         internal
-        initializer
         virtual override
+        onlyInitializing()
     {
         (
             address authority,

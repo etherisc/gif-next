@@ -59,14 +59,14 @@ contract ReleaseRegistry is
 
     // _verifyService
     error ErrorReleaseRegistryNotService(address notService);
-    error ErrorReleaseRegistryServiceAuthorityMismatch(IService service, address serviceAuthority, address releaseAuthority);
-    error ErrorReleaseRegistryServiceVersionMismatch(IService service, VersionPart serviceVersion, VersionPart releaseVersion);
+    error ErrorReleaseRegistryServiceAuthorityMismatch(IService service, address expectedAuthority, address actualAuthority);
     error ErrorReleaseRegistryServiceDomainMismatch(IService service, ObjectType expectedDomain, ObjectType actualDomain);
 
     // _verifyServiceInfo
     error ErrorReleaseRegistryServiceInfoAddressInvalid(IService service, address expected);
     error ErrorReleaseRegistryServiceInfoInterceptorInvalid(IService service, bool isInterceptor);
     error ErrorReleaseRegistryServiceInfoTypeInvalid(IService service, ObjectType expected, ObjectType found);
+    error ErrorReleaseRegistryServiceInfoVersionMismatch(IService service, VersionPart expected, VersionPart actual);
     error ErrorReleaseRegistryServiceInfoOwnerInvalid(IService service, address expected, address found);
     error ErrorReleaseRegistryServiceSelfRegistration(IService service);
     error ErrorReleaseRegistryServiceOwnerRegistered(IService service, address owner);
@@ -184,23 +184,20 @@ contract ReleaseRegistry is
         address releaseAuthority = ReleaseAdmin(_releaseInfo[releaseVersion].releaseAdmin).authority();
         IServiceAuthorization releaseAuthz = _releaseInfo[releaseVersion].auth;
         ObjectType expectedDomain = releaseAuthz.getServiceDomain(_registeredServices);
+        address expectedOwner = msg.sender;
 
         // service can work with release registry and release version
         (
             IRegistry.ObjectInfo memory info,
-            ObjectType serviceDomain,
-            VersionPart serviceVersion
-            //,string memory serviceName
+            bytes memory data,
+            ObjectType serviceDomain
         ) = _verifyService(
             service, 
+            expectedOwner,
             releaseAuthority, 
             releaseVersion, 
             expectedDomain
         );
-
-        //_releaseInfo[releaseVersion].addresses.push(address(service)); // TODO get this info from auth contract?
-        //_releaseInfo[releaseVersion].domains.push(serviceDomain);
-        //_releaseInfo[releaseVersion].names.push(serviceName); // TODO if needed read in _verifyService()
 
         _registeredServices++; // TODO use releaseInfo.someArray.length instead of _registeredServices
 
@@ -222,7 +219,7 @@ contract ReleaseRegistry is
         releaseAdmin.setReleaseLocked(true); 
 
         // register service with registry
-        nftId = _registry.registerService(info, serviceVersion, serviceDomain);
+        nftId = _registry.registerService(info, expectedOwner, serviceDomain, data);
         service.linkToRegisteredNftId();
     }
 
@@ -439,7 +436,8 @@ contract ReleaseRegistry is
 
     // TODO get service names 
     function _verifyService(
-        IService service, 
+        IService service,
+        address expectedOwner,
         address expectedAuthority, 
         VersionPart expectedVersion,
         ObjectType expectedDomain
@@ -447,54 +445,54 @@ contract ReleaseRegistry is
         internal
         view
         returns(
-            IRegistry.ObjectInfo memory serviceInfo,
-            ObjectType serviceDomain, 
-            VersionPart serviceVersion
+            IRegistry.ObjectInfo memory info,
+            bytes memory data,
+            ObjectType domain
         )
     {
         if(!service.supportsInterface(type(IService).interfaceId)) {
             revert ErrorReleaseRegistryNotService(address(service));
         }
 
-        address owner = msg.sender;
-        address serviceAuthority = service.authority();
-        serviceVersion = service.getVersion().toMajorPart();
-        serviceDomain = service.getDomain();// checked in registry
-        serviceInfo = service.getInitialInfo();
+        address authority = service.authority();
+        domain = service.getDomain();// checked in registry
 
-        _verifyServiceInfo(service, serviceInfo, owner);
+        (info,, data) = _verifyServiceInfo(
+            service,
+            expectedOwner,
+            expectedVersion);
 
-        if(serviceAuthority != expectedAuthority) {
+        if(authority != expectedAuthority) {
             revert ErrorReleaseRegistryServiceAuthorityMismatch(
                 service,
-                serviceAuthority,
-                expectedAuthority);
+                expectedAuthority,
+                authority);
         }
 
-        if(serviceVersion != expectedVersion) {
-            revert ErrorReleaseRegistryServiceVersionMismatch(
-                service,
-                serviceVersion,
-                expectedVersion);            
-        }
-
-        if(serviceDomain != expectedDomain) {
+        if(domain != expectedDomain) {
             revert ErrorReleaseRegistryServiceDomainMismatch(
                 service,
                 expectedDomain,
-                serviceDomain);
+                domain);
         }
     }
 
 
     function _verifyServiceInfo(
         IService service,
-        IRegistry.ObjectInfo memory info,
-        address expectedOwner // assume always valid, can not be 0
+        address expectedOwner, // assume always valid, can not be 0
+        VersionPart expectedVersion
     )
         internal
         view
+        returns (
+            IRegistry.ObjectInfo memory info,
+            address initialOwner,
+            bytes memory data
+        )
     {
+        (info, initialOwner, data) = service.getInitialInfo();
+
         if(info.objectAddress != address(service)) {
             revert ErrorReleaseRegistryServiceInfoAddressInvalid(service, info.objectAddress);
         }
@@ -507,18 +505,23 @@ contract ReleaseRegistry is
             revert ErrorReleaseRegistryServiceInfoTypeInvalid(service, SERVICE(), info.objectType);
         }
 
-        address owner = info.initialOwner;
-
-        if(owner != expectedOwner) { // registerable owner protection
-            revert ErrorReleaseRegistryServiceInfoOwnerInvalid(service, expectedOwner, owner); 
+        if(info.objectRelease != expectedVersion) {
+            revert ErrorReleaseRegistryServiceInfoVersionMismatch(
+                service,
+                expectedVersion,
+                info.objectRelease);            
         }
 
-        if(owner == address(service)) {
+        if(initialOwner != expectedOwner) { // registerable owner protection
+            revert ErrorReleaseRegistryServiceInfoOwnerInvalid(service, expectedOwner, initialOwner); 
+        }
+
+        if(initialOwner == address(service)) {
             revert ErrorReleaseRegistryServiceSelfRegistration(service);
         }
         
-        if(_registry.isRegistered(owner)) { 
-            revert ErrorReleaseRegistryServiceOwnerRegistered(service, owner);
+        if(_registry.isRegistered(initialOwner)) { 
+            revert ErrorReleaseRegistryServiceOwnerRegistered(service, initialOwner);
         }
     }
 }

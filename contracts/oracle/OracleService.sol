@@ -29,7 +29,7 @@ contract OracleService is
     )
         internal
         virtual override
-        initializer()
+        onlyInitializing()
     {
         (
             address authority,
