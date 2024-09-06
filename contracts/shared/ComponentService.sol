@@ -142,6 +142,7 @@ contract ComponentService is
         instance.getInstanceAdmin().setComponentLocked(
             component, 
             locked);
+        emit LogComponentServiceComponentLocked(component, locked);
     }
 
 

@@ -45,6 +45,7 @@ interface IComponentService is
     error ErrorComponentServiceWithdrawAmountExceedsLimit(Amount withdrawnAmount, Amount withdrawLimit);
     error ErrorComponentServiceWalletAllowanceTooSmall(address wallet, address spender, uint256 allowance, uint256 amount);
 
+    event LogComponentServiceComponentLocked(address component, bool locked);
     event LogComponentServiceRegistered(NftId instanceNftId, NftId componentNftId, ObjectType componentType, address component, address token, address initialOwner); 
     event LogComponentServiceWalletAddressChanged(NftId componentNftId, address currentWallet, address newWallet);
     event LogComponentServiceWalletTokensTransferred(NftId componentNftId, address currentWallet, address newWallet, uint256 currentBalance);
