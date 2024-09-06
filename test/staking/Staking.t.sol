@@ -92,9 +92,9 @@ contract StakingTest is GifTest {
         assertTrue(rewardRate == TargetManagerLib.getDefaultRewardRate(), "unexpected reward rate");
 
         // check stake balance
-        assertEq(stakingReader.getStakeBalance(stakeNftId).toInt(), dipAmount.toInt(), "unexpected stake amount");
-        assertEq(stakingReader.getRewardBalance(stakeNftId).toInt(), 0, "unexpected reward amount");
-        assertEq(stakingReader.getBalanceUpdatedAt(stakeNftId).toInt(), block.timestamp, "unexpected last updated at");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).stakedAmount.toInt(), dipAmount.toInt(), "unexpected stake amount");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).rewardAmount.toInt(), 0, "unexpected reward amount");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).lastUpdatedIn.toInt(), block.number, "unexpected last updated in");
 
         // check state info
         IStaking.StakeInfo memory stakeInfo = stakingReader.getStakeInfo(stakeNftId);
@@ -142,9 +142,9 @@ contract StakingTest is GifTest {
         assertEq(lockingPeriod.toInt(), TargetManagerLib.getDefaultLockingPeriod().toInt(), "unexpected locking period");
 
         // check stake balance
-        assertEq(stakingReader.getStakeBalance(stakeNftId).toInt(), dipAmount.toInt(), "unexpected stake amount");
-        assertEq(stakingReader.getRewardBalance(stakeNftId).toInt(), 0, "unexpected reward amount");
-        assertEq(stakingReader.getBalanceUpdatedAt(stakeNftId).toInt(), block.timestamp, "unexpected last updated at");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).stakedAmount.toInt(), dipAmount.toInt(), "unexpected stake amount");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).rewardAmount.toInt(), 0, "unexpected reward amount");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).lastUpdatedIn.toInt(), block.number, "unexpected last updated at");
 
         // check state info
         IStaking.StakeInfo memory stakeInfo = stakingReader.getStakeInfo(stakeNftId);
@@ -152,9 +152,9 @@ contract StakingTest is GifTest {
         assertEq(stakeInfo.lockedUntil.toInt(), TimestampLib.blockTimestamp().toInt() + lockingPeriod.toInt(), "unexpected locked until");
 
         // check accumulated stakes/rewards on instance
-        assertEq(stakingReader.getStakeBalance(instanceNftId).toInt(), dipAmount.toInt(), "unexpected instance stake amount");
-        assertEq(stakingReader.getRewardBalance(instanceNftId).toInt(), 0, "unexpected instance reward amount");
-        assertEq(stakingReader.getBalanceUpdatedIn(instanceNftId).toInt(), block.number, "unexpected instance last updated in");
+        assertEq(stakingReader.getStakeInfo(instanceNftId).stakedAmount.toInt(), dipAmount.toInt(), "unexpected instance stake amount");
+        assertEq(stakingReader.getStakeInfo(instanceNftId).rewardAmount.toInt(), 0, "unexpected instance reward amount");
+        assertEq(stakingReader.getStakeInfo(instanceNftId).lastUpdatedIn.toInt(), block.number, "unexpected instance last updated in");
     }
 
     function test_stakeExceedsMaxStakedAmount() public {
@@ -221,7 +221,7 @@ contract StakingTest is GifTest {
         // record time at stake creation
         uint256 lastUpdateAt = block.timestamp;
         uint256 lastUpdateIn = block.number;
-        assertEq(stakingReader.getBalanceUpdatedAt(stakeNftId).toInt(), lastUpdateAt, "unexpected last updated at for stake balance");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).lastUpdatedIn.toInt(), lastUpdateAt, "unexpected last updated at for stake balance");
 
         // WHEN
         // wait a year
@@ -259,14 +259,14 @@ contract StakingTest is GifTest {
         assertEq(rewardIncrease.toInt(), expectedRewardIncreaseInt, "unexpected reward increase");
 
         // check stake/rewards balance (before calling update rewards)
-        assertEq(stakingReader.getStakeBalance(stakeNftId).toInt(), dipAmount.toInt(), "unexpected stake amount (before)");
-        assertEq(stakingReader.getRewardBalance(stakeNftId).toInt(), 0, "unexpected reward amount (before)");
-        assertEq(stakingReader.getBalanceUpdatedAt(stakeNftId).toInt(), lastUpdateAt, "unexpected last updated at (before)");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).stakedAmount.toInt(), dipAmount.toInt(), "unexpected stake amount (before)");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).rewardAmount.toInt(), 0, "unexpected reward amount (before)");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).lastUpdatedIn.toInt(), lastUpdateAt, "unexpected last updated at (before)");
 
         // check accumulated stakes/rewards on instance
-        assertEq(stakingReader.getStakeBalance(instanceNftId).toInt(), dipAmount.toInt(), "unexpected instance stake amount (before)");
-        assertEq(stakingReader.getRewardBalance(instanceNftId).toInt(), 0, "unexpected instance reward amount (before)");
-        assertEq(stakingReader.getBalanceUpdatedIn(instanceNftId).toInt(), lastUpdateIn, "unexpected instance last updated at (before)");
+        assertEq(stakingReader.getStakeInfo(instanceNftId).stakedAmount.toInt(), dipAmount.toInt(), "unexpected instance stake amount (before)");
+        assertEq(stakingReader.getStakeInfo(instanceNftId).rewardAmount.toInt(), 0, "unexpected instance reward amount (before)");
+        assertEq(stakingReader.getStakeInfo(instanceNftId).lastUpdatedIn.toInt(), lastUpdateIn, "unexpected instance last updated at (before)");
 
         // WHEN
         // update rewards (unpermissioned)
@@ -274,14 +274,14 @@ contract StakingTest is GifTest {
 
         // THEN
         // re-check stake/rewards balance (after calling update rewards)
-        assertEq(stakingReader.getStakeBalance(stakeNftId).toInt(), dipAmount.toInt(), "unexpected stake amount (after)");
-        assertEq(stakingReader.getRewardBalance(stakeNftId).toInt(), expectedRewardIncrease.toInt(), "unexpected reward amount (after)");
-        assertEq(stakingReader.getBalanceUpdatedAt(stakeNftId).toInt(), block.timestamp, "unexpected last updated at (after)");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).stakedAmount.toInt(), dipAmount.toInt(), "unexpected stake amount (after)");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).rewardAmount.toInt(), expectedRewardIncrease.toInt(), "unexpected reward amount (after)");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).lastUpdatedIn.toInt(), block.number, "unexpected last updated at (after)");
 
         // re-check accumulated stakes/rewards on instance
-        assertEq(stakingReader.getStakeBalance(instanceNftId).toInt(), dipAmount.toInt(), "unexpected instance stake amount (after)");
-        assertEq(stakingReader.getRewardBalance(instanceNftId).toInt(), expectedRewardIncrease.toInt(), "unexpected instance reward amount (after)");
-        assertEq(stakingReader.getBalanceUpdatedIn(instanceNftId).toInt(), block.number, "unexpected instance last updated at (after)");
+        assertEq(stakingReader.getStakeInfo(instanceNftId).stakedAmount.toInt(), dipAmount.toInt(), "unexpected instance stake amount (after)");
+        assertEq(stakingReader.getStakeInfo(instanceNftId).rewardAmount.toInt(), expectedRewardIncrease.toInt(), "unexpected instance reward amount (after)");
+        assertEq(stakingReader.getStakeInfo(instanceNftId).lastUpdatedIn.toInt(), block.number, "unexpected instance last updated at (after)");
     }
 
 
@@ -322,9 +322,9 @@ contract StakingTest is GifTest {
         assertEq(rewardIncrease.toInt(), expectedRewardIncrease.toInt(), "unexpected rewared increase");
 
         // check stake/rewards balance (before calling restake)
-        assertEq(stakingReader.getStakeBalance(stakeNftId).toInt(), dipAmount.toInt(), "unexpected stake amount (before)");
-        assertEq(stakingReader.getRewardBalance(stakeNftId).toInt(), 0, "unexpected reward amount (before)");
-        assertEq(stakingReader.getBalanceUpdatedAt(stakeNftId).toInt(), lastUpdateAt, "unexpected last updated at (before)");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).stakedAmount.toInt(), dipAmount.toInt(), "unexpected stake amount (before)");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).rewardAmount.toInt(), 0, "unexpected reward amount (before)");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).lastUpdatedIn.toInt(), lastUpdateAt, "unexpected last updated at (before)");
 
         // time now
         Timestamp timestampNow = TimestampLib.blockTimestamp();
@@ -336,9 +336,9 @@ contract StakingTest is GifTest {
 
         // check stake/rewards balance (after calling restake)
         Amount expectedRestakedAmount = dipAmount + expectedRewardIncrease;
-        assertEq(stakingReader.getStakeBalance(stakeNftId).toInt(), expectedRestakedAmount.toInt(), "unexpected stake amount (after restake)");
-        assertEq(stakingReader.getRewardBalance(stakeNftId).toInt(), 0, "unexpected reward amount (after restake)");
-        assertEq(stakingReader.getBalanceUpdatedAt(stakeNftId).toInt(), block.timestamp, "unexpected last updated at (after)");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).stakedAmount.toInt(), expectedRestakedAmount.toInt(), "unexpected stake amount (after restake)");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).rewardAmount.toInt(), 0, "unexpected reward amount (after restake)");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).lastUpdatedIn.toInt(), block.number, "unexpected last updated at (after)");
 
         // check locked until
         Seconds lockingPeriod = stakingReader.getTargetInfo(instanceNftId).lockingPeriod;
@@ -384,9 +384,9 @@ contract StakingTest is GifTest {
         assertEq(rewardIncrease.toInt(), expectedRewardIncrease.toInt(), "unexpected rewared increase");
 
         // check stake/rewards balance (before calling restake)
-        assertEq(stakingReader.getStakeBalance(stakeNftId).toInt(), dipAmount.toInt(), "unexpected stake amount (before)");
-        assertEq(stakingReader.getRewardBalance(stakeNftId).toInt(), 0, "unexpected reward amount (before)");
-        assertEq(stakingReader.getBalanceUpdatedAt(stakeNftId).toInt(), lastUpdateAt, "unexpected last updated at (before)");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).stakedAmount.toInt(), dipAmount.toInt(), "unexpected stake amount (before)");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).rewardAmount.toInt(), 0, "unexpected reward amount (before)");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).lastUpdatedIn.toInt(), lastUpdateAt, "unexpected last updated at (before)");
 
         // time now
         Timestamp timestampNow = TimestampLib.blockTimestamp();
@@ -400,9 +400,9 @@ contract StakingTest is GifTest {
 
         // check stake/rewards balance (after calling restake)
         Amount newBalanceWithRestakedDipsAmount = dipAmount + stakeIncreaseAmount + expectedRewardIncrease;
-        assertEq(stakingReader.getStakeBalance(stakeNftId).toInt(), newBalanceWithRestakedDipsAmount.toInt(), "unexpected stake amount (after restake)");
-        assertEq(stakingReader.getRewardBalance(stakeNftId).toInt(), 0, "unexpected reward amount (after restake)");
-        assertEq(stakingReader.getBalanceUpdatedAt(stakeNftId).toInt(), block.timestamp, "unexpected last updated at (after)");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).stakedAmount.toInt(), newBalanceWithRestakedDipsAmount.toInt(), "unexpected stake amount (after restake)");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).rewardAmount.toInt(), 0, "unexpected reward amount (after restake)");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).lastUpdatedIn.toInt(), block.number, "unexpected last updated at (after)");
 
         // check locked until
         Seconds lockingPeriod = stakingReader.getTargetInfo(instanceNftId).lockingPeriod;
@@ -462,9 +462,9 @@ contract StakingTest is GifTest {
         assertEq(dip.balanceOf(staker), 0, "staker dip balance not 0 (before unstake)");
 
         // check stake/rewards balance (before unstake)
-        assertEq(stakingReader.getStakeBalance(stakeNftId).toInt(), stakeAmount.toInt(), "unexpected stake amount (before unstake)");
-        assertEq(stakingReader.getRewardBalance(stakeNftId).toInt(), 0, "unexpected reward amount (before unstake)");
-        assertEq(stakingReader.getBalanceUpdatedAt(stakeNftId).toInt(), lastUpdateAt, "unexpected last updated at (before unstake)");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).stakedAmount.toInt(), stakeAmount.toInt(), "unexpected stake amount (before unstake)");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).rewardAmount.toInt(), 0, "unexpected reward amount (before unstake)");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).lastUpdatedIn.toInt(), lastUpdateAt, "unexpected last updated at (before unstake)");
 
         // WHEN
         vm.startPrank(staker);
@@ -492,14 +492,14 @@ contract StakingTest is GifTest {
         assertEq(dip.balanceOf(staker), expectedBalanceAfterUnstake.toInt(), "unexpected staker balance after unstake");
 
         // check stake/rewards balance (after unstake)
-        assertEq(stakingReader.getStakeBalance(stakeNftId).toInt(), 0, "unexpected stake amount (after unstake)");
-        assertEq(stakingReader.getRewardBalance(stakeNftId).toInt(), 0, "unexpected reward amount (after unstake)");
-        assertEq(stakingReader.getBalanceUpdatedAt(stakeNftId).toInt(), block.timestamp, "unexpected last updated at (after unstake)");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).stakedAmount.toInt(), 0, "unexpected stake amount (after unstake)");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).rewardAmount.toInt(), 0, "unexpected reward amount (after unstake)");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).lastUpdatedIn.toInt(), block.number, "unexpected last updated at (after unstake)");
 
         // check accumulated stakes/rewards on instance(after unstake)
-        assertEq(stakingReader.getStakeBalance(instanceNftId).toInt(), 0, "unexpected instance stake amount (after unstake)");
-        assertEq(stakingReader.getRewardBalance(instanceNftId).toInt(), 0, "unexpected instance reward amount (after unstake)");
-        assertEq(stakingReader.getBalanceUpdatedIn(instanceNftId).toInt(), block.number, "unexpected instance last updated in (after unstake)");
+        assertEq(stakingReader.getStakeInfo(instanceNftId).stakedAmount.toInt(), 0, "unexpected instance stake amount (after unstake)");
+        assertEq(stakingReader.getStakeInfo(instanceNftId).rewardAmount.toInt(), 0, "unexpected instance reward amount (after unstake)");
+        assertEq(stakingReader.getStakeInfo(instanceNftId).lastUpdatedIn.toInt(), block.number, "unexpected instance last updated in (after unstake)");
     }
 
     function test_stakingStakeUnstake_stakeLocked() public {
@@ -552,9 +552,9 @@ contract StakingTest is GifTest {
         assertEq(dip.balanceOf(staker), 0, "staker dip balance not 0 (before unstake)");
 
         // check stake/rewards balance (before unstake)
-        assertEq(stakingReader.getStakeBalance(stakeNftId).toInt(), stakeAmount.toInt(), "unexpected stake amount (before unstake)");
-        assertEq(stakingReader.getRewardBalance(stakeNftId).toInt(), 0, "unexpected reward amount (before unstake)");
-        assertEq(stakingReader.getBalanceUpdatedAt(stakeNftId).toInt(), lastUpdateAt, "unexpected last updated at (before unstake)");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).stakedAmount.toInt(), stakeAmount.toInt(), "unexpected stake amount (before unstake)");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).rewardAmount.toInt(), 0, "unexpected reward amount (before unstake)");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).lastUpdatedIn.toInt(), lastUpdateAt, "unexpected last updated at (before unstake)");
 
         // WHEN
         vm.startPrank(staker);
@@ -578,14 +578,14 @@ contract StakingTest is GifTest {
         assertEq(dip.balanceOf(staker), expectedRewards.toInt(), "unexpected staker balance after claim rewards");
 
         // check stake/rewards balance (after claim rewards)
-        assertEq(stakingReader.getStakeBalance(stakeNftId).toInt(), stakeAmount.toInt(), "unexpected stake amount (after claim rewards)");
-        assertEq(stakingReader.getRewardBalance(stakeNftId).toInt(), 0, "unexpected reward amount (after claim rewards)");
-        assertEq(stakingReader.getBalanceUpdatedAt(stakeNftId).toInt(), block.timestamp, "unexpected last updated at (after claim rewards)");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).stakedAmount.toInt(), stakeAmount.toInt(), "unexpected stake amount (after claim rewards)");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).rewardAmount.toInt(), 0, "unexpected reward amount (after claim rewards)");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).lastUpdatedIn.toInt(), block.number, "unexpected last updated at (after claim rewards)");
 
         // check accumulated stakes/rewards on instance(after claim rewards)
-        assertEq(stakingReader.getStakeBalance(instanceNftId).toInt(), stakeAmount.toInt(), "unexpected instance stake amount (after claim rewards)");
-        assertEq(stakingReader.getRewardBalance(instanceNftId).toInt(), 0, "unexpected instance reward amount (after claim rewards)");
-        assertEq(stakingReader.getBalanceUpdatedIn(instanceNftId).toInt(), block.number, "unexpected instance last updated in (after claim rewards)");
+        assertEq(stakingReader.getStakeInfo(instanceNftId).stakedAmount.toInt(), stakeAmount.toInt(), "unexpected instance stake amount (after claim rewards)");
+        assertEq(stakingReader.getStakeInfo(instanceNftId).rewardAmount.toInt(), 0, "unexpected instance reward amount (after claim rewards)");
+        assertEq(stakingReader.getStakeInfo(instanceNftId).lastUpdatedIn.toInt(), block.number, "unexpected instance last updated in (after claim rewards)");
     }
 
 
@@ -613,9 +613,9 @@ contract StakingTest is GifTest {
         assertEq(dip.balanceOf(staker), 0, "staker dip balance not 0 (before unstake)");
 
         // check stake/rewards balance (before unstake)
-        assertEq(stakingReader.getStakeBalance(stakeNftId).toInt(), stakeAmount.toInt(), "unexpected stake amount (before unstake)");
-        assertEq(stakingReader.getRewardBalance(stakeNftId).toInt(), 0, "unexpected reward amount (before unstake)");
-        assertEq(stakingReader.getBalanceUpdatedAt(stakeNftId).toInt(), lastUpdateAt, "unexpected last updated at (before unstake)");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).stakedAmount.toInt(), stakeAmount.toInt(), "unexpected stake amount (before unstake)");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).rewardAmount.toInt(), 0, "unexpected reward amount (before unstake)");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).lastUpdatedIn.toInt(), lastUpdateAt, "unexpected last updated at (before unstake)");
 
         UFixed rewardRate = stakingReader.getRewardRate(instanceNftId);
         Amount expectedRewards = stakeAmount.multiplyWith(rewardRate);
@@ -678,23 +678,23 @@ contract StakingTest is GifTest {
         assertEq(dip.balanceOf(staking.getWallet()), dipAmount.toInt(), "staking wallet: unexpected dip balance (after staking)");
 
         // check stake balance after restake
-        assertEq(stakingReader.getStakeBalance(stakeNftId).toInt(), 0, "unexpected stake amount");
-        assertEq(stakingReader.getRewardBalance(stakeNftId).toInt(), 0, "unexpected reward amount");
-        assertEq(stakingReader.getStakeBalance(stakeNftId2).toInt(), dipAmount.toInt(), "unexpected stake amount (2)");
-        assertEq(stakingReader.getRewardBalance(stakeNftId2).toInt(), 0, "unexpected reward amount (2)");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).stakedAmount.toInt(), 0, "unexpected stake amount");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).rewardAmount.toInt(), 0, "unexpected reward amount");
+        assertEq(stakingReader.getStakeInfo(stakeNftId2).stakedAmount.toInt(), dipAmount.toInt(), "unexpected stake amount (2)");
+        assertEq(stakingReader.getStakeInfo(stakeNftId2).rewardAmount.toInt(), 0, "unexpected reward amount (2)");
 
         // check state info
         IStaking.StakeInfo memory stakeInfo2 = stakingReader.getStakeInfo(stakeNftId2);
         assertEq(stakeInfo2.lockedUntil.toInt(), TimestampLib.blockTimestamp().toInt() + lockingPeriod2.toInt(), "unexpected locked until (2)");
 
         // check accumulated stakes/rewards on instance and instance2
-        assertEq(stakingReader.getStakeBalance(instanceNftId).toInt(), 0, "unexpected instance stake amount");
-        assertEq(stakingReader.getRewardBalance(instanceNftId).toInt(), 0, "unexpected instance reward amount");
-        assertEq(stakingReader.getBalanceUpdatedIn(instanceNftId).toInt(), block.number, "unexpected instance last updated in");
+        assertEq(stakingReader.getTargetInfo(instanceNftId).stakedAmount.toInt(), 0, "unexpected instance stake amount");
+        assertEq(stakingReader.getTargetInfo(instanceNftId).rewardAmount.toInt(), 0, "unexpected instance reward amount");
+        assertEq(stakingReader.getTargetInfo(instanceNftId).lastUpdatedIn.toInt(), block.number, "unexpected instance last updated in");
 
-        assertEq(stakingReader.getStakeBalance(instanceNftId2).toInt(), dipAmount.toInt(), "unexpected instance stake amount (2)");
-        assertEq(stakingReader.getRewardBalance(instanceNftId2).toInt(), 0, "unexpected instance reward amount (2)");
-        assertEq(stakingReader.getBalanceUpdatedIn(instanceNftId2).toInt(), block.number, "unexpected instance last updated in (2)");
+        assertEq(stakingReader.getTargetInfo(instanceNftId2).stakedAmount.toInt(), dipAmount.toInt(), "unexpected instance stake amount (2)");
+        assertEq(stakingReader.getTargetInfo(instanceNftId2).rewardAmount.toInt(), 0, "unexpected instance reward amount (2)");
+        assertEq(stakingReader.getTargetInfo(instanceNftId2).lastUpdatedIn.toInt(), block.number, "unexpected instance last updated in (2)");
     }
 
     // solhint-disable-next-line func-name-mixedcase
@@ -738,23 +738,23 @@ contract StakingTest is GifTest {
         assertEq(dip.balanceOf(staking.getWallet()), dipAmount.toInt(), "staking wallet: unexpected dip balance (after staking)");
 
         // check stake balance after restake
-        assertEq(stakingReader.getStakeBalance(stakeNftId).toInt(), 0, "unexpected stake amount");
-        assertEq(stakingReader.getRewardBalance(stakeNftId).toInt(), 0, "unexpected reward amount");
-        assertEq(stakingReader.getStakeBalance(stakeNftId2).toInt(), dipAmount.toInt() + expectedReward.toInt(), "unexpected stake amount (2)");
-        assertEq(stakingReader.getRewardBalance(stakeNftId2).toInt(), 0, "unexpected reward amount (2)");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).stakedAmount.toInt(), 0, "unexpected stake amount");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).rewardAmount.toInt(), 0, "unexpected reward amount");
+        assertEq(stakingReader.getStakeInfo(stakeNftId2).stakedAmount.toInt(), dipAmount.toInt() + expectedReward.toInt(), "unexpected stake amount (2)");
+        assertEq(stakingReader.getStakeInfo(stakeNftId2).rewardAmount.toInt(), 0, "unexpected reward amount (2)");
 
         // check state info
         IStaking.StakeInfo memory stakeInfo2 = stakingReader.getStakeInfo(stakeNftId2);
         assertEq(stakeInfo2.lockedUntil.toInt(), TimestampLib.blockTimestamp().toInt() + lockingPeriod2.toInt(), "unexpected locked until (2)");
 
         // check accumulated stakes/rewards on instance and instance2
-        assertEq(stakingReader.getStakeBalance(instanceNftId).toInt(), 0, "unexpected instance stake amount");
-        assertEq(stakingReader.getRewardBalance(instanceNftId).toInt(), 0, "unexpected instance reward amount");
-        assertEq(stakingReader.getBalanceUpdatedIn(instanceNftId).toInt(), block.number, "unexpected instance last updated in");
+        assertEq(stakingReader.getTargetInfo(instanceNftId).stakedAmount.toInt(), 0, "unexpected instance stake amount");
+        assertEq(stakingReader.getTargetInfo(instanceNftId).rewardAmount.toInt(), 0, "unexpected instance reward amount");
+        assertEq(stakingReader.getTargetInfo(instanceNftId).lastUpdatedIn.toInt(), block.number, "unexpected instance last updated in");
 
-        assertEq(stakingReader.getStakeBalance(instanceNftId2).toInt(), dipAmount.toInt() + expectedReward.toInt(), "unexpected instance stake amount (2)");
-        assertEq(stakingReader.getRewardBalance(instanceNftId2).toInt(), 0, "unexpected instance reward amount (2)");
-        assertEq(stakingReader.getBalanceUpdatedIn(instanceNftId2).toInt(), block.number, "unexpected instance last updated in (2)");
+        assertEq(stakingReader.getTargetInfo(instanceNftId2).stakedAmount.toInt(), dipAmount.toInt() + expectedReward.toInt(), "unexpected instance stake amount (2)");
+        assertEq(stakingReader.getTargetInfo(instanceNftId2).rewardAmount.toInt(), 0, "unexpected instance reward amount (2)");
+        assertEq(stakingReader.getTargetInfo(instanceNftId2).lastUpdatedIn.toInt(), block.number, "unexpected instance last updated in (2)");
     }
 
     // solhint-disable-next-line func-name-mixedcase
@@ -804,12 +804,12 @@ contract StakingTest is GifTest {
         assertEq(dip.balanceOf(staking.getWallet()), dipAmount.toInt(), "staking wallet: unexpected dip balance (after staking)");
 
         // check stake balance after restake
-        assertEq(stakingReader.getStakeBalance(stakeNftId).toInt(), 0, "unexpected stake amount");
-        assertEq(stakingReader.getRewardBalance(stakeNftId).toInt(), 0, "unexpected reward amount");
-        assertEq(stakingReader.getStakeBalance(stakeNftId2).toInt(), twoThousand.toInt(), "unexpected stake amount (2)");
-        assertEq(stakingReader.getRewardBalance(stakeNftId2).toInt(), 0, "unexpected reward amount (2)");
-        assertEq(stakingReader.getStakeBalance(stakeNftId3).toInt(), oneThousand.toInt(), "unexpected stake amount (3)");
-        assertEq(stakingReader.getRewardBalance(stakeNftId3).toInt(), 0, "unexpected reward amount (3)");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).stakedAmount.toInt(), 0, "unexpected stake amount");
+        assertEq(stakingReader.getStakeInfo(stakeNftId).rewardAmount.toInt(), 0, "unexpected reward amount");
+        assertEq(stakingReader.getStakeInfo(stakeNftId2).stakedAmount.toInt(), twoThousand.toInt(), "unexpected stake amount (2)");
+        assertEq(stakingReader.getStakeInfo(stakeNftId2).rewardAmount.toInt(), 0, "unexpected reward amount (2)");
+        assertEq(stakingReader.getStakeInfo(stakeNftId3).stakedAmount.toInt(), oneThousand.toInt(), "unexpected stake amount (3)");
+        assertEq(stakingReader.getStakeInfo(stakeNftId3).rewardAmount.toInt(), 0, "unexpected reward amount (3)");
 
         // check state info
         IStaking.StakeInfo memory stakeInfo2 = stakingReader.getStakeInfo(stakeNftId2);
@@ -818,13 +818,13 @@ contract StakingTest is GifTest {
         assertEq(stakeInfo3.lockedUntil.toInt(), TimestampLib.blockTimestamp().toInt() + lockingPeriod2.toInt(), "unexpected locked until (3)");
 
         // check accumulated stakes/rewards on instance and instance2
-        assertEq(stakingReader.getStakeBalance(instanceNftId).toInt(), 0, "unexpected instance stake amount");
-        assertEq(stakingReader.getRewardBalance(instanceNftId).toInt(), 0, "unexpected instance reward amount");
-        assertEq(stakingReader.getBalanceUpdatedIn(instanceNftId).toInt(), block.number, "unexpected instance last updated in");
+        assertEq(stakingReader.getTargetInfo(instanceNftId).stakedAmount.toInt(), 0, "unexpected instance stake amount");
+        assertEq(stakingReader.getTargetInfo(instanceNftId).rewardAmount.toInt(), 0, "unexpected instance reward amount");
+        assertEq(stakingReader.getTargetInfo(instanceNftId).lastUpdatedIn.toInt(), block.number, "unexpected instance last updated in");
 
-        assertEq(stakingReader.getStakeBalance(instanceNftId2).toInt(), dipAmount.toInt(), "unexpected instance stake amount (2)");
-        assertEq(stakingReader.getRewardBalance(instanceNftId2).toInt(), 0, "unexpected instance reward amount (2)");
-        assertEq(stakingReader.getBalanceUpdatedIn(instanceNftId2).toInt(), block.number, "unexpected instance last updated in (2)");
+        assertEq(stakingReader.getTargetInfo(instanceNftId2).stakedAmount.toInt(), dipAmount.toInt(), "unexpected instance stake amount (2)");
+        assertEq(stakingReader.getTargetInfo(instanceNftId2).rewardAmount.toInt(), 0, "unexpected instance reward amount (2)");
+        assertEq(stakingReader.getTargetInfo(instanceNftId2).lastUpdatedIn.toInt(), block.number, "unexpected instance last updated in (2)");
     }
 
 

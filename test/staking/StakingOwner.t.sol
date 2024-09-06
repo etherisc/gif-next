@@ -12,6 +12,8 @@ import {IStaking} from "../../contracts/staking/IStaking.sol";
 import {IStakingService} from "../../contracts/staking/IStakingService.sol";
 
 import {Amount, AmountLib} from "../../contracts/type/Amount.sol";
+import {BlocknumberLib} from "../../contracts/type/Blocknumber.sol";
+import {ChainIdLib} from "../../contracts/type/ChainId.sol";
 import {GifTest} from "../base/GifTest.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {PROTOCOL, STAKE, STAKING} from "../../contracts/type/ObjectType.sol";
@@ -55,7 +57,7 @@ contract StakingOwnerTest is GifTest {
 
         // solhint-disable
         console.log("staking seq", registry.STAKING_TOKEN_SEQUENCE_ID());
-        console.log("chain id", block.chainid);
+        console.log("chain id", ChainIdLib.current().toInt());
         console.log("staking id (expected)", chainNft.calculateTokenId(registry.STAKING_TOKEN_SEQUENCE_ID(), block.chainid));
         console.log("staking nft id (actual)", staking.getNftId().toInt());
 
@@ -161,8 +163,9 @@ contract StakingOwnerTest is GifTest {
         vm.expectEmit(address(staking));
         emit IStaking.LogStakingProtocolLockingPeriodSet(
             registry.getProtocolNftId(),
+            newProtocolLockingPeriod,
             protocolLockingPeriod,
-            newProtocolLockingPeriod);
+            BlocknumberLib.current());
 
         vm.startPrank(stakingOwner);
         staking.setProtocolLockingPeriod(newProtocolLockingPeriod);
@@ -182,8 +185,9 @@ contract StakingOwnerTest is GifTest {
         vm.expectEmit(address(staking));
         emit IStaking.LogStakingProtocolRewardRateSet(
             registry.getProtocolNftId(),
+            newProtocolRewardRate,
             protocolRewardRate,
-            newProtocolRewardRate);
+            BlocknumberLib.current());
 
         vm.startPrank(stakingOwner);
         staking.setProtocolRewardRate(newProtocolRewardRate);
@@ -225,7 +229,7 @@ contract StakingOwnerTest is GifTest {
             abi.encodeWithSelector(
                 INftOwnable.ErrorNftOwnableNotOwner.selector, outsider));
 
-        staking.setStakingRate(block.chainid, address(token), newTokenStakingRate);
+        staking.setStakingRate(ChainIdLib.current(), address(token), newTokenStakingRate);
 
         // WHEN + THEN attempt to set staking reader
         StakingReader newStakingReader = new StakingReader(registry);

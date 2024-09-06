@@ -125,7 +125,7 @@ contract StakingSetupTest is GifTest {
 
         IStaking.TargetInfo memory targetInfo = stakingReader.getTargetInfo(protocolNftId);
         assertEq(targetInfo.objectType.toInt(), PROTOCOL().toInt(), "unexpected protocol object type");
-        assertEq(targetInfo.chainId, 1, "unexpected protocol chain id");
+        assertEq(targetInfo.chainId.toInt(), 1, "unexpected protocol chain id");
         assertEq(targetInfo.lockingPeriod.toInt(), TargetManagerLib.getDefaultLockingPeriod().toInt(), "unexpected locking period");
 
         // check instance target
@@ -134,7 +134,7 @@ contract StakingSetupTest is GifTest {
 
         IStaking.TargetInfo memory instanceTargetInfo = stakingReader.getTargetInfo(instanceNftId);
         assertEq(instanceTargetInfo.objectType.toInt(), INSTANCE().toInt(), "unexpected instance object type");
-        assertEq(instanceTargetInfo.chainId, block.chainid, "unexpected instance chain id");
+        assertEq(instanceTargetInfo.chainId.toInt(), block.chainid, "unexpected instance chain id");
         assertEq(instanceTargetInfo.lockingPeriod.toInt(), TargetManagerLib.getDefaultLockingPeriod().toInt(), "unexpected locking period");
     }
 }

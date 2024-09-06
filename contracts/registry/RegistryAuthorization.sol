@@ -267,18 +267,17 @@ contract RegistryAuthorization
 
           _authorize(functions, StakingStore.setStakingRate.selector, "setStakingRate");
           _authorize(functions, StakingStore.createTarget.selector, "createTarget");
-          _authorize(functions, StakingStore.updateTarget.selector, "updateTarget");
+          _authorize(functions, StakingStore.setLockingPeriod.selector, "setLockingPeriod");
+          _authorize(functions, StakingStore.setRewardRate.selector, "setRewardRate");
+          _authorize(functions, StakingStore.setMaxStakedAmount.selector, "setMaxStakedAmount");
           _authorize(functions, StakingStore.increaseReserves.selector, "increaseReserves");
           _authorize(functions, StakingStore.decreaseReserves.selector, "decreaseReserves");
           _authorize(functions, StakingStore.increaseTotalValueLocked.selector, "increaseTotalValueLocked");
           _authorize(functions, StakingStore.decreaseTotalValueLocked.selector, "decreaseTotalValueLocked");
-          _authorize(functions, StakingStore.create.selector, "create");
-          _authorize(functions, StakingStore.update.selector, "update");
-          _authorize(functions, StakingStore.increaseStake.selector, "increaseStake");
+          _authorize(functions, StakingStore.createStake.selector, "createStake");
+          _authorize(functions, StakingStore.increaseStakeBalances.selector, "increaseStakeBalances");
+          _authorize(functions, StakingStore.decreaseStakeBalances.selector, "decreaseStakeBalances");
           _authorize(functions, StakingStore.restakeRewards.selector, "restakeRewards");
-          _authorize(functions, StakingStore.updateRewards.selector, "updateRewards");
-          _authorize(functions, StakingStore.claimUpTo.selector, "claimUpTo");
-          _authorize(functions, StakingStore.unstakeUpTo.selector, "unstakeUpTo");
      }
 }
 

@@ -109,7 +109,7 @@ contract StakingTargetManagementTest is GifTest {
     function test_stakingTargetRefillRewardReservesInstanceOwner() public {
 
         // GIVEN
-        Amount reservesInitialAmount = stakingReader.getRewardBalance(instanceNftId);
+        Amount reservesInitialAmount = stakingReader.getTargetInfo(instanceNftId).rewardAmount;
         assertEq(reservesInitialAmount.toInt(), 0, "instance reward reserves not 0");
 
         address stakingWallet = staking.getWallet();

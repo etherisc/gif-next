@@ -68,7 +68,6 @@ contract StakingService is
         _getStakingServiceStorage()._staking.registerTarget(
             targetNftId,
             INSTANCE(),
-            chainId,
             initialLockingPeriod,
             initialRewardRate);
 

@@ -5,6 +5,7 @@ import {console} from "../../lib/forge-std/src/Test.sol";
 
 import {Amount, AmountLib} from "../../contracts/type/Amount.sol";
 import {Blocknumber, BlocknumberLib} from "../../contracts/type/Blocknumber.sol";
+import {ChainIdLib} from "../../contracts/type/ChainId.sol";
 import {ClaimId} from "../../contracts/type/ClaimId.sol";
 import {GifTest} from "../base/GifTest.sol";
 import {NftId} from "../../contracts/type/NftId.sol";
@@ -28,14 +29,32 @@ contract StakingRateManagement is GifTest {
     UFixed public tokenStakingRate;
 
 
-    function test_stakingRateInitialState() public {
+    function setUp() public override {
+        super.setUp();
+
+        tokenAddress = address(token);
+        stakingStoreAddress = address(staking.getStakingStore());
+
+        // 10 dips per usdc
+        tokenStakingRate = TargetManagerLib.calculateStakingRate(
+            dip,
+            token,
+            UFixedLib.toUFixed(10)); // 10 dips required per usdc token
+        
+        vm.startPrank(registryOwner);
+        staking.setStakingRate(ChainIdLib.current(), tokenAddress, tokenStakingRate);
+        vm.stopPrank();
+    }
+
+
+    function test_stakingRateSetup() public view {
 
         // check token is what we think it is
         assertEq(token.symbol(), "USDC", "token symbol not USDC");
         assertEq(tokenAddress, address(token), "unexpected token address");
 
         // check instance is active target
-        UFixed stakingRate = stakingReader.getStakingRate(block.chainid, tokenAddress);
+        UFixed stakingRate = stakingReader.getTokenInfo(ChainIdLib.current(), tokenAddress).stakingRate;
         assertTrue(stakingRate.gtz(), "staking rate 0");
         assertTrue(stakingRate == tokenStakingRate, "unexpected token staking rate");
     }
@@ -57,17 +76,17 @@ contract StakingRateManagement is GifTest {
         // WHEN
         vm.expectEmit(address(staking));
         emit LogStakingStakingRateSet(
-            block.chainid, 
+            ChainIdLib.current().toInt(), 
             tokenAddress, 
             tokenStakingRate, // old stakig rate
             newStakingRate); // new staking rate
 
         vm.startPrank(registryOwner);
-        staking.setStakingRate(block.chainid, tokenAddress, newStakingRate);
+        staking.setStakingRate(ChainIdLib.current(), tokenAddress, newStakingRate);
         vm.stopPrank();
 
         // THEN
-        UFixed stakingRateFromReader = stakingReader.getStakingRate(block.chainid, tokenAddress);
+        UFixed stakingRateFromReader = stakingReader.getTokenInfo(ChainIdLib.current(), tokenAddress).stakingRate;
         assertTrue(stakingRateFromReader.gtz(), "staking rate (from reader) 0");
         assertTrue(stakingRateFromReader == newStakingRate, "unexpected token staking rate (from reader)");
     }
@@ -134,23 +153,5 @@ contract StakingRateManagement is GifTest {
 
         // check
         assertEq(requiredDipAmount.toInt(), expectedRequiredDipAmount.toInt(), "unexpected required dip amount");
-    }
-
-
-    function setUp() public override {
-        super.setUp();
-
-        tokenAddress = address(token);
-        stakingStoreAddress = address(staking.getStakingStore());
-
-        // 10 dips per usdc
-        tokenStakingRate = TargetManagerLib.calculateStakingRate(
-            dip,
-            token,
-            UFixedLib.toUFixed(10));
-        
-        vm.startPrank(registryOwner);
-        staking.setStakingRate(block.chainid, tokenAddress, tokenStakingRate);
-        vm.stopPrank();
     }
 }

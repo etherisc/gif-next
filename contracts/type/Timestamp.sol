@@ -3,6 +3,8 @@ pragma solidity ^0.8.20;
 
 import {Seconds} from "./Seconds.sol";
 
+/// @dev Target: Cover 10 years with 1 ms block time resolution.
+/// Typical block time resolution is 1s.
 type Timestamp is uint40;
 
 using {

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+/// @dev Target: Cover durations of 1000 years.
 type Seconds is uint40;
 
 using {

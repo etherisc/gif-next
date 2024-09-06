@@ -7,6 +7,8 @@ import {IComponent} from "../shared/IComponent.sol";
 import {IVersionable} from "../upgradeability/IVersionable.sol";
 
 import {Amount} from "../type/Amount.sol";
+import {Blocknumber} from "../type/Blocknumber.sol";
+import {ChainId} from "../type/ChainId.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType} from "../type/ObjectType.sol";
 import {Seconds} from "../type/Seconds.sol";
@@ -19,20 +21,27 @@ interface IStaking is
     IComponent,
     IVersionable
 {
-    // staking rate
-    event LogStakingStakingRateSet(uint256 chainId, address token, UFixed oldStakingRate, UFixed newStakingRate);
 
     // protocol parameters
-    event LogStakingProtocolLockingPeriodSet(NftId targetNftId, Seconds oldLockingPeriod, Seconds lockingPeriod);
-    event LogStakingProtocolRewardRateSet(NftId targetNftId, UFixed oldRewardRate, UFixed rewardRate);
+    event LogStakingProtocolLockingPeriodSet(NftId targetNftId, Seconds newLockingPeriod, Seconds oldLockingPeriod, Blocknumber lastUpdatedIn);
+    event LogStakingProtocolRewardRateSet(NftId targetNftId, UFixed newRewardRate, UFixed oldRewardRate, Blocknumber lastUpdatedIn);
+
+    // token
+    event LogStakingTokenAdded(ChainId chainId, address token);
 
     // targets
-    event LogStakingTargetRegistered(NftId targetNftId, ObjectType objectType, Seconds lockingPeriod, UFixed rewardRate, Amount maxStakedAmount);
+    event LogStakingTargetAdded(NftId targetNftId, ObjectType objectType, Seconds lockingPeriod, UFixed rewardRate, Amount maxStakedAmount);
 
     // target parameters
-    event LogStakingLockingPeriodSet(NftId targetNftId, Seconds oldLockingPeriod, Seconds lockingPeriod);
-    event LogStakingRewardRateSet(NftId targetNftId, UFixed oldRewardRate, UFixed rewardRate);
-    event LogStakingMaxStakedAmountSet(NftId targetNftId, Amount maxStakedAmount);
+    event LogStakingTargetLockingPeriodSet(NftId targetNftId, Seconds oldLockingPeriod, Seconds lockingPeriod);
+    event LogStakingTargetRewardRateSet(NftId targetNftId, UFixed oldRewardRate, UFixed rewardRate);
+    event LogStakingTargetMaxStakedAmountSet(NftId targetNftId, Amount maxStakedAmount);
+
+    // staking rate
+    event LogStakingStakingRateSet(ChainId chainId, address token, UFixed newStakingRate, UFixed oldStakingRate, Blocknumber lastUpdatedIn);
+
+    // stakes
+    event LogStakingStakeRegistered(NftId stakeNftId, NftId targetNftId, Amount stakeAmount);
 
     // modifiers
     error ErrorStakingNotStake(NftId stakeNftId);
@@ -45,7 +54,7 @@ interface IStaking is
     error ErrorStakingNotRegistry(address registry);
 
     // staking rate
-    error ErrorStakingTokenNotRegistered(uint256 chainId, address token);
+    error ErrorStakingTokenNotRegistered(ChainId chainId, address token);
 
     // check dip balance and allowance
     error ErrorStakingDipBalanceInsufficient(address owner, uint256 amount, uint256 dipBalance);
@@ -61,26 +70,56 @@ interface IStaking is
     error ErrorStakingStakeLocked(NftId stakeNftId, Timestamp lockedUntil);
     error ErrorStakingRewardRateTooHigh(NftId targetNftId, UFixed maxRewardRate, UFixed rewardRate);
     error ErrorStakingTargetNotFound(NftId targetNftId);
-    error ErrorStakingTargetTokenNotFound(NftId targetNftId, uint256 chainId, address token);
+    error ErrorStakingTargetTokenNotFound(NftId targetNftId, ChainId chainId, address token);
     error ErrorStakingTargetMaxStakedAmountExceeded(NftId targetNftId, Amount maxStakedAmount, Amount stakedAmount);
 
     error ErrorStakingStakeAmountZero(NftId targetNftId);
 
+    /*
+        Amount is uint96
+        Blocknumber is uint32
+        Timestamp is uint40
+        UFixed is uint160
+
+    */
+
     // info for individual stake
     struct StakeInfo {
         // slot 0
-        Timestamp lockedUntil;
+        Amount stakedAmount; // 96
+        Amount rewardAmount; // 96
+        Timestamp lockedUntil; // 40
+        // slot 1
+        NftId targetNftId; // 96, redundant to parent nft in registry object info
+        Timestamp lastUpdateAt; // 40, needed to update rewards
+        Blocknumber lastUpdatedIn; // 40, needed for traceability
     }
 
     struct TargetInfo {
         // Slot 0
-        UFixed rewardRate;
-        Amount maxStakedAmount;
+        Amount stakedAmount; // 96
+        Amount rewardAmount; // 96
+        Blocknumber lastUpdatedIn; // 40, needed for traceability
         // Slot 1
-        ObjectType objectType;
-        Seconds lockingPeriod;
+        Amount reserveAmount; // 96
+        Amount maxStakedAmount; // 96
+        Seconds lockingPeriod; // 40
+        ObjectType objectType; // 8
         // Slot 2
-        uint256 chainId;
+        UFixed rewardRate; // 160
+        ChainId chainId; // 96 redundant to target nft id
+    }
+
+    struct TvlInfo {
+        // Slot 0
+        Amount tvlAmount; // 96
+        Blocknumber lastUpdatedIn; // 40, needed for traceability
+    }
+
+    struct TokenInfo {
+        // Slot 0
+        UFixed stakingRate; // 160
+        Blocknumber lastUpdatedIn; // 40, needed for traceability
     }
 
     function initializeTokenHandler() external;
@@ -95,7 +134,7 @@ interface IStaking is
 
     /// @dev Set the staking rate for the specified chain and token.
     /// The staking rate defines the amount of staked dips required to back up 1 token of total value locked.
-    function setStakingRate(uint256 chainId, address token, UFixed stakingRate) external;
+    function setStakingRate(ChainId chainId, address token, UFixed stakingRate) external;
 
     /// @dev Sets/updates the staking reader contract. 
     function setStakingReader(StakingReader stakingReader) external;
@@ -104,12 +143,19 @@ interface IStaking is
     /// Defines the max allowance from the staking wallet to the token handler.
     function approveTokenHandler(IERC20Metadata token, Amount amount) external;
 
+    //--- token management -----------------------------------------------//
+
+    /// @dev Registers a token for recording staking rate and total value locked.
+    /// Process flow: Add token by token registry which will trigger this staking contract.
+    function addToken(ChainId chainId, address token) external;
+
     //--- target management ----------------------------------------------//
 
+    /// @dev Register a new target for staking.
+    /// Permissioned: only the staking service may call this function 
     function registerTarget(
         NftId targetNftId,
         ObjectType expectedObjectType,
-        uint256 chainId,
         Seconds initialLockingPeriod,
         UFixed initialRewardRate
     ) external;
@@ -135,6 +181,11 @@ interface IStaking is
     /// permissioned: only the staking service may call this function
     function withdrawRewardReserves(NftId targetNftId, Amount dipAmount) external returns (Amount newBalance);
 
+    /// @dev Register a token for the specified target.
+    /// Used for instance targets. Each product may introduce its own token.
+    /// Permissioned: only the staking service may call this function
+    function addTargetToken(NftId targetNftId, address token) external;
+
     /// @dev increases the total value locked amount for the specified target by the provided token amount.
     /// function is called when a new policy is collateralized.
     /// function restricted to the pool service.
@@ -152,7 +203,7 @@ interface IStaking is
 
     /// @dev creat a new stake info object
     /// permissioned: only staking service may call this function.
-    function createStake(NftId stakeNftId, NftId targetNftId, Amount dipAmount) external;
+    function createStake(NftId stakeNftId, NftId targetNftId, Amount dipAmount) external returns (NftId);
 
     /// @dev increase the staked dip by dipAmount for the specified stake.
     /// staking rewards are updated and added to the staked dips as well.

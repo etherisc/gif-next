@@ -34,6 +34,7 @@ contract TokenRegistry is
 
     struct TokenInfo {
         // slot 0
+        // TODO refactor to ChainId -> reorder to save gas
         uint256 chainId;
         // slot 1
         string symbol;

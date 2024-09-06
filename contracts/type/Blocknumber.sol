@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-type Blocknumber is uint32;
+/// @dev Target: Cover 10 years with 1 ms block times.
+/// Typical block times are a few seconds.
+type Blocknumber is uint40;
 
 using {
     gtBlocknumber as >,
@@ -72,6 +74,19 @@ function blockNumber() view returns (Blocknumber) {
 }
 
 library BlocknumberLib {
+
+    function zero() public pure returns (Blocknumber) {
+        return Blocknumber.wrap(0);
+    }
+
+    function max() public pure returns (Blocknumber) {
+        return Blocknumber.wrap(type(uint40).max);
+    }
+
+    function current() public view returns (Blocknumber) {
+        return Blocknumber.wrap(uint40(block.number));
+    }
+
     /// @dev returns the current Blocknumber
     function currentBlocknumber() public view returns (Blocknumber) {
         return Blocknumber.wrap(uint32(block.number));
@@ -82,7 +97,7 @@ library BlocknumberLib {
         return Blocknumber.unwrap(blocknumber) == 0;
     }
 
-    /// @dev return true iff blocknumber is 0
+    /// @dev return true iff blocknumber is > 0
     function gtz(Blocknumber blocknumber) public pure returns (bool) {
         return Blocknumber.unwrap(blocknumber) > 0;
     }

@@ -3,6 +3,10 @@ pragma solidity ^0.8.20;
 
 import {UFixed, UFixedLib} from "./UFixed.sol";
 
+/// @dev Targets: 100 trillion (worlds GDP) with 6 decimal places
+/// 3 trillion USD (total crypto market cap) with 12 decimal places.
+/// 2023 100 trillion USD => 100e12 * 1e6 = 1e20
+/// 2024 2 trillion crypto market cap => 2e12 * 1e18 = 2e30
 type Amount is uint96;
 
 using {

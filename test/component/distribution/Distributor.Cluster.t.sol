@@ -120,7 +120,7 @@ contract DistributorClusterTest is GifClusterTest {
         allowRenewals = true;
         data = ".";
 
-        vm.startPrank(distOwner);
+        vm.prank(distOwner);
         return dist.createDistributorType(
             name,
             minDiscountPercentage,
@@ -131,7 +131,5 @@ contract DistributorClusterTest is GifClusterTest {
             allowSelfReferrals,
             allowRenewals,
             data);
-        vm.stopPrank();
     }
-
 }

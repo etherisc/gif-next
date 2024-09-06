@@ -14,111 +14,112 @@ import {UFixed, UFixedLib} from "../type/UFixed.sol";
 
 library StakingLib {
 
-    function stake(
-        IRegistry registry,
-        StakingReader stakingReader,
-        StakingStore stakingStore,
-        NftId stakeNftId,
-        Amount stakeAmount
-    )
-        external
-        returns (Amount stakeBalance)
-    {
-        // check that target is active for staking
-        (
-            UFixed rewardRate,
-            Seconds lockingPeriod
-        ) = checkStakeParameters(
-            stakingReader, 
-            stakeNftId);        
+    // TODO cleanup
+    // function stake(
+    //     IRegistry registry,
+    //     StakingReader stakingReader,
+    //     StakingStore stakingStore,
+    //     NftId stakeNftId,
+    //     Amount stakeAmount
+    // )
+    //     external
+    //     returns (Amount stakeBalance)
+    // {
+    //     // check that target is active for staking
+    //     (
+    //         UFixed rewardRate,
+    //         Seconds lockingPeriod
+    //     ) = checkStakeParameters(
+    //         stakingReader, 
+    //         stakeNftId);        
 
-        // calculate new rewards (if any)
-        (
-            Amount rewardIncrementAmount, 
-            Amount currentTotalDipAmount
-        ) = calculateRewardIncrease(
-            stakingReader, 
-            stakeNftId,
-            rewardRate);
+    //     // calculate new rewards (if any)
+    //     (
+    //         Amount rewardIncrementAmount, 
+    //         Amount currentTotalDipAmount
+    //     ) = calculateRewardIncrease(
+    //         stakingReader, 
+    //         stakeNftId,
+    //         rewardRate);
 
-        stakeBalance = currentTotalDipAmount + stakeAmount;
+    //     stakeBalance = currentTotalDipAmount + stakeAmount;
 
-        // TODO check that additional dip, rewards and rewards increment 
-        // are still ok with max target staking amount
-        NftId targetNftId = registry.getParentNftId(stakeNftId);
-        Amount maxStakedAmount = stakingReader.getTargetMaxStakedAmount(targetNftId);
+    //     // TODO check that additional dip, rewards and rewards increment 
+    //     // are still ok with max target staking amount
+    //     NftId targetNftId = registry.getParentNftId(stakeNftId);
+    //     Amount maxStakedAmount = stakingReader.getTargetMaxStakedAmount(targetNftId);
 
-        if (stakeBalance > maxStakedAmount) {
-            revert IStaking.ErrorStakingTargetMaxStakedAmountExceeded(targetNftId, maxStakedAmount, stakeBalance);
-        }
+    //     if (stakeBalance > maxStakedAmount) {
+    //         revert IStaking.ErrorStakingTargetMaxStakedAmountExceeded(targetNftId, maxStakedAmount, stakeBalance);
+    //     }
 
-        stakingStore.restakeRewards(
-            stakeNftId, 
-            targetNftId, 
-            rewardIncrementAmount);
+    //     stakingStore.restakeRewards(
+    //         stakeNftId, 
+    //         targetNftId, 
+    //         rewardIncrementAmount);
 
-        stakingStore.increaseStake(
-            stakeNftId, 
-            targetNftId, 
-            stakeAmount);
+    //     stakingStore.increaseStake(
+    //         stakeNftId, 
+    //         targetNftId, 
+    //         stakeAmount);
 
-        // update locked until with target locking period
-        stakingStore.update(
-            stakeNftId, 
-            IStaking.StakeInfo({
-                lockedUntil: TimestampLib.blockTimestamp().addSeconds(
-                    lockingPeriod)}));
+    //     // update locked until with target locking period
+    //     stakingStore.update(
+    //         stakeNftId, 
+    //         IStaking.StakeInfo({
+    //             lockedUntil: TimestampLib.blockTimestamp().addSeconds(
+    //                 lockingPeriod)}));
 
-    }
+    // }
 
-    function restake(
-        StakingReader stakingReader,
-        StakingStore stakingStore,
-        NftId oldStakeNftId,
-        NftId newStakeNftId
-    )
-        external
-        returns (Amount newStakeBalance)
-    {
-        checkUnstakeParameters(stakingReader, oldStakeNftId);
-        (NftId oldTargetNftId, UFixed oldRewardRate) = stakingReader.getTargetRewardRate(oldStakeNftId);
+    // function restake(
+    //     StakingReader stakingReader,
+    //     StakingStore stakingStore,
+    //     NftId oldStakeNftId,
+    //     NftId newStakeNftId
+    // )
+    //     external
+    //     returns (Amount newStakeBalance)
+    // {
+    //     checkUnstakeParameters(stakingReader, oldStakeNftId);
+    //     (NftId oldTargetNftId, UFixed oldRewardRate) = stakingReader.getTargetRewardRate(oldStakeNftId);
         
-        // calculate new rewards update and unstake full amount
-        (
-            Amount rewardIncrementAmount,
-        ) = calculateRewardIncrease(
-            stakingReader, 
-            oldStakeNftId,
-            oldRewardRate);
-        stakingStore.updateRewards(
-            oldStakeNftId, 
-            oldTargetNftId, 
-            rewardIncrementAmount);
-        (
-            Amount unstakedAmount, 
-            Amount rewardsAmount
-        ) = stakingStore.unstakeUpTo(
-            oldStakeNftId,
-            oldTargetNftId,
-            AmountLib.max(), // unstake all stakes
-            AmountLib.max()); // claim all rewards
+    //     // calculate new rewards update and unstake full amount
+    //     (
+    //         Amount rewardIncrementAmount,
+    //     ) = calculateRewardIncrease(
+    //         stakingReader, 
+    //         oldStakeNftId,
+    //         oldRewardRate);
+    //     stakingStore.updateRewards(
+    //         oldStakeNftId, 
+    //         oldTargetNftId, 
+    //         rewardIncrementAmount);
+    //     (
+    //         Amount unstakedAmount, 
+    //         Amount rewardsAmount
+    //     ) = stakingStore.unstakeUpTo(
+    //         oldStakeNftId,
+    //         oldTargetNftId,
+    //         AmountLib.max(), // unstake all stakes
+    //         AmountLib.max()); // claim all rewards
 
-        // calculate full restake amount
-        newStakeBalance = unstakedAmount + rewardsAmount;
-        NftId newTargetNftId = stakingReader.getTargetNftId(newStakeNftId);
+    //     // calculate full restake amount
+    //     newStakeBalance = unstakedAmount + rewardsAmount;
+    //     NftId newTargetNftId = stakingReader.getTargetNftId(newStakeNftId);
         
-        // create new staking target and increase stake
-        Timestamp newLockedUntil = _checkCreateParameters(stakingReader, newTargetNftId, newStakeBalance);
-        stakingStore.create(
-            newStakeNftId, 
-            IStaking.StakeInfo({
-                    lockedUntil: newLockedUntil
-                }));
-        stakingStore.increaseStake(
-            newStakeNftId, 
-            newTargetNftId, 
-            newStakeBalance);
-    }
+    //     // create new staking target and increase stake
+    //     Timestamp newLockedUntil = _checkCreateParameters(stakingReader, newTargetNftId, newStakeBalance);
+    //     stakingStore.create(
+    //         newStakeNftId, 
+    //         IStaking.StakeInfo({
+    //                 lockedUntil: newLockedUntil
+    //             }));
+    //     stakingStore.increaseStake(
+    //         newStakeNftId, 
+    //         newTargetNftId, 
+    //         newStakeBalance);
+    // }
 
     function checkCreateParameters(
         StakingReader stakingReader,
