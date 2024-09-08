@@ -252,7 +252,7 @@ contract StakingService is
         // collect staked dip by staking
         if (dipAmount.gtz()) {
             emit LogStakingServiceStakeIncreased(stakeNftId, stakeOwner, dipAmount, stakeBalance);
-        $._tokenHandler.pullToken(
+            $._tokenHandler.pullToken(
                 stakeOwner,
                 dipAmount);
         }

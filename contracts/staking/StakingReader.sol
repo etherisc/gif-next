@@ -147,7 +147,7 @@ contract StakingReader is
 
     function getRequiredStakeBalance(NftId targetNftId) external view returns (Amount requiredStakedAmount) {
         // TODO implement
-        return AmountLib.zero();
+        return _store.getRequiredStakeBalance(targetNftId);
     }
 
     // TODO cleanup

@@ -11,7 +11,7 @@ import {IVersionable} from "../upgradeability/IVersionable.sol";
 
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {Blocknumber} from "../type/Blocknumber.sol";
-import {ChainId} from "../type/ChainId.sol";
+import {ChainId, ChainIdLib} from "../type/ChainId.sol";
 import {Component} from "../shared/Component.sol";
 import {IComponent} from "../shared/IComponent.sol";
 import {IComponentService} from "../shared/IComponentService.sol";
@@ -189,6 +189,7 @@ contract Staking is
     function setStakingReader(StakingReader stakingReader)
         external
         virtual
+        restricted()
         onlyOwner()
     {
         if(stakingReader.getStaking() != IStaking(this)) {
@@ -324,8 +325,17 @@ contract Staking is
         restricted()
         onlyTarget(targetNftId)
     {
-        _getStakingStorage()._store.addTargetToken(targetNftId, token);
-        // TODO add logging
+        StakingStorage storage $ = _getStakingStorage();
+        ChainId chainId = ChainIdLib.fromNftId(targetNftId);
+        if ($._store.getTokenInfo(chainId, token).lastUpdatedIn.eqz()) {
+            $._store.addToken(chainId, token);
+
+            emit LogStakingTokenAdded(chainId, token);
+        }
+        
+        $._store.addTargetToken(targetNftId, token);
+
+        emit LogStakingTargetTokenAdded(targetNftId, chainId, token);
     }
 
 
@@ -339,7 +349,7 @@ contract Staking is
         StakingStorage storage $ = _getStakingStorage();
         newBalance = $._store.increaseTotalValueLocked(targetNftId, token, amount);
 
-        // TODO add logging
+        emit LogStakingTotalValueLockedIncreased(targetNftId, token, amount, newBalance);
     }
 
 
@@ -353,7 +363,7 @@ contract Staking is
         StakingStorage storage $ = _getStakingStorage();
         newBalance = $._store.decreaseTotalValueLocked(targetNftId, token, amount);
 
-        // TODO add logging
+        emit LogStakingTotalValueLockedDecreased(targetNftId, token, amount, newBalance);
     }
 
 
@@ -404,14 +414,29 @@ contract Staking is
         virtual
         restricted() // only staking service
         onlyStake(stakeNftId)
-        returns (Amount stakeBalance)
+        returns (Amount newStakeBalance)
     {
         StakingStorage storage $ = _getStakingStorage();
+
+        // update rewards since last update
+        NftId targetNftId = $._reader.getTargetNftId(stakeNftId);
+        TargetInfo memory targetInfo = $._reader.getTargetInfo(targetNftId);
+        (Amount rewardIncrement, ) = StakingLib.calculateRewardIncrease(
+            $._reader, 
+            stakeNftId,
+            targetInfo.rewardRate);
+
+        // calculate additional locking period if applicable
+        Seconds additionalLockingPeriod = SecondsLib.zero();
+        if (stakeAmount.gtz()) {
+            additionalLockingPeriod = targetInfo.lockingPeriod;
+        }
+
         $._store.increaseStakeBalances(
             stakeNftId,
             stakeAmount,
-            AmountLib.zero(),
-            SecondsLib.zero()); // TODO define effect on locking period
+            rewardIncrement,
+            additionalLockingPeriod); // TODO define effect on locking period
 
         // TODO add logging
     }
@@ -432,13 +457,20 @@ contract Staking is
         (
             unstakedAmount,
             rewardsClaimedAmount
-        ) = _unstakeAll($, stakeNftId);
+        ) = _unstakeAll(
+            $, 
+            stakeNftId,
+            true); // claim rewards
 
         // TODO add logging
     }
 
 
-    function _unstakeAll(StakingStorage storage $, NftId stakeNftId)
+    function _unstakeAll(
+        StakingStorage storage $, 
+        NftId stakeNftId,
+        bool claimRewards
+    )
         internal
         virtual
         returns (
@@ -452,7 +484,7 @@ contract Staking is
         }
 
         // update rewards since last update
-        NftId targetNftId = _updateRewards($._reader, $._store, stakeNftId);
+        _updateRewards($._reader, $._store, stakeNftId);
 
         (
             unstakedAmount, 
@@ -460,7 +492,8 @@ contract Staking is
         ) = $._store.decreaseStakeBalances(
             stakeNftId,
             AmountLib.max(), // unstake all stakes
-            AmountLib.max()); // claim all rewards
+            AmountLib.max(), // claim all rewards
+            claimRewards);
     }
 
 
@@ -472,6 +505,7 @@ contract Staking is
         virtual
         restricted() // only staking service
         onlyStakeOwner(stakeNftId)
+        onlyTarget(newTargetNftId)
         returns (
             NftId newStakeNftId,
             Amount newStakedAmount
@@ -483,11 +517,17 @@ contract Staking is
         (
             Amount unstakedAmount,
             Amount rewardsClaimedAmount
-        ) = _unstakeAll($, stakeNftId);
+        ) = _unstakeAll(
+            $, 
+            stakeNftId, 
+            false); // do not claim rewards, as rewards are restaked
 
         newStakeNftId = $._stakingService.createStakeObject(newTargetNftId, stakeOwner);
         newStakedAmount = unstakedAmount + rewardsClaimedAmount;
-        $._store.createStake(newStakeNftId, newTargetNftId, newStakedAmount);
+        $._store.createStake(
+            newStakeNftId, 
+            newTargetNftId, 
+            newStakedAmount);
 
         emit LogStakingStakeRestaked(newStakeNftId, newTargetNftId, newStakedAmount, stakeOwner, stakeNftId);
     }
@@ -515,13 +555,14 @@ contract Staking is
         StakingStorage storage $ = _getStakingStorage();
 
         // update rewards since last update
-        NftId targetNftId = _updateRewards($._reader, $._store, stakeNftId);
+        _updateRewards($._reader, $._store, stakeNftId);
 
         // unstake all available rewards
         (, rewardsClaimedAmount) = $._store.decreaseStakeBalances(
             stakeNftId,
             AmountLib.zero(), // unstake dip amount
-            AmountLib.max()); // unstake reward amount
+            AmountLib.max(), // unstake reward amount
+            true); // claim rewards
 
         // TODO add logging
     }
@@ -568,7 +609,6 @@ contract Staking is
     //--- internal functions ------------------------------------------------//
 
 
-
     function _updateRewards(
         StakingReader reader,
         StakingStore store,
@@ -576,21 +616,21 @@ contract Staking is
     )
         internal
         virtual
-        returns (NftId targetNftId)
     {
-        UFixed rewardRate;
+        (, UFixed rewardRate) = reader.getTargetRewardRate(stakeNftId);
 
-        (targetNftId, rewardRate) = reader.getTargetRewardRate(stakeNftId);
         (Amount rewardIncrement, ) = StakingLib.calculateRewardIncrease(
             reader, 
             stakeNftId,
             rewardRate);
 
-        store.increaseStakeBalances(
+        (, Amount newRewardAmount,) = store.increaseStakeBalances(
             stakeNftId, 
             AmountLib.zero(),
             rewardIncrement,
             SecondsLib.zero());
+
+        emit LogStakingStakeRewardsUpdated(stakeNftId, rewardIncrement, newRewardAmount);
     }
 
 

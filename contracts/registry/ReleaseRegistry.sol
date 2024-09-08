@@ -14,7 +14,7 @@ import {IServiceAuthorization} from "../authorization/IServiceAuthorization.sol"
 
 import {ContractLib} from "../shared/ContractLib.sol";
 import {NftId} from "../type/NftId.sol";
-import {ObjectType, ObjectTypeLib, POOL, RELEASE, REGISTRY, SERVICE, STAKING} from "../type/ObjectType.sol";
+import {ObjectType, ObjectTypeLib, COMPONENT, POOL, RELEASE, REGISTRY, SERVICE, STAKING} from "../type/ObjectType.sol";
 import {RegistryAdmin} from "./RegistryAdmin.sol";
 import {Registry} from "./Registry.sol";
 import {ReleaseAdmin} from "./ReleaseAdmin.sol";
@@ -256,6 +256,11 @@ contract ReleaseRegistry is
         service = _registry.getServiceAddress(STAKING(), release);
         if(service != address(0)) {
             _registryAdmin.grantServiceRoleForAllVersions(IService(service), STAKING());
+        }
+
+        service = _registry.getServiceAddress(COMPONENT(), release);
+        if(service != address(0)) {
+            _registryAdmin.grantServiceRoleForAllVersions(IService(service), COMPONENT());
         }
 
         service = _registry.getServiceAddress(POOL(), release);

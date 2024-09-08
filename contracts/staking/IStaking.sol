@@ -34,6 +34,11 @@ interface IStaking is
 
     // token
     event LogStakingTokenAdded(ChainId chainId, address token);
+    event LogStakingTargetTokenAdded(NftId targetNftId, ChainId chainId, address token);
+
+    // total value locked
+    event LogStakingTotalValueLockedIncreased(NftId targetNftId, address token, Amount amount, Amount newBalance);
+    event LogStakingTotalValueLockedDecreased(NftId targetNftId, address token, Amount amount, Amount newBalance);
 
     // targets
     event LogStakingTargetCreated(NftId targetNftId, ObjectType objectType, Seconds lockingPeriod, UFixed rewardRate, Amount maxStakedAmount);
@@ -45,6 +50,7 @@ interface IStaking is
 
     // stakes
     event LogStakingStakeRegistered(NftId stakeNftId, NftId targetNftId, Amount stakeAmount);
+    event LogStakingStakeRewardsUpdated(NftId stakeNftId, Amount rewardIncrementAmount, Amount rewardBalanceAmount);
     event LogStakingStakeRestaked(NftId stakeNftId, NftId targetNftId, Amount stakeAmount, address owner, NftId oldStakeNftId);
 
     // modifiers

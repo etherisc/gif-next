@@ -12,8 +12,8 @@ import {IStaking} from "../../contracts/staking/IStaking.sol";
 import {IStakingService} from "../../contracts/staking/IStakingService.sol";
 
 import {Amount, AmountLib} from "../../contracts/type/Amount.sol";
-import {BlocknumberLib} from "../../contracts/type/Blocknumber.sol";
-import {ChainIdLib} from "../../contracts/type/ChainId.sol";
+import {Blocknumber, BlocknumberLib} from "../../contracts/type/Blocknumber.sol";
+import {ChainId, ChainIdLib} from "../../contracts/type/ChainId.sol";
 import {GifTest} from "../base/GifTest.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {PROTOCOL, STAKE, STAKING} from "../../contracts/type/ObjectType.sol";
@@ -25,6 +25,7 @@ import {TargetManagerLib} from "../../contracts/staking/TargetManagerLib.sol";
 import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
 import {TokenHandler} from "../../contracts/shared/TokenHandler.sol";
 import {UFixed, UFixedLib} from "../../contracts/type/UFixed.sol";
+import {VersionPart} from "../../contracts/type/Version.sol";
 
 
 contract StakingOwnerTest is GifTest {
@@ -160,12 +161,14 @@ contract StakingOwnerTest is GifTest {
         assertTrue(newProtocolLockingPeriod > protocolLockingPeriod, "new locking period not greater than default locking period");
 
         // WHEN
+        NftId protocolNftId = registry.getProtocolNftId();
+        Blocknumber currentBlock = BlocknumberLib.current();
         vm.expectEmit(address(staking));
         emit IStaking.LogStakingProtocolLockingPeriodSet(
-            registry.getProtocolNftId(),
+            protocolNftId,
             newProtocolLockingPeriod,
             protocolLockingPeriod,
-            BlocknumberLib.current());
+            currentBlock);
 
         vm.startPrank(stakingOwner);
         staking.setProtocolLockingPeriod(newProtocolLockingPeriod);
@@ -182,12 +185,14 @@ contract StakingOwnerTest is GifTest {
         assertTrue(newProtocolRewardRate > protocolRewardRate, "new reward rate not greater than default reward rate");
 
         // WHEN
+        NftId protocolNftId = registry.getProtocolNftId();
+        Blocknumber currentBlock = BlocknumberLib.current();
         vm.expectEmit(address(staking));
         emit IStaking.LogStakingProtocolRewardRateSet(
-            registry.getProtocolNftId(),
+            protocolNftId,
             newProtocolRewardRate,
             protocolRewardRate,
-            BlocknumberLib.current());
+            currentBlock);
 
         vm.startPrank(stakingOwner);
         staking.setProtocolRewardRate(newProtocolRewardRate);
@@ -225,11 +230,12 @@ contract StakingOwnerTest is GifTest {
         staking.setProtocolRewardRate(newProtocolRewardRate);
 
         // WHEN + THEN attempt to set staking rate
+        ChainId currentChainId = ChainIdLib.current();
         vm.expectRevert(
             abi.encodeWithSelector(
                 INftOwnable.ErrorNftOwnableNotOwner.selector, outsider));
 
-        staking.setStakingRate(ChainIdLib.current(), address(token), newTokenStakingRate);
+        staking.setStakingRate(currentChainId, address(token), newTokenStakingRate);
 
         // WHEN + THEN attempt to set staking reader
         StakingReader newStakingReader = new StakingReader(registry);
@@ -238,6 +244,14 @@ contract StakingOwnerTest is GifTest {
                 INftOwnable.ErrorNftOwnableNotOwner.selector, outsider));
 
         staking.setStakingReader(newStakingReader);
+
+        // WHEN + THEN attempt to set staking servie
+        VersionPart currentRelase = registry.getLatestRelease();
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                INftOwnable.ErrorNftOwnableNotOwner.selector, outsider));
+
+        staking.setStakingService(currentRelase);
 
         // WHEN + THEN attempt to approve token handler
         Amount newApproveAmount = AmountLib.toAmount(100);

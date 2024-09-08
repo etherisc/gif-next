@@ -6,7 +6,7 @@ import {IRegistry} from "../registry/IRegistry.sol";
 import {IStaking} from "../staking/IStaking.sol";
 
 import {Authorization} from "../authorization/Authorization.sol";
-import {POOL, REGISTRY, STAKING} from "../../contracts/type/ObjectType.sol";
+import {COMPONENT, POOL, REGISTRY, STAKING} from "../../contracts/type/ObjectType.sol";
 import {PUBLIC_ROLE} from "../type/RoleId.sol";
 import {ReleaseRegistry} from "./ReleaseRegistry.sol";
 import {RegistryAdmin} from "./RegistryAdmin.sol";
@@ -21,7 +21,6 @@ import {VersionPartLib} from "../type/Version.sol";
 contract RegistryAuthorization
      is Authorization
 {
-
      /// @dev gif core roles
      string public constant GIF_ADMIN_ROLE_NAME = "GifAdminRole";
      string public constant GIF_MANAGER_ROLE_NAME = "GifManagerRole";
@@ -76,6 +75,14 @@ contract RegistryAuthorization
                     roleType: RoleType.Core,
                     maxMemberCount: maxReleases, 
                     name: STAKING_SERVICE_ROLE_NAME}));
+
+          _addRole(
+               RoleIdLib.toGenericServiceRoleId(COMPONENT()), 
+               _toRoleInfo({
+                    adminRoleId: ADMIN_ROLE(),
+                    roleType: RoleType.Core,
+                    maxMemberCount: maxReleases, 
+                    name: COMPONENT_SERVICE_ROLE_NAME}));
 
           _addRole(
                RoleIdLib.toGenericServiceRoleId(POOL()), 
@@ -238,6 +245,13 @@ contract RegistryAuthorization
           // pool service role
           functions = _authorizeForTarget(
                STAKING_TARGET_NAME, 
+               RoleIdLib.toGenericServiceRoleId(COMPONENT()));
+
+          _authorize(functions, IStaking.addTargetToken.selector, "addTargetToken");
+
+          // pool service role
+          functions = _authorizeForTarget(
+               STAKING_TARGET_NAME, 
                RoleIdLib.toGenericServiceRoleId(POOL()));
 
           _authorize(functions, IStaking.increaseTotalValueLocked.selector, "increaseTotalValueLocked");
@@ -276,6 +290,7 @@ contract RegistryAuthorization
                STAKING_STORE_TARGET_NAME, 
                getTargetRole(getTarget(STAKING_TARGET_NAME)));
 
+          _authorize(functions, StakingStore.addTargetToken.selector, "addTargetToken");
           _authorize(functions, StakingStore.addToken.selector, "addToken");
           _authorize(functions, StakingStore.setStakingRate.selector, "setStakingRate");
           _authorize(functions, StakingStore.createTarget.selector, "createTarget");

@@ -198,8 +198,9 @@ contract RegistryTokenWhitelisting is GifTest {
         tokenRegistry.registerRemoteToken(quakChainId, quakAddress, quakDecimals, quakSymbol);
 
         // attempt to register quak token for currentChainId 0
+        ChainId zeroChainId = ChainIdLib.zero();
         vm.expectRevert(TokenRegistry.ErrorTokenRegistryChainIdZero.selector);
-        tokenRegistry.registerRemoteToken(ChainIdLib.zero(), quakAddress, quakDecimals, quakSymbol);
+        tokenRegistry.registerRemoteToken(zeroChainId, quakAddress, quakDecimals, quakSymbol);
 
         // attempt to register quak token for currentChainId 0
         vm.expectRevert(TokenRegistry.ErrorTokenRegistryTokenAddressZero.selector);

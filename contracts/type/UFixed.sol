@@ -18,6 +18,7 @@ using {
     eqUFixed as ==,
     neUFixed as !=,
     UFixedLib.gt,
+    UFixedLib.eqz,
     UFixedLib.gtz,
     UFixedLib.toInt,
     UFixedLib.toInt1000

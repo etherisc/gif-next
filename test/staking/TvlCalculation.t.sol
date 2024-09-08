@@ -21,8 +21,8 @@ import {UFixed, UFixedLib} from "../../contracts/type/UFixed.sol";import {Versio
 contract TvlCalculation is GifTest {
 
     // TODO find better ways than to copy paste events from StakingStore contract
-    event LogStakingStoreTotalValueLockedIncreased(NftId targetNftId, address token, Amount amount, Amount newBalance, Blocknumber lastUpdatedIn);
-    event LogStakingStoreTotalValueLockedDecreased(NftId targetNftId, address token, Amount amount, Amount newBalance, Blocknumber lastUpdatedIn);
+    event LogStakingTotalValueLockedIncreased(NftId targetNftId, address token, Amount amount, Amount newBalance);
+    event LogStakingTotalValueLockedDecreased(NftId targetNftId, address token, Amount amount, Amount newBalance);
 
     uint256 public constant BUNDLE_CAPITAL = 20000;
     uint256 public constant SUM_INSURED = 1000;
@@ -34,6 +34,31 @@ contract TvlCalculation is GifTest {
     address public tokenAddress;
     address public stakingStoreAddress;
     UFixed public stakingRate;
+
+
+    function setUp() public override {
+        super.setUp();
+
+        _prepareProduct();  
+
+        // create risk
+        vm.startPrank(productOwner);
+        riskId = product.createRisk("Risk_1", "");
+        vm.stopPrank();
+
+        // fund customer
+        _fundAccount(customer, CUSTOMER_FUNDS * 10 ** token.decimals());
+
+        tokenAddress = address(token);
+        stakingStoreAddress = address(staking.getStakingStore());
+
+        // for every usdc token 10 dip tokens must be staked
+        stakingRate = UFixedLib.toUFixed(1, int8(dip.decimals() - token.decimals() + 1));
+
+        vm.startPrank(stakingOwner);
+        staking.setStakingRate(ChainIdLib.current(), tokenAddress, stakingRate);
+        vm.stopPrank();
+    }
 
 
     function test_stakingTvlCalculationInitialState() public {
@@ -99,13 +124,12 @@ contract TvlCalculation is GifTest {
         // check tvl log entry from staking
         Blocknumber currentBlocknumber = BlocknumberLib.current();
         Timestamp currentTimestamp = TimestampLib.current();
-        vm.expectEmit(stakingStoreAddress);
-        emit LogStakingStoreTotalValueLockedIncreased(
+        vm.expectEmit(address(staking));
+        emit LogStakingTotalValueLockedIncreased(
             instanceNftId, 
             tokenAddress, 
             sumInsuredAmount, // amount
-            sumInsuredAmount, // new balance
-            currentBlocknumber);
+            sumInsuredAmount); // new balance
 
         // collateralize application
         _collateralize(policyNftId, false, currentTimestamp);
@@ -169,13 +193,12 @@ contract TvlCalculation is GifTest {
         // check tvl decrease log emission
         Blocknumber currentBlocknumber = BlocknumberLib.current();
         Amount zeroAmount = AmountLib.zero();
-        vm.expectEmit(stakingStoreAddress);
-        emit LogStakingStoreTotalValueLockedDecreased(
+        vm.expectEmit(address(staking));
+        emit LogStakingTotalValueLockedDecreased(
             instanceNftId, 
             tokenAddress, 
             sumInsuredAmount, // amount
-            zeroAmount, // new balance
-            currentBlocknumber);
+            zeroAmount); // new balance
 
         _closePolicy(policyNftId);
 
@@ -304,13 +327,12 @@ contract TvlCalculation is GifTest {
         // WHEN processing the payout (includes actual payout token flow)
         Blocknumber currentBlocknumber = BlocknumberLib.current();
         Amount newBalanceAmount = sumInsuredAmount - claimAmount;
-        vm.expectEmit(stakingStoreAddress);
-        emit LogStakingStoreTotalValueLockedDecreased(
+        vm.expectEmit(address(staking));
+        emit LogStakingTotalValueLockedDecreased(
             instanceNftId, 
             tokenAddress, 
             claimAmount, // amount
-            newBalanceAmount, // new balance
-            currentBlocknumber);
+            newBalanceAmount); // new balance
 
         product.processPayout(policyNftId, payoutId);
 
@@ -329,30 +351,6 @@ contract TvlCalculation is GifTest {
             expectedRequiredStakeBalance.toInt(), 
             "unexpected required stake balance (after payout processing)");
 
-    }
-
-    function setUp() public override {
-        super.setUp();
-
-        _prepareProduct();  
-
-        // create risk
-        vm.startPrank(productOwner);
-        riskId = product.createRisk("Risk_1", "");
-        vm.stopPrank();
-
-        // fund customer
-        _fundAccount(customer, CUSTOMER_FUNDS * 10 ** token.decimals());
-
-        tokenAddress = address(token);
-        stakingStoreAddress = address(staking.getStakingStore());
-
-        // for every usdc token 10 dip tokens must be staked
-        stakingRate = UFixedLib.toUFixed(1, int8(dip.decimals() - token.decimals() + 1));
-
-        vm.startPrank(stakingOwner);
-        staking.setStakingRate(ChainIdLib.current(), tokenAddress, stakingRate);
-        vm.stopPrank();
     }
 
 

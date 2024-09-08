@@ -64,7 +64,7 @@ contract Instance is
         IRegistry registry, 
         VersionPart release,
         address initialOwner,
-        bool tokenRegistryDisabled
+        bool tokenRegistryDisabled // only disable for testing
     ) 
         external 
         initializer()

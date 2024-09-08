@@ -41,7 +41,7 @@ contract StakingStore is
 
     // in/decreasing reward reserves
     error ErrorStakingStoreNotTarget(NftId targetNftId);
-    error ErrorStakingStoreRewardReservesInsufficient(NftId targetNftId, Amount reservesBalanceAmount, Amount dipAmount);    
+    error ErrorStakingStoreRewardReservesInsufficient(NftId targetNftId, Amount reserveAmount, Amount claimedAmount);
 
     // stakes
     error ErrorStakingStoreStakesExceedingTargetMaxAmount(NftId targetNftId, Amount maxStakedAmount, Amount newIStaking);
@@ -111,11 +111,12 @@ contract StakingStore is
             revert ErrorStakingStoreTokenAlreadyAdded(chainId, token);
         }
 
-        // check if token is registered with token registry
-        TokenRegistry tokenRegistry = TokenRegistry(_registry.getTokenRegistryAddress());
-        if (!tokenRegistry.isRegistered(chainId, token)) {
-            revert ErrorStakingStoreTokenNotRegistered(chainId, token);
-        }
+        // TODO cleanup
+        // // check if token is registered with token registry
+        // TokenRegistry tokenRegistry = TokenRegistry(_registry.getTokenRegistryAddress());
+        // if (!tokenRegistry.isRegistered(chainId, token)) {
+        //     revert ErrorStakingStoreTokenNotRegistered(chainId, token);
+        // }
 
         info.stakingRate = UFixedLib.zero();
         info.lastUpdatedIn = BlocknumberLib.current();
@@ -421,7 +422,7 @@ contract StakingStore is
 
         // effects
         // update target
-        targetInfo.stakedAmount = stakedAmount;
+        targetInfo.stakedAmount = targetInfo.stakedAmount + stakedAmount;
         targetInfo.lastUpdatedIn = BlocknumberLib.current();
 
         // update stake
@@ -442,6 +443,11 @@ contract StakingStore is
     )
         external
         restricted()
+        returns (
+            Amount newStakedAmount,
+            Amount newRewardAmount,
+            Timestamp newLockedUntil
+        )
     {
         // checks
         IStaking.StakeInfo storage stakeInfo = _getAndVerifyStake(stakeNftId);
@@ -455,14 +461,18 @@ contract StakingStore is
         targetInfo.lastUpdatedIn = BlocknumberLib.current();
 
         // update stake
-        stakeInfo.stakedAmount = stakeInfo.stakedAmount + stakedAmount;
-        stakeInfo.rewardAmount = stakeInfo.rewardAmount + rewardAmount;
+        newStakedAmount = stakeInfo.stakedAmount + stakedAmount;
+        newRewardAmount = stakeInfo.rewardAmount + rewardAmount;
+        newLockedUntil = stakeInfo.lockedUntil;
+        stakeInfo.stakedAmount = newStakedAmount;
+        stakeInfo.rewardAmount = newRewardAmount;
         stakeInfo.lastUpdateAt = TimestampLib.current();
         stakeInfo.lastUpdatedIn = BlocknumberLib.current();
 
         // increase locked until if applicable
         if (additionalLockingPeriod.gtz()) {
-            stakeInfo.lockedUntil.addSeconds(additionalLockingPeriod);
+            newLockedUntil = stakeInfo.lockedUntil.addSeconds(additionalLockingPeriod);
+            stakeInfo.lockedUntil = newLockedUntil;
         }
     }
 
@@ -470,7 +480,8 @@ contract StakingStore is
     function decreaseStakeBalances(
         NftId stakeNftId, 
         Amount maxUnstakedAmount,
-        Amount maxClaimAmount
+        Amount maxClaimAmount,
+        bool claimRewards
     )
         external
         restricted()
@@ -490,7 +501,19 @@ contract StakingStore is
         // update target
         targetInfo.stakedAmount = targetInfo.stakedAmount - unstakedAmount;
         targetInfo.rewardAmount = targetInfo.rewardAmount - claimedAmount;
-        targetInfo.reserveAmount = targetInfo.reserveAmount - claimedAmount;
+
+        // update reserves if rewards are claimed
+        if (claimRewards) {
+            if (claimedAmount > targetInfo.reserveAmount) {
+                revert ErrorStakingStoreRewardReservesInsufficient(
+                    stakeInfo.targetNftId,
+                    targetInfo.reserveAmount,
+                    claimedAmount);
+            }
+
+            targetInfo.reserveAmount = targetInfo.reserveAmount - claimedAmount;
+        }
+
         targetInfo.lastUpdatedIn = BlocknumberLib.current();
 
         // update stake
@@ -546,11 +569,38 @@ contract StakingStore is
         return _reader;
     }
 
-    function exists(NftId stakeNftId) external view returns (bool) { return exists(stakeNftId.toKey32(STAKE())); }
+
+    function exists(NftId stakeNftId) external view returns (bool) { 
+        return _stakeInfo[stakeNftId].lastUpdatedIn.gtz();
+    }
 
 
-    function getRequiredStakeBalance(NftId nftId) external view returns (Amount requiredAmount) { 
-        // TODO implement
+    function getRequiredStakeBalance(NftId targetNftId)
+        external
+        view
+        returns (Amount requiredStakedAmount)
+    {
+        address [] memory tokens = _targetToken[targetNftId];
+        if (tokens.length == 0) {
+            return AmountLib.zero();
+        }
+
+        requiredStakedAmount = AmountLib.zero();
+        ChainId targetChainId = _targetInfo[targetNftId].chainId;
+        address token;
+        Amount tvlAmount;
+        UFixed stakingRate;
+
+        for (uint256 i = 0; i < tokens.length; i++) {
+            token = tokens[i];
+            tvlAmount = _tvlInfo[targetNftId][token].tvlAmount;
+            if (tvlAmount.eqz()) { continue; }
+
+            stakingRate = _tokenInfo[targetChainId][token].stakingRate;
+            if (stakingRate.eqz()) { continue; }
+
+            requiredStakedAmount = requiredStakedAmount + tvlAmount.multiplyWith(stakingRate);
+        }
     }
 
 
@@ -569,6 +619,7 @@ contract StakingStore is
             stakeInfo.rewardAmount, 
             stakeInfo.lastUpdateAt);
     }
+
 
     /// @dev Returns true iff current stake amount is still locked
     function isStakeLocked(NftId stakeNftId) external view returns (bool) { 

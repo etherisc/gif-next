@@ -48,6 +48,8 @@ contract DistributorClusterTest is GifClusterTest {
         DistributorType type2 = _createDistributorType(myDistribution2, instanceOwner);
 
         // THEN
+        address distribution1Owner = myDistribution1.getOwner();
+        address newDistributor = makeAddr("newDistributor");
         vm.expectRevert(abi.encodeWithSelector(
             IDistributionService.ErrorDistributionServiceDistributorTypeDistributionMismatch.selector, 
             type2,
@@ -55,7 +57,8 @@ contract DistributorClusterTest is GifClusterTest {
             myDistributionNftId1));
 
         // WHEN
-        myDistribution1.createDistributor(makeAddr("distributor"), type2, "");
+        vm.prank(distribution1Owner);
+        myDistribution1.createDistributor(newDistributor, type2, "");
     }
 
     function test_changeDistributorType_typeFromOtherProductCluster() public {
