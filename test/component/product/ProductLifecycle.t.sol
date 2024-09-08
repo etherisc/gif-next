@@ -83,7 +83,7 @@ contract TestProductLifecycle
         assertEq(policyHolder.expiredAt(policyNftId).toInt(), 0, "unexpected expired at (holder, before)");
 
         // WHEN
-        Timestamp activateAt = TimestampLib.blockTimestamp().addSeconds(SecondsLib.toSeconds(42));
+        Timestamp activateAt = TimestampLib.current().addSeconds(SecondsLib.toSeconds(42));
         _createAndActivate(policyNftId, activateAt);
 
         // THEN
@@ -99,7 +99,7 @@ contract TestProductLifecycle
 
     function test_policyHolderCreationAndActivationCallbackNonReentrant() public {
         // GIVEN switch policy holder to reentrant
-        Timestamp activateAt = TimestampLib.blockTimestamp();
+        Timestamp activateAt = TimestampLib.current();
 
         // WHEN setting policy holder to mode that tries to do reentrancy on services
         policyHolder.setReentrant(product, true);
@@ -131,7 +131,7 @@ contract TestProductLifecycle
         assertEq(policyHolder.expiredAt(policyNftId).toInt(), 0, "unexpected expired at (holder, before)");
 
         // WHEN
-        Timestamp activateAt = TimestampLib.blockTimestamp().addSeconds(SecondsLib.toSeconds(42));
+        Timestamp activateAt = TimestampLib.current().addSeconds(SecondsLib.toSeconds(42));
         product.activate(policyNftId, activateAt);
 
         // THEN
@@ -147,7 +147,7 @@ contract TestProductLifecycle
 
     function test_policyHolderExpiryCallback() public {
         // GIVEN create active policy
-        Timestamp activateAt = TimestampLib.blockTimestamp();
+        Timestamp activateAt = TimestampLib.current();
         _createAndActivate(policyNftId, activateAt);
 
         // check that no expiry callback has yet happened
@@ -170,7 +170,7 @@ contract TestProductLifecycle
 
     function test_policyHolderClaimSubmitOnly() public {
         // GIVEN create active policy
-        Timestamp activateAt = TimestampLib.blockTimestamp();
+        Timestamp activateAt = TimestampLib.current();
         _createAndActivate(policyNftId, activateAt);
 
         // check that no claim callback has yet happened
@@ -204,7 +204,7 @@ contract TestProductLifecycle
 
     function test_policyHolderClaimConfirmationCallback() public {
         // GIVEN create active policy
-        Timestamp activateAt = TimestampLib.blockTimestamp();
+        Timestamp activateAt = TimestampLib.current();
         _createAndActivate(policyNftId, activateAt);
 
         // check that no claim callback has yet happened
@@ -238,7 +238,7 @@ contract TestProductLifecycle
     // such guards prevent various re insurane use cases
     // function test_policyHolderClaimConfirmationCallbackNonReentrant() public {
     //     // GIVEN switch policy holder to reentrant
-    //     Timestamp activateAt = TimestampLib.blockTimestamp();
+    //     Timestamp activateAt = TimestampLib.current();
     //     _createAndActivate(policyNftId, activateAt);
 
     //     policyHolder.setReentrant(product, true);
@@ -262,7 +262,7 @@ contract TestProductLifecycle
     function test_policyHolderPayoutExecutedBeneficiaryCallback() public {
         // GIVEN 
         // create active policy
-        Timestamp activateAt = TimestampLib.blockTimestamp();
+        Timestamp activateAt = TimestampLib.current();
         _createAndActivate(policyNftId, activateAt);
 
         // create confirmed claim
@@ -335,7 +335,7 @@ contract TestProductLifecycle
     function test_policyHolderPayoutExecutedDefaultCallback() public {
         // GIVEN 
         // create active policy
-        Timestamp activateAt = TimestampLib.blockTimestamp();
+        Timestamp activateAt = TimestampLib.current();
         _createAndActivate(policyNftId, activateAt);
 
         address beneficiary = registry.ownerOf(policyNftId);

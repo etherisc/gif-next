@@ -120,8 +120,8 @@ contract BundleService is
                 poolNftId: poolNftId,
                 fee: bundleFee,
                 filter: filter,
-                activatedAt: TimestampLib.blockTimestamp(),
-                expiredAt: TimestampLib.blockTimestamp().addSeconds(lifetime),
+                activatedAt: TimestampLib.current(),
+                expiredAt: TimestampLib.current().addSeconds(lifetime),
                 closedAt: zeroTimestamp()
             })
         );
@@ -156,7 +156,7 @@ contract BundleService is
             IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
 
             // ensure bundle is active and not yet expired
-            if(bundleState != ACTIVE() || bundleInfo.expiredAt < TimestampLib.blockTimestamp()) {
+            if(bundleState != ACTIVE() || bundleInfo.expiredAt < TimestampLib.current()) {
                 revert ErrorBundleServiceBundleNotOpen(bundleNftId, bundleState, bundleInfo.expiredAt);
             }
         }
@@ -265,7 +265,7 @@ contract BundleService is
         StateId bundleState = instanceReader.getBundleState(bundleNftId);
 
         if( (bundleState != ACTIVE() && bundleState != PAUSED()) // locked bundles can be staked
-            || bundleInfo.expiredAt < TimestampLib.blockTimestamp() 
+            || bundleInfo.expiredAt < TimestampLib.current() 
             || bundleInfo.closedAt.gtz()) {
             revert ErrorBundleServiceBundleNotOpen(bundleNftId, bundleState, bundleInfo.expiredAt);
         }
@@ -343,7 +343,7 @@ contract BundleService is
         }
 
         // ensure bundle is active and not yet expired
-        if(bundleState != ACTIVE() || bundleInfo.expiredAt < TimestampLib.blockTimestamp()) {
+        if(bundleState != ACTIVE() || bundleInfo.expiredAt < TimestampLib.current()) {
             revert ErrorBundleServiceBundleNotOpen(bundleNftId, bundleState, bundleInfo.expiredAt);
         }
 

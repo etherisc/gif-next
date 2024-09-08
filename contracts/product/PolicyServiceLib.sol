@@ -24,8 +24,8 @@ library PolicyServiceLib {
 
         if (info.productNftId.eqz()) { return false; } // not closeable: policy does not exist (or does not belong to this instance)
         if (info.activatedAt.eqz()) { return false; } // not closeable: not yet activated
-        if (info.activatedAt > TimestampLib.blockTimestamp()) { return false; } // not yet active
-        if (info.expiredAt <= TimestampLib.blockTimestamp()) { return false; } // already expired
+        if (info.activatedAt > TimestampLib.current()) { return false; } // not yet active
+        if (info.expiredAt <= TimestampLib.current()) { return false; } // already expired
 
         return true;
     }
@@ -78,7 +78,7 @@ library PolicyServiceLib {
         if (expireAt.gtz()) {
             policyInfo.expiredAt = expireAt;
         } else {
-            policyInfo.expiredAt = TimestampLib.blockTimestamp();
+            policyInfo.expiredAt = TimestampLib.current();
         }
 
         return policyInfo;
@@ -96,7 +96,7 @@ library PolicyServiceLib {
         if (policyState != COLLATERALIZED()) { 
             revert IPolicyService.ErrorPolicyServicePolicyNotActive(policyNftId, policyState);
         } 
-        if (TimestampLib.blockTimestamp() < policyInfo.activatedAt) { 
+        if (TimestampLib.current() < policyInfo.activatedAt) { 
             revert IPolicyService.ErrorPolicyServicePolicyNotActive(policyNftId, policyState);
         } 
 
@@ -105,8 +105,8 @@ library PolicyServiceLib {
             revert IPolicyService.ErrorPolicyServicePolicyExpirationTooLate(policyNftId, policyInfo.expiredAt, newExpiredAt);
         }
 
-        if (newExpiredAt.gtz() && newExpiredAt < TimestampLib.blockTimestamp()) {
-            revert IPolicyService.ErrorPolicyServicePolicyExpirationTooEarly(policyNftId, TimestampLib.blockTimestamp(), newExpiredAt);
+        if (newExpiredAt.gtz() && newExpiredAt < TimestampLib.current()) {
+            revert IPolicyService.ErrorPolicyServicePolicyExpirationTooEarly(policyNftId, TimestampLib.current(), newExpiredAt);
         }
     }
 
@@ -130,7 +130,7 @@ library PolicyServiceLib {
         if (info.claimAmount == info.sumInsuredAmount) { return true; }
 
         // not closeable: not yet expired
-        if (TimestampLib.blockTimestamp() < info.expiredAt) { return false; }
+        if (TimestampLib.current() < info.expiredAt) { return false; }
 
         // all conditions to close the policy are met
         return true; 

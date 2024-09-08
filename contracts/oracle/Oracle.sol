@@ -75,7 +75,7 @@ abstract contract Oracle is
     }
 
 
-    function _initializeOracle(
+    function __Oracle_init(
         address registry,
         NftId productNftId,
         IAuthorization authorization,
@@ -87,7 +87,7 @@ abstract contract Oracle is
         virtual
         onlyInitializing()
     {
-        _initializeInstanceLinkedComponent(
+        __InstanceLinkedComponent_init(
             registry, 
             productNftId, 
             name, 

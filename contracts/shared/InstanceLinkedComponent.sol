@@ -67,7 +67,7 @@ abstract contract InstanceLinkedComponent is
         }
     }
 
-    function _initializeInstanceLinkedComponent(
+    function __InstanceLinkedComponent_init(
         address registry,
         NftId parentNftId,
         string memory name,
@@ -93,7 +93,7 @@ abstract contract InstanceLinkedComponent is
             IRegistry(registry).getObjectAddress(instanceNftId));
 
         // set component specific parameters
-        _initializeComponent(
+        __Component_init(
             $._instance.authority(), // instance linked components need to point to instance admin
             registry, 
             parentNftId, 

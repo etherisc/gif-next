@@ -9,6 +9,7 @@ import {IAccessAdmin} from "../../contracts/authorization/IAccessAdmin.sol";
 import {IServiceAuthorization} from "../../contracts/authorization/IServiceAuthorization.sol";
 
 import {Amount, AmountLib} from "../../contracts/type/Amount.sol";
+import {ChainId, ChainIdLib} from "../../contracts/type/ChainId.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {SecondsLib} from "../../contracts/type/Seconds.sol";
 import {Fee, FeeLib} from "../../contracts/type/Fee.sol";
@@ -16,7 +17,7 @@ import {UFixed, UFixedLib} from "../../contracts/type/UFixed.sol";
 import {RoleId} from "../../contracts/type/RoleId.sol";
 import {ACTIVE} from "../../contracts/type/StateId.sol";
 import {Timestamp} from "../../contracts/type/Timestamp.sol";
-import {VersionPartLib} from "../../contracts/type/Version.sol";
+import {VersionPart, VersionPartLib} from "../../contracts/type/Version.sol";
 
 import {BasicOracleAuthorization} from "../../contracts/oracle/BasicOracleAuthorization.sol";
 import {BasicProductAuthorization} from "../../contracts/product/BasicProductAuthorization.sol";
@@ -67,6 +68,7 @@ contract GifTest is GifDeployer {
     // bundle lifetime is one year in seconds
     uint256 constant public DEFAULT_BUNDLE_LIFETIME = 365 * 24 * 3600;
 
+    ChainId public currentChainId;
     IERC20Metadata public token;
 
     AccessManagerCloneable public masterAccessManager;
@@ -146,6 +148,8 @@ contract GifTest is GifDeployer {
         address gifAdmin = registryOwner;
         address gifManager = registryOwner;
 
+        currentChainId = ChainIdLib.current();
+
         // solhint-disable
         console.log("=== GifTest starting =======================================");
         console.log("=== deploying core =========================================");
@@ -157,15 +161,15 @@ contract GifTest is GifDeployer {
         _deployAndRegisterServices(gifAdmin, gifManager);
 
         // solhint-disable-next-line
-        console.log("=== deploying master instance ==============================");
-        vm.startPrank(registryOwner);
-        _deployMasterInstance();
-        vm.stopPrank();
-
-        // solhint-disable-next-line
         console.log("=== register token =========================================");
         vm.startPrank(address(registryOwner)); 
         _deployRegisterAndActivateToken();
+        vm.stopPrank();
+
+        // solhint-disable-next-line
+        console.log("=== deploying master instance ==============================");
+        vm.startPrank(registryOwner);
+        _deployMasterInstance();
         vm.stopPrank();
 
         // solhint-disable-next-line
@@ -238,7 +242,12 @@ contract GifTest is GifDeployer {
             gifAdmin, 
             gifManager);
 
-        assertEq(releaseRegistry.getState(releaseRegistry.getLatestVersion()).toInt(), ACTIVE().toInt(), "unexpected state for releaseRegistry after activateNextRelease");
+        VersionPart latestRelease = registry.getLatestRelease();
+        assertEq(releaseRegistry.getState(latestRelease).toInt(), ACTIVE().toInt(), "unexpected state for releaseRegistry after activateNextRelease");
+
+        // set staking service
+        vm.startPrank(stakingOwner);
+        staking.setStakingService(latestRelease);
     }
 
     function _deployMasterInstance() internal 
@@ -321,19 +330,18 @@ contract GifTest is GifDeployer {
     }
 
     function _deployRegisterAndActivateToken() internal {
+        VersionPart release = registry.getLatestRelease();
+
         // dip
         tokenRegistry.setActiveForVersion(
-            block.chainid, 
-            address(dip), 
-            registry.getLatestVersion(), true);
+            currentChainId, address(dip), release, true);
 
         // usdc
         token = new Usdc();
+        // TODO continue here : tokenRegistry need to call staktint to add registered tokens there
         tokenRegistry.registerToken(address(token));
         tokenRegistry.setActiveForVersion(
-            block.chainid, 
-            address(token), 
-            registry.getLatestVersion(), true);
+            currentChainId, address(token), release, true);
 
         // solhint-disable
         console.log("token (usdc) deployed at", address(token));

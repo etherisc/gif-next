@@ -39,7 +39,7 @@ contract ReleaseProductTest is GifTest {
 
     VersionPart public RELEASE_3 = VersionPartLib.toVersionPart(3);
     Seconds public lifetime = SecondsLib.toSeconds(LIFETIME);
-    Timestamp public activateAt = TimestampLib.blockTimestamp();
+    Timestamp public activateAt = TimestampLib.current();
     ReferralId public referralIdZero = ReferralLib.zero();
     Amount public claimAmount = AmountLib.toAmount(100);
 

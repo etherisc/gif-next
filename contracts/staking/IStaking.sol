@@ -16,39 +16,48 @@ import {StakingReader} from "./StakingReader.sol";
 import {StakingStore} from "./StakingStore.sol";
 import {Timestamp} from "../type/Timestamp.sol";
 import {UFixed} from "../type/UFixed.sol";
+import {VersionPart} from "../type/Version.sol";
+
 
 interface IStaking is 
     IComponent,
     IVersionable
 {
 
-    // protocol parameters
+    // owner functions
     event LogStakingProtocolLockingPeriodSet(NftId targetNftId, Seconds newLockingPeriod, Seconds oldLockingPeriod, Blocknumber lastUpdatedIn);
     event LogStakingProtocolRewardRateSet(NftId targetNftId, UFixed newRewardRate, UFixed oldRewardRate, Blocknumber lastUpdatedIn);
+    event LogStakingStakingRateSet(ChainId chainId, address token, UFixed newStakingRate, UFixed oldStakingRate, Blocknumber lastUpdatedIn);
+    event LogStakingStakingServiceSet(address stakingService, VersionPart release, address oldStakingService);
+    event LogStakingStakingReaderSet(address stakingReader, address oldStakingReader);
+    event LogStakingTokenHandlerApproved(address token, Amount approvalAmount, Amount oldApprovalAmount);
 
     // token
     event LogStakingTokenAdded(ChainId chainId, address token);
 
     // targets
-    event LogStakingTargetAdded(NftId targetNftId, ObjectType objectType, Seconds lockingPeriod, UFixed rewardRate, Amount maxStakedAmount);
+    event LogStakingTargetCreated(NftId targetNftId, ObjectType objectType, Seconds lockingPeriod, UFixed rewardRate, Amount maxStakedAmount);
 
     // target parameters
     event LogStakingTargetLockingPeriodSet(NftId targetNftId, Seconds oldLockingPeriod, Seconds lockingPeriod);
     event LogStakingTargetRewardRateSet(NftId targetNftId, UFixed oldRewardRate, UFixed rewardRate);
     event LogStakingTargetMaxStakedAmountSet(NftId targetNftId, Amount maxStakedAmount);
 
-    // staking rate
-    event LogStakingStakingRateSet(ChainId chainId, address token, UFixed newStakingRate, UFixed oldStakingRate, Blocknumber lastUpdatedIn);
-
     // stakes
     event LogStakingStakeRegistered(NftId stakeNftId, NftId targetNftId, Amount stakeAmount);
+    event LogStakingStakeRestaked(NftId stakeNftId, NftId targetNftId, Amount stakeAmount, address owner, NftId oldStakeNftId);
 
     // modifiers
     error ErrorStakingNotStake(NftId stakeNftId);
     error ErrorStakingNotTarget(NftId targetNftId);
+    error ErrorStakingNotStakeOwner(NftId stakeNftId, address expectedOwner, address actualOwner);
 
     error ErrorStakingNotStakingOwner();
     error ErrorStakingNotNftOwner(NftId nftId);
+
+    // owner functions
+    error ErrorStakingReleaseNotActive(VersionPart release);
+    error ErrorStakingServiceNotFound(VersionPart release);
 
     // initializeTokenHandler
     error ErrorStakingNotRegistry(address registry);
@@ -136,6 +145,9 @@ interface IStaking is
     /// The staking rate defines the amount of staked dips required to back up 1 token of total value locked.
     function setStakingRate(ChainId chainId, address token, UFixed stakingRate) external;
 
+    /// @dev Sets/updates the staking service contract to the staking service of the specified release.
+    function setStakingService(VersionPart release) external;
+
     /// @dev Sets/updates the staking reader contract. 
     function setStakingReader(StakingReader stakingReader) external;
 
@@ -213,7 +225,7 @@ interface IStaking is
     /// @dev restakes the dips to a new target.
     /// the sum of the staked dips and the accumulated rewards will be restaked.
     /// permissioned: only staking service may call this function.
-    function restake(NftId stakeNftId, NftId newStakeNftId) external returns (Amount newStakeBalance);
+    function restake(NftId stakeNftId, NftId newTargetNftId) external returns (NftId newStakeNftId, Amount newStakeBalance);
 
     /// @dev retuns the specified amount of dips to the holder of the specified stake nft.
     /// if dipAmount is set to Amount.max() all staked dips and all rewards are transferred to 

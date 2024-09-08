@@ -365,7 +365,7 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
             adminRoleId: adminRoleId,
             roleType: roleType,
             maxMemberCount: maxMemberCount,
-            createdAt: TimestampLib.blockTimestamp(),
+            createdAt: TimestampLib.current(),
             pausedAt: TimestampLib.max()
         });
     }
@@ -390,7 +390,7 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
         return IAccess.FunctionInfo({
             name: StrLib.toStr(name),
             selector: SelectorLib.toSelector(selector),
-            createdAt: TimestampLib.blockTimestamp()});
+            createdAt: TimestampLib.current()});
     }
 
 }

@@ -95,7 +95,7 @@ contract FireProductTest is FireTestBase {
         vm.stopPrank();
 
         assertTrue(APPLIED().eq(instanceReader.getPolicyState(policyNftId)));
-        Timestamp timestamp = TimestampLib.blockTimestamp();
+        Timestamp timestamp = TimestampLib.current();
 
         uint256 tokenBalanceCustomerBefore = fireUSD.balanceOf(customer);
         uint256 tokenBalancePoolBefore = fireUSD.balanceOf(firePool.getWallet());
@@ -146,7 +146,7 @@ contract FireProductTest is FireTestBase {
             ONE_YEAR(), 
             bundleNftId);
 
-        Timestamp timestamp = TimestampLib.blockTimestamp();
+        Timestamp timestamp = TimestampLib.current();
 
         // THEN - expect revert for wrong role
         vm.expectRevert(abi.encodeWithSelector(
@@ -225,7 +225,7 @@ contract FireProductTest is FireTestBase {
 
         assertTrue(APPLIED().eq(instanceReader.getPolicyState(policyNftId)));
         
-        Timestamp timestamp = TimestampLib.blockTimestamp();
+        Timestamp timestamp = TimestampLib.current();
 
         vm.startPrank(fireProductOwner);
 
@@ -235,7 +235,7 @@ contract FireProductTest is FireTestBase {
 
         // forward time by 100 days
         vm.warp(100 * 24 * 60 * 60); 
-        Timestamp hundertDaysLater = TimestampLib.blockTimestamp();
+        Timestamp hundertDaysLater = TimestampLib.current();
 
         // WHEN - policy is expired
         fireProduct.expire(policyNftId, hundertDaysLater);
@@ -275,7 +275,7 @@ contract FireProductTest is FireTestBase {
 
         assertTrue(APPLIED().eq(instanceReader.getPolicyState(policyNftId)));
         
-        Timestamp timestamp = TimestampLib.blockTimestamp();
+        Timestamp timestamp = TimestampLib.current();
 
         vm.startPrank(fireProductOwner);
 
@@ -285,7 +285,7 @@ contract FireProductTest is FireTestBase {
 
         // forward time by 100 days
         vm.warp(100 * 24 * 60 * 60); 
-        Timestamp hundertDaysLater = TimestampLib.blockTimestamp();
+        Timestamp hundertDaysLater = TimestampLib.current();
 
         vm.stopPrank();
 
@@ -322,7 +322,7 @@ contract FireProductTest is FireTestBase {
 
         assertTrue(APPLIED().eq(instanceReader.getPolicyState(policyNftId)));
         
-        Timestamp timestamp = TimestampLib.blockTimestamp();
+        Timestamp timestamp = TimestampLib.current();
 
         vm.startPrank(fireProductOwner);
 
@@ -332,7 +332,7 @@ contract FireProductTest is FireTestBase {
 
         // forward time by 361 days
         vm.warp(361 * 24 * 60 * 60); 
-        Timestamp threeHundertSixtyOneDaysLater = TimestampLib.blockTimestamp();
+        Timestamp threeHundertSixtyOneDaysLater = TimestampLib.current();
         
         // WHEN 
         fireProduct.close(policyNftId);
@@ -372,7 +372,7 @@ contract FireProductTest is FireTestBase {
 
         assertTrue(APPLIED().eq(instanceReader.getPolicyState(policyNftId)));
         
-        Timestamp timestamp = TimestampLib.blockTimestamp();
+        Timestamp timestamp = TimestampLib.current();
 
         vm.startPrank(fireProductOwner);
 

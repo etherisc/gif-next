@@ -299,8 +299,8 @@ contract PolicyService is
             revert ErrorPolicyServicePolicyNotActivated(policyNftId);
         }
 
-        if (newActivateAt < TimestampLib.blockTimestamp()) {
-            revert ErrorPolicyServicePolicyActivationTooEarly(policyNftId, TimestampLib.blockTimestamp(), newActivateAt);
+        if (newActivateAt < TimestampLib.current()) {
+            revert ErrorPolicyServicePolicyActivationTooEarly(policyNftId, TimestampLib.current(), newActivateAt);
         }
 
         if (newActivateAt > policyInfo.expiredAt) {
@@ -414,7 +414,7 @@ contract PolicyService is
         // TODO consider to also set expiredAt to current block timestamp if that timestamp is still in the futue
 
         // update policy state to closed
-        policyInfo.closedAt = TimestampLib.blockTimestamp();
+        policyInfo.closedAt = TimestampLib.current();
         instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, CLOSED());
 
         // unlink policy from risk and bundle

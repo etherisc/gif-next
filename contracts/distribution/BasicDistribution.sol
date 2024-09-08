@@ -129,7 +129,7 @@ contract BasicDistribution is
         virtual
         onlyInitializing()
     {
-        _initializeDistribution(
+        __Distribution_init(
             registry, 
             instanceNftId, 
             authorization,

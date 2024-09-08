@@ -239,7 +239,7 @@ contract ProxyManager is
             version: newVersion,
             implementation: implementation,
             activatedBy: activatedBy,
-            activatedAt: TimestampLib.blockTimestamp(),
+            activatedAt: TimestampLib.current(),
             activatedIn: blockNumber()
         });
     }

@@ -107,7 +107,7 @@ contract PoolWithReinsurance is
         reinsuranceProduct.createPolicy(
             resinsurancePolicyNftId,
             false, // no premium collection required
-            TimestampLib.blockTimestamp()); // active immediately
+            TimestampLib.current()); // active immediately
 
         emit LogPoolWithReinsurancePolicyCreated(resinsurancePolicyNftId);
     }

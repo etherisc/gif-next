@@ -230,7 +230,7 @@ contract AccessAdmin is
     }
 
     function isRoleActive(RoleId roleId) external view returns (bool isActive) {
-        return _roleInfo[roleId].pausedAt > TimestampLib.blockTimestamp();
+        return _roleInfo[roleId].pausedAt > TimestampLib.current();
     }
 
     function isRoleCustom(RoleId roleId) external view returns (bool isActive) {
@@ -544,7 +544,7 @@ contract AccessAdmin is
         if (active) {
             _roleInfo[roleId].pausedAt = TimestampLib.max();
         } else {
-            _roleInfo[roleId].pausedAt = TimestampLib.blockTimestamp();
+            _roleInfo[roleId].pausedAt = TimestampLib.current();
         }
     }
 
@@ -614,7 +614,7 @@ contract AccessAdmin is
         private
     {
         // create role info
-        info.createdAt = TimestampLib.blockTimestamp();
+        info.createdAt = TimestampLib.current();
         info.pausedAt = TimestampLib.max();
         _roleInfo[roleId] = info;
 
@@ -657,7 +657,7 @@ contract AccessAdmin is
             name: name,
             targetType: targetType,
             roleId: targetRoleId,
-            createdAt: TimestampLib.blockTimestamp()
+            createdAt: TimestampLib.current()
         });
 
         // create name to target mapping
@@ -759,7 +759,7 @@ contract AccessAdmin is
         }
 
         // check if role is disabled
-        if (onlyActiveRole && _roleInfo[roleId].pausedAt <= TimestampLib.blockTimestamp()) {
+        if (onlyActiveRole && _roleInfo[roleId].pausedAt <= TimestampLib.current()) {
             revert ErrorAccessAdminRoleIsPaused(roleId);
         }
     }

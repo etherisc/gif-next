@@ -339,7 +339,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
 
         IAccessAdmin.TargetInfo memory info = accessAdmin.getTargetInfo(address(accessManagedMock));
         assertEq(info.name.toString(), targetName, "unexpected target name (info)");
-        assertEq(info.createdAt.toInt(), TimestampLib.blockTimestamp().toInt(), "unexpected created at (info)");
+        assertEq(info.createdAt.toInt(), TimestampLib.current().toInt(), "unexpected created at (info)");
     }
 
     function test_accessAdminCreateTargetInvalidParameters() public {
@@ -445,7 +445,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
             newRoleId, 
             adminRoleId,
             newRoleName,
-            TimestampLib.blockTimestamp());
+            TimestampLib.current());
 
         _checkRoleGranting(
             accessAdmin,
@@ -480,7 +480,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
             adminRoleId,
             newRoleName,
             maxOneRoleMember,
-            TimestampLib.blockTimestamp());
+            TimestampLib.current());
 
         assertEq(accessAdmin.roleMembers(newRoleId), 0, "role members > 0 before granting role");
 
@@ -699,7 +699,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
             newAdminRoleId, 
             adminRoleId,
             newRoleAdminName,
-            TimestampLib.blockTimestamp());
+            TimestampLib.current());
 
         // check granting of new role admin role
         _checkRoleGranting(
@@ -714,7 +714,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
             newRoleId, 
             newAdminRoleId,
             newRoleName,
-            TimestampLib.blockTimestamp());
+            TimestampLib.current());
 
         // check granting of new role (check that roleAdmin can grant/revoke new role)
         _checkRoleGranting(
@@ -753,7 +753,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
             newAdminRoleId, 
             adminRoleId,
             newAdminRoleName,
-            TimestampLib.blockTimestamp());
+            TimestampLib.current());
 
         // check granting of new role admin role
         _checkRoleGranting(
@@ -768,7 +768,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
             newRoleId, 
             newAdminRoleId,
             newRoleName,
-            TimestampLib.blockTimestamp());
+            TimestampLib.current());
 
         // check granting of new role (check that roleAdmin can grant/revoke new role)
         _checkRoleGranting(
@@ -1091,7 +1091,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
             aa.getAdminRole(),
             ADMIN_ROLE_NAME(),
             1, // only one admin ! (aa contract is sole admin role member)
-            TimestampLib.blockTimestamp());
+            TimestampLib.current());
 
         // check public role
         _checkRole(
@@ -1100,7 +1100,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
             aa.getAdminRole(),
             PUBLIC_ROLE_NAME(),
             type(uint32).max, // every account is public role member
-            TimestampLib.blockTimestamp());
+            TimestampLib.current());
 
         // check manager role
         _checkRole(
@@ -1109,7 +1109,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
             aa.getAdminRole(),
             aa.MANAGER_ROLE_NAME(),
             3,
-            TimestampLib.blockTimestamp());
+            TimestampLib.current());
 
         // check non existent role
         RoleId missingRoleId = RoleIdLib.toRoleId(1313);

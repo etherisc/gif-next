@@ -316,7 +316,7 @@ contract FireProduct is
             revert ErrorFireProductCityUnknown(cityName);
         }
 
-        if (reportedAt > TimestampLib.blockTimestamp()) {
+        if (reportedAt > TimestampLib.current()) {
             revert ErrorFireProductTimestampInFuture();
         }
 

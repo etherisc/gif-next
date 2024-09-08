@@ -119,10 +119,12 @@ contract ServiceAuthorizationV3
           _authorize(functions, IStakingService.refillInstanceRewardReserves.selector, "refillInstanceRewardReserves");
           _authorize(functions, IStakingService.withdrawInstanceRewardReserves.selector, "withdrawInstanceRewardReserves");
 
+          // TODO cleanup
           functions = _authorizeForService(STAKING(), ALL());
+          _authorize(functions, IStakingService.createStakeObject.selector, "createStakeObject");
           _authorize(functions, IStakingService.create.selector, "create");
           _authorize(functions, IStakingService.stake.selector, "stake");
-          _authorize(functions, IStakingService.restakeToNewTarget.selector, "restakeToNewTarget");
+          // _authorize(functions, IStakingService.restakeToNewTarget.selector, "restakeToNewTarget");
           _authorize(functions, IStakingService.updateRewards.selector, "updateRewards");
           _authorize(functions, IStakingService.claimRewards.selector, "claimRewards");
           _authorize(functions, IStakingService.unstake.selector, "unstake");

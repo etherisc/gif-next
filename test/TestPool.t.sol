@@ -189,7 +189,7 @@ contract TestPool is GifTest {
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
         assertEq(
             bundleInfo.expiredAt.toInt(), 
-            TimestampLib.blockTimestamp().addSeconds(lifetime).toInt(),
+            TimestampLib.current().addSeconds(lifetime).toInt(),
             "unexpected expired at");
         assertEq(
             bundleInfo.activatedAt.toInt(),

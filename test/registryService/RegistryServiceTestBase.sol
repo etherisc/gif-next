@@ -96,6 +96,7 @@ contract RegistryServiceTestBase is GifTest, FoundryRandom {
         eqObjectInfo(infoFromRegistry, objectInfo);
     }
 
+    // TODO cleanup
     /*function _checkRegistryServiceGetters(address implementation, Version version, uint64 initializedVersion, uint256 versionsCount) internal
     {
         _assert_versionable_getters(IVersionable(registryService), implementation, version, initializedVersion, versionsCount);

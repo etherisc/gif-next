@@ -58,7 +58,7 @@ contract PricingServiceClusterTest is GifClusterTest {
             "GET_A_DISCOUNT",
             UFixedLib.toUFixed(10, -2),
             5,
-            TimestampLib.blockTimestamp().addSeconds(SecondsLib.toSeconds(604800)),
+            TimestampLib.current().addSeconds(SecondsLib.toSeconds(604800)),
             "");
         vm.stopPrank();
 

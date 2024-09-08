@@ -28,8 +28,7 @@ contract StakingManager is
         _initializationData = abi.encode(
             registry,
             tokenRegistry,
-            stakingStore,
-            initialOwner);
+            stakingStore);
         
         IVersionable versionable = initialize(
             registry,

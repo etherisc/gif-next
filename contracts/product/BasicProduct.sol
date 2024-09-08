@@ -36,7 +36,7 @@ abstract contract BasicProduct is
         virtual
         onlyInitializing()
     {
-        _initializeProduct(
+        __Product_init(
             registry, 
             instanceNftId, 
             name, 

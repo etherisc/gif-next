@@ -123,7 +123,7 @@ abstract contract Pool is
 
     // Internals
 
-    function _initializePool(
+    function __Pool_init(
         address registry,
         NftId productNftId,
         string memory name,
@@ -136,7 +136,7 @@ abstract contract Pool is
         virtual
         onlyInitializing()
     {
-        _initializeInstanceLinkedComponent(
+        __InstanceLinkedComponent_init(
             registry, 
             productNftId,  
             name, 

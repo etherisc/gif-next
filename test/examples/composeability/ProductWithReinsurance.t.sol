@@ -336,7 +336,7 @@ contract ProductWithReinsuranceTest is
         productRe.createPolicy(
             newPolicyNftId, 
             true, // require premium payment
-            TimestampLib.blockTimestamp()); // activate policy now
+            TimestampLib.current()); // activate policy now
 
         // solhint-disable
         console.log("nft id", newPolicyNftId.toInt());

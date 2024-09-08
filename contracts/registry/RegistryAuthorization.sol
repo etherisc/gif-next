@@ -207,13 +207,16 @@ contract RegistryAuthorization
                STAKING_TARGET_NAME,
                PUBLIC_ROLE());
 
+          // owner functions
           _authorize(functions, IStaking.setProtocolLockingPeriod.selector, "setProtocolLockingPeriod");
           _authorize(functions, IStaking.setProtocolRewardRate.selector, "setProtocolRewardRate");
+          _authorize(functions, IStaking.setStakingRate.selector, "setStakingRate");
+          _authorize(functions, IStaking.setStakingService.selector, "setStakingService");
           _authorize(functions, IStaking.setStakingReader.selector, "setStakingReader");
           _authorize(functions, IStaking.approveTokenHandler.selector, "approveTokenHandler");
-          _authorize(functions, IStaking.approveTokenHandler.selector, "approveTokenHandler");
-          _authorize(functions, Staking.setStakingReader.selector, "setStakingReader");
-          _authorize(functions, Staking.setStakingRate.selector, "setStaking");
+
+          // staker functions
+          _authorize(functions, IStaking.restake.selector, "restake");
 
           // staking service role
           functions = _authorizeForTarget(
@@ -229,7 +232,6 @@ contract RegistryAuthorization
           _authorize(functions, IStaking.createStake.selector, "createStake");
           _authorize(functions, IStaking.stake.selector, "stake");
           _authorize(functions, IStaking.unstake.selector, "unstake");
-          _authorize(functions, IStaking.restake.selector, "restake");
           _authorize(functions, IStaking.updateRewards.selector, "updateRewards");
           _authorize(functions, IStaking.claimRewards.selector, "claimRewards");
 
@@ -240,6 +242,15 @@ contract RegistryAuthorization
 
           _authorize(functions, IStaking.increaseTotalValueLocked.selector, "increaseTotalValueLocked");
           _authorize(functions, IStaking.decreaseTotalValueLocked.selector, "decreaseTotalValueLocked");
+
+
+          // token registry
+          functions = _authorizeForTarget(
+               STAKING_TARGET_NAME, 
+               getTargetRole(getTarget(TOKEN_REGISTRY_TARGET_NAME)));
+
+          _authorize(functions, IStaking.addToken.selector, "addToken");
+
      }
 
 
@@ -265,6 +276,7 @@ contract RegistryAuthorization
                STAKING_STORE_TARGET_NAME, 
                getTargetRole(getTarget(STAKING_TARGET_NAME)));
 
+          _authorize(functions, StakingStore.addToken.selector, "addToken");
           _authorize(functions, StakingStore.setStakingRate.selector, "setStakingRate");
           _authorize(functions, StakingStore.createTarget.selector, "createTarget");
           _authorize(functions, StakingStore.setLockingPeriod.selector, "setLockingPeriod");

@@ -342,7 +342,7 @@ contract AccessAdminManageMockTest is AccessAdminBaseTest {
             aa.getAdminRole(),
             ADMIN_ROLE_NAME(),
             TimestampLib.max(), 
-            TimestampLib.blockTimestamp());
+            TimestampLib.current());
 
         // check public role
         _checkRole(
@@ -351,7 +351,7 @@ contract AccessAdminManageMockTest is AccessAdminBaseTest {
             aa.getAdminRole(),
             PUBLIC_ROLE_NAME(),
             TimestampLib.max(), 
-            TimestampLib.blockTimestamp());
+            TimestampLib.current());
 
         // check manager role
         _checkRole(
@@ -360,7 +360,7 @@ contract AccessAdminManageMockTest is AccessAdminBaseTest {
             aa.getAdminRole(),
             aa.MANAGER_ROLE_NAME(),
             TimestampLib.max(), 
-            TimestampLib.blockTimestamp());
+            TimestampLib.current());
 
         // check non existent role
         RoleId missingRoleId = RoleIdLib.toRoleId(1313);

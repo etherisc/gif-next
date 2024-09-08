@@ -24,6 +24,7 @@ interface IStakingService is IService
     event LogStakingServiceRewardReservesIncreased(NftId targetNftId, address rewardProvider, Amount dipAmount, Amount newBalance);
     event LogStakingServiceRewardReservesDecreased(NftId targetNftId, address targetOwner, Amount dipAmount, Amount newBalance);
 
+    event LogStakingServiceStakeObjectCreated(NftId stakeNftId, NftId targetNftId, address stakeOwner);
     event LogStakingServiceStakeCreated(NftId stakeNftId, NftId targetNftId, address owner, Amount stakedAmount);
     event LogStakingServiceStakeIncreased(NftId stakeNftId, address owner, Amount stakedAmount, Amount stakeBalance);
     event LogStakingServiceUnstaked(NftId stakeNftId, address stakeOwner, Amount totalAmount);
@@ -85,6 +86,16 @@ interface IStakingService is IService
     /// Permissioned: only the target owner may call this function
     function withdrawInstanceRewardReserves(NftId instanceNftId, Amount dipAmount) external returns (Amount newBalance);
 
+
+    /// @dev Creates a new stake object for the specified target via the registry service.
+    function createStakeObject(
+        NftId targetNftId,
+        address initialOwner
+    )
+        external
+        returns (NftId stakeNftId);
+
+
     /// @dev create a new stake with amount DIP to the specified target
     /// returns the id of the newly minted stake nft
     /// permissionless function
@@ -104,44 +115,41 @@ interface IStakingService is IService
     function stake(
         NftId stakeNftId,
         Amount amount
-    )
-        external;
+    ) external;
 
 
-    /// @dev re-stakes the current staked DIP as well as all accumulated rewards to the new stake target.
-    /// all related stakes and all accumulated reward DIP are transferred to the current stake holder
-    /// function restricted to the current stake owner
-    function restakeToNewTarget(
-        NftId stakeNftId,
-        NftId newTargetNftId
-    )
-        external
-        returns (
-            NftId newStakeNftId,
-            Amount newStakeBalance
-        );
+    // TODO cleanup
+    // /// @dev re-stakes the current staked DIP as well as all accumulated rewards to the new stake target.
+    // /// all related stakes and all accumulated reward DIP are transferred to the current stake holder
+    // /// function restricted to the current stake owner
+    // function restakeToNewTarget(
+    //     NftId stakeNftId,
+    //     NftId newTargetNftId
+    // )
+    //     external
+    //     returns (
+    //         NftId newStakeNftId,
+    //         Amount newStakeBalance
+    //     );
 
 
     /// @dev updates the reward balance of the stake using the current reward rate.
     function updateRewards(
         NftId stakeNftId
-    )
-        external;
+    ) external;
 
 
     /// @dev claims all available rewards.
     function claimRewards(
         NftId stakeNftId
-    )
-        external;
+    ) external;
 
 
     /// @dev unstakes all dips (stakes and rewards) of an existing stake.
     /// function restricted to the current stake owner
     function unstake(
         NftId stakeNftId
-    )
-        external;
+    ) external;
 
 
     /// @dev sets total value locked data for a target contract on a different chain.
@@ -150,8 +158,7 @@ interface IStakingService is IService
         NftId targetNftId,
         address token,
         Amount amount
-    )
-        external;
+    ) external;
 
     function getDipToken()
         external

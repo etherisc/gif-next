@@ -126,7 +126,7 @@ contract ReferralTest is ReferralTestBase {
 
         // WHEN
         vm.startPrank(productOwner);
-        product.createPolicy(policyNftId, true, TimestampLib.blockTimestamp()); 
+        product.createPolicy(policyNftId, true, TimestampLib.current()); 
         vm.stopPrank();
 
         // THEN - check 13 tokens in distribution wallet (120 premium ), 887 tokens in customer wallet, 10100 tokens in pool wallet
@@ -233,8 +233,8 @@ contract ReferralTest is ReferralTestBase {
 
         // WHEN
         vm.startPrank(productOwner);
-        product.createPolicy(policyNftId, true, TimestampLib.blockTimestamp()); 
-        product.createPolicy(policyNftId2, true, TimestampLib.blockTimestamp()); 
+        product.createPolicy(policyNftId, true, TimestampLib.current()); 
+        product.createPolicy(policyNftId2, true, TimestampLib.current()); 
 
         // THEN - check 13 tokens in distribution wallet (120 premium ), 887 tokens in customer wallet, 10100 tokens in pool wallet
         assertTrue(instanceReader.getPolicyState(policyNftId) == COLLATERALIZED(), "policy state not COLLATERALIZED");
@@ -289,7 +289,7 @@ contract ReferralTest is ReferralTestBase {
         );
 
         // WHEN 
-        product.createPolicy(policyNftId3, true, TimestampLib.blockTimestamp()); 
+        product.createPolicy(policyNftId3, true, TimestampLib.current()); 
 
         // THEN 
         assertTrue(instanceReader.getPolicyState(policyNftId3) == COLLATERALIZED(), "policy3 state not COLLATERALIZED");

@@ -65,7 +65,7 @@ contract InstanceAuthzRolesTest is InstanceAuthzBaseTest {
         assertTrue(roleInfo.roleType == IAccess.RoleType.Custom, "not custom role type");
         assertEq(roleInfo.maxMemberCount, maxMemberCount, "unexpected max member count");
         assertEq(roleInfo.name.toString(), "MyCustomRole", "unexpected role name");
-        assertEq(roleInfo.createdAt.toInt(), TimestampLib.blockTimestamp().toInt(), "unexpected created at timestamp");
+        assertEq(roleInfo.createdAt.toInt(), TimestampLib.current().toInt(), "unexpected created at timestamp");
         assertEq(roleInfo.pausedAt.toInt(), TimestampLib.max().toInt(), "unexpected paused at timestamp");
     }
 
@@ -99,7 +99,7 @@ contract InstanceAuthzRolesTest is InstanceAuthzBaseTest {
         assertTrue(roleInfo.roleType == IAccess.RoleType.Custom, "not custom role type");
         assertEq(roleInfo.maxMemberCount, maxMemberCount, "unexpected max member count");
         assertEq(roleInfo.name.toString(), "MySackedRole", "unexpected role name");
-        assertEq(roleInfo.createdAt.toInt(), TimestampLib.blockTimestamp().toInt(), "unexpected created at timestamp");
+        assertEq(roleInfo.createdAt.toInt(), TimestampLib.current().toInt(), "unexpected created at timestamp");
         assertEq(roleInfo.pausedAt.toInt(), TimestampLib.max().toInt(), "unexpected paused at timestamp");
     }
 
@@ -192,7 +192,7 @@ contract InstanceAuthzRolesTest is InstanceAuthzBaseTest {
 
         // THEN
         assertFalse(instanceReader.isRoleActive(myCustomRoleId), "role not active");
-        assertEq(instanceReader.getRoleInfo(myCustomRoleId).pausedAt.toInt(), TimestampLib.blockTimestamp().toInt(), "unexpected paused at timestamp");
+        assertEq(instanceReader.getRoleInfo(myCustomRoleId).pausedAt.toInt(), TimestampLib.current().toInt(), "unexpected paused at timestamp");
 
         // WHEN - activate
         vm.expectEmit(address(instance));
@@ -230,7 +230,7 @@ contract InstanceAuthzRolesTest is InstanceAuthzBaseTest {
 
         // THEN
         assertFalse(instanceReader.isRoleActive(myCustomRoleId), "role not active");
-        assertEq(instanceReader.getRoleInfo(myCustomRoleId).pausedAt.toInt(), TimestampLib.blockTimestamp().toInt(), "unexpected paused at timestamp");
+        assertEq(instanceReader.getRoleInfo(myCustomRoleId).pausedAt.toInt(), TimestampLib.current().toInt(), "unexpected paused at timestamp");
 
         // WHEN - deactivate pused role
         vm.prank(instanceOwner);
@@ -238,7 +238,7 @@ contract InstanceAuthzRolesTest is InstanceAuthzBaseTest {
 
         // THEN
         assertFalse(instanceReader.isRoleActive(myCustomRoleId), "role not active");
-        assertEq(instanceReader.getRoleInfo(myCustomRoleId).pausedAt.toInt(), TimestampLib.blockTimestamp().toInt(), "unexpected paused at timestamp");
+        assertEq(instanceReader.getRoleInfo(myCustomRoleId).pausedAt.toInt(), TimestampLib.current().toInt(), "unexpected paused at timestamp");
     }
 
 

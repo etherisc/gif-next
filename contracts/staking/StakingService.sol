@@ -151,8 +151,38 @@ contract StakingService is
             dipAmount);
     }
 
+    function createStakeObject(
+        NftId targetNftId,
+        address initialOwner
+    )
+        external
+        virtual
+        restricted()
+        onlyStaking()
+        returns (NftId stakeNftId)
+    {
+        StakingServiceStorage storage $ = _getStakingServiceStorage();
+        address stakeOwner = msg.sender;
 
-    /// @dev creates a new stake to the specified target nft id with the provided dip amount
+        // target nft id checks are performed in $._staking.createStake() below
+        // register new stake object with registry
+        stakeNftId = $._registryService.registerStake(
+            IRegistry.ObjectInfo({
+                nftId: NftIdLib.zero(),
+                parentNftId: targetNftId,
+                objectType: STAKE(),
+                isInterceptor: false,
+                objectAddress: address(0),
+                initialOwner: initialOwner,
+                data: ""
+            }));
+
+        emit LogStakingServiceStakeObjectCreated(stakeNftId, targetNftId, stakeOwner);
+    }
+
+
+    /// @dev Creates a new stake object via regisry Service.
+    /// Funds are stakedto the specified target nft id with the provided dip amount
     /// the target nft id must have been registered as an active staking target prior to this call
     /// the sender of this transaction becomes the stake owner via the minted nft.
     /// to create the new stake balance and allowance of the staker need to cover the dip amount
@@ -228,47 +258,47 @@ contract StakingService is
         }
     }
 
+    // TODO cleanup
+    // function restakeToNewTarget(
+    //     NftId stakeNftId,
+    //     NftId newTargetNftId
+    // )
+    //     external
+    //     virtual
+    //     restricted()
+    //     onlyNftOwner(stakeNftId)
+    //     returns (
+    //         NftId newStakeNftId,
+    //         Amount newStakeBalance
+    //     )
+    // {
+    //     _checkNftType(stakeNftId, STAKE());
 
-    function restakeToNewTarget(
-        NftId stakeNftId,
-        NftId newTargetNftId
-    )
-        external
-        virtual
-        restricted()
-        onlyNftOwner(stakeNftId)
-        returns (
-            NftId newStakeNftId,
-            Amount newStakeBalance
-        )
-    {
-        _checkNftType(stakeNftId, STAKE());
+    //     StakingServiceStorage storage $ = _getStakingServiceStorage();
+    //     address stakeOwner = msg.sender;
 
-        StakingServiceStorage storage $ = _getStakingServiceStorage();
-        address stakeOwner = msg.sender;
+    //     if (! getRegistry().isRegistered(newTargetNftId)) {
+    //         revert ErrorStakingServiceTargetUnknown(newTargetNftId);
+    //     }
 
-        if (! getRegistry().isRegistered(newTargetNftId)) {
-            revert ErrorStakingServiceTargetUnknown(newTargetNftId);
-        }
+    //     // register new stake object with registry
+    //     newStakeNftId = $._registryService.registerStake(
+    //         IRegistry.ObjectInfo({
+    //             nftId: NftIdLib.zero(),
+    //             parentNftId: newTargetNftId,
+    //             objectType: STAKE(),
+    //             isInterceptor: false,
+    //             objectAddress: address(0),
+    //             initialOwner: stakeOwner,
+    //             data: ""
+    //         }));
 
-        // register new stake object with registry
-        newStakeNftId = $._registryService.registerStake(
-            IRegistry.ObjectInfo({
-                nftId: NftIdLib.zero(),
-                parentNftId: newTargetNftId,
-                objectType: STAKE(),
-                isInterceptor: false,
-                objectAddress: address(0),
-                initialOwner: stakeOwner,
-                data: ""
-            }));
+    //     newStakeBalance = $._staking.restake(
+    //         stakeNftId, 
+    //         newStakeNftId);
 
-        newStakeBalance = $._staking.restake(
-            stakeNftId, 
-            newStakeNftId);
-
-        emit LogStakingServiceStakeRestaked(stakeOwner, stakeNftId, newStakeNftId, newTargetNftId, newStakeBalance);
-    } 
+    //     emit LogStakingServiceStakeRestaked(stakeOwner, stakeNftId, newStakeNftId, newTargetNftId, newStakeBalance);
+    // } 
 
 
     function updateRewards(

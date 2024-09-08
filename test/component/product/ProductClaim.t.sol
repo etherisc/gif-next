@@ -57,7 +57,7 @@ contract TestProductClaim is GifTest {
     function test_ProductClaimSubmitHappyCase() public {
         // GIVEN
         _approve();
-        _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
+        _collateralize(policyNftId, true, TimestampLib.current());
 
         // check policy info
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
@@ -186,7 +186,7 @@ contract TestProductClaim is GifTest {
     function test_ProductClaimConfirmHappyCase() public {
         // GIVEN
         _approve();
-        _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
+        _collateralize(policyNftId, true, TimestampLib.current());
         Amount claimAmount = AmountLib.toAmount(499);
         bytes memory claimData = "please pay";
         ClaimId claimId = product.submitClaim(policyNftId, claimAmount, claimData); 
@@ -233,7 +233,7 @@ contract TestProductClaim is GifTest {
     function test_ProductClaimRevokeHappyCase() public {
         // GIVEN
         _approve();
-        _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
+        _collateralize(policyNftId, true, TimestampLib.current());
         Amount claimAmount = AmountLib.toAmount(499);
         ClaimId claimId = product.submitClaim(policyNftId, claimAmount, ""); 
 
@@ -278,7 +278,7 @@ contract TestProductClaim is GifTest {
     function test_ProductClaimDeclineHappyCase() public {
         // GIVEN
         _approve();
-        _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
+        _collateralize(policyNftId, true, TimestampLib.current());
         Amount claimAmount = AmountLib.toAmount(499);
         bytes memory claimData = "please pay";
         ClaimId claimId = product.submitClaim(policyNftId, claimAmount, claimData); 

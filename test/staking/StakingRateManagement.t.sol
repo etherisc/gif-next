@@ -3,9 +3,11 @@ pragma solidity ^0.8.20;
 
 import {console} from "../../lib/forge-std/src/Test.sol";
 
+import {IStaking} from "../../contracts/staking/IStaking.sol";
+
 import {Amount, AmountLib} from "../../contracts/type/Amount.sol";
 import {Blocknumber, BlocknumberLib} from "../../contracts/type/Blocknumber.sol";
-import {ChainIdLib} from "../../contracts/type/ChainId.sol";
+import {ChainId, ChainIdLib} from "../../contracts/type/ChainId.sol";
 import {ClaimId} from "../../contracts/type/ClaimId.sol";
 import {GifTest} from "../base/GifTest.sol";
 import {NftId} from "../../contracts/type/NftId.sol";
@@ -22,7 +24,12 @@ import {UFixed, UFixedLib} from "../../contracts/type/UFixed.sol";import {Versio
 contract StakingRateManagement is GifTest {
 
     // TODO find better solution than copying event from IStaking
-    event LogStakingStakingRateSet(uint256 chainId, address token, UFixed oldStakingRate, UFixed newStakingRate);
+    event LogStakingProtocolLockingPeriodSet(NftId targetNftId, Seconds newLockingPeriod, Seconds oldLockingPeriod, Blocknumber lastUpdatedIn);
+    event LogStakingProtocolRewardRateSet(NftId targetNftId, UFixed newRewardRate, UFixed oldRewardRate, Blocknumber lastUpdatedIn);
+    event LogStakingStakingRateSet(ChainId chainId, address token, UFixed newStakingRate, UFixed oldStakingRate, Blocknumber lastUpdatedIn);
+    event LogStakingStakingServiceSet(address stakingService, VersionPart release, address oldStakingService);
+    event LogStakingStakingReaderSet(address stakingReader, address oldStakingReader);
+    event LogStakingTokenHandlerApproved(address token, Amount approvalAmount, Amount oldApprovalAmount);
 
     address public tokenAddress;
     address public stakingStoreAddress;
@@ -74,15 +81,18 @@ contract StakingRateManagement is GifTest {
         assertTrue(newStakingRate.gtz(), "new staking rate 0");
 
         // WHEN
+        ChainId currentChainId = ChainIdLib.current();
+        Blocknumber currentBlock = BlocknumberLib.current();
         vm.expectEmit(address(staking));
         emit LogStakingStakingRateSet(
-            ChainIdLib.current().toInt(), 
+            currentChainId, 
             tokenAddress, 
+            newStakingRate, // new staking rate
             tokenStakingRate, // old stakig rate
-            newStakingRate); // new staking rate
+            currentBlock);
 
         vm.startPrank(registryOwner);
-        staking.setStakingRate(ChainIdLib.current(), tokenAddress, newStakingRate);
+        staking.setStakingRate(currentChainId, tokenAddress, newStakingRate);
         vm.stopPrank();
 
         // THEN

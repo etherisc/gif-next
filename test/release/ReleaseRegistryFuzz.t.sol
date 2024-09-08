@@ -152,7 +152,7 @@ contract ReleaseRegistryTest is GifDeployer, FoundryRandom {
             assertTrue(address(info.auth) != address(0), "Test error: unexpected auth #3");
             assertTrue(info.auth.getRelease() == info.version, "Test error: unexpected auth version #2");
             assertTrue(info.auth.getServiceDomains().length > 0, "Test error: unexpected auth domain num #2");
-            assertTrue(gteTimestamp(TimestampLib.blockTimestamp(), info.activatedAt), "Test error: unexpected activatedAt #3");
+            assertTrue(gteTimestamp(TimestampLib.current(), info.activatedAt), "Test error: unexpected activatedAt #3");
             assertTrue(info.disabledAt.eqz(), "Test error: unexpected disabledAt #3");
         } else if (info.state == PAUSED()) {
             assertTrue(info.version.toInt() >= 3, "Test error: unexpected version #4");
@@ -160,8 +160,8 @@ contract ReleaseRegistryTest is GifDeployer, FoundryRandom {
             assertTrue(address(info.auth) != address(0), "Test error: unexpected auth #4");
             assertTrue(info.auth.getRelease() == info.version, "Test error: unexpected auth version #3");
             assertTrue(info.auth.getServiceDomains().length > 0, "Test error: unexpected auth domain num #3");
-            assertTrue(gteTimestamp(TimestampLib.blockTimestamp(), info.activatedAt), "Test error: unexpected activatedAt #4");
-            assertTrue(gteTimestamp(TimestampLib.blockTimestamp(), info.disabledAt), "Test error: unexpected disabledAt #4");
+            assertTrue(gteTimestamp(TimestampLib.current(), info.activatedAt), "Test error: unexpected activatedAt #4");
+            assertTrue(gteTimestamp(TimestampLib.current(), info.disabledAt), "Test error: unexpected disabledAt #4");
             assertTrue(gteTimestamp(info.disabledAt, info.activatedAt), "Test error: disabledAt < activatedAt #4");
         } else if (info.state == SKIPPED()) {
             assertTrue(info.version.toInt() >= 3, "Test error: unexpected version #5");

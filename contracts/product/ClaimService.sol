@@ -72,7 +72,7 @@ contract ClaimService is
         ) = _verifyCallerWithPolicy(policyNftId);
 
         // check policy is in its active period
-        if(policyInfo.activatedAt.eqz() || TimestampLib.blockTimestamp() >= policyInfo.expiredAt) {
+        if(policyInfo.activatedAt.eqz() || TimestampLib.current() >= policyInfo.expiredAt) {
             revert ErrorClaimServicePolicyNotOpen(policyNftId);
         }
 
@@ -140,7 +140,7 @@ contract ClaimService is
 
         // should policy still be active it needs to become expired
         if (policyInfo.claimAmount >= policyInfo.sumInsuredAmount) {
-            _policyService.expirePolicy(instance, policyNftId, TimestampLib.blockTimestamp());
+            _policyService.expirePolicy(instance, policyNftId, TimestampLib.current());
         }
 
         emit LogClaimServiceClaimConfirmed(policyNftId, claimId, confirmedAmount);
@@ -176,7 +176,7 @@ contract ClaimService is
         // check/update claim info
         IPolicy.ClaimInfo memory claimInfo = _verifyClaim(instanceReader, policyNftId, claimId, SUBMITTED());
         claimInfo.processData = data;
-        claimInfo.closedAt = TimestampLib.blockTimestamp();
+        claimInfo.closedAt = TimestampLib.current();
         instanceStore.updateClaim(policyNftId, claimId, claimInfo, DECLINED());
 
         // update and save policy info with instance
@@ -205,7 +205,7 @@ contract ClaimService is
 
         // check/update claim info
         IPolicy.ClaimInfo memory claimInfo = _verifyClaim(instanceReader, policyNftId, claimId, SUBMITTED());
-        claimInfo.closedAt = TimestampLib.blockTimestamp();
+        claimInfo.closedAt = TimestampLib.current();
         instanceStore.updateClaim(policyNftId, claimId, claimInfo, REVOKED());
 
         // update and save policy info with instance
@@ -244,7 +244,16 @@ contract ClaimService is
                 claimInfo.openPayoutsCount);
         }
 
-        claimInfo.closedAt = TimestampLib.blockTimestamp();
+        // check claim paid amount matches with claim amount
+        if(claimInfo.paidAmount.toInt() < claimInfo.claimAmount.toInt()) {
+            revert ErrorClaimServiceClaimWithMissingPayouts(
+                policyNftId, 
+                claimId, 
+                claimInfo.claimAmount,
+                claimInfo.paidAmount);
+        }
+
+        claimInfo.closedAt = TimestampLib.current();
         instanceStore.updateClaim(policyNftId, claimId, claimInfo, CANCELLED());
 
         emit LogClaimServiceClaimCancelled(policyNftId, claimId);
@@ -344,7 +353,7 @@ contract ClaimService is
 
             // effects
             // update and save payout info with instance
-            payoutInfo.paidAt = TimestampLib.blockTimestamp();
+            payoutInfo.paidAt = TimestampLib.current();
             instanceStore.updatePayout(policyNftId, payoutId, payoutInfo, PAID());
         }
 
@@ -359,7 +368,7 @@ contract ClaimService is
             // check if this payout is closing the linked claim
             // update claim and policy info accordingly
             if(claimInfo.openPayoutsCount == 0 && claimInfo.paidAmount == claimInfo.claimAmount) {
-                claimInfo.closedAt = TimestampLib.blockTimestamp();
+                claimInfo.closedAt = TimestampLib.current();
                 instanceStore.updateClaim(policyNftId, claimId, claimInfo, CLOSED());
 
                 policyInfo.openClaimsCount -= 1;

@@ -103,7 +103,7 @@ abstract contract Distribution is
     }
 
 
-    function _initializeDistribution(
+    function __Distribution_init(
         address registry,
         NftId productNftId,
         IAuthorization authorization, 
@@ -116,7 +116,7 @@ abstract contract Distribution is
         virtual
         onlyInitializing()
     {
-        _initializeInstanceLinkedComponent(
+        __InstanceLinkedComponent_init(
             registry, 
             productNftId, 
             name, 

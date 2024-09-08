@@ -34,7 +34,7 @@ contract BasicOracle is
         onlyInitializing()
     {
 
-        _initializeOracle(
+        __Oracle_init(
             registry,
             instanceNftId,
             authorization,

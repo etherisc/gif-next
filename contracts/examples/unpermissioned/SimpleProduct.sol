@@ -400,7 +400,7 @@ contract SimpleProduct is
         SimpleOracle.SimpleResponse memory response = abi.decode(
             responseData, (SimpleOracle.SimpleResponse));
 
-        if (response.revertInCall && response.revertUntil >= TimestampLib.blockTimestamp()) {
+        if (response.revertInCall && response.revertUntil >= TimestampLib.current()) {
             revert ErrorSimpleProductRevertedWhileProcessingResponse(requestId);
         }
 

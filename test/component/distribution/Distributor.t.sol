@@ -247,7 +247,7 @@ contract DistributorTest is GifTest {
         UFixed referralDiscount = UFixedLib.toUFixed(5, -2);
         maxReferralCount = 7;
         Seconds thirtySeconds = SecondsLib.toSeconds(30);
-        Timestamp referralExpiresAt = TimestampLib.blockTimestamp().addSeconds(thirtySeconds);
+        Timestamp referralExpiresAt = TimestampLib.current().addSeconds(thirtySeconds);
         referralData = "refDat";
 
         // WHEN

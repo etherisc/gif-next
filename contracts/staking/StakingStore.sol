@@ -87,7 +87,8 @@ contract StakingStore is
             NftIdLib.toNftId(1101), 
             PROTOCOL(),
             TargetManagerLib.getDefaultLockingPeriod(),
-            TargetManagerLib.getDefaultRewardRate());
+            TargetManagerLib.getDefaultRewardRate(),
+            false); // no parameter check
     }
 
 
@@ -112,7 +113,7 @@ contract StakingStore is
 
         // check if token is registered with token registry
         TokenRegistry tokenRegistry = TokenRegistry(_registry.getTokenRegistryAddress());
-        if (!tokenRegistry.isRegistered(chainId.toInt(), token)) {
+        if (!tokenRegistry.isRegistered(chainId, token)) {
             revert ErrorStakingStoreTokenNotRegistered(chainId, token);
         }
 
@@ -159,7 +160,7 @@ contract StakingStore is
         external
         restricted() // staking
     {
-        _createTarget(targetNftId, objectType, lockingPeriod, rewardRate);
+        _createTarget(targetNftId, objectType, lockingPeriod, rewardRate, true);
     }
 
 
@@ -244,18 +245,21 @@ contract StakingStore is
         NftId targetNftId,
         ObjectType objectType,
         Seconds lockingPeriod,
-        UFixed rewardRate
+        UFixed rewardRate,
+        bool checkParameters
     )
         private
     {
         // checks
-        TargetManagerLib.checkTargetParameters(
-            _registry, 
-            _reader, 
-            targetNftId, 
-            objectType, 
-            lockingPeriod, 
-            rewardRate);
+        if (checkParameters) {
+            TargetManagerLib.checkTargetParameters(
+                _registry, 
+                _reader, 
+                targetNftId, 
+                objectType, 
+                lockingPeriod, 
+                rewardRate);
+        }
 
         // effects
         IStaking.TargetInfo storage targetInfo = _targetInfo[targetNftId];
@@ -412,7 +416,7 @@ contract StakingStore is
             revert ErrorStakingStoreStakeBalanceAlreadyInitialized(stakeNftId);
         }
 
-        IStaking.TargetInfo storage targetInfo = _getAndVerifyTarget(stakeInfo.targetNftId);
+        IStaking.TargetInfo storage targetInfo = _getAndVerifyTarget(targetNftId);
         _checkMaxStakedAmount(targetNftId, targetInfo, stakedAmount);
 
         // effects
@@ -425,7 +429,7 @@ contract StakingStore is
         stakeInfo.stakedAmount = stakedAmount;
         stakeInfo.rewardAmount = AmountLib.zero();
         stakeInfo.lockedUntil = lockedUntil;
-        stakeInfo.lastUpdateAt = TimestampLib.blockTimestamp();
+        stakeInfo.lastUpdateAt = TimestampLib.current();
         stakeInfo.lastUpdatedIn = BlocknumberLib.currentBlocknumber();
     }
 
@@ -453,7 +457,7 @@ contract StakingStore is
         // update stake
         stakeInfo.stakedAmount = stakeInfo.stakedAmount + stakedAmount;
         stakeInfo.rewardAmount = stakeInfo.rewardAmount + rewardAmount;
-        stakeInfo.lastUpdateAt = TimestampLib.blockTimestamp();
+        stakeInfo.lastUpdateAt = TimestampLib.current();
         stakeInfo.lastUpdatedIn = BlocknumberLib.currentBlocknumber();
 
         // increase locked until if applicable
@@ -492,7 +496,7 @@ contract StakingStore is
         // update stake
         stakeInfo.stakedAmount = stakeInfo.stakedAmount - unstakedAmount;
         stakeInfo.rewardAmount = stakeInfo.rewardAmount - claimedAmount;
-        stakeInfo.lastUpdateAt = TimestampLib.blockTimestamp();
+        stakeInfo.lastUpdateAt = TimestampLib.current();
         stakeInfo.lastUpdatedIn = BlocknumberLib.currentBlocknumber();
     }
 
@@ -526,7 +530,7 @@ contract StakingStore is
         // update stake
         stakeInfo.stakedAmount = stakeInfo.stakedAmount + updatedRewardAmount;
         stakeInfo.rewardAmount = AmountLib.zero();
-        stakeInfo.lastUpdateAt = TimestampLib.blockTimestamp();
+        stakeInfo.lastUpdateAt = TimestampLib.current();
         stakeInfo.lastUpdatedIn = BlocknumberLib.currentBlocknumber();
 
         // increase locked until if applicable
@@ -564,6 +568,11 @@ contract StakingStore is
             stakeInfo.stakedAmount, 
             stakeInfo.rewardAmount, 
             stakeInfo.lastUpdateAt);
+    }
+
+    /// @dev Returns true iff current stake amount is still locked
+    function isStakeLocked(NftId stakeNftId) external view returns (bool) { 
+        return _stakeInfo[stakeNftId].lockedUntil > TimestampLib.current(); 
     }
 
 
@@ -612,16 +621,6 @@ contract StakingStore is
         if (stakeInfo.lastUpdatedIn.eqz()) {
             revert ErrorStakingStoreStakeNotInitialized(stakeNftId);
         }
-    }
-
-
-    /// @dev Creates a new staking target with the specified target info.
-    function _createTarget(
-        NftId targetNftId,
-        IStaking.TargetInfo memory targetInfo
-    )
-        private
-    {
     }
 
 

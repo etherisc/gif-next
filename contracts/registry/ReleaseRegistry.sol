@@ -239,7 +239,7 @@ contract ReleaseRegistry is
 
         _latest = release;
         _releaseInfo[release].state = ACTIVE();
-        _releaseInfo[release].activatedAt = TimestampLib.blockTimestamp();
+        _releaseInfo[release].activatedAt = TimestampLib.current();
         _releaseInfo[release].disabledAt = TimestampLib.max();
 
         // grant special roles for registry/staking/pool services
@@ -283,7 +283,7 @@ contract ReleaseRegistry is
         } else {
             checkTransition(state, RELEASE(), ACTIVE(), PAUSED());
             _releaseInfo[release].state = PAUSED();
-            _releaseInfo[release].disabledAt = TimestampLib.blockTimestamp();
+            _releaseInfo[release].disabledAt = TimestampLib.current();
             emit LogReleaseDisabled(release);
         }
 

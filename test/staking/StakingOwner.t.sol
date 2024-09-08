@@ -249,24 +249,4 @@ contract StakingOwnerTest is GifTest {
 
         vm.stopPrank();
     }
-
-    // TODO cleanup
-    function test_obsolete() public {
-        // NftId protocolNftId = stakingReader.getTargetNftId(0);
-        // (, Amount dipAmount) = _prepareAccount(staker, 5000);
-
-        // // check balances before staking
-        // assertTrue(staker != staking.getWallet(), "staker and staking wallet the same");
-        // assertEq(dip.balanceOf(staker), dipAmount.toInt(), "staker: unexpected dip balance");
-        // assertEq(dip.balanceOf(staking.getWallet()), 0, "staking wallet: unexpected dip balance");
-
-        // vm.startPrank(staker);
-
-        // // create stake
-        // NftId stakeNftId = stakingService.create(
-        //     protocolNftId, 
-        //     dipAmount);
-
-        // vm.stopPrank();
-    }
 }

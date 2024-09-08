@@ -88,7 +88,7 @@ contract DistributorClusterTest is GifClusterTest {
         vm.startPrank(instanceOwner);
         distributorNftId = myDistribution2.createDistributor(distributor, type2, "");
 
-        Timestamp referralLifetime = TimestampLib.blockTimestamp().addSeconds(SecondsLib.toSeconds(3600));
+        Timestamp referralLifetime = TimestampLib.current().addSeconds(SecondsLib.toSeconds(3600));
         UFixed discount = UFixedLib.toUFixed(1, -1);
         
         // THEN

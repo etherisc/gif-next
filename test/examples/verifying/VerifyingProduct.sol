@@ -76,7 +76,7 @@ contract VerifyingProduct is
         
         _createPolicy(
             policyNftId,
-            TimestampLib.blockTimestamp(),
+            TimestampLib.current(),
             AmountLib.max());
     }
 }

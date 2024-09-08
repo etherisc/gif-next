@@ -69,7 +69,7 @@ contract ReleaseRegistryConcreteTest is GifDeployer, FoundryRandom {
     {
         _checkReleaseInfo(info);
 
-        assertEq(releaseRegistry.isActiveRelease(version), (info.activatedAt.gtz() && info.disabledAt > TimestampLib.blockTimestamp()), "isActiveRelease() return unxpected value");
+        assertEq(releaseRegistry.isActiveRelease(version), (info.activatedAt.gtz() && info.disabledAt > TimestampLib.current()), "isActiveRelease() return unxpected value");
         assertTrue(eqReleaseInfo(releaseRegistry.getReleaseInfo(version), info), "getReleaseInfo() return unxpected value");  
         assertEq(releaseRegistry.getState(version).toInt(), info.state.toInt(), "getState() return unexpected value #1");
         assertEq(address(releaseRegistry.getServiceAuthorization(version)), address(info.auth), "getServiceAuthorization() return unexpected value #1");    
@@ -610,7 +610,7 @@ console.log("block 3g, i:", i);
                 releaseRegistry.activateNextRelease();
 
                 nextReleaseInfo.state = ACTIVE();
-                nextReleaseInfo.activatedAt = TimestampLib.blockTimestamp();
+                nextReleaseInfo.activatedAt = TimestampLib.current();
                 nextReleaseInfo.disabledAt = TimestampLib.max();
                 RoleId expectedServiceRoleIdForAllVersions = RoleIdLib.toGenericServiceRoleId(REGISTRY());
 
@@ -765,7 +765,7 @@ console.log("block 3g, i:", i);
                 releaseRegistry.activateNextRelease();
 
                 nextReleaseInfo.state = ACTIVE();
-                nextReleaseInfo.activatedAt = TimestampLib.blockTimestamp();
+                nextReleaseInfo.activatedAt = TimestampLib.current();
                 nextReleaseInfo.disabledAt = TimestampLib.max();
                 RoleId expectedServiceRoleIdForAllVersions = RoleIdLib.toGenericServiceRoleId(REGISTRY());
 
@@ -791,7 +791,7 @@ console.log("block 3g, i:", i);
                 releaseRegistry.setActive(nextVersion, false);
 
                 nextReleaseInfo.state = PAUSED();
-                nextReleaseInfo.disabledAt = TimestampLib.blockTimestamp();
+                nextReleaseInfo.disabledAt = TimestampLib.current();
 
                 // check pause
                 assertTrue(AccessManagerCloneable(
@@ -932,7 +932,7 @@ console.log("block 3g, i:", i);
                 releaseRegistry.activateNextRelease();
 
                 nextReleaseInfo.state = ACTIVE();
-                nextReleaseInfo.activatedAt = TimestampLib.blockTimestamp();
+                nextReleaseInfo.activatedAt = TimestampLib.current();
                 nextReleaseInfo.disabledAt = TimestampLib.max();
                 RoleId expectedServiceRoleIdForAllVersions = RoleIdLib.toGenericServiceRoleId(REGISTRY());
 
@@ -958,7 +958,7 @@ console.log("block 3g, i:", i);
                 releaseRegistry.setActive(nextVersion, false);
 
                 nextReleaseInfo.state = PAUSED();
-                nextReleaseInfo.disabledAt = TimestampLib.blockTimestamp();
+                nextReleaseInfo.disabledAt = TimestampLib.current();
 
                 // check pause
                 assertTrue(AccessManagerCloneable(ReleaseAdmin(nextReleaseInfo.releaseAdmin)
@@ -2290,7 +2290,7 @@ console.log("block 3g, i:", i);
             assertTrue(address(info.auth) != address(0), "Test error: unexpected auth #3");
             assertTrue(info.auth.getRelease() == info.version, "Test error: unexpected auth version #2");
             assertTrue(info.auth.getServiceDomains().length > 0, "Test error: unexpected auth domain num #2");
-            assertTrue(gteTimestamp(TimestampLib.blockTimestamp(), info.activatedAt), "Test error: unexpected activatedAt #3");
+            assertTrue(gteTimestamp(TimestampLib.current(), info.activatedAt), "Test error: unexpected activatedAt #3");
             assertTrue(info.disabledAt == TimestampLib.max(), "Test error: unexpected disabledAt #3");
         } else if (info.state == PAUSED()) {
             assertTrue(info.version.toInt() >= 3, "Test error: unexpected version #4");
@@ -2298,8 +2298,8 @@ console.log("block 3g, i:", i);
             assertTrue(address(info.auth) != address(0), "Test error: unexpected auth #4");
             assertTrue(info.auth.getRelease() == info.version, "Test error: unexpected auth version #3");
             assertTrue(info.auth.getServiceDomains().length > 0, "Test error: unexpected auth domain num #3");
-            assertTrue(gteTimestamp(TimestampLib.blockTimestamp(), info.activatedAt), "Test error: unexpected activatedAt #4");
-            assertTrue(gteTimestamp(TimestampLib.blockTimestamp(), info.disabledAt), "Test error: unexpected disabledAt #4");
+            assertTrue(gteTimestamp(TimestampLib.current(), info.activatedAt), "Test error: unexpected activatedAt #4");
+            assertTrue(gteTimestamp(TimestampLib.current(), info.disabledAt), "Test error: unexpected disabledAt #4");
             assertTrue(gteTimestamp(info.disabledAt, info.activatedAt), "Test error: disabledAt < activatedAt #4");
         } else if (info.state == SKIPPED()) {
             assertTrue(info.version.toInt() >= 3, "Test error: unexpected version #5");

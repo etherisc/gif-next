@@ -193,7 +193,7 @@ contract DistributionService is
         if (bytes(code).length == 0) {
             revert ErrorDistributionServiceInvalidReferral();
         }
-        if (expiryAt.eqz() || expiryAt < TimestampLib.blockTimestamp()) {
+        if (expiryAt.eqz() || expiryAt < TimestampLib.current()) {
             revert ErrorDistributionServiceExpirationInvalid(expiryAt);
         }
 
@@ -216,7 +216,7 @@ contract DistributionService is
             if (distributorTypeData.maxDiscountPercentage < discountPercentage) {
                 revert ErrorDistributionServiceDiscountTooHigh(distributorTypeData.maxDiscountPercentage, discountPercentage);
             }
-            if (expiryAt.toInt() - TimestampLib.blockTimestamp().toInt() > distributorTypeData.maxReferralLifetime.toInt()) {
+            if (expiryAt.toInt() - TimestampLib.current().toInt() > distributorTypeData.maxReferralLifetime.toInt()) {
                 revert ErrorDistributionServiceExpiryTooLong(distributorTypeData.maxReferralLifetime, expiryAt);
             }
         }
@@ -369,7 +369,7 @@ contract DistributionService is
             revert ErrorDistributionServiceReferralDistributionMismatch(referralId, info.distributionNftId, distributionNftId);
         }
 
-        isValid = info.expiryAt.eqz() || (info.expiryAt.gtz() && TimestampLib.blockTimestamp() <= info.expiryAt);
+        isValid = info.expiryAt.eqz() || (info.expiryAt.gtz() && TimestampLib.current() <= info.expiryAt);
         isValid = isValid && info.usedReferrals < info.maxReferrals;
     }
 
@@ -395,7 +395,7 @@ contract DistributionService is
                 REFERRAL_ERROR_UNKNOWN());
         }
 
-        if (info.expiryAt < TimestampLib.blockTimestamp()) {
+        if (info.expiryAt < TimestampLib.current()) {
             return (
                 UFixedLib.zero(),
                 REFERRAL_ERROR_EXPIRED());

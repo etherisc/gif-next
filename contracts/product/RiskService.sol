@@ -56,7 +56,7 @@ contract RiskService is
         riskId = RiskIdLib.toRiskId(productNftId, id);
         IRisk.RiskInfo memory riskInfo = IRisk.RiskInfo({
             productNftId: productNftId, 
-            createdAt: TimestampLib.blockTimestamp(),
+            createdAt: TimestampLib.current(),
             data: data});
 
         instance.getInstanceStore().createRisk(

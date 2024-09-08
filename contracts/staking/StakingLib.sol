@@ -67,7 +67,7 @@ library StakingLib {
     //     stakingStore.update(
     //         stakeNftId, 
     //         IStaking.StakeInfo({
-    //             lockedUntil: TimestampLib.blockTimestamp().addSeconds(
+    //             lockedUntil: TimestampLib.current().addSeconds(
     //                 lockingPeriod)}));
 
     // }
@@ -148,7 +148,7 @@ library StakingLib {
         Seconds lockingPeriod = checkTarget(stakingReader, targetNftId);
         checkDipAmount(stakingReader, targetNftId, dipAmount);
 
-        Timestamp currentTime = TimestampLib.blockTimestamp();
+        Timestamp currentTime = TimestampLib.current();
         lockedUntil = currentTime.addSeconds(lockingPeriod);
     }
 
@@ -188,7 +188,7 @@ library StakingLib {
     {
         IStaking.StakeInfo memory stakeInfo = stakingReader.getStakeInfo(stakeNftId);
         
-        if (stakeInfo.lockedUntil > TimestampLib.blockTimestamp()) {
+        if (stakeInfo.lockedUntil > TimestampLib.current()) {
             revert IStaking.ErrorStakingStakeLocked(stakeNftId, stakeInfo.lockedUntil);
         }
     }

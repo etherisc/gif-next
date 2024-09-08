@@ -36,7 +36,7 @@ contract TvlCalculation is GifTest {
     UFixed public stakingRate;
 
 
-    function test_tvlCalculationInitialState() public {
+    function test_stakingTvlCalculationInitialState() public {
 
         // check instance is active target
         assertTrue(stakingReader.isTarget(instanceNftId), "instance not target");
@@ -68,7 +68,7 @@ contract TvlCalculation is GifTest {
     }
 
 
-    function test_tvlCalculationCreateSinglePolicy() public {
+    function test_stakingTvlCalculationCreateSinglePolicy() public {
 
         // GIVEN
         uint256 sumInsuredAmountInt = 1000 * 10 ** token.decimals();
@@ -98,7 +98,7 @@ contract TvlCalculation is GifTest {
         // WHEN collateralizing the application
         // check tvl log entry from staking
         Blocknumber currentBlocknumber = BlocknumberLib.currentBlocknumber();
-        Timestamp currentTimestamp = TimestampLib.blockTimestamp();
+        Timestamp currentTimestamp = TimestampLib.current();
         vm.expectEmit(stakingStoreAddress);
         emit LogStakingStoreTotalValueLockedIncreased(
             instanceNftId, 
@@ -132,7 +132,7 @@ contract TvlCalculation is GifTest {
     }
 
 
-    function test_tvlCalculationCreateAndCloseSinglePoliciy() public {
+    function test_stakingTvlCalculationCreateAndCloseSinglePoliciy() public {
 
         // GIVEN
         uint256 sumInsuredAmountInt = 1000 * 10 ** token.decimals();
@@ -196,7 +196,7 @@ contract TvlCalculation is GifTest {
     }
 
 
-    function test_tvlCalculationCreateAndCloseMultiplePolicies() public {
+    function test_stakingTvlCalculationCreateAndCloseMultiplePolicies() public {
 
         // GIVEN
         uint256 sumInsuredAmountInt = 1000 * 10 ** token.decimals();
@@ -270,7 +270,7 @@ contract TvlCalculation is GifTest {
     }
 
 
-    function test_tvlCalculationCreatePoliciyAndCreatePayout() public {
+    function test_stakingTvlCalculationCreatePoliciyAndCreatePayout() public {
 
         // GIVEN
         uint256 sumInsuredAmountInt = 1000 * 10 ** token.decimals();
@@ -420,7 +420,7 @@ contract TvlCalculation is GifTest {
         returns (NftId plicyNftId)
     {
         plicyNftId = _createApplication(policyHolder, sumInsuredAmount, lifetime);
-        _collateralize(plicyNftId, true, TimestampLib.blockTimestamp());
+        _collateralize(plicyNftId, true, TimestampLib.current());
     }
 
 
