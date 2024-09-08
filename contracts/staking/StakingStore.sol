@@ -118,7 +118,7 @@ contract StakingStore is
         }
 
         info.stakingRate = UFixedLib.zero();
-        info.lastUpdatedIn = BlocknumberLib.currentBlocknumber();
+        info.lastUpdatedIn = BlocknumberLib.current();
     }
 
 
@@ -146,7 +146,7 @@ contract StakingStore is
 
         // update values
         info.stakingRate = stakingRate;
-        info.lastUpdatedIn = BlocknumberLib.currentBlocknumber();
+        info.lastUpdatedIn = BlocknumberLib.current();
     }
 
     //--- target management -------------------------------------------------//
@@ -236,7 +236,7 @@ contract StakingStore is
         // checks
         targetInfo = _getAndVerifyTarget(targetNftId);
         lastUpdatedIn = targetInfo.lastUpdatedIn;
-        targetInfo.lastUpdatedIn = BlocknumberLib.currentBlocknumber();
+        targetInfo.lastUpdatedIn = BlocknumberLib.current();
     }
 
 
@@ -272,7 +272,7 @@ contract StakingStore is
         targetInfo.lockingPeriod = lockingPeriod;
         targetInfo.rewardRate = rewardRate;
         targetInfo.chainId = ChainIdLib.fromNftId(targetNftId);
-        targetInfo.lastUpdatedIn = BlocknumberLib.currentBlocknumber();
+        targetInfo.lastUpdatedIn = BlocknumberLib.current();
 
         // add new target to target set
         _targetNftIdSet.add(targetNftId);
@@ -305,7 +305,7 @@ contract StakingStore is
 
         // effects
         tvlInfo.tvlAmount = AmountLib.zero();
-        tvlInfo.lastUpdatedIn = BlocknumberLib.currentBlocknumber();
+        tvlInfo.lastUpdatedIn = BlocknumberLib.current();
 
         // add token to list of know tokens for target
         _targetToken[targetNftId].push(token);
@@ -325,7 +325,7 @@ contract StakingStore is
 
         // effects
         targetInfo.reserveAmount = targetInfo.reserveAmount + dipAmount;
-        targetInfo.lastUpdatedIn = BlocknumberLib.currentBlocknumber();
+        targetInfo.lastUpdatedIn = BlocknumberLib.current();
         newReserveBalance = targetInfo.reserveAmount;
     }
 
@@ -351,7 +351,7 @@ contract StakingStore is
 
         // effects
         targetInfo.reserveAmount = targetInfo.reserveAmount - dipAmount;
-        targetInfo.lastUpdatedIn = BlocknumberLib.currentBlocknumber();
+        targetInfo.lastUpdatedIn = BlocknumberLib.current();
         newReserveBalance = targetInfo.reserveAmount;
     }
 
@@ -372,7 +372,7 @@ contract StakingStore is
 
         // effects
         tvlInfo.tvlAmount = tvlInfo.tvlAmount + amount;
-        tvlInfo.lastUpdatedIn = BlocknumberLib.currentBlocknumber();
+        tvlInfo.lastUpdatedIn = BlocknumberLib.current();
         newBalance = tvlInfo.tvlAmount;
     }
 
@@ -391,7 +391,7 @@ contract StakingStore is
 
         // effects
         tvlInfo.tvlAmount = tvlInfo.tvlAmount - amount;
-        tvlInfo.lastUpdatedIn = BlocknumberLib.currentBlocknumber();
+        tvlInfo.lastUpdatedIn = BlocknumberLib.current();
         newBalance = tvlInfo.tvlAmount;
     }
 
@@ -422,7 +422,7 @@ contract StakingStore is
         // effects
         // update target
         targetInfo.stakedAmount = stakedAmount;
-        targetInfo.lastUpdatedIn = BlocknumberLib.currentBlocknumber();
+        targetInfo.lastUpdatedIn = BlocknumberLib.current();
 
         // update stake
         stakeInfo.targetNftId = targetNftId;
@@ -430,7 +430,7 @@ contract StakingStore is
         stakeInfo.rewardAmount = AmountLib.zero();
         stakeInfo.lockedUntil = lockedUntil;
         stakeInfo.lastUpdateAt = TimestampLib.current();
-        stakeInfo.lastUpdatedIn = BlocknumberLib.currentBlocknumber();
+        stakeInfo.lastUpdatedIn = BlocknumberLib.current();
     }
 
 
@@ -452,13 +452,13 @@ contract StakingStore is
         // update target
         targetInfo.stakedAmount = targetInfo.stakedAmount + stakedAmount;
         targetInfo.rewardAmount = targetInfo.rewardAmount + rewardAmount;
-        targetInfo.lastUpdatedIn = BlocknumberLib.currentBlocknumber();
+        targetInfo.lastUpdatedIn = BlocknumberLib.current();
 
         // update stake
         stakeInfo.stakedAmount = stakeInfo.stakedAmount + stakedAmount;
         stakeInfo.rewardAmount = stakeInfo.rewardAmount + rewardAmount;
         stakeInfo.lastUpdateAt = TimestampLib.current();
-        stakeInfo.lastUpdatedIn = BlocknumberLib.currentBlocknumber();
+        stakeInfo.lastUpdatedIn = BlocknumberLib.current();
 
         // increase locked until if applicable
         if (additionalLockingPeriod.gtz()) {
@@ -491,13 +491,13 @@ contract StakingStore is
         targetInfo.stakedAmount = targetInfo.stakedAmount - unstakedAmount;
         targetInfo.rewardAmount = targetInfo.rewardAmount - claimedAmount;
         targetInfo.reserveAmount = targetInfo.reserveAmount - claimedAmount;
-        targetInfo.lastUpdatedIn = BlocknumberLib.currentBlocknumber();
+        targetInfo.lastUpdatedIn = BlocknumberLib.current();
 
         // update stake
         stakeInfo.stakedAmount = stakeInfo.stakedAmount - unstakedAmount;
         stakeInfo.rewardAmount = stakeInfo.rewardAmount - claimedAmount;
         stakeInfo.lastUpdateAt = TimestampLib.current();
-        stakeInfo.lastUpdatedIn = BlocknumberLib.currentBlocknumber();
+        stakeInfo.lastUpdatedIn = BlocknumberLib.current();
     }
 
 
@@ -525,13 +525,13 @@ contract StakingStore is
         // update target
         targetInfo.stakedAmount = targetInfo.stakedAmount + updatedRewardAmount;
         targetInfo.rewardAmount = targetInfo.rewardAmount - oldRewardAmount;
-        targetInfo.lastUpdatedIn = BlocknumberLib.currentBlocknumber();
+        targetInfo.lastUpdatedIn = BlocknumberLib.current();
 
         // update stake
         stakeInfo.stakedAmount = stakeInfo.stakedAmount + updatedRewardAmount;
         stakeInfo.rewardAmount = AmountLib.zero();
         stakeInfo.lastUpdateAt = TimestampLib.current();
-        stakeInfo.lastUpdatedIn = BlocknumberLib.currentBlocknumber();
+        stakeInfo.lastUpdatedIn = BlocknumberLib.current();
 
         // increase locked until if applicable
         if (additionalLockingPeriod.gtz()) {
@@ -672,7 +672,7 @@ contract StakingStore is
 
         // set tvl balances to 0 and update last updated in
         info.tvlAmount = AmountLib.zero();
-        info.lastUpdatedIn = BlocknumberLib.currentBlocknumber();
+        info.lastUpdatedIn = BlocknumberLib.current();
     }
 
 
@@ -692,7 +692,7 @@ contract StakingStore is
         lastUpdatedIn = tvlInfo.lastUpdatedIn;
 
         tvlInfo.tvlAmount = newTvlAmount;
-        tvlInfo.lastUpdatedIn = BlocknumberLib.currentBlocknumber();
+        tvlInfo.lastUpdatedIn = BlocknumberLib.current();
     }
 
 

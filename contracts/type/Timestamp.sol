@@ -76,11 +76,6 @@ library TimestampLib {
         return Timestamp.wrap(uint40(block.timestamp));
     }
 
-    // TODO cleanup
-    // function blockTimestamp() public view returns (Timestamp) {
-    //     return current();
-    // }
-
     function toTimestamp(uint256 timestamp) public pure returns (Timestamp) {
         return Timestamp.wrap(uint40(timestamp));
     }

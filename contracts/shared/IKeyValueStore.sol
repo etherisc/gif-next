@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Blocknumber, blockBlocknumber, zeroBlocknumber} from "../type/Blocknumber.sol";
+import {Blocknumber} from "../type/Blocknumber.sol";
 import {Key32, KeyId} from "../type/Key32.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType} from "../type/ObjectType.sol";

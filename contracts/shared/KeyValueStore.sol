@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Blocknumber, blockBlocknumber, zeroBlocknumber} from "../type/Blocknumber.sol";
+import {Blocknumber, BlocknumberLib} from "../type/Blocknumber.sol";
 import {Key32, KeyId, Key32Lib} from "../type/Key32.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType} from "../type/ObjectType.sol";
@@ -38,7 +38,7 @@ abstract contract KeyValueStore is
             revert ErrorKeyValueStoreNoLifecycle(objectType);
         }
 
-        Blocknumber blocknumber = blockBlocknumber();
+        Blocknumber blocknumber = BlocknumberLib.current();
         StateId initialState = getInitialState(objectType);
 
         // set metadata
@@ -102,7 +102,7 @@ abstract contract KeyValueStore is
         }
 
         // update metadata
-        metadata.updatedIn = blockBlocknumber();
+        metadata.updatedIn = BlocknumberLib.current();
     }
 
     function exists(Key32 key32) public view returns (bool) {

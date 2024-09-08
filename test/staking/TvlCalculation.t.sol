@@ -97,7 +97,7 @@ contract TvlCalculation is GifTest {
 
         // WHEN collateralizing the application
         // check tvl log entry from staking
-        Blocknumber currentBlocknumber = BlocknumberLib.currentBlocknumber();
+        Blocknumber currentBlocknumber = BlocknumberLib.current();
         Timestamp currentTimestamp = TimestampLib.current();
         vm.expectEmit(stakingStoreAddress);
         emit LogStakingStoreTotalValueLockedIncreased(
@@ -167,7 +167,7 @@ contract TvlCalculation is GifTest {
         vm.warp(policyExpiryAt.toInt());
 
         // check tvl decrease log emission
-        Blocknumber currentBlocknumber = BlocknumberLib.currentBlocknumber();
+        Blocknumber currentBlocknumber = BlocknumberLib.current();
         Amount zeroAmount = AmountLib.zero();
         vm.expectEmit(stakingStoreAddress);
         emit LogStakingStoreTotalValueLockedDecreased(
@@ -302,7 +302,7 @@ contract TvlCalculation is GifTest {
             "unexpected required stake balance (after payout creation)");
 
         // WHEN processing the payout (includes actual payout token flow)
-        Blocknumber currentBlocknumber = BlocknumberLib.currentBlocknumber();
+        Blocknumber currentBlocknumber = BlocknumberLib.current();
         Amount newBalanceAmount = sumInsuredAmount - claimAmount;
         vm.expectEmit(stakingStoreAddress);
         emit LogStakingStoreTotalValueLockedDecreased(
