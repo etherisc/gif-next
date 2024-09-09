@@ -3,6 +3,8 @@ pragma solidity ^0.8.20;
 
 import {console} from "../../../lib/forge-std/src/Test.sol";
 
+import {IRiskService} from "../../../contracts/product/IRiskService.sol";
+
 import {GifTest} from "../../base/GifTest.sol";
 import {KeyId} from "../../../contracts/type/Key32.sol";
 import {NftId} from "../../../contracts/type/NftId.sol";
@@ -12,7 +14,7 @@ import {Timestamp, zeroTimestamp} from "../../../contracts/type/Timestamp.sol";
 import {RISK} from "../../../contracts/type/ObjectType.sol";
 import {RiskId, RiskIdLib, eqRiskId} from "../../../contracts/type/RiskId.sol";
 import {ReferralLib} from "../../../contracts/type/Referral.sol";
-import {ACTIVE, PAUSED, ARCHIVED} from "../../../contracts/type/StateId.sol";
+import {ACTIVE, PAUSED, ARCHIVED, CLOSED} from "../../../contracts/type/StateId.sol";
 
 contract TestProductRisk is GifTest {
 
@@ -139,9 +141,9 @@ contract TestProductRisk is GifTest {
 
         // WHEN pausing
         vm.startPrank(productOwner);
-        product.updateRiskState(riskId1, PAUSED());
-        product.updateRiskState(riskId3, PAUSED());
-        product.updateRiskState(riskId4, PAUSED());
+        product.setRiskLocked(riskId1, true);
+        product.setRiskLocked(riskId3, true);
+        product.setRiskLocked(riskId4, true);
         vm.stopPrank();
 
         // THEN
@@ -152,8 +154,8 @@ contract TestProductRisk is GifTest {
 
         // WHEN re-activating
         vm.startPrank(productOwner);
-        product.updateRiskState(riskId1, ACTIVE());
-        product.updateRiskState(riskId3, ACTIVE());
+        product.setRiskLocked(riskId1, false);
+        product.setRiskLocked(riskId3, false);
         vm.stopPrank();
 
         // THEN
@@ -192,7 +194,7 @@ contract TestProductRisk is GifTest {
 
         // WHEN pausing
         vm.startPrank(productOwner);
-        product.updateRiskState(riskId1, PAUSED());
+        product.setRiskLocked(riskId1, true);
         vm.stopPrank();
 
         // THEN
@@ -207,7 +209,7 @@ contract TestProductRisk is GifTest {
 
         // WHEN re-activating
         vm.startPrank(productOwner);
-        product.updateRiskState(riskId1, ACTIVE());
+        product.setRiskLocked(riskId1, false);
         vm.stopPrank();
 
         // THEN
@@ -230,30 +232,9 @@ contract TestProductRisk is GifTest {
 
         // WHEN + THEN (activec -> paused)
         vm.prank(productOwner);
-        product.updateRiskState(riskId, PAUSED());
-        assertEq(instanceReader.getRiskState(riskId).toInt(), PAUSED().toInt(), "risk not paused");
-
-        // WHEN + THEN (paused -> active)
-        vm.prank(productOwner);
-        product.updateRiskState(riskId, ACTIVE());
-        assertEq(instanceReader.getRiskState(riskId).toInt(), ACTIVE().toInt(), "risk not active");
-    }
-
-    // check risk lifecycle
-    function test_productRiskLifecycle2() public {
-        // GIVEN
-        RiskId riskId = _createRisk("XYZ");
-        assertEq(instanceReader.getRiskState(riskId).toInt(), ACTIVE().toInt(), "unexpected new risk state");
-
-        // WHEN + THEN (activec -> paused)
-        vm.prank(productOwner);
-        product.updateRiskState(riskId, PAUSED());
-        assertEq(instanceReader.getRiskState(riskId).toInt(), PAUSED().toInt(), "risk not paused");
-
-        // WHEN + THEN (paused -> archived)
-        vm.prank(productOwner);
-        product.updateRiskState(riskId, ARCHIVED());
-        assertEq(instanceReader.getRiskState(riskId).toInt(), ARCHIVED().toInt(), "risk not active");
+        product.setRiskLocked(riskId, true);
+        product.closeRisk(riskId);
+        assertEq(instanceReader.getRiskState(riskId).toInt(), CLOSED().toInt(), "risk not paused");
     }
 
     // check risk lifecycle
@@ -265,39 +246,35 @@ contract TestProductRisk is GifTest {
         // WHEN + THEN (active -> archived)
         vm.expectRevert(
             abi.encodeWithSelector(
-                ILifecycle.ErrorInvalidStateTransition.selector,
-                address(instanceStore),
-                RISK(),
-                ACTIVE(),
-                ARCHIVED()));
+                IRiskService.ErrorRiskServiceRiskNotLocked.selector,
+                productNftId,
+                riskId));
 
         vm.prank(productOwner);
-        product.updateRiskState(riskId, ARCHIVED());
+        product.closeRisk(riskId);
     }
 
     // check risk lifecycle
-    function test_productRiskLifecycleArchivedToActiveError() public {
+    function test_productRisk_lockClosedRisk() public {
         // GIVEN
         RiskId riskId = _createRisk("XYZ");
 
         vm.startPrank(productOwner);
-        product.updateRiskState(riskId, PAUSED());
-        product.updateRiskState(riskId, ARCHIVED());
+        product.setRiskLocked(riskId, true);
+        product.closeRisk(riskId);
         vm.stopPrank();
 
-        assertEq(instanceReader.getRiskState(riskId).toInt(), ARCHIVED().toInt(), "unexpected new risk state");
+        assertEq(instanceReader.getRiskState(riskId).toInt(), CLOSED().toInt(), "unexpected new risk state");
 
-        // WHEN + THEN (archived -> active)
+        // WHEN + THEN (unlocke)
         vm.expectRevert(
             abi.encodeWithSelector(
-                ILifecycle.ErrorInvalidStateTransition.selector,
-                address(instanceStore),
-                RISK(),
-                ARCHIVED(),
-                ACTIVE()));
+                IRiskService.ErrorRiskServiceRiskNotActive.selector,
+                productNftId,
+                riskId));
 
         vm.prank(productOwner);
-        product.updateRiskState(riskId, ACTIVE());
+        product.setRiskLocked(riskId, false);
     }
 
     // check risk lifecycle
@@ -306,23 +283,21 @@ contract TestProductRisk is GifTest {
         RiskId riskId = _createRisk("XYZ");
 
         vm.startPrank(productOwner);
-        product.updateRiskState(riskId, PAUSED());
-        product.updateRiskState(riskId, ARCHIVED());
+        product.setRiskLocked(riskId, true);
+        product.closeRisk(riskId);
         vm.stopPrank();
 
-        assertEq(instanceReader.getRiskState(riskId).toInt(), ARCHIVED().toInt(), "unexpected new risk state");
+        assertEq(instanceReader.getRiskState(riskId).toInt(), CLOSED().toInt(), "unexpected new risk state");
+        vm.prank(productOwner);
 
         // WHEN + THEN (archived -> paused)
         vm.expectRevert(
             abi.encodeWithSelector(
-                ILifecycle.ErrorInvalidStateTransition.selector,
-                address(instanceStore),
-                RISK(),
-                ARCHIVED(),
-                PAUSED()));
+                IRiskService.ErrorRiskServiceRiskNotActive.selector,
+                productNftId,
+                riskId));
 
-        vm.prank(productOwner);
-        product.updateRiskState(riskId, PAUSED());
+        product.setRiskLocked(riskId, true);
     }
 
     // add allowance to pay premiums

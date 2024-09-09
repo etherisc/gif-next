@@ -76,9 +76,7 @@ contract ObjectLifecycle is
 
     function _setupRiskLifecycle() private {
         setInitialState(RISK(), ACTIVE());
-        setStateTransition(RISK(), ACTIVE(), PAUSED());
-        setStateTransition(RISK(), PAUSED(), ACTIVE());
-        setStateTransition(RISK(), PAUSED(), ARCHIVED());
+        setStateTransition(RISK(), ACTIVE(), CLOSED());
     }
 
     function _setupRequestLifecycle() private {

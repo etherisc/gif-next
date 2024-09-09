@@ -140,9 +140,9 @@ contract FireProduct is
             revert ErrorFireProductCityUnknown(cityName);
         }
 
-        _updateRiskState(
+        _setRiskLocked(
             _riskMapping[cityName],
-            PAUSED()
+            true
         );
     }
 
@@ -156,9 +156,9 @@ contract FireProduct is
             revert ErrorFireProductCityUnknown(cityName);
         }
 
-        _updateRiskState(
+        _setRiskLocked(
             _riskMapping[cityName],
-            ACTIVE()
+            false
         );
     }
 

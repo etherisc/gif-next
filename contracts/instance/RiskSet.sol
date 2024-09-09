@@ -19,7 +19,6 @@ contract RiskSet is
     event LogRiskSetRiskAdded(NftId productNftId, RiskId riskId);
     event LogRiskSetRiskActive(NftId poolNftId,  RiskId riskId);
     event LogRiskSetRiskPaused(NftId poolNftId,  RiskId riskId);
-    event LogRiskSetRiskArchived(NftId poolNftId,  RiskId riskId);
 
     error ErrorRiskSetRiskLocked(RiskId riskId, NftId policyNftId); 
     error ErrorRiskSetRiskUnknown(RiskId riskId);
@@ -73,7 +72,7 @@ contract RiskSet is
     }
 
     /// @dev Applications linked to paused/archived risks may not be underwritten
-    function pause(RiskId riskId) external restricted() {
+    function deactivate(RiskId riskId) external restricted() {
         NftId productNftId = ObjectSetHelperLib.getProductNftId(_instanceAddress, riskId);
         _deactivate(productNftId, riskId.toKey32());
         emit LogRiskSetRiskPaused(productNftId, riskId);
@@ -90,6 +89,15 @@ contract RiskSet is
         if (exists) {
             active = _isActive(productNftId, riskKey32);
         }
+    }
+
+    function hasRisk(NftId productNftId, RiskId riskId)
+        public
+        view 
+        returns (bool)
+    {
+        Key32 riskKey32 = riskId.toKey32();
+        return _contains(productNftId, riskKey32);
     }
 
     function risks(NftId productNftId) external view returns(uint256) {

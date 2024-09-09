@@ -9,7 +9,7 @@ import {IRiskService} from "./IRiskService.sol";
 import {ContractLib} from "../shared/ContractLib.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {ObjectType, COMPONENT, PRODUCT, RISK} from "../type/ObjectType.sol";
-import {ACTIVE, PAUSED, KEEP_STATE} from "../type/StateId.sol";
+import {ACTIVE, KEEP_STATE, CLOSED} from "../type/StateId.sol";
 import {NftId} from "../type/NftId.sol";
 import {RiskId, RiskIdLib} from "../type/RiskId.sol";
 import {StateId} from "../type/StateId.sol";
@@ -98,9 +98,10 @@ contract RiskService is
     }
 
 
-    function updateRiskState(
+    /// @inheritdoc IRiskService
+    function setRiskLocked(
         RiskId riskId,
-        StateId state
+        bool locked
     )
         external 
         virtual
@@ -109,21 +110,47 @@ contract RiskService is
         // checks
         (NftId productNftId, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
 
-        NftId riskProductNftId = instance.getInstanceReader().getRiskInfo(riskId).productNftId;
-        if (riskProductNftId != productNftId) {
-            revert ErrorRiskServiceRiskProductMismatch(riskId, riskProductNftId, productNftId);
+        if (!instance.getRiskSet().hasRisk(productNftId, riskId)) {
+            revert ErrorRiskServiceUnknownRisk(productNftId, riskId);
+        }
+
+        if (instance.getInstanceReader().getRiskState(riskId) != ACTIVE()) {
+            revert ErrorRiskServiceRiskNotActive(productNftId, riskId);
+        }
+
+        if (locked) {
+            instance.getRiskSet().deactivate(riskId);
+            emit LogRiskServiceRiskLocked(productNftId, riskId);
+        } else {
+            instance.getRiskSet().activate(riskId);
+            emit LogRiskServiceRiskUnlocked(productNftId, riskId);
+        }
+    }
+
+    /// @inheritdoc IRiskService
+    function closeRisk(
+        RiskId riskId
+    )
+        external 
+        virtual
+        restricted()
+    {
+        // checks
+        (NftId productNftId, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
+        (bool exists, bool active) = instance.getRiskSet().checkRisk(productNftId, riskId);
+
+        if (!exists) {
+            revert ErrorRiskServiceUnknownRisk(productNftId, riskId);
+        }
+
+        if (active) {
+            revert ErrorRiskServiceRiskNotLocked(productNftId, riskId);
         }
 
         // effects
-        instance.getInstanceStore().updateRiskState(riskId, state);
+        instance.getInstanceStore().updateRiskState(riskId, CLOSED());
 
-        if (state == ACTIVE()) {
-            instance.getRiskSet().activate(riskId);
-        } else if (state == PAUSED()) {
-            instance.getRiskSet().pause(riskId);
-        }
-
-        emit LogRiskServiceRiskStateUpdated(productNftId, riskId, state);
+        emit LogRiskServiceRiskClosed(productNftId, riskId);
     }
 
     function _getAndVerifyActiveComponent(ObjectType expectedType) 

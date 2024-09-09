@@ -209,16 +209,27 @@ abstract contract Product is
         );
     }
 
-    function _updateRiskState(
+    function _setRiskLocked(
         RiskId id,
-        StateId state
+        bool locked
     )
         internal
         virtual
     {
-        _getProductStorage()._riskService.updateRiskState(
+        _getProductStorage()._riskService.setRiskLocked(
             id,
-            state
+            locked
+        );
+    }
+
+    function _closeRisk(
+        RiskId id
+    )
+        internal
+        virtual
+    {
+        _getProductStorage()._riskService.closeRisk(
+            id
         );
     }
 
