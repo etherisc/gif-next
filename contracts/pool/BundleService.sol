@@ -195,9 +195,6 @@ contract BundleService is
 
         (, IInstance instance) = PoolLib.getAndVerifyActivePool(getRegistry(), msg.sender);
 
-        // udpate bundle state
-        instance.getInstanceStore().updateBundleState(bundleNftId, PAUSED());
-
         // effects
         // update set of active bundles
         BundleSet bundleManager = instance.getBundleSet();
@@ -218,8 +215,6 @@ contract BundleService is
         (, IInstance instance) = PoolLib.getAndVerifyActivePool(getRegistry(), msg.sender);
 
         // effects
-        // udpate bundle state
-        instance.getInstanceStore().updateBundleState(bundleNftId, ACTIVE());
 
         // update set of active bundles
         BundleSet bundleManager = instance.getBundleSet();

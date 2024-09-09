@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {console} from "../lib/forge-std/src/Test.sol";
 
+import {BundleSet} from "../contracts/instance/BundleSet.sol";
 import {GifTest} from "./base/GifTest.sol";
 import {NftId, NftIdLib} from "../contracts/type/NftId.sol";
 import {SimpleProduct} from "../contracts/examples/unpermissioned/SimpleProduct.sol";
@@ -735,7 +736,10 @@ contract TestProduct is GifTest {
         Timestamp timeNow = TimestampLib.blockTimestamp();
 
         // THEN - WHEN - try collateralize on locked bundle
-        vm.expectRevert();
+        vm.expectRevert(abi.encodeWithSelector(
+            BundleSet.ErrorBundleSetBundleLocked.selector,
+            bundleNftId,
+            policyNftId));
         product.createPolicy(policyNftId, false, timeNow); 
 
         // WHEN - unlock bundle and try collateralize again
