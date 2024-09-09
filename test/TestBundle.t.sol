@@ -3,6 +3,8 @@ pragma solidity ^0.8.20;
 
 import {console} from "../lib/forge-std/src/Test.sol";
 
+import {INftOwnable} from "../contracts/shared/INftOwnable.sol";
+
 import {Amount, AmountLib} from "../contracts/type/Amount.sol";
 import {BasicPoolAuthorization} from "../contracts/pool/BasicPoolAuthorization.sol";
 import {Fee, FeeLib} from "../contracts/type/Fee.sol";
@@ -14,7 +16,7 @@ import {ILifecycle} from "../contracts/shared/ILifecycle.sol";
 import {IPoolComponent} from "../contracts/pool/IPoolComponent.sol";
 import {Key32} from "../contracts/type/Key32.sol";
 import {NftId, NftIdLib} from "../contracts/type/NftId.sol";
-import {ObjectType, BUNDLE} from "../contracts/type/ObjectType.sol";
+import {ObjectType, BUNDLE, PRODUCT} from "../contracts/type/ObjectType.sol";
 import {Pool} from "../contracts/pool/Pool.sol";
 import {IPoolService} from "../contracts/pool/IPoolService.sol";
 import {PUBLIC_ROLE} from "../contracts/type/RoleId.sol";
@@ -315,6 +317,44 @@ contract TestBundle is GifTest {
         pool.stake(bundleNftId, stakeAmount);
     }
 
+    /// @dev test staking into an nft that is not a bundle
+    function test_bundle_stakeBundle_invalidNftType() public {
+        // GIVEN
+        initialStakingFee = FeeLib.percentageFee(4);
+        _prepareProduct(false);
+        
+        IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
+
+        vm.startPrank(investor);
+        token.approve(address(pool.getTokenHandler()), 2000);
+
+        Seconds lifetime = SecondsLib.toSeconds(604800);
+        (bundleNftId,) = pool.createBundle(
+            FeeLib.zero(), 
+            1000, 
+            lifetime, 
+            ""
+        );
+        uint256 createdAt = vm.getBlockTimestamp();
+        
+        Amount stakeAmount = AmountLib.toAmount(1000);
+        
+        pool.closeBundle(bundleNftId);
+
+        vm.stopPrank();
+        vm.startPrank(productOwner);
+
+        // THEN - revert
+        vm.expectRevert(abi.encodeWithSelector(
+            INftOwnable.ErrorNftOwnableInvalidType.selector,
+            productNftId,
+            BUNDLE()
+        ));
+
+        // WHEN - nft is not a bundle
+        pool.stake(productNftId, stakeAmount);
+    }
+
     /// @dev test unstaking of a bundle 
     function test_bundle_unstakeBundle() public {
         // GIVEN
@@ -520,6 +560,42 @@ contract TestBundle is GifTest {
 
         // WHEN - tokens are unstaked
         pool.unstake(bundleNftId, unstakeAmount);
+    }
+
+    /// @dev test unstaking of a bundle with an invalid nft type
+    function test_bundle_unstakeBundle_invalidNftType() public {
+        // GIVEN
+        initialStakingFee = FeeLib.percentageFee(4);
+        _prepareProduct(false);
+        
+        IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
+
+        vm.startPrank(investor);
+        token.approve(address(pool.getTokenHandler()), 2000);
+
+        Seconds lifetime = SecondsLib.toSeconds(604800);
+        (bundleNftId,) = pool.createBundle(
+            FeeLib.zero(), 
+            1000, 
+            lifetime, 
+            ""
+        );
+
+        vm.stopPrank();
+
+        vm.startPrank(productOwner);
+
+        Amount unstakeAmount = AmountLib.toAmount(500);
+        
+        // THEN - expect revert
+        vm.expectRevert(abi.encodeWithSelector(
+            INftOwnable.ErrorNftOwnableInvalidType.selector,
+            productNftId,
+            BUNDLE()
+        ));
+
+        // WHEN - unstaking with an invalid nft type is attempted
+        pool.unstake(productNftId, unstakeAmount);
     }
 
     /// @dev test extension of a bundle
