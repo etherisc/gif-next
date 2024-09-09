@@ -1,31 +1,24 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Vm, console} from "../../../lib/forge-std/src/Test.sol";
+import {Vm} from "forge-std/Test.sol";
+
+import {IClaimService} from "@gif-next/product/IClaimService.sol";
 
 import {GifTest} from "../../base/GifTest.sol";
 import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
-import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
+import {NftId} from "../../../contracts/type/NftId.sol";
 import {ClaimId} from "../../../contracts/type/ClaimId.sol";
-import {SimpleProduct} from "../../../contracts/examples/unpermissioned/SimpleProduct.sol";
-import {SimplePool} from "../../../contracts/examples/unpermissioned/SimplePool.sol";
-import {IComponents} from "../../../contracts/instance/module/IComponents.sol";
-import {ILifecycle} from "../../../contracts/shared/ILifecycle.sol";
 import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
-import {IBundle} from "../../../contracts/instance/module/IBundle.sol";
-import {Fee, FeeLib} from "../../../contracts/type/Fee.sol";
-import {UFixedLib} from "../../../contracts/type/UFixed.sol";
 import {Seconds, SecondsLib} from "../../../contracts/type/Seconds.sol";
 import {Timestamp, TimestampLib, zeroTimestamp} from "../../../contracts/type/Timestamp.sol";
-import {IPolicyService} from "../../../contracts/product/IPolicyService.sol";
-import {IRisk} from "../../../contracts/instance/module/IRisk.sol";
-import {PayoutId, PayoutIdLib} from "../../../contracts/type/PayoutId.sol";
-import {POLICY} from "../../../contracts/type/ObjectType.sol";
-import {RiskId, RiskIdLib, eqRiskId} from "../../../contracts/type/RiskId.sol";
+import {PayoutId} from "../../../contracts/type/PayoutId.sol";
+import {RiskId} from "../../../contracts/type/RiskId.sol";
 import {ReferralLib} from "../../../contracts/type/Referral.sol";
-import {SUBMITTED, ACTIVE, COLLATERALIZED, CONFIRMED, DECLINED, CLOSED, REVOKED} from "../../../contracts/type/StateId.sol";
+import {SUBMITTED, CONFIRMED, DECLINED, REVOKED} from "../../../contracts/type/StateId.sol";
 import {StateId} from "../../../contracts/type/StateId.sol";
 
+// solhint-disable func-name-mixedcase
 contract TestProductClaim is GifTest {
 
     event LogClaimTestClaimInfo(NftId policyNftId, IPolicy.PolicyInfo policyInfo, ClaimId claimId, IPolicy.ClaimInfo claimInfo);
@@ -109,6 +102,40 @@ contract TestProductClaim is GifTest {
         assertEq(claimInfo.openPayoutsCount, 0, "open payouts count not 0");
         assertEq(keccak256(claimInfo.submissionData), keccak256(claimData), "unexpected claim data");
         assertTrue(claimInfo.closedAt.eqz(), "closed at not 0");
+    }
+
+    function test_ProductClaimSubmitAmountZero() public {
+        // GIVEN
+        _approve();
+        _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
+
+        // WHEN
+        Amount claimAmount = AmountLib.zero();
+        bytes memory claimData = "please pay";
+
+        vm.expectRevert(abi.encodeWithSelector(
+            IClaimService.ErrorClaimServiceClaimAmountIsZero.selector, 
+            policyNftId));
+
+        product.submitClaim(policyNftId, claimAmount, claimData); 
+    }
+
+    function test_ProductClaimSubmitExceedsSumInsured() public {
+        // GIVEN
+        _approve();
+        _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
+
+        // WHEN
+        Amount claimAmount = AmountLib.toAmount(1001);
+        bytes memory claimData = "please pay";
+
+        vm.expectRevert(abi.encodeWithSelector(
+            IClaimService.ErrorClaimServiceClaimExceedsSumInsured.selector, 
+            policyNftId,
+            AmountLib.toAmount(SUM_INSURED),
+            claimAmount));
+
+        product.submitClaim(policyNftId, claimAmount, claimData); 
     }
 
 
