@@ -260,6 +260,16 @@ abstract contract Product is
         );
     }
 
+    function _revoke(
+        NftId applicationNftId
+    )
+        internal
+        virtual
+    {
+        _getProductStorage()._applicationService.revoke(
+            applicationNftId);
+    }
+
     function _createPolicy(
         NftId applicationNftId,
         Timestamp activateAt,

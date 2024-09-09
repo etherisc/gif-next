@@ -21,7 +21,7 @@ import {IRisk} from "../../../contracts/instance/module/IRisk.sol";
 import {RiskId, RiskIdLib, eqRiskId} from "../../../contracts/type/RiskId.sol";
 import {ReferralId, ReferralLib} from "../../../contracts/type/Referral.sol";
 import {ReferralId, ReferralLib} from "../../../contracts/type/Referral.sol";
-import {APPLIED, COLLATERALIZED, CLOSED, DECLINED, PAID, EXPECTED} from "../../../contracts/type/StateId.sol";
+import {APPLIED, COLLATERALIZED, CLOSED, DECLINED, PAID, EXPECTED, REVOKED} from "../../../contracts/type/StateId.sol";
 import {POLICY} from "../../../contracts/type/ObjectType.sol";
 import {DistributorType} from "../../../contracts/type/DistributorType.sol";
 import {IPolicyService} from "../../../contracts/product/IPolicyService.sol";
@@ -194,6 +194,46 @@ contract ProductApplicationTest is GifTest {
             "",
             bundleNftId,
             referralId);
+    }
+
+    function test_productRevokeApplication() public {
+        // GIVEN
+
+        vm.startPrank(productOwner);
+        bytes memory data = "bla di blubb";
+        RiskId riskId = product.createRisk("42x4711", data);
+        vm.stopPrank();
+
+        vm.startPrank(customer);
+
+        // crete application
+        uint256 sumInsuredAmount = 1000;
+        Seconds lifetime = SecondsLib.toSeconds(30);
+        bytes memory applicationData = "";
+        ReferralId referralId = ReferralLib.zero();
+        NftId policyNftId = product.createApplication(
+            customer,
+            riskId,
+            sumInsuredAmount,
+            lifetime,
+            applicationData,
+            bundleNftId,
+            referralId
+        );
+
+        assertTrue(policyNftId.gtz(), "policyNftId was zero");
+        assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
+        assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
+        
+        // THEN
+        vm.expectEmit();
+        emit IApplicationService.LogApplicationServiceApplicationRevoked(policyNftId);
+
+        // WHEN
+        product.revoke(policyNftId);
+
+        // THEN 
+        assertTrue(instanceReader.getPolicyState(policyNftId) == REVOKED(), "policy state not REVOKED");
     }
 
     function test_productDeclineApplication() public {

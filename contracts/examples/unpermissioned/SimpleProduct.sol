@@ -173,6 +173,12 @@ contract SimpleProduct is
             applicationData
         );
     }
+    
+    function revoke(
+        NftId applicationNftId
+    ) public {
+        _revoke(applicationNftId);
+    }
 
     function createPolicy(
         NftId applicationNftId,
