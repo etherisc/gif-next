@@ -1,29 +1,29 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {console} from "../lib/forge-std/src/Test.sol";
+import {console} from "../../../lib/forge-std/src/Test.sol";
 
-import {IBundleService} from "../contracts/pool/IBundleService.sol";
-import {BundleSet} from "../contracts/instance/BundleSet.sol";
-import {GifTest} from "./base/GifTest.sol";
-import {NftId, NftIdLib} from "../contracts/type/NftId.sol";
-import {SimpleProduct} from "../contracts/examples/unpermissioned/SimpleProduct.sol";
-import {IComponents} from "../contracts/instance/module/IComponents.sol";
-import {IDistribution} from "../contracts/instance/module/IDistribution.sol";
-import {IPolicy} from "../contracts/instance/module/IPolicy.sol";
-import {Amount, AmountLib} from "../contracts/type/Amount.sol";
-import {Fee, FeeLib} from "../contracts/type/Fee.sol";
-import {UFixedLib} from "../contracts/type/UFixed.sol";
-import {Seconds, SecondsLib} from "../contracts/type/Seconds.sol";
-import {Timestamp, TimestampLib, zeroTimestamp} from "../contracts/type/Timestamp.sol";
-import {IRisk} from "../contracts/instance/module/IRisk.sol";
-import {RiskId, RiskIdLib, eqRiskId} from "../contracts/type/RiskId.sol";
-import {ReferralId, ReferralLib} from "../contracts/type/Referral.sol";
-import {ReferralId, ReferralLib} from "../contracts/type/Referral.sol";
-import {APPLIED, COLLATERALIZED, CLOSED, DECLINED, PAID, EXPECTED} from "../contracts/type/StateId.sol";
-import {POLICY} from "../contracts/type/ObjectType.sol";
-import {DistributorType} from "../contracts/type/DistributorType.sol";
-import {IPolicyService} from "../contracts/product/IPolicyService.sol";
+import {IBundleService} from "../../../contracts/pool/IBundleService.sol";
+import {BundleSet} from "../../../contracts/instance/BundleSet.sol";
+import {GifTest} from "../../base/GifTest.sol";
+import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
+import {SimpleProduct} from "../../../contracts/examples/unpermissioned/SimpleProduct.sol";
+import {IComponents} from "../../../contracts/instance/module/IComponents.sol";
+import {IDistribution} from "../../../contracts/instance/module/IDistribution.sol";
+import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
+import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
+import {Fee, FeeLib} from "../../../contracts/type/Fee.sol";
+import {UFixedLib} from "../../../contracts/type/UFixed.sol";
+import {Seconds, SecondsLib} from "../../../contracts/type/Seconds.sol";
+import {Timestamp, TimestampLib, zeroTimestamp} from "../../../contracts/type/Timestamp.sol";
+import {IRisk} from "../../../contracts/instance/module/IRisk.sol";
+import {RiskId, RiskIdLib, eqRiskId} from "../../../contracts/type/RiskId.sol";
+import {ReferralId, ReferralLib} from "../../../contracts/type/Referral.sol";
+import {ReferralId, ReferralLib} from "../../../contracts/type/Referral.sol";
+import {APPLIED, COLLATERALIZED, CLOSED, DECLINED, PAID, EXPECTED} from "../../../contracts/type/StateId.sol";
+import {POLICY} from "../../../contracts/type/ObjectType.sol";
+import {DistributorType} from "../../../contracts/type/DistributorType.sol";
+import {IPolicyService} from "../../../contracts/product/IPolicyService.sol";
 
 contract TestProduct is GifTest {
 

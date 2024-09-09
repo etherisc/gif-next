@@ -2,16 +2,16 @@
 pragma solidity ^0.8.20;
 
 
-import {GifClusterTest} from "./base/GifClusterTest.sol";
-import {NftId} from "../contracts/type/NftId.sol";
-import {FeeLib} from "../contracts/type/Fee.sol";
-import {UFixedLib} from "../contracts/type/UFixed.sol";
-import {Seconds, SecondsLib} from "../contracts/type/Seconds.sol";
-import {TimestampLib} from "../contracts/type/Timestamp.sol";
-import {RiskId} from "../contracts/type/RiskId.sol";
-import {ReferralId, ReferralLib} from "../contracts/type/Referral.sol";
-import {DistributorType} from "../contracts/type/DistributorType.sol";
-import {IDistributionService} from "../contracts/distribution/IDistributionService.sol";
+import {GifClusterTest} from "../../base/GifClusterTest.sol";
+import {NftId} from "../../../contracts/type/NftId.sol";
+import {FeeLib} from "../../../contracts/type/Fee.sol";
+import {UFixedLib} from "../../../contracts/type/UFixed.sol";
+import {Seconds, SecondsLib} from "../../../contracts/type/Seconds.sol";
+import {TimestampLib} from "../../../contracts/type/Timestamp.sol";
+import {RiskId} from "../../../contracts/type/RiskId.sol";
+import {ReferralId, ReferralLib} from "../../../contracts/type/Referral.sol";
+import {DistributorType} from "../../../contracts/type/DistributorType.sol";
+import {IDistributionService} from "../../../contracts/distribution/IDistributionService.sol";
 
 
 // solhint-disable func-name-mixedcase
