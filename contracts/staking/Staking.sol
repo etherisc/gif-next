@@ -204,29 +204,30 @@ contract Staking is
 
 
     /// @inheritdoc IStaking
+    function addToken(
+        ChainId chainId, 
+        address token
+    )
+        external
+        virtual
+        restricted()
+        onlyOwner()
+    {
+        _addToken(
+            _getStakingStorage(), chainId, token);
+    }
+
+
+    /// @inheritdoc IStaking
     function approveTokenHandler(IERC20Metadata token, Amount amount)
         public
+        virtual
         restricted()
         onlyOwner()
     {
         Amount oldApprovalAmount = _approveTokenHandler(token, amount);
 
         emit LogStakingTokenHandlerApproved(address(token), amount, oldApprovalAmount);
-    }
-
-    //--- token management --------------------------------------------------//
-
-    /// @inheritdoc IStaking
-    function addToken(
-        ChainId chainId, 
-        address token
-    )
-        external
-        restricted() // token registry
-    {
-        _getStakingStorage()._store.addToken(chainId, token);
-
-        emit LogStakingTokenAdded(chainId, token);
     }
 
     //--- target management -------------------------------------------------//
@@ -263,8 +264,8 @@ contract Staking is
         restricted()
         onlyTarget(targetNftId)
     {
-        _getStakingStorage()._store.setLockingPeriod(targetNftId, lockingPeriod);
-        // emit LogStakingTargetLockingPeriodSet(targetNftId, oldLockingPeriod, lockingPeriod);
+        (Seconds oldLockingPeriod, ) = _getStakingStorage()._store.setLockingPeriod(targetNftId, lockingPeriod);
+        emit LogStakingTargetLockingPeriodSet(targetNftId, lockingPeriod, oldLockingPeriod);
     }
 
 
@@ -275,8 +276,8 @@ contract Staking is
         restricted()
         onlyTarget(targetNftId)
     {
-        _getStakingStorage()._store.setRewardRate(targetNftId, rewardRate);
-        // emit LogStakingTargetRewardRateSet(targetNftId, oldRewardRate, rewardRate);
+        (UFixed oldRewardRate,) = _getStakingStorage()._store.setRewardRate(targetNftId, rewardRate);
+        emit LogStakingTargetRewardRateSet(targetNftId, rewardRate, oldRewardRate);
     }
 
 
@@ -327,11 +328,7 @@ contract Staking is
     {
         StakingStorage storage $ = _getStakingStorage();
         ChainId chainId = ChainIdLib.fromNftId(targetNftId);
-        if ($._store.getTokenInfo(chainId, token).lastUpdatedIn.eqz()) {
-            $._store.addToken(chainId, token);
-
-            emit LogStakingTokenAdded(chainId, token);
-        }
+        _addToken($, chainId, token);
         
         $._store.addTargetToken(targetNftId, token);
 
@@ -421,7 +418,7 @@ contract Staking is
         // update rewards since last update
         NftId targetNftId = $._reader.getTargetNftId(stakeNftId);
         TargetInfo memory targetInfo = $._reader.getTargetInfo(targetNftId);
-        (Amount rewardIncrement, ) = StakingLib.calculateRewardIncrease(
+        Amount rewardIncrement = StakingLib.calculateRewardIncrease(
             $._reader, 
             stakeNftId,
             targetInfo.rewardRate);
@@ -617,9 +614,10 @@ contract Staking is
         internal
         virtual
     {
-        (, UFixed rewardRate) = reader.getTargetRewardRate(stakeNftId);
+        UFixed rewardRate = store.getTargetInfo(
+            store.getStakeTarget(stakeNftId)).rewardRate;
 
-        (Amount rewardIncrement, ) = StakingLib.calculateRewardIncrease(
+        Amount rewardIncrement = StakingLib.calculateRewardIncrease(
             reader, 
             stakeNftId,
             rewardRate);
@@ -631,6 +629,22 @@ contract Staking is
             SecondsLib.zero());
 
         emit LogStakingStakeRewardsUpdated(stakeNftId, rewardIncrement, newRewardAmount);
+    }
+
+
+    function _addToken(
+        StakingStorage storage $,
+        ChainId chainId, 
+        address token
+    )
+        internal
+        virtual
+    {
+        if ($._store.getTokenInfo(chainId, token).lastUpdatedIn.eqz()) {
+            $._store.addToken(chainId, token);
+
+            emit LogStakingTokenAdded(chainId, token);
+        }
     }
 
 

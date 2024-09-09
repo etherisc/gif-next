@@ -252,9 +252,7 @@ contract StakingTest is GifTest {
         assertEq(expectedRewardIncrease.toInt(), expectedRewardIncreaseInt, "unexpected 'expected' reward increase");
 
         // check expected reward increase (version 2)
-        (
-            Amount rewardIncrease,
-        ) = StakingLib.calculateRewardIncrease(
+        Amount rewardIncrease = StakingLib.calculateRewardIncrease(
             stakingReader,
             stakeNftId,
             rewardRate);
@@ -309,10 +307,7 @@ contract StakingTest is GifTest {
 
         // check reward calculations after one year
         UFixed rewardRate = stakingReader.getTargetInfo(instanceNftId).rewardRate;
-        (
-            Amount rewardIncrease,
-            Amount totalDipAmount
-        ) = StakingLib.calculateRewardIncrease(
+        Amount rewardIncrease = StakingLib.calculateRewardIncrease(
             stakingReader,
             stakeNftId,
             rewardRate);
@@ -367,10 +362,7 @@ contract StakingTest is GifTest {
 
         // check reward calculations after one year
         UFixed rewardRate = stakingReader.getTargetInfo(instanceNftId).rewardRate;
-        (
-            Amount rewardIncrease,
-            Amount totalDipAmount
-        ) = StakingLib.calculateRewardIncrease(
+        Amount rewardIncrease = StakingLib.calculateRewardIncrease(
             stakingReader,
             stakeNftId,
             rewardRate);
@@ -705,8 +697,9 @@ contract StakingTest is GifTest {
     function test_stakingRestakeWithRewards() public {
         // GIVEN
         // set reward rate
+        UFixed instanceRewardRate = UFixedLib.toUFixed(1, -1); // 10% reward rate
         vm.startPrank(instanceOwner);
-        instance.setStakingRewardRate(UFixedLib.toUFixed(1, -1)); // 10% reward rate
+        instance.setStakingRewardRate(instanceRewardRate); 
         vm.stopPrank();
 
         (
@@ -729,10 +722,10 @@ contract StakingTest is GifTest {
         (NftId stakeNftId2, Amount restakedAmount) = staking.restake(stakeNftId, instanceNftId2);
 
         // THEN - check restake only created new staked and changed counters nothing else, especially no tokens moved
-        Amount expectedReward = dipAmount.multiplyWith(UFixedLib.toUFixed(1, -1)); // 10% over one year
+        Amount expectedReward = dipAmount.multiplyWith(instanceRewardRate);
 
         assertTrue(stakeNftId2.gtz());
-        assertEq(dipAmount.toInt()  + expectedReward.toInt(), restakedAmount.toInt(), "restaked amount invalid");
+        assertEq(dipAmount.toInt() + expectedReward.toInt(), restakedAmount.toInt(), "restaked amount invalid");
 
         // check balances after staking - no tokens mived
         assertEq(dip.balanceOf(staker), 0, "staker: unexpected dip balance (after staking)");

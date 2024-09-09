@@ -146,42 +146,6 @@ contract StakingReader is
     }
 
     function getRequiredStakeBalance(NftId targetNftId) external view returns (Amount requiredStakedAmount) {
-        // TODO implement
         return _store.getRequiredStakeBalance(targetNftId);
-    }
-
-    // TODO cleanup
-    // function getTargetBalances(NftId stakeNftId) 
-    //     public
-    //     view
-    //     returns (
-    //         Amount balanceAmount,
-    //         Amount stakeAmount,
-    //         Amount rewardAmount,
-    //         Blocknumber lastUpdatedIn
-    //     )
-    // {
-    //     (
-    //         balanceAmount,
-    //         stakeAmount,
-    //         rewardAmount,
-    //         lastUpdatedIn
-    //     ) = _store.getTargetBalances(stakeNftId);
-    // }
-
-    function getStakeBalances(NftId stakeNftId) 
-        external
-        view
-        returns (
-            Amount stakeAmount,
-            Amount rewardAmount,
-            Timestamp lastUpdatedAt
-        )
-    {
-        (
-            stakeAmount,
-            rewardAmount,
-            lastUpdatedAt
-        ) = _store.getStakeBalances(stakeNftId);
     }
 }

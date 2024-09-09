@@ -49,6 +49,7 @@ contract StakingRateManagement is GifTest {
             UFixedLib.toUFixed(10)); // 10 dips required per usdc token
         
         vm.startPrank(registryOwner);
+        staking.addToken(ChainIdLib.current(), tokenAddress);
         staking.setStakingRate(ChainIdLib.current(), tokenAddress, tokenStakingRate);
         vm.stopPrank();
     }

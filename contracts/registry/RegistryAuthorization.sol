@@ -220,6 +220,7 @@ contract RegistryAuthorization
           _authorize(functions, IStaking.setStakingRate.selector, "setStakingRate");
           _authorize(functions, IStaking.setStakingService.selector, "setStakingService");
           _authorize(functions, IStaking.setStakingReader.selector, "setStakingReader");
+          _authorize(functions, IStaking.addToken.selector, "addToken");
           _authorize(functions, IStaking.approveTokenHandler.selector, "approveTokenHandler");
 
           // staker functions
@@ -256,15 +257,6 @@ contract RegistryAuthorization
 
           _authorize(functions, IStaking.increaseTotalValueLocked.selector, "increaseTotalValueLocked");
           _authorize(functions, IStaking.decreaseTotalValueLocked.selector, "decreaseTotalValueLocked");
-
-
-          // token registry
-          functions = _authorizeForTarget(
-               STAKING_TARGET_NAME, 
-               getTargetRole(getTarget(TOKEN_REGISTRY_TARGET_NAME)));
-
-          _authorize(functions, IStaking.addToken.selector, "addToken");
-
      }
 
 

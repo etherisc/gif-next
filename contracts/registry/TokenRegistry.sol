@@ -92,9 +92,6 @@ contract TokenRegistry is
 
         // effects
         _registerToken(_chainId, tokenAddress, token.decimals(), token.symbol());
-
-        // notify staking about the new token
-        IStaking(_registry.getStakingAddress()).addToken(_chainId, tokenAddress);
     }
 
 

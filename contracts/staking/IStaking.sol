@@ -45,7 +45,7 @@ interface IStaking is
 
     // target parameters
     event LogStakingTargetLockingPeriodSet(NftId targetNftId, Seconds oldLockingPeriod, Seconds lockingPeriod);
-    event LogStakingTargetRewardRateSet(NftId targetNftId, UFixed oldRewardRate, UFixed rewardRate);
+    event LogStakingTargetRewardRateSet(NftId targetNftId, UFixed rewardRate, UFixed oldRewardRate);
     event LogStakingTargetMaxStakedAmountSet(NftId targetNftId, Amount maxStakedAmount);
 
     // stakes
@@ -157,15 +157,13 @@ interface IStaking is
     /// @dev Sets/updates the staking reader contract. 
     function setStakingReader(StakingReader stakingReader) external;
 
-    /// @dev Set the approval to the token handler.
-    /// Defines the max allowance from the staking wallet to the token handler.
-    function approveTokenHandler(IERC20Metadata token, Amount amount) external;
-
-    //--- token management -----------------------------------------------//
-
     /// @dev Registers a token for recording staking rate and total value locked.
     /// Process flow: Add token by token registry which will trigger this staking contract.
     function addToken(ChainId chainId, address token) external;
+
+    /// @dev Set the approval to the token handler.
+    /// Defines the max allowance from the staking wallet to the token handler.
+    function approveTokenHandler(IERC20Metadata token, Amount amount) external;
 
     //--- target management ----------------------------------------------//
 

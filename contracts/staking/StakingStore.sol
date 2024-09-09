@@ -604,23 +604,6 @@ contract StakingStore is
     }
 
 
-    function getStakeBalances(NftId stakeNftId) 
-        external
-        view
-        returns (
-            Amount stakeAmount,
-            Amount rewardAmount,
-            Timestamp lastUpdatedAt
-        )
-    {
-        IStaking.StakeInfo storage stakeInfo = _stakeInfo[stakeNftId];
-        return (
-            stakeInfo.stakedAmount, 
-            stakeInfo.rewardAmount, 
-            stakeInfo.lastUpdateAt);
-    }
-
-
     /// @dev Returns true iff current stake amount is still locked
     function isStakeLocked(NftId stakeNftId) external view returns (bool) { 
         return _stakeInfo[stakeNftId].lockedUntil > TimestampLib.current(); 
@@ -630,6 +613,12 @@ contract StakingStore is
     /// @dev Returns the stake infos for the specified stake.
     function getStakeInfo(NftId stakeNftId) external view returns (IStaking.StakeInfo memory stakeInfo) { 
         return _stakeInfo[stakeNftId]; 
+    }
+
+
+    /// @dev Returns the stake infos for the specified stake.
+    function getStakeTarget(NftId stakeNftId) external view returns (NftId targetNftId) { 
+        return _stakeInfo[stakeNftId].targetNftId; 
     }
 
 
