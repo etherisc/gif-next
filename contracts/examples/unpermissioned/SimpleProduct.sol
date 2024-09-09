@@ -149,6 +149,31 @@ contract SimpleProduct is
         );
     }
 
+    function createApplication2(
+        address applicationOwner,
+        RiskId riskId,
+        Amount sumInsuredAmount,
+        Amount premiumAmount,
+        Seconds lifetime,
+        bytes memory applicationData,
+        NftId bundleNftId,
+        ReferralId referralId
+    )
+        public
+        returns (NftId nftId)
+    {
+        return _createApplication(
+            applicationOwner,
+            riskId,
+            sumInsuredAmount,
+            premiumAmount,
+            lifetime,
+            bundleNftId,
+            referralId,
+            applicationData
+        );
+    }
+
     function createPolicy(
         NftId applicationNftId,
         bool requirePremiumPayment,

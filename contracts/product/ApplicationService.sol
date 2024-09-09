@@ -69,7 +69,7 @@ contract ApplicationService is
         // check risk with product
         (bool exists, bool active) = instanceReader.getRiskSet().checkRisk(productNftId, riskId);
         if (!exists) { revert ErrorApplicationServiceRiskUnknown(riskId, productNftId); }
-        if (!active) { revert ErrorApplicationServiceRiskPaused(riskId, productNftId); }
+        if (!active) { revert ErrorApplicationServiceRiskLocked(riskId, productNftId); }
 
         NftId riskProductNftId = instanceReader.getRiskInfo(riskId).productNftId;
         if (productNftId != riskProductNftId) {

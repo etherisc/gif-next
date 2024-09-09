@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {console} from "../../../lib/forge-std/src/Test.sol";
 
+import {IApplicationService} from "../../../contracts/product/IApplicationService.sol";
 import {IBundleService} from "../../../contracts/pool/IBundleService.sol";
 import {BundleSet} from "../../../contracts/instance/BundleSet.sol";
 import {GifTest} from "../../base/GifTest.sol";
@@ -73,7 +74,58 @@ contract ProductApplicationTest is GifTest {
         assertTrue(policyInfo.bundleNftId.eq(bundleNftId), "bundleNftId not set");        
     }
 
-    
+    function test_Product_createApplication_invalidRisk() public {
+        vm.startPrank(productOwner);
+
+        RiskId riskId = product.createRisk("42x4711", "bla di blubb");
+        RiskId riskId2 = RiskIdLib.toRiskId(productNftId, "42x4712");
+        Seconds lifetime = SecondsLib.toSeconds(30);
+        ReferralId noReferral = ReferralLib.zero();
+        Amount sumInsured = AmountLib.toAmount(1000);
+        Amount premium = AmountLib.toAmount(100);
+
+        vm.expectRevert(abi.encodeWithSelector(
+            IApplicationService.ErrorApplicationServiceRiskUnknown.selector, 
+            riskId2,
+            productNftId));
+        NftId policyNftId = product.createApplication2(
+            customer,
+            riskId2,
+            sumInsured,
+            premium,
+            lifetime,
+            "",
+            bundleNftId,
+            noReferral
+        );
+    }
+
+    function test_Product_createApplication_lockedRisk() public {
+        vm.startPrank(productOwner);
+
+        RiskId riskId = product.createRisk("42x4711", "bla di blubb");
+        Seconds lifetime = SecondsLib.toSeconds(30);
+        ReferralId noReferral = ReferralLib.zero();
+        Amount sumInsured = AmountLib.toAmount(1000);
+        Amount premium = AmountLib.toAmount(100);
+
+        product.setRiskLocked(riskId, true);
+
+        vm.expectRevert(abi.encodeWithSelector(
+            IApplicationService.ErrorApplicationServiceRiskLocked.selector, 
+            riskId,
+            productNftId));
+        NftId policyNftId = product.createApplication2(
+            customer,
+            riskId,
+            sumInsured,
+            premium,
+            lifetime,
+            "",
+            bundleNftId,
+            noReferral
+        );
+    }
 
     function test_productDeclineApplication() public {
         // GIVEN
