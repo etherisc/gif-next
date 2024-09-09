@@ -127,6 +127,43 @@ contract ProductApplicationTest is GifTest {
         );
     }
 
+    function test_Product_createApplication_lockedBundle() public {
+        // GIVEN
+        vm.startPrank(productOwner);
+
+        RiskId riskId = product.createRisk("42x4711", "bla di blubb");
+        Seconds lifetime = SecondsLib.toSeconds(30);
+        ReferralId noReferral = ReferralLib.zero();
+        Amount sumInsured = AmountLib.toAmount(1000);
+        Amount premium = AmountLib.toAmount(100);
+        
+        vm.stopPrank();
+
+        vm.startPrank(investor);
+        pool.setBundleLocked(bundleNftId, true);
+        vm.stopPrank();
+
+        vm.startPrank(customer);
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IApplicationService.ErrorApplicationServiceBundleLocked.selector, 
+            bundleNftId,
+            poolNftId));
+
+        // WHEN
+        product.createApplication2(
+            customer,
+            riskId,
+            sumInsured,
+            premium,
+            lifetime,
+            "",
+            bundleNftId,
+            noReferral
+        );
+    }
+
     function test_productDeclineApplication() public {
         // GIVEN
 
