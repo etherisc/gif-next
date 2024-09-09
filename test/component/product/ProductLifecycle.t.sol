@@ -3,7 +3,9 @@ pragma solidity ^0.8.20;
 
 import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
-import {console} from "../../../lib/forge-std/src/Test.sol";
+import {console} from "forge-std/Test.sol";
+
+import {IClaimService} from "../../../contracts/product/IClaimService.sol";
 
 import {GifTest} from "../../base/GifTest.sol";
 import {MyPolicyHolder} from "../../mock/MyPolicyHolder.sol";
@@ -303,6 +305,32 @@ contract TestProductLifecycle
         assertEq(policyHolder.payoutAmount(policyNftId, payoutIdExpected).toInt(), payoutAmount.toInt(), "unexpected amount (holder, after2)");
         assertEq(token.balanceOf(beneficiary), payoutAmount.toInt(), "unexpected balance (beneficiary, after2)");
     }
+
+    function test_policyHolderPayoutExecutedBeneficiaryZero() public {
+        // GIVEN 
+        // create active policy
+        Timestamp activateAt = TimestampLib.blockTimestamp();
+        _createAndActivate(policyNftId, activateAt);
+
+        // create confirmed claim
+        Amount claimAmount = AmountLib.toAmount(100);
+        (, ClaimId claimId,,) = _makeClaim(policyNftId, claimAmount, true);
+
+        // check that no payout callback has yet happened
+        PayoutId payoutIdExpected = PayoutIdLib.toPayoutId(claimId, 1);
+        Amount payoutAmount = claimAmount;
+
+        // THEN
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IClaimService.ErrorClaimServiceBeneficiaryIsZero.selector,
+                policyNftId,
+                claimId));
+
+        // WHEN - create payout
+        product.createPayoutForBeneficiary(policyNftId, claimId, payoutAmount, address(0), "");
+    }
+
 
     function test_policyHolderPayoutExecutedDefaultCallback() public {
         // GIVEN 
