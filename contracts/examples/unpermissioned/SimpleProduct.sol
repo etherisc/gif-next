@@ -278,11 +278,11 @@ contract SimpleProduct is
         _declineClaim(policyNftId, claimId, processData);
     }
 
-    function closeClaim(
+    function cancelConfirmedClaim(
         NftId policyNftId,
         ClaimId claimId
     ) public {
-        _closeClaim(policyNftId, claimId);
+        _cancelConfirmedClaim(policyNftId, claimId);
     }
 
     function createPayout(

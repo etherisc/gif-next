@@ -1062,6 +1062,87 @@ contract TestProductClaim is GifTest {
         product.cancelPayout(policyNftId, payoutId);
     }
 
+    function test_Claim_cancelConfirmedClaim() public {
+        // GIVEN
+        _approve();
+        _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
+
+        uint256 claimAmountInt = 500;
+        uint256 payoutAmountInt = 500;
+        bytes memory payoutData = "some sample payout data";
+
+        // record balances before
+        uint256 poolBalanceBefore = product.getToken().balanceOf(pool.getWallet());
+        uint256 customerBalanceBefore = product.getToken().balanceOf(customer);
+
+        // solhint-disable
+        console.log("payout amount:", payoutAmountInt);
+        console.log("pool balance before: ", poolBalanceBefore);
+        console.log("customer balance before: ", customerBalanceBefore);
+        // solhint-enable
+
+        // create claim and payout
+        (
+            , // IPolicy.PolicyInfo memory policyInfo,
+            ClaimId claimId,
+            , // StateId claimState,
+            , // IPolicy.ClaimInfo memory claimInfo,
+            PayoutId payoutId
+            , // StateId payoutState,
+            , // IPolicy.PayoutInfo memory payoutInfo
+        ) = _createClaimAndPayout(policyNftId, claimAmountInt, payoutAmountInt, payoutData, false);
+
+        product.cancelPayout(policyNftId, payoutId);
+
+        // WHEN
+        product.cancelConfirmedClaim(policyNftId, claimId);
+
+        // THEN
+        assertEq(instanceReader.getClaimState(policyNftId, claimId).toInt(), CANCELLED().toInt(), "unexpected claim state");
+    }
+
+    function test_Claim_cancelConfirmedClaim_pendingPayout() public {
+        // GIVEN
+        _approve();
+        _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
+
+        uint256 claimAmountInt = 500;
+        uint256 payoutAmountInt = 500;
+        bytes memory payoutData = "some sample payout data";
+
+        // record balances before
+        uint256 poolBalanceBefore = product.getToken().balanceOf(pool.getWallet());
+        uint256 customerBalanceBefore = product.getToken().balanceOf(customer);
+
+        // solhint-disable
+        console.log("payout amount:", payoutAmountInt);
+        console.log("pool balance before: ", poolBalanceBefore);
+        console.log("customer balance before: ", customerBalanceBefore);
+        // solhint-enable
+
+        // create claim and payout
+        (
+            , // IPolicy.PolicyInfo memory policyInfo,
+            ClaimId claimId,
+            , // StateId claimState,
+            , // IPolicy.ClaimInfo memory claimInfo,
+            PayoutId payoutId
+            , // StateId payoutState,
+            , // IPolicy.PayoutInfo memory payoutInfo
+        ) = _createClaimAndPayout(policyNftId, claimAmountInt, payoutAmountInt, payoutData, false);
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IClaimService.ErrorClaimServiceClaimWithOpenPayouts.selector, 
+                policyNftId,
+                claimId,
+                1));
+
+        // WHEN
+        product.cancelConfirmedClaim(policyNftId, claimId);
+    }
+
+
     function _createPolicyWithClaimAndPayout(
         address policyHolder,
         uint256 sumInsuredAmountInt, 

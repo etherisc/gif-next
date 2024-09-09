@@ -216,7 +216,7 @@ contract ClaimService is
     }
 
 
-    function close(
+    function cancelConfirmedClaim(
         NftId policyNftId, 
         ClaimId claimId
     )
@@ -244,19 +244,10 @@ contract ClaimService is
                 claimInfo.openPayoutsCount);
         }
 
-        // check claim paid amount matches with claim amount
-        if(claimInfo.paidAmount.toInt() < claimInfo.claimAmount.toInt()) {
-            revert ErrorClaimServiceClaimWithMissingPayouts(
-                policyNftId, 
-                claimId, 
-                claimInfo.claimAmount,
-                claimInfo.paidAmount);
-        }
-
         claimInfo.closedAt = TimestampLib.blockTimestamp();
-        instanceStore.updateClaim(policyNftId, claimId, claimInfo, CLOSED());
+        instanceStore.updateClaim(policyNftId, claimId, claimInfo, CANCELLED());
 
-        emit LogClaimServiceClaimClosed(policyNftId, claimId);
+        emit LogClaimServiceClaimCancelled(policyNftId, claimId);
     }
 
 

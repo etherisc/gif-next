@@ -412,14 +412,14 @@ abstract contract Product is
             data);
     }
 
-    function _closeClaim(
+    function _cancelConfirmedClaim(
         NftId policyNftId,
         ClaimId claimId
     )
         internal
         virtual
     {
-        _getProductStorage()._claimService.close(
+        _getProductStorage()._claimService.cancelConfirmedClaim(
             policyNftId,
             claimId);
     }

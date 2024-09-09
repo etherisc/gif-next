@@ -230,7 +230,7 @@ contract ServiceAuthorizationV3
           _authorize(functions, IClaimService.confirm.selector, "confirm");
           _authorize(functions, IClaimService.decline.selector, "decline");
           _authorize(functions, IClaimService.revoke.selector, "revoke");
-          _authorize(functions, IClaimService.close.selector, "close");
+          _authorize(functions, IClaimService.cancelConfirmedClaim.selector, "cancelConfirmedClaim");
           _authorize(functions, IClaimService.createPayoutForBeneficiary.selector, "createPayoutForBeneficiary");
           _authorize(functions, IClaimService.createPayout.selector, "createPayout");
           _authorize(functions, IClaimService.processPayout.selector, "processPayout");

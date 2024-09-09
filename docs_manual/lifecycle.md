@@ -67,8 +67,10 @@ stateDiagram-v2
     SUBMITTED --> CONFIRMED
     SUBMITTED --> DECLINED
     CONFIRMED --> CLOSED
+    CONFIRMED --> CANCELLED
     CLOSED --> [*]
     DECLINED --> [*]
+    CANCELLED --> [*]
 ```
 
 # Payout lifecycle

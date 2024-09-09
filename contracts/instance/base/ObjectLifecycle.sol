@@ -66,6 +66,7 @@ contract ObjectLifecycle is
         setStateTransition(CLAIM(), SUBMITTED(), CONFIRMED());
         setStateTransition(CLAIM(), SUBMITTED(), DECLINED());
         setStateTransition(CLAIM(), CONFIRMED(), CLOSED());
+        setStateTransition(CLAIM(), CONFIRMED(), CANCELLED());
     }
 
     function _setupPayoutLifecycle() private {

@@ -23,7 +23,7 @@ interface IClaimService is
     event LogClaimServiceClaimConfirmed(NftId policyNftId, ClaimId claimId, Amount confirmedAmount);
     event LogClaimServiceClaimDeclined(NftId policyNftId, ClaimId claimId);
     event LogClaimServiceClaimRevoked(NftId policyNftId, ClaimId claimId);
-    event LogClaimServiceClaimClosed(NftId policyNftId, ClaimId claimId);
+    event LogClaimServiceClaimCancelled(NftId policyNftId, ClaimId claimId);
 
     event LogClaimServicePayoutCreated(NftId policyNftId, PayoutId payoutId, Amount amount, address beneficiary);
     event LogClaimServicePayoutProcessed(NftId policyNftId, PayoutId payoutId, Amount amount);
@@ -83,9 +83,10 @@ interface IClaimService is
     ) external;
 
 
-    /// @dev closes the specified claim
+    /// @dev cancels a confirmed claim before it has been fully paid out. 
+    /// Can only be called when there are not pending payouts
     /// function can only be called by product, policy needs to match with calling product
-    function close(
+    function cancelConfirmedClaim(
         NftId policyNftId, 
         ClaimId claimId
     ) external;
