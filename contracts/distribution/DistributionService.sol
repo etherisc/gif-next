@@ -191,9 +191,9 @@ contract DistributionService is
         (NftId distributionNftId, IInstance instance) = _getAndVerifyActiveDistribution();
 
         if (bytes(code).length == 0) {
-            revert ErrorDistributionServiceInvalidReferral(code);
+            revert ErrorDistributionServiceInvalidReferral();
         }
-        if (expiryAt.eqz() || expiryAt.lte(TimestampLib.blockTimestamp())) {
+        if (expiryAt.eqz() || expiryAt < TimestampLib.blockTimestamp()) {
             revert ErrorDistributionServiceExpirationInvalid(expiryAt);
         }
 
@@ -208,13 +208,13 @@ contract DistributionService is
             IDistribution.DistributorTypeInfo memory distributorTypeData = instanceReader.getDistributorTypeInfo(distributorType);
 
             if (distributorTypeData.maxReferralCount < maxReferrals) {
-                revert ErrorDistributionServiceMaxReferralsExceeded(distributorTypeData.maxReferralCount);
+                revert ErrorDistributionServiceMaxReferralsExceeded(distributorTypeData.maxReferralCount, maxReferrals);
             }
             if (distributorTypeData.minDiscountPercentage > discountPercentage) {
-                revert ErrorDistributionServiceDiscountTooLow(distributorTypeData.minDiscountPercentage.toInt(), discountPercentage.toInt());
+                revert ErrorDistributionServiceDiscountTooLow(distributorTypeData.minDiscountPercentage, discountPercentage);
             }
             if (distributorTypeData.maxDiscountPercentage < discountPercentage) {
-                revert ErrorDistributionServiceDiscountTooHigh(distributorTypeData.maxDiscountPercentage.toInt(), discountPercentage.toInt());
+                revert ErrorDistributionServiceDiscountTooHigh(distributorTypeData.maxDiscountPercentage, discountPercentage);
             }
             if (expiryAt.toInt() - TimestampLib.blockTimestamp().toInt() > distributorTypeData.maxReferralLifetime.toInt()) {
                 revert ErrorDistributionServiceExpiryTooLong(distributorTypeData.maxReferralLifetime, expiryAt);

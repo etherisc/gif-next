@@ -7,6 +7,7 @@ import {console} from "../../../lib/forge-std/src/Test.sol";
 import {FeeLib} from "../../../contracts/type/Fee.sol";
 import {IComponents} from "../../../contracts/instance/module/IComponents.sol";
 import {IDistribution} from "../../../contracts/instance/module/IDistribution.sol";
+import {IDistributionService} from "../../../contracts/distribution/IDistributionService.sol";
 import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
 import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
 import {POLICY} from "../../../contracts/type/ObjectType.sol";
@@ -15,8 +16,8 @@ import {ReferralTestBase} from "./ReferralTestBase.sol";
 import {RiskId, RiskIdLib} from "../../../contracts/type/RiskId.sol";
 import {SecondsLib} from "../../../contracts/type/Seconds.sol";
 import {SimpleDistribution} from "../../../contracts/examples/unpermissioned/SimpleDistribution.sol";
-import {TimestampLib} from "../../../contracts/type/Timestamp.sol";
-import {UFixedLib} from "../../../contracts/type/UFixed.sol";
+import {Timestamp, TimestampLib} from "../../../contracts/type/Timestamp.sol";
+import {UFixed, UFixedLib} from "../../../contracts/type/UFixed.sol";
 
 contract ReferralTest is ReferralTestBase {
 
@@ -307,6 +308,140 @@ contract ReferralTest is ReferralTestBase {
         vm.stopPrank();
     }
 
+    function test_createReferral_codeEmpty() public {
+        // GIVEN
+        _setupTestData(true);
+        vm.startPrank(customer);
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IDistributionService.ErrorDistributionServiceInvalidReferral.selector));
+
+        // WHEN
+        referralId = distribution.createReferral(
+            distributorNftId,
+            "",
+            discountPercentage,
+            maxReferrals,
+            expiryAt,
+            referralData);
+    }
+
+    function test_createReferral_expirationInvalid() public {
+        // GIVEN
+        vm.warp(500);
+        _setupTestData(true);
+        vm.startPrank(customer);
+        Timestamp tsZero = TimestampLib.zero();
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IDistributionService.ErrorDistributionServiceExpirationInvalid.selector,
+            0));
+
+        // WHEN
+        referralId = distribution.createReferral(
+            distributorNftId,
+            "CODE",
+            discountPercentage,
+            maxReferrals,
+            tsZero,
+            referralData);
+
+        Timestamp exp =  TimestampLib.toTimestamp(TimestampLib.blockTimestamp().toInt() - 10);
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IDistributionService.ErrorDistributionServiceExpirationInvalid.selector,
+            exp));
+
+        // WHEN
+        referralId = distribution.createReferral(
+            distributorNftId,
+            "CODE",
+            discountPercentage,
+            maxReferrals,
+            exp,
+            referralData);
+
+        exp =  TimestampLib.toTimestamp(TimestampLib.blockTimestamp().toInt() + maxReferralLifetime.toInt() + 10);
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IDistributionService.ErrorDistributionServiceExpiryTooLong.selector,
+            maxReferralLifetime,
+            exp));
+
+        // WHEN
+        referralId = distribution.createReferral(
+            distributorNftId,
+            "CODE",
+            discountPercentage,
+            maxReferrals,
+            exp,
+            referralData);
+    }
+
+    function test_createReferral_referralCountInvalid() public {
+        // GIVEN
+        _setupTestData(true);
+        vm.startPrank(customer);
+        Timestamp exp = TimestampLib.blockTimestamp().addSeconds(SecondsLib.toSeconds(10));
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IDistributionService.ErrorDistributionServiceMaxReferralsExceeded.selector,
+            20,
+            42));
+
+        // WHEN
+        referralId = distribution.createReferral(
+            distributorNftId,
+            "CODE",
+            discountPercentage,
+            42,
+            exp,
+            referralData);
+    }
+
+    function test_createReferral_discoundInvalid() public {
+        // GIVEN
+        _setupTestData(true);
+        vm.startPrank(customer);
+        Timestamp exp = TimestampLib.blockTimestamp().addSeconds(SecondsLib.toSeconds(10));
+        UFixed discount = UFixedLib.toUFixed(3, -2);
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IDistributionService.ErrorDistributionServiceDiscountTooLow.selector,
+            minDiscountPercentage,
+            discount));
+
+        // WHEN
+        referralId = distribution.createReferral(
+            distributorNftId,
+            "CODE",
+            discount,
+            15,
+            exp,
+            referralData);
+
+        // THEN
+        discount = UFixedLib.toUFixed(22, -2);
+        vm.expectRevert(abi.encodeWithSelector(
+            IDistributionService.ErrorDistributionServiceDiscountTooHigh.selector,
+            maxDiscountPercentage,
+            discount));
+
+        // WHEN
+        referralId = distribution.createReferral(
+            distributorNftId,
+            "CODE",
+            discount,
+            15,
+            exp,
+            referralData);
+    }
 
     function _setupBundle(uint256 bundleAmount) internal {
 

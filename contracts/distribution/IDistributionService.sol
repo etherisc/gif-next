@@ -19,11 +19,11 @@ interface IDistributionService is IService {
     error ErrorDistributionServiceParentNftIdNotInstance(NftId nftId, NftId parentNftId);
     error ErrorDistributionServiceCallerNotDistributor(address caller);
     error ErrorDistributionServiceInvalidReferralId(ReferralId referralId);
-    error ErrorDistributionServiceMaxReferralsExceeded(uint256 maxReferrals);
-    error ErrorDistributionServiceDiscountTooLow(uint256 minDiscountPercentage, uint256 discountPercentage);
-    error ErrorDistributionServiceDiscountTooHigh(uint256 maxDiscountPercentage, uint256 discountPercentage);
+    error ErrorDistributionServiceMaxReferralsExceeded(uint256 limit, uint256 maxReferrals);
+    error ErrorDistributionServiceDiscountTooLow(UFixed minDiscountPercentage, UFixed discountPercentage);
+    error ErrorDistributionServiceDiscountTooHigh(UFixed maxDiscountPercentage, UFixed discountPercentage);
     error ErrorDistributionServiceExpiryTooLong(Seconds maxReferralLifetime, Timestamp expiryAt);
-    error ErrorDistributionServiceInvalidReferral(string code);
+    error ErrorDistributionServiceInvalidReferral();
     error ErrorDistributionServiceExpirationInvalid(Timestamp expiryAt);
     error ErrorDistributionServiceCommissionTooHigh(uint256 commissionPercentage, uint256 maxCommissionPercentage);
     error ErrorDistributionServiceMinFeeTooHigh(uint256 minFee, uint256 limit);
