@@ -153,7 +153,7 @@ contract StakingService is
 
     function createStakeObject(
         NftId targetNftId,
-        address initialOwner
+        address stakeOwner
     )
         external
         virtual
@@ -162,45 +162,6 @@ contract StakingService is
         returns (NftId stakeNftId)
     {
         StakingServiceStorage storage $ = _getStakingServiceStorage();
-        address stakeOwner = msg.sender;
-
-        // target nft id checks are performed in $._staking.createStake() below
-        // register new stake object with registry
-        stakeNftId = $._registryService.registerStake(
-            IRegistry.ObjectInfo({
-                nftId: NftIdLib.zero(),
-                parentNftId: targetNftId,
-                objectType: STAKE(),
-                isInterceptor: false,
-                objectAddress: address(0),
-                initialOwner: initialOwner,
-                data: ""
-            }));
-
-        emit LogStakingServiceStakeObjectCreated(stakeNftId, targetNftId, stakeOwner);
-    }
-
-
-    /// @dev Creates a new stake object via regisry Service.
-    /// Funds are stakedto the specified target nft id with the provided dip amount
-    /// the target nft id must have been registered as an active staking target prior to this call
-    /// the sender of this transaction becomes the stake owner via the minted nft.
-    /// to create the new stake balance and allowance of the staker need to cover the dip amount
-    /// the allowance needs to be on the token handler of the staking contract (getTokenHandler())
-    /// this is a permissionless function.
-    function create(
-        NftId targetNftId,
-        Amount dipAmount
-    )
-        external
-        virtual
-        restricted()
-        returns (
-            NftId stakeNftId
-        )
-    {
-        StakingServiceStorage storage $ = _getStakingServiceStorage();
-        address stakeOwner = msg.sender;
 
         // target nft id checks are performed in $._staking.createStake() below
         // register new stake object with registry
@@ -215,19 +176,67 @@ contract StakingService is
                 data: ""
             }));
 
-        // create stake info with staking
-        $._staking.createStake(
-            stakeNftId, 
-            targetNftId,
-            dipAmount);
-
-        emit LogStakingServiceStakeCreated(stakeNftId, targetNftId, stakeOwner, dipAmount);
-
-        // collect staked dip by staking
-        $._tokenHandler.pullToken(
-            stakeOwner, 
-            dipAmount);
+        emit LogStakingServiceStakeObjectCreated(stakeNftId, targetNftId, stakeOwner);
     }
+
+
+    function pullDipToken(Amount dipAmount, address stakeOwner)
+        external
+        virtual
+        restricted()
+        onlyStaking()
+    {
+        _getStakingServiceStorage()._tokenHandler.pullToken(stakeOwner, dipAmount);
+    }
+
+    /// TODO cleanup
+    /// @dev Creates a new stake object via regisry Service.
+    /// Funds are stakedto the specified target nft id with the provided dip amount
+    /// the target nft id must have been registered as an active staking target prior to this call
+    /// the sender of this transaction becomes the stake owner via the minted nft.
+    /// to create the new stake balance and allowance of the staker need to cover the dip amount
+    /// the allowance needs to be on the token handler of the staking contract (getTokenHandler())
+    /// this is a permissionless function.
+    // function create(
+    //     NftId targetNftId,
+    //     Amount dipAmount
+    // )
+    //     external
+    //     virtual
+    //     restricted()
+    //     returns (
+    //         NftId stakeNftId
+    //     )
+    // {
+    //     StakingServiceStorage storage $ = _getStakingServiceStorage();
+    //     address stakeOwner = msg.sender;
+
+    //     // target nft id checks are performed in $._staking.createStake() below
+    //     // register new stake object with registry
+    //     stakeNftId = $._registryService.registerStake(
+    //         IRegistry.ObjectInfo({
+    //             nftId: NftIdLib.zero(),
+    //             parentNftId: targetNftId,
+    //             objectType: STAKE(),
+    //             isInterceptor: false,
+    //             objectAddress: address(0),
+    //             initialOwner: stakeOwner,
+    //             data: ""
+    //         }));
+
+    //     // create stake info with staking
+    //     $._staking.createStake(
+    //         stakeNftId, 
+    //         targetNftId,
+    //         dipAmount);
+
+    //     emit LogStakingServiceStakeCreated(stakeNftId, targetNftId, stakeOwner, dipAmount);
+
+    //     // collect staked dip by staking
+    //     $._tokenHandler.pullToken(
+    //         stakeOwner, 
+    //         dipAmount);
+    // }
 
 
     function stake(

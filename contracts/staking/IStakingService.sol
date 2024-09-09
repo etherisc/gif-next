@@ -88,6 +88,7 @@ interface IStakingService is IService
 
 
     /// @dev Creates a new stake object for the specified target via the registry service.
+    /// Permissioned: only the staking component may call this function
     function createStakeObject(
         NftId targetNftId,
         address initialOwner
@@ -96,29 +97,19 @@ interface IStakingService is IService
         returns (NftId stakeNftId);
 
 
-    /// @dev create a new stake with amount DIP to the specified target
-    /// returns the id of the newly minted stake nft
-    /// permissionless function
-    function create(
-        NftId targetNftId,
-        Amount amount
-    )
-        external
-        returns (
-            NftId stakeNftId
-        );
-
-
-    /// @dev increase an existing stake by amount DIP
-    /// updates and restakes the staking reward amount
-    /// function restricted to the current stake owner
-    function stake(
-        NftId stakeNftId,
-        Amount amount
-    ) external;
-
+    /// @dev collect DIP token from stake owner.
+    /// Permissioned: only the staking component may call this function
+    function pullDipToken(Amount dipAmount, address stakeOwner) external;
 
     // TODO cleanup
+    // /// @dev increase an existing stake by amount DIP
+    // /// updates and restakes the staking reward amount
+    // /// function restricted to the current stake owner
+    // function stake(
+    //     NftId stakeNftId,
+    //     Amount amount
+    // ) external;
+
     // /// @dev re-stakes the current staked DIP as well as all accumulated rewards to the new stake target.
     // /// all related stakes and all accumulated reward DIP are transferred to the current stake holder
     // /// function restricted to the current stake owner

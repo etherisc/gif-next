@@ -49,8 +49,12 @@ interface IStaking is
     event LogStakingTargetMaxStakedAmountSet(NftId targetNftId, Amount maxStakedAmount);
 
     // stakes
-    event LogStakingStakeRegistered(NftId stakeNftId, NftId targetNftId, Amount stakeAmount);
-    event LogStakingStakeRewardsUpdated(NftId stakeNftId, Amount rewardIncrementAmount, Amount rewardBalanceAmount);
+    event LogStakingStakeCreated(NftId stakeNftId, NftId targetNftId, Amount stakeAmount, Timestamp lockedUntil, address stakeOwner);
+    event LogStakingStakeRewardsUpdated(NftId stakeNftId, Amount rewardIncrementAmount, Amount stakeBalance, Amount rewardBalance, Timestamp lockedUntil);
+    event LogStakingRewardsRestaked(NftId stakeNftId, Amount restakedAmount, Amount stakeBalance, Amount rewardBalance, Timestamp lockedUntil);
+    event LogStakingStaked(NftId stakeNftId, Amount stakedAmount, Amount stakeBalance, Amount rewardBalance, Timestamp lockedUntil);
+    event LogStakingUnstaked(NftId stakeNftId, Amount unstakedAmount, Amount stakedBalance, Amount rewardBalance, Timestamp lockedUntil);
+
     event LogStakingStakeRestaked(NftId stakeNftId, NftId targetNftId, Amount stakeAmount, address owner, NftId oldStakeNftId);
 
     // modifiers
@@ -90,14 +94,6 @@ interface IStaking is
 
     error ErrorStakingStakeAmountZero(NftId targetNftId);
 
-    /*
-        Amount is uint96
-        Blocknumber is uint32
-        Timestamp is uint40
-        UFixed is uint160
-
-    */
-
     // info for individual stake
     struct StakeInfo {
         // slot 0
@@ -107,14 +103,14 @@ interface IStaking is
         // slot 1
         NftId targetNftId; // 96, redundant to parent nft in registry object info
         Timestamp lastUpdateAt; // 40, needed to update rewards
-        Blocknumber lastUpdatedIn; // 40, needed for traceability
+        Blocknumber lastUpdateIn; // 40, needed for traceability
     }
 
     struct TargetInfo {
         // Slot 0
         Amount stakedAmount; // 96
         Amount rewardAmount; // 96
-        Blocknumber lastUpdatedIn; // 40, needed for traceability
+        Blocknumber lastUpdateIn; // 40, needed for traceability
         // Slot 1
         Amount reserveAmount; // 96
         Amount maxStakedAmount; // 96
@@ -128,13 +124,13 @@ interface IStaking is
     struct TvlInfo {
         // Slot 0
         Amount tvlAmount; // 96
-        Blocknumber lastUpdatedIn; // 40, needed for traceability
+        Blocknumber lastUpdateIn; // 40, needed for traceability
     }
 
     struct TokenInfo {
         // Slot 0
         UFixed stakingRate; // 160
-        Blocknumber lastUpdatedIn; // 40, needed for traceability
+        Blocknumber lastUpdateIn; // 40, needed for traceability
     }
 
     function initializeTokenHandler() external;
@@ -217,43 +213,35 @@ interface IStaking is
 
     // staking functions
 
-    /// @dev creat a new stake info object
-    /// permissioned: only staking service may call this function.
-    function createStake(NftId stakeNftId, NftId targetNftId, Amount dipAmount) external returns (NftId);
+    /// @dev Creates a new stake to the specified target over the given DIP amount.
+    /// The stake owner is provided as an argument and becomes the stake NFT holder.
+    /// This function is permissionless and may be called by any user.
+    function createStake(NftId targetNftId, Amount dipAmount, address stakeOwner) external returns (NftId stakeNftId);
 
-    /// @dev increase the staked dip by dipAmount for the specified stake.
-    /// staking rewards are updated and added to the staked dips as well.
-    /// the function returns the new total amount of staked dips.
-    function stake(NftId stakeNftId, Amount dipAmount) external returns (Amount stakeBalance);
+    /// @dev Increase the staked DIP by dipAmount for the specified stake.
+    /// Staking rewards are updated and added to the staked DIP amount as well.
+    /// The function returns the new total amount of staked dips.
+    function stake(NftId stakeNftId, Amount dipAmount) external returns (Amount newStakeBalance);
+
+    /// @dev Pays the specified DIP amount to the holder of the stake NFT ID.
+    /// If dipAmount is set to Amount.max() all stakes and rewards are transferred to the stake holder.
+    /// permissioned: only staking service may call this function.
+    function unstake(NftId stakeNftId) external returns (Amount unstakedAmount, Amount rewardsClaimedAmount);
 
     /// @dev restakes the dips to a new target.
     /// the sum of the staked dips and the accumulated rewards will be restaked.
     /// permissioned: only staking service may call this function.
     function restake(NftId stakeNftId, NftId newTargetNftId) external returns (NftId newStakeNftId, Amount newStakeBalance);
 
-    /// @dev retuns the specified amount of dips to the holder of the specified stake nft.
-    /// if dipAmount is set to Amount.max() all staked dips and all rewards are transferred to 
-    /// permissioned: only staking service may call this function.
-    function unstake(NftId stakeNftId)
-        external
-        returns (
-            Amount unstakedAmount,
-            Amount rewardsClaimedAmount
-        );
-
     /// @dev update stake rewards for current time.
     /// may be called before an announement of a decrease of a reward rate reduction.
     /// calling this functions ensures that reward balance is updated using the current (higher) reward rate.
     /// unpermissioned.
-    function updateRewards(NftId stakeNftId) external;
+    function updateRewards(NftId stakeNftId) external returns (Amount newRewardAmount);
 
     /// @dev transfers all rewards accumulated so far to the holder of the specified stake nft.
     /// permissioned: only staking service may call this function.
-    function claimRewards(NftId stakeNftId)
-        external
-        returns (
-            Amount rewardsClaimedAmount
-        );
+    function claimRewards(NftId stakeNftId) external returns (Amount rewardsClaimedAmount);
 
     //--- view and pure functions -------------------------------------------//
 

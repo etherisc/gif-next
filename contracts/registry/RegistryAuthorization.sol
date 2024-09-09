@@ -224,6 +224,8 @@ contract RegistryAuthorization
           _authorize(functions, IStaking.approveTokenHandler.selector, "approveTokenHandler");
 
           // staker functions
+          _authorize(functions, IStaking.createStake.selector, "createStake");
+          _authorize(functions, IStaking.stake.selector, "stake");
           _authorize(functions, IStaking.restake.selector, "restake");
 
           // staking service role
@@ -237,8 +239,8 @@ contract RegistryAuthorization
           _authorize(functions, IStaking.setMaxStakedAmount.selector, "setMaxStakedAmount");
           _authorize(functions, IStaking.refillRewardReserves.selector, "refillRewardReserves");
           _authorize(functions, IStaking.withdrawRewardReserves.selector, "withdrawRewardReserves");
-          _authorize(functions, IStaking.createStake.selector, "createStake");
-          _authorize(functions, IStaking.stake.selector, "stake");
+          // TODO cleanup
+          // _authorize(functions, IStaking.stake.selector, "stake");
           _authorize(functions, IStaking.unstake.selector, "unstake");
           _authorize(functions, IStaking.updateRewards.selector, "updateRewards");
           _authorize(functions, IStaking.claimRewards.selector, "claimRewards");
@@ -294,8 +296,9 @@ contract RegistryAuthorization
           _authorize(functions, StakingStore.increaseTotalValueLocked.selector, "increaseTotalValueLocked");
           _authorize(functions, StakingStore.decreaseTotalValueLocked.selector, "decreaseTotalValueLocked");
           _authorize(functions, StakingStore.createStake.selector, "createStake");
-          _authorize(functions, StakingStore.increaseStakeBalances.selector, "increaseStakeBalances");
-          _authorize(functions, StakingStore.decreaseStakeBalances.selector, "decreaseStakeBalances");
+          _authorize(functions, StakingStore.updateRewards.selector, "updateRewards");
+          _authorize(functions, StakingStore.increaseStakes.selector, "increaseStakes");
+          _authorize(functions, StakingStore.decreaseStakes.selector, "decreaseStakes");
           _authorize(functions, StakingStore.restakeRewards.selector, "restakeRewards");
      }
 }
