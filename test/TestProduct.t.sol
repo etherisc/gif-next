@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {console} from "../lib/forge-std/src/Test.sol";
 
+import {IBundleService} from "../contracts/pool/IBundleService.sol";
 import {BundleSet} from "../contracts/instance/BundleSet.sol";
 import {GifTest} from "./base/GifTest.sol";
 import {NftId, NftIdLib} from "../contracts/type/NftId.sol";
@@ -749,6 +750,46 @@ contract TestProduct is GifTest {
         // THEN
         assertEq(instanceReader.getPolicyState(policyNftId).toInt(), COLLATERALIZED().toInt(), "unexpected policy state (not COLLATERALIZED)");
         assertEq(instanceReader.getPolicyInfo(policyNftId).activatedAt.toInt(), timeNow.toInt(), "unexpected activatedAt");
+    }
+
+    function test_productCollateralizeRevertsOnCapacityInsufficient() public {
+        // GIVEN
+        vm.startPrank(productOwner);
+
+        bytes memory data = "bla di blubb";
+        RiskId riskId = product.createRisk("42x4711", data);
+
+        vm.stopPrank();
+
+        vm.startPrank(customer);
+        NftId policyNftId = product.createApplication(
+            customer,
+            riskId,
+            DEFAULT_BUNDLE_CAPITALIZATION + 1,
+            SecondsLib.toSeconds(30),
+            "",
+            bundleNftId,
+            ReferralLib.zero()
+        );
+        assertTrue(policyNftId.gtz(), "policyNftId was zero");
+
+        vm.stopPrank();
+
+        assertEq(instanceReader.getPolicyState(policyNftId).toInt(), APPLIED().toInt(), "unexpected policy state (not APPLIED)");
+
+        Timestamp activateAt = TimestampLib.blockTimestamp();
+
+        vm.startPrank(investor);
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IBundleService.ErrorBundleServiceCapacityInsufficient.selector,
+            bundleNftId,
+            DEFAULT_BUNDLE_CAPITALIZATION,
+            DEFAULT_BUNDLE_CAPITALIZATION + 1));
+
+        // WHEN
+        product.createPolicy(policyNftId, false, activateAt);
     }
 
 
