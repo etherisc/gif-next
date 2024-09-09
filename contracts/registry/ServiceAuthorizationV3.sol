@@ -296,8 +296,7 @@ contract ServiceAuthorizationV3
           functions = _authorizeForService(BUNDLE(), ALL());
           _authorize(functions, IBundleService.create.selector, "create");
           _authorize(functions, IBundleService.extend.selector, "extend");
-          _authorize(functions, IBundleService.lock.selector, "lock");
-          _authorize(functions, IBundleService.unlock.selector, "unlock");
+          _authorize(functions, IBundleService.setLocked.selector, "setLocked");
           _authorize(functions, IBundleService.setFee.selector, "setFee");
      }
 

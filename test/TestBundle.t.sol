@@ -119,7 +119,7 @@ contract TestBundle is GifTest {
         Amount stakeAmt = AmountLib.toAmount(stakeAmount);
         Amount stakeNetAmt = AmountLib.toAmount(960);
 
-        pool.lockBundle(bundleNftId);
+        pool.setBundleLocked(bundleNftId, true);
 
         // THEN - expect log event
         vm.expectEmit();
@@ -166,7 +166,7 @@ contract TestBundle is GifTest {
         Amount stakeAmt = AmountLib.toAmount(stakeAmount);
         Amount stakeNetAmt = AmountLib.toAmount(960);
 
-        pool.lockBundle(bundleNftId);
+        pool.setBundleLocked(bundleNftId, true);
 
         // THEN - expect revert
         vm.expectRevert(abi.encodeWithSelector(

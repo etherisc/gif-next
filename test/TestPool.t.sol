@@ -350,7 +350,7 @@ contract TestPool is GifTest {
         assertEq(metadata.state.toInt(), ACTIVE().toInt(), "bundle state not active");
 
         vm.prank(investor);
-        pool.lockBundle(bundleNftId);
+        pool.setBundleLocked(bundleNftId, true);
 
         // THEN
 
@@ -361,7 +361,7 @@ contract TestPool is GifTest {
 
         // WHEN unlock bundle again
         vm.prank(investor);
-        pool.unlockBundle(bundleNftId);
+        pool.setBundleLocked(bundleNftId, false);
 
         assertEq(instanceBundleSet.bundles(poolNftId), 1, "expected only 1 bundle");
         assertEq(instanceBundleSet.getBundleNftId(poolNftId, 0).toInt(), bundleNftId.toInt(), "bundle nft id in bundle manager not equal to bundle nft id");

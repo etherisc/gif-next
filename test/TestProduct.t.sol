@@ -731,7 +731,7 @@ contract TestProduct is GifTest {
         assertEq(instanceReader.getPolicyState(policyNftId).toInt(), APPLIED().toInt(), "unexpected policy state (not APPLIED)");
 
         vm.startPrank(investor);
-        pool.lockBundle(bundleNftId);
+        pool.setBundleLocked(bundleNftId, true);
 
         Timestamp timeNow = TimestampLib.blockTimestamp();
 
@@ -743,7 +743,7 @@ contract TestProduct is GifTest {
         product.createPolicy(policyNftId, false, timeNow); 
 
         // WHEN - unlock bundle and try collateralize again
-        pool.unlockBundle(bundleNftId);
+        pool.setBundleLocked(bundleNftId, false);
         product.createPolicy(policyNftId, false, timeNow);
 
         // THEN
