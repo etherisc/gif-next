@@ -164,6 +164,38 @@ contract ProductApplicationTest is GifTest {
         );
     }
 
+    function test_Product_createApplication_invalidReferral() public {
+        // GIVEN
+        vm.startPrank(productOwner);
+
+        RiskId riskId = product.createRisk("42x4711", "bla di blubb");
+        Seconds lifetime = SecondsLib.toSeconds(30);
+        ReferralId referralId = ReferralLib.toReferralId(distributionNftId, "UNKNOWN");
+        Amount sumInsured = AmountLib.toAmount(1000);
+        Amount premium = AmountLib.toAmount(100);
+        vm.stopPrank();
+
+        vm.startPrank(customer);
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IApplicationService.ErrorApplicationServiceReferralInvalid.selector, 
+            productNftId,
+            distributionNftId,
+            referralId));
+
+        // WHEN
+        product.createApplication2(
+            customer,
+            riskId,
+            sumInsured,
+            premium,
+            lifetime,
+            "",
+            bundleNftId,
+            referralId);
+    }
+
     function test_productDeclineApplication() public {
         // GIVEN
 
