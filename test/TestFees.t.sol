@@ -513,7 +513,7 @@ contract TestFees is GifTest {
         
         Amount withdrawAmount = AmountLib.toAmount(5);
         vm.startPrank(investor);
-        pool.lockBundle(bundleNftId);
+        pool.setBundleLocked(bundleNftId, true);
 
         // THEN - expect a log entry for the fee withdrawal
         vm.expectEmit();

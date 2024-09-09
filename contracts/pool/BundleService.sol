@@ -185,29 +185,7 @@ contract BundleService is
     }
 
 
-    function lock(NftId bundleNftId) 
-        external
-        virtual
-        restricted()
-    {
-        // checks
-        _checkNftType(bundleNftId, BUNDLE());
-
-        (, IInstance instance) = PoolLib.getAndVerifyActivePool(getRegistry(), msg.sender);
-
-        // udpate bundle state
-        instance.getInstanceStore().updateBundleState(bundleNftId, PAUSED());
-
-        // effects
-        // update set of active bundles
-        BundleSet bundleManager = instance.getBundleSet();
-        bundleManager.lock(bundleNftId);
-
-        emit LogBundleServiceBundleLocked(bundleNftId);
-    }
-
-
-    function unlock(NftId bundleNftId) 
+    function setLocked(NftId bundleNftId, bool locked) 
         external
         virtual
         restricted()
@@ -218,16 +196,18 @@ contract BundleService is
         (, IInstance instance) = PoolLib.getAndVerifyActivePool(getRegistry(), msg.sender);
 
         // effects
-        // udpate bundle state
-        instance.getInstanceStore().updateBundleState(bundleNftId, ACTIVE());
-
         // update set of active bundles
         BundleSet bundleManager = instance.getBundleSet();
-        bundleManager.unlock(bundleNftId);
 
-        emit LogBundleServiceBundleUnlocked(bundleNftId);
+        if (locked) {
+            bundleManager.lock(bundleNftId);
+            emit LogBundleServiceBundleLocked(bundleNftId);
+        } else {
+            bundleManager.unlock(bundleNftId);
+            emit LogBundleServiceBundleUnlocked(bundleNftId);
+        }
     }
-
+    
 
     function close(
         IInstance instance,

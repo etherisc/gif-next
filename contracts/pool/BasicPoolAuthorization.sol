@@ -60,8 +60,7 @@ contract BasicPoolAuthorization
           _authorize(functions, BasicPool.stake.selector, "stake");
           _authorize(functions, BasicPool.unstake.selector, "unstake");
           _authorize(functions, BasicPool.extend.selector, "extend");
-          _authorize(functions, BasicPool.lockBundle.selector, "lockBundle");
-          _authorize(functions, BasicPool.unlockBundle.selector, "unlockBundle");
+          _authorize(functions, BasicPool.setBundleLocked.selector, "setBundleLocked");
           _authorize(functions, BasicPool.closeBundle.selector, "closeBundle");
           _authorize(functions, BasicPool.setBundleFee.selector, "setBundleFee");
 

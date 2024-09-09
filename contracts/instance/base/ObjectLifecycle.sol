@@ -44,10 +44,7 @@ contract ObjectLifecycle is
 
     function _setupBundleLifecycle() private {
         setInitialState(BUNDLE(), ACTIVE());
-        setStateTransition(BUNDLE(), ACTIVE(), PAUSED());
         setStateTransition(BUNDLE(), ACTIVE(), CLOSED());
-        setStateTransition(BUNDLE(), PAUSED(), ACTIVE());
-        setStateTransition(BUNDLE(), PAUSED(), CLOSED());
     }
 
     function _setupPolicyLifecycle() private {

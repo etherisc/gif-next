@@ -283,21 +283,11 @@ abstract contract Pool is
     /// @dev Locks the specified bundle.
     /// A bundle to be locked MUST be in active state.
     /// Locked bundles may not be used to collateralize any new policy.
-    function _lockBundle(NftId bundleNftId)
+    function _setBundleLocked(NftId bundleNftId, bool locked)
         internal
         virtual
     {
-        _getPoolStorage()._bundleService.lock(bundleNftId);
-    }
-
-
-    /// @dev Unlocks the specified bundle.
-    /// A bundle to be unlocked MUST be in locked state.
-    function _unlockBundle(NftId bundleNftId)
-        internal
-        virtual
-    {
-        _getPoolStorage()._bundleService.unlock(bundleNftId);
+        _getPoolStorage()._bundleService.setLocked(bundleNftId, locked);
     }
 
 

@@ -68,15 +68,10 @@ interface IBundleService is IService {
     /// @dev extend the lifetime of the bundle by the specified time in seconds
     function extend(NftId bundleNftId, Seconds lifetimeExtension) external returns (Timestamp extendedExpiredAt);
 
-    /// @dev locks the specified bundle, locked bundles are not available to collateralize new policies
-    /// only active bundles may be locked
-    /// may only be called by registered and unlocked pool components
-    function lock(NftId bundleNftId) external;
-
-    /// @dev activates the specified bundle
-    /// only locked bundles may be unlocked
-    /// may only be called by registered and unlocked pool components
-    function unlock(NftId bundleNftId) external;
+    /// @dev locks/unlocks the specified bundle. 
+    /// locked bundles are not available to collateralize new policies.
+    /// may only be called by registered and unlocked pool components.
+    function setLocked(NftId bundleNftId, bool locked) external;
 
     /// @dev closes the specified bundle
     /// only open bundles (active or locked) may be closed

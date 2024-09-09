@@ -82,25 +82,14 @@ abstract contract BasicPool is
     }
 
 
-    function lockBundle(NftId bundleNftId)
+    function setBundleLocked(NftId bundleNftId, bool locked)
         public
         virtual
         restricted()
         onlyBundleOwner(bundleNftId)
         onlyNftOfType(bundleNftId, BUNDLE())
     {
-        _lockBundle(bundleNftId);
-    }
-
-
-    function unlockBundle(NftId bundleNftId)
-        public
-        virtual
-        restricted()
-        onlyBundleOwner(bundleNftId)
-        onlyNftOfType(bundleNftId, BUNDLE())
-    {
-        _unlockBundle(bundleNftId);
+        _setBundleLocked(bundleNftId, locked);
     }
 
 

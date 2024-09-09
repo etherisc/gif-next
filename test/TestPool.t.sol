@@ -350,11 +350,9 @@ contract TestPool is GifTest {
         assertEq(metadata.state.toInt(), ACTIVE().toInt(), "bundle state not active");
 
         vm.prank(investor);
-        pool.lockBundle(bundleNftId);
+        pool.setBundleLocked(bundleNftId, true);
 
         // THEN
-        metadata = instanceReader.getMetadata(bundleKey);
-        assertEq(metadata.state.toInt(), PAUSED().toInt(), "bundle state not paused");
 
         // bundle manager checks
         assertEq(instanceBundleSet.bundles(poolNftId), 1, "expected only 1 bundle");
@@ -363,10 +361,7 @@ contract TestPool is GifTest {
 
         // WHEN unlock bundle again
         vm.prank(investor);
-        pool.unlockBundle(bundleNftId);
-
-        metadata = instanceReader.getMetadata(bundleKey);
-        assertEq(metadata.state.toInt(), ACTIVE().toInt(), "bundle state not active again");
+        pool.setBundleLocked(bundleNftId, false);
 
         assertEq(instanceBundleSet.bundles(poolNftId), 1, "expected only 1 bundle");
         assertEq(instanceBundleSet.getBundleNftId(poolNftId, 0).toInt(), bundleNftId.toInt(), "bundle nft id in bundle manager not equal to bundle nft id");
@@ -384,38 +379,6 @@ contract TestPool is GifTest {
         // bundle manager checks
         assertEq(instanceBundleSet.activeBundles(poolNftId), 0, "expected zero active bundle");
     }
-
-
-    function test_poolBundleLockTwiceAttempt() public {
-        // GIVEN setup includes pool and product
-
-        _fundInvestor();
-
-        bundleNftId = _createBundle();
-        Key32 bundleKey = bundleNftId.toKey32(BUNDLE());
-
-        IKeyValueStore.Metadata memory metadata = instanceReader.getMetadata(bundleKey);
-        assertEq(metadata.state.toInt(), ACTIVE().toInt(), "bundle state not active");
-
-        vm.prank(investor);
-        pool.lockBundle(bundleNftId);
-
-        // WHEN attepting to lock a locked bundle
-        vm.expectRevert(abi.encodeWithSelector(
-            ILifecycle.ErrorInvalidStateTransition.selector,
-            address(instanceStore),
-            BUNDLE(),
-            PAUSED(),
-            PAUSED()));
-
-        vm.prank(investor);
-        pool.lockBundle(bundleNftId);
-
-        // THEN
-        metadata = instanceReader.getMetadata(bundleKey);
-        assertEq(metadata.state.toInt(), PAUSED().toInt(), "bundle state not paused");
-    }
-
 
     function test_poolSetBundleFee() public {
         // GIVEN setup includes pool and product
