@@ -39,19 +39,32 @@ contract ProductRiskClusterTest is GifClusterTest {
         myProduct2.updateRisk(riskId, "risk1updated");
     }
 
-    function test_updateRiskState_fromOtherProductCluster() public {
+    function test_setRiskLocked_fromOtherProductCluster() public {
         // GIVEN
         RiskId riskId = myProduct1.createRisk("risk1", "risk1data");
         
         // THEN 
         vm.expectRevert(abi.encodeWithSelector(
-            IRiskService.ErrorRiskServiceRiskProductMismatch.selector, 
-            riskId,
-            myProductNftId1,
-            myProductNftId2));
+            IRiskService.ErrorRiskServiceUnknownRisk.selector, 
+            myProductNftId2,
+            riskId));
 
         // WHEN
-        myProduct2.updateRiskState(riskId, PAUSED());
+        myProduct2.setRiskLocked(riskId, true);
+    }
+
+    function test_closeRisk_fromOtherProductCluster() public {
+        // GIVEN
+        RiskId riskId = myProduct1.createRisk("risk1", "risk1data");
+        
+        // THEN 
+        vm.expectRevert(abi.encodeWithSelector(
+            IRiskService.ErrorRiskServiceUnknownRisk.selector, 
+            myProductNftId2,
+            riskId));
+
+        // WHEN
+        myProduct2.closeRisk(riskId);
     }
 
 }

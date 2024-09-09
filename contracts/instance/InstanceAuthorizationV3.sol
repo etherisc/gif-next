@@ -115,7 +115,7 @@ contract InstanceAuthorizationV3
           // authorize risk service role
           functions = _authorizeForTarget(RISK_SET_TARGET_NAME, getServiceRole(RISK()));
           _authorize(functions, RiskSet.add.selector, "add");
-          _authorize(functions, RiskSet.pause.selector, "pause");
+          _authorize(functions, RiskSet.deactivate.selector, "deactivate");
           _authorize(functions, RiskSet.activate.selector, "activate");
 
           // authorize policy service role

@@ -31,10 +31,7 @@ stateDiagram-v2
 ```mermaid
 stateDiagram-v2
     [*] --> ACTIVE
-    ACTIVE --> PAUSED
     ACTIVE --> CLOSED 
-    PAUSED --> ACTIVE
-    PAUSED --> CLOSED
     CLOSED --> [*]
 ```
 
@@ -90,10 +87,8 @@ stateDiagram-v2
 ```mermaid
 stateDiagram-v2
     [*] --> ACTIVE
-    ACTIVE --> PAUSED
-    PAUSED --> ACTIVE
-    PAUSED --> ARCHIVED
-    ARCHIVED --> [*]
+    ACTIVE --> CLOSED
+    CLOSED --> [*]
 ```
 
 # Request lifecycle

@@ -100,14 +100,20 @@ contract SimpleProduct is
         );
     }
 
-    function updateRiskState(
+    function setRiskLocked(
         RiskId id,
-        StateId state
+        bool locked
     ) public {
-        _updateRiskState(
+        _setRiskLocked(
             id,
-            state
+            locked
         );
+    }
+
+    function closeRisk(
+        RiskId id
+    ) public {
+        _closeRisk(id);
     }
 
     function createApplication(

@@ -216,7 +216,8 @@ contract ServiceAuthorizationV3
           functions = _authorizeForService(RISK(), ALL());
           _authorize(functions, IRiskService.createRisk.selector, "createRisk");
           _authorize(functions, IRiskService.updateRisk.selector, "updateRisk");
-          _authorize(functions, IRiskService.updateRiskState.selector, "updateRiskState");
+          _authorize(functions, IRiskService.setRiskLocked.selector, "setRiskLocked");
+          _authorize(functions, IRiskService.closeRisk.selector, "closeRisk");
      }
 
      /// @dev Distribution service function authorization.

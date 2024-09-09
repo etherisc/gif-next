@@ -11,9 +11,14 @@ interface IRiskService is IService {
 
     event LogRiskServiceRiskCreated(NftId productNftId, RiskId riskId);
     event LogRiskServiceRiskUpdated(NftId productNftId, RiskId riskId);
-    event LogRiskServiceRiskStateUpdated(NftId productNftId, RiskId riskId, StateId newState);
-
+    event LogRiskServiceRiskLocked(NftId productNftId, RiskId riskId);
+    event LogRiskServiceRiskUnlocked(NftId productNftId, RiskId riskId);
+    event LogRiskServiceRiskClosed(NftId productNftId, RiskId riskId);
+    
     error ErrorRiskServiceRiskProductMismatch(RiskId riskId, NftId riskProductNftId, NftId productNftId);
+    error ErrorRiskServiceRiskNotActive(NftId productNftId, RiskId riskId);
+    error ErrorRiskServiceUnknownRisk(NftId productNftId, RiskId riskId);
+    error ErrorRiskServiceRiskNotLocked(NftId productNftId, RiskId riskId);
 
     /// @dev Create a new risk with the given id and provided data. 
     /// The key of the risk derived from the risk id in comination with the product NftId. 
@@ -29,9 +34,15 @@ interface IRiskService is IService {
         bytes memory data
     ) external;
 
-
-    function updateRiskState(
+    /// @dev Locks/unlocks the risk with the given id.
+    /// No new policies can be underwritten for a locked risk.
+    function setRiskLocked(
         RiskId riskId,
-        StateId newState
+        bool locked
+    ) external;
+
+    /// @dev Close the risk with the given id.
+    function closeRisk(
+        RiskId riskId
     ) external;
 }
