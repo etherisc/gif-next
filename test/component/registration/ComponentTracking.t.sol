@@ -169,6 +169,48 @@ contract ComponentTrackingTest is GifTest {
         myProduct.registerComponent(address(myDistribution2));
     }
 
+    function test_componentTracking_noOracleExpected() public {
+        // GIVEN
+        assertEq(instanceReader.components(), 0, "unexpected components count (before)");
+        assertEq(instanceReader.products(), 0, "unexpected products count (before)");
+
+        // WHEN
+        vm.startPrank(instanceOwner);
+
+        SimpleProduct myProduct = _deployProduct("MyProduct", instanceOwner, false, 0);
+        NftId myProductNftId = instance.registerProduct(address(myProduct), address(token));
+
+        SimpleOracle myOracle = _deployOracle("MyOracle", myProductNftId, instanceOwner);
+
+        vm.expectRevert(abi.encodeWithSelector(
+            IComponentService.ErrorProductServiceNoOraclesExpected.selector, 
+            myProductNftId));
+        myProduct.registerComponent(address(myOracle));   
+    }
+
+    function test_componentTracking_oracleAlreadyRegistered() public {
+        // GIVEN
+        assertEq(instanceReader.components(), 0, "unexpected components count (before)");
+        assertEq(instanceReader.products(), 0, "unexpected products count (before)");
+
+        // WHEN
+        vm.startPrank(instanceOwner);
+
+        SimpleProduct myProduct = _deployProduct("MyProduct", instanceOwner, false, 1);
+        NftId myProductNftId = instance.registerProduct(address(myProduct), address(token));
+
+        SimpleOracle myOracle = _deployOracle("MyOracle", myProductNftId, instanceOwner);
+        NftId oracleNftId = myProduct.registerComponent(address(myOracle));
+        SimpleOracle myOracle2 = _deployOracle("MyOracle2", myProductNftId, instanceOwner);
+
+        vm.expectRevert(abi.encodeWithSelector(
+            IComponentService.ErrorProductServiceOraclesAlreadyRegistered.selector, 
+            myProductNftId,
+            1));
+        myProduct.registerComponent(address(myOracle2));
+        
+    }
+
 
     function _deployProduct(
         string memory name, 
