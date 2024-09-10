@@ -109,14 +109,15 @@ contract TestProductClaim is GifTest {
         _approve();
         _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
 
-        // WHEN
         Amount claimAmount = AmountLib.zero();
         bytes memory claimData = "please pay";
 
+        // THEN
         vm.expectRevert(abi.encodeWithSelector(
             IClaimService.ErrorClaimServiceClaimAmountIsZero.selector, 
             policyNftId));
 
+        // WHEN
         product.submitClaim(policyNftId, claimAmount, claimData); 
     }
 
@@ -125,17 +126,60 @@ contract TestProductClaim is GifTest {
         _approve();
         _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
 
-        // WHEN
         Amount claimAmount = AmountLib.toAmount(1001);
         bytes memory claimData = "please pay";
 
+        // THEN
         vm.expectRevert(abi.encodeWithSelector(
             IClaimService.ErrorClaimServiceClaimExceedsSumInsured.selector, 
             policyNftId,
             AmountLib.toAmount(SUM_INSURED),
             claimAmount));
 
+        // WHEN
         product.submitClaim(policyNftId, claimAmount, claimData); 
+    }
+
+    function test_ProductClaimConfirmAmountZero() public {
+        // GIVEN
+        _approve();
+        _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
+
+        Amount claimAmount = AmountLib.toAmount(499);
+        Amount confirmedAmount = AmountLib.zero();
+        bytes memory claimData = "please pay";
+        
+        ClaimId claimId = product.submitClaim(policyNftId, claimAmount, claimData); 
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IClaimService.ErrorClaimServiceClaimAmountIsZero.selector, 
+            policyNftId));
+
+        // WHEN
+        product.confirmClaim(policyNftId, claimId, confirmedAmount, "");
+    }
+
+        function test_ProductClaimConfirmAmounExceedsSumInsured() public {
+        // GIVEN
+        _approve();
+        _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
+
+        Amount claimAmount = AmountLib.toAmount(499);
+        Amount confirmedAmount = AmountLib.toAmount(1001);
+        bytes memory claimData = "please pay";
+        
+        ClaimId claimId = product.submitClaim(policyNftId, claimAmount, claimData); 
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IClaimService.ErrorClaimServiceClaimExceedsSumInsured.selector, 
+            policyNftId,
+            AmountLib.toAmount(1000),
+            confirmedAmount));
+
+        // WHEN
+        product.confirmClaim(policyNftId, claimId, confirmedAmount, "");
     }
 
 
