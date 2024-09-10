@@ -313,7 +313,33 @@ contract StakingStore is
     }
 
 
-    function increaseReserves(
+    function refillRewardReserves(
+        NftId targetNftId, 
+        Amount dipAmount
+    )
+        external
+        restricted()
+        returns (Amount newReserveBalance)
+    {
+        // checks
+        IStaking.TargetInfo storage targetInfo = _getAndVerifyTarget(targetNftId);
+        Blocknumber lastUpdateIn = targetInfo.lastUpdateIn;
+
+        // effects
+        targetInfo.reserveAmount = targetInfo.reserveAmount + dipAmount;
+        targetInfo.lastUpdateIn = BlocknumberLib.current();
+
+        // logging
+        newReserveBalance = targetInfo.reserveAmount;
+        emit IStaking.LogStakingRewardReservesRefilled(
+            targetNftId,
+            dipAmount,
+            newReserveBalance,
+            lastUpdateIn);
+    }
+
+
+    function withdrawRewardReserves(
         NftId targetNftId, 
         Amount dipAmount
     )
@@ -325,22 +351,45 @@ contract StakingStore is
         IStaking.TargetInfo storage targetInfo = _getAndVerifyTarget(targetNftId);
 
         // effects
-        targetInfo.reserveAmount = targetInfo.reserveAmount + dipAmount;
-        targetInfo.lastUpdateIn = BlocknumberLib.current();
+        Blocknumber lastUpdateIn = _decreaseReserves(targetNftId, targetInfo, dipAmount);
+
+        // logging
         newReserveBalance = targetInfo.reserveAmount;
+        emit IStaking.LogStakingRewardReservesWithdrawn(
+            targetNftId,
+            dipAmount,
+            newReserveBalance,
+            lastUpdateIn);
     }
 
 
-    function decreaseReserves(
+    function _spendRewardReserves(
         NftId targetNftId, 
+        IStaking.TargetInfo storage targetInfo,
         Amount dipAmount
     )
-        external
-        restricted()
-        returns (Amount newReserveBalance)
+        private
     {
-        // checks
-        IStaking.TargetInfo storage targetInfo = _getAndVerifyTarget(targetNftId);
+        Blocknumber lastUpdateIn = _decreaseReserves(targetNftId, targetInfo, dipAmount);
+
+        // logging
+        emit IStaking.LogStakingRewardReservesSpent(
+            targetNftId,
+            dipAmount,
+            targetInfo.reserveAmount,
+            lastUpdateIn);
+    }
+
+
+    function _decreaseReserves(
+        NftId targetNftId,
+        IStaking.TargetInfo storage targetInfo, 
+        Amount dipAmount
+    )
+        private
+        returns ( Blocknumber lastUpdateIn)
+    {
+        lastUpdateIn = targetInfo.lastUpdateIn;
 
         // check if reserves are sufficient
         if (dipAmount > targetInfo.reserveAmount) {
@@ -353,7 +402,6 @@ contract StakingStore is
         // effects
         targetInfo.reserveAmount = targetInfo.reserveAmount - dipAmount;
         targetInfo.lastUpdateIn = BlocknumberLib.current();
-        newReserveBalance = targetInfo.reserveAmount;
     }
 
 
@@ -521,12 +569,16 @@ contract StakingStore is
     {
         // checks
         IStaking.StakeInfo storage stakeInfo = _getAndVerifyStake(stakeNftId);
-        IStaking.TargetInfo storage targetInfo = _getAndVerifyTarget(stakeInfo.targetNftId);
+        NftId targetNftId = stakeInfo.targetNftId;
+        IStaking.TargetInfo storage targetInfo = _getAndVerifyTarget(targetNftId);
 
         // restake rewards if applicable
         if (restakeRewards && stakeInfo.rewardAmount.gtz()) {
             restakedRewardAmount = stakeInfo.rewardAmount;
-            _checkMaxStakedAmount(stakeInfo.targetNftId, targetInfo, restakedRewardAmount);
+            _checkMaxStakedAmount(targetNftId, targetInfo, restakedRewardAmount);
+
+            // reserves used for restaking
+            _spendRewardReserves(targetNftId, targetInfo, restakedRewardAmount);
 
             // update target
             targetInfo.stakedAmount = targetInfo.stakedAmount + restakedRewardAmount;

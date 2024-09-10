@@ -127,9 +127,9 @@ contract ServiceAuthorizationV3
           // _authorize(functions, IStakingService.create.selector, "create");
           // _authorize(functions, IStakingService.stake.selector, "stake");
           // _authorize(functions, IStakingService.restakeToNewTarget.selector, "restakeToNewTarget");
-          _authorize(functions, IStakingService.updateRewards.selector, "updateRewards");
+          // _authorize(functions, IStakingService.updateRewards.selector, "updateRewards");
           // _authorize(functions, IStakingService.claimRewards.selector, "claimRewards");
-          _authorize(functions, IStakingService.unstake.selector, "unstake");
+          // _authorize(functions, IStakingService.unstake.selector, "unstake");
      }
 
 

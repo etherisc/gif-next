@@ -339,45 +339,45 @@ contract StakingService is
     // }
 
 
-    function updateRewards(
-        NftId stakeNftId
-    )
-        external
-        virtual
-        restricted()
-    {
-        _checkNftType(stakeNftId, STAKE());
+    // function updateRewards(
+    //     NftId stakeNftId
+    // )
+    //     external
+    //     virtual
+    //     restricted()
+    // {
+    //     _checkNftType(stakeNftId, STAKE());
 
-        StakingServiceStorage storage $ = _getStakingServiceStorage();
-        $._staking.updateRewards(stakeNftId);
+    //     StakingServiceStorage storage $ = _getStakingServiceStorage();
+    //     $._staking.updateRewards(stakeNftId);
 
-        emit LogStakingServiceRewardsUpdated(stakeNftId);
-    }
+    //     emit LogStakingServiceRewardsUpdated(stakeNftId);
+    // }
 
 
-    function unstake(NftId stakeNftId)
-        external
-        virtual
-        restricted()
-        onlyNftOwner(stakeNftId)
-    {
-        _checkNftType(stakeNftId, STAKE());
+    // function unstake(NftId stakeNftId)
+    //     external
+    //     virtual
+    //     restricted()
+    //     onlyNftOwner(stakeNftId)
+    // {
+    //     _checkNftType(stakeNftId, STAKE());
         
-        StakingServiceStorage storage $ = _getStakingServiceStorage();
-        address stakeOwner = msg.sender;
+    //     StakingServiceStorage storage $ = _getStakingServiceStorage();
+    //     address stakeOwner = msg.sender;
 
-        (
-            Amount unstakedAmount,
-            Amount rewardsClaimedAmount
-        ) = $._staking.unstake(stakeNftId);
+    //     (
+    //         Amount unstakedAmount,
+    //         Amount rewardsClaimedAmount
+    //     ) = $._staking.unstake(stakeNftId);
 
-        Amount totalAmount = unstakedAmount + rewardsClaimedAmount;
-        emit LogStakingServiceUnstaked(stakeNftId, stakeOwner, totalAmount);
+    //     Amount totalAmount = unstakedAmount + rewardsClaimedAmount;
+    //     emit LogStakingServiceUnstaked(stakeNftId, stakeOwner, totalAmount);
 
-        $._tokenHandler.pushToken(
-            stakeOwner, 
-            totalAmount);
-    }
+    //     $._tokenHandler.pushToken(
+    //         stakeOwner, 
+    //         totalAmount);
+    // }
 
 
     function setTotalValueLocked(

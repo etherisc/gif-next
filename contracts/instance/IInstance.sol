@@ -79,7 +79,7 @@ interface IInstance is
     function setStakingMaxAmount(Amount maxStakedAmount) external;
 
     /// @dev Refills the staking reward reserves for the specified target.
-    function refillStakingRewardReserves(Amount dipAmount) external;
+    function refillStakingRewardReserves(Amount dipAmount) external returns (Amount newBalance);
 
     /// @dev Defunds the staking reward reserves for the specified target.
     function withdrawStakingRewardReserves(Amount dipAmount) external returns (Amount newBalance);

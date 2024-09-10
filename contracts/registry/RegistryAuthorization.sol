@@ -226,7 +226,9 @@ contract RegistryAuthorization
           // staker functions
           _authorize(functions, IStaking.createStake.selector, "createStake");
           _authorize(functions, IStaking.stake.selector, "stake");
+          _authorize(functions, IStaking.unstake.selector, "unstake");
           _authorize(functions, IStaking.restake.selector, "restake");
+          _authorize(functions, IStaking.updateRewards.selector, "updateRewards");
           _authorize(functions, IStaking.claimRewards.selector, "claimRewards");
 
           // staking service role
@@ -242,8 +244,8 @@ contract RegistryAuthorization
           _authorize(functions, IStaking.withdrawRewardReserves.selector, "withdrawRewardReserves");
           // TODO cleanup
           // _authorize(functions, IStaking.stake.selector, "stake");
-          _authorize(functions, IStaking.unstake.selector, "unstake");
-          _authorize(functions, IStaking.updateRewards.selector, "updateRewards");
+          // _authorize(functions, IStaking.unstake.selector, "unstake");
+          // _authorize(functions, IStaking.updateRewards.selector, "updateRewards");
           // _authorize(functions, IStaking.claimRewards.selector, "claimRewards");
 
           // pool service role
@@ -292,8 +294,8 @@ contract RegistryAuthorization
           _authorize(functions, StakingStore.setLockingPeriod.selector, "setLockingPeriod");
           _authorize(functions, StakingStore.setRewardRate.selector, "setRewardRate");
           _authorize(functions, StakingStore.setMaxStakedAmount.selector, "setMaxStakedAmount");
-          _authorize(functions, StakingStore.increaseReserves.selector, "increaseReserves");
-          _authorize(functions, StakingStore.decreaseReserves.selector, "decreaseReserves");
+          _authorize(functions, StakingStore.refillRewardReserves.selector, "refillRewardReserves");
+          _authorize(functions, StakingStore.withdrawRewardReserves.selector, "withdrawRewardReserves");
           _authorize(functions, StakingStore.increaseTotalValueLocked.selector, "increaseTotalValueLocked");
           _authorize(functions, StakingStore.decreaseTotalValueLocked.selector, "decreaseTotalValueLocked");
           _authorize(functions, StakingStore.createStake.selector, "createStake");

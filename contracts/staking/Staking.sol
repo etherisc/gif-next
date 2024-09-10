@@ -300,9 +300,8 @@ contract Staking is
         restricted()
         returns (Amount newBalance)
     {
-        // update book keeping of reward reserves
         StakingStorage storage $ = _getStakingStorage();
-        newBalance = $._store.increaseReserves(targetNftId, dipAmount);
+        newBalance = $._store.refillRewardReserves(targetNftId, dipAmount);
     }
 
 
@@ -313,9 +312,8 @@ contract Staking is
         restricted()
         returns (Amount newBalance)
     {
-        // update book keeping of reward reserves
         StakingStorage storage $ = _getStakingStorage();
-        newBalance = $._store.decreaseReserves(targetNftId, dipAmount);
+        newBalance = $._store.withdrawRewardReserves(targetNftId, dipAmount);
     }
 
 
@@ -500,7 +498,7 @@ contract Staking is
         external
         virtual
         restricted() // only staking service
-        onlyStake(stakeNftId)
+        onlyStakeOwner(stakeNftId)
         returns (
             Amount unstakedAmount,
             Amount rewardsClaimedAmount
@@ -508,16 +506,25 @@ contract Staking is
     {
         StakingStorage storage $ = _getStakingStorage();
         bool restakeRewards = true;
+        Timestamp lockedUntil;
 
         (
             unstakedAmount,
-            rewardsClaimedAmount
+            rewardsClaimedAmount,
+            lockedUntil
         ) = _unstakeAll(
             $, 
             stakeNftId,
             restakeRewards); // restake rewards
 
-        // TODO add logging
+        // collect staked DIP token by staking service
+        Amount collectedAmount = unstakedAmount + rewardsClaimedAmount;
+        if (collectedAmount.gtz()) {
+
+            // interactions
+            address stakeOwner = getRegistry().ownerOf(stakeNftId);
+            $._stakingService.pushDipToken(collectedAmount, stakeOwner);
+        }
     }
 
 
@@ -541,7 +548,7 @@ contract Staking is
 
         (
             Amount unstakedAmount,
-            Amount rewardsClaimedAmount
+            Amount rewardsClaimedAmount,
         ) = _unstakeAll($, stakeNftId, true); // restake rewards
 
         newStakeNftId = $._stakingService.createStakeObject(newTargetNftId, stakeOwner);
@@ -658,7 +665,8 @@ event LogStakingDebug(string message, uint256 value);
         virtual
         returns (
             Amount unstakedAmount,
-            Amount claimedAmount
+            Amount claimedAmount,
+            Timestamp lockedUntil
         )
     {
         // additional checks (most checks are done prior to calling this function)
@@ -667,11 +675,10 @@ event LogStakingDebug(string message, uint256 value);
         }
 
         // update rewards since last update
-        (,,,,Timestamp lockedUntil) = _updateRewards($, stakeNftId);
+        (,,,, lockedUntil) = _updateRewards($, stakeNftId);
         Amount restakedRewardAmount;
         Amount stakeBalance;
         Amount rewardBalance;
-        Timestamp lockedUntilNew;
 
         (
             restakedRewardAmount,
@@ -679,7 +686,6 @@ event LogStakingDebug(string message, uint256 value);
             claimedAmount,
             stakeBalance,
             rewardBalance,
-            lockedUntilNew
         ) = $._store.decreaseStakes(
             stakeNftId,
             AmountLib.max(), // unstake all stakes

@@ -48,6 +48,11 @@ interface IStaking is
     event LogStakingTargetRewardRateSet(NftId targetNftId, UFixed rewardRate, UFixed oldRewardRate);
     event LogStakingTargetMaxStakedAmountSet(NftId targetNftId, Amount maxStakedAmount);
 
+    // reward reserves
+    event LogStakingRewardReservesRefilled(NftId targetNftId, Amount dipAmount, Amount reserveBalance, Blocknumber lastUpdateIn);
+    event LogStakingRewardReservesWithdrawn(NftId targetNftId, Amount dipAmount, Amount reserveBalance, Blocknumber lastUpdateIn);
+    event LogStakingRewardReservesSpent(NftId targetNftId, Amount dipAmount, Amount reserveBalance, Blocknumber lastUpdateIn);
+
     // stakes
     event LogStakingStakeCreated(NftId stakeNftId, NftId targetNftId, Amount stakeAmount, Timestamp lockedUntil, address stakeOwner);
     event LogStakingStakeRewardsUpdated(NftId stakeNftId, Amount rewardIncrementAmount, Amount stakeBalance, Amount rewardBalance, Timestamp lockedUntil);

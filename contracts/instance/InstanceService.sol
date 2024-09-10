@@ -266,9 +266,10 @@ contract InstanceService is
         virtual
         restricted()
         onlyInstance()
+        returns (Amount newBalance)
     {
         NftId instanceNftId = getRegistry().getNftIdForAddress(msg.sender);
-        _stakingService.refillInstanceRewardReserves(
+        newBalance = _stakingService.refillInstanceRewardReserves(
             instanceNftId,
             rewardProvider,
             dipAmount);

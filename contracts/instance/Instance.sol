@@ -173,16 +173,17 @@ contract Instance is
         external
         restricted()
         onlyOwner()
+        returns (Amount newRewardReserveBalance)
     {
         address instanceOwner = msg.sender;
-        _instanceService.refillStakingRewardReserves(instanceOwner, dipAmount);
+        return _instanceService.refillStakingRewardReserves(instanceOwner, dipAmount);
     }
 
     function withdrawStakingRewardReserves(Amount dipAmount)
         external
         restricted()
         onlyOwner()
-        returns (Amount newBalance)
+        returns (Amount newRewardReserveBalance)
     {
         return _instanceService.withdrawStakingRewardReserves(dipAmount);
     }

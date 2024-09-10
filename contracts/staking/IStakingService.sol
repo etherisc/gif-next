@@ -135,17 +135,17 @@ interface IStakingService is IService
     // ) external;
 
 
-    /// @dev updates the reward balance of the stake using the current reward rate.
-    function updateRewards(
-        NftId stakeNftId
-    ) external;
+    // /// @dev updates the reward balance of the stake using the current reward rate.
+    // function updateRewards(
+    //     NftId stakeNftId
+    // ) external;
 
 
-    /// @dev unstakes all dips (stakes and rewards) of an existing stake.
-    /// function restricted to the current stake owner
-    function unstake(
-        NftId stakeNftId
-    ) external;
+    // /// @dev unstakes all dips (stakes and rewards) of an existing stake.
+    // /// function restricted to the current stake owner
+    // function unstake(
+    //     NftId stakeNftId
+    // ) external;
 
 
     /// @dev sets total value locked data for a target contract on a different chain.
