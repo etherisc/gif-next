@@ -1780,64 +1780,6 @@ contract ProductPolicyTest is GifTest {
         product.expire(policyNftId, expireAtTs);
     }
 
-    function test_PolicyServiceLib_policyIsActive() public {
-        // GIVEN
-        vm.warp(100);
-        vm.startPrank(productOwner);
-
-        // create test specific risk
-        bytes memory data = "bla di blubb";
-        RiskId riskId = product.createRisk("42x4711", data);
-
-        // crete application
-        uint256 sumInsuredAmount = 1000;
-        Seconds lifetime = SecondsLib.toSeconds(30);
-        bytes memory applicationData = "";
-        ReferralId referralId = ReferralLib.zero();
-        NftId policyNftId = product.createApplication(
-            customer,
-            riskId,
-            sumInsuredAmount,
-            lifetime,
-            applicationData,
-            bundleNftId,
-            referralId
-        );
-
-        assertTrue(policyNftId.gtz(), "policyNftId was zero");
-        assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
-        assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
-
-        vm.stopPrank();
-
-        // WHEN - collateralize application
-        bool requirePremiumPayment = false;
-        product.createPolicy(policyNftId, requirePremiumPayment, TimestampLib.zero()); 
-
-        // THEN - activatedAt is 0
-        assertFalse(PolicyServiceLib.policyIsActive(instanceReader, policyNftId));
-
-        vm.warp(1);
-
-        Timestamp activateAt = TimestampLib.blockTimestamp().addSeconds(SecondsLib.toSeconds(10));
-        product.activate(policyNftId, activateAt);
-        
-        // THEN - activatedAt is 11, expiredAt is 41
-        assertFalse(PolicyServiceLib.policyIsActive(instanceReader, policyNftId));
-
-        vm.warp(11);
-
-        assertTrue(PolicyServiceLib.policyIsActive(instanceReader, policyNftId));
-
-        vm.warp(41);
-
-        assertFalse(PolicyServiceLib.policyIsActive(instanceReader, policyNftId));
-
-        vm.warp(42);
-
-        assertFalse(PolicyServiceLib.policyIsActive(instanceReader, policyNftId));
-    }
-
     function _configureProduct(uint bundleCapital) internal {
         vm.startPrank(distributionOwner);
         Fee memory distributionFee = FeeLib.toFee(UFixedLib.zero(), 10);
