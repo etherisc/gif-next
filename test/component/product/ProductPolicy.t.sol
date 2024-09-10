@@ -766,6 +766,48 @@ contract ProductPolicyTest is GifTest {
         assertTrue(policyInfo.expiredAt.toInt() == policyInfo.activatedAt.addSeconds(sec30).toInt(), "expiredAt not activatedAt + 30");
     }
 
+    function test_productPolicyActivate_alreadyActive() public {
+        // GIVEN
+
+        vm.startPrank(productOwner);
+
+        Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
+        product.setFees(productFee, FeeLib.zero());
+
+        bytes memory data = "bla di blubb";
+        RiskId riskId = product.createRisk("42x4711", data);
+
+        uint sumInsuredAmount = 1000;
+        NftId policyNftId = product.createApplication(
+            customer,
+            riskId,
+            sumInsuredAmount,
+            SecondsLib.toSeconds(30),
+            "",
+            bundleNftId,
+            ReferralLib.zero()
+        );
+        assertTrue(policyNftId.gtz(), "policyNftId was zero");
+        assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
+
+        assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
+
+        Timestamp activateAt = TimestampLib.blockTimestamp();
+        product.createPolicy(policyNftId, false, activateAt); 
+
+        vm.warp(100);
+        activateAt = TimestampLib.blockTimestamp();
+        
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IPolicyService.ErrorPolicyServicePolicyAlreadyActivated.selector, 
+            policyNftId));
+
+        // WHEN
+        product.activate(policyNftId, activateAt);
+    }
+
     function test_adjustActivation() public {
         // GIVEN
         vm.startPrank(registryOwner);
