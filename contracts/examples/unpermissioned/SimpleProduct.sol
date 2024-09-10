@@ -396,21 +396,14 @@ contract SimpleProduct is
     }
 
 
-    function doSomethingSpecial() 
+    function doSomethingOnlyWhenActive() 
         public 
-        restricted()
+        onlyActive()
         returns (bool) 
     {
         return true;
     }
 
-    function doWhenNotLocked() 
-        public 
-        restricted()
-        returns (bool) 
-    {
-        return true;
-    }
 
     function getOracleService() public view returns (IOracleService) {
         return _oracleService;
