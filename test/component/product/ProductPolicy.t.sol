@@ -6,8 +6,7 @@ import {console} from "../../../lib/forge-std/src/Test.sol";
 import {IBundleService} from "../../../contracts/pool/IBundleService.sol";
 import {BundleSet} from "../../../contracts/instance/BundleSet.sol";
 import {GifTest} from "../../base/GifTest.sol";
-import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
-import {SimpleProduct} from "../../../contracts/examples/unpermissioned/SimpleProduct.sol";
+import {NftId} from "../../../contracts/type/NftId.sol";
 import {IComponents} from "../../../contracts/instance/module/IComponents.sol";
 import {IDistribution} from "../../../contracts/instance/module/IDistribution.sol";
 import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
@@ -16,15 +15,13 @@ import {Fee, FeeLib} from "../../../contracts/type/Fee.sol";
 import {UFixedLib} from "../../../contracts/type/UFixed.sol";
 import {Seconds, SecondsLib} from "../../../contracts/type/Seconds.sol";
 import {Timestamp, TimestampLib, zeroTimestamp} from "../../../contracts/type/Timestamp.sol";
-import {IRisk} from "../../../contracts/instance/module/IRisk.sol";
-import {RiskId, RiskIdLib, eqRiskId} from "../../../contracts/type/RiskId.sol";
+import {RiskId} from "../../../contracts/type/RiskId.sol";
 import {ReferralId, ReferralLib} from "../../../contracts/type/Referral.sol";
 import {ReferralId, ReferralLib} from "../../../contracts/type/Referral.sol";
 import {APPLIED, COLLATERALIZED, CLOSED, DECLINED, PAID, EXPECTED} from "../../../contracts/type/StateId.sol";
 import {POLICY} from "../../../contracts/type/ObjectType.sol";
 import {DistributorType} from "../../../contracts/type/DistributorType.sol";
 import {IPolicyService} from "../../../contracts/product/IPolicyService.sol";
-import {PolicyServiceLib} from "../../../contracts/product/PolicyServiceLib.sol";
 
 // solhint-disable func-name-mixedcase
 contract ProductPolicyTest is GifTest {
