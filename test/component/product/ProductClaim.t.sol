@@ -160,7 +160,7 @@ contract TestProductClaim is GifTest {
         product.confirmClaim(policyNftId, claimId, confirmedAmount, "");
     }
 
-        function test_ProductClaimConfirmAmounExceedsSumInsured() public {
+    function test_ProductClaimConfirmAmounExceedsSumInsured() public {
         // GIVEN
         _approve();
         _collateralize(policyNftId, true, TimestampLib.blockTimestamp());

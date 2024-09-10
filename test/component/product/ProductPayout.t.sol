@@ -15,7 +15,7 @@ import {Timestamp, TimestampLib} from "../../../contracts/type/Timestamp.sol";
 import {PayoutId, PayoutIdLib} from "../../../contracts/type/PayoutId.sol";
 import {RiskId} from "../../../contracts/type/RiskId.sol";
 import {ReferralLib} from "../../../contracts/type/Referral.sol";
-import {CANCELLED, COLLATERALIZED, CONFIRMED, CLOSED, EXPECTED, PAID} from "../../../contracts/type/StateId.sol";
+import {CANCELLED, COLLATERALIZED, CONFIRMED, CLOSED, EXPECTED, PAID, SUBMITTED} from "../../../contracts/type/StateId.sol";
 import {StateId} from "../../../contracts/type/StateId.sol";
 
 
@@ -159,6 +159,28 @@ contract TestProductClaim is GifTest {
         assertEq(payoutInfo.paidAt.toInt(), 0, "unexpected payout paid at");
     }
 
+    function test_productPayoutCreate_claimNotConfirmed() public {
+        // GIVEN
+        _approve();
+        _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
+        Amount claimAmount = AmountLib.toAmount(499);
+
+        bytes memory claimData = "please pay";
+        ClaimId claimId = product.submitClaim(policyNftId, claimAmount, claimData); 
+
+        Amount payoutAmount = AmountLib.toAmount(200);
+        bytes memory payoutData = "some payout";
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IClaimService.ErrorClaimServiceClaimNotConfirmed.selector, 
+            policyNftId, 
+            claimId,
+            SUBMITTED()));
+
+        // WHEN
+        product.createPayout(policyNftId, claimId, payoutAmount, payoutData);
+    }
 
     function test_productPayoutProcessHappyCase() public {
         // GIVEN
