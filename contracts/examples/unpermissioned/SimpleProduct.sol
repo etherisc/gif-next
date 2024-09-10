@@ -348,6 +348,28 @@ contract SimpleProduct is
         }
     }
 
+    function createOracleRequest2(
+        NftId oracleNftId,
+        string memory requestText,
+        Timestamp expiryAt,
+        bool synchronous,
+        string memory callbackMethod
+    )
+        public
+        // restricted()
+        returns (RequestId)
+    {
+        bytes memory requestData = abi.encode(SimpleOracle.SimpleRequest(
+            synchronous,
+            requestText));
+
+        return _oracleService.request(
+            oracleNftId, 
+            requestData, 
+            expiryAt, 
+            callbackMethod);
+    }
+
     function cancelOracleRequest(
         RequestId requestId
     )

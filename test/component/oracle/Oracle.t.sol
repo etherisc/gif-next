@@ -20,12 +20,14 @@ import {Timestamp, TimestampLib, zeroTimestamp} from "../../../contracts/type/Ti
 import {IPolicyService} from "../../../contracts/product/IPolicyService.sol";
 import {IRisk} from "../../../contracts/instance/module/IRisk.sol";
 import {PayoutId, PayoutIdLib} from "../../../contracts/type/PayoutId.sol";
-import {POLICY} from "../../../contracts/type/ObjectType.sol";
+import {POLICY, ORACLE} from "../../../contracts/type/ObjectType.sol";
 import {RiskId, RiskIdLib, eqRiskId} from "../../../contracts/type/RiskId.sol";
 import {ReferralLib} from "../../../contracts/type/Referral.sol";
 import {RequestId, RequestIdLib} from "../../../contracts/type/RequestId.sol";
 import {SUBMITTED, ACTIVE, CANCELLED, FAILED, FULFILLED} from "../../../contracts/type/StateId.sol";
 import {StateId} from "../../../contracts/type/StateId.sol";
+import {IOracleService} from "../../../contracts/oracle/IOracleService.sol";
+import {INftOwnable} from "../../../contracts/shared/INftOwnable.sol";
 
 contract TestOracle is GifTest {
 
@@ -156,6 +158,59 @@ contract TestOracle is GifTest {
         // check request state
         StateId requestState = instanceReader.getState(requestId.toKey32());
         assertEq(requestState.toInt(), FULFILLED().toInt(), "unexpected request state");
+    }
+
+    function test_oracleRequestCreate_expirationInvalid() public {
+        // GIVEN
+        string memory requestText = "some sync question";
+        Timestamp expiryAt = TimestampLib.zero();
+
+        RequestId expectedRequestId = RequestIdLib.toRequestId(1);
+
+        vm.expectRevert(abi.encodeWithSelector(
+            IOracleService.ErrorOracleServiceExpiryInThePast.selector, 
+            1,
+            0));
+        product.createOracleRequest(
+            oracleNftId, 
+            requestText,
+            expiryAt,
+            true);
+    }
+
+    function test_oracleRequestCreate_callbackMethodNameEmpty() public {
+        // GIVEN
+        string memory requestText = "some sync question";
+        Timestamp expiryAt = TimestampLib.blockTimestamp().addSeconds(SecondsLib.oneYear());
+
+        RequestId expectedRequestId = RequestIdLib.toRequestId(1);
+
+        vm.expectRevert(abi.encodeWithSelector(
+            IOracleService.ErrorOracleServiceCallbackMethodNameEmpty.selector));
+        product.createOracleRequest2(
+            oracleNftId, 
+            requestText,
+            expiryAt,
+            true,
+            "");
+    }
+
+    function test_oracleRequestCreate_invalidNftType() public {
+        // GIVEN
+        string memory requestText = "some sync question";
+        Timestamp expiryAt = TimestampLib.blockTimestamp().addSeconds(SecondsLib.oneYear());
+
+        RequestId expectedRequestId = RequestIdLib.toRequestId(1);
+
+        vm.expectRevert(abi.encodeWithSelector(
+            INftOwnable.ErrorNftOwnableInvalidType.selector,
+            productNftId,
+            ORACLE()));
+        product.createOracleRequest(
+            productNftId, 
+            requestText,
+            expiryAt,
+            true);
     }
 
 
