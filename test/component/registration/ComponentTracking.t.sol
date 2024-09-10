@@ -11,6 +11,7 @@ import {SimpleProduct} from "../../../contracts/examples/unpermissioned/SimplePr
 import {SimpleDistribution} from "../../../contracts/examples/unpermissioned/SimpleDistribution.sol";
 import {SimpleOracle} from "../../../contracts/examples/unpermissioned/SimpleOracle.sol";
 import {SimplePool} from "../../../contracts/examples/unpermissioned/SimplePool.sol";
+import {IComponent} from "../../../contracts/shared/IComponent.sol";
 import {IComponents} from "../../../contracts/instance/module/IComponents.sol";
 import {IComponentService} from "../../../contracts/shared/IComponentService.sol";
 
@@ -209,6 +210,30 @@ contract ComponentTrackingTest is GifTest {
             1));
         myProduct.registerComponent(address(myOracle2));
         
+    }
+
+    function test_componentEmptyName() public {
+        // GIVEN
+        assertEq(instanceReader.components(), 0, "unexpected components count (before)");
+        assertEq(instanceReader.products(), 0, "unexpected products count (before)");
+
+        // WHEN
+        vm.startPrank(instanceOwner);
+
+        IComponents.ProductInfo memory productInfo = _getSimpleProductInfo();
+        IComponents.FeeInfo memory feeInfo = _getSimpleFeeInfo();
+        BasicProductAuthorization auth = new BasicProductAuthorization("empty name");
+
+        vm.expectRevert(abi.encodeWithSelector(
+            IComponent.ErrorComponentNameLengthZero.selector));
+        new SimpleProduct(
+            address(registry),
+            instanceNftId, 
+            "",
+            productInfo,
+            feeInfo,
+            auth,
+            instanceOwner);
     }
 
 
