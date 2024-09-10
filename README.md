@@ -19,7 +19,6 @@ cat remappings.txt
 @openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/
 ```
 
-
 ## Submodules checkout
 
 This repository uses submodules. To checkout or update to the latest submodules, run the following command after updating to any revision (or checking out the repository)
