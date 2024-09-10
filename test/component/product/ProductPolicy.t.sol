@@ -694,7 +694,7 @@ contract ProductPolicyTest is GifTest {
 
         assertEq(instanceReader.getPolicyState(policyNftId).toInt(), APPLIED().toInt(), "unexpected policy state (not APPLIED)");
 
-        Timestamp activateAt = TimestampLib.blockTimestamp();
+        Timestamp activateAt = TimestampLib.current();
 
         vm.startPrank(investor);
 
@@ -790,11 +790,11 @@ contract ProductPolicyTest is GifTest {
 
         assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
 
-        Timestamp activateAt = TimestampLib.blockTimestamp();
+        Timestamp activateAt = TimestampLib.current();
         product.createPolicy(policyNftId, false, activateAt); 
 
         vm.warp(100);
-        activateAt = TimestampLib.blockTimestamp();
+        activateAt = TimestampLib.current();
         
 
         // THEN
@@ -1271,7 +1271,7 @@ contract ProductPolicyTest is GifTest {
         product.createPolicy(
             policyNftId, 
             false, 
-            TimestampLib.blockTimestamp()); 
+            TimestampLib.current()); 
 
         vm.warp(100); // warp 100 seconds
 
@@ -1586,7 +1586,7 @@ contract ProductPolicyTest is GifTest {
 
         assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
 
-        Timestamp activateAt = TimestampLib.blockTimestamp();
+        Timestamp activateAt = TimestampLib.current();
         vm.startPrank(productOwner);
 
         // THEN
@@ -1633,7 +1633,7 @@ contract ProductPolicyTest is GifTest {
 
         assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
 
-        Timestamp activateAt = TimestampLib.blockTimestamp();
+        Timestamp activateAt = TimestampLib.current();
         vm.startPrank(productOwner);
         product.createPolicy(policyNftId, true, activateAt); 
 

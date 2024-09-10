@@ -348,7 +348,7 @@ contract ReferralTest is ReferralTestBase {
             tsZero,
             referralData);
 
-        Timestamp exp =  TimestampLib.toTimestamp(TimestampLib.blockTimestamp().toInt() - 10);
+        Timestamp exp =  TimestampLib.toTimestamp(TimestampLib.current().toInt() - 10);
 
         // THEN
         vm.expectRevert(abi.encodeWithSelector(
@@ -364,7 +364,7 @@ contract ReferralTest is ReferralTestBase {
             exp,
             referralData);
 
-        exp =  TimestampLib.toTimestamp(TimestampLib.blockTimestamp().toInt() + maxReferralLifetime.toInt() + 10);
+        exp =  TimestampLib.toTimestamp(TimestampLib.current().toInt() + maxReferralLifetime.toInt() + 10);
 
         // THEN
         vm.expectRevert(abi.encodeWithSelector(
@@ -386,7 +386,7 @@ contract ReferralTest is ReferralTestBase {
         // GIVEN
         _setupTestData(true);
         vm.startPrank(customer);
-        Timestamp exp = TimestampLib.blockTimestamp().addSeconds(SecondsLib.toSeconds(10));
+        Timestamp exp = TimestampLib.current().addSeconds(SecondsLib.toSeconds(10));
 
         // THEN
         vm.expectRevert(abi.encodeWithSelector(
@@ -408,7 +408,7 @@ contract ReferralTest is ReferralTestBase {
         // GIVEN
         _setupTestData(true);
         vm.startPrank(customer);
-        Timestamp exp = TimestampLib.blockTimestamp().addSeconds(SecondsLib.toSeconds(10));
+        Timestamp exp = TimestampLib.current().addSeconds(SecondsLib.toSeconds(10));
         UFixed discount = UFixedLib.toUFixed(3, -2);
 
         // THEN

@@ -181,7 +181,7 @@ contract TestOracle is GifTest {
     function test_oracleRequestCreate_callbackMethodNameEmpty() public {
         // GIVEN
         string memory requestText = "some sync question";
-        Timestamp expiryAt = TimestampLib.blockTimestamp().addSeconds(SecondsLib.oneYear());
+        Timestamp expiryAt = TimestampLib.current().addSeconds(SecondsLib.oneYear());
 
         RequestId expectedRequestId = RequestIdLib.toRequestId(1);
 
@@ -198,7 +198,7 @@ contract TestOracle is GifTest {
     function test_oracleRequestCreate_invalidNftType() public {
         // GIVEN
         string memory requestText = "some sync question";
-        Timestamp expiryAt = TimestampLib.blockTimestamp().addSeconds(SecondsLib.oneYear());
+        Timestamp expiryAt = TimestampLib.current().addSeconds(SecondsLib.oneYear());
 
         RequestId expectedRequestId = RequestIdLib.toRequestId(1);
 

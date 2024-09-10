@@ -107,7 +107,7 @@ contract TestProductClaim is GifTest {
     function test_ProductClaimSubmitAmountZero() public {
         // GIVEN
         _approve();
-        _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
+        _collateralize(policyNftId, true, TimestampLib.current());
 
         Amount claimAmount = AmountLib.zero();
         bytes memory claimData = "please pay";
@@ -124,7 +124,7 @@ contract TestProductClaim is GifTest {
     function test_ProductClaimSubmitExceedsSumInsured() public {
         // GIVEN
         _approve();
-        _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
+        _collateralize(policyNftId, true, TimestampLib.current());
 
         Amount claimAmount = AmountLib.toAmount(1001);
         bytes memory claimData = "please pay";
@@ -143,7 +143,7 @@ contract TestProductClaim is GifTest {
     function test_ProductClaimConfirmAmountZero() public {
         // GIVEN
         _approve();
-        _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
+        _collateralize(policyNftId, true, TimestampLib.current());
 
         Amount claimAmount = AmountLib.toAmount(499);
         Amount confirmedAmount = AmountLib.zero();
@@ -163,7 +163,7 @@ contract TestProductClaim is GifTest {
     function test_ProductClaimConfirmAmounExceedsSumInsured() public {
         // GIVEN
         _approve();
-        _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
+        _collateralize(policyNftId, true, TimestampLib.current());
 
         Amount claimAmount = AmountLib.toAmount(499);
         Amount confirmedAmount = AmountLib.toAmount(1001);

@@ -65,7 +65,7 @@ contract PolicyServiceLibTest is GifTest {
 
         vm.warp(1);
 
-        Timestamp activateAt = TimestampLib.blockTimestamp().addSeconds(SecondsLib.toSeconds(10));
+        Timestamp activateAt = TimestampLib.current().addSeconds(SecondsLib.toSeconds(10));
         product.activate(policyNftId, activateAt);
         
         // THEN - activatedAt is 11, expiredAt is 41
@@ -122,7 +122,7 @@ contract PolicyServiceLibTest is GifTest {
 
         vm.warp(1);
 
-        Timestamp activateAt = TimestampLib.blockTimestamp().addSeconds(SecondsLib.toSeconds(10));
+        Timestamp activateAt = TimestampLib.current().addSeconds(SecondsLib.toSeconds(10));
         product.activate(policyNftId, activateAt);
         
         // THEN - activatedAt is 11, expiredAt is 41
@@ -164,7 +164,7 @@ contract PolicyServiceLibTest is GifTest {
 
         // WHEN - collateralize application
         bool requirePremiumPayment = false;
-        Timestamp activateAt = TimestampLib.blockTimestamp().addSeconds(SecondsLib.toSeconds(10));
+        Timestamp activateAt = TimestampLib.current().addSeconds(SecondsLib.toSeconds(10));
         product.createPolicy(policyNftId, requirePremiumPayment, activateAt); 
 
         // THEN - activatedAt is 0

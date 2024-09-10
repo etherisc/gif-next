@@ -309,7 +309,7 @@ contract TestProductLifecycle
     function test_policyHolderPayoutExecutedBeneficiaryZero() public {
         // GIVEN 
         // create active policy
-        Timestamp activateAt = TimestampLib.blockTimestamp();
+        Timestamp activateAt = TimestampLib.current();
         _createAndActivate(policyNftId, activateAt);
 
         // create confirmed claim
