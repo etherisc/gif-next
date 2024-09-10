@@ -514,8 +514,9 @@ contract StakingStore is
             Amount restakedRewardAmount,
             Amount unstakedAmount,
             Amount claimedAmount,
-            Amount stakedBalance,
-            Amount rewardBalance
+            Amount stakeBalance,
+            Amount rewardBalance,
+            Timestamp lockedUntil
         )
     {
         // checks
@@ -568,8 +569,9 @@ contract StakingStore is
         stakeInfo.lastUpdateIn = BlocknumberLib.current();
 
         // set return values
-        stakedBalance = stakeInfo.stakedAmount;
+        stakeBalance = stakeInfo.stakedAmount;
         rewardBalance = stakeInfo.rewardAmount;
+        lockedUntil = stakeInfo.lockedUntil;
     }
 
 

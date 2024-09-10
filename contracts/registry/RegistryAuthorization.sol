@@ -227,6 +227,7 @@ contract RegistryAuthorization
           _authorize(functions, IStaking.createStake.selector, "createStake");
           _authorize(functions, IStaking.stake.selector, "stake");
           _authorize(functions, IStaking.restake.selector, "restake");
+          _authorize(functions, IStaking.claimRewards.selector, "claimRewards");
 
           // staking service role
           functions = _authorizeForTarget(
@@ -243,7 +244,7 @@ contract RegistryAuthorization
           // _authorize(functions, IStaking.stake.selector, "stake");
           _authorize(functions, IStaking.unstake.selector, "unstake");
           _authorize(functions, IStaking.updateRewards.selector, "updateRewards");
-          _authorize(functions, IStaking.claimRewards.selector, "claimRewards");
+          // _authorize(functions, IStaking.claimRewards.selector, "claimRewards");
 
           // pool service role
           functions = _authorizeForTarget(

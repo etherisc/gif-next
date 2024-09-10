@@ -582,15 +582,27 @@ contract Staking is
         // update rewards since last update
         _updateRewards($, stakeNftId);
 
-        // FIXME
-        // unstake all available rewards
-        // (, rewardsClaimedAmount) = $._store.decreaseStakes(
-        //     stakeNftId,
-        //     AmountLib.zero(), // unstake dip amount
-        //     AmountLib.max(), // unstake reward amount
-        //     true); // claim rewards
+        (
+            Amount restakedRewardAmount,
+            Amount unstakedAmount,
+            Amount claimedAmount,
+            Amount stakedBalance,
+            Amount rewardBalance,
+            Timestamp lockedUntil
+        ) = $._store.decreaseStakes(
+            stakeNftId,
+            AmountLib.zero(), // unstake dip amount
+            AmountLib.max(), // unstake reward amount
+            false); // restake rewards
 
-        // TODO add logging
+        // collect staked DIP token by staking service
+        if (claimedAmount.gtz()) {
+            emit LogStakingRewardsClaimed(stakeNftId, claimedAmount, stakedBalance, rewardBalance, lockedUntil);
+
+            // interactions
+            address stakeOwner = getRegistry().ownerOf(stakeNftId);
+            $._stakingService.pushDipToken(claimedAmount, stakeOwner);
+        }
     }
 
 
@@ -659,13 +671,15 @@ event LogStakingDebug(string message, uint256 value);
         Amount restakedRewardAmount;
         Amount stakeBalance;
         Amount rewardBalance;
+        Timestamp lockedUntilNew;
 
         (
             restakedRewardAmount,
             unstakedAmount,
             claimedAmount,
             stakeBalance,
-            rewardBalance
+            rewardBalance,
+            lockedUntilNew
         ) = $._store.decreaseStakes(
             stakeNftId,
             AmountLib.max(), // unstake all stakes

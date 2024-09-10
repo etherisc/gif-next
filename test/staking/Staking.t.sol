@@ -556,7 +556,7 @@ contract StakingTest is GifTest {
 
         // WHEN
         vm.prank(staker);
-        stakingService.claimRewards(stakeNftId);
+        staking.claimRewards(stakeNftId);
 
         // THEN
         // get and check instance reward rate
@@ -626,7 +626,7 @@ contract StakingTest is GifTest {
                 expectedRewards));
 
         vm.prank(staker);
-        stakingService.claimRewards(stakeNftId);
+        staking.claimRewards(stakeNftId);
     }
 
 

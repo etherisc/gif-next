@@ -101,6 +101,11 @@ interface IStakingService is IService
     /// Permissioned: only the staking component may call this function
     function pullDipToken(Amount dipAmount, address stakeOwner) external;
 
+
+    /// @dev transfer DIP token to stake owner.
+    /// Permissioned: only the staking component may call this function
+    function pushDipToken(Amount dipAmount, address stakeOwner) external;
+
     // TODO cleanup
     // /// @dev increase an existing stake by amount DIP
     // /// updates and restakes the staking reward amount
@@ -124,14 +129,14 @@ interface IStakingService is IService
     //     );
 
 
+    // /// @dev claims all available rewards.
+    // function claimRewards(
+    //     NftId stakeNftId
+    // ) external;
+
+
     /// @dev updates the reward balance of the stake using the current reward rate.
     function updateRewards(
-        NftId stakeNftId
-    ) external;
-
-
-    /// @dev claims all available rewards.
-    function claimRewards(
         NftId stakeNftId
     ) external;
 

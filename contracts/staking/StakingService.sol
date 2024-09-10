@@ -189,6 +189,16 @@ contract StakingService is
         _getStakingServiceStorage()._tokenHandler.pullToken(stakeOwner, dipAmount);
     }
 
+
+    function pushDipToken(Amount dipAmount, address stakeOwner)
+        external
+        virtual
+        restricted()
+        onlyStaking()
+    {
+        _getStakingServiceStorage()._tokenHandler.pushToken(stakeOwner, dipAmount);
+    }
+
     /// TODO cleanup
     /// @dev Creates a new stake object via regisry Service.
     /// Funds are stakedto the specified target nft id with the provided dip amount
@@ -310,6 +320,25 @@ contract StakingService is
     // } 
 
 
+    // function claimRewards(NftId stakeNftId)
+    //     external
+    //     virtual
+    //     restricted()
+    //     onlyNftOwner(stakeNftId)
+    // {
+    //     _checkNftType(stakeNftId, STAKE());
+
+    //     StakingServiceStorage storage $ = _getStakingServiceStorage();
+    //     address stakeOwner = msg.sender;
+
+    //     Amount rewardsClaimedAmount = $._staking.claimRewards(stakeNftId);
+    //     emit LogStakingServiceRewardsClaimed(stakeNftId, stakeOwner, rewardsClaimedAmount);
+    //     $._tokenHandler.pushToken(
+    //         stakeOwner,
+    //         rewardsClaimedAmount);
+    // }
+
+
     function updateRewards(
         NftId stakeNftId
     )
@@ -323,25 +352,6 @@ contract StakingService is
         $._staking.updateRewards(stakeNftId);
 
         emit LogStakingServiceRewardsUpdated(stakeNftId);
-    }
-
-
-    function claimRewards(NftId stakeNftId)
-        external
-        virtual
-        restricted()
-        onlyNftOwner(stakeNftId)
-    {
-        _checkNftType(stakeNftId, STAKE());
-
-        StakingServiceStorage storage $ = _getStakingServiceStorage();
-        address stakeOwner = msg.sender;
-
-        Amount rewardsClaimedAmount = $._staking.claimRewards(stakeNftId);
-        emit LogStakingServiceRewardsClaimed(stakeNftId, stakeOwner, rewardsClaimedAmount);
-        $._tokenHandler.pushToken(
-            stakeOwner,
-            rewardsClaimedAmount);
     }
 
 
