@@ -242,11 +242,6 @@ contract RegistryAuthorization
           _authorize(functions, IStaking.setMaxStakedAmount.selector, "setMaxStakedAmount");
           _authorize(functions, IStaking.refillRewardReserves.selector, "refillRewardReserves");
           _authorize(functions, IStaking.withdrawRewardReserves.selector, "withdrawRewardReserves");
-          // TODO cleanup
-          // _authorize(functions, IStaking.stake.selector, "stake");
-          // _authorize(functions, IStaking.unstake.selector, "unstake");
-          // _authorize(functions, IStaking.updateRewards.selector, "updateRewards");
-          // _authorize(functions, IStaking.claimRewards.selector, "claimRewards");
 
           // pool service role
           functions = _authorizeForTarget(

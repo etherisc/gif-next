@@ -300,8 +300,16 @@ contract Staking is
         restricted()
         returns (Amount newBalance)
     {
+        // checks + effects
         StakingStorage storage $ = _getStakingStorage();
         newBalance = $._store.refillRewardReserves(targetNftId, dipAmount);
+
+        // interactions
+        // collect DIP token from target owner
+        if (dipAmount.gtz()) {
+            address targetOwner = getRegistry().ownerOf(targetNftId);
+            $._stakingService.pullDipToken(dipAmount, targetOwner);
+        }
     }
 
 
@@ -312,8 +320,16 @@ contract Staking is
         restricted()
         returns (Amount newBalance)
     {
+        // checks + effects
         StakingStorage storage $ = _getStakingStorage();
         newBalance = $._store.withdrawRewardReserves(targetNftId, dipAmount);
+
+        // interactions
+        // transfer DIP token to target owner
+        if (dipAmount.gtz()) {
+            address targetOwner = getRegistry().ownerOf(targetNftId);
+            $._stakingService.pushDipToken(dipAmount, targetOwner);
+        }
     }
 
 
@@ -653,9 +669,6 @@ contract Staking is
 
     //--- internal functions ------------------------------------------------//
 
-// TODO cleanup
-event LogStakingDebug(string message, uint256 value);
-
     function _unstakeAll(
         StakingStorage storage $, 
         NftId stakeNftId,
@@ -691,13 +704,6 @@ event LogStakingDebug(string message, uint256 value);
             AmountLib.max(), // unstake all stakes
             AmountLib.max(), // claim all rewards
             restakeRewards);
-
-// TODO cleanup
-// if (restakeRewards) {
-//     emit LogStakingDebug("restakeRewards (true)", restakedRewardAmount.toInt());
-// } else {
-//     emit LogStakingDebug("restakeRewards (false)", restakedRewardAmount.toInt());
-// }
 
         if (restakedRewardAmount.gtz()) {
             emit LogStakingRewardsRestaked(stakeNftId, restakedRewardAmount, stakeBalance + unstakedAmount, rewardBalance + claimedAmount, lockedUntil);

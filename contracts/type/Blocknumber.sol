@@ -58,17 +58,6 @@ function toBlocknumber(uint256 blocknum) pure returns (Blocknumber) {
     return Blocknumber.wrap(uint32(blocknum));
 }
 
-// TODO cleanup
-// function blockBlocknumber() view returns (Blocknumber) {
-//     return BlocknumberLib.currentBlocknumber();
-// }
-
-// // TODO move to BlocknumberLib and rename to zero()
-// /// @dev Return the Blocknumber zero (0)
-// function zeroBlocknumber() pure returns (Blocknumber) {
-//     return toBlocknumber(0);
-// }
-
 /// @dev Return the current block number
 function blockNumber() view returns (Blocknumber) {
     return toBlocknumber(block.number);
@@ -87,12 +76,6 @@ library BlocknumberLib {
     function current() public view returns (Blocknumber) {
         return Blocknumber.wrap(uint40(block.number));
     }
-
-    // TODO cleanup
-    // /// @dev returns the current Blocknumber
-    // function currentBlocknumber() public view returns (Blocknumber) {
-    //     return current();
-    // }
 
     /// @dev return true iff blocknumber is 0
     function eqz(Blocknumber blocknumber) public pure returns (bool) {

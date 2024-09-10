@@ -360,8 +360,6 @@ contract ClaimService is
         // update and save claim info with instance
         {
             ClaimId claimId = payoutId.toClaimId();
-            // TODO cleanup
-            // IPolicy.ClaimInfo memory claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
             claimInfo.paidAmount = claimInfo.paidAmount.add(payoutAmount);
             claimInfo.openPayoutsCount -= 1;
 

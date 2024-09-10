@@ -40,9 +40,6 @@ interface IRegistry is
     error ErrorRegistryServiceAddressZero(); 
     error ErrorRegistryServiceVersionZero(address service);
 
-    // TODO cleanup
-    //error ErrorRegistryServiceVersionMismatch(address service, VersionPart serviceVersion, VersionPart releaseVersion);
-    //error ErrorRegistryServiceVersionNotDeploying(address service, VersionPart version);
     error ErrorRegistryServiceDomainZero(address service, VersionPart version);
     error ErrorRegistryNotService(address service, ObjectType objectType);
     error ErrorRegistryServiceParentNotRegistry(address service, VersionPart version, NftId parentNftId);

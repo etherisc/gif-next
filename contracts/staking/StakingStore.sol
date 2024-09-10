@@ -111,13 +111,6 @@ contract StakingStore is
             revert ErrorStakingStoreTokenAlreadyAdded(chainId, token);
         }
 
-        // TODO cleanup
-        // // check if token is registered with token registry
-        // TokenRegistry tokenRegistry = TokenRegistry(_registry.getTokenRegistryAddress());
-        // if (!tokenRegistry.isRegistered(chainId, token)) {
-        //     revert ErrorStakingStoreTokenNotRegistered(chainId, token);
-        // }
-
         info.stakingRate = UFixedLib.zero();
         info.lastUpdateIn = BlocknumberLib.current();
     }
@@ -334,6 +327,7 @@ contract StakingStore is
         emit IStaking.LogStakingRewardReservesRefilled(
             targetNftId,
             dipAmount,
+            _registry.ownerOf(targetNftId),
             newReserveBalance,
             lastUpdateIn);
     }
@@ -358,6 +352,7 @@ contract StakingStore is
         emit IStaking.LogStakingRewardReservesWithdrawn(
             targetNftId,
             dipAmount,
+            _registry.ownerOf(targetNftId),
             newReserveBalance,
             lastUpdateIn);
     }

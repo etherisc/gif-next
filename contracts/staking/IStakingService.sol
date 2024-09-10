@@ -46,16 +46,10 @@ interface IStakingService is IService
     error ErrorStakingServiceDipBalanceInsufficient(NftId targetNftId, uint256 amount, uint256 balance);
     error ErrorStakingServiceDipAllowanceInsufficient(NftId targetNftId, address tokenHandler, uint256 amount, uint256 allowance);
 
+    //--- functions for instance service -----------------------------------------------//
 
-    /// @dev Approves the staking token handler.
-    /// Reverts if the staking token handler wallet is not the token handler itself.
-    function approveTokenHandler(
-        IERC20Metadata token,
-        Amount amount
-    ) external;
-
-    /// @dev creates/registers an on-chain instance staking target.
-    /// function granted to instance service
+    /// @dev Creates/registers an on-chain instance staking target.
+    /// Permissioned: Only instance service
     function createInstanceTarget(
         NftId targetNftId,
         Seconds initialLockingPeriod,
@@ -63,98 +57,58 @@ interface IStakingService is IService
     ) external;
 
     /// @dev Set the instance stake locking period to the specified duration.
-    /// Permissioned: Only owner of the specified target.
+    /// Permissioned: Only instance service
     function setInstanceLockingPeriod(NftId instanceNftId, Seconds lockingPeriod) external;
 
     /// @dev Set the instance reward rate to the specified value.
-    /// Permissioned: Only owner of the specified target.
+    /// Permissioned: Only instance service
     function setInstanceRewardRate(NftId instanceNftId, UFixed rewardRate) external;
 
     /// @dev Set the instance max staked amount to the specified value.
-    /// Permissioned: Only owner of the specified target.
+    /// Permissioned: Only instance service
     function setInstanceMaxStakedAmount(NftId instanceNftId, Amount maxStakingAmount) external;
 
     /// @dev (Re)fills the staking reward reserves for the specified target using the dips provided by the reward provider.
-    /// unpermissioned: anybody may fill up staking reward reserves
+    /// Permissioned: Only instance service
     function refillInstanceRewardReserves(NftId instanceNftId, address rewardProvider, Amount dipAmount) external returns (Amount newBalance);
 
-    /// @dev (Re)fills the staking reward reserves for the specified target using the dips provided by the sender
-    /// unpermissioned: anybody may fill up staking reward reserves
-    function refillRewardReservesBySender(NftId targetNftId, Amount dipAmount) external returns (Amount newBalance);
-
     /// @dev Defunds the staking reward reserves for the specified target
-    /// Permissioned: only the target owner may call this function
+    /// Permissioned: Only instance service
     function withdrawInstanceRewardReserves(NftId instanceNftId, Amount dipAmount) external returns (Amount newBalance);
 
-
-    /// @dev Creates a new stake object for the specified target via the registry service.
-    /// Permissioned: only the staking component may call this function
-    function createStakeObject(
-        NftId targetNftId,
-        address initialOwner
-    )
-        external
-        returns (NftId stakeNftId);
-
-
-    /// @dev collect DIP token from stake owner.
-    /// Permissioned: only the staking component may call this function
-    function pullDipToken(Amount dipAmount, address stakeOwner) external;
-
-
-    /// @dev transfer DIP token to stake owner.
-    /// Permissioned: only the staking component may call this function
-    function pushDipToken(Amount dipAmount, address stakeOwner) external;
-
-    // TODO cleanup
-    // /// @dev increase an existing stake by amount DIP
-    // /// updates and restakes the staking reward amount
-    // /// function restricted to the current stake owner
-    // function stake(
-    //     NftId stakeNftId,
-    //     Amount amount
-    // ) external;
-
-    // /// @dev re-stakes the current staked DIP as well as all accumulated rewards to the new stake target.
-    // /// all related stakes and all accumulated reward DIP are transferred to the current stake holder
-    // /// function restricted to the current stake owner
-    // function restakeToNewTarget(
-    //     NftId stakeNftId,
-    //     NftId newTargetNftId
-    // )
-    //     external
-    //     returns (
-    //         NftId newStakeNftId,
-    //         Amount newStakeBalance
-    //     );
-
-
-    // /// @dev claims all available rewards.
-    // function claimRewards(
-    //     NftId stakeNftId
-    // ) external;
-
-
-    // /// @dev updates the reward balance of the stake using the current reward rate.
-    // function updateRewards(
-    //     NftId stakeNftId
-    // ) external;
-
-
-    // /// @dev unstakes all dips (stakes and rewards) of an existing stake.
-    // /// function restricted to the current stake owner
-    // function unstake(
-    //     NftId stakeNftId
-    // ) external;
-
-
-    /// @dev sets total value locked data for a target contract on a different chain.
+    /// @dev Sets total value locked data for a target contract on a different chain.
     /// this is done via CCIP (cross chain communication) 
     function setTotalValueLocked(
         NftId targetNftId,
         address token,
         Amount amount
     ) external;
+
+    //--- functions for staking component ---------------------------------------------//
+
+    /// @dev Creates a new stake object for the specified target via the registry service.
+    /// Permissioned: only the staking component may call this function
+    function createStakeObject(
+        NftId targetNftId,
+        address initialOwner
+    ) external returns (NftId stakeNftId);
+
+    /// @dev Collect DIP token from stake owner.
+    /// Permissioned: only the staking component may call this function
+    function pullDipToken(Amount dipAmount, address stakeOwner) external;
+
+    /// @dev Transfer DIP token to stake owner.
+    /// Permissioned: only the staking component may call this function
+    function pushDipToken(Amount dipAmount, address stakeOwner) external;
+
+    /// @dev Approves the staking token handler.
+    /// Permissioned: only the staking component may call this function
+    function approveTokenHandler(
+        IERC20Metadata token,
+        Amount amount
+    ) external;
+
+    //--- view functions --------------------------------------------------------------//
 
     function getDipToken()
         external
