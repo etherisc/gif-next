@@ -214,7 +214,7 @@ contract RegistryAuthorization
                STAKING_TARGET_NAME,
                PUBLIC_ROLE());
 
-          // owner functions
+          // owner functions (permissioned to staking owner)
           _authorize(functions, IStaking.setProtocolLockingPeriod.selector, "setProtocolLockingPeriod");
           _authorize(functions, IStaking.setProtocolRewardRate.selector, "setProtocolRewardRate");
           _authorize(functions, IStaking.setStakingRate.selector, "setStakingRate");
@@ -222,14 +222,19 @@ contract RegistryAuthorization
           _authorize(functions, IStaking.setStakingReader.selector, "setStakingReader");
           _authorize(functions, IStaking.addToken.selector, "addToken");
           _authorize(functions, IStaking.approveTokenHandler.selector, "approveTokenHandler");
-
-          // staker functions
+          _authorize(functions, IStaking.withdrawRewardReserves.selector, "withdrawRewardReserves");
+          
+          // staker functions (may be permissioned to nft holders)
           _authorize(functions, IStaking.createStake.selector, "createStake");
           _authorize(functions, IStaking.stake.selector, "stake");
           _authorize(functions, IStaking.unstake.selector, "unstake");
           _authorize(functions, IStaking.restake.selector, "restake");
           _authorize(functions, IStaking.updateRewards.selector, "updateRewards");
           _authorize(functions, IStaking.claimRewards.selector, "claimRewards");
+
+          // reward reserve functions
+          _authorize(functions, IStaking.refillRewardReserves.selector, "refillRewardReserves");
+          _authorize(functions, IStaking.withdrawRewardReserves.selector, "withdrawRewardReserves");
 
           // staking service role
           functions = _authorizeForTarget(
@@ -240,8 +245,8 @@ contract RegistryAuthorization
           _authorize(functions, IStaking.setLockingPeriod.selector, "setLockingPeriod");
           _authorize(functions, IStaking.setRewardRate.selector, "setRewardRate");
           _authorize(functions, IStaking.setMaxStakedAmount.selector, "setMaxStakedAmount");
-          _authorize(functions, IStaking.refillRewardReserves.selector, "refillRewardReserves");
-          _authorize(functions, IStaking.withdrawRewardReserves.selector, "withdrawRewardReserves");
+          _authorize(functions, IStaking.refillRewardReservesByService.selector, "refillRewardReservesByService");
+          _authorize(functions, IStaking.withdrawRewardReservesByService.selector, "withdrawRewardReservesByService");
 
           // pool service role
           functions = _authorizeForTarget(

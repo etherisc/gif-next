@@ -150,8 +150,8 @@ contract ServiceAuthorizationV3
           _authorize(functions, IInstanceService.setStakingLockingPeriod.selector, "setStakingLockingPeriod");
           _authorize(functions, IInstanceService.setStakingRewardRate.selector, "setStakingRewardRate");
           _authorize(functions, IInstanceService.setStakingMaxAmount.selector, "setStakingMaxAmount");
-          _authorize(functions, IInstanceService.refillStakingRewardReserves.selector, "refillStakingRewardReserves");
-          _authorize(functions, IInstanceService.withdrawStakingRewardReserves.selector, "withdrawStakingRewardReserves");
+          _authorize(functions, IInstanceService.refillInstanceRewardReserves.selector, "refillInstanceRewardReserves");
+          _authorize(functions, IInstanceService.withdrawInstanceRewardReserves.selector, "withdrawInstanceRewardReserves");
      }
 
      /// @dev Accounting service function authorization.

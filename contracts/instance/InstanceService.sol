@@ -261,7 +261,7 @@ contract InstanceService is
     }    
 
 
-    function refillStakingRewardReserves(address rewardProvider, Amount dipAmount)
+    function refillInstanceRewardReserves(address rewardProvider, Amount dipAmount)
         external
         virtual
         restricted()
@@ -276,7 +276,7 @@ contract InstanceService is
     }
 
 
-    function withdrawStakingRewardReserves(Amount dipAmount)
+    function withdrawInstanceRewardReserves(Amount dipAmount)
         external
         virtual
         restricted()

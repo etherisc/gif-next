@@ -66,7 +66,7 @@ interface IStaking is
     // modifiers
     error ErrorStakingNotStake(NftId stakeNftId);
     error ErrorStakingNotTarget(NftId targetNftId);
-    error ErrorStakingNotStakeOwner(NftId stakeNftId, address expectedOwner, address actualOwner);
+    error ErrorStakingNotOwner(NftId stakeNftId, address expectedOwner, address actualOwner);
 
     error ErrorStakingNotStakingOwner();
     error ErrorStakingNotNftOwner(NftId nftId);
@@ -160,12 +160,21 @@ interface IStaking is
     function setStakingReader(StakingReader stakingReader) external;
 
     /// @dev Registers a token for recording staking rate and total value locked.
-    /// Process flow: Add token by token registry which will trigger this staking contract.
     function addToken(ChainId chainId, address token) external;
 
     /// @dev Set the approval to the token handler.
     /// Defines the max allowance from the staking wallet to the token handler.
     function approveTokenHandler(IERC20Metadata token, Amount amount) external;
+
+    //--- only target owner functions ------------------------------------//
+
+    /// @dev (Re)fills the staking reward reserves for the specified target
+    /// Unpermissioned: anybody may fill up staking reward reserves
+    function refillRewardReserves(NftId targetNftId, Amount dipAmount) external returns (Amount newBalance);
+
+    /// @dev Defunds the staking reward reserves for the specified target
+    /// Permissioned: only the owner may call this function
+    function withdrawRewardReserves(NftId targetNftId, Amount dipAmount) external returns (Amount newBalance);
 
     //--- target management ----------------------------------------------//
 
@@ -179,37 +188,37 @@ interface IStaking is
     ) external;
 
 
-    /// @dev set the stake locking period to the specified duration.
-    /// permissioned: only the staking service may call this function
+    /// @dev Set the stake locking period to the specified duration.
+    /// Permissioned: only the staking service may call this function
     function setLockingPeriod(NftId targetNftId, Seconds lockingPeriod) external;
 
-    /// @dev update the target specific reward rate.
-    /// permissioned: only the staking service may call this function
+    /// @dev Update the target specific reward rate.
+    /// Permissioned: only the staking service may call this function
     function setRewardRate(NftId targetNftId, UFixed rewardRate) external;
 
-    /// @dev set the maximum staked amount for the specified target.
-    /// permissioned: only the staking service may call this function
+    /// @dev Set the maximum staked amount for the specified target.
+    /// Permissioned: only the staking service may call this function
     function setMaxStakedAmount(NftId targetNftId, Amount maxStakedAmount) external;
 
-    /// @dev (re)fills the staking reward reserves for the specified target
-    /// unpermissioned: anybody may fill up staking reward reserves
-    function refillRewardReserves(NftId targetNftId, Amount dipAmount) external returns (Amount newBalance);
+    /// @dev (Re)fills the staking reward reserves for the specified target
+    /// Unpermissioned: anybody may fill up staking reward reserves
+    function refillRewardReservesByService(NftId targetNftId, Amount dipAmount, address transferFrom) external returns (Amount newBalance);
 
-    /// @dev defunds the staking reward reserves for the specified target
-    /// permissioned: only the staking service may call this function
-    function withdrawRewardReserves(NftId targetNftId, Amount dipAmount) external returns (Amount newBalance);
+    /// @dev Defunds the staking reward reserves for the specified target
+    /// Permissioned: only the owner may call this function
+    function withdrawRewardReservesByService(NftId targetNftId, Amount dipAmount, address transferTo) external returns (Amount newBalance);
 
     /// @dev Register a token for the specified target.
     /// Used for instance targets. Each product may introduce its own token.
     /// Permissioned: only the staking service may call this function
     function addTargetToken(NftId targetNftId, address token) external;
 
-    /// @dev increases the total value locked amount for the specified target by the provided token amount.
+    /// @dev Increases the total value locked amount for the specified target by the provided token amount.
     /// function is called when a new policy is collateralized.
     /// function restricted to the pool service.
     function increaseTotalValueLocked(NftId targetNftId, address token, Amount amount) external returns (Amount newBalance);
 
-    /// @dev decreases the total value locked amount for the specified target by the provided token amount.
+    /// @dev Decreases the total value locked amount for the specified target by the provided token amount.
     /// function is called when a new policy is closed or payouts are executed.
     /// function restricted to the pool service.
     function decreaseTotalValueLocked(NftId targetNftId, address token, Amount amount) external returns (Amount newBalance);

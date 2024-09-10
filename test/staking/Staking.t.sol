@@ -870,7 +870,7 @@ contract StakingTest is GifTest {
 
         // THEN
         vm.expectRevert(abi.encodeWithSelector(
-            IStaking.ErrorStakingNotStakeOwner.selector, 
+            IStaking.ErrorStakingNotOwner.selector, 
             stakeNftId,
             staker,
             outsider));

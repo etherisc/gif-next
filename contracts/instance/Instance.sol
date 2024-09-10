@@ -176,7 +176,7 @@ contract Instance is
         returns (Amount newRewardReserveBalance)
     {
         address instanceOwner = msg.sender;
-        return _instanceService.refillStakingRewardReserves(instanceOwner, dipAmount);
+        return _instanceService.refillInstanceRewardReserves(instanceOwner, dipAmount);
     }
 
     function withdrawStakingRewardReserves(Amount dipAmount)
@@ -185,7 +185,7 @@ contract Instance is
         onlyOwner()
         returns (Amount newRewardReserveBalance)
     {
-        return _instanceService.withdrawStakingRewardReserves(dipAmount);
+        return _instanceService.withdrawInstanceRewardReserves(dipAmount);
     }
 
     //--- Roles ------------------------------------------------------------//

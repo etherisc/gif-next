@@ -16,7 +16,7 @@ import {Component} from "../shared/Component.sol";
 import {IComponent} from "../shared/IComponent.sol";
 import {IComponentService} from "../shared/IComponentService.sol";
 import {NftId} from "../type/NftId.sol";
-import {ObjectType, COMPONENT, STAKE, STAKING} from "../type/ObjectType.sol";
+import {ObjectType, COMPONENT, STAKE, STAKING, TARGET} from "../type/ObjectType.sol";
 import {Seconds, SecondsLib} from "../type/Seconds.sol";
 import {Registerable} from "../shared/Registerable.sol";
 import {ReleaseRegistry} from "../registry/ReleaseRegistry.sol";
@@ -53,34 +53,25 @@ contract Staking is
 
 
     modifier onlyStake(NftId stakeNftId) {
-        if (!_getStakingStorage()._store.exists(stakeNftId)) {
-            revert ErrorStakingNotStake(stakeNftId);
-        }
+        _checkTypeAndOwner(stakeNftId, STAKE(), false);
         _;
     }
 
 
     modifier onlyStakeOwner(NftId stakeNftId) {
-        IRegistry registry = getRegistry();
-
-        // check nft is stake object
-        if (!registry.isObjectType(stakeNftId, STAKE())) {
-            revert ErrorStakingNotStake(stakeNftId);
-        }
-
-        // check caller is owner of stake object
-        if (msg.sender != registry.ownerOf(stakeNftId)) {
-            revert ErrorStakingNotStakeOwner(stakeNftId, registry.ownerOf(stakeNftId), msg.sender);
-        }
-
+        _checkTypeAndOwner(stakeNftId, STAKE(), true);
         _;
     }
 
 
     modifier onlyTarget(NftId targetNftId) {
-        if (!_getStakingStorage()._store.getTargetSet().exists(targetNftId)) {
-            revert ErrorStakingNotTarget(targetNftId);
-        }
+        _checkTypeAndOwner(targetNftId, TARGET(), false);
+        _;
+    }
+
+
+    modifier onlyTargetOwner(NftId targetNftId) {
+        _checkTypeAndOwner(targetNftId, TARGET(), true);
         _;
     }
 
@@ -136,6 +127,7 @@ contract Staking is
             UFixed oldRewardRate,
             Blocknumber lastUpdatedIn
         ) = _getStakingStorage()._store.setRewardRate(protocolNftId, newRewardRate);
+
         emit LogStakingProtocolRewardRateSet(protocolNftId, newRewardRate, oldRewardRate, lastUpdatedIn);
     }
 
@@ -225,12 +217,101 @@ contract Staking is
         restricted()
         onlyOwner()
     {
-        Amount oldApprovalAmount = _approveTokenHandler(token, amount);
+        Amount oldAllowanceAmount = AmountLib.toAmount(
+            token.allowance(
+                address(this), 
+                address(_getStakingStorage()._tokenHandler)));
 
-        emit LogStakingTokenHandlerApproved(address(token), amount, oldApprovalAmount);
+        // staking token handler approval via its own implementation in staking service
+        IComponentService(_getServiceAddress(STAKING())).approveTokenHandler(
+            token, 
+            amount);
+
+        emit LogStakingTokenHandlerApproved(address(token), amount, oldAllowanceAmount);
     }
 
     //--- target management -------------------------------------------------//
+
+
+    /// @inheritdoc IStaking
+    function refillRewardReserves(NftId targetNftId, Amount dipAmount)
+        external
+        virtual
+        restricted()
+        onlyTarget(targetNftId)
+        returns (Amount newBalance)
+    {
+        address transferFrom = msg.sender;
+        _refillRewardReserves(targetNftId, dipAmount, transferFrom);
+    }
+
+
+    /// @inheritdoc IStaking
+    function withdrawRewardReserves(NftId targetNftId, Amount dipAmount)
+        external
+        virtual
+        restricted()
+        onlyTarget(targetNftId)
+        returns (Amount newBalance)
+    {
+        // special case 1: protocol target: staking owner is recipient
+        if (targetNftId == getRegistry().getProtocolNftId()) {
+            // verify that the caller is the staking owner
+            if (msg.sender != getOwner()) {
+                revert ErrorStakingNotStakingOwner();
+            }
+
+            return _withdrawRewardReserves(targetNftId, dipAmount, getOwner());
+        }
+
+        // special case 2: off-chain targets
+        // TODO decide how to handle and implement
+
+        // default: on-chain target owner is recipient
+        address targetOwner = getRegistry().ownerOf(targetNftId);
+        // verify that the caller is the target owner
+        if (msg.sender != targetOwner) {
+            revert ErrorStakingNotNftOwner(targetNftId);
+        }
+
+        return _withdrawRewardReserves(targetNftId, dipAmount, targetOwner);
+    }
+
+
+    /// @inheritdoc IStaking
+    function refillRewardReservesByService(NftId targetNftId, Amount dipAmount, address transferFrom)
+        external
+        virtual
+        restricted()
+        onlyTarget(targetNftId)
+        returns (Amount newBalance)
+    {
+        address fundingBy = msg.sender;
+        _refillRewardReserves(targetNftId, dipAmount, transferFrom);
+    }
+
+
+    /// @inheritdoc IStaking
+    function withdrawRewardReservesByService(NftId targetNftId, Amount dipAmount, address transferTo)
+        external
+        virtual
+        restricted()
+        onlyTarget(targetNftId)
+        returns (Amount newBalance)
+    {
+        // special case 1: protocol target: staking owner is recipient
+        if (targetNftId == getRegistry().getProtocolNftId()) {
+            return _withdrawRewardReserves(targetNftId, dipAmount, transferTo);
+        }
+
+        // special case 2: off-chain targets
+        // TODO decide how to handle and implement
+
+        // default: on-chain target owner is recipient
+        address targetOwner = getRegistry().ownerOf(targetNftId);
+        return _withdrawRewardReserves(targetNftId, dipAmount, targetOwner);
+    }
+
 
     /// @inheritdoc IStaking
     function registerTarget(
@@ -265,6 +346,7 @@ contract Staking is
         onlyTarget(targetNftId)
     {
         (Seconds oldLockingPeriod, ) = _getStakingStorage()._store.setLockingPeriod(targetNftId, lockingPeriod);
+
         emit LogStakingTargetLockingPeriodSet(targetNftId, lockingPeriod, oldLockingPeriod);
     }
 
@@ -289,48 +371,30 @@ contract Staking is
         onlyTarget(targetNftId)
     {
         _getStakingStorage()._store.setMaxStakedAmount(targetNftId, maxStakedAmount);
-        // emit LogStakingTargetMaxStakedAmountSet(targetNftId, maxStakedAmount);
+        emit LogStakingTargetMaxStakedAmountSet(targetNftId, maxStakedAmount);
     }
 
-
-    /// @inheritdoc IStaking
-    function refillRewardReserves(NftId targetNftId, Amount dipAmount)
-        external
-        virtual
-        restricted()
-        returns (Amount newBalance)
-    {
-        // checks + effects
-        StakingStorage storage $ = _getStakingStorage();
-        newBalance = $._store.refillRewardReserves(targetNftId, dipAmount);
-
-        // interactions
-        // collect DIP token from target owner
-        if (dipAmount.gtz()) {
-            address targetOwner = getRegistry().ownerOf(targetNftId);
-            $._stakingService.pullDipToken(dipAmount, targetOwner);
-        }
-    }
+    // TODO cleanup
+    // /// @inheritdoc IStaking
+    // function refillRewardReservesByService(NftId targetNftId, Amount dipAmount, address from)
+    //     external
+    //     virtual
+    //     restricted()
+    //     returns (Amount newBalance)
+    // {
+    //     _refillRewardReserves(targetNftId, dipAmount, from);
+    // }
 
 
-    /// @inheritdoc IStaking
-    function withdrawRewardReserves(NftId targetNftId, Amount dipAmount)
-        external
-        virtual
-        restricted()
-        returns (Amount newBalance)
-    {
-        // checks + effects
-        StakingStorage storage $ = _getStakingStorage();
-        newBalance = $._store.withdrawRewardReserves(targetNftId, dipAmount);
-
-        // interactions
-        // transfer DIP token to target owner
-        if (dipAmount.gtz()) {
-            address targetOwner = getRegistry().ownerOf(targetNftId);
-            $._stakingService.pushDipToken(dipAmount, targetOwner);
-        }
-    }
+    // /// @inheritdoc IStaking
+    // function withdrawRewardReservesByService(NftId targetNftId, Amount dipAmount, address to)
+    //     external
+    //     virtual
+    //     restricted()
+    //     returns (Amount newBalance)
+    // {
+    //     _withdrawRewardReserves(targetNftId, dipAmount, to);
+    // }
 
 
     /// @inheritdoc IStaking
@@ -424,34 +488,6 @@ contract Staking is
 
         // interactions
         $._stakingService.pullDipToken(stakeAmount, stakeOwner);
-    }
-
-
-    function _updateRewards(
-        StakingStorage storage $, 
-        NftId stakeNftId
-    )
-        internal 
-        virtual 
-        returns (
-            Amount rewardIncreaseAmount,
-            Seconds targetLockingPeriod,
-            Amount stakeBalance,
-            Amount rewardBalance,
-            Timestamp lockedUntil
-        )
-    {
-        (
-            rewardIncreaseAmount,
-            targetLockingPeriod,
-            stakeBalance,
-            rewardBalance,
-            lockedUntil
-        ) = $._store.updateRewards(stakeNftId);
-
-        if (rewardIncreaseAmount.gtz()) {
-            emit LogStakingStakeRewardsUpdated(stakeNftId, rewardIncreaseAmount, stakeBalance, rewardBalance, lockedUntil);
-        }
     }
 
 
@@ -669,6 +705,69 @@ contract Staking is
 
     //--- internal functions ------------------------------------------------//
 
+
+    function _refillRewardReserves(NftId targetNftId, Amount dipAmount, address transferFrom)
+        internal
+        virtual
+        returns (Amount newBalance)
+    {
+        // checks + effects
+        StakingStorage storage $ = _getStakingStorage();
+        newBalance = $._store.refillRewardReserves(targetNftId, dipAmount);
+
+        // interactions
+        // collect DIP token from target owner
+        if (dipAmount.gtz()) {
+            $._stakingService.pullDipToken(dipAmount, transferFrom);
+        }
+    }
+
+
+    function _withdrawRewardReserves(NftId targetNftId, Amount dipAmount, address transferTo)
+        internal
+        virtual
+        returns (Amount newBalance)
+    {
+        // checks + effects
+        StakingStorage storage $ = _getStakingStorage();
+        newBalance = $._store.withdrawRewardReserves(targetNftId, dipAmount);
+
+        // interactions
+        // transfer DIP token to designated address
+        if (dipAmount.gtz()) {
+            $._stakingService.pushDipToken(dipAmount, transferTo);
+        }
+    }
+
+
+    function _updateRewards(
+        StakingStorage storage $, 
+        NftId stakeNftId
+    )
+        internal 
+        virtual 
+        returns (
+            Amount rewardIncreaseAmount,
+            Seconds targetLockingPeriod,
+            Amount stakeBalance,
+            Amount rewardBalance,
+            Timestamp lockedUntil
+        )
+    {
+        (
+            rewardIncreaseAmount,
+            targetLockingPeriod,
+            stakeBalance,
+            rewardBalance,
+            lockedUntil
+        ) = $._store.updateRewards(stakeNftId);
+
+        if (rewardIncreaseAmount.gtz()) {
+            emit LogStakingStakeRewardsUpdated(stakeNftId, rewardIncreaseAmount, stakeBalance, rewardBalance, lockedUntil);
+        }
+    }
+
+
     function _unstakeAll(
         StakingStorage storage $, 
         NftId stakeNftId,
@@ -715,24 +814,6 @@ contract Staking is
     }
 
 
-    function _calculateRewardIncrease(
-        UFixed targetRewardRate,
-        StakeInfo memory stakeInfo
-    )
-        internal
-        virtual
-        returns (Amount rewardIncreaseAmount)
-    {
-        Seconds duration = SecondsLib.toSeconds(
-            block.timestamp - stakeInfo.lastUpdateAt.toInt());
-        
-        return StakingLib.calculateRewardAmount(
-            targetRewardRate,
-            duration,
-            stakeInfo.stakedAmount);
-    }
-
-
     function _addToken(
         StakingStorage storage $,
         ChainId chainId, 
@@ -746,23 +827,6 @@ contract Staking is
 
             emit LogStakingTokenAdded(chainId, token);
         }
-    }
-
-
-    function _approveTokenHandler(
-        IERC20Metadata token, 
-        Amount amount)
-        internal
-        virtual override
-        returns (Amount oldAllowanceAmount)
-    {
-        oldAllowanceAmount = AmountLib.toAmount(
-            token.allowance(address(this), address(_getStakingStorage()._tokenHandler)));
-
-        // staking token handler approval via its own implementation in staking service
-        IComponentService(_getServiceAddress(STAKING())).approveTokenHandler(
-            token, 
-            amount);
     }
 
 
@@ -822,6 +886,31 @@ contract Staking is
         }
 
         emit LogStakingTargetCreated($._protocolNftId, protocolInfo.objectType, protocolInfo.lockingPeriod, protocolInfo.rewardRate, protocolInfo.maxStakedAmount);
+    }
+
+
+    function _checkTypeAndOwner(NftId nftId, ObjectType expectedObjectType, bool checkOwner)
+        internal
+        view
+    {
+        if (expectedObjectType == STAKE()) {
+            if (!_getStakingStorage()._store.exists(nftId)) {
+                revert ErrorStakingNotStake(nftId);
+            }
+        } else {
+            if (expectedObjectType == TARGET()) {
+                if (!_getStakingStorage()._store.getTargetSet().exists(nftId)) {
+                    revert ErrorStakingNotTarget(nftId);
+                }
+            }
+        }
+
+        if (checkOwner) {
+            address nftOwner = getRegistry().ownerOf(nftId);
+            if (msg.sender != nftOwner) {
+                revert ErrorStakingNotOwner(nftId, nftOwner, msg.sender);
+            }
+        }
     }
 
 

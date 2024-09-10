@@ -114,7 +114,8 @@ contract StakingService is
 
         // update reward reserve book keeping
         StakingServiceStorage storage $ = _getStakingServiceStorage();
-        newBalance = $._staking.refillRewardReserves(instanceNftId, dipAmount);
+        address instanceOwner = getRegistry().ownerOf(instanceNftId);
+        newBalance = $._staking.refillRewardReservesByService(instanceNftId, dipAmount, instanceOwner);
 
         emit LogStakingServiceRewardReservesIncreased(instanceNftId, rewardProvider, dipAmount, newBalance);
     }
@@ -130,10 +131,9 @@ contract StakingService is
         _checkNftType(instanceNftId, INSTANCE());
         // update reward reserve book keeping
         StakingServiceStorage storage $ = _getStakingServiceStorage();
-        newBalance = $._staking.withdrawRewardReserves(instanceNftId, dipAmount);
-
-        // transfer withdrawal amount to target owner
         address instanceOwner = getRegistry().ownerOf(instanceNftId);
+        newBalance = $._staking.withdrawRewardReservesByService(instanceNftId, dipAmount, instanceOwner);
+
         emit LogStakingServiceRewardReservesDecreased(instanceNftId, instanceOwner, dipAmount, newBalance);
     }
 

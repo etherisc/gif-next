@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {console} from "../../lib/forge-std/src/Test.sol";
 
 import {Amount, AmountLib} from "../../contracts/type/Amount.sol";
@@ -13,6 +14,7 @@ import {NftId} from "../../contracts/type/NftId.sol";
 import {INSTANCE, PROTOCOL, SERVICE, STAKE, STAKING} from "../../contracts/type/ObjectType.sol";
 import {Seconds, SecondsLib} from "../../contracts/type/Seconds.sol";
 import {StakingLib} from "../../contracts/staking/StakingLib.sol";
+import {StakingStore} from "../../contracts/staking/StakingStore.sol";
 import {TargetManagerLib} from "../../contracts/staking/TargetManagerLib.sol";
 import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
 import {TokenHandler} from "../../contracts/shared/TokenHandler.sol";
@@ -23,6 +25,202 @@ import {VersionPart} from "../../contracts/type/Version.sol";
 contract StakingTargetManagementTest is GifTest {
 
     uint256 public constant STAKING_WALLET_APPROVAL = 5000;
+
+
+    function setUp() public override {
+        super.setUp();
+
+        // needs component service to be registered
+        // can therefore only be called after service registration
+        vm.startPrank(staking.getOwner());
+        staking.approveTokenHandler(dip, AmountLib.max());
+        vm.stopPrank();
+    }
+
+
+    function test_stakingTargetRefillProtocolRewardReservesStakingOwner() public {
+
+        // GIVEN
+        NftId protocolNftId = registry.getProtocolNftId();
+        Amount reservesInitialAmount = stakingReader.getTargetInfo(protocolNftId).reserveAmount;
+        assertEq(reservesInitialAmount.toInt(), 0, "protocol reward reserves not 0");
+        uint256 stakingOwnerInitialDipBalance = dip.balanceOf(stakingOwner);
+
+        address stakingWallet = staking.getWallet();
+        uint256 refillAmountFullDips = 500;
+        Amount refillAmount = AmountLib.toAmount(refillAmountFullDips * 10 ** dip.decimals());
+
+        assertEq(dip.balanceOf(stakingWallet), 0, "staking wallet dip balance not 0 (after staking owner funding)");
+        assertEq(stakingReader.getReserveBalance(protocolNftId).toInt(), 0, "reward reserves balance not at refill amount (after staking owner funding)");
+
+        // WHEN - refill reward reserves for protocol
+        _refillRewardReserves(protocolNftId, refillAmount, stakingOwner);
+
+        // THEN
+        // check reward reserve balance from book keeping
+        assertEq(stakingReader.getReserveBalance(protocolNftId).toInt(), refillAmount.toInt(), "protocol reward reserves balance not at refill amount (after reward funding)");
+
+        // check dips have been transferred to staking wallet
+        assertEq(dip.balanceOf(stakingWallet), refillAmount.toInt(), "staking wallet dip balance not at refill amount (after reward funding)");
+        assertEq(dip.balanceOf(stakingOwner), stakingOwnerInitialDipBalance - refillAmount.toInt(), "unexpected staking owner dip balance (after reward funding)");
+    }
+
+
+    function test_stakingTargetWithdrawProtocolRewardReservesStakingOwner() public {
+
+        // GIVEN
+        NftId protocolNftId = registry.getProtocolNftId();
+        address stakingWallet = staking.getWallet();
+        uint256 refillAmountFullDips = 1000;
+        uint256 withdrwaAmountFullDips = 700;
+        Amount initialAmount = AmountLib.toAmount(refillAmountFullDips * 10 ** dip.decimals());
+        Amount withdrawAmount = AmountLib.toAmount(withdrwaAmountFullDips * 10 ** dip.decimals());
+
+        _refillRewardReserves(protocolNftId, initialAmount, stakingOwner);
+
+        // check initial state
+        assertEq(dip.balanceOf(stakingWallet), initialAmount.toInt(), "unexpected initial staking wallet dip balance (before withdrawal)");
+        assertEq(stakingReader.getTargetInfo(protocolNftId).reserveAmount.toInt(), initialAmount.toInt(), "unexpected reward reserves balance via targetInfo (before withdrawal)");
+        assertEq(stakingReader.getReserveBalance(protocolNftId).toInt(), initialAmount.toInt(), "unexpected reward reserves balance (before withdrawal)");
+
+        uint256 stakingOwnerInitialDipBalance = dip.balanceOf(stakingOwner);
+
+        // WHEN - withdraw protocol reward reserves
+        vm.prank(stakingOwner);
+        staking.withdrawRewardReserves(protocolNftId, withdrawAmount);
+
+        // THEN
+        Amount expectedNewRewardBalance = initialAmount - withdrawAmount;
+        assertEq(expectedNewRewardBalance.toInt(), (1000 - 700) * 10 ** dip.decimals(), "unexpected new reward balance value");
+        assertEq(dip.balanceOf(stakingWallet), expectedNewRewardBalance.toInt(), "unexpected staking wallet dip balance (after withdrawal)");
+        assertEq(stakingReader.getTargetInfo(protocolNftId).reserveAmount.toInt(), expectedNewRewardBalance.toInt(), "unexpected reward reserves balance via targetInfo (after withdrawal)");
+        assertEq(stakingReader.getReserveBalance(protocolNftId).toInt(), expectedNewRewardBalance.toInt(), "unexpected reward reserves balance (after withdrawal)");
+
+        assertEq(dip.balanceOf(stakingOwner), stakingOwnerInitialDipBalance + withdrawAmount.toInt(), "unexpected staking owner dip balance (after reward funding)");
+    }
+
+
+    function test_stakingTargetWithdrawProtocolRewardReservesNotStakingOwner() public {
+
+        // GIVEN
+        NftId protocolNftId = registry.getProtocolNftId();
+        address stakingWallet = staking.getWallet();
+        uint256 refillAmountFullDips = 1000;
+        uint256 withdrwaAmountFullDips = 700;
+        Amount initialAmount = AmountLib.toAmount(refillAmountFullDips * 10 ** dip.decimals());
+        Amount withdrawAmount = AmountLib.toAmount(withdrwaAmountFullDips * 10 ** dip.decimals());
+
+        _refillRewardReserves(protocolNftId, initialAmount, stakingOwner);
+
+        // WHEN + THEN - outsider attempts to withdraw protocol reward reserves
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IStaking.ErrorStakingNotStakingOwner.selector));
+
+        vm.prank(outsider);
+        staking.withdrawRewardReserves(protocolNftId, withdrawAmount);
+
+        // WHEN + THEN - instance owner attempts to withdraw protocol reward reserves
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IStaking.ErrorStakingNotStakingOwner.selector));
+
+        vm.prank(instanceOwner);
+        staking.withdrawRewardReserves(protocolNftId, withdrawAmount);
+    }
+
+
+    function test_stakingTargetRefillProtocolRewardReservesInstanceOwner() public {
+        _stakingTargetRefillRewardReserves(registry.getProtocolNftId(), instanceOwner);
+    }
+
+
+    function test_stakingTargetWithdrawInstanceRewardReservesInstanceOwner() public {
+        // GIVEN
+        _stakingTargetRefillRewardReserves(instanceNftId, instanceOwner);
+
+        address stakingWallet = staking.getWallet();
+        uint256 withdrwaAmountFullDips = 100;
+        Amount withdrawAmount = AmountLib.toAmount(withdrwaAmountFullDips * 10 ** dip.decimals());
+
+        assertEq(dip.balanceOf(instanceOwner), 0, "unexpected instance owner dip balance (before withdrawal)");
+
+        // WHEN
+        vm.prank(instanceOwner);
+        staking.withdrawRewardReserves(instanceNftId, withdrawAmount);
+
+        // THEN
+        Amount expectedNewRewardBalance = AmountLib.toAmount((500 - 100) * 10 ** dip.decimals());
+        assertEq(stakingReader.getReserveBalance(instanceNftId).toInt(), expectedNewRewardBalance.toInt(), "unexpected reward reserves balance (after withdrawal)");
+        assertEq(dip.balanceOf(stakingWallet), expectedNewRewardBalance.toInt(), "unexpected staking wallet dip balance (after withdrawal)");
+        assertEq(dip.balanceOf(instanceOwner), withdrawAmount.toInt(), "unexpected instance owner dip balance (after withdrawal)");
+    }
+
+
+    function test_stakingTargetWithdrawInstanceRewardReservesExceedingBalance() public {
+        // GIVEN
+        _stakingTargetRefillRewardReserves(instanceNftId, instanceOwner);
+
+        address stakingWallet = staking.getWallet();
+        Amount reservesInitialAmount = stakingReader.getReserveBalance(instanceNftId);
+        Amount withdrawAmount = reservesInitialAmount + AmountLib.toAmount(1);
+
+        // WHEN + THEN
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                StakingStore.ErrorStakingStoreRewardReservesInsufficient.selector,
+                instanceNftId,
+                reservesInitialAmount,
+                withdrawAmount));
+
+        vm.prank(instanceOwner);
+        staking.withdrawRewardReserves(instanceNftId, withdrawAmount);
+    }
+
+
+    function test_stakingTargetWithdrawInstanceRewardReservesNotInstanceOwner() public {
+        // GIVEN
+        _stakingTargetRefillRewardReserves(instanceNftId, instanceOwner);
+
+        address stakingWallet = staking.getWallet();
+        uint256 withdrwaAmountFullDips = 100;
+        Amount withdrawAmount = AmountLib.toAmount(withdrwaAmountFullDips * 10 ** dip.decimals());
+
+        assertEq(dip.balanceOf(instanceOwner), 0, "unexpected instance owner dip balance (before withdrawal)");
+
+        // WHEN + THEN - attempt to withdraw instance reserves as staking owner
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IStaking.ErrorStakingNotNftOwner.selector,
+                instanceNftId));
+
+        vm.prank(stakingOwner);
+        staking.withdrawRewardReserves(instanceNftId, withdrawAmount);
+
+        // WHEN + THEN - attempt to withdraw instance reserves as outsider
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IStaking.ErrorStakingNotNftOwner.selector,
+                instanceNftId));
+
+        vm.prank(outsider);
+        staking.withdrawRewardReserves(instanceNftId, withdrawAmount);
+    }
+
+
+    function test_stakingTargetRefillProtocolRewardReservesOutsider() public {
+        _stakingTargetRefillRewardReserves(registry.getProtocolNftId(), outsider);
+    }
+
+
+    function test_stakingTargetRefillInstanceRewardReservesInstanceOwner() public {
+        _stakingTargetRefillRewardReserves(instanceNftId, instanceOwner);
+    }
+
+
+    function test_stakingTargetRefillInstanceRewardReservesOutsider() public {
+        _stakingTargetRefillRewardReserves(instanceNftId, outsider);
+    }
 
 
     function test_stakingTargetSetLockingPeriodHappyCase() public {
@@ -223,14 +421,24 @@ contract StakingTargetManagementTest is GifTest {
     }
 
 
-    function setUp() public override {
-        super.setUp();
+    function _stakingTargetRefillRewardReserves(NftId targetNftId, address account) public {
 
-        // needs component service to be registered
-        // can therefore only be called after service registration
-        vm.startPrank(staking.getOwner());
-        staking.approveTokenHandler(dip, AmountLib.max());
-        vm.stopPrank();
+        // GIVEN
+        NftId protocolNftId = registry.getProtocolNftId();
+        address stakingWallet = staking.getWallet();
+        uint256 refillAmountFullDips = 500;
+
+        (, Amount refillAmount) = _prepareAccount(account, refillAmountFullDips);
+
+        assertEq(stakingReader.getReserveBalance(targetNftId).toInt(), 0, "target reward reserves not 0");
+        assertEq(dip.balanceOf(stakingWallet), 0, "staking wallet dip balance not 0");
+
+        // WHEN + THEN
+        vm.prank(account);
+        staking.refillRewardReserves(targetNftId, refillAmount);
+
+        assertEq(stakingReader.getReserveBalance(targetNftId).toInt(), refillAmount.toInt(), "unexpected target reward reserves");
+        assertEq(dip.balanceOf(stakingWallet), refillAmount.toInt(), "unexpected staking wallet dip balance (after refill)");
     }
 
 
@@ -249,6 +457,20 @@ contract StakingTargetManagementTest is GifTest {
 
         vm.startPrank(account);
         instance.refillStakingRewardReserves(refillAmount);
+        vm.stopPrank();
+    }
+
+
+    function _refillRewardReserves(NftId targetNftId, Amount refillAmount, address account) internal {
+        vm.startPrank(account);
+
+        // set allowance
+        dip.approve(
+            address(staking.getTokenHandler()),
+            refillAmount.toInt());
+
+        // refill reward reserves
+        staking.refillRewardReserves(targetNftId, refillAmount);
         vm.stopPrank();
     }
 
