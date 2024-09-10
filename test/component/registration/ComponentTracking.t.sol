@@ -12,6 +12,7 @@ import {SimpleDistribution} from "../../../contracts/examples/unpermissioned/Sim
 import {SimpleOracle} from "../../../contracts/examples/unpermissioned/SimpleOracle.sol";
 import {SimplePool} from "../../../contracts/examples/unpermissioned/SimplePool.sol";
 import {IComponents} from "../../../contracts/instance/module/IComponents.sol";
+import {IComponentService} from "../../../contracts/shared/IComponentService.sol";
 
 
 // solhint-disable func-name-mixedcase
@@ -125,6 +126,47 @@ contract ComponentTrackingTest is GifTest {
         assertEq(instanceReader.getProductNftId(0).toInt(), myProductNftId1.toInt(), "unexpected product nft id (1a)");
         assertEq(instanceReader.getProductNftId(1).toInt(), myProductNftId2.toInt(), "unexpected product nft id (1b)");
         assertEq(instanceReader.getProductNftId(2).toInt(), myProductNftId3.toInt(), "unexpected product nft id (1c)");
+    }
+
+    function test_componentTracking_noDistributionExpected() public {
+        // GIVEN
+        assertEq(instanceReader.components(), 0, "unexpected components count (before)");
+        assertEq(instanceReader.products(), 0, "unexpected products count (before)");
+
+        // WHEN
+        vm.startPrank(instanceOwner);
+
+        SimpleProduct myProduct = _deployProduct("MyProduct", instanceOwner, false, 0);
+        NftId myProductNftId = instance.registerProduct(address(myProduct), address(token));
+
+        SimpleDistribution myDistribution = _deployDistribution("MyDistribution", myProductNftId, instanceOwner);
+
+        vm.expectRevert(abi.encodeWithSelector(
+            IComponentService.ErrorProductServiceNoDistributionExpected.selector, 
+            myProductNftId));
+        myProduct.registerComponent(address(myDistribution));   
+    }
+
+    function test_componentTracking_distributionAlreadyRegistered() public {
+        // GIVEN
+        assertEq(instanceReader.components(), 0, "unexpected components count (before)");
+        assertEq(instanceReader.products(), 0, "unexpected products count (before)");
+
+        // WHEN
+        vm.startPrank(instanceOwner);
+
+        SimpleProduct myProduct = _deployProduct("MyProduct", instanceOwner, true, 0);
+        NftId myProductNftId = instance.registerProduct(address(myProduct), address(token));
+
+        SimpleDistribution myDistribution = _deployDistribution("MyDistribution", myProductNftId, instanceOwner);
+        NftId distNftId = myProduct.registerComponent(address(myDistribution));
+        SimpleDistribution myDistribution2 = _deployDistribution("MyDistribution2", myProductNftId, instanceOwner);
+
+        vm.expectRevert(abi.encodeWithSelector(
+            IComponentService.ErrorProductServiceDistributionAlreadyRegistered.selector, 
+            myProductNftId,
+            distNftId));
+        myProduct.registerComponent(address(myDistribution2));
     }
 
 
