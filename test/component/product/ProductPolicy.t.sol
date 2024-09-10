@@ -1460,6 +1460,92 @@ contract ProductPolicyTest is GifTest {
         product.decline(policyNftId); 
     }
 
+    function test_productCollectPremium_notCollateralized() public {
+        // GIVEN
+
+        vm.startPrank(productOwner);
+
+        Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
+        product.setFees(productFee, FeeLib.zero());
+
+        bytes memory data = "bla di blubb";
+        RiskId riskId = product.createRisk("42x4711", data);
+
+        uint sumInsuredAmount = 1000;
+        NftId policyNftId = product.createApplication(
+            customer,
+            riskId,
+            sumInsuredAmount,
+            SecondsLib.toSeconds(30),
+            "",
+            bundleNftId,
+            ReferralLib.zero()
+        );
+        assertTrue(policyNftId.gtz(), "policyNftId was zero");
+        assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
+
+        assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
+
+        Timestamp activateAt = TimestampLib.blockTimestamp();
+        vm.startPrank(productOwner);
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IPolicyService.ErrorPolicyServicePolicyStateNotCollateralized.selector,
+            policyNftId));
+
+        // WHEN - state not applied
+        product.collectPremium(policyNftId, activateAt); 
+    }
+
+    function test_productCollectPremium_alreadyPaid() public {
+        // GIVEN
+        vm.startPrank(registryOwner);
+        token.transfer(customer, 1000);
+        vm.stopPrank();
+
+        vm.startPrank(productOwner);
+
+        Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
+        product.setFees(productFee, FeeLib.zero());
+
+        bytes memory data = "bla di blubb";
+        RiskId riskId = product.createRisk("42x4711", data);
+
+        vm.stopPrank();
+        vm.startPrank(customer);
+
+        uint sumInsuredAmount = 1000;
+        NftId policyNftId = product.createApplication(
+            customer,
+            riskId,
+            sumInsuredAmount,
+            SecondsLib.toSeconds(30),
+            "",
+            bundleNftId,
+            ReferralLib.zero()
+        );
+        token.approve(address(instanceReader.getComponentInfo(productNftId).tokenHandler), 200);
+        vm.stopPrank();
+        
+        assertTrue(policyNftId.gtz(), "policyNftId was zero");
+        assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
+
+        assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
+
+        Timestamp activateAt = TimestampLib.blockTimestamp();
+        vm.startPrank(productOwner);
+        product.createPolicy(policyNftId, true, activateAt); 
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IPolicyService.ErrorPolicyServicePremiumAlreadyPaid.selector,
+            policyNftId));
+
+        // WHEN - state not applied
+        product.collectPremium(policyNftId, activateAt);
+    }
+
     /// @dev test that policy expiration reverts if the expireAt timestamp is too late
     function test_productPolicyExpire_expireAtTooLate() public {
         // GIVEN
