@@ -14,7 +14,11 @@ contract UpgradableProxyWithAdmin is TransparentUpgradeableProxy {
         _initializationData = data;
     }
 
-    function getProxyAdmin() external returns (ProxyAdmin) { return ProxyAdmin(_proxyAdmin()); }
+    function getProxyAdmin() external returns (ProxyAdmin) { 
+        return ProxyAdmin(_proxyAdmin()); 
+    }
 
-    function getInitializationData() external view returns (bytes memory) { return _initializationData; }
+    function getInitializationData() external view returns (bytes memory) { 
+        return _initializationData; 
+    }
 }
