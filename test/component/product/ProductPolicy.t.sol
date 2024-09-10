@@ -25,6 +25,7 @@ import {POLICY} from "../../../contracts/type/ObjectType.sol";
 import {DistributorType} from "../../../contracts/type/DistributorType.sol";
 import {IPolicyService} from "../../../contracts/product/IPolicyService.sol";
 
+// solhint-disable func-name-mixedcase
 contract ProductPolicyTest is GifTest {
 
     Seconds public sec30;
@@ -1183,6 +1184,65 @@ contract ProductPolicyTest is GifTest {
         assertEq(token.balanceOf(pool.getWallet()) - pb[pool.getWallet()], 120, "pool balance not 120"); // 100 (netPremium) + 10 (poolFee) + 10 (bundleFee)
 
         assertEq(instanceBundleSet.activePolicies(bundleNftId), 0, "expected no active policy");
+    }
+
+    function test_productPolicyClose_notPaid() public {
+        // GIVEN
+        vm.startPrank(registryOwner);
+        token.transfer(customer, 1000);
+        vm.stopPrank();
+
+        vm.startPrank(productOwner);
+
+        Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
+        product.setFees(productFee, FeeLib.zero());
+
+        bytes memory data = "bla di blubb";
+        RiskId riskId = product.createRisk("42x4711", data);
+
+        vm.stopPrank();
+
+        vm.startPrank(customer);
+
+        IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(productNftId);
+        token.approve(address(componentInfo.tokenHandler), 1000);
+
+        // solhint-disable-next-line 
+        console.log("before application creation");
+
+        uint sumInsuredAmount = 1000;
+        Seconds lifetime = SecondsLib.toSeconds(30);
+        bytes memory applicationData = "";
+        ReferralId referralId = ReferralLib.zero();
+        NftId policyNftId = product.createApplication(
+            customer,
+            riskId,
+            sumInsuredAmount,
+            lifetime,
+            applicationData,
+            bundleNftId,
+            referralId
+        );
+
+        vm.stopPrank();
+
+        vm.startPrank(productOwner);
+
+        product.createPolicy(
+            policyNftId, 
+            false, 
+            TimestampLib.blockTimestamp()); 
+
+        vm.warp(100); // warp 100 seconds
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IPolicyService.ErrorPolicyServicePremiumNotPaid.selector,
+            policyNftId,
+            instanceReader.getPremiumInfo(policyNftId).premiumAmount));
+
+        // WHEN
+        product.close(policyNftId);
     }
 
     /// @dev test that policy expiration works 
