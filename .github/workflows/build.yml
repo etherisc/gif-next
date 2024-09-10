@@ -74,7 +74,8 @@ jobs:
             contract_sizes.log
 
   test_foundry:
-    name: Run tests (Foundry - ci profile)
+    # name: Run tests (Foundry - ci profile)
+    name: Run tests (Foundry)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -90,8 +91,8 @@ jobs:
         if: | 
           github.event_name != 'pull_request' || 
           ! contains(github.event.pull_request.labels.*.name, 'run_all_tests')
-        env:
-          FOUNDRY_PROFILE: ci
+        # env:
+        #   FOUNDRY_PROFILE: ci
         run: forge test -vv --nmt "_longRunning"
       
       - name: Run all tests (label 'run_all_tests')
@@ -103,8 +104,8 @@ jobs:
             && contains(github.event.pull_request.labels.*.name, 'run_all_tests')
           ) || 
           github.event.schedule == '33 3 * * *'
-        env:
-          FOUNDRY_PROFILE: ci
+        # env:
+        #   FOUNDRY_PROFILE: ci
         run: forge test -vv
 
   publish:

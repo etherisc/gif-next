@@ -7,7 +7,7 @@ import {Distribution} from "./Distribution.sol";
 import {DistributorType} from "../type/DistributorType.sol";
 import {DISTRIBUTOR} from "../type/ObjectType.sol";
 import {Fee} from "../type/Fee.sol";
-import {NftId, NftIdLib} from "../type/NftId.sol";
+import {NftId} from "../type/NftId.sol";
 import {ReferralId} from "../type/Referral.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {Timestamp} from "../type/Timestamp.sol";

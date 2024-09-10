@@ -2,7 +2,6 @@
 pragma solidity ^0.8.20;
 
 import {IServiceAuthorization} from "./IServiceAuthorization.sol";
-import {RoleId} from "../type/RoleId.sol";
 import {Str} from "../type/String.sol";
 
 
