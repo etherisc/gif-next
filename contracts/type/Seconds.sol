@@ -90,6 +90,15 @@ library SecondsLib {
         return Seconds.unwrap(duration1) < Seconds.unwrap(duration2);
     }
 
+    /// @dev returns the smaller of the duration
+    function min(Seconds duration1, Seconds duration2) public pure returns (Seconds) {
+        if (Seconds.unwrap(duration1) < Seconds.unwrap(duration2)) {
+            return duration1;
+        } 
+        
+        return duration2;
+    }   
+
     /// @dev return add duration1 and duration2
     function add(Seconds duration1, Seconds duration2) public pure returns (Seconds) {
         return Seconds.wrap(Seconds.unwrap(duration1) + Seconds.unwrap(duration2));

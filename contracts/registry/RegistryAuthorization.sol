@@ -299,10 +299,11 @@ contract RegistryAuthorization
           _authorize(functions, StakingStore.increaseTotalValueLocked.selector, "increaseTotalValueLocked");
           _authorize(functions, StakingStore.decreaseTotalValueLocked.selector, "decreaseTotalValueLocked");
           _authorize(functions, StakingStore.createStake.selector, "createStake");
+          _authorize(functions, StakingStore.stake.selector, "stake");
+          _authorize(functions, StakingStore.unstake.selector, "unstake");
           _authorize(functions, StakingStore.updateRewards.selector, "updateRewards");
-          _authorize(functions, StakingStore.increaseStakes.selector, "increaseStakes");
-          _authorize(functions, StakingStore.decreaseStakes.selector, "decreaseStakes");
           _authorize(functions, StakingStore.restakeRewards.selector, "restakeRewards");
+          _authorize(functions, StakingStore.claimRewards.selector, "claimRewards");
      }
 }
 

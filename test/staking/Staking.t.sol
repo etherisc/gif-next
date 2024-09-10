@@ -290,6 +290,8 @@ contract StakingTest is GifTest {
 
 
     function test_stakingStakeIncreaseByZeroAfterOneYear() public {
+        // GIVEN
+        (, Amount reserveAmount) = _addRewardReserves(instanceNftId, instanceOwner, 500);
 
         (
             ,
@@ -346,6 +348,8 @@ contract StakingTest is GifTest {
 
 
     function test_stakingStakeIncreaseByHundredAfterOneYear() public {
+        // GIVEN
+        (, Amount reserveAmount) = _addRewardReserves(instanceNftId, instanceOwner, 500);
 
         (
             ,
@@ -427,7 +431,7 @@ contract StakingTest is GifTest {
         // THEN
         vm.expectRevert(
             abi.encodeWithSelector(
-                StakingStore.ErrorStakingStoreStakesExceedingTargetMaxAmount.selector, 
+                IStaking.ErrorStakingTargetMaxStakedAmountExceeded.selector, 
                 instanceNftId,
                 dipAmount,
                 dipAmount + stakeIncreaseAmount));
@@ -530,6 +534,10 @@ contract StakingTest is GifTest {
     function test_stakingStakeClaimRewardsHappyCase() public {
 
         // GIVEN
+
+        (, Amount reserveAmount) = _addRewardReserves(instanceNftId, instanceOwner, 500);
+        assertEq(stakingReader.getReserveBalance(instanceNftId).toInt(), reserveAmount.toInt(), "unexpected reserve balance (initial)");
+
         (
             ,
             Amount stakeAmount,
@@ -537,9 +545,6 @@ contract StakingTest is GifTest {
         ) = _prepareStake(staker, instanceNftId, 1000);
 
         uint256 lastUpdateAt = block.timestamp;
-
-        (, Amount reserveAmount) = _addRewardReserves(instanceNftId, instanceOwner, 500);
-        assertEq(stakingReader.getReserveBalance(instanceNftId).toInt(), reserveAmount.toInt(), "unexpected reserve balance (initial)");
 
         // dip balance of staker after staking
         assertEq(dip.balanceOf(staker), 0, "unexpected staker balance after staking");

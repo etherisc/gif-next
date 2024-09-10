@@ -190,7 +190,7 @@ contract StakingProtocolTargetTest is GifTest {
 
         // THEN
         vm.prank(outsider);
-        (Amount unstakedAmount, Amount rewardsClaimedAmount) = staking.unstake(stakeNftId);
+        Amount unstakedAmount = staking.unstake(stakeNftId);
 
         IStaking.StakeInfo memory stakeInfo = stakingReader.getStakeInfo(stakeNftId);
         assertEq(stakeInfo.stakedAmount.toInt(), 0, "unexpected staked amount (after unstake)");
@@ -198,7 +198,6 @@ contract StakingProtocolTargetTest is GifTest {
 
         Amount expectedRewardAmount = dipAmount.multiplyWith(protocolRewardRate);
         assertEq(unstakedAmount.toInt(), (dipAmount + expectedRewardAmount).toInt(), "unexpected unstaked amount");
-        assertEq(rewardsClaimedAmount.toInt(), 0, "unexpected rewards claimed amount");
         assertEq(dip.balanceOf(stakingWallet), (initialProtocolRewardAmount - expectedRewardAmount).toInt(), "unexpected balance for staking wallet (after unstake)");
         assertEq(dip.balanceOf(outsider), (dipAmount + expectedRewardAmount).toInt(), "unexpected balance for staker (after unstake)");
     }

@@ -70,18 +70,27 @@ library ChainIdLib {
     }
 
 
-    function fromNftId(NftId nftId) public pure returns (ChainId) {
-        uint256 nftIdInt = nftId.toInt();
-        uint256 chainIdDigits = nftIdInt % 100; // Extract the last two digits
-        uint256 chainIdInt = nftIdInt % 10**(chainIdDigits + 2) / 100; // Extract the chainId
+    /// @dev returns true iff NFT ID is from the current chain.
+    function isCurrentChain(NftId nftId) public view returns (bool) {
+        return _fromNftId(nftId) == block.chainid;
+    }
 
-        return toChainId(chainIdInt);
+
+    function fromNftId(NftId nftId) public pure returns (ChainId) {
+        return toChainId(_fromNftId(nftId));
     }
 
 
     /// @dev converts the ChainId to a uint256
     function toInt(ChainId chainId) public pure returns (uint256) {
         return uint256(uint96(ChainId.unwrap(chainId)));
+    }
+
+
+    function _fromNftId(NftId nftId) internal pure returns (uint256 chainIdInt) {
+        uint256 nftIdInt = nftId.toInt();
+        uint256 chainIdDigits = nftIdInt % 100; // Extract the last two digits
+        chainIdInt = nftIdInt % 10**(chainIdDigits + 2) / 100; // Extract the chainId
     }
 
 

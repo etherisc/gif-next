@@ -10,18 +10,16 @@ import {Amount, AmountLib} from "../type/Amount.sol";
 import {ChainId, ChainIdLib} from "../type/ChainId.sol";
 import {Blocknumber, BlocknumberLib} from "../type/Blocknumber.sol";
 import {KeyValueStore} from "../shared/KeyValueStore.sol";
-import {KEEP_STATE} from "../type/StateId.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
 import {NftIdSet} from "../shared/NftIdSet.sol";
 import {ObjectType} from "../type/ObjectType.sol";
-import {PROTOCOL, STAKE, TARGET} from "../type/ObjectType.sol";
+import {PROTOCOL} from "../type/ObjectType.sol";
 import {Seconds, SecondsLib} from "../type/Seconds.sol";
 import {StakingLib} from "./StakingLib.sol";
 import {StakingLifecycle} from "./StakingLifecycle.sol";
 import {StakingReader} from "./StakingReader.sol";
 import {TargetManagerLib} from "./TargetManagerLib.sol";
 import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
-import {TokenRegistry} from "../registry/TokenRegistry.sol";
 import {UFixed, UFixedLib} from "../type/UFixed.sol";
 
 
@@ -65,7 +63,7 @@ contract StakingStore is
     // targets
     mapping(NftId targetNftId => IStaking.TargetInfo) private _targetInfo;
     mapping(NftId targetNftId => mapping(address token => IStaking.TvlInfo)) private _tvlInfo;
-    mapping(NftId targetNftId => address [] token) _targetToken;
+    mapping(NftId targetNftId => address [] token) private _targetToken;
 
     // staking rate
     mapping(ChainId chainId => mapping(address token => IStaking.TokenInfo)) private _tokenInfo;
@@ -103,7 +101,6 @@ contract StakingStore is
         restricted() // token registry via staking
     {
         // checks
-
         IStaking.TokenInfo storage info = _tokenInfo[chainId][token];
 
         // check token is not yet registered
@@ -113,6 +110,9 @@ contract StakingStore is
 
         info.stakingRate = UFixedLib.zero();
         info.lastUpdateIn = BlocknumberLib.current();
+
+        // logging
+        emit IStaking.LogStakingTokenAdded(chainId, token);
     }
 
 
@@ -219,60 +219,6 @@ contract StakingStore is
     }
 
 
-    // TODO move to private functions
-    function _verifyAndUpdateTarget(NftId targetNftId)
-        private
-        returns (
-            IStaking.TargetInfo storage targetInfo,
-            Blocknumber lastUpdatedIn
-        )
-    {
-        // checks
-        targetInfo = _getAndVerifyTarget(targetNftId);
-        lastUpdatedIn = targetInfo.lastUpdateIn;
-        targetInfo.lastUpdateIn = BlocknumberLib.current();
-    }
-
-
-    // TODO move to private functions
-    function _createTarget(
-        NftId targetNftId,
-        ObjectType objectType,
-        Seconds lockingPeriod,
-        UFixed rewardRate,
-        bool checkParameters
-    )
-        private
-    {
-        // checks
-        if (checkParameters) {
-            TargetManagerLib.checkTargetParameters(
-                _registry, 
-                _reader, 
-                targetNftId, 
-                objectType, 
-                lockingPeriod, 
-                rewardRate);
-        }
-
-        // effects
-        IStaking.TargetInfo storage targetInfo = _targetInfo[targetNftId];
-        targetInfo.stakedAmount = AmountLib.zero();
-        targetInfo.rewardAmount = AmountLib.zero();
-        targetInfo.reserveAmount = AmountLib.zero();
-        targetInfo.maxStakedAmount = AmountLib.max();
-
-        targetInfo.objectType = objectType;
-        targetInfo.lockingPeriod = lockingPeriod;
-        targetInfo.rewardRate = rewardRate;
-        targetInfo.chainId = ChainIdLib.fromNftId(targetNftId);
-        targetInfo.lastUpdateIn = BlocknumberLib.current();
-
-        // add new target to target set
-        _targetNftIdSet.add(targetNftId);
-    }
-
-
     function addTargetToken(
         NftId targetNftId,
         address token
@@ -358,48 +304,6 @@ contract StakingStore is
     }
 
 
-    function _spendRewardReserves(
-        NftId targetNftId, 
-        IStaking.TargetInfo storage targetInfo,
-        Amount dipAmount
-    )
-        private
-    {
-        Blocknumber lastUpdateIn = _decreaseReserves(targetNftId, targetInfo, dipAmount);
-
-        // logging
-        emit IStaking.LogStakingRewardReservesSpent(
-            targetNftId,
-            dipAmount,
-            targetInfo.reserveAmount,
-            lastUpdateIn);
-    }
-
-
-    function _decreaseReserves(
-        NftId targetNftId,
-        IStaking.TargetInfo storage targetInfo, 
-        Amount dipAmount
-    )
-        private
-        returns ( Blocknumber lastUpdateIn)
-    {
-        lastUpdateIn = targetInfo.lastUpdateIn;
-
-        // check if reserves are sufficient
-        if (dipAmount > targetInfo.reserveAmount) {
-            revert ErrorStakingStoreRewardReservesInsufficient(
-                targetNftId,
-                targetInfo.reserveAmount,
-                dipAmount);
-        }
-
-        // effects
-        targetInfo.reserveAmount = targetInfo.reserveAmount - dipAmount;
-        targetInfo.lastUpdateIn = BlocknumberLib.current();
-    }
-
-
     //--- tvl specific functions -------------------------------------//
 
     function increaseTotalValueLocked(
@@ -444,269 +348,138 @@ contract StakingStore is
     function createStake(
         NftId stakeNftId, 
         NftId targetNftId, 
-        Amount stakedAmount
+        address stakeOwner,
+        Amount stakeAmount
     )
         external
         restricted()
         returns (Timestamp lockedUntil)
     {
         // checks
-        lockedUntil = StakingLib.checkCreateParameters(
-            _reader,
-            targetNftId,
-            stakedAmount);
-
         IStaking.StakeInfo storage stakeInfo = _stakeInfo[stakeNftId];
         if (stakeInfo.lastUpdateIn.gtz()) {
             revert ErrorStakingStoreStakeBalanceAlreadyInitialized(stakeNftId);
         }
 
         IStaking.TargetInfo storage targetInfo = _getAndVerifyTarget(targetNftId);
-        _checkMaxStakedAmount(targetNftId, targetInfo, stakedAmount);
+        _checkMaxStakedAmount(targetNftId, targetInfo, stakeAmount);
 
         // effects
-        // update target
-        targetInfo.stakedAmount = targetInfo.stakedAmount + stakedAmount;
-        targetInfo.lastUpdateIn = BlocknumberLib.current();
-
-        // update stake
         stakeInfo.targetNftId = targetNftId;
-        stakeInfo.stakedAmount = stakedAmount;
+        stakeInfo.stakedAmount = AmountLib.zero();
         stakeInfo.rewardAmount = AmountLib.zero();
-        stakeInfo.lockedUntil = lockedUntil;
-        stakeInfo.lastUpdateAt = TimestampLib.current();
-        stakeInfo.lastUpdateIn = BlocknumberLib.current();
-    }
+        stakeInfo.lockedUntil = TimestampLib.current();
+        _setStakeLastUpdatesToCurrent(stakeInfo);
 
-    /// @dev Increases the stake amount and optionally restakes the rewards.
-    /// IMPORTANT: Function updateRewards must be called before this function in the same transaction.
-    function increaseStakes(
-        NftId stakeNftId, 
-        Amount stakeIncreaseAmount, // additional staked amount
-        Seconds additionalLockingPeriod, // duration to increase locked until
-        bool restakeRewards
-    )
-        external
-        restricted()
-        returns (
-            Amount stakeBalance,
-            Amount rewardBalance,
-            Timestamp lockedUntil
-        )
-    {
-        // checks
-        IStaking.StakeInfo storage stakeInfo = _getAndVerifyStake(stakeNftId);
-        IStaking.TargetInfo storage targetInfo = _getAndVerifyTarget(stakeInfo.targetNftId);
-        Amount restakedRewardAmount = stakeInfo.rewardAmount;
+        // logging for creation of empty stake
+        emit IStaking.LogStakingStakeCreated(stakeNftId, stakeInfo.targetNftId, stakeInfo.stakedAmount, stakeInfo.lockedUntil, stakeOwner);
 
-        // calculate new values (with restaking)
-        if (restakeRewards && restakedRewardAmount.gtz()) {
-            Amount totalStakeIncreaseAmount = stakeIncreaseAmount + restakedRewardAmount;
-            _checkMaxStakedAmount(stakeInfo.targetNftId, targetInfo, totalStakeIncreaseAmount);
-
-            // effects
-            // update target
-            targetInfo.stakedAmount = targetInfo.stakedAmount + totalStakeIncreaseAmount;
-            targetInfo.rewardAmount = targetInfo.rewardAmount - stakeInfo.rewardAmount;
-
-            // update stake
-            stakeInfo.stakedAmount = stakeInfo.stakedAmount + totalStakeIncreaseAmount;
-            stakeInfo.rewardAmount = AmountLib.zero();
-
-        // calculate new values (without restaking)
-        } else {
-            _checkMaxStakedAmount(stakeInfo.targetNftId, targetInfo, stakeIncreaseAmount);
-    
-            // effects
-            // update target and stake
-            targetInfo.stakedAmount = targetInfo.stakedAmount + stakeIncreaseAmount;
-            stakeInfo.stakedAmount = stakeInfo.stakedAmount + stakeIncreaseAmount;
-        }
-
-        // update meta data for target and stake
-        targetInfo.lastUpdateIn = BlocknumberLib.current();
-        stakeInfo.lastUpdateAt = TimestampLib.current();
-        stakeInfo.lastUpdateIn = BlocknumberLib.current();
-
-        // increase locked until if applicable
-        if (additionalLockingPeriod.gtz()) {
-            stakeInfo.lockedUntil = stakeInfo.lockedUntil.addSeconds(additionalLockingPeriod);
-        }
-
-        // set return values
-        stakeBalance = stakeInfo.stakedAmount;
-        rewardBalance = stakeInfo.rewardAmount;
-        lockedUntil = stakeInfo.lockedUntil;
+        // process stake amount
+        _stake(stakeNftId, stakeInfo, targetInfo, targetInfo.lockingPeriod, stakeAmount);
     }
 
 
-    /// @dev Decreases the staking and reward amounts.
-    /// The function attepmts to unstake up to the specified max amounts.
-    /// In case the specified amounts are higher than the current staked and reward amounts, the avaiable amounts are unstaked.
-    /// The method optionally restakes the rewards.
-    /// IMPORTANT: Function updateRewards must be called before this function in the same transaction.
-    function decreaseStakes(
-        NftId stakeNftId, 
-        Amount maxUnstakedAmount,
-        Amount maxClaimAmount,
-        bool restakeRewards
+    function stake(
+        NftId stakeNftId,
+        bool updateRewards,
+        bool restakeRewards,
+        Seconds additionalLockingPeriod,
+        Amount stakeAmount
     )
         external
         restricted()
-        returns (
-            Amount restakedRewardAmount,
-            Amount unstakedAmount,
-            Amount claimedAmount,
-            Amount stakeBalance,
-            Amount rewardBalance,
-            Timestamp lockedUntil
-        )
-    {
-        // checks
-        IStaking.StakeInfo storage stakeInfo = _getAndVerifyStake(stakeNftId);
-        NftId targetNftId = stakeInfo.targetNftId;
-        IStaking.TargetInfo storage targetInfo = _getAndVerifyTarget(targetNftId);
-
-        // restake rewards if applicable
-        if (restakeRewards && stakeInfo.rewardAmount.gtz()) {
-            restakedRewardAmount = stakeInfo.rewardAmount;
-            _checkMaxStakedAmount(targetNftId, targetInfo, restakedRewardAmount);
-
-            // reserves used for restaking
-            _spendRewardReserves(targetNftId, targetInfo, restakedRewardAmount);
-
-            // update target
-            targetInfo.stakedAmount = targetInfo.stakedAmount + restakedRewardAmount;
-            targetInfo.rewardAmount = targetInfo.rewardAmount - restakedRewardAmount;
-
-            // update stake
-            stakeInfo.stakedAmount = stakeInfo.stakedAmount + restakedRewardAmount;
-            stakeInfo.rewardAmount = AmountLib.zero();
-
-        } else {
-            restakedRewardAmount = AmountLib.zero();
-        }
-    
-        // determine amounts
-        unstakedAmount = AmountLib.min(maxUnstakedAmount, stakeInfo.stakedAmount);
-        claimedAmount = AmountLib.min(maxClaimAmount, stakeInfo.rewardAmount);
-
-        // update reserves if rewards are claimed
-        if (!restakeRewards) {
-            // check if reserves are sufficient
-            if (claimedAmount > targetInfo.reserveAmount) {
-                revert ErrorStakingStoreRewardReservesInsufficient(
-                    stakeInfo.targetNftId,
-                    targetInfo.reserveAmount,
-                    claimedAmount);
-            }
-
-            targetInfo.reserveAmount = targetInfo.reserveAmount - claimedAmount;
-        }
-
-        // update target
-        targetInfo.stakedAmount = targetInfo.stakedAmount - unstakedAmount;
-        targetInfo.rewardAmount = targetInfo.rewardAmount - claimedAmount;
-        targetInfo.lastUpdateIn = BlocknumberLib.current();
-
-        // update stake
-        stakeInfo.stakedAmount = stakeInfo.stakedAmount - unstakedAmount;
-        stakeInfo.rewardAmount = stakeInfo.rewardAmount - claimedAmount;
-        stakeInfo.lastUpdateAt = TimestampLib.current();
-        stakeInfo.lastUpdateIn = BlocknumberLib.current();
-
-        // set return values
-        stakeBalance = stakeInfo.stakedAmount;
-        rewardBalance = stakeInfo.rewardAmount;
-        lockedUntil = stakeInfo.lockedUntil;
-    }
-
-
-    function updateRewards(
-        NftId stakeNftId
-    )
-        external
-        restricted()
-        returns (
-            Amount rewardIncreaseAmount,
-            Seconds targetLockingPeriod,
-            Amount stakeBalance,
-            Amount rewardBalance,
-            Timestamp lockedUntil
-        )
     {
         // checks
         IStaking.StakeInfo storage stakeInfo = _getAndVerifyStake(stakeNftId);
         IStaking.TargetInfo storage targetInfo = _getAndVerifyTarget(stakeInfo.targetNftId);
 
-        // get seconds since last update on stake
-        Seconds duration = SecondsLib.toSeconds(
-            block.timestamp - stakeInfo.lastUpdateAt.toInt());
-        
-        // calculate reward increase since
-        rewardIncreaseAmount = StakingLib.calculateRewardAmount(
-            targetInfo.rewardRate,
-            duration,
-            stakeInfo.stakedAmount);
-
-        // effects
-        if (rewardIncreaseAmount.gtz()) {
-            // update target
-            targetInfo.rewardAmount = targetInfo.rewardAmount + rewardIncreaseAmount;
-            targetInfo.lastUpdateIn = BlocknumberLib.current();
-
-            // update stake
-            stakeInfo.rewardAmount = stakeInfo.rewardAmount + rewardIncreaseAmount;
-            stakeInfo.lastUpdateIn = BlocknumberLib.current();
-            stakeInfo.lastUpdateAt = TimestampLib.current();
+        if (updateRewards) {
+            _updateRewards(stakeNftId, stakeInfo, targetInfo);
         }
 
-        // set remaining return values
-        targetLockingPeriod = targetInfo.lockingPeriod;
-        stakeBalance = stakeInfo.stakedAmount;
-        rewardBalance = stakeInfo.rewardAmount;
-        lockedUntil = stakeInfo.lockedUntil;
+        if (restakeRewards) {
+            _restakeRewards(stakeNftId, stakeInfo, targetInfo);
+        }
+
+        _stake(stakeNftId, stakeInfo, targetInfo, additionalLockingPeriod, stakeAmount);
+    }
+
+
+    function unstake(
+        NftId stakeNftId,
+        bool updateRewards,
+        bool restakeRewards,
+        Amount maxUnstakeAmount
+    )
+        external
+        restricted()
+        returns (Amount unstakedAmount)
+    {
+        // checks
+        IStaking.StakeInfo storage stakeInfo = _getAndVerifyStake(stakeNftId);
+        IStaking.TargetInfo storage targetInfo = _getAndVerifyTarget(stakeInfo.targetNftId);
+
+        if (updateRewards) {
+            _updateRewards(stakeNftId, stakeInfo, targetInfo);
+        }
+
+        if (restakeRewards) {
+            _restakeRewards(stakeNftId, stakeInfo, targetInfo);
+        }
+
+        return _unstake(stakeNftId, stakeInfo, targetInfo, maxUnstakeAmount);
+    }
+
+
+    function updateRewards(NftId stakeNftId)
+        external
+        restricted()
+    {
+        // checks
+        IStaking.StakeInfo storage stakeInfo = _getAndVerifyStake(stakeNftId);
+        IStaking.TargetInfo storage targetInfo = _getAndVerifyTarget(stakeInfo.targetNftId);
+        _updateRewards(stakeNftId, stakeInfo, targetInfo);
     }
 
 
     function restakeRewards(
         NftId stakeNftId,
-        Amount additionalRewardAmount, 
-        Seconds additionalLockingPeriod // duration to increase locked until
+        bool updateRewards
     )
         external
         restricted()
-        returns (
-            Amount newstakedAmount
-        )
     {
         // checks
         IStaking.StakeInfo storage stakeInfo = _getAndVerifyStake(stakeNftId);
-
-        Amount oldRewardAmount = stakeInfo.rewardAmount;
-        Amount updatedRewardAmount = stakeInfo.rewardAmount + additionalRewardAmount;
-
         IStaking.TargetInfo storage targetInfo = _getAndVerifyTarget(stakeInfo.targetNftId);
-        _checkMaxStakedAmount(stakeInfo.targetNftId, targetInfo, updatedRewardAmount);
 
-        // effects
-        // update target
-        targetInfo.stakedAmount = targetInfo.stakedAmount + updatedRewardAmount;
-        targetInfo.rewardAmount = targetInfo.rewardAmount - oldRewardAmount;
-        targetInfo.lastUpdateIn = BlocknumberLib.current();
-
-        // update stake
-        stakeInfo.stakedAmount = stakeInfo.stakedAmount + updatedRewardAmount;
-        stakeInfo.rewardAmount = AmountLib.zero();
-        stakeInfo.lastUpdateAt = TimestampLib.current();
-        stakeInfo.lastUpdateIn = BlocknumberLib.current();
-
-        // increase locked until if applicable
-        if (additionalLockingPeriod.gtz()) {
-            stakeInfo.lockedUntil.addSeconds(additionalLockingPeriod);
+        if (updateRewards) {
+            _updateRewards(stakeNftId, stakeInfo, targetInfo);
         }
+
+        _restakeRewards(stakeNftId, stakeInfo, targetInfo);
     }
 
+
+    function claimRewards(
+        NftId stakeNftId,
+        bool updateRewards,
+        Amount maxClaimAmount
+    )
+        external
+        restricted()
+        returns (Amount claimedAmount)
+    {
+        // checks
+        IStaking.StakeInfo storage stakeInfo = _getAndVerifyStake(stakeNftId);
+        IStaking.TargetInfo storage targetInfo = _getAndVerifyTarget(stakeInfo.targetNftId);
+
+        if (updateRewards) {
+            _updateRewards(stakeNftId, stakeInfo, targetInfo);
+        }
+
+        claimedAmount = _claimRewards(stakeNftId, stakeInfo, targetInfo, maxClaimAmount);
+    }
 
     //--- view functions -----------------------------------------------//
 
@@ -750,7 +523,7 @@ contract StakingStore is
 
 
     /// @dev Returns true iff current stake amount is still locked
-    function isStakeLocked(NftId stakeNftId) external view returns (bool) { 
+    function isStakeLocked(NftId stakeNftId) public view returns (bool) { 
         return _stakeInfo[stakeNftId].lockedUntil > TimestampLib.current(); 
     }
 
@@ -789,6 +562,312 @@ contract StakingStore is
         return _targetNftIdSet;
     }
 
+    //--- internal functions -----------------------------------------------//
+
+    function _verifyAndUpdateTarget(NftId targetNftId)
+        private
+        returns (
+            IStaking.TargetInfo storage targetInfo,
+            Blocknumber lastUpdatedIn
+        )
+    {
+        // checks
+        targetInfo = _getAndVerifyTarget(targetNftId);
+        lastUpdatedIn = targetInfo.lastUpdateIn;
+        targetInfo.lastUpdateIn = BlocknumberLib.current();
+    }
+
+
+    function _createTarget(
+        NftId targetNftId,
+        ObjectType objectType,
+        Seconds lockingPeriod,
+        UFixed rewardRate,
+        bool checkParameters
+    )
+        private
+    {
+        // checks
+        if (checkParameters) {
+            TargetManagerLib.checkTargetParameters(
+                _registry, 
+                _reader, 
+                targetNftId, 
+                objectType, 
+                lockingPeriod, 
+                rewardRate);
+        }
+
+        // effects
+        IStaking.TargetInfo storage targetInfo = _targetInfo[targetNftId];
+        targetInfo.stakedAmount = AmountLib.zero();
+        targetInfo.rewardAmount = AmountLib.zero();
+        targetInfo.reserveAmount = AmountLib.zero();
+        targetInfo.maxStakedAmount = AmountLib.max();
+
+        targetInfo.objectType = objectType;
+        targetInfo.lockingPeriod = lockingPeriod;
+        targetInfo.rewardRate = rewardRate;
+        targetInfo.chainId = ChainIdLib.fromNftId(targetNftId);
+        targetInfo.lastUpdateIn = BlocknumberLib.current();
+
+        // add new target to target set
+        _targetNftIdSet.add(targetNftId);
+    }
+
+
+    function _spendRewardReserves(
+        NftId targetNftId, 
+        IStaking.TargetInfo storage targetInfo,
+        Amount dipAmount
+    )
+        private
+    {
+        Blocknumber lastUpdateIn = _decreaseReserves(targetNftId, targetInfo, dipAmount);
+
+        // logging
+        emit IStaking.LogStakingRewardReservesSpent(
+            targetNftId,
+            dipAmount,
+            targetInfo.reserveAmount,
+            lastUpdateIn);
+    }
+
+
+    function _decreaseReserves(
+        NftId targetNftId,
+        IStaking.TargetInfo storage targetInfo, 
+        Amount dipAmount
+    )
+        private
+        returns ( Blocknumber lastUpdateIn)
+    {
+        lastUpdateIn = targetInfo.lastUpdateIn;
+
+        // check if reserves are sufficient
+        if (dipAmount > targetInfo.reserveAmount) {
+            revert ErrorStakingStoreRewardReservesInsufficient(
+                targetNftId,
+                targetInfo.reserveAmount,
+                dipAmount);
+        }
+
+        // effects
+        targetInfo.reserveAmount = targetInfo.reserveAmount - dipAmount;
+        targetInfo.lastUpdateIn = BlocknumberLib.current();
+    }
+
+
+    function _updateRewards(
+        NftId stakeNftId,
+        IStaking.StakeInfo storage stakeInfo,
+        IStaking.TargetInfo storage targetInfo
+    )
+        internal
+        returns (Amount rewardIncreaseAmount)
+    {
+        // return if reward rate is zero
+        if (targetInfo.rewardRate.eqz()) {
+            return rewardIncreaseAmount;
+        }
+
+        // get seconds since last update on stake
+        Seconds duration = SecondsLib.toSeconds(
+            block.timestamp - stakeInfo.lastUpdateAt.toInt());
+
+        // return if duration is zero
+        if (duration.eqz()) {
+            return AmountLib.zero();
+        }
+        
+        // calculate reward increase since
+        rewardIncreaseAmount = StakingLib.calculateRewardAmount(
+            targetInfo.rewardRate,
+            duration,
+            stakeInfo.stakedAmount);
+
+        // update target + stake
+        targetInfo.rewardAmount = targetInfo.rewardAmount + rewardIncreaseAmount;
+        stakeInfo.rewardAmount = stakeInfo.rewardAmount + rewardIncreaseAmount;
+        _setLastUpdatesToCurrent(stakeInfo, targetInfo);
+
+        // logging
+        emit IStaking.LogStakingStakeRewardsUpdated(
+            stakeNftId, 
+            rewardIncreaseAmount, 
+            stakeInfo.stakedAmount, 
+            stakeInfo.rewardAmount, 
+            stakeInfo.lockedUntil);
+    }
+
+
+    function _restakeRewards(
+        NftId stakeNftId,
+        IStaking.StakeInfo storage stakeInfo,
+        IStaking.TargetInfo storage targetInfo
+    )
+        internal
+        returns (Amount restakeAmount)
+    {
+        restakeAmount = stakeInfo.rewardAmount;
+
+        // return if reward amount is zero
+        if (restakeAmount.eqz()) {
+            return restakeAmount;
+        }
+
+        // check restaking amount does not exceed target max staked amount
+        _checkMaxStakedAmount(stakeInfo.targetNftId, targetInfo, restakeAmount);
+
+        // use up reserves for newly staked dips
+        _spendRewardReserves(stakeInfo.targetNftId, targetInfo, restakeAmount);
+
+        // update target + stake
+        targetInfo.stakedAmount = targetInfo.stakedAmount + restakeAmount;
+        targetInfo.rewardAmount = targetInfo.rewardAmount - restakeAmount;
+        stakeInfo.stakedAmount = stakeInfo.stakedAmount + restakeAmount;
+        stakeInfo.rewardAmount = AmountLib.zero();
+        _setLastUpdatesToCurrent(stakeInfo, targetInfo);
+
+        // logging
+        emit IStaking.LogStakingRewardsRestaked(
+            stakeNftId,
+            restakeAmount, 
+            stakeInfo.stakedAmount, 
+            AmountLib.zero(), 
+            stakeInfo.lockedUntil);
+    }
+
+
+    function _stake(
+        NftId stakeNftId,
+        IStaking.StakeInfo storage stakeInfo,
+        IStaking.TargetInfo storage targetInfo,
+        Seconds maxAdditionalLockingPeriod,
+        Amount stakeAmount
+    )
+        internal
+    {
+        // return if reward amount is zero
+        if (stakeAmount.eqz()) {
+            return;
+        }
+
+        // check restaking amount does not exceed target max staked amount
+        _checkMaxStakedAmount(stakeInfo.targetNftId, targetInfo, stakeAmount);
+
+        // update target + stake
+        targetInfo.stakedAmount = targetInfo.stakedAmount + stakeAmount;
+        stakeInfo.stakedAmount = stakeInfo.stakedAmount + stakeAmount;
+
+        // increase locked until if applicable
+        Seconds additionalLockingPeriod = SecondsLib.min(maxAdditionalLockingPeriod, targetInfo.lockingPeriod);
+        if (stakeAmount.gtz() && additionalLockingPeriod.gtz()) {
+            stakeInfo.lockedUntil = stakeInfo.lockedUntil.addSeconds(additionalLockingPeriod);
+        }
+
+        _setLastUpdatesToCurrent(stakeInfo, targetInfo);
+
+        // logging
+        emit IStaking.LogStakingStaked(
+            stakeNftId,
+            stakeAmount, 
+            stakeInfo.stakedAmount, 
+            stakeInfo.rewardAmount, 
+            stakeInfo.lockedUntil);
+    }
+
+
+    function _claimRewards(
+        NftId stakeNftId,
+        IStaking.StakeInfo storage stakeInfo,
+        IStaking.TargetInfo storage targetInfo,
+        Amount maxClaimAmount
+    )
+        internal
+        returns (Amount claimAmount)
+    {
+        claimAmount = AmountLib.min(maxClaimAmount, stakeInfo.rewardAmount);
+
+        // return if no rewards to claim
+        if (claimAmount.eqz()) {
+            return claimAmount;
+        }
+
+        // effects
+        // use up reserves for claimed rewards
+        _spendRewardReserves(stakeInfo.targetNftId, targetInfo, claimAmount);
+
+        // update target + stake
+        targetInfo.rewardAmount = targetInfo.rewardAmount - claimAmount;
+        stakeInfo.rewardAmount = stakeInfo.rewardAmount - claimAmount;
+        _setLastUpdatesToCurrent(stakeInfo, targetInfo);
+
+        // logging
+        emit IStaking.LogStakingRewardsClaimed(
+            stakeNftId,
+            claimAmount, 
+            stakeInfo.stakedAmount, 
+            stakeInfo.rewardAmount, 
+            stakeInfo.lockedUntil);
+    }
+
+
+    function _unstake(
+        NftId stakeNftId,
+        IStaking.StakeInfo storage stakeInfo,
+        IStaking.TargetInfo storage targetInfo,
+        Amount maxUnstakeAmount
+    )
+        internal
+        returns (Amount unstakedAmount)
+    {
+        unstakedAmount = AmountLib.min(maxUnstakeAmount, stakeInfo.stakedAmount);
+
+        // return if no stakes to claim
+        if (unstakedAmount.eqz()) {
+            return unstakedAmount;
+        }
+
+        // check if stake is still locked
+        if (isStakeLocked(stakeNftId)) {
+            revert IStaking.ErrorStakingStakeLocked(stakeNftId, stakeInfo.lockedUntil);
+        }
+
+        // update target + stake
+        targetInfo.stakedAmount = targetInfo.stakedAmount - unstakedAmount;
+        stakeInfo.stakedAmount = stakeInfo.stakedAmount - unstakedAmount;
+        _setLastUpdatesToCurrent(stakeInfo, targetInfo);
+
+        // logging
+        emit IStaking.LogStakingUnstaked(
+            stakeNftId,
+            unstakedAmount, 
+            stakeInfo.stakedAmount, 
+            stakeInfo.rewardAmount, 
+            stakeInfo.lockedUntil);
+    }
+
+
+    function _setLastUpdatesToCurrent(
+        IStaking.StakeInfo storage stakeInfo,
+        IStaking.TargetInfo storage targetInfo
+    )
+        internal
+    {
+        targetInfo.lastUpdateIn = BlocknumberLib.current();
+        _setStakeLastUpdatesToCurrent(stakeInfo);
+    }
+
+
+    function _setStakeLastUpdatesToCurrent(
+        IStaking.StakeInfo storage stakeInfo
+    )
+        internal
+    {
+        stakeInfo.lastUpdateIn = BlocknumberLib.current();
+        stakeInfo.lastUpdateAt = TimestampLib.current();
+    }
 
     //--- private stake and target functions --------------------------------//
 
@@ -817,7 +896,7 @@ contract StakingStore is
         private
     {
         if (targetInfo.stakedAmount + additionalstakedAmount > targetInfo.maxStakedAmount) {
-            revert ErrorStakingStoreStakesExceedingTargetMaxAmount(
+            revert IStaking.ErrorStakingTargetMaxStakedAmountExceeded(
                 targetNftId,
                 targetInfo.maxStakedAmount,
                 targetInfo.stakedAmount + additionalstakedAmount);

@@ -3,13 +3,17 @@ pragma solidity ^0.8.20;
 
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IStaking} from "./IStaking.sol";
+import {IStakingService} from "./IStakingService.sol";
 
-import {Amount, AmountLib} from "../type/Amount.sol";
+import {Amount} from "../type/Amount.sol";
 import {NftId} from "../type/NftId.sol";
+import {ReleaseRegistry} from "../registry/ReleaseRegistry.sol";
 import {Seconds, SecondsLib} from "../type/Seconds.sol";
 import {StakingReader} from "./StakingReader.sol";
+import {STAKING} from "../type/ObjectType.sol";
 import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
 import {UFixed, UFixedLib} from "../type/UFixed.sol";
+import {VersionPart} from "../type/Version.sol";
 
 
 library StakingLib {
@@ -27,6 +31,7 @@ library StakingLib {
     {
         return _checkCreateParameters(stakingReader, targetNftId, dipAmount);
     }
+
 
     function _checkCreateParameters(
         StakingReader stakingReader,
@@ -69,6 +74,7 @@ library StakingLib {
         lockingPeriod = info.lockingPeriod;
     }
 
+
     function checkUnstakeParameters(
         StakingReader stakingReader,
         NftId stakeNftId
@@ -101,6 +107,27 @@ library StakingLib {
         }
 
         lockingPeriod = stakingReader.getTargetInfo(targetNftId).lockingPeriod;
+    }
+
+
+    function checkAndGetStakingService(
+        IRegistry registry,
+        VersionPart release
+    )
+        public
+        view
+        returns (IStakingService stakingService)
+    {
+        if (!ReleaseRegistry(registry.getReleaseRegistryAddress()).isActiveRelease(release)) {
+            revert IStaking.ErrorStakingReleaseNotActive(release);
+        }
+
+        address stakingServiceAddress = registry.getServiceAddress(STAKING(), release);
+        if (stakingServiceAddress == address(0)) {
+            revert IStaking.ErrorStakingServiceNotFound(release);
+        }
+
+        return IStakingService(stakingServiceAddress);
     }
 
 

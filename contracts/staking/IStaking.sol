@@ -239,9 +239,8 @@ interface IStaking is
     function stake(NftId stakeNftId, Amount dipAmount) external returns (Amount newStakeBalance);
 
     /// @dev Pays the specified DIP amount to the holder of the stake NFT ID.
-    /// If dipAmount is set to Amount.max() all stakes and rewards are transferred to the stake holder.
     /// permissioned: only staking service may call this function.
-    function unstake(NftId stakeNftId) external returns (Amount unstakedAmount, Amount rewardsClaimedAmount);
+    function unstake(NftId stakeNftId) external returns (Amount unstakedAmount);
 
     /// @dev restakes the dips to a new target.
     /// the sum of the staked dips and the accumulated rewards will be restaked.
