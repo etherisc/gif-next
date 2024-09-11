@@ -121,7 +121,7 @@ contract StakingReader is
 
     /// @dev Get the max staked amount allowed for the specified target NFT ID.
     function getTargetMaxStakedAmount(NftId targetNftId) external view returns (Amount maxStakedAmount) {
-        return getTargetInfo(targetNftId).maxStakedAmount;
+        return getTargetInfo(targetNftId).limitAmount;
     }
 
 
@@ -142,7 +142,7 @@ contract StakingReader is
     }
 
     function getTotalValueLocked(NftId targetNftId, address token) external view returns (Amount totalValueLocked) {
-        return getTvlInfo(targetNftId, token).tvlAmount;
+        return _store.getTvlInfo(targetNftId, token).tvlAmount;
     }
 
     function getRequiredStakeBalance(NftId targetNftId) external view returns (Amount requiredStakedAmount) {

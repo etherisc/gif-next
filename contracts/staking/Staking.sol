@@ -7,6 +7,7 @@ import {IRegistry} from "../registry/IRegistry.sol";
 import {IRelease} from "../registry/IRelease.sol";
 import {IStaking} from "./IStaking.sol";
 import {IStakingService} from "./IStakingService.sol";
+import {ITargetManager} from "./ITargetManager.sol";
 import {IVersionable} from "../upgradeability/IVersionable.sol";
 
 import {Amount, AmountLib} from "../type/Amount.sol";
@@ -21,10 +22,11 @@ import {Registerable} from "../shared/Registerable.sol";
 import {StakingLib} from "./StakingLib.sol";
 import {StakingReader} from "./StakingReader.sol";
 import {StakingStore} from "./StakingStore.sol";
+import {TargetManager} from "./TargetManager.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {TokenHandlerDeployerLib} from "../shared/TokenHandlerDeployerLib.sol";
 import {TokenRegistry} from "../registry/TokenRegistry.sol";
-import {UFixed} from "../type/UFixed.sol";
+import {UFixed, UFixedLib} from "../type/UFixed.sol";
 import {Version, VersionLib, VersionPart, VersionPartLib} from "../type/Version.sol";
 import {Versionable} from "../upgradeability/Versionable.sol";
 
@@ -32,6 +34,7 @@ import {Versionable} from "../upgradeability/Versionable.sol";
 contract Staking is 
     Component,
     Versionable,
+    TargetManager,
     IStaking
 {
     string public constant CONTRACT_NAME = "Staking";
@@ -60,6 +63,12 @@ contract Staking is
         _;
     }
 
+
+    modifier onlyTargetOwner(NftId targetNftId) {
+        _checkTypeAndOwner(targetNftId, TARGET(), true);
+        _;
+    }
+
     //--- contract intitialization -------------------------------------------
 
     function initializeTokenHandler()
@@ -78,6 +87,7 @@ contract Staking is
             dipToken, 
             getRegistry().getAuthority());
     }
+
 
     //--- staking owner functions -------------------------------------------//
 
@@ -153,20 +163,32 @@ contract Staking is
 
 
     /// @inheritdoc IStaking
-    function setStakingReader(StakingReader stakingReader)
+    function setStakingReader(address reader)
         external
         virtual
         restricted()
         onlyOwner()
     {
+        StakingReader stakingReader = StakingReader(reader);
+
         if(stakingReader.getStaking() != IStaking(this)) {
             revert ErrorStakingStakingReaderStakingMismatch(address(stakingReader.getStaking()));
         }
 
-        address oldReader = address(_getStakingStorage()._reader);
-        _getStakingStorage()._reader = stakingReader;
+        StakingStorage storage $ = _getStakingStorage();
+        $._reader = stakingReader;
+        $._store.setStakingReader(reader);
+    }
 
-        emit LogStakingStakingReaderSet(address(stakingReader), oldReader);
+
+    /// @inheritdoc IStaking
+    function setTargetManager(address targetManager)
+        external
+        virtual
+        restricted()
+        onlyOwner()
+    {
+        _getStakingStorage()._store.setTargetManager(targetManager);
     }
 
 
@@ -339,16 +361,27 @@ contract Staking is
     }
 
 
+    // TODO refactor into setTargetLimits
     /// @inheritdoc IStaking
-    function setMaxStakedAmount(NftId targetNftId, Amount maxStakedAmount)
+    function setMaxStakedAmount(NftId targetNftId, Amount stakeLimitAmount)
         external
         virtual
         restricted()
         onlyTarget(targetNftId)
     {
-        _getStakingStorage()._store.setMaxStakedAmount(targetNftId, maxStakedAmount);
+        _getStakingStorage()._store.setMaxStakedAmount(targetNftId, stakeLimitAmount);
+    }
 
-        emit LogStakingTargetMaxStakedAmountSet(targetNftId, maxStakedAmount);
+
+    /// @inheritdoc IStaking
+    function setTargetLimits(NftId targetNftId, Amount marginAmount, Amount limitAmount)
+        external
+        virtual
+        restricted()
+        onlyTargetOwner(targetNftId)
+    {
+        StakingStorage storage $ = _getStakingStorage();
+        $._store.setTargetLimits(targetNftId, marginAmount, limitAmount);
     }
 
 
@@ -678,6 +711,7 @@ contract Staking is
         $._tokenRegistry = TokenRegistry(tokenRegistryAddress);
         // staking service has to be set via setStakingService after deploying the first GIF release
 
+        // initialize component
         __Component_init(
             registry.getAuthority(),
             address(registry), 
@@ -688,6 +722,14 @@ contract Staking is
             owner, 
             "", // registry data
             ""); // component data
+
+        // initialize target manager
+        uint16 tvlUpdatesTrigger = 2; // every 2nd tvl update TODO: make configurable
+        UFixed maxTvlRatio = UFixedLib.toUFixed(1, -1); // change of 10% in tvl  TODO: make configurable
+        __TargetManager_init(
+            $._store,
+            tvlUpdatesTrigger,
+            maxTvlRatio);
 
         // Protocol target is created in the StakingStore constructor.
         // This allows setting up the protocol target before the full 
@@ -708,7 +750,12 @@ contract Staking is
             revert ErrorStakingTargetNotFound($._protocolNftId);
         }
 
-        emit LogStakingTargetCreated($._protocolNftId, protocolInfo.objectType, protocolInfo.lockingPeriod, protocolInfo.rewardRate, protocolInfo.maxStakedAmount);
+        emit LogStakingTargetCreated(
+            $._protocolNftId, 
+            protocolInfo.objectType, 
+            protocolInfo.lockingPeriod, 
+            protocolInfo.rewardRate, 
+            protocolInfo.limitAmount);
     }
 
 

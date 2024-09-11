@@ -144,9 +144,9 @@ library StakingLib {
             revert IStaking.ErrorStakingStakeAmountZero(targetNftId);
         }
 
-        Amount maxStakedAmount = stakingReader.getTargetMaxStakedAmount(targetNftId);
-        if (dipAmount > maxStakedAmount) {
-            revert IStaking.ErrorStakingTargetMaxStakedAmountExceeded(targetNftId, maxStakedAmount, dipAmount);
+        Amount stakeLimitAmount = stakingReader.getTargetMaxStakedAmount(targetNftId);
+        if (dipAmount > stakeLimitAmount) {
+            revert IStaking.ErrorStakingTargetMaxStakedAmountExceeded(targetNftId, stakeLimitAmount, dipAmount);
         }
     }
 

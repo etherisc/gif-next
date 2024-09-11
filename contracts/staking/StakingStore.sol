@@ -5,6 +5,7 @@ import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManage
 
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IStaking} from "./IStaking.sol";
+import {ITargetManager} from "./ITargetManager.sol";
 
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {ChainId, ChainIdLib} from "../type/ChainId.sol";
@@ -36,13 +37,14 @@ contract StakingStore is
 
     // target
     error ErrorStakingStoreTargetNotInitialized(NftId targetNftId);
+    error ErrorStakingStoreLimitNotInitialized(NftId targetNftId);
 
     // in/decreasing reward reserves
     error ErrorStakingStoreNotTarget(NftId targetNftId);
     error ErrorStakingStoreRewardReservesInsufficient(NftId targetNftId, Amount reserveAmount, Amount claimedAmount);
 
     // stakes
-    error ErrorStakingStoreStakesExceedingTargetMaxAmount(NftId targetNftId, Amount maxStakedAmount, Amount newIStaking);
+    error ErrorStakingStoreStakesExceedingTargetMaxAmount(NftId targetNftId, Amount stakeLimitAmount, Amount newIStaking);
     error ErrorStakingStoreStakeNotInitialized(NftId nftId);
 
     // creating and updating of staking balance
@@ -54,14 +56,17 @@ contract StakingStore is
     error ErrorStakingStoreTvlBalanceNotInitialized(NftId nftId, address token);
 
     IRegistry private _registry;
-    NftIdSet private _targetNftIdSet;
+    ITargetManager private _targetManager;
     StakingReader private _reader;
+    NftIdSet private _targetNftIdSet;
+
 
     // stakes
     mapping(NftId stakeNftId => IStaking.StakeInfo) private _stakeInfo;
 
     // targets
     mapping(NftId targetNftId => IStaking.TargetInfo) private _targetInfo;
+    mapping(NftId targetNftId => IStaking.LimitInfo) private _limitInfo;
     mapping(NftId targetNftId => mapping(address token => IStaking.TvlInfo)) private _tvlInfo;
     mapping(NftId targetNftId => address [] token) private _targetToken;
 
@@ -69,7 +74,10 @@ contract StakingStore is
     mapping(ChainId chainId => mapping(address token => IStaking.TokenInfo)) private _tokenInfo;
 
 
-    constructor(IRegistry registry, StakingReader reader)
+    constructor(
+        IRegistry registry, 
+        StakingReader reader
+    )
         AccessManaged(msg.sender)
     {
         // set final authority
@@ -89,6 +97,28 @@ contract StakingStore is
             false); // no parameter check
     }
 
+    //--- dependency management ---------------------------------------------//
+
+    function setStakingReader(address reader)
+        external
+        restricted()
+    {
+        address oldReader = address(_reader);
+        _reader = StakingReader(reader);
+
+        emit IStaking.LogStakingStakingReaderSet(reader, oldReader);
+    }
+
+
+    function setTargetManager(address targetManager)
+        external
+        restricted()
+    {
+        address oldTargetManager = address(_targetManager);
+        _targetManager = ITargetManager(targetManager);
+
+        emit IStaking.LogStakingTargetManagerSet(targetManager, oldTargetManager);
+    }
 
     //--- token management --------------------------------------------------//
 
@@ -200,22 +230,53 @@ contract StakingStore is
     }
 
 
+    // TODO refactor to set limits functionality
     function setMaxStakedAmount(
         NftId targetNftId,
-        Amount maxStakedAmount
+        Amount stakeLimitAmount
     )
         external
         restricted() // staking
         returns (
-            Amount oldMaxStakedAmount,
+            Amount oldLimitAmount,
             Blocknumber lastUpdatedIn
         )
     {
         IStaking.TargetInfo storage targetInfo;
         (targetInfo, lastUpdatedIn) = _verifyAndUpdateTarget(targetNftId);
 
-        oldMaxStakedAmount = targetInfo.maxStakedAmount;
-        targetInfo.maxStakedAmount = maxStakedAmount;
+        oldLimitAmount = targetInfo.limitAmount;
+        targetInfo.limitAmount = stakeLimitAmount;
+
+        emit IStaking.LogStakingTargetMaxStakedAmountSet(targetNftId, stakeLimitAmount, lastUpdatedIn);
+
+    }
+
+
+    function setTargetLimits(
+        NftId targetNftId, 
+        Amount marginAmount, 
+        Amount hardLimitAmount
+    )
+        external
+        virtual
+        restricted()
+    {
+        // checks
+        IStaking.LimitInfo storage limitInfo = _getAndVerifyLimit(targetNftId);
+        Blocknumber lastUpdateIn = limitInfo.lastUpdateIn;
+
+        // effects
+        limitInfo.marginAmount = marginAmount;
+        limitInfo.hardLimitAmount = hardLimitAmount;
+        limitInfo.lastUpdateIn = BlocknumberLib.current();
+
+        // logging
+        emit IStaking.LogStakingTargetLimitsUpdated(
+            targetNftId,
+            marginAmount,
+            hardLimitAmount,
+            lastUpdateIn);
     }
 
 
@@ -319,7 +380,9 @@ contract StakingStore is
         IStaking.TvlInfo storage tvlInfo = _getAndVerifyTvl(targetNftId, token);
 
         // effects
+        // update tvl balance and adapts required stakes if necessary
         tvlInfo.tvlAmount = tvlInfo.tvlAmount + amount;
+        _checkAndUpdateTargetLimit(targetNftId, token, tvlInfo);
         tvlInfo.lastUpdateIn = BlocknumberLib.current();
         newBalance = tvlInfo.tvlAmount;
     }
@@ -338,16 +401,90 @@ contract StakingStore is
         IStaking.TvlInfo storage tvlInfo = _getAndVerifyTvl(targetNftId, token);
 
         // effects
+        // update tvl balance and adapts required stakes if necessary
         tvlInfo.tvlAmount = tvlInfo.tvlAmount - amount;
+        _checkAndUpdateTargetLimit(targetNftId, token, tvlInfo);
         tvlInfo.lastUpdateIn = BlocknumberLib.current();
         newBalance = tvlInfo.tvlAmount;
+    }
+
+
+    function updateTargetLimit(NftId targetNftId)
+        external
+        restricted()
+        returns (Amount stakeLimitAmount)
+    {
+        return _updateTargetLimit(targetNftId);
+    }
+
+
+    function _checkAndUpdateTargetLimit(
+        NftId targetNftId, 
+        address token,
+        IStaking.TvlInfo storage tvlInfo
+    )
+        internal
+    {
+        // update counter
+        tvlInfo.updatesCounter++;
+
+        // check if upgrade is necessary
+        bool updateRequired = _targetManager.isLimitUpdateRequired(
+            targetNftId, 
+            token, 
+            tvlInfo.updatesCounter,
+            tvlInfo.tvlBaselineAmount, 
+            tvlInfo.tvlAmount);
+
+        if (updateRequired) {
+            // reset baseline and counter
+            tvlInfo.tvlBaselineAmount = tvlInfo.tvlAmount;
+            tvlInfo.updatesCounter = 0;
+
+            // update limit
+            _updateTargetLimit(targetNftId);
+        }
+    }
+
+
+    function _updateTargetLimit(NftId targetNftId)
+        internal
+        returns (Amount limitAmount)
+    {
+        // checks
+        IStaking.TargetInfo storage targetInfo = _getAndVerifyTarget(targetNftId);
+        IStaking.LimitInfo storage limitInfo = _getAndVerifyLimit(targetNftId);
+        Blocknumber lastUpdateIn = limitInfo.lastUpdateIn;
+
+        // calculate max stake amount
+        Amount requiredStakeAmount = getRequiredStakeBalance(targetNftId);
+        limitAmount = AmountLib.min(
+            targetInfo.limitAmount, 
+            requiredStakeAmount + limitInfo.marginAmount);
+        
+        limitAmount = AmountLib.min(
+            limitAmount, 
+            limitInfo.hardLimitAmount);
+
+        // effects
+        targetInfo.limitAmount = limitAmount;
+        targetInfo.lastUpdateIn = BlocknumberLib.current();
+
+        // logging
+        emit IStaking.LogStakingTargetLimitUpdated(
+            targetNftId,
+            targetInfo.limitAmount,
+            limitInfo.hardLimitAmount,
+            requiredStakeAmount,
+            targetInfo.stakedAmount,
+            lastUpdateIn);
     }
 
     //--- stake specific functions -------------------------------------//
 
     function createStake(
         NftId stakeNftId, 
-        NftId targetNftId, 
+        NftId targetNftId,
         address stakeOwner,
         Amount stakeAmount
     )
@@ -487,6 +624,10 @@ contract StakingStore is
         return _reader;
     }
 
+    function getTargetManager() external view returns (ITargetManager targetManager){
+        return _targetManager;
+    }
+
 
     function exists(NftId stakeNftId) external view returns (bool) { 
         return _stakeInfo[stakeNftId].lastUpdateIn.gtz();
@@ -494,16 +635,16 @@ contract StakingStore is
 
 
     function getRequiredStakeBalance(NftId targetNftId)
-        external
+        public
         view
-        returns (Amount requiredStakedAmount)
+        returns (Amount requiredStakeAmount)
     {
         address [] memory tokens = _targetToken[targetNftId];
         if (tokens.length == 0) {
             return AmountLib.zero();
         }
 
-        requiredStakedAmount = AmountLib.zero();
+        requiredStakeAmount = AmountLib.zero();
         ChainId targetChainId = _targetInfo[targetNftId].chainId;
         address token;
         Amount tvlAmount;
@@ -517,7 +658,7 @@ contract StakingStore is
             stakingRate = _tokenInfo[targetChainId][token].stakingRate;
             if (stakingRate.eqz()) { continue; }
 
-            requiredStakedAmount = requiredStakedAmount + tvlAmount.multiplyWith(stakingRate);
+            requiredStakeAmount = requiredStakeAmount + tvlAmount.multiplyWith(stakingRate);
         }
     }
 
@@ -543,6 +684,12 @@ contract StakingStore is
     /// @dev Returns the target infos for the specified target.
     function getTargetInfo(NftId targetNftId) external view returns (IStaking.TargetInfo memory targetInfo) { 
         return _targetInfo[targetNftId]; 
+    }
+
+
+    /// @dev Returns the target limit infos for the specified target.
+    function getLimitInfo(NftId targetNftId) external view returns (IStaking.LimitInfo memory limitInfo) { 
+        return _limitInfo[targetNftId]; 
     }
 
 
@@ -599,17 +746,25 @@ contract StakingStore is
         }
 
         // effects
+
+        // target info
         IStaking.TargetInfo storage targetInfo = _targetInfo[targetNftId];
         targetInfo.stakedAmount = AmountLib.zero();
         targetInfo.rewardAmount = AmountLib.zero();
         targetInfo.reserveAmount = AmountLib.zero();
-        targetInfo.maxStakedAmount = AmountLib.max();
+        targetInfo.limitAmount = AmountLib.max();
 
         targetInfo.objectType = objectType;
         targetInfo.lockingPeriod = lockingPeriod;
         targetInfo.rewardRate = rewardRate;
         targetInfo.chainId = ChainIdLib.fromNftId(targetNftId);
         targetInfo.lastUpdateIn = BlocknumberLib.current();
+
+        // limit info
+        IStaking.LimitInfo storage limitInfo = _limitInfo[targetNftId];
+        limitInfo.marginAmount = AmountLib.zero();
+        limitInfo.hardLimitAmount = AmountLib.max();
+        limitInfo.lastUpdateIn = BlocknumberLib.current();
 
         // add new target to target set
         _targetNftIdSet.add(targetNftId);
@@ -895,10 +1050,10 @@ contract StakingStore is
     )
         private
     {
-        if (targetInfo.stakedAmount + additionalstakedAmount > targetInfo.maxStakedAmount) {
+        if (targetInfo.stakedAmount + additionalstakedAmount > targetInfo.limitAmount) {
             revert IStaking.ErrorStakingTargetMaxStakedAmountExceeded(
                 targetNftId,
-                targetInfo.maxStakedAmount,
+                targetInfo.limitAmount,
                 targetInfo.stakedAmount + additionalstakedAmount);
         }
 
@@ -919,6 +1074,23 @@ contract StakingStore is
 
         if (targetInfo.lastUpdateIn.eqz()) {
             revert ErrorStakingStoreTargetNotInitialized(targetNftId);
+        }
+    }
+
+
+    function _getAndVerifyLimit(
+        NftId targetNftId
+    )
+        private
+        view
+        returns (
+            IStaking.LimitInfo storage limitInfo
+        )
+    {
+        limitInfo = _limitInfo[targetNftId];
+
+        if (limitInfo.lastUpdateIn.eqz()) {
+            revert ErrorStakingStoreLimitNotInitialized(targetNftId);
         }
     }
 

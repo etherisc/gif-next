@@ -216,6 +216,9 @@ contract GifDeployer is Test {
             gifAdmin,
             gifManager);
 
+        console.log("   d) set target manager for staking store");
+        staking.setTargetManager(address(staking));
+
         console.log("GIF core contracts deployed and setup completed");
 
         vm.stopPrank();
@@ -261,7 +264,9 @@ contract GifDeployer is Test {
         StakingReader stakingReader = new StakingReader(registry);
 
         console.log("   b) deploy staking store");
-        StakingStore stakingStore = new StakingStore(registry, stakingReader);
+        StakingStore stakingStore = new StakingStore(
+            registry, 
+            stakingReader);
 
         console.log("   c) deploy staking manager (including upgradeable staking)");
         stakingManager = new StakingManager(

@@ -220,6 +220,7 @@ contract RegistryAuthorization
           _authorize(functions, IStaking.setStakingRate.selector, "setStakingRate");
           _authorize(functions, IStaking.setStakingService.selector, "setStakingService");
           _authorize(functions, IStaking.setStakingReader.selector, "setStakingReader");
+          _authorize(functions, IStaking.setTargetManager.selector, "setTargetManager");
           _authorize(functions, IStaking.addToken.selector, "addToken");
           _authorize(functions, IStaking.approveTokenHandler.selector, "approveTokenHandler");
           _authorize(functions, IStaking.withdrawRewardReserves.selector, "withdrawRewardReserves");
@@ -287,6 +288,8 @@ contract RegistryAuthorization
                STAKING_STORE_TARGET_NAME, 
                getTargetRole(getTarget(STAKING_TARGET_NAME)));
 
+          _authorize(functions, StakingStore.setStakingReader.selector, "setStakingReader");
+          _authorize(functions, StakingStore.setTargetManager.selector, "setTargetManager");
           _authorize(functions, StakingStore.addTargetToken.selector, "addTargetToken");
           _authorize(functions, StakingStore.addToken.selector, "addToken");
           _authorize(functions, StakingStore.setStakingRate.selector, "setStakingRate");
