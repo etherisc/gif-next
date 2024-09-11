@@ -2,10 +2,11 @@
 pragma solidity ^0.8.20;
 
 import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManaged.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol"; 
 
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IStaking} from "./IStaking.sol";
-import {ITargetManager} from "./ITargetManager.sol";
+import {ITargetLimitHandler} from "./ITargetLimitHandler.sol";
 
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {ChainId, ChainIdLib} from "../type/ChainId.sol";
@@ -25,6 +26,7 @@ import {UFixed, UFixedLib} from "../type/UFixed.sol";
 
 
 contract StakingStore is 
+    Initializable,
     AccessManaged,
     KeyValueStore,
     StakingLifecycle
@@ -56,7 +58,7 @@ contract StakingStore is
     error ErrorStakingStoreTvlBalanceNotInitialized(NftId nftId, address token);
 
     IRegistry private _registry;
-    ITargetManager private _targetManager;
+    ITargetLimitHandler private _targetLimitHandler;
     StakingReader private _reader;
     NftIdSet private _targetNftIdSet;
 
@@ -97,6 +99,17 @@ contract StakingStore is
             false); // no parameter check
     }
 
+
+    function initialize(
+        address targetLimitHandler
+    )
+        external
+        initializer()
+    {
+        _targetLimitHandler = ITargetLimitHandler(targetLimitHandler);
+    }
+
+
     //--- dependency management ---------------------------------------------//
 
     function setStakingReader(address reader)
@@ -110,14 +123,14 @@ contract StakingStore is
     }
 
 
-    function setTargetManager(address targetManager)
+    function setTargetLimitHandler(address targetLimitHandler )
         external
         restricted()
     {
-        address oldTargetManager = address(_targetManager);
-        _targetManager = ITargetManager(targetManager);
+        address oldTargetHandler = address(_targetLimitHandler);
+        _targetLimitHandler = ITargetLimitHandler(targetLimitHandler );
 
-        emit IStaking.LogStakingTargetManagerSet(targetManager, oldTargetManager);
+        emit IStaking.LogStakingTargetHandlerSet(targetLimitHandler , oldTargetHandler);
     }
 
     //--- token management --------------------------------------------------//
@@ -429,7 +442,7 @@ contract StakingStore is
         tvlInfo.updatesCounter++;
 
         // check if upgrade is necessary
-        bool updateRequired = _targetManager.isLimitUpdateRequired(
+        bool updateRequired = _targetLimitHandler.isLimitUpdateRequired(
             targetNftId, 
             token, 
             tvlInfo.updatesCounter,
@@ -624,8 +637,8 @@ contract StakingStore is
         return _reader;
     }
 
-    function getTargetManager() external view returns (ITargetManager targetManager){
-        return _targetManager;
+    function getTargetManager() external view returns (ITargetLimitHandler targetLimitHandler ){
+        return _targetLimitHandler;
     }
 
 

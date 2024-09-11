@@ -16,8 +16,9 @@ contract StakingManager is
     /// @dev initializes proxy manager with service implementation 
     constructor(
         address registry,
-        address tokenRegistry,
+        address targetHandler,
         address stakingStore,
+        address tokenRegistry,
         address initialOwner,
         bytes32 salt
     )
@@ -27,8 +28,9 @@ contract StakingManager is
         _initialImplementation = address(stakingImplementation);
         _initializationData = abi.encode(
             registry,
-            tokenRegistry,
-            stakingStore);
+            targetHandler,
+            stakingStore,
+            tokenRegistry);
         
         IVersionable versionable = initialize(
             registry,

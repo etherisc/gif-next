@@ -4,15 +4,13 @@ pragma solidity ^0.8.20;
 import {Amount} from "../type/Amount.sol";
 import {NftId} from "../type/NftId.sol";
 
-interface ITargetManager {
+interface ITargetLimitHandler {
 
     //--- functions ---------------------------------------------------------//
 
     /// @dev Updates the target limit.
     /// The target limit defines the maximum stake amount for the target NFT ID.
-    function updateLimit(
-        NftId targetNftId
-    ) external returns (Amount stakeLimitAmount);
+    function updateLimit(NftId targetNftId) external returns (Amount stakeLimitAmount);
 
 
     //--- view functions ----------------------------------------------------//

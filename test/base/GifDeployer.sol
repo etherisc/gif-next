@@ -33,6 +33,7 @@ import {ReleaseAdmin} from "../../contracts/registry/ReleaseAdmin.sol";
 import {Staking} from "../../contracts/staking/Staking.sol";
 import {StakingManager} from "../../contracts/staking/StakingManager.sol";
 import {StakingReader} from "../../contracts/staking/StakingReader.sol";
+import {TargetHandler} from "../../contracts/staking/TargetHandler.sol";
 import {StakingStore} from "../../contracts/staking/StakingStore.sol";
 import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
 
@@ -216,9 +217,6 @@ contract GifDeployer is Test {
             gifAdmin,
             gifManager);
 
-        console.log("   d) set target manager for staking store");
-        staking.setTargetManager(address(staking));
-
         console.log("GIF core contracts deployed and setup completed");
 
         vm.stopPrank();
@@ -265,19 +263,30 @@ contract GifDeployer is Test {
 
         console.log("   b) deploy staking store");
         StakingStore stakingStore = new StakingStore(
-            registry, 
+            registry,
             stakingReader);
 
-        console.log("   c) deploy staking manager (including upgradeable staking)");
+        console.log("   c) deploy target handler");
+        TargetHandler targetHandler = new TargetHandler(
+            registry,
+            stakingStore);
+
+        console.log("   d) deploy staking manager (including upgradeable staking)");
         stakingManager = new StakingManager(
             address(registry),
-            address(tokenRegistry),
+            address(targetHandler),
             address(stakingStore),
+            address(tokenRegistry),
             stakingOwner,
             bytes32("")); // salt
         staking = stakingManager.getStaking();
 
-        console.log("   d) initialize staking reader");
+        // TODO cleanup/remove if target hanlding iniitialization is not needed
+        console.log("   e) initialize staking store");
+        stakingStore.initialize(
+            address(targetHandler));
+
+        console.log("   f) initialize staking reader");
         stakingReader.initialize(
             address(staking),
             address(stakingStore));

@@ -7,7 +7,7 @@ import {IRegistry} from "../registry/IRegistry.sol";
 import {IRelease} from "../registry/IRelease.sol";
 import {IStaking} from "./IStaking.sol";
 import {IStakingService} from "./IStakingService.sol";
-import {ITargetManager} from "./ITargetManager.sol";
+import {ITargetLimitHandler} from "./ITargetLimitHandler.sol";
 import {IVersionable} from "../upgradeability/IVersionable.sol";
 
 import {Amount, AmountLib} from "../type/Amount.sol";
@@ -22,7 +22,7 @@ import {Registerable} from "../shared/Registerable.sol";
 import {StakingLib} from "./StakingLib.sol";
 import {StakingReader} from "./StakingReader.sol";
 import {StakingStore} from "./StakingStore.sol";
-import {TargetManager} from "./TargetManager.sol";
+import {TargetHandler} from "./TargetHandler.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {TokenHandlerDeployerLib} from "../shared/TokenHandlerDeployerLib.sol";
 import {TokenRegistry} from "../registry/TokenRegistry.sol";
@@ -34,7 +34,6 @@ import {Versionable} from "../upgradeability/Versionable.sol";
 contract Staking is 
     Component,
     Versionable,
-    TargetManager,
     IStaking
 {
     string public constant CONTRACT_NAME = "Staking";
@@ -46,6 +45,7 @@ contract Staking is
         TokenRegistry _tokenRegistry;
         TokenHandler _tokenHandler;
         IStakingService _stakingService;
+        TargetHandler _targetHandler;
         StakingStore _store;
         StakingReader _reader;
         NftId _protocolNftId;
@@ -181,17 +181,7 @@ contract Staking is
     }
 
 
-    /// @inheritdoc IStaking
-    function setTargetManager(address targetManager)
-        external
-        virtual
-        restricted()
-        onlyOwner()
-    {
-        _getStakingStorage()._store.setTargetManager(targetManager);
-    }
-
-
+    // TODO move to TargetHandler?
     /// @inheritdoc IStaking
     function addToken(
         ChainId chainId, 
@@ -357,6 +347,7 @@ contract Staking is
     {
         (UFixed oldRewardRate,) = _getStakingStorage()._store.setRewardRate(targetNftId, rewardRate);
 
+        // TODO move logging to store
         emit LogStakingTargetRewardRateSet(targetNftId, rewardRate, oldRewardRate);
     }
 
@@ -369,7 +360,8 @@ contract Staking is
         restricted()
         onlyTarget(targetNftId)
     {
-        _getStakingStorage()._store.setMaxStakedAmount(targetNftId, stakeLimitAmount);
+        StakingStorage storage $ = _getStakingStorage();
+        $._store.setMaxStakedAmount(targetNftId, stakeLimitAmount);
     }
 
 
@@ -398,6 +390,7 @@ contract Staking is
         
         $._store.addTargetToken(targetNftId, token);
 
+        // TODO move logging to store
         emit LogStakingTargetTokenAdded(targetNftId, chainId, token);
     }
 
@@ -412,6 +405,7 @@ contract Staking is
         StakingStorage storage $ = _getStakingStorage();
         newBalance = $._store.increaseTotalValueLocked(targetNftId, token, amount);
 
+        // TODO move logging to store
         emit LogStakingTotalValueLockedIncreased(targetNftId, token, amount, newBalance);
     }
 
@@ -452,7 +446,7 @@ contract Staking is
         
     }
 
-    //--- staking functions -------------------------------------------------//
+    //--- stake owner functions ---------------------------------------------//
 
     /// @inheritdoc IStaking
     function createStake(
@@ -604,6 +598,10 @@ contract Staking is
         return _getStakingStorage()._reader;
     }
 
+    function getTargetHandler() external virtual view returns (TargetHandler targetHandler) {
+        return _getStakingStorage()._targetHandler;
+    }
+
     function getStakingStore() external virtual view returns (StakingStore stakingStore) {
         return _getStakingStorage()._store;
     }
@@ -698,14 +696,16 @@ contract Staking is
     {
         (
             address registryAddress,
-            address tokenRegistryAddress,
-            address stakingStoreAddress
-        ) = abi.decode(data, (address, address, address));
+            address targetHandlerAddress,
+            address stakingStoreAddress,
+            address tokenRegistryAddress
+        ) = abi.decode(data, (address, address, address, address));
 
         // wiring to external contracts
         IRegistry registry = IRegistry(registryAddress);
         StakingStorage storage $ = _getStakingStorage();
         $._protocolNftId = registry.getProtocolNftId();
+        $._targetHandler = TargetHandler(targetHandlerAddress);
         $._store = StakingStore(stakingStoreAddress);
         $._reader = StakingStore(stakingStoreAddress).getStakingReader();
         $._tokenRegistry = TokenRegistry(tokenRegistryAddress);
@@ -723,14 +723,6 @@ contract Staking is
             "", // registry data
             ""); // component data
 
-        // initialize target manager
-        uint16 tvlUpdatesTrigger = 2; // every 2nd tvl update TODO: make configurable
-        UFixed maxTvlRatio = UFixedLib.toUFixed(1, -1); // change of 10% in tvl  TODO: make configurable
-        __TargetManager_init(
-            $._store,
-            tvlUpdatesTrigger,
-            maxTvlRatio);
-
         // Protocol target is created in the StakingStore constructor.
         // This allows setting up the protocol target before the full 
         // staking authorization setup is in place.
@@ -739,7 +731,7 @@ contract Staking is
         _registerInterface(type(IStaking).interfaceId);
     }
 
-
+    // TODO move to TargetHandler?
     function _checkAndLogProtocolTargetCreation(StakingStorage storage $)
         internal 
         virtual

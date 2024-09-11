@@ -4,7 +4,6 @@ pragma solidity ^0.8.20;
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {IComponent} from "../shared/IComponent.sol";
-import {ITargetManager} from "./ITargetManager.sol";
 import {IVersionable} from "../upgradeability/IVersionable.sol";
 
 import {Amount} from "../type/Amount.sol";
@@ -15,6 +14,7 @@ import {ObjectType} from "../type/ObjectType.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {StakingReader} from "./StakingReader.sol";
 import {StakingStore} from "./StakingStore.sol";
+import {TargetHandler} from "./TargetHandler.sol";
 import {Timestamp} from "../type/Timestamp.sol";
 import {UFixed} from "../type/UFixed.sol";
 import {VersionPart} from "../type/Version.sol";
@@ -22,8 +22,7 @@ import {VersionPart} from "../type/Version.sol";
 
 interface IStaking is 
     IComponent,
-    IVersionable,
-    ITargetManager
+    IVersionable
 {
 
     // owner functions
@@ -32,7 +31,7 @@ interface IStaking is
     event LogStakingStakingRateSet(ChainId chainId, address token, UFixed newStakingRate, UFixed oldStakingRate, Blocknumber lastUpdatedIn);
     event LogStakingStakingServiceSet(address stakingService, VersionPart release, address oldStakingService);
     event LogStakingStakingReaderSet(address stakingReader, address oldStakingReader);
-    event LogStakingTargetManagerSet(address targetManager, address oldTargetManager);
+    event LogStakingTargetHandlerSet(address targetManager, address oldTargetHandler);
     event LogStakingTokenHandlerApproved(address token, Amount approvalAmount, Amount oldApprovalAmount);
 
     // token
@@ -178,10 +177,6 @@ interface IStaking is
     /// @dev Sets/updates the staking reader contract. 
     function setStakingReader(address stakingReader) external;
 
-    // TODO rename TargetManager to something without manager (manager reserved for upgradeable stuff)
-    /// @dev Sets/updates the target manager contract. 
-    function setTargetManager(address targetManager) external;
-
     /// @dev Registers a token for recording staking rate and total value locked.
     function addToken(ChainId chainId, address token) external;
 
@@ -296,6 +291,7 @@ interface IStaking is
 
     //--- view and pure functions -------------------------------------------//
 
+    function getTargetHandler() external view returns (TargetHandler targetHandler);
     function getStakingStore() external view returns (StakingStore stakingStore);
     function getStakingReader() external view returns (StakingReader reader);
 }

@@ -710,7 +710,7 @@ contract ProductPolicyTest is GifTest {
     }
 
 
-    function test_productPolicyActivate() public {
+    function test_productPolicyActivateHappyCase() public {
         // GIVEN
 
         vm.startPrank(productOwner);
