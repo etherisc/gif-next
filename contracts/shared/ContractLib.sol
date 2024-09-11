@@ -9,6 +9,7 @@ import {IPolicyHolder} from "../shared/IPolicyHolder.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IService} from "../shared/IService.sol";
 
+import {ChainId} from "../type/ChainId.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType, INSTANCE, PRODUCT, DISTRIBUTION, ORACLE, POOL} from "../type/ObjectType.sol";
 import {VersionPart} from "../type/Version.sol";
@@ -22,7 +23,7 @@ interface IInstanceAdminHelper {
 }
 
 interface ITokenRegistryHelper {
-    function isActive(uint256 chainId, address token, VersionPart release) external view returns (bool);
+    function isActive(ChainId chainId, address token, VersionPart release) external view returns (bool);
 }
 
 library ContractLib {
@@ -114,8 +115,8 @@ library ContractLib {
 
     function isActiveToken(
         address tokenRegistryAddress,
+        ChainId chainId, 
         address token,
-        uint256 chainId, 
         VersionPart release
     )
         external 

@@ -273,7 +273,7 @@ contract ServiceAuthorization is
                adminRoleId: adminRoleId,
                roleType: roleType,
                maxMemberCount: maxMemberCount,
-               createdAt: TimestampLib.blockTimestamp(),
+               createdAt: TimestampLib.current(),
                pausedAt: TimestampLib.max()});
      }
 
@@ -315,6 +315,6 @@ contract ServiceAuthorization is
                IAccess.FunctionInfo({
                     selector: SelectorLib.toSelector(selector),
                     name: StrLib.toStr(name),
-                    createdAt: TimestampLib.blockTimestamp()}));
+                    createdAt: TimestampLib.current()}));
      }
 }

@@ -58,7 +58,7 @@ contract TestProductClaim is GifTest {
     function test_productPayoutCreateHappyCaseCheckLogAndPolicy() public {
         // GIVEN
         _approve();
-        _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
+        _collateralize(policyNftId, true, TimestampLib.current());
         Amount claimAmount = AmountLib.toAmount(499);
 
         (
@@ -117,7 +117,7 @@ contract TestProductClaim is GifTest {
     function test_productPayoutCreateHappyCaseCheckClaimAndPayout() public {
         // GIVEN
         _approve();
-        _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
+        _collateralize(policyNftId, true, TimestampLib.current());
 
         uint256 claimAmountInt = 500;
         uint256 payoutAmountInt = 300;
@@ -162,7 +162,7 @@ contract TestProductClaim is GifTest {
     function test_productPayoutCreate_claimNotConfirmed() public {
         // GIVEN
         _approve();
-        _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
+        _collateralize(policyNftId, true, TimestampLib.current());
         Amount claimAmount = AmountLib.toAmount(499);
 
         bytes memory claimData = "please pay";
@@ -185,7 +185,7 @@ contract TestProductClaim is GifTest {
     function test_productPayoutProcessHappyCase() public {
         // GIVEN
         _approve();
-        _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
+        _collateralize(policyNftId, true, TimestampLib.current());
 
         uint256 claimAmountInt = 500;
         uint256 payoutAmountInt = 300;
@@ -279,7 +279,7 @@ contract TestProductClaim is GifTest {
 
         // GIVEN
         _approve();
-        _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
+        _collateralize(policyNftId, true, TimestampLib.current());
 
         uint256 claimAmountInt = 500;
         uint256 payoutAmountInt = 300;
@@ -933,7 +933,7 @@ contract TestProductClaim is GifTest {
     function test_productPayoutProcessTwice() public {
         // GIVEN
         _approve();
-        _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
+        _collateralize(policyNftId, true, TimestampLib.current());
 
         uint256 claimAmountInt = 500;
         uint256 payoutAmountInt = 300;
@@ -968,7 +968,7 @@ contract TestProductClaim is GifTest {
     function test_productPayoutCancelPayout() public {
         // GIVEN
         _approve();
-        _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
+        _collateralize(policyNftId, true, TimestampLib.current());
 
         uint256 claimAmountInt = 500;
         uint256 payoutAmountInt = 300;
@@ -1053,7 +1053,7 @@ contract TestProductClaim is GifTest {
     function test_productPayoutCancelPaidOutPayout() public {
         // GIVEN
         _approve();
-        _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
+        _collateralize(policyNftId, true, TimestampLib.current());
 
         uint256 claimAmountInt = 500;
         uint256 payoutAmountInt = 300;
@@ -1084,10 +1084,10 @@ contract TestProductClaim is GifTest {
         product.cancelPayout(policyNftId, payoutId);
     }
 
-    function test_Claim_cancelConfirmedClaim() public {
+    function test_Claim_cancelConfirmedClaim_happyCase() public {
         // GIVEN
         _approve();
-        _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
+        _collateralize(policyNftId, true, TimestampLib.current());
 
         uint256 claimAmountInt = 500;
         uint256 payoutAmountInt = 500;
@@ -1126,7 +1126,7 @@ contract TestProductClaim is GifTest {
     function test_Claim_cancelConfirmedClaim_pendingPayout() public {
         // GIVEN
         _approve();
-        _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
+        _collateralize(policyNftId, true, TimestampLib.current());
 
         uint256 claimAmountInt = 500;
         uint256 payoutAmountInt = 500;
@@ -1207,7 +1207,7 @@ contract TestProductClaim is GifTest {
 
         // collateralize policy
         bool collectPremium = true;
-        Timestamp activateAt = TimestampLib.blockTimestamp();
+        Timestamp activateAt = TimestampLib.current();
 
         vm.startPrank(productOwner);
         product.createPolicy(policyNftId, collectPremium, activateAt); 

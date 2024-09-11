@@ -57,7 +57,7 @@ contract TestOracle is GifTest {
 
         // GIVEN
         string memory requestText = "some question for the oracle to answer";
-        Timestamp expiryAt = TimestampLib.blockTimestamp().addSeconds(
+        Timestamp expiryAt = TimestampLib.current().addSeconds(
             SecondsLib.oneYear());
 
         // check that oracle component has received oracle request
@@ -105,7 +105,7 @@ contract TestOracle is GifTest {
 
         // GIVEN
         string memory requestText = "some sync question";
-        Timestamp expiryAt = TimestampLib.blockTimestamp().addSeconds(
+        Timestamp expiryAt = TimestampLib.current().addSeconds(
             SecondsLib.oneYear());
 
         RequestId expectedRequestId = RequestIdLib.toRequestId(1);
@@ -181,7 +181,7 @@ contract TestOracle is GifTest {
     function test_oracleRequestCreate_callbackMethodNameEmpty() public {
         // GIVEN
         string memory requestText = "some sync question";
-        Timestamp expiryAt = TimestampLib.blockTimestamp().addSeconds(SecondsLib.oneYear());
+        Timestamp expiryAt = TimestampLib.current().addSeconds(SecondsLib.oneYear());
 
         RequestId expectedRequestId = RequestIdLib.toRequestId(1);
 
@@ -198,7 +198,7 @@ contract TestOracle is GifTest {
     function test_oracleRequestCreate_invalidNftType() public {
         // GIVEN
         string memory requestText = "some sync question";
-        Timestamp expiryAt = TimestampLib.blockTimestamp().addSeconds(SecondsLib.oneYear());
+        Timestamp expiryAt = TimestampLib.current().addSeconds(SecondsLib.oneYear());
 
         RequestId expectedRequestId = RequestIdLib.toRequestId(1);
 
@@ -218,7 +218,7 @@ contract TestOracle is GifTest {
 
         // GIVEN
         string memory requestText = "some question for the oracle to answer";
-        Timestamp expiryAt = TimestampLib.blockTimestamp().addSeconds(
+        Timestamp expiryAt = TimestampLib.current().addSeconds(
             SecondsLib.oneYear());
 
         bool synchronous = false;
@@ -284,7 +284,7 @@ contract TestOracle is GifTest {
 
         // GIVEN
         string memory requestText = "some question for the oracle to answer";
-        Timestamp expiryAt = TimestampLib.blockTimestamp().addSeconds(
+        Timestamp expiryAt = TimestampLib.current().addSeconds(
             SecondsLib.oneYear());
 
         bool synchronous = false;
@@ -348,7 +348,7 @@ contract TestOracle is GifTest {
 
         // GIVEN
         string memory requestText = "some question for the oracle to answer";
-        Timestamp expiryAt = TimestampLib.blockTimestamp().addSeconds(
+        Timestamp expiryAt = TimestampLib.current().addSeconds(
             SecondsLib.oneYear());
 
         bool synchronous = false;
@@ -359,7 +359,7 @@ contract TestOracle is GifTest {
             synchronous);
 
         string memory responseText = "async /w revert to replay";
-        Timestamp revertUntil = TimestampLib.blockTimestamp();
+        Timestamp revertUntil = TimestampLib.current();
 
         oracle.respondAsync(
             requestId, 
@@ -408,7 +408,7 @@ contract TestOracle is GifTest {
 
         // GIVEN
         string memory requestText = "some question for the oracle to answer";
-        Timestamp expiryAt = TimestampLib.blockTimestamp().addSeconds(
+        Timestamp expiryAt = TimestampLib.current().addSeconds(
             SecondsLib.oneYear());
 
         bool synchronous = false;

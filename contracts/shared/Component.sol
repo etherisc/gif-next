@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import {Amount} from "../type/Amount.sol";
+import {Amount, AmountLib} from "../type/Amount.sol";
 import {IComponent} from "./IComponent.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {IComponentService} from "./IComponentService.sol";
@@ -46,7 +46,7 @@ abstract contract Component is
     }
 
 
-    function _initializeComponent(
+    function __Component_init(
         address authority,
         address registry,
         NftId parentNftId,
@@ -152,7 +152,11 @@ abstract contract Component is
     function _approveTokenHandler(IERC20Metadata token, Amount amount)
         internal
         virtual
+        returns (Amount oldAllowanceAmount)
     {
+        oldAllowanceAmount = AmountLib.toAmount(
+            token.allowance(address(getTokenHandler()), address(this)));
+
         _getComponentStorage()._componentService.approveTokenHandler(
             token, 
             amount);

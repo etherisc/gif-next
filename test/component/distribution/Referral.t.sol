@@ -126,7 +126,7 @@ contract ReferralTest is ReferralTestBase {
 
         // WHEN
         vm.startPrank(productOwner);
-        product.createPolicy(policyNftId, true, TimestampLib.blockTimestamp()); 
+        product.createPolicy(policyNftId, true, TimestampLib.current()); 
         vm.stopPrank();
 
         // THEN - check 13 tokens in distribution wallet (120 premium ), 887 tokens in customer wallet, 10100 tokens in pool wallet
@@ -233,8 +233,8 @@ contract ReferralTest is ReferralTestBase {
 
         // WHEN
         vm.startPrank(productOwner);
-        product.createPolicy(policyNftId, true, TimestampLib.blockTimestamp()); 
-        product.createPolicy(policyNftId2, true, TimestampLib.blockTimestamp()); 
+        product.createPolicy(policyNftId, true, TimestampLib.current()); 
+        product.createPolicy(policyNftId2, true, TimestampLib.current()); 
 
         // THEN - check 13 tokens in distribution wallet (120 premium ), 887 tokens in customer wallet, 10100 tokens in pool wallet
         assertTrue(instanceReader.getPolicyState(policyNftId) == COLLATERALIZED(), "policy state not COLLATERALIZED");
@@ -289,7 +289,7 @@ contract ReferralTest is ReferralTestBase {
         );
 
         // WHEN 
-        product.createPolicy(policyNftId3, true, TimestampLib.blockTimestamp()); 
+        product.createPolicy(policyNftId3, true, TimestampLib.current()); 
 
         // THEN 
         assertTrue(instanceReader.getPolicyState(policyNftId3) == COLLATERALIZED(), "policy3 state not COLLATERALIZED");
@@ -348,7 +348,7 @@ contract ReferralTest is ReferralTestBase {
             tsZero,
             referralData);
 
-        Timestamp exp =  TimestampLib.toTimestamp(TimestampLib.blockTimestamp().toInt() - 10);
+        Timestamp exp =  TimestampLib.toTimestamp(TimestampLib.current().toInt() - 10);
 
         // THEN
         vm.expectRevert(abi.encodeWithSelector(
@@ -364,7 +364,7 @@ contract ReferralTest is ReferralTestBase {
             exp,
             referralData);
 
-        exp =  TimestampLib.toTimestamp(TimestampLib.blockTimestamp().toInt() + maxReferralLifetime.toInt() + 10);
+        exp =  TimestampLib.toTimestamp(TimestampLib.current().toInt() + maxReferralLifetime.toInt() + 10);
 
         // THEN
         vm.expectRevert(abi.encodeWithSelector(
@@ -386,7 +386,7 @@ contract ReferralTest is ReferralTestBase {
         // GIVEN
         _setupTestData(true);
         vm.startPrank(customer);
-        Timestamp exp = TimestampLib.blockTimestamp().addSeconds(SecondsLib.toSeconds(10));
+        Timestamp exp = TimestampLib.current().addSeconds(SecondsLib.toSeconds(10));
 
         // THEN
         vm.expectRevert(abi.encodeWithSelector(
@@ -408,7 +408,7 @@ contract ReferralTest is ReferralTestBase {
         // GIVEN
         _setupTestData(true);
         vm.startPrank(customer);
-        Timestamp exp = TimestampLib.blockTimestamp().addSeconds(SecondsLib.toSeconds(10));
+        Timestamp exp = TimestampLib.current().addSeconds(SecondsLib.toSeconds(10));
         UFixed discount = UFixedLib.toUFixed(3, -2);
 
         // THEN

@@ -27,16 +27,16 @@ contract TimestampTest is Test {
 
     function test_blockTimestamp() public {
         uint256 ts = block.timestamp;
-        assertEq(TimestampLib.blockTimestamp().toInt(), ts);
+        assertEq(TimestampLib.current().toInt(), ts);
 
         vm.warp(100);
 
         ts = block.timestamp;
-        assertEq(TimestampLib.blockTimestamp().toInt(), ts);
+        assertEq(TimestampLib.current().toInt(), ts);
 
         vm.warp(200);
 
-        assertGt(TimestampLib.blockTimestamp().toInt(), ts);
+        assertGt(TimestampLib.current().toInt(), ts);
     }
 
     function test_op_gt() public {

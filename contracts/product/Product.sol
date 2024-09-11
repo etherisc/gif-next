@@ -133,7 +133,7 @@ abstract contract Product is
     }
 
 
-    function _initializeProduct(
+    function __Product_init(
         address registry,
         NftId instanceNftId,
         string memory name,
@@ -147,7 +147,7 @@ abstract contract Product is
         virtual
         onlyInitializing()
     {
-        _initializeInstanceLinkedComponent(
+        __InstanceLinkedComponent_init(
             registry, 
             instanceNftId, 
             name, 

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+/// @dev Target: Cover durations of 1000 years.
 type Seconds is uint40;
 
 using {
@@ -88,6 +89,15 @@ library SecondsLib {
     function lt(Seconds duration1, Seconds duration2) public pure returns (bool) {
         return Seconds.unwrap(duration1) < Seconds.unwrap(duration2);
     }
+
+    /// @dev returns the smaller of the duration
+    function min(Seconds duration1, Seconds duration2) public pure returns (Seconds) {
+        if (Seconds.unwrap(duration1) < Seconds.unwrap(duration2)) {
+            return duration1;
+        } 
+        
+        return duration2;
+    }   
 
     /// @dev return add duration1 and duration2
     function add(Seconds duration1, Seconds duration2) public pure returns (Seconds) {

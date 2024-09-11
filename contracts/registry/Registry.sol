@@ -300,17 +300,17 @@ contract Registry is
 
 
     /// @dev earliest GIF major version 
-    function getInitialVersion() external view returns (VersionPart) {
+    function getInitialRelease() external view returns (VersionPart) {
         return VersionPartLib.toVersionPart(_releaseRegistry.INITIAL_GIF_VERSION());
     }
 
     /// @dev next GIF release version to be released
-    function getNextVersion() external view returns (VersionPart) {
+    function getNextRelease() external view returns (VersionPart) {
         return _releaseRegistry.getNextVersion();
     }
 
     /// @dev latest active GIF release version 
-    function getLatestVersion() external view returns (VersionPart) { 
+    function getLatestRelease() external view returns (VersionPart) { 
         return _releaseRegistry.getLatestVersion();
     }
 

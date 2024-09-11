@@ -143,7 +143,7 @@ contract ProductClusterTest is GifClusterTest {
         _setupProductClusters1to4();
         _createProductSpecificObjects1and2();
 
-        Timestamp activateAt = TimestampLib.blockTimestamp();
+        Timestamp activateAt = TimestampLib.current();
 
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -171,8 +171,8 @@ contract ProductClusterTest is GifClusterTest {
 
         policyNftId1 = _createApplication(myProduct1, riskId1, bundleNftId1, referralId1);
         policyNftId2 = _createApplication(myProduct2, riskId2, bundleNftId2, referralId2);
-        _createPolicy(myProduct1, policyNftId1, TimestampLib.blockTimestamp());
-        _createPolicy(myProduct2, policyNftId2, TimestampLib.blockTimestamp());
+        _createPolicy(myProduct1, policyNftId1, TimestampLib.current());
+        _createPolicy(myProduct2, policyNftId2, TimestampLib.current());
     }
 
 
@@ -219,7 +219,7 @@ contract ProductClusterTest is GifClusterTest {
             referralCode,
             DISCOUNT, // 10% discount
             MAX_REFERRALS, // max referrals
-            TimestampLib.blockTimestamp().addSeconds(
+            TimestampLib.current().addSeconds(
                 SecondsLib.toSeconds(5 * 24 * 3600)), // expiry in 5 days
             ""); // referral data
         vm.stopPrank();

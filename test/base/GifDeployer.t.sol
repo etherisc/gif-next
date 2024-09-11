@@ -5,6 +5,7 @@ import {IAccessManager} from "@openzeppelin/contracts/access/manager/IAccessMana
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {console} from "../../lib/forge-std/src/Test.sol";
 
+import {ChainId, ChainIdLib} from "../../contracts/type/ChainId.sol";
 import {ChainNft} from "../../contracts/registry/ChainNft.sol";
 import {Dip} from "../../contracts/mock/Dip.sol";
 import {GifDeployer} from "./GifDeployer.sol";
@@ -29,6 +30,7 @@ import {VersionPart, VersionPartLib} from "../../contracts/type/Version.sol";
 // solhint-disable-next-line max-states-count
 contract GifDeployerTest is GifDeployer {
 
+    ChainId public currentChainId = ChainIdLib.current();
     VersionPart public gifV3;
     IServiceAuthorization public serviceAuthorization;
 
@@ -107,7 +109,7 @@ contract GifDeployerTest is GifDeployer {
         assertTrue(address(tokenRegistry) != address(0), "token registry address zero");
 
         assertEq(address(tokenRegistry.getDipToken()), address(dip), "unexpected dip address");
-        assertTrue(tokenRegistry.isRegistered(block.chainid, address(dip)), "dip not registered with token registry");
+        assertTrue(tokenRegistry.isRegistered(currentChainId, address(dip)), "dip not registered with token registry");
 
         // TODO reactivate + amend once full gif setup is streamlined
         // assertTrue(tokenRegistry.isActive(block.chainid, address(dip), VersionPartLib.toVersionPart(3)), "dip not active for gif version 3");

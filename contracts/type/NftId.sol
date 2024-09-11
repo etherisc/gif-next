@@ -78,8 +78,8 @@ library NftIdLib {
     }
 
     function toNftId(KeyId keyId) public pure returns (NftId nftId) {
-       uint248 keyIdInt = uint248(bytes31(KeyId.unwrap(keyId)));
-       assert(keyIdInt < type(uint96).max);
-       return NftId.wrap(uint96(keyIdInt));
+        uint248 keyIdInt = uint248(bytes31(KeyId.unwrap(keyId)));
+        assert(keyIdInt < type(uint96).max);
+        return NftId.wrap(uint96(keyIdInt));
     }
 }

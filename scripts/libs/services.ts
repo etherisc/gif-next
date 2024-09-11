@@ -156,13 +156,12 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             release.salt
         ],
         { libraries: {
-            AmountLib: libraries.amountLibAddress,
             ContractLib: libraries.contractLibAddress,
             NftIdLib: libraries.nftIdLibAddress,
+            ObjectTypeLib: libraries.objectTypeLibAddress, 
             RoleIdLib: libraries.roleIdLibAddress,
             TimestampLib: libraries.timestampLibAddress,
             VersionLib: libraries.versionLibAddress,
-            ObjectTypeLib: libraries.objectTypeLibAddress, 
         }});
 
     const stakingServiceManager = stakingServiceManagerBaseContract as StakingServiceManager;
@@ -234,6 +233,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         ],
         { libraries: { 
             AmountLib: libraries.amountLibAddress,
+            ChainIdLib: libraries.chainIdLibAddress,
             ContractLib: libraries.contractLibAddress,
             FeeLib: libraries.feeLibAddress,
             NftIdLib: libraries.nftIdLibAddress, 

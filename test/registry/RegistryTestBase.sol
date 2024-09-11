@@ -612,13 +612,13 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         assertEq(registry.getProtocolNftId().toInt(), protocolNftId.toInt(), "getProtocolNftId() returned unexpected value");
 
         // TODO mirror release state in local state, use it in this checks
-        assertEq(registry.getInitialVersion().toInt(), VERSION.toInt(), "getInitialVersion() returned unexpected value");
+        assertEq(registry.getInitialRelease().toInt(), VERSION.toInt(), "getInitialVersion() returned unexpected value");
         // next version points to: 
         // 1. "initial version - 1" if 0 releases where ever created 
         // 2. the version undergoing deployment  
         // 3. the latest activated version if no new releases where created since then
-        assertEq(registry.getNextVersion().toInt(), VERSION.toInt(), "getNextVersion() returned unexpected value");
-        assertEq(registry.getLatestVersion().toInt(), VERSION.toInt(), "getLatestVersion() returned unexpected value");
+        assertEq(registry.getNextRelease().toInt(), VERSION.toInt(), "getNextVersion() returned unexpected value");
+        assertEq(registry.getLatestRelease().toInt(), VERSION.toInt(), "getLatestVersion() returned unexpected value");
 
 
         // check for zero address

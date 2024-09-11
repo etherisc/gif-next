@@ -29,7 +29,7 @@ abstract contract BasicPool is
         virtual
         onlyInitializing()
     {
-        _initializePool(
+        __Pool_init(
             registry, 
             productNftId, 
             name, 

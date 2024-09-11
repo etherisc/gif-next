@@ -183,6 +183,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         ],
         {
             libraries: {
+                ChainIdLib: libraries.chainIdLibAddress,
                 VersionPartLib: libraries.versionPartLibAddress,
             }
         });
@@ -197,7 +198,6 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         [registryAddress],
         {
             libraries: {
-                NftIdLib: libraries.nftIdLibAddress,
             }
         });
 
@@ -216,10 +216,12 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
             libraries: {
                 AmountLib: libraries.amountLibAddress, 
                 BlocknumberLib: libraries.blockNumberLibAddress, 
+                ChainIdLib: libraries.chainIdLibAddress, 
                 Key32Lib: libraries.key32LibAddress, 
                 NftIdLib: libraries.nftIdLibAddress, 
                 LibNftIdSet: libraries.libNftIdSetAddress,
-                ObjectTypeLib: libraries.objectTypeLibAddress, 
+                SecondsLib: libraries.secondsLibAddress, 
+                StakingLib: libraries.stakingLibAddress, 
                 StateIdLib: libraries.stateIdLibAddress, 
                 TargetManagerLib: libraries.targetManagerLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
@@ -245,15 +247,16 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         { 
             libraries: { 
                 AmountLib: libraries.amountLibAddress, 
+                BlocknumberLib: libraries.blockNumberLibAddress, 
+                ChainIdLib: libraries.chainIdLibAddress, 
                 ContractLib: libraries.contractLibAddress,
                 NftIdLib: libraries.nftIdLibAddress, 
+                SecondsLib: libraries.secondsLibAddress, 
                 StakingLib: libraries.stakingLibAddress, 
-                TargetManagerLib: libraries.targetManagerLibAddress, 
                 TimestampLib: libraries.timestampLibAddress,
                 TokenHandlerDeployerLib: libraries.tokenHandlerDeployerLibAddress,
                 VersionLib: libraries.versionLibAddress,
                 VersionPartLib: libraries.versionPartLibAddress,
-                ObjectTypeLib: libraries.objectTypeLibAddress,
             }
         });
 

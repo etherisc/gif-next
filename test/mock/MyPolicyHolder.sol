@@ -64,7 +64,7 @@ contract MyPolicyHolder is PolicyHolder {
             product.createPolicy(
                 applicationNftId, 
                 false, 
-                TimestampLib.blockTimestamp());
+                TimestampLib.current());
         }
     }
 

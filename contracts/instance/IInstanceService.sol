@@ -109,8 +109,9 @@ interface IInstanceService is IService {
     function setStakingLockingPeriod(Seconds stakeLockingPeriod) external;
     function setStakingRewardRate(UFixed rewardRate) external;
     function setStakingMaxAmount(Amount maxStakedAmount) external;
-    function refillStakingRewardReserves(address rewardProvider, Amount dipAmount) external;
+
+    function refillInstanceRewardReserves(address rewardProvider, Amount dipAmount) external returns (Amount newBalance);
 
     /// @dev Defunds the staking reward reserves for the specified target.
-    function withdrawStakingRewardReserves(Amount dipAmount) external returns (Amount newBalance);
+    function withdrawInstanceRewardReserves(Amount dipAmount) external returns (Amount newBalance);
 }

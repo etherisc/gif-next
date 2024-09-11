@@ -41,7 +41,7 @@ contract FireTestBase is GifTest {
         vm.startPrank(registryOwner);
         tokenRegistry.registerToken(address(fireUSD));
         tokenRegistry.setActiveForVersion(
-            block.chainid, 
+            currentChainId, 
             address(fireUSD), 
             VersionPartLib.toVersionPart(3),
             true);

@@ -118,7 +118,7 @@ contract OracleService is
         bool callerIsOracle = true;
         IOracle.RequestInfo memory request = _checkAndGetRequestInfo(instance, requestId, oracleNftId, callerIsOracle);
         request.responseData = responseData;
-        request.respondedAt = TimestampLib.blockTimestamp();
+        request.respondedAt = TimestampLib.current();
 
         instance.getInstanceStore().updateRequest(
             requestId, request, KEEP_STATE());
@@ -253,8 +253,8 @@ contract OracleService is
         }
 
         // check expiriyAt >= now
-        if (expiryAt < TimestampLib.blockTimestamp()) {
-            revert ErrorOracleServiceExpiryInThePast(TimestampLib.blockTimestamp(), expiryAt);
+        if (expiryAt < TimestampLib.current()) {
+            revert ErrorOracleServiceExpiryInThePast(TimestampLib.current(), expiryAt);
         }
 
         // check callbackMethodName.length > 0
@@ -298,7 +298,7 @@ contract OracleService is
         }
 
         // check expiry
-        if (info.expiredAt < TimestampLib.blockTimestamp()) {
+        if (info.expiredAt < TimestampLib.current()) {
             revert ErrorOracleServiceRequestExpired(requestId, info.expiredAt);
         }
     }

@@ -120,12 +120,9 @@ contract ServiceAuthorizationV3
           _authorize(functions, IStakingService.withdrawInstanceRewardReserves.selector, "withdrawInstanceRewardReserves");
 
           functions = _authorizeForService(STAKING(), ALL());
-          _authorize(functions, IStakingService.create.selector, "create");
-          _authorize(functions, IStakingService.stake.selector, "stake");
-          _authorize(functions, IStakingService.restakeToNewTarget.selector, "restakeToNewTarget");
-          _authorize(functions, IStakingService.updateRewards.selector, "updateRewards");
-          _authorize(functions, IStakingService.claimRewards.selector, "claimRewards");
-          _authorize(functions, IStakingService.unstake.selector, "unstake");
+          _authorize(functions, IStakingService.createStakeObject.selector, "createStakeObject");
+          _authorize(functions, IStakingService.pullDipToken.selector, "pullDipToken");
+          _authorize(functions, IStakingService.pushDipToken.selector, "pushDipToken");
      }
 
 
@@ -153,8 +150,8 @@ contract ServiceAuthorizationV3
           _authorize(functions, IInstanceService.setStakingLockingPeriod.selector, "setStakingLockingPeriod");
           _authorize(functions, IInstanceService.setStakingRewardRate.selector, "setStakingRewardRate");
           _authorize(functions, IInstanceService.setStakingMaxAmount.selector, "setStakingMaxAmount");
-          _authorize(functions, IInstanceService.refillStakingRewardReserves.selector, "refillStakingRewardReserves");
-          _authorize(functions, IInstanceService.withdrawStakingRewardReserves.selector, "withdrawStakingRewardReserves");
+          _authorize(functions, IInstanceService.refillInstanceRewardReserves.selector, "refillInstanceRewardReserves");
+          _authorize(functions, IInstanceService.withdrawInstanceRewardReserves.selector, "withdrawInstanceRewardReserves");
      }
 
      /// @dev Accounting service function authorization.

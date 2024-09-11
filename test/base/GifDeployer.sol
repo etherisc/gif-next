@@ -216,7 +216,7 @@ contract GifDeployer is Test {
             gifAdmin,
             gifManager);
 
-        console.log("GIF core contracts deployd and setup completed");
+        console.log("GIF core contracts deployed and setup completed");
 
         vm.stopPrank();
         // solhint-disable enable

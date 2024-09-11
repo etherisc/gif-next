@@ -11,19 +11,21 @@ import {IInstanceLinkedComponent} from "./IInstanceLinkedComponent.sol";
 import {InstanceAdmin} from "../instance/InstanceAdmin.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
-import {IInstanceService} from "../instance/IInstanceService.sol";
 import {IPoolComponent} from "../pool/IPoolComponent.sol";
 import {IProductComponent} from "../product/IProductComponent.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegistryService} from "../registry/IRegistryService.sol";
+import {IStaking} from "../staking/IStaking.sol";
+import {IStakingService} from "../staking/IStakingService.sol";
 
 import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
 import {Amount, AmountLib} from "../type/Amount.sol";
+import {ChainIdLib} from "../type/ChainId.sol";
 import {ContractLib} from "../shared/ContractLib.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
 import {KEEP_STATE} from "../type/StateId.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
-import {ObjectType, ACCOUNTING, REGISTRY, COMPONENT, DISTRIBUTION, INSTANCE, ORACLE, POOL, PRODUCT} from "../type/ObjectType.sol";
+import {ObjectType, ACCOUNTING, REGISTRY, COMPONENT, DISTRIBUTION, INSTANCE, ORACLE, POOL, PRODUCT, STAKING} from "../type/ObjectType.sol";
 import {Service} from "../shared/Service.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {TokenHandlerDeployerLib} from "../shared/TokenHandlerDeployerLib.sol";
@@ -38,7 +40,7 @@ contract ComponentService is
 
     IAccountingService private _accountingService;
     IRegistryService private _registryService;
-    IInstanceService private _instanceService;
+    IStaking private _staking;
 
     function _initialize(
         address owner, 
@@ -57,7 +59,7 @@ contract ComponentService is
 
         _accountingService = IAccountingService(_getServiceAddress(ACCOUNTING()));
         _registryService = IRegistryService(_getServiceAddress(REGISTRY()));
-        _instanceService = IInstanceService(_getServiceAddress(INSTANCE()));
+        _staking = IStakingService(_getServiceAddress(STAKING())).getStaking();
 
         _registerInterface(type(IComponentService).interfaceId);
     }
@@ -220,10 +222,16 @@ contract ComponentService is
         }
 
         IInstance instance = IInstance(msg.sender);
+        NftId instanceNftId = registry.getNftIdForAddress(msg.sender);
         productNftId = _verifyAndRegister(
             instance, 
             productAddress, 
-            instance.getNftId(), // instance is parent of product to be registered 
+            instanceNftId, // instance is parent of product to be registered 
+            token);
+
+        // add product specific token for product to staking
+        _staking.addTargetToken(
+            instanceNftId, 
             token);
     }
 
@@ -561,8 +569,8 @@ contract ComponentService is
             // check if provided token is whitelisted and active
             if (!ContractLib.isActiveToken(
                 getRegistry().getTokenRegistryAddress(), 
+                ChainIdLib.current(), 
                 token, 
-                block.chainid, 
                 AccessManagerCloneable(authority()).getRelease())
             ) {
                 revert ErrorComponentServiceTokenInvalid(token);

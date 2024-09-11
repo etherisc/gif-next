@@ -14,7 +14,7 @@ import {IServiceAuthorization} from "../authorization/IServiceAuthorization.sol"
 
 import {ContractLib} from "../shared/ContractLib.sol";
 import {NftId} from "../type/NftId.sol";
-import {ObjectType, ObjectTypeLib, POOL, RELEASE, REGISTRY, SERVICE, STAKING} from "../type/ObjectType.sol";
+import {ObjectType, ObjectTypeLib, COMPONENT, POOL, RELEASE, REGISTRY, SERVICE, STAKING} from "../type/ObjectType.sol";
 import {RegistryAdmin} from "./RegistryAdmin.sol";
 import {Registry} from "./Registry.sol";
 import {ReleaseAdmin} from "./ReleaseAdmin.sol";
@@ -239,7 +239,7 @@ contract ReleaseRegistry is
 
         _latest = release;
         _releaseInfo[release].state = ACTIVE();
-        _releaseInfo[release].activatedAt = TimestampLib.blockTimestamp();
+        _releaseInfo[release].activatedAt = TimestampLib.current();
         _releaseInfo[release].disabledAt = TimestampLib.max();
 
         // grant special roles for registry/staking/pool services
@@ -256,6 +256,11 @@ contract ReleaseRegistry is
         service = _registry.getServiceAddress(STAKING(), release);
         if(service != address(0)) {
             _registryAdmin.grantServiceRoleForAllVersions(IService(service), STAKING());
+        }
+
+        service = _registry.getServiceAddress(COMPONENT(), release);
+        if(service != address(0)) {
+            _registryAdmin.grantServiceRoleForAllVersions(IService(service), COMPONENT());
         }
 
         service = _registry.getServiceAddress(POOL(), release);
@@ -283,7 +288,7 @@ contract ReleaseRegistry is
         } else {
             checkTransition(state, RELEASE(), ACTIVE(), PAUSED());
             _releaseInfo[release].state = PAUSED();
-            _releaseInfo[release].disabledAt = TimestampLib.blockTimestamp();
+            _releaseInfo[release].disabledAt = TimestampLib.current();
             emit LogReleaseDisabled(release);
         }
 

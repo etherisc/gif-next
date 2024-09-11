@@ -12,6 +12,8 @@ import {IStaking} from "../../contracts/staking/IStaking.sol";
 import {IStakingService} from "../../contracts/staking/IStakingService.sol";
 
 import {Amount, AmountLib} from "../../contracts/type/Amount.sol";
+import {Blocknumber, BlocknumberLib} from "../../contracts/type/Blocknumber.sol";
+import {ChainId, ChainIdLib} from "../../contracts/type/ChainId.sol";
 import {GifTest} from "../base/GifTest.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {PROTOCOL, STAKE, STAKING} from "../../contracts/type/ObjectType.sol";
@@ -23,6 +25,7 @@ import {TargetManagerLib} from "../../contracts/staking/TargetManagerLib.sol";
 import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
 import {TokenHandler} from "../../contracts/shared/TokenHandler.sol";
 import {UFixed, UFixedLib} from "../../contracts/type/UFixed.sol";
+import {VersionPart} from "../../contracts/type/Version.sol";
 
 
 contract StakingOwnerTest is GifTest {
@@ -55,7 +58,7 @@ contract StakingOwnerTest is GifTest {
 
         // solhint-disable
         console.log("staking seq", registry.STAKING_TOKEN_SEQUENCE_ID());
-        console.log("chain id", block.chainid);
+        console.log("chain id", ChainIdLib.current().toInt());
         console.log("staking id (expected)", chainNft.calculateTokenId(registry.STAKING_TOKEN_SEQUENCE_ID(), block.chainid));
         console.log("staking nft id (actual)", staking.getNftId().toInt());
 
@@ -158,11 +161,14 @@ contract StakingOwnerTest is GifTest {
         assertTrue(newProtocolLockingPeriod > protocolLockingPeriod, "new locking period not greater than default locking period");
 
         // WHEN
+        NftId protocolNftId = registry.getProtocolNftId();
+        Blocknumber currentBlock = BlocknumberLib.current();
         vm.expectEmit(address(staking));
         emit IStaking.LogStakingProtocolLockingPeriodSet(
-            registry.getProtocolNftId(),
+            protocolNftId,
+            newProtocolLockingPeriod,
             protocolLockingPeriod,
-            newProtocolLockingPeriod);
+            currentBlock);
 
         vm.startPrank(stakingOwner);
         staking.setProtocolLockingPeriod(newProtocolLockingPeriod);
@@ -179,11 +185,14 @@ contract StakingOwnerTest is GifTest {
         assertTrue(newProtocolRewardRate > protocolRewardRate, "new reward rate not greater than default reward rate");
 
         // WHEN
+        NftId protocolNftId = registry.getProtocolNftId();
+        Blocknumber currentBlock = BlocknumberLib.current();
         vm.expectEmit(address(staking));
         emit IStaking.LogStakingProtocolRewardRateSet(
-            registry.getProtocolNftId(),
+            protocolNftId,
+            newProtocolRewardRate,
             protocolRewardRate,
-            newProtocolRewardRate);
+            currentBlock);
 
         vm.startPrank(stakingOwner);
         staking.setProtocolRewardRate(newProtocolRewardRate);
@@ -221,11 +230,12 @@ contract StakingOwnerTest is GifTest {
         staking.setProtocolRewardRate(newProtocolRewardRate);
 
         // WHEN + THEN attempt to set staking rate
+        ChainId currentChainId = ChainIdLib.current();
         vm.expectRevert(
             abi.encodeWithSelector(
                 INftOwnable.ErrorNftOwnableNotOwner.selector, outsider));
 
-        staking.setStakingRate(block.chainid, address(token), newTokenStakingRate);
+        staking.setStakingRate(currentChainId, address(token), newTokenStakingRate);
 
         // WHEN + THEN attempt to set staking reader
         StakingReader newStakingReader = new StakingReader(registry);
@@ -234,6 +244,14 @@ contract StakingOwnerTest is GifTest {
                 INftOwnable.ErrorNftOwnableNotOwner.selector, outsider));
 
         staking.setStakingReader(newStakingReader);
+
+        // WHEN + THEN attempt to set staking servie
+        VersionPart currentRelase = registry.getLatestRelease();
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                INftOwnable.ErrorNftOwnableNotOwner.selector, outsider));
+
+        staking.setStakingService(currentRelase);
 
         // WHEN + THEN attempt to approve token handler
         Amount newApproveAmount = AmountLib.toAmount(100);
@@ -244,25 +262,5 @@ contract StakingOwnerTest is GifTest {
         staking.approveTokenHandler(token, newApproveAmount);
 
         vm.stopPrank();
-    }
-
-    // TODO cleanup
-    function test_obsolete() public {
-        // NftId protocolNftId = stakingReader.getTargetNftId(0);
-        // (, Amount dipAmount) = _prepareAccount(staker, 5000);
-
-        // // check balances before staking
-        // assertTrue(staker != staking.getWallet(), "staker and staking wallet the same");
-        // assertEq(dip.balanceOf(staker), dipAmount.toInt(), "staker: unexpected dip balance");
-        // assertEq(dip.balanceOf(staking.getWallet()), 0, "staking wallet: unexpected dip balance");
-
-        // vm.startPrank(staker);
-
-        // // create stake
-        // NftId stakeNftId = stakingService.create(
-        //     protocolNftId, 
-        //     dipAmount);
-
-        // vm.stopPrank();
     }
 }

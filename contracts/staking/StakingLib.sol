@@ -1,124 +1,22 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Amount, AmountLib} from "../type/Amount.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IStaking} from "./IStaking.sol";
+import {IStakingService} from "./IStakingService.sol";
+
+import {Amount} from "../type/Amount.sol";
 import {NftId} from "../type/NftId.sol";
+import {ReleaseRegistry} from "../registry/ReleaseRegistry.sol";
 import {Seconds, SecondsLib} from "../type/Seconds.sol";
 import {StakingReader} from "./StakingReader.sol";
-import {StakingStore} from "./StakingStore.sol";
+import {STAKING} from "../type/ObjectType.sol";
 import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
 import {UFixed, UFixedLib} from "../type/UFixed.sol";
+import {VersionPart} from "../type/Version.sol";
 
 
 library StakingLib {
-
-    function stake(
-        IRegistry registry,
-        StakingReader stakingReader,
-        StakingStore stakingStore,
-        NftId stakeNftId,
-        Amount stakeAmount
-    )
-        external
-        returns (Amount stakeBalance)
-    {
-        // check that target is active for staking
-        (
-            UFixed rewardRate,
-            Seconds lockingPeriod
-        ) = checkStakeParameters(
-            stakingReader, 
-            stakeNftId);        
-
-        // calculate new rewards (if any)
-        (
-            Amount rewardIncrementAmount, 
-            Amount currentTotalDipAmount
-        ) = calculateRewardIncrease(
-            stakingReader, 
-            stakeNftId,
-            rewardRate);
-
-        stakeBalance = currentTotalDipAmount + stakeAmount;
-
-        // TODO check that additional dip, rewards and rewards increment 
-        // are still ok with max target staking amount
-        NftId targetNftId = registry.getParentNftId(stakeNftId);
-        Amount maxStakedAmount = stakingReader.getTargetMaxStakedAmount(targetNftId);
-
-        if (stakeBalance > maxStakedAmount) {
-            revert IStaking.ErrorStakingTargetMaxStakedAmountExceeded(targetNftId, maxStakedAmount, stakeBalance);
-        }
-
-        stakingStore.restakeRewards(
-            stakeNftId, 
-            targetNftId, 
-            rewardIncrementAmount);
-
-        stakingStore.increaseStake(
-            stakeNftId, 
-            targetNftId, 
-            stakeAmount);
-
-        // update locked until with target locking period
-        stakingStore.update(
-            stakeNftId, 
-            IStaking.StakeInfo({
-                lockedUntil: TimestampLib.blockTimestamp().addSeconds(
-                    lockingPeriod)}));
-
-    }
-
-    function restake(
-        StakingReader stakingReader,
-        StakingStore stakingStore,
-        NftId oldStakeNftId,
-        NftId newStakeNftId
-    )
-        external
-        returns (Amount newStakeBalance)
-    {
-        checkUnstakeParameters(stakingReader, oldStakeNftId);
-        (NftId oldTargetNftId, UFixed oldRewardRate) = stakingReader.getTargetRewardRate(oldStakeNftId);
-        
-        // calculate new rewards update and unstake full amount
-        (
-            Amount rewardIncrementAmount,
-        ) = calculateRewardIncrease(
-            stakingReader, 
-            oldStakeNftId,
-            oldRewardRate);
-        stakingStore.updateRewards(
-            oldStakeNftId, 
-            oldTargetNftId, 
-            rewardIncrementAmount);
-        (
-            Amount unstakedAmount, 
-            Amount rewardsAmount
-        ) = stakingStore.unstakeUpTo(
-            oldStakeNftId,
-            oldTargetNftId,
-            AmountLib.max(), // unstake all stakes
-            AmountLib.max()); // claim all rewards
-
-        // calculate full restake amount
-        newStakeBalance = unstakedAmount + rewardsAmount;
-        NftId newTargetNftId = stakingReader.getTargetNftId(newStakeNftId);
-        
-        // create new staking target and increase stake
-        Timestamp newLockedUntil = _checkCreateParameters(stakingReader, newTargetNftId, newStakeBalance);
-        stakingStore.create(
-            newStakeNftId, 
-            IStaking.StakeInfo({
-                    lockedUntil: newLockedUntil
-                }));
-        stakingStore.increaseStake(
-            newStakeNftId, 
-            newTargetNftId, 
-            newStakeBalance);
-    }
 
     function checkCreateParameters(
         StakingReader stakingReader,
@@ -134,6 +32,7 @@ library StakingLib {
         return _checkCreateParameters(stakingReader, targetNftId, dipAmount);
     }
 
+
     function _checkCreateParameters(
         StakingReader stakingReader,
         NftId targetNftId, 
@@ -147,7 +46,7 @@ library StakingLib {
         Seconds lockingPeriod = checkTarget(stakingReader, targetNftId);
         checkDipAmount(stakingReader, targetNftId, dipAmount);
 
-        Timestamp currentTime = TimestampLib.blockTimestamp();
+        Timestamp currentTime = TimestampLib.current();
         lockedUntil = currentTime.addSeconds(lockingPeriod);
     }
 
@@ -175,6 +74,7 @@ library StakingLib {
         lockingPeriod = info.lockingPeriod;
     }
 
+
     function checkUnstakeParameters(
         StakingReader stakingReader,
         NftId stakeNftId
@@ -187,7 +87,7 @@ library StakingLib {
     {
         IStaking.StakeInfo memory stakeInfo = stakingReader.getStakeInfo(stakeNftId);
         
-        if (stakeInfo.lockedUntil > TimestampLib.blockTimestamp()) {
+        if (stakeInfo.lockedUntil > TimestampLib.current()) {
             revert IStaking.ErrorStakingStakeLocked(stakeNftId, stakeInfo.lockedUntil);
         }
     }
@@ -207,6 +107,27 @@ library StakingLib {
         }
 
         lockingPeriod = stakingReader.getTargetInfo(targetNftId).lockingPeriod;
+    }
+
+
+    function checkAndGetStakingService(
+        IRegistry registry,
+        VersionPart release
+    )
+        public
+        view
+        returns (IStakingService stakingService)
+    {
+        if (!ReleaseRegistry(registry.getReleaseRegistryAddress()).isActiveRelease(release)) {
+            revert IStaking.ErrorStakingReleaseNotActive(release);
+        }
+
+        address stakingServiceAddress = registry.getServiceAddress(STAKING(), release);
+        if (stakingServiceAddress == address(0)) {
+            revert IStaking.ErrorStakingServiceNotFound(release);
+        }
+
+        return IStakingService(stakingServiceAddress);
     }
 
 
@@ -237,25 +158,18 @@ library StakingLib {
         public
         view
         returns (
-            Amount rewardIncreaseAmount,
-            Amount totalDipAmount
+            Amount rewardIncreaseAmount
         )
     {
-        (
-            Amount stakeAmount,
-            Amount rewardAmount,
-            Timestamp lastUpdatedAt
-        ) = stakingReader.getStakeBalances(stakeNftId);
+        IStaking.StakeInfo memory stakeInfo = stakingReader.getStakeInfo(stakeNftId);
 
         Seconds duration = SecondsLib.toSeconds(
-            block.timestamp - lastUpdatedAt.toInt());
+            block.timestamp - stakeInfo.lastUpdateAt.toInt());
         
         rewardIncreaseAmount = calculateRewardAmount(
             rewardRate,
             duration,
-            stakeAmount);
-        
-        totalDipAmount = stakeAmount + rewardAmount + rewardIncreaseAmount;
+            stakeInfo.stakedAmount);
     }
 
     function calculateRewardAmount(

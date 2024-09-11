@@ -59,7 +59,7 @@ contract InstanceAuthzTargetsTest is InstanceAuthzBaseTest {
         assertEq(targetInfo.name.toString(), "MyTarget", "unexpected target name");
         assertTrue(targetInfo.targetType == IAccess.TargetType.Custom, "target type not custom");
         assertEq(targetInfo.roleId.toInt(), expectedRoleId.toInt(), "unexpected target role id");
-        assertEq(targetInfo.createdAt.toInt(), TimestampLib.blockTimestamp().toInt(), "unexpected target creation time");
+        assertEq(targetInfo.createdAt.toInt(), TimestampLib.current().toInt(), "unexpected target creation time");
 
         // check role
         assertTrue(instanceReader.roleExists(targetInfo.roleId), "role not existing after create");
@@ -71,7 +71,7 @@ contract InstanceAuthzTargetsTest is InstanceAuthzBaseTest {
         assertEq(roleInfo.name.toString(), "MyTarget_Role", "unexpected role name");
         assertTrue(roleInfo.roleType == IAccess.RoleType.Contract, "unexpected role type");
         assertEq(roleInfo.maxMemberCount, 1, "unexpected max member count");
-        assertEq(roleInfo.createdAt.toInt(), TimestampLib.blockTimestamp().toInt(), "unexpected role creation time");
+        assertEq(roleInfo.createdAt.toInt(), TimestampLib.current().toInt(), "unexpected role creation time");
         assertEq(roleInfo.pausedAt.toInt(), TimestampLib.max().toInt(), "unexpected role pausing time");
     }
 
@@ -149,13 +149,13 @@ contract InstanceAuthzTargetsTest is InstanceAuthzBaseTest {
         (IAccess.FunctionInfo memory func, RoleId authorizedRole) = instanceReader.getAuthorizedFunction(address(target), 0);
         assertTrue(StrLib.eq(func.name.toString(), "increaseCounter1"), "unexpected function name");
         assertEq(func.selector.toBytes4(), AccessManagedMock.increaseCounter1.selector, "unexpected function selector");
-        assertEq(func.createdAt.toInt(), TimestampLib.blockTimestamp().toInt(), "unexpected function creation time");
+        assertEq(func.createdAt.toInt(), TimestampLib.current().toInt(), "unexpected function creation time");
         assertEq(authorizedRole.toInt(), publicRoleId.toInt(), "unexpected authorized role");
 
         (func, authorizedRole) = instanceReader.getAuthorizedFunction(address(target), 1);
         assertTrue(StrLib.eq(func.name.toString(), "increaseCounter2"), "unexpected function name");
         assertEq(func.selector.toBytes4(), AccessManagedMock.increaseCounter2.selector, "unexpected function selector");
-        assertEq(func.createdAt.toInt(), TimestampLib.blockTimestamp().toInt(), "unexpected function creation time");
+        assertEq(func.createdAt.toInt(), TimestampLib.current().toInt(), "unexpected function creation time");
         assertEq(authorizedRole.toInt(), publicRoleId.toInt(), "unexpected authorized role");
 
         // must not revert now
@@ -199,7 +199,7 @@ contract InstanceAuthzTargetsTest is InstanceAuthzBaseTest {
         (IAccess.FunctionInfo memory func, RoleId authorizedRole) = instanceReader.getAuthorizedFunction(address(target), 0);
         assertTrue(StrLib.eq(func.name.toString(), "increaseCounter2"), "unexpected function name");
         assertEq(func.selector.toBytes4(), AccessManagedMock.increaseCounter2.selector, "unexpected function selector");
-        assertEq(func.createdAt.toInt(), TimestampLib.blockTimestamp().toInt(), "unexpected function creation time");
+        assertEq(func.createdAt.toInt(), TimestampLib.current().toInt(), "unexpected function creation time");
         assertEq(authorizedRole.toInt(), publicRoleId.toInt(), "unexpected authorized role");
 
         vm.expectRevert(
@@ -221,7 +221,7 @@ contract InstanceAuthzTargetsTest is InstanceAuthzBaseTest {
         IAccess.FunctionInfo memory myFunction = instanceReader.toFunction(signature, name);
         assertEq(myFunction.name.toString(), name, "unexpected function name");
         assertEq(myFunction.selector.toBytes4(), signature, "unexpected function selector");
-        assertEq(myFunction.createdAt.toInt(), TimestampLib.blockTimestamp().toInt(), "unexpected function creation time");
+        assertEq(myFunction.createdAt.toInt(), TimestampLib.current().toInt(), "unexpected function creation time");
 
         // check signature zero check
         vm.expectRevert(

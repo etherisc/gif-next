@@ -48,6 +48,8 @@ contract DistributorClusterTest is GifClusterTest {
         DistributorType type2 = _createDistributorType(myDistribution2, instanceOwner);
 
         // THEN
+        address distribution1Owner = myDistribution1.getOwner();
+        address newDistributor = makeAddr("newDistributor");
         vm.expectRevert(abi.encodeWithSelector(
             IDistributionService.ErrorDistributionServiceDistributorTypeDistributionMismatch.selector, 
             type2,
@@ -55,7 +57,8 @@ contract DistributorClusterTest is GifClusterTest {
             myDistributionNftId1));
 
         // WHEN
-        myDistribution1.createDistributor(makeAddr("distributor"), type2, "");
+        vm.prank(distribution1Owner);
+        myDistribution1.createDistributor(newDistributor, type2, "");
     }
 
     function test_changeDistributorType_typeFromOtherProductCluster() public {
@@ -88,7 +91,7 @@ contract DistributorClusterTest is GifClusterTest {
         vm.startPrank(instanceOwner);
         distributorNftId = myDistribution2.createDistributor(distributor, type2, "");
 
-        Timestamp referralLifetime = TimestampLib.blockTimestamp().addSeconds(SecondsLib.toSeconds(3600));
+        Timestamp referralLifetime = TimestampLib.current().addSeconds(SecondsLib.toSeconds(3600));
         UFixed discount = UFixedLib.toUFixed(1, -1);
         
         // THEN
@@ -120,7 +123,7 @@ contract DistributorClusterTest is GifClusterTest {
         allowRenewals = true;
         data = ".";
 
-        vm.startPrank(distOwner);
+        vm.prank(distOwner);
         return dist.createDistributorType(
             name,
             minDiscountPercentage,
@@ -131,7 +134,5 @@ contract DistributorClusterTest is GifClusterTest {
             allowSelfReferrals,
             allowRenewals,
             data);
-        vm.stopPrank();
     }
-
 }

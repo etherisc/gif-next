@@ -6,8 +6,9 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 
 import {IRegistry} from "./IRegistry.sol";
 import {IRegistryLinked} from "../shared/IRegistryLinked.sol";
+import {IStaking} from "../staking/IStaking.sol";
 
-import {ReleaseRegistry} from "./ReleaseRegistry.sol";
+import {ChainId, ChainIdLib} from "../type/ChainId.sol";
 import {RegistryAdmin} from "./RegistryAdmin.sol";
 import {VersionPart} from "../type/Version.sol";
 
@@ -17,42 +18,41 @@ contract TokenRegistry is
     AccessManaged,
     IRegistryLinked
 {
-    event LogTokenRegistryTokenRegistered(uint256 chainId, address token, uint256 decimals, string symbol);
-    event LogTokenRegistryTokenGlobalStateSet(uint256 chainId, address token, bool active);
-    event LogTokenRegistryTokenStateSet(uint256 chainId, address token, VersionPart majorVersion, bool active);
+    event LogTokenRegistryTokenRegistered(ChainId chainId, address token, uint256 decimals, string symbol);
+    event LogTokenRegistryTokenGlobalStateSet(ChainId chainId, address token, bool active);
+    event LogTokenRegistryTokenStateSet(ChainId chainId, address token, VersionPart release, bool active);
 
     error ErrorTokenRegistryChainIdZero();
     error ErrorTokenRegistryTokenAddressZero();
 
-    error ErrorTokenRegistryNotRemoteToken(uint256 chainId, address token);
-    error ErrorTokenRegistryTokenAlreadyRegistered(uint256 chainId, address token);
-    error ErrorTokenRegistryTokenNotContract(uint256 chainId, address token);
-    error ErrorTokenRegistryTokenNotErc20(uint256 chainId, address token);
+    error ErrorTokenRegistryNotRemoteToken(ChainId chainId, address token);
+    error ErrorTokenRegistryTokenAlreadyRegistered(ChainId chainId, address token);
+    error ErrorTokenRegistryTokenNotContract(ChainId chainId, address token);
+    error ErrorTokenRegistryTokenNotErc20(ChainId chainId, address token);
 
-    error ErrorTokenRegistryTokenNotRegistered(uint256 chainId, address token);
-    error ErrorTokenRegistryMajorVersionInvalid(VersionPart majorVersion);
+    error ErrorTokenRegistryTokenNotRegistered(ChainId chainId, address token);
+    error ErrorTokenRegistryMajorVersionInvalid(VersionPart release);
 
     struct TokenInfo {
         // slot 0
-        uint256 chainId;
+        ChainId chainId; // 96
+        address token; // 20
+        uint8 decimals; // 8
+        bool active;
         // slot 1
         string symbol;
-        // slot 2
-        address token;
-        uint8 decimals;
-        bool active;
     }
 
-    mapping(uint256 chainId => mapping(address token => TokenInfo info)) internal _tokenInfo;
-    mapping(uint256 chainId => mapping(address token => mapping(VersionPart majorVersion => bool isActive))) internal _active;
+    mapping(ChainId chainId => mapping(address token => TokenInfo info)) internal _tokenInfo;
+    mapping(ChainId chainId => mapping(address token => mapping(VersionPart release => bool isActive))) internal _active;
     TokenInfo [] internal _token;
 
     IRegistry internal _registry;
-    ReleaseRegistry internal _releaseRegistry;
+    ChainId internal _chainId = ChainIdLib.current();
     IERC20Metadata internal _dipToken;
 
     /// @dev enforces msg.sender is owner of nft (or initial owner of nft ownable)
-    modifier onlyRegisteredToken(uint256 chainId, address token) {
+    modifier onlyRegisteredToken(ChainId chainId, address token) {
         if (!isRegistered(chainId, token)) {
             revert ErrorTokenRegistryTokenNotRegistered(chainId, token);
         }
@@ -67,12 +67,13 @@ contract TokenRegistry is
         setAuthority(authority);
         
         _registry = registry;
+
+        // TODO deal with chains without a dip token
         _dipToken = _verifyOnchainToken(address(dipToken));
 
         // register dip token
-        uint256 chainId = block.chainid;
         _registerToken(
-            chainId, 
+            _chainId, 
             address(_dipToken), 
             _dipToken.decimals(), 
             _dipToken.symbol());
@@ -86,15 +87,18 @@ contract TokenRegistry is
         external
         restricted()
     {
+        // checks
         IERC20Metadata token = _verifyOnchainToken(tokenAddress);
-        _registerToken(block.chainid, tokenAddress, token.decimals(), token.symbol());
+
+        // effects
+        _registerToken(_chainId, tokenAddress, token.decimals(), token.symbol());
     }
 
 
     /// @dev register the remote token with the provided attributes.
     /// this function may not be used for tokens when chainId == block.chainid.
     function registerRemoteToken(
-        uint256 chainId,
+        ChainId chainId,
         address token,
         uint8 decimals,
         string memory symbol
@@ -102,7 +106,7 @@ contract TokenRegistry is
         external
         restricted()
     {
-        if (chainId == block.chainid) {
+        if (chainId == _chainId) {
             revert ErrorTokenRegistryNotRemoteToken(chainId, token);
         }
 
@@ -114,7 +118,7 @@ contract TokenRegistry is
     /// when setting a token to active=false isActive will return false
     /// regardless of release specific active value.
     function setActive(
-        uint256 chainId, 
+        ChainId chainId, 
         address token, 
         bool active
     )
@@ -127,32 +131,32 @@ contract TokenRegistry is
     }
 
 
-    /// @dev sets active state for specified token and major version.
+    /// @dev sets active state for specified token and release (major version).
     /// internally calls setActiveWithVersionCheck() with enforcing version check.
     /// token state is informative, registry have no clue about used tokens
     /// component owner is responsible for token selection and operations
     /// service MUST deny registration of component with inactive token.
     function setActiveForVersion(
-        uint256 chainId, 
+        ChainId chainId, 
         address token, 
-        VersionPart majorVersion, 
+        VersionPart release, 
         bool active
     )
         external
         restricted()
         onlyRegisteredToken(chainId, token)
     {
-        _setActiveWithVersionCheck(chainId, token, majorVersion, active, true);
+        _setActiveWithVersionCheck(chainId, token, release, active, true);
     }
 
 
     /// @dev as setActiveForVersion() with the option to skip the version check.
     /// enforcing the version check checks if the provided major version with the release manager. 
-    /// the function reverts if the provided majorVersion is unknown to the release manager.
+    /// the function reverts if the provided release is unknown to the release manager.
     function setActiveWithVersionCheck(
-        uint256 chainId, 
+        ChainId chainId, 
         address token, 
-        VersionPart majorVersion, 
+        VersionPart release, 
         bool active,
         bool enforceVersionCheck
     )
@@ -160,14 +164,14 @@ contract TokenRegistry is
         restricted()
         onlyRegisteredToken(chainId, token)
     {
-        _setActiveWithVersionCheck(chainId, token, majorVersion, active, enforceVersionCheck);
+        _setActiveWithVersionCheck(chainId, token, release, active, enforceVersionCheck);
     }
 
 
     function _setActiveWithVersionCheck(
-        uint256 chainId, 
+        ChainId chainId, 
         address token, 
-        VersionPart majorVersion, 
+        VersionPart release, 
         bool active,
         bool enforceVersionCheck
     )
@@ -175,15 +179,15 @@ contract TokenRegistry is
     {
         // verify valid major version
         if(enforceVersionCheck) {
-            uint256 version = majorVersion.toInt();
-            if (!getRegistry().isActiveRelease(majorVersion)) {
-                revert ErrorTokenRegistryMajorVersionInvalid(majorVersion);
+            uint256 version = release.toInt();
+            if (!getRegistry().isActiveRelease(release)) {
+                revert ErrorTokenRegistryMajorVersionInvalid(release);
             }
         }
 
-        _active[chainId][token][majorVersion] = active;
+        _active[chainId][token][release] = active;
 
-        emit LogTokenRegistryTokenStateSet(chainId, token, majorVersion, active);
+        emit LogTokenRegistryTokenStateSet(chainId, token, release, active);
     }
 
     /// @dev returns the dip token for this chain
@@ -202,17 +206,17 @@ contract TokenRegistry is
     }
 
     /// @dev returns the token info for the specified token coordinates.
-    function getTokenInfo(uint256 chainId, address token) external view returns (TokenInfo memory tokenInfo) {
+    function getTokenInfo(ChainId chainId, address token) external view returns (TokenInfo memory tokenInfo) {
         return _tokenInfo[chainId][token];
     }
 
     /// @dev returns true iff the specified token has been registered for this TokenRegistry contract.
-    function isRegistered(uint256 chainId, address token) public view returns (bool) {
-        return _tokenInfo[chainId][token].chainId > 0;
+    function isRegistered(ChainId chainId, address token) public view returns (bool) {
+        return _tokenInfo[chainId][token].chainId.gtz();
     }
 
     /// @dev returns true iff both the token is active for the specfied release and the global token state is active
-    function isActive(uint256 chainId, address token, VersionPart release) external view returns (bool) {
+    function isActive(ChainId chainId, address token, VersionPart release) external view returns (bool) {
         if(!_tokenInfo[chainId][token].active) {
             return false;
         }
@@ -243,16 +247,15 @@ contract TokenRegistry is
         returns (IERC20Metadata token)
     {
         token = IERC20Metadata(tokenAddress);
-        uint256 chainId = block.chainid;
 
         // MUST be contract
         if(tokenAddress.code.length == 0) {
-            revert ErrorTokenRegistryTokenNotContract(chainId, tokenAddress);
+            revert ErrorTokenRegistryTokenNotContract(ChainIdLib.current(), tokenAddress);
         }
 
         // MUST implement required erc20 view functions
         if(!_implementsErc20Functions(token)) {
-            revert ErrorTokenRegistryTokenNotErc20(chainId, tokenAddress);
+            revert ErrorTokenRegistryTokenNotErc20(ChainIdLib.current(), tokenAddress);
         }
     }
 
@@ -285,13 +288,13 @@ contract TokenRegistry is
     /// - token not yet registered
     /// - chainId not zero
     /// - token address not zero
-    function _registerToken(uint256 chainId, address token, uint8 decimals, string memory symbol) internal {
+    function _registerToken(ChainId chainId, address token, uint8 decimals, string memory symbol) internal {
 
         if (isRegistered(chainId, token)) {
             revert ErrorTokenRegistryTokenAlreadyRegistered(chainId, token);
         }
 
-        if(chainId == 0) {
+        if(chainId.eqz()) {
             revert ErrorTokenRegistryChainIdZero();
         }
 

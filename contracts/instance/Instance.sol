@@ -64,7 +64,7 @@ contract Instance is
         IRegistry registry, 
         VersionPart release,
         address initialOwner,
-        bool tokenRegistryDisabled
+        bool tokenRegistryDisabled // only disable for testing
     ) 
         external 
         initializer()
@@ -173,18 +173,19 @@ contract Instance is
         external
         restricted()
         onlyOwner()
+        returns (Amount newRewardReserveBalance)
     {
         address instanceOwner = msg.sender;
-        _instanceService.refillStakingRewardReserves(instanceOwner, dipAmount);
+        return _instanceService.refillInstanceRewardReserves(instanceOwner, dipAmount);
     }
 
     function withdrawStakingRewardReserves(Amount dipAmount)
         external
         restricted()
         onlyOwner()
-        returns (Amount newBalance)
+        returns (Amount newRewardReserveBalance)
     {
-        return _instanceService.withdrawStakingRewardReserves(dipAmount);
+        return _instanceService.withdrawInstanceRewardReserves(dipAmount);
     }
 
     //--- Roles ------------------------------------------------------------//

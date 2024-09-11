@@ -116,6 +116,6 @@ contract BalanceStore {
 
     //--- internal/private functions ----------------------------------------//
     function _setLastUpdatedIn(NftId targetNftId) internal {
-        _lastUpdatedIn[targetNftId] = BlocknumberLib.currentBlocknumber();
+        _lastUpdatedIn[targetNftId] = BlocknumberLib.current();
     }
 }

@@ -5,6 +5,7 @@ import {console} from "../../lib/forge-std/src/Test.sol";
 
 import {Amount, AmountLib} from "../../contracts/type/Amount.sol";
 import {Blocknumber, BlocknumberLib} from "../../contracts/type/Blocknumber.sol";
+import {ChainIdLib} from "../../contracts/type/ChainId.sol";
 import {ClaimId} from "../../contracts/type/ClaimId.sol";
 import {GifTest} from "../base/GifTest.sol";
 import {NftId} from "../../contracts/type/NftId.sol";
@@ -20,8 +21,8 @@ import {UFixed, UFixedLib} from "../../contracts/type/UFixed.sol";import {Versio
 contract TvlCalculation is GifTest {
 
     // TODO find better ways than to copy paste events from StakingStore contract
-    event LogStakingStoreTotalValueLockedIncreased(NftId targetNftId, address token, Amount amount, Amount newBalance, Blocknumber lastUpdatedIn);
-    event LogStakingStoreTotalValueLockedDecreased(NftId targetNftId, address token, Amount amount, Amount newBalance, Blocknumber lastUpdatedIn);
+    event LogStakingTotalValueLockedIncreased(NftId targetNftId, address token, Amount amount, Amount newBalance);
+    event LogStakingTotalValueLockedDecreased(NftId targetNftId, address token, Amount amount, Amount newBalance);
 
     uint256 public constant BUNDLE_CAPITAL = 20000;
     uint256 public constant SUM_INSURED = 1000;
@@ -35,7 +36,32 @@ contract TvlCalculation is GifTest {
     UFixed public stakingRate;
 
 
-    function test_tvlCalculationInitialState() public {
+    function setUp() public override {
+        super.setUp();
+
+        _prepareProduct();  
+
+        // create risk
+        vm.startPrank(productOwner);
+        riskId = product.createRisk("Risk_1", "");
+        vm.stopPrank();
+
+        // fund customer
+        _fundAccount(customer, CUSTOMER_FUNDS * 10 ** token.decimals());
+
+        tokenAddress = address(token);
+        stakingStoreAddress = address(staking.getStakingStore());
+
+        // for every usdc token 10 dip tokens must be staked
+        stakingRate = UFixedLib.toUFixed(1, int8(dip.decimals() - token.decimals() + 1));
+
+        vm.startPrank(stakingOwner);
+        staking.setStakingRate(ChainIdLib.current(), tokenAddress, stakingRate);
+        vm.stopPrank();
+    }
+
+
+    function test_stakingTvlCalculationInitialState() public {
 
         // check instance is active target
         assertTrue(stakingReader.isTarget(instanceNftId), "instance not target");
@@ -67,7 +93,7 @@ contract TvlCalculation is GifTest {
     }
 
 
-    function test_tvlCalculationCreateSinglePolicy() public {
+    function test_stakingTvlCalculationCreateSinglePolicy() public {
 
         // GIVEN
         uint256 sumInsuredAmountInt = 1000 * 10 ** token.decimals();
@@ -96,15 +122,14 @@ contract TvlCalculation is GifTest {
 
         // WHEN collateralizing the application
         // check tvl log entry from staking
-        Blocknumber currentBlocknumber = BlocknumberLib.currentBlocknumber();
-        Timestamp currentTimestamp = TimestampLib.blockTimestamp();
-        vm.expectEmit(stakingStoreAddress);
-        emit LogStakingStoreTotalValueLockedIncreased(
+        Blocknumber currentBlocknumber = BlocknumberLib.current();
+        Timestamp currentTimestamp = TimestampLib.current();
+        vm.expectEmit(address(staking));
+        emit LogStakingTotalValueLockedIncreased(
             instanceNftId, 
             tokenAddress, 
             sumInsuredAmount, // amount
-            sumInsuredAmount, // new balance
-            currentBlocknumber);
+            sumInsuredAmount); // new balance
 
         // collateralize application
         _collateralize(policyNftId, false, currentTimestamp);
@@ -119,7 +144,7 @@ contract TvlCalculation is GifTest {
             "unexpected instance tvl(usdc) (after collateralization)");
 
         // check required staking balance after collateralizaion
-        UFixed stakingRate = stakingReader.getStakingRate(block.chainid, tokenAddress);
+        UFixed stakingRate = stakingReader.getTokenInfo(ChainIdLib.current(), tokenAddress).stakingRate;
         Amount expectedRequiredStakeBalance = sumInsuredAmount.multiplyWith(stakingRate);
 
         assertTrue(stakingRate.gtz(), "staking rate zero");
@@ -131,7 +156,7 @@ contract TvlCalculation is GifTest {
     }
 
 
-    function test_tvlCalculationCreateAndCloseSinglePoliciy() public {
+    function test_stakingTvlCalculationCreateAndCloseSinglePoliciy() public {
 
         // GIVEN
         uint256 sumInsuredAmountInt = 1000 * 10 ** token.decimals();
@@ -150,7 +175,7 @@ contract TvlCalculation is GifTest {
             "unexpected instance tvl(usdc) (after policy creation)");
 
         // check required staking balance after policy creation
-        UFixed stakingRate = stakingReader.getStakingRate(block.chainid, tokenAddress);
+        UFixed stakingRate = stakingReader.getTokenInfo(ChainIdLib.current(), tokenAddress).stakingRate;
         Amount expectedRequiredStakeBalance = sumInsuredAmount.multiplyWith(stakingRate);
 
         assertTrue(stakingRate.gtz(), "staking rate zero");
@@ -166,15 +191,14 @@ contract TvlCalculation is GifTest {
         vm.warp(policyExpiryAt.toInt());
 
         // check tvl decrease log emission
-        Blocknumber currentBlocknumber = BlocknumberLib.currentBlocknumber();
+        Blocknumber currentBlocknumber = BlocknumberLib.current();
         Amount zeroAmount = AmountLib.zero();
-        vm.expectEmit(stakingStoreAddress);
-        emit LogStakingStoreTotalValueLockedDecreased(
+        vm.expectEmit(address(staking));
+        emit LogStakingTotalValueLockedDecreased(
             instanceNftId, 
             tokenAddress, 
             sumInsuredAmount, // amount
-            zeroAmount, // new balance
-            currentBlocknumber);
+            zeroAmount); // new balance
 
         _closePolicy(policyNftId);
 
@@ -195,7 +219,7 @@ contract TvlCalculation is GifTest {
     }
 
 
-    function test_tvlCalculationCreateAndCloseMultiplePolicies() public {
+    function test_stakingTvlCalculationCreateAndCloseMultiplePolicies() public {
 
         // GIVEN
         uint256 sumInsuredAmountInt = 1000 * 10 ** token.decimals();
@@ -215,7 +239,7 @@ contract TvlCalculation is GifTest {
             "unexpected instance tvl(usdc) (after collateralization)");
 
         // check required staking balance 2 policies
-        UFixed stakingRate = stakingReader.getStakingRate(block.chainid, tokenAddress);
+        UFixed stakingRate = stakingReader.getTokenInfo(ChainIdLib.current(), tokenAddress).stakingRate;
         Amount expectedRequiredStakeBalance = sumInsuredAmount.multiplyWith(stakingRate);
 
         assertTrue(stakingRate.gtz(), "staking rate zero");
@@ -269,7 +293,7 @@ contract TvlCalculation is GifTest {
     }
 
 
-    function test_tvlCalculationCreatePoliciyAndCreatePayout() public {
+    function test_stakingTvlCalculationCreatePoliciyAndCreatePayout() public {
 
         // GIVEN
         uint256 sumInsuredAmountInt = 1000 * 10 ** token.decimals();
@@ -293,7 +317,7 @@ contract TvlCalculation is GifTest {
             "unexpected instance tvl(usdc) (after payout creation)");
 
         // check required staking balance after policy closing
-        UFixed stakingRate = stakingReader.getStakingRate(block.chainid, tokenAddress);
+        UFixed stakingRate = stakingReader.getTokenInfo(ChainIdLib.current(), tokenAddress).stakingRate;
         Amount expectedRequiredStakeBalance = sumInsuredAmount.multiplyWith(stakingRate);
         assertEq(
             stakingReader.getRequiredStakeBalance(instanceNftId).toInt(),
@@ -301,15 +325,14 @@ contract TvlCalculation is GifTest {
             "unexpected required stake balance (after payout creation)");
 
         // WHEN processing the payout (includes actual payout token flow)
-        Blocknumber currentBlocknumber = BlocknumberLib.currentBlocknumber();
+        Blocknumber currentBlocknumber = BlocknumberLib.current();
         Amount newBalanceAmount = sumInsuredAmount - claimAmount;
-        vm.expectEmit(stakingStoreAddress);
-        emit LogStakingStoreTotalValueLockedDecreased(
+        vm.expectEmit(address(staking));
+        emit LogStakingTotalValueLockedDecreased(
             instanceNftId, 
             tokenAddress, 
             claimAmount, // amount
-            newBalanceAmount, // new balance
-            currentBlocknumber);
+            newBalanceAmount); // new balance
 
         product.processPayout(policyNftId, payoutId);
 
@@ -328,30 +351,6 @@ contract TvlCalculation is GifTest {
             expectedRequiredStakeBalance.toInt(), 
             "unexpected required stake balance (after payout processing)");
 
-    }
-
-    function setUp() public override {
-        super.setUp();
-
-        _prepareProduct();  
-
-        // create risk
-        vm.startPrank(productOwner);
-        riskId = product.createRisk("Risk_1", "");
-        vm.stopPrank();
-
-        // fund customer
-        _fundAccount(customer, CUSTOMER_FUNDS * 10 ** token.decimals());
-
-        tokenAddress = address(token);
-        stakingStoreAddress = address(staking.getStakingStore());
-
-        // for every usdc token 10 dip tokens must be staked
-        stakingRate = UFixedLib.toUFixed(1, int8(dip.decimals() - token.decimals() + 1));
-
-        vm.startPrank(stakingOwner);
-        staking.setStakingRate(block.chainid, tokenAddress, stakingRate);
-        vm.stopPrank();
     }
 
 
@@ -419,7 +418,7 @@ contract TvlCalculation is GifTest {
         returns (NftId plicyNftId)
     {
         plicyNftId = _createApplication(policyHolder, sumInsuredAmount, lifetime);
-        _collateralize(plicyNftId, true, TimestampLib.blockTimestamp());
+        _collateralize(plicyNftId, true, TimestampLib.current());
     }
 
 

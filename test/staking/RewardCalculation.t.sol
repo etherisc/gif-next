@@ -12,7 +12,7 @@ import {UFixed, UFixedLib} from "../../contracts/type/UFixed.sol";
 
 contract RewardCalculation is GifTest {
 
-    function test_rewardCalculationConsoleLog() public {
+    function test_stakingRewardCalculationConsoleLog() public {
         // solhint-disable
         console.log("getYearDuration()", SecondsLib.oneYear().toInt());
         console.log("356 * 24 * 3600", uint(356 * 24 * 3600));
@@ -27,7 +27,7 @@ contract RewardCalculation is GifTest {
         // solhint-enable
     }
 
-    function test_rewardCalculationGetYearFraction() public {
+    function test_stakingRewardCalculationGetYearFraction() public {
 
         // check for 1 year
         Seconds yearDuration = SecondsLib.oneYear();
@@ -66,7 +66,7 @@ contract RewardCalculation is GifTest {
     }
 
 
-    function test_rewardCalculationCalculateRewardInitial() public {
+    function test_stakingRewardCalculationCalculateRewardInitial() public {
 
         // check for 1 year
         UFixed tenPercentAPR = UFixedLib.toUFixed(1, -1); 
@@ -83,7 +83,7 @@ contract RewardCalculation is GifTest {
     }
 
 
-    function test_rewardCalculationCalculateRewardApr() public {
+    function test_stakingRewardCalculationCalculateRewardApr() public {
 
         // check for 1 year
         UFixed tenPercentAPR = UFixedLib.toUFixed(1, -1); 
@@ -102,7 +102,7 @@ contract RewardCalculation is GifTest {
     }
 
 
-    function test_rewardCalculationCalculateRewardDuration() public {
+    function test_stakingRewardCalculationCalculateRewardDuration() public {
 
         // check for 1 year
         UFixed tenPercentAPR = UFixedLib.toUFixed(1, -1); 
@@ -132,7 +132,7 @@ contract RewardCalculation is GifTest {
     }
 
 
-    function test_rewardCalculationCalculateRewardAmount() public {
+    function test_stakingRewardCalculationCalculateRewardAmount() public {
 
         // check for 1 year
         UFixed tenPercentAPR = UFixedLib.toUFixed(1, -1); 
@@ -162,7 +162,7 @@ contract RewardCalculation is GifTest {
     }
 
 
-    function test_rewardCalculationCalculateRewardZero() public {
+    function test_stakingRewardCalculationCalculateRewardZero() public {
 
         UFixed tenPercentAPR = UFixedLib.toUFixed(1, -1); 
         Seconds yearDuration = SecondsLib.oneYear();

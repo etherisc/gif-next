@@ -38,6 +38,7 @@ export type LibraryAddresses = {
     objectSetHelperLibAddress: AddressLike;
     policyServiceLibAddress: AddressLike;
     accessAdminLibAddress: AddressLike;
+    chainIdLibAddress: AddressLike;
 }
 
 export const LIBRARY_ADDRESSES: Map<string, AddressLike> = new Map<string, AddressLike>();
@@ -70,6 +71,17 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
             }
         });
     LIBRARY_ADDRESSES.set("NftIdLib", nftIdLibAddress);
+
+    const { address: chainIdLibAddress } = await deployContract(
+        "ChainIdLib",
+        owner,
+        undefined, 
+        {
+            libraries: {
+                NftIdLib: nftIdLibAddress,
+            }
+        });
+    LIBRARY_ADDRESSES.set("ChainIdLib", chainIdLibAddress);
 
     const { address: uFixedLibAddress } = await deployContract(
         "UFixedLib",
@@ -403,6 +415,7 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         objectSetHelperLibAddress,
         policyServiceLibAddress,
         accessAdminLibAddress,
+        chainIdLibAddress,
     };
     
 }

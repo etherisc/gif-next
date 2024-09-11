@@ -42,18 +42,6 @@ contract StakingService is
     }
 
 
-    function approveTokenHandler(
-        IERC20Metadata token,
-        Amount amount
-    )
-        external
-        virtual
-        onlyStaking()
-    {
-        _getStakingServiceStorage()._tokenHandler.approve(token, amount);
-    }
-
-
     /// @inheritdoc IStakingService
     function createInstanceTarget(
         NftId targetNftId,
@@ -68,7 +56,6 @@ contract StakingService is
         _getStakingServiceStorage()._staking.registerTarget(
             targetNftId,
             INSTANCE(),
-            chainId,
             initialLockingPeriod,
             initialRewardRate);
 
@@ -76,6 +63,7 @@ contract StakingService is
     }
 
 
+    /// @inheritdoc IStakingService
     function setInstanceLockingPeriod(NftId instanceNftId, Seconds lockingPeriod)
         external
         virtual
@@ -88,6 +76,7 @@ contract StakingService is
     }
 
 
+    /// @inheritdoc IStakingService
     function setInstanceRewardRate(NftId instanceNftId, UFixed rewardRate)
         external
         virtual
@@ -99,6 +88,8 @@ contract StakingService is
             rewardRate);
     }
 
+
+    /// @inheritdoc IStakingService
     function setInstanceMaxStakedAmount(NftId instanceNftId, Amount maxStakingAmount)
         external
         virtual
@@ -111,28 +102,26 @@ contract StakingService is
     }
 
 
+    /// @inheritdoc IStakingService
     function refillInstanceRewardReserves(NftId instanceNftId, address rewardProvider, Amount dipAmount)
         external
         virtual
         restricted()
         returns (Amount newBalance)
     {
+        // checks
         _checkNftType(instanceNftId, INSTANCE());
-        return _refillRewardReserves(instanceNftId, rewardProvider, dipAmount);
+
+        // update reward reserve book keeping
+        StakingServiceStorage storage $ = _getStakingServiceStorage();
+        address instanceOwner = getRegistry().ownerOf(instanceNftId);
+        newBalance = $._staking.refillRewardReservesByService(instanceNftId, dipAmount, instanceOwner);
+
+        emit LogStakingServiceRewardReservesIncreased(instanceNftId, rewardProvider, dipAmount, newBalance);
     }
 
 
-    function refillRewardReservesBySender(NftId targetNftId, Amount dipAmount)
-        external
-        virtual
-        restricted()
-        returns (Amount newBalance)
-    {
-        address rewardProvider = msg.sender;
-        return _refillRewardReserves(targetNftId, rewardProvider, dipAmount);
-    }
-
-
+    /// @inheritdoc IStakingService
     function withdrawInstanceRewardReserves(NftId instanceNftId, Amount dipAmount)
         external
         virtual
@@ -142,36 +131,25 @@ contract StakingService is
         _checkNftType(instanceNftId, INSTANCE());
         // update reward reserve book keeping
         StakingServiceStorage storage $ = _getStakingServiceStorage();
-        newBalance = $._staking.withdrawRewardReserves(instanceNftId, dipAmount);
-
-        // transfer withdrawal amount to target owner
         address instanceOwner = getRegistry().ownerOf(instanceNftId);
+        newBalance = $._staking.withdrawRewardReservesByService(instanceNftId, dipAmount, instanceOwner);
+
         emit LogStakingServiceRewardReservesDecreased(instanceNftId, instanceOwner, dipAmount, newBalance);
-        $._tokenHandler.pushToken(
-            instanceOwner,
-            dipAmount);
     }
 
 
-    /// @dev creates a new stake to the specified target nft id with the provided dip amount
-    /// the target nft id must have been registered as an active staking target prior to this call
-    /// the sender of this transaction becomes the stake owner via the minted nft.
-    /// to create the new stake balance and allowance of the staker need to cover the dip amount
-    /// the allowance needs to be on the token handler of the staking contract (getTokenHandler())
-    /// this is a permissionless function.
-    function create(
+    /// @inheritdoc IStakingService
+    function createStakeObject(
         NftId targetNftId,
-        Amount dipAmount
+        address stakeOwner
     )
         external
         virtual
         restricted()
-        returns (
-            NftId stakeNftId
-        )
+        onlyStaking()
+        returns (NftId stakeNftId)
     {
         StakingServiceStorage storage $ = _getStakingServiceStorage();
-        address stakeOwner = msg.sender;
 
         // target nft id checks are performed in $._staking.createStake() below
         // register new stake object with registry
@@ -186,149 +164,42 @@ contract StakingService is
                 data: ""
             }));
 
-        // create stake info with staking
-        $._staking.createStake(
-            stakeNftId, 
-            targetNftId,
-            dipAmount);
-
-        emit LogStakingServiceStakeCreated(stakeNftId, targetNftId, stakeOwner, dipAmount);
-
-        // collect staked dip by staking
-        $._tokenHandler.pullToken(
-            stakeOwner, 
-            dipAmount);
+        emit LogStakingServiceStakeObjectCreated(stakeNftId, targetNftId, stakeOwner);
     }
 
 
-    function stake(
-        NftId stakeNftId,
-        Amount dipAmount
+    /// @inheritdoc IStakingService
+    function pullDipToken(Amount dipAmount, address stakeOwner)
+        external
+        virtual
+        restricted()
+        onlyStaking()
+    {
+        _getStakingServiceStorage()._tokenHandler.pullToken(stakeOwner, dipAmount);
+    }
+
+
+    /// @inheritdoc IStakingService
+    function pushDipToken(Amount dipAmount, address stakeOwner)
+        external
+        virtual
+        restricted()
+        onlyStaking()
+    {
+        _getStakingServiceStorage()._tokenHandler.pushToken(stakeOwner, dipAmount);
+    }
+
+
+    /// @inheritdoc IStakingService
+    function approveTokenHandler(
+        IERC20Metadata token,
+        Amount amount
     )
         external
         virtual
-        restricted()
-        onlyNftOwner(stakeNftId)
+        onlyStaking()
     {
-        _checkNftType(stakeNftId, STAKE());
-
-        StakingServiceStorage storage $ = _getStakingServiceStorage();
-        address stakeOwner = msg.sender;
-
-        // add additional staked dips by staking 
-        Amount stakeBalance = $._staking.stake(
-            stakeNftId, 
-            dipAmount);
-
-        // collect staked dip by staking
-        if (dipAmount.gtz()) {
-            emit LogStakingServiceStakeIncreased(stakeNftId, stakeOwner, dipAmount, stakeBalance);
-        $._tokenHandler.pullToken(
-                stakeOwner,
-                dipAmount);
-        }
-    }
-
-
-    function restakeToNewTarget(
-        NftId stakeNftId,
-        NftId newTargetNftId
-    )
-        external
-        virtual
-        restricted()
-        onlyNftOwner(stakeNftId)
-        returns (
-            NftId newStakeNftId,
-            Amount newStakeBalance
-        )
-    {
-        _checkNftType(stakeNftId, STAKE());
-
-        StakingServiceStorage storage $ = _getStakingServiceStorage();
-        address stakeOwner = msg.sender;
-
-        if (! getRegistry().isRegistered(newTargetNftId)) {
-            revert ErrorStakingServiceTargetUnknown(newTargetNftId);
-        }
-
-        // register new stake object with registry
-        newStakeNftId = $._registryService.registerStake(
-            IRegistry.ObjectInfo({
-                nftId: NftIdLib.zero(),
-                parentNftId: newTargetNftId,
-                objectType: STAKE(),
-                isInterceptor: false,
-                objectAddress: address(0),
-                initialOwner: stakeOwner,
-                data: ""
-            }));
-
-        newStakeBalance = $._staking.restake(
-            stakeNftId, 
-            newStakeNftId);
-
-        emit LogStakingServiceStakeRestaked(stakeOwner, stakeNftId, newStakeNftId, newTargetNftId, newStakeBalance);
-    } 
-
-
-    function updateRewards(
-        NftId stakeNftId
-    )
-        external
-        virtual
-        restricted()
-    {
-        _checkNftType(stakeNftId, STAKE());
-
-        StakingServiceStorage storage $ = _getStakingServiceStorage();
-        $._staking.updateRewards(stakeNftId);
-
-        emit LogStakingServiceRewardsUpdated(stakeNftId);
-    }
-
-
-    function claimRewards(NftId stakeNftId)
-        external
-        virtual
-        restricted()
-        onlyNftOwner(stakeNftId)
-    {
-        _checkNftType(stakeNftId, STAKE());
-
-        StakingServiceStorage storage $ = _getStakingServiceStorage();
-        address stakeOwner = msg.sender;
-
-        Amount rewardsClaimedAmount = $._staking.claimRewards(stakeNftId);
-        emit LogStakingServiceRewardsClaimed(stakeNftId, stakeOwner, rewardsClaimedAmount);
-        $._tokenHandler.pushToken(
-            stakeOwner,
-            rewardsClaimedAmount);
-    }
-
-
-    function unstake(NftId stakeNftId)
-        external
-        virtual
-        restricted()
-        onlyNftOwner(stakeNftId)
-    {
-        _checkNftType(stakeNftId, STAKE());
-        
-        StakingServiceStorage storage $ = _getStakingServiceStorage();
-        address stakeOwner = msg.sender;
-
-        (
-            Amount unstakedAmount,
-            Amount rewardsClaimedAmount
-        ) = $._staking.unstake(stakeNftId);
-
-        Amount totalAmount = unstakedAmount + rewardsClaimedAmount;
-        emit LogStakingServiceUnstaked(stakeNftId, stakeOwner, totalAmount);
-
-        $._tokenHandler.pushToken(
-            stakeOwner, 
-            totalAmount);
+        _getStakingServiceStorage()._tokenHandler.approve(token, amount);
     }
 
 
@@ -434,24 +305,6 @@ contract StakingService is
             owner);
 
         return IStaking(stakingAddress);
-    }
-
-
-    function _refillRewardReserves(NftId targetNftId, address rewardProvider, Amount dipAmount)
-        internal
-        virtual
-        returns (Amount newBalance)
-    {
-        // update reward reserve book keeping
-        StakingServiceStorage storage $ = _getStakingServiceStorage();
-        newBalance = $._staking.refillRewardReserves(targetNftId, dipAmount);
-
-        emit LogStakingServiceRewardReservesIncreased(targetNftId, rewardProvider, dipAmount, newBalance);
-
-        // collect reward dip from provider
-        $._tokenHandler.pullToken(
-            rewardProvider,
-            dipAmount);
     }
 
 

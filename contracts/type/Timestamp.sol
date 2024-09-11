@@ -3,6 +3,8 @@ pragma solidity ^0.8.20;
 
 import {Seconds} from "./Seconds.sol";
 
+/// @dev Target: Cover 10 years with 1 ms block time resolution.
+/// Typical block time resolution is 1s.
 type Timestamp is uint40;
 
 using {
@@ -69,8 +71,8 @@ library TimestampLib {
     function max() public pure returns (Timestamp) {
         return Timestamp.wrap(type(uint40).max);
     }
-    
-    function blockTimestamp() public view returns (Timestamp) {
+
+    function current() public view returns (Timestamp) {
         return Timestamp.wrap(uint40(block.timestamp));
     }
 

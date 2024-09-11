@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Blocknumber, BlocknumberLib, neBlocknumber, eqBlocknumber, gtBlocknumber, gteBlocknumber, ltBlocknumber, lteBlocknumber, toBlocknumber, zeroBlocknumber, blockBlocknumber} from "../../contracts/type/Blocknumber.sol";
+import {Blocknumber, BlocknumberLib, neBlocknumber, eqBlocknumber, gtBlocknumber, gteBlocknumber, ltBlocknumber, lteBlocknumber, toBlocknumber} from "../../contracts/type/Blocknumber.sol";
 
 import {Test} from "../../lib/forge-std/src/Test.sol";
 
@@ -23,17 +23,17 @@ contract BlocknumberTest is Test {
     }
 
     function test_zeroBlocknumber() public {
-        assertEq(zeroBlocknumber().toInt(), 0);
+        assertEq(BlocknumberLib.zero().toInt(), 0);
     }
 
     function test_blockBlocknumber() public {
         uint256 bn = block.number;
-        assertEq(blockBlocknumber().toInt(), bn);
+        assertEq(BlocknumberLib.current().toInt(), bn);
 
         vm.warp(100);
 
         bn = block.number;
-        assertEq(blockBlocknumber().toInt(), bn);
+        assertEq(BlocknumberLib.current().toInt(), bn);
     }
 
     function test_op_gt() public {
