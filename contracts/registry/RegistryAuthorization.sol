@@ -11,8 +11,8 @@ import {PUBLIC_ROLE} from "../type/RoleId.sol";
 import {ReleaseRegistry} from "./ReleaseRegistry.sol";
 import {RegistryAdmin} from "./RegistryAdmin.sol";
 import {RoleIdLib, ADMIN_ROLE, GIF_ADMIN_ROLE, GIF_MANAGER_ROLE} from "../type/RoleId.sol";
-import {Staking} from "../staking/Staking.sol";
 import {StakingStore} from "../staking/StakingStore.sol";
+import {TargetHandler} from "../staking/TargetHandler.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {TokenRegistry} from "../registry/TokenRegistry.sol";
 import {VersionPartLib} from "../type/Version.sol";
@@ -138,6 +138,7 @@ contract RegistryAuthorization
 
           // staking
           _setupStakingAuthorization();
+          _setupStakingTargetHandlerAuthorization();
           _setupStakingStoreAuthorization();
           _setupStakingThAuthorization();
      }
@@ -216,7 +217,13 @@ contract RegistryAuthorization
                STAKING_TARGET_NAME,
                PUBLIC_ROLE());
 
+          // unpermissioned functions
+          _authorize(functions, IStaking.updateTargetLimit.selector, "updateTargetLimit");
+          _authorize(functions, IStaking.createStake.selector, "createStake");
+
           // owner functions (permissioned to staking owner)
+          _authorize(functions, IStaking.setSupportInfo.selector, "setSupportInfo");
+          _authorize(functions, IStaking.setUpdateTriggers.selector, "setUpdateTriggers");
           _authorize(functions, IStaking.setProtocolLockingPeriod.selector, "setProtocolLockingPeriod");
           _authorize(functions, IStaking.setProtocolRewardRate.selector, "setProtocolRewardRate");
           _authorize(functions, IStaking.setStakingRate.selector, "setStakingRate");
@@ -224,8 +231,10 @@ contract RegistryAuthorization
           _authorize(functions, IStaking.setStakingReader.selector, "setStakingReader");
           _authorize(functions, IStaking.addToken.selector, "addToken");
           
+          // target owner functions (permissioned to target owner)
+          _authorize(functions, IStaking.setTargetLimits.selector, "setTargetLimits");
+
           // staker functions (may be permissioned to nft holders)
-          _authorize(functions, IStaking.createStake.selector, "createStake");
           _authorize(functions, IStaking.stake.selector, "stake");
           _authorize(functions, IStaking.unstake.selector, "unstake");
           _authorize(functions, IStaking.restake.selector, "restake");
@@ -266,6 +275,18 @@ contract RegistryAuthorization
      }
 
 
+     function _setupStakingTargetHandlerAuthorization() internal {
+          IAccess.FunctionInfo[] storage functions;
+
+          // staking service role
+          functions = _authorizeForTarget(
+               STAKING_TARGET_HANDLER_NAME,
+               getTargetRole(getTarget(STAKING_TARGET_NAME)));
+
+          _authorize(functions, TargetHandler.setUpdateTriggers.selector, "setUpdateTriggers");
+     }
+
+
      function _setupStakingStoreAuthorization() internal {
           IAccess.FunctionInfo[] storage functions;
 
@@ -274,6 +295,8 @@ contract RegistryAuthorization
                STAKING_STORE_TARGET_NAME, 
                getTargetRole(getTarget(STAKING_TARGET_NAME)));
 
+          _authorize(functions, StakingStore.setTargetLimits.selector, "setTargetLimits");
+          _authorize(functions, StakingStore.updateTargetLimit.selector, "updateTargetLimit");
           _authorize(functions, StakingStore.setStakingReader.selector, "setStakingReader");
           _authorize(functions, StakingStore.setTargetLimitHandler.selector, "setTargetLimitHandler");
           _authorize(functions, StakingStore.setSupportInfo.selector, "setSupportInfo");

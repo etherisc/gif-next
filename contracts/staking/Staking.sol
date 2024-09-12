@@ -122,6 +122,20 @@ contract Staking is
             maxRewardRate);
     }
 
+
+    /// @inheritdoc IStaking
+    function setUpdateTriggers(
+        uint16 tvlUpdatesTrigger,
+        UFixed minTvlRatioTrigger
+    )
+        external
+        restricted()
+    {
+        StakingStorage storage $ = _getStakingStorage();
+        $._targetHandler.setUpdateTriggers(tvlUpdatesTrigger, minTvlRatioTrigger);
+    }
+
+
     /// @inheritdoc IStaking
     function setProtocolLockingPeriod(Seconds newLockingPeriod)
         external
@@ -452,7 +466,17 @@ contract Staking is
         
     }
 
-    //--- stake owner functions ---------------------------------------------//
+    //--- public functions --------------------------------------------------//
+
+    /// @inheritdoc IStaking
+    function updateTargetLimit(NftId targetNftId)
+        external
+        restricted()
+    {
+        StakingStorage storage $ = _getStakingStorage();
+        $._store.updateTargetLimit(targetNftId);
+    }
+
 
     /// @inheritdoc IStaking
     function createStake(
@@ -476,6 +500,8 @@ contract Staking is
             $._stakingService.pullDipToken(stakeAmount, stakeOwner);
         }
     }
+
+    //--- stake owner functions ---------------------------------------------//
 
 
     /// @inheritdoc IStaking

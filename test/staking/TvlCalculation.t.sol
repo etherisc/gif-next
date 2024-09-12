@@ -11,6 +11,7 @@ import {ChainIdLib} from "../../contracts/type/ChainId.sol";
 import {ClaimId} from "../../contracts/type/ClaimId.sol";
 import {GifTest} from "../base/GifTest.sol";
 import {NftId} from "../../contracts/type/NftId.sol";
+import {INSTANCE} from "../../contracts/type/ObjectType.sol";
 import {PayoutId} from "../../contracts/type/PayoutId.sol";
 import {ReferralLib} from "../../contracts/type/Referral.sol";
 import {RiskId, RiskIdLib} from "../../contracts/type/RiskId.sol";
@@ -55,6 +56,22 @@ contract TvlCalculation is GifTest {
 
         vm.startPrank(stakingOwner);
         staking.setStakingRate(ChainIdLib.current(), tokenAddress, stakingRate);
+        vm.stopPrank();
+
+        // set minimum required stake amount for instance to zero
+        IStaking.SupportInfo memory isi = stakingReader.getSupportInfo(INSTANCE());
+        vm.startPrank(stakingOwner);
+        staking.setSupportInfo(
+            INSTANCE(),
+            isi.isSupported,
+            isi.allowNewTargets,
+            isi.allowCrossChain,
+            AmountLib.zero(), // minStakingAmount
+            isi.maxStakingAmount,
+            isi.minLockingPeriod,
+            isi.maxLockingPeriod,
+            isi.minRewardRate,
+            isi.maxRewardRate);
         vm.stopPrank();
     }
 

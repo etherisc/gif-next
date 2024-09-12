@@ -96,6 +96,11 @@ contract StakingReader is
     }
 
 
+    function getLimitInfo(NftId targetNftId) public view returns (IStaking.LimitInfo memory info) {
+        return _store.getLimitInfo(targetNftId);
+    }
+
+
     function getTvlInfo(NftId targetNftId, address token) public view returns (IStaking.TvlInfo memory info) {
         return _store.getTvlInfo(targetNftId, token);
     }
@@ -157,6 +162,10 @@ contract StakingReader is
     }
 
     function getRequiredStakeBalance(NftId targetNftId) external view returns (Amount requiredStakedAmount) {
-        return _store.getRequiredStakeBalance(targetNftId);
+        return _store.getRequiredStakeBalance(targetNftId, true);
+    }
+
+    function getRequiredStakeBalance(NftId targetNftId, bool includeTargetTypeRequirements) external view returns (Amount requiredStakedAmount) {
+        return _store.getRequiredStakeBalance(targetNftId, includeTargetTypeRequirements);
     }
 }

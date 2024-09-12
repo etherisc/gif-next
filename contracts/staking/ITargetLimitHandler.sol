@@ -6,15 +6,6 @@ import {NftId} from "../type/NftId.sol";
 
 interface ITargetLimitHandler {
 
-    //--- functions ---------------------------------------------------------//
-
-    /// @dev Updates the target limit.
-    /// The target limit defines the maximum stake amount for the target NFT ID.
-    function updateLimit(NftId targetNftId) external returns (Amount stakeLimitAmount);
-
-
-    //--- view functions ----------------------------------------------------//
-
     /// @dev Returns true iff the target limit update is required.
     function isLimitUpdateRequired(
         NftId targetNftId, 

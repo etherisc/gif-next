@@ -8,6 +8,7 @@ import {IRegistry} from "../registry/IRegistry.sol";
 import {ITargetLimitHandler} from "./ITargetLimitHandler.sol";
 
 import {Amount, AmountLib} from "../type/Amount.sol";
+import {Blocknumber, BlocknumberLib} from "../type/Blocknumber.sol";
 import {NftId} from "../type/NftId.sol";
 import {StakingStore} from "./StakingStore.sol";
 import {UFixed, UFixedLib} from "../type/UFixed.sol";
@@ -19,10 +20,16 @@ contract TargetHandler is
     ITargetLimitHandler
 {
 
+    event LogTargetHandlerUpdateTriggersSet(uint16 tvlUpdatesTrigger, UFixed minTvlRatioTrigger, Blocknumber lastUpdateIn);
+
     IRegistry private _registry;
     StakingStore private _store;
-    uint16 private _tvlUpdatesTrigger; // number of TVL updates below which limit updates are suppressed
-    UFixed private _maxTvlRatio; // any ratio above this value will trigger a limit update
+
+    /// @dev Update trigger value: Number of TVL updates below which limit updates are suppressed
+    uint16 private _tvlUpdatesTrigger; 
+    /// @dev Maximum TVL ratio: Any ratio above this value will trigger a limit update
+    UFixed private _minTvlRatioTrigger;
+    Blocknumber private _lastUpdateIn;
 
 
     constructor (
@@ -35,9 +42,13 @@ contract TargetHandler is
         setAuthority(registry.getAuthority());
         _registry = registry;
         _store = stakingStore;
-        _tvlUpdatesTrigger = 2; // check after 2 TVL updates TODO make this configurable
-        _maxTvlRatio = UFixedLib.toUFixed(1, -1); // 10% above the baseline TVL amount TODO make this configurable
+
+        // set default trigger values
+        _setUpdateTriggers(
+            10, // check after 2 TVL updates
+            UFixedLib.toUFixed(1, -1)); // 10% deviation from baseline TVL
     }
+
 
     // TODO do we really need this?
     // if so: add onlyDeployer (new base contract? also for reader)
@@ -47,19 +58,20 @@ contract TargetHandler is
         initializer()
     { }
 
-    //--- target owner functions --------------------------------------------------//    
-    //--- ITargetLimitHandler -----------------------------------------------------//
+    //--- staking functions -------------------------------------------------------//
 
-    /// @inheritdoc ITargetLimitHandler
-    function updateLimit(NftId targetNftId)
+    /// @dev Sets the TVL update triggers.
+    function setUpdateTriggers(
+        uint16 tvlUpdatesTrigger,
+        UFixed minTvlRatioTrigger
+    )
         external
-        virtual 
-        restricted() 
-        returns (Amount stakeLimitAmount)
+        restricted()
     {
-        _store.updateTargetLimit(targetNftId);
+        _setUpdateTriggers(tvlUpdatesTrigger, minTvlRatioTrigger);
     }
 
+    //--- ITargetLimitHandler -----------------------------------------------------//
 
     /// @inheritdoc ITargetLimitHandler
     // Current implementation only considers the TVL amounts. 
@@ -100,6 +112,21 @@ contract TargetHandler is
         else { ratio = current / baseline; }
 
         // update required if the ratio is above the maximum TVL ratio
-        return ratio > _maxTvlRatio;
+        return ratio >= _minTvlRatioTrigger;
+    }
+
+
+    function _setUpdateTriggers(
+        uint16 tvlUpdatesTrigger,
+        UFixed minTvlRatioTrigger
+    )
+        internal
+    {
+        Blocknumber lastUpdateIn = _lastUpdateIn;
+        _tvlUpdatesTrigger = tvlUpdatesTrigger;
+        _minTvlRatioTrigger = minTvlRatioTrigger;
+        _lastUpdateIn = BlocknumberLib.current();
+
+        emit LogTargetHandlerUpdateTriggersSet(tvlUpdatesTrigger, minTvlRatioTrigger, lastUpdateIn);
     }
 }

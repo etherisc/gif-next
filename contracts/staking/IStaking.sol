@@ -197,6 +197,31 @@ interface IStaking is
 
     //--- only owner functions ----------------------------------------------//
 
+    /// @dev Enable/disable the staking support for the specified target type.
+    /// Defines the degrees of freedom for creating staking targets per target type.
+    function setSupportInfo(
+        ObjectType targetType,
+        bool isSupported,
+        bool allowNewTargets,
+        bool allowCrossChain,
+        Amount minStakingAmount,
+        Amount maxStakingAmount,
+        Seconds minLockingPeriod,
+        Seconds maxLockingPeriod,
+        UFixed minRewardRate,
+        UFixed maxRewardRate
+    ) external;
+
+    /// @dev Set the trigger values to determine when to update limit amount in TargetInfo.
+    /// Changes in the TvlInfo may trigger an update of the limit amount in the TargetInfo based on these settings.
+    /// The value tvlUpdatesTrigger suppresses any updates if the number of TVL updates is below this value.
+    /// The value minTvlRatioTrigger defines the minimal TVL ratio above which the limit amount is updated.
+    /// The ratio is calulated as current TVL / baseline TVL (or baseline TVL / current TVL).
+    function setUpdateTriggers(
+        uint16 tvlUpdatesTrigger,
+        UFixed minTvlRatioTrigger
+    ) external;
+
     /// @dev Set the stake locking period for protocol stakes to the specified duration.
     function setProtocolLockingPeriod(Seconds lockingPeriod) external;
 
@@ -294,12 +319,21 @@ interface IStaking is
     /// Permissioned: only the owner may call this function
     function withdrawRewardReservesByService(NftId targetNftId, Amount dipAmount, address transferTo) external returns (Amount newBalance);
 
-    //--- staking functions -------------------------------------------------//
+    //--- public functions -----------------------------------------------------//
+
+    /// @dev Updates the current limit amount for the specified target.
+    /// The function takes into account the current TVL amount per token
+    /// and the current staking rate for the token to calculate the required stake amount.
+    /// Based on this required stake amount and the targets margin and hard limit (from LimitInfo) 
+    /// the function updates the target limit amount (in the target info)
+    function updateTargetLimit(NftId targetNftId) external;
 
     /// @dev Creates a new stake to the specified target over the given DIP amount.
     /// The stake owner is provided as an argument and becomes the stake NFT holder.
     /// This function is permissionless and may be called by any user.
     function createStake(NftId targetNftId, Amount dipAmount, address stakeOwner) external returns (NftId stakeNftId);
+
+    //--- stake owner functions -------------------------------------------------//
 
     /// @dev Increase the staked DIP by dipAmount for the specified stake.
     /// Staking rewards are updated and added to the staked DIP amount as well.

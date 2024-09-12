@@ -626,14 +626,15 @@ contract StakingStore is
         Blocknumber lastUpdateIn = limitInfo.lastUpdateIn;
 
         // calculate max stake amount
-        Amount requiredStakeAmount = getRequiredStakeBalance(targetNftId);
-        limitAmount = AmountLib.min(
-            targetInfo.limitAmount, 
-            requiredStakeAmount + limitInfo.marginAmount);
+        Amount requiredStakeAmount = getRequiredStakeBalance(targetNftId, false);
+        // limitAmount = AmountLib.min(
+        //     targetInfo.limitAmount, 
+        //     requiredStakeAmount + limitInfo.marginAmount);
         
-        limitAmount = AmountLib.min(
-            limitAmount, 
-            limitInfo.hardLimitAmount);
+        // add margin to required stakes
+        limitAmount = requiredStakeAmount + limitInfo.marginAmount;
+        // cap at hard limit
+        limitAmount = AmountLib.min(limitAmount, limitInfo.hardLimitAmount);
 
         // effects
         targetInfo.limitAmount = limitAmount;
@@ -803,7 +804,10 @@ contract StakingStore is
     }
 
 
-    function getRequiredStakeBalance(NftId targetNftId)
+    function getRequiredStakeBalance(
+        NftId targetNftId,
+        bool includeTargetTypeRequirements
+    )
         public
         view
         returns (Amount requiredStakeAmount)
@@ -813,6 +817,7 @@ contract StakingStore is
             return AmountLib.zero();
         }
 
+        // calculate tvl based required stake amount
         requiredStakeAmount = AmountLib.zero();
         ChainId targetChainId = _targetInfo[targetNftId].chainId;
         address token;
@@ -828,6 +833,18 @@ contract StakingStore is
             if (stakingRate.eqz()) { continue; }
 
             requiredStakeAmount = requiredStakeAmount + tvlAmount.multiplyWith(stakingRate);
+        }
+
+        // update required amount based on target type
+        if (includeTargetTypeRequirements) {
+            ObjectType targetType = _targetInfo[targetNftId].objectType;
+            IStaking.SupportInfo storage supportInfo = _supportInfo[targetType];
+
+            if (requiredStakeAmount < supportInfo.minStakingAmount) {
+                requiredStakeAmount = supportInfo.minStakingAmount;
+            } else if (requiredStakeAmount > supportInfo.maxStakingAmount) {
+                requiredStakeAmount = supportInfo.maxStakingAmount;
+            }
         }
     }
 
@@ -933,7 +950,7 @@ contract StakingStore is
         _setLimits(
             _limitInfo[targetNftId],
             targetNftId, 
-            AmountLib.zero(), // margin limit
+            AmountLib.toAmount(AmountLib.max().toInt() / 2), // margin limit
             AmountLib.max()); // hard limit
 
         // add new target to target set
