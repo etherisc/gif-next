@@ -11,7 +11,7 @@ import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {IStaking} from "../../contracts/staking/IStaking.sol";
 import {IStakingService} from "../../contracts/staking/IStakingService.sol";
 import {NftId} from "../../contracts/type/NftId.sol";
-import {INSTANCE, PROTOCOL, SERVICE, STAKE, STAKING} from "../../contracts/type/ObjectType.sol";
+import {INSTANCE, BUNDLE, PROTOCOL, REGISTRY, SERVICE, STAKE, STAKING} from "../../contracts/type/ObjectType.sol";
 import {Seconds, SecondsLib} from "../../contracts/type/Seconds.sol";
 import {StakingLib} from "../../contracts/staking/StakingLib.sol";
 import {StakingStore} from "../../contracts/staking/StakingStore.sol";
@@ -22,7 +22,7 @@ import {UFixed, UFixedLib} from "../../contracts/type/UFixed.sol";
 import {VersionPart} from "../../contracts/type/Version.sol";
 
 
-contract StakingTargetManagementTest is GifTest {
+contract StakingTargetTest is GifTest {
 
     uint256 public constant STAKING_WALLET_APPROVAL = 5000;
 
@@ -35,6 +35,33 @@ contract StakingTargetManagementTest is GifTest {
         vm.startPrank(staking.getOwner());
         staking.approveTokenHandler(dip, AmountLib.max());
         vm.stopPrank();
+    }
+
+
+    function test_stakingTargetSetInfo() public view {
+
+        // check initial protocol and instance support
+        assertTrue(stakingReader.isSupportedTargetType(PROTOCOL()), "protocol staking not supported");
+        assertTrue(stakingReader.isSupportedTargetType(INSTANCE()), "instance staking not supported");
+
+        // check counter examples
+        assertFalse(stakingReader.isSupportedTargetType(REGISTRY()), "registry staking not supported");
+        assertFalse(stakingReader.isSupportedTargetType(STAKE()), "stake staking not supported");
+        assertFalse(stakingReader.isSupportedTargetType(BUNDLE()), "bundle staking not supported");
+
+        // protocol support info
+        IStaking.SupportInfo memory psi = stakingReader.getSupportInfo(PROTOCOL());
+        assertFalse(psi.allowNewTargets, "protocol staking allows new targets");
+        assertTrue(psi.allowCrossChain, "protocol staking does not allow stakes from other chains");
+        assertTrue(psi.minStakingAmount.eqz(), "protocol staking min > 0");
+        assertTrue(psi.lastUpdateIn.gtz(), "protocol staking last update 0");
+
+        // instance support info
+        IStaking.SupportInfo memory isi = stakingReader.getSupportInfo(INSTANCE());
+        assertTrue(isi.allowNewTargets, "instance staking does not allow new targets");
+        assertTrue(isi.allowCrossChain, "instance staking does not allow stakes from other chains");
+        assertTrue(isi.minStakingAmount.gtz(), "instance staking min == 0");
+        assertTrue(isi.lastUpdateIn.gtz(), "instance staking last update 0");
     }
 
 

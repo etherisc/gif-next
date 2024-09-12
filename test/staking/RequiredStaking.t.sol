@@ -75,6 +75,7 @@ contract RequiredStakingTest is GifTest {
         assertEq(tvlInfo.updatesCounter, 0, "unexpected initial updates counter");
         assertEq(tvlInfo.lastUpdateIn.toInt(), 1000, "unexpected initial last update in");
 
+        // solhint-disable-next-line
         console.log("required stakes (dip)", stakingReader.getRequiredStakeBalance(instanceNftId).toInt());
     }
 
@@ -302,6 +303,7 @@ contract RequiredStakingTest is GifTest {
 
 
     function _printRequiredStakes(string memory postfix) internal {
+        // solhint-disable-next-line
         console.log(
             "required dip stakes", 
             postfix, 

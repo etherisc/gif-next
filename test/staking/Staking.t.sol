@@ -13,7 +13,7 @@ import {Amount, AmountLib} from "../../contracts/type/Amount.sol";
 import {BlocknumberLib} from "../../contracts/type/Blocknumber.sol";
 import {GifTest} from "../base/GifTest.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
-import {STAKE} from "../../contracts/type/ObjectType.sol";
+import {INSTANCE, STAKE} from "../../contracts/type/ObjectType.sol";
 import {Seconds, SecondsLib} from "../../contracts/type/Seconds.sol";
 import {StakingLib} from "../../contracts/staking/StakingLib.sol";
 import {StakingStore} from "../../contracts/staking/StakingStore.sol";
@@ -206,11 +206,14 @@ contract StakingTest is GifTest {
         Seconds oneHour = SecondsLib.toSeconds(3600);
         vm.startPrank(instanceOwner);
 
+        IStaking.SupportInfo memory supportInfo = stakingReader.getSupportInfo(INSTANCE());
         vm.expectRevert(abi.encodeWithSelector(
-            IStaking.ErrorStakingLockingPeriodTooShort.selector,
+            IStaking.ErrorStakingLockingPeriodInvalid.selector,
             instanceNftId,
-            TargetManagerLib.getMinimumLockingPeriod(),
-            oneHour));
+            oneHour,
+            supportInfo.minLockingPeriod,
+            supportInfo.maxLockingPeriod));
+
         instance.setStakingLockingPeriod(oneHour);
     }
 

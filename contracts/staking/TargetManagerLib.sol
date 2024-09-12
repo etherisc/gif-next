@@ -3,8 +3,10 @@ pragma solidity ^0.8.20;
 
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
+import {IStaking} from "./IStaking.sol";
+
 import {Amount, AmountLib} from "../type/Amount.sol";
-import {Component} from "../shared/Component.sol";
+import {ChainIdLib} from "../type/ChainId.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegistryService} from "../registry/IRegistryService.sol";
 import {IStaking} from "./IStaking.sol";
@@ -37,7 +39,8 @@ library TargetManagerLib {
             revert IStaking.ErrorStakingTargetNotFound(targetNftId);
         }
 
-        checkLockingPeriod(targetNftId, lockingPeriod);
+        ObjectType targetType = reader.getTargetInfo(targetNftId).objectType;
+        checkLockingPeriod(reader, targetNftId, targetType, lockingPeriod);
 
         targetInfo = reader.getTargetInfo(targetNftId);
         oldLockingPeriod = targetInfo.lockingPeriod;
@@ -65,7 +68,8 @@ library TargetManagerLib {
             revert IStaking.ErrorStakingTargetNotFound(targetNftId);
         }
 
-        checkRewardRate(targetNftId, rewardRate);
+        ObjectType targetType = reader.getTargetInfo(targetNftId).objectType;
+        checkRewardRate(reader, targetNftId, targetType, rewardRate);
 
         targetInfo = reader.getTargetInfo(targetNftId);
         oldRewardRate = targetInfo.rewardRate;
@@ -79,8 +83,8 @@ library TargetManagerLib {
         StakingReader stakingReader,
         NftId targetNftId,
         ObjectType expectedObjectType,
-        Seconds initialLockingPeriod,
-        UFixed initialRewardRate
+        Seconds lockingPeriod,
+        UFixed rewardRate
     )
         external
         view
@@ -95,63 +99,54 @@ library TargetManagerLib {
             revert IStaking.ErrorStakingTargetAlreadyRegistered(targetNftId);
         }
 
-        // target object type must be allowed
-        if (!isTargetTypeSupported(expectedObjectType)) {
+        // get setup info for additional checks
+        IStaking.SupportInfo memory supportInfo = stakingReader.getSupportInfo(expectedObjectType);
+
+        // check if type is supported and new targets of that type are allowed
+        if (!(supportInfo.isSupported && supportInfo.allowNewTargets)) {
             revert IStaking.ErrorStakingTargetTypeNotSupported(targetNftId, expectedObjectType);
         }
 
-        checkLockingPeriod(targetNftId, initialLockingPeriod);
-        checkRewardRate(targetNftId, initialRewardRate);
+        // check if cross chain targets are allowed (if applicable)
+        bool isCurrentChain = ChainIdLib.isCurrentChain(targetNftId);
+        if (!supportInfo.allowCrossChain && !isCurrentChain) {
+            revert IStaking.ErrorStakingCrossChainTargetsNotSupported(targetNftId, expectedObjectType);
+        }
 
-        // target nft id must be known and registered with the expected object type
-        if (!registry.isRegistered(targetNftId)) {
-            revert IStaking.ErrorStakingTargetNotFound(targetNftId);
-        } else {
-            // check that expected object type matches with registered object type
-            ObjectType actualObjectType = registry.getObjectInfo(targetNftId).objectType;
-            if (actualObjectType != expectedObjectType) {
-                revert IStaking.ErrorStakingTargetUnexpectedObjectType(targetNftId, expectedObjectType, actualObjectType);
+        // additional check for current chain target: target nft id must be known and registered with the expected object type
+        if (isCurrentChain) {
+            if (!registry.isRegistered(targetNftId)) {
+                revert IStaking.ErrorStakingTargetNotFound(targetNftId);
+            } else {
+                // check that expected object type matches with registered object type
+                ObjectType actualObjectType = registry.getObjectInfo(targetNftId).objectType;
+                if (actualObjectType != expectedObjectType) {
+                    revert IStaking.ErrorStakingTargetUnexpectedObjectType(targetNftId, expectedObjectType, actualObjectType);
+                }
             }
         }
+
+        // check locking period and reward rate
+        _checkLockingPeriod(targetNftId, lockingPeriod, supportInfo);
+        _checkRewardRate(targetNftId, rewardRate, supportInfo);
     }
 
 
-    function isTargetTypeSupported(ObjectType objectType)
+    function checkLockingPeriod(StakingReader reader, NftId targetNftId, ObjectType targetType, Seconds lockingPeriod)
         public 
-        pure 
-        returns (bool isSupported)
+        view
     {
-        if(objectType == PROTOCOL()) { return true; }
-        if(objectType == INSTANCE()) { return true; }
-
-        return false;
+        IStaking.SupportInfo memory supportInfo = reader.getSupportInfo(targetType);
+        _checkLockingPeriod(targetNftId, lockingPeriod, supportInfo);
     }
 
 
-    function checkLockingPeriod(NftId targetNftId, Seconds lockingPeriod)
-        public 
-        pure
-    {
-        // check locking period is >= min locking period
-        if (lockingPeriod.lt(getMinimumLockingPeriod())) {
-            revert IStaking.ErrorStakingLockingPeriodTooShort(targetNftId, getMinimumLockingPeriod(), lockingPeriod);
-        }
-
-        // check locking period <= max locking period
-        if (lockingPeriod > getMaxLockingPeriod()) {
-            revert IStaking.ErrorStakingLockingPeriodTooLong(targetNftId, getMaxLockingPeriod(), lockingPeriod);
-        }
-    }
-
-
-    function checkRewardRate(NftId targetNftId, UFixed rewardRate)
+    function checkRewardRate(StakingReader reader, NftId targetNftId, ObjectType targetType, UFixed rewardRate)
         public
-        pure
+        view
     {
-        // check reward rate <= max reward rate
-        if (rewardRate > getMaxRewardRate()) {
-            revert IStaking.ErrorStakingRewardRateTooHigh(targetNftId, getMaxRewardRate(), rewardRate);
-        }
+        IStaking.SupportInfo memory supportInfo = reader.getSupportInfo(targetType);
+        _checkRewardRate(targetNftId, rewardRate, supportInfo);
     }
 
 
@@ -207,5 +202,33 @@ library TargetManagerLib {
 
     function toTargetKey(NftId targetNftId) public pure returns (Key32 targetKey) {
         return targetNftId.toKey32(TARGET());
+    }
+
+
+    function _checkLockingPeriod(NftId targetNftId, Seconds lockingPeriod, IStaking.SupportInfo memory supportInfo)
+        private
+        pure
+    {
+        if (lockingPeriod < supportInfo.minLockingPeriod || lockingPeriod > supportInfo.maxLockingPeriod) {
+            revert IStaking.ErrorStakingLockingPeriodInvalid(
+                targetNftId, 
+                lockingPeriod, 
+                supportInfo.minLockingPeriod,
+                supportInfo.maxLockingPeriod);
+        }
+    }
+
+
+    function _checkRewardRate(NftId targetNftId, UFixed rewardRate, IStaking.SupportInfo memory supportInfo) 
+        private
+        pure
+    {
+        if (rewardRate < supportInfo.minRewardRate || rewardRate > supportInfo.maxRewardRate) {
+            revert IStaking.ErrorStakingRewardRateInvalid(
+                targetNftId, 
+                rewardRate,
+                supportInfo.minRewardRate,
+                supportInfo.maxRewardRate);
+        }
     }
 }

@@ -26,8 +26,6 @@ interface IStaking is
 {
 
     // owner functions
-    event LogStakingProtocolLockingPeriodSet(NftId targetNftId, Seconds newLockingPeriod, Seconds oldLockingPeriod, Blocknumber lastUpdateIn);
-    event LogStakingProtocolRewardRateSet(NftId targetNftId, UFixed newRewardRate, UFixed oldRewardRate, Blocknumber lastUpdateIn);
     event LogStakingStakingRateSet(ChainId chainId, address token, UFixed newStakingRate, UFixed oldStakingRate, Blocknumber lastUpdateIn);
     event LogStakingStakingServiceSet(address stakingService, VersionPart release, address oldStakingService);
     event LogStakingStakingReaderSet(address stakingReader, address oldStakingReader);
@@ -43,13 +41,27 @@ interface IStaking is
     event LogStakingTvlDecreased(NftId targetNftId, address token, Amount amount, Amount newBalance, Blocknumber lastUpdateIn);
 
     // targets
-    event LogStakingTargetCreated(NftId targetNftId, ObjectType objectType, Seconds lockingPeriod, UFixed rewardRate, Amount stakeLimitAmount);
+    event LogStakingSupportInfoSet(
+        ObjectType objectType,
+        bool isSupported,
+        bool allowNewTargets,
+        bool allowCrossChain,
+        Amount minStakingAmount,
+        Amount maxStakingAmount,
+        Seconds minLockingPeriod,
+        Seconds maxLockingPeriod,
+        UFixed minRewardRate,
+        UFixed maxRewardRate,
+        Blocknumber lastUpdateIn);
+
+    event LogStakingTargetCreated(NftId targetNftId, ObjectType objectType, Seconds lockingPeriod, UFixed rewardRate);
+    event LogStakingLimitsSet(NftId targetNftId, Amount marginAmount, Amount hardLimitAmount, Blocknumber lastUpdateIn);
     event LogStakingTargetLimitsUpdated(NftId targetNftId, Amount marginAmount, Amount hardLimitAmount, Blocknumber lastUpdateIn);
     event LogStakingTargetLimitUpdated(NftId targetNftId, Amount limitAmount, Amount hardLimitAmount, Amount requiredStakeAmount, Amount actualStakeAmount, Blocknumber lastUpdateIn);
 
     // target parameters
-    event LogStakingTargetLockingPeriodSet(NftId targetNftId, Seconds oldLockingPeriod, Seconds lockingPeriod);
-    event LogStakingTargetRewardRateSet(NftId targetNftId, UFixed rewardRate, UFixed oldRewardRate);
+    event LogStakingTargetLockingPeriodSet(NftId targetNftId, Seconds oldLockingPeriod, Seconds lockingPeriod, Blocknumber lastUpdateIn);
+    event LogStakingTargetRewardRateSet(NftId targetNftId, UFixed rewardRate, UFixed oldRewardRate, Blocknumber lastUpdateIn);
     // TODO cleanup LogStakingTargetMaxStakedAmountSet
     event LogStakingTargetMaxStakedAmountSet(NftId targetNftId, Amount stakeLimitAmount, Blocknumber lastUpdateIn);
     event LogStakingTargetLimitsSet(NftId targetNftId, Amount stakeLimitAmount, Amount marginAmount, Amount limitAmount);
@@ -94,6 +106,11 @@ interface IStaking is
     error ErrorStakingStakingReaderStakingMismatch(address stakingByStakingReader);
 
     // target management
+    error ErrorStakingSupportTypeInvalid(ObjectType targetType);
+    error ErrorStakingStakingAmountsInvalid(Amount minStakingAmount, Amount maxStakingAmount);
+    error ErrorStakingLockingPeriodsInvalid(Seconds minLockingPeriod, Seconds maxLockingPeriod);
+    error ErrorStakingRewardRatesInvalid(UFixed minRewardRate, UFixed maxRewardRate);
+
     error ErrorStakingTargetNotFound(NftId targetNftId);
     error ErrorStakingTargetTokenNotFound(NftId targetNftId, ChainId chainId, address token);
     error ErrorStakingTargetMaxStakedAmountExceeded(NftId targetNftId, Amount stakeLimitAmount, Amount stakedAmount);
@@ -101,12 +118,12 @@ interface IStaking is
     error ErrorStakingTargetAlreadyRegistered(NftId targetNftId);
     error ErrorStakingTargetNftIdZero();
     error ErrorStakingTargetTypeNotSupported(NftId targetNftId, ObjectType objectType);
+    error ErrorStakingCrossChainTargetsNotSupported(NftId targetNftId, ObjectType objectType);
     error ErrorStakingTargetUnexpectedObjectType(NftId targetNftId, ObjectType expectedObjectType, ObjectType actualObjectType);
-    error ErrorStakingLockingPeriodTooShort(NftId targetNftId, Seconds minLockingPeriod, Seconds lockingPeriod);
-    error ErrorStakingLockingPeriodTooLong(NftId targetNftId, Seconds maxLockingPeriod, Seconds lockingPeriod);
-    error ErrorStakingStakeLocked(NftId stakeNftId, Timestamp lockedUntil);
-    error ErrorStakingRewardRateTooHigh(NftId targetNftId, UFixed maxRewardRate, UFixed rewardRate);
+    error ErrorStakingLockingPeriodInvalid(NftId targetNftId, Seconds lockingPeriod, Seconds minLockingPeriod, Seconds maxLockingPeriod);
+    error ErrorStakingRewardRateInvalid(NftId targetNftId, UFixed rewardRate, UFixed minRewardRate, UFixed maxRewardRate);
 
+    error ErrorStakingStakeLocked(NftId stakeNftId, Timestamp lockedUntil);
     error ErrorStakingStakeAmountZero(NftId targetNftId);
 
     // info for individual stake
@@ -120,6 +137,25 @@ interface IStaking is
         Timestamp lastUpdateAt; // 40, needed to update rewards
         Blocknumber lastUpdateIn; // 40, needed for traceability
     }
+
+
+    struct SupportInfo {
+        bool isSupported; // 1
+        bool allowNewTargets;
+        bool allowCrossChain;
+
+        Amount minStakingAmount; // 96
+        Amount maxStakingAmount; // 96
+
+        Seconds minLockingPeriod; // 40
+        Seconds maxLockingPeriod; // 40
+
+        UFixed minRewardRate; // 160
+        UFixed maxRewardRate; // 160
+
+        Blocknumber lastUpdateIn; // 40, needed for traceability
+    }
+
 
     struct TargetInfo {
         // Slot 0
@@ -233,12 +269,12 @@ interface IStaking is
     /// @dev Increases the total value locked amount for the specified target by the provided token amount.
     /// function is called when a new policy is collateralized.
     /// function restricted to the pool service.
-    function increaseTotalValueLocked(NftId targetNftId, address token, Amount amount) external returns (Amount newBalance);
+    function increaseTotalValueLocked(NftId targetNftId, address token, Amount amount) external;
 
     /// @dev Decreases the total value locked amount for the specified target by the provided token amount.
     /// function is called when a new policy is closed or payouts are executed.
     /// function restricted to the pool service.
-    function decreaseTotalValueLocked(NftId targetNftId, address token, Amount amount) external returns (Amount newBalance);
+    function decreaseTotalValueLocked(NftId targetNftId, address token, Amount amount) external;
 
 
     function updateRemoteTvl(NftId targetNftId, address token, Amount amount) external;

@@ -11,6 +11,7 @@ import {Amount, AmountLib} from "../type/Amount.sol";
 import {Blocknumber}  from "../type/Blocknumber.sol";
 import {ChainId}  from "../type/ChainId.sol";
 import {NftId} from "../type/NftId.sol";
+import {ObjectType} from "../type/ObjectType.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {StakingStore} from "./StakingStore.sol";
 import {STAKE, TARGET} from "../type/ObjectType.sol";
@@ -102,6 +103,16 @@ contract StakingReader is
 
     function getTokenInfo(ChainId chainId, address token) public view returns (IStaking.TokenInfo memory info) {
         return _store.getTokenInfo(chainId, token);
+    }
+
+
+    function isSupportedTargetType(ObjectType targetType) public view returns (bool) {
+        return _store.getSupportInfo(targetType).isSupported;
+    }
+
+
+    function getSupportInfo(ObjectType targetType) public view returns (IStaking.SupportInfo memory info) {
+        return _store.getSupportInfo(targetType);
     }
 
 

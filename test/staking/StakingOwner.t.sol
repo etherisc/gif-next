@@ -163,8 +163,8 @@ contract StakingOwnerTest is GifTest {
         // WHEN
         NftId protocolNftId = registry.getProtocolNftId();
         Blocknumber currentBlock = BlocknumberLib.current();
-        vm.expectEmit(address(staking));
-        emit IStaking.LogStakingProtocolLockingPeriodSet(
+        vm.expectEmit(address(staking.getStakingStore()));
+        emit IStaking.LogStakingTargetLockingPeriodSet(
             protocolNftId,
             newProtocolLockingPeriod,
             protocolLockingPeriod,
@@ -187,8 +187,8 @@ contract StakingOwnerTest is GifTest {
         // WHEN
         NftId protocolNftId = registry.getProtocolNftId();
         Blocknumber currentBlock = BlocknumberLib.current();
-        vm.expectEmit(address(staking));
-        emit IStaking.LogStakingProtocolRewardRateSet(
+        vm.expectEmit(address(staking.getStakingStore()));
+        emit IStaking.LogStakingTargetRewardRateSet(
             protocolNftId,
             newProtocolRewardRate,
             protocolRewardRate,

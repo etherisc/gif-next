@@ -276,8 +276,9 @@ contract RegistryAuthorization
 
           _authorize(functions, StakingStore.setStakingReader.selector, "setStakingReader");
           _authorize(functions, StakingStore.setTargetLimitHandler.selector, "setTargetLimitHandler");
-          _authorize(functions, StakingStore.addTargetToken.selector, "addTargetToken");
+          _authorize(functions, StakingStore.setSupportInfo.selector, "setSupportInfo");
           _authorize(functions, StakingStore.addToken.selector, "addToken");
+          _authorize(functions, StakingStore.addTargetToken.selector, "addTargetToken");
           _authorize(functions, StakingStore.setStakingRate.selector, "setStakingRate");
           _authorize(functions, StakingStore.createTarget.selector, "createTarget");
           _authorize(functions, StakingStore.setLockingPeriod.selector, "setLockingPeriod");

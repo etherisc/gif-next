@@ -6,6 +6,7 @@ type Seconds is uint40;
 
 using {
     SecondsEq as ==,
+    SecondsLt as <,
     SecondsGt as >,
     SecondsAdd as +,
     SecondsLib.eqz,
@@ -19,6 +20,10 @@ using {
 
 function SecondsEq(Seconds duration1, Seconds duration2) pure returns (bool) {
     return SecondsLib.eq(duration1, duration2);
+}
+
+function SecondsLt(Seconds duration1, Seconds duration2) pure returns (bool) {
+    return SecondsLib.lt(duration1, duration2);
 }
 
 function SecondsGt(Seconds duration1, Seconds duration2) pure returns (bool) {

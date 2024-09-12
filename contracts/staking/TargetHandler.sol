@@ -47,6 +47,9 @@ contract TargetHandler is
         initializer()
     { }
 
+    //--- target owner functions --------------------------------------------------//    
+    //--- ITargetLimitHandler -----------------------------------------------------//
+
     /// @inheritdoc ITargetLimitHandler
     function updateLimit(NftId targetNftId)
         external

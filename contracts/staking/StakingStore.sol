@@ -11,14 +11,12 @@ import {ITargetLimitHandler} from "./ITargetLimitHandler.sol";
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {ChainId, ChainIdLib} from "../type/ChainId.sol";
 import {Blocknumber, BlocknumberLib} from "../type/Blocknumber.sol";
-import {KeyValueStore} from "../shared/KeyValueStore.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
 import {NftIdSet} from "../shared/NftIdSet.sol";
 import {ObjectType} from "../type/ObjectType.sol";
-import {PROTOCOL} from "../type/ObjectType.sol";
+import {PROTOCOL, INSTANCE} from "../type/ObjectType.sol";
 import {Seconds, SecondsLib} from "../type/Seconds.sol";
 import {StakingLib} from "./StakingLib.sol";
-import {StakingLifecycle} from "./StakingLifecycle.sol";
 import {StakingReader} from "./StakingReader.sol";
 import {TargetManagerLib} from "./TargetManagerLib.sol";
 import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
@@ -27,9 +25,7 @@ import {UFixed, UFixedLib} from "../type/UFixed.sol";
 
 contract StakingStore is 
     Initializable,
-    AccessManaged,
-    KeyValueStore,
-    StakingLifecycle
+    AccessManaged
 {
 
     // token
@@ -62,9 +58,8 @@ contract StakingStore is
     StakingReader private _reader;
     NftIdSet private _targetNftIdSet;
 
-
-    // stakes
-    mapping(NftId stakeNftId => IStaking.StakeInfo) private _stakeInfo;
+    // target support
+    mapping(ObjectType targetType => IStaking.SupportInfo) private _supportInfo;
 
     // targets
     mapping(NftId targetNftId => IStaking.TargetInfo) private _targetInfo;
@@ -74,6 +69,9 @@ contract StakingStore is
 
     // staking rate
     mapping(ChainId chainId => mapping(address token => IStaking.TokenInfo)) private _tokenInfo;
+
+    // stakes
+    mapping(NftId stakeNftId => IStaking.StakeInfo) private _stakeInfo;
 
 
     constructor(
@@ -90,13 +88,47 @@ contract StakingStore is
         _reader = reader;
         _targetNftIdSet = new NftIdSet();
 
+        _createInitialSetup();
         // register protocol target
+    }
+
+
+    function _createInitialSetup()
+        internal
+    {
+        // define support parameters for protocol target
+        _setSupportInfo(
+            PROTOCOL(), 
+            true, // isSupported
+            false, // allowNewTargets,
+            true, // crossChainIsSupported
+            AmountLib.zero(), // minStakingAmount
+            AmountLib.max(), // maxStakingAmount, 
+            SecondsLib.oneDay(), // minLockingPeriod, 
+            SecondsLib.oneYear(), // maxLockingPeriod, 
+            UFixedLib.zero(), // minRewardRate, 
+            UFixedLib.toUFixed(15, -2)); // maxRewardRate
+
+        // create protocol target
         _createTarget(
             NftIdLib.toNftId(1101), 
             PROTOCOL(),
             TargetManagerLib.getDefaultLockingPeriod(),
             TargetManagerLib.getDefaultRewardRate(),
             false); // no parameter check
+
+        // define support parameters for instance targets
+        _setSupportInfo(
+            INSTANCE(), 
+            true, // isSupported
+            true, // allowNewTargets,
+            true, // allowCrossChain
+            AmountLib.toAmount(100000 * 10 ** 18), // minStakingAmount 100'000 DIP
+            AmountLib.max(), // maxStakingAmount, 
+            SecondsLib.oneDay(), // minLockingPeriod, 
+            SecondsLib.oneYear(), // maxLockingPeriod, 
+            UFixedLib.zero(), // minRewardRate, 
+            UFixedLib.toUFixed(3, -1)); // maxRewardRate 30%
     }
 
 
@@ -131,6 +163,114 @@ contract StakingStore is
         _targetLimitHandler = ITargetLimitHandler(targetLimitHandler );
 
         emit IStaking.LogStakingTargetHandlerSet(targetLimitHandler , oldTargetHandler);
+    }
+
+    //--- target support management -----------------------------------------//
+
+    /// @dev Generic setter for support info.
+    /// Any change in any of the parameters requires to set all parameters.
+    function setSupportInfo(
+        ObjectType targetType,
+        bool isSupported,
+        bool allowNewTargets,
+        bool allowCrossChain,
+        Amount minStakingAmount,
+        Amount maxStakingAmount,
+        Seconds minLockingPeriod,
+        Seconds maxLockingPeriod,
+        UFixed minRewardRate,
+        UFixed maxRewardRate
+    )
+        external
+        restricted()
+    {
+        _setSupportInfo(
+            targetType,
+            isSupported,
+            allowNewTargets,
+            allowCrossChain,
+            minStakingAmount,
+            maxStakingAmount,
+            minLockingPeriod,
+            maxLockingPeriod,
+            minRewardRate,
+            maxRewardRate);
+    }
+
+
+    function _setSupportInfo(
+        ObjectType targetType,
+        bool isSupported,
+        bool allowNewTargets,
+        bool allowCrossChain,
+        Amount minStakingAmount,
+        Amount maxStakingAmount,
+        Seconds minLockingPeriod,
+        Seconds maxLockingPeriod,
+        UFixed minRewardRate,
+        UFixed maxRewardRate
+    )
+        private
+    {
+        // checks
+        if (targetType.eqz()) {
+            revert IStaking.ErrorStakingSupportTypeInvalid(targetType);
+        }
+
+        // check staking amount limits
+        if (minStakingAmount > maxStakingAmount) {
+            revert IStaking.ErrorStakingStakingAmountsInvalid(minStakingAmount, maxStakingAmount);
+        }
+
+        // check locking period limits
+        if (minLockingPeriod > maxLockingPeriod) {
+            revert IStaking.ErrorStakingLockingPeriodsInvalid(minLockingPeriod, maxLockingPeriod);
+        }
+
+        // check reward rate limits
+        if (minRewardRate > maxRewardRate) {
+            revert IStaking.ErrorStakingRewardRatesInvalid(minRewardRate, maxRewardRate);
+        }
+
+        // effects
+        // remember previous last update
+        Blocknumber lastUpdateIn = _supportInfo[targetType].lastUpdateIn;
+
+        // set parameters to new values
+        _supportInfo[targetType].isSupported = isSupported;
+        _supportInfo[targetType].allowNewTargets = allowNewTargets;
+        _supportInfo[targetType].allowCrossChain = allowCrossChain;
+        _supportInfo[targetType].minStakingAmount = minStakingAmount;
+        _supportInfo[targetType].maxStakingAmount = maxStakingAmount;
+        _supportInfo[targetType].minLockingPeriod = minLockingPeriod;
+        _supportInfo[targetType].maxLockingPeriod = maxLockingPeriod;
+        _supportInfo[targetType].minRewardRate = minRewardRate;
+        _supportInfo[targetType].maxRewardRate = maxRewardRate;
+        // update last update
+        _supportInfo[targetType].lastUpdateIn = BlocknumberLib.current();
+
+        // logging
+        emit IStaking.LogStakingSupportInfoSet(
+            targetType,
+            isSupported,
+            allowNewTargets,
+            allowCrossChain,
+            minStakingAmount,
+            maxStakingAmount,
+            minLockingPeriod,
+            maxLockingPeriod,
+            minRewardRate,
+            maxRewardRate,
+            lastUpdateIn);
+    }
+
+    /// @dev Returns the support info for the specified target type.
+    function getSupportInfo(ObjectType targetType)
+        external
+        view
+        returns (IStaking.SupportInfo memory supportInfo)
+    {
+        return _supportInfo[targetType];
     }
 
     //--- token management --------------------------------------------------//
@@ -207,18 +347,22 @@ contract StakingStore is
     )
         external
         restricted() // staking
-        returns (
-            Seconds oldLockingPeriod,
-            Blocknumber lastUpdatedIn
-        )
     {
-        TargetManagerLib.checkLockingPeriod(targetNftId, lockingPeriod);
+        // checks
+        (
+            IStaking.TargetInfo storage targetInfo, 
+            Blocknumber lastUpdateIn
+        ) = _verifyAndUpdateTarget(targetNftId);
 
-        IStaking.TargetInfo storage targetInfo;
-        (targetInfo, lastUpdatedIn) = _verifyAndUpdateTarget(targetNftId);
+        TargetManagerLib.checkLockingPeriod(_reader, targetNftId, targetInfo.objectType, lockingPeriod);
 
-        oldLockingPeriod = targetInfo.lockingPeriod;
+        // effects
+        Seconds oldLockingPeriod = targetInfo.lockingPeriod;
         targetInfo.lockingPeriod = lockingPeriod;
+        targetInfo.lastUpdateIn = BlocknumberLib.current();
+
+        // logging
+        emit IStaking.LogStakingTargetLockingPeriodSet(targetNftId, lockingPeriod, oldLockingPeriod, lastUpdateIn);
     }
 
 
@@ -228,18 +372,22 @@ contract StakingStore is
     )
         external
         restricted() // staking
-        returns (
-            UFixed oldRewardRate,
-            Blocknumber lastUpdatedIn
-        )
     {
-        TargetManagerLib.checkRewardRate(targetNftId, rewardRate);
+        // checks
+        (
+            IStaking.TargetInfo storage targetInfo, 
+            Blocknumber lastUpdateIn
+        ) = _verifyAndUpdateTarget(targetNftId);
 
-        IStaking.TargetInfo storage targetInfo;
-        (targetInfo, lastUpdatedIn) = _verifyAndUpdateTarget(targetNftId);
+        TargetManagerLib.checkRewardRate(_reader, targetNftId, targetInfo.objectType, rewardRate);
 
-        oldRewardRate = targetInfo.rewardRate;
+        // effects
+        UFixed oldRewardRate = targetInfo.rewardRate;
         targetInfo.rewardRate = rewardRate;
+        targetInfo.lastUpdateIn = BlocknumberLib.current();
+
+        // logging
+        emit IStaking.LogStakingTargetRewardRateSet(targetNftId, rewardRate, oldRewardRate, lastUpdateIn);
     }
 
 
@@ -781,14 +929,37 @@ contract StakingStore is
         targetInfo.chainId = ChainIdLib.fromNftId(targetNftId);
         targetInfo.lastUpdateIn = BlocknumberLib.current();
 
-        // limit info
-        IStaking.LimitInfo storage limitInfo = _limitInfo[targetNftId];
-        limitInfo.marginAmount = AmountLib.zero();
-        limitInfo.hardLimitAmount = AmountLib.max();
-        limitInfo.lastUpdateIn = BlocknumberLib.current();
+        // create limit info
+        _setLimits(
+            _limitInfo[targetNftId],
+            targetNftId, 
+            AmountLib.zero(), // margin limit
+            AmountLib.max()); // hard limit
 
         // add new target to target set
         _targetNftIdSet.add(targetNftId);
+
+        // logging
+        emit IStaking.LogStakingTargetCreated(targetNftId, objectType, lockingPeriod, rewardRate);
+    }
+
+
+    function _setLimits(
+        IStaking.LimitInfo storage limitInfo,
+        NftId targetNftId,
+        Amount marginAmount,
+        Amount hardLimitAmount
+    )
+        private
+    {
+        // effects
+        Blocknumber lastUpdateIn = limitInfo.lastUpdateIn;
+        limitInfo.marginAmount = marginAmount;
+        limitInfo.hardLimitAmount = hardLimitAmount;
+        limitInfo.lastUpdateIn = BlocknumberLib.current();
+
+        // logging
+        emit IStaking.LogStakingLimitsSet(targetNftId, limitInfo.marginAmount , limitInfo.hardLimitAmount, lastUpdateIn);
     }
 
 
