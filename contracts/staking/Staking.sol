@@ -403,10 +403,7 @@ contract Staking is
         returns (Amount newBalance)
     {
         StakingStorage storage $ = _getStakingStorage();
-        newBalance = $._store.increaseTotalValueLocked(targetNftId, token, amount);
-
-        // TODO move logging to store
-        emit LogStakingTotalValueLockedIncreased(targetNftId, token, amount, newBalance);
+        return $._store.increaseTotalValueLocked(targetNftId, token, amount);
     }
 
 
@@ -418,9 +415,7 @@ contract Staking is
         returns (Amount newBalance)
     {
         StakingStorage storage $ = _getStakingStorage();
-        newBalance = $._store.decreaseTotalValueLocked(targetNftId, token, amount);
-
-        emit LogStakingTotalValueLockedDecreased(targetNftId, token, amount, newBalance);
+        return $._store.decreaseTotalValueLocked(targetNftId, token, amount);
     }
 
 

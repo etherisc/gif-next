@@ -391,6 +391,7 @@ contract StakingStore is
     {
         // checks
         IStaking.TvlInfo storage tvlInfo = _getAndVerifyTvl(targetNftId, token);
+        Blocknumber lastUpdateIn = tvlInfo.lastUpdateIn;
 
         // effects
         // update tvl balance and adapts required stakes if necessary
@@ -398,6 +399,9 @@ contract StakingStore is
         _checkAndUpdateTargetLimit(targetNftId, token, tvlInfo);
         tvlInfo.lastUpdateIn = BlocknumberLib.current();
         newBalance = tvlInfo.tvlAmount;
+
+        // logging
+        emit IStaking.LogStakingTvlIncreased(targetNftId, token, amount, newBalance, lastUpdateIn);
     }
 
 
@@ -412,6 +416,7 @@ contract StakingStore is
     {
         // checks
         IStaking.TvlInfo storage tvlInfo = _getAndVerifyTvl(targetNftId, token);
+        Blocknumber lastUpdateIn = tvlInfo.lastUpdateIn;
 
         // effects
         // update tvl balance and adapts required stakes if necessary
@@ -419,6 +424,9 @@ contract StakingStore is
         _checkAndUpdateTargetLimit(targetNftId, token, tvlInfo);
         tvlInfo.lastUpdateIn = BlocknumberLib.current();
         newBalance = tvlInfo.tvlAmount;
+
+        // logging
+        emit IStaking.LogStakingTvlDecreased(targetNftId, token, amount, newBalance, lastUpdateIn);
     }
 
 
@@ -857,7 +865,7 @@ contract StakingStore is
         // update target + stake
         targetInfo.rewardAmount = targetInfo.rewardAmount + rewardIncreaseAmount;
         stakeInfo.rewardAmount = stakeInfo.rewardAmount + rewardIncreaseAmount;
-        _setLastUpdatesToCurrent(stakeInfo, targetInfo);
+        Blocknumber lastUpdateIn = _setLastUpdatesToCurrent(stakeInfo, targetInfo);
 
         // logging
         emit IStaking.LogStakingStakeRewardsUpdated(
@@ -865,7 +873,8 @@ contract StakingStore is
             rewardIncreaseAmount, 
             stakeInfo.stakedAmount, 
             stakeInfo.rewardAmount, 
-            stakeInfo.lockedUntil);
+            stakeInfo.lockedUntil,
+            lastUpdateIn);
     }
 
 
@@ -895,7 +904,7 @@ contract StakingStore is
         targetInfo.rewardAmount = targetInfo.rewardAmount - restakeAmount;
         stakeInfo.stakedAmount = stakeInfo.stakedAmount + restakeAmount;
         stakeInfo.rewardAmount = AmountLib.zero();
-        _setLastUpdatesToCurrent(stakeInfo, targetInfo);
+        Blocknumber lastUpdateIn = _setLastUpdatesToCurrent(stakeInfo, targetInfo);
 
         // logging
         emit IStaking.LogStakingRewardsRestaked(
@@ -903,7 +912,8 @@ contract StakingStore is
             restakeAmount, 
             stakeInfo.stakedAmount, 
             AmountLib.zero(), 
-            stakeInfo.lockedUntil);
+            stakeInfo.lockedUntil,
+            lastUpdateIn);
     }
 
 
@@ -934,7 +944,7 @@ contract StakingStore is
             stakeInfo.lockedUntil = stakeInfo.lockedUntil.addSeconds(additionalLockingPeriod);
         }
 
-        _setLastUpdatesToCurrent(stakeInfo, targetInfo);
+        Blocknumber lastUpdateIn = _setLastUpdatesToCurrent(stakeInfo, targetInfo);
 
         // logging
         emit IStaking.LogStakingStaked(
@@ -942,7 +952,8 @@ contract StakingStore is
             stakeAmount, 
             stakeInfo.stakedAmount, 
             stakeInfo.rewardAmount, 
-            stakeInfo.lockedUntil);
+            stakeInfo.lockedUntil,
+            lastUpdateIn);
     }
 
 
@@ -969,7 +980,7 @@ contract StakingStore is
         // update target + stake
         targetInfo.rewardAmount = targetInfo.rewardAmount - claimAmount;
         stakeInfo.rewardAmount = stakeInfo.rewardAmount - claimAmount;
-        _setLastUpdatesToCurrent(stakeInfo, targetInfo);
+        Blocknumber lastUpdateIn = _setLastUpdatesToCurrent(stakeInfo, targetInfo);
 
         // logging
         emit IStaking.LogStakingRewardsClaimed(
@@ -977,7 +988,8 @@ contract StakingStore is
             claimAmount, 
             stakeInfo.stakedAmount, 
             stakeInfo.rewardAmount, 
-            stakeInfo.lockedUntil);
+            stakeInfo.lockedUntil,
+            lastUpdateIn);
     }
 
 
@@ -1005,7 +1017,7 @@ contract StakingStore is
         // update target + stake
         targetInfo.stakedAmount = targetInfo.stakedAmount - unstakedAmount;
         stakeInfo.stakedAmount = stakeInfo.stakedAmount - unstakedAmount;
-        _setLastUpdatesToCurrent(stakeInfo, targetInfo);
+        Blocknumber lastUpdateIn = _setLastUpdatesToCurrent(stakeInfo, targetInfo);
 
         // logging
         emit IStaking.LogStakingUnstaked(
@@ -1013,7 +1025,8 @@ contract StakingStore is
             unstakedAmount, 
             stakeInfo.stakedAmount, 
             stakeInfo.rewardAmount, 
-            stakeInfo.lockedUntil);
+            stakeInfo.lockedUntil,
+            lastUpdateIn);
     }
 
 
@@ -1022,9 +1035,10 @@ contract StakingStore is
         IStaking.TargetInfo storage targetInfo
     )
         internal
+        returns (Blocknumber lastUpdateIn)
     {
         targetInfo.lastUpdateIn = BlocknumberLib.current();
-        _setStakeLastUpdatesToCurrent(stakeInfo);
+        lastUpdateIn = _setStakeLastUpdatesToCurrent(stakeInfo);
     }
 
 
@@ -1032,7 +1046,9 @@ contract StakingStore is
         IStaking.StakeInfo storage stakeInfo
     )
         internal
+        returns (Blocknumber lastUpdateIn)
     {
+        lastUpdateIn = stakeInfo.lastUpdateIn;
         stakeInfo.lastUpdateIn = BlocknumberLib.current();
         stakeInfo.lastUpdateAt = TimestampLib.current();
     }
