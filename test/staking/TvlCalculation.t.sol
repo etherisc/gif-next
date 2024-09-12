@@ -3,12 +3,15 @@ pragma solidity ^0.8.20;
 
 import {console} from "../../lib/forge-std/src/Test.sol";
 
+import {IStaking} from "../../contracts/staking/IStaking.sol";
+
 import {Amount, AmountLib} from "../../contracts/type/Amount.sol";
 import {Blocknumber, BlocknumberLib} from "../../contracts/type/Blocknumber.sol";
 import {ChainIdLib} from "../../contracts/type/ChainId.sol";
 import {ClaimId} from "../../contracts/type/ClaimId.sol";
 import {GifTest} from "../base/GifTest.sol";
 import {NftId} from "../../contracts/type/NftId.sol";
+import {INSTANCE} from "../../contracts/type/ObjectType.sol";
 import {PayoutId} from "../../contracts/type/PayoutId.sol";
 import {ReferralLib} from "../../contracts/type/Referral.sol";
 import {RiskId, RiskIdLib} from "../../contracts/type/RiskId.sol";
@@ -19,10 +22,6 @@ import {UFixed, UFixedLib} from "../../contracts/type/UFixed.sol";import {Versio
 
 
 contract TvlCalculation is GifTest {
-
-    // TODO find better ways than to copy paste events from StakingStore contract
-    event LogStakingTotalValueLockedIncreased(NftId targetNftId, address token, Amount amount, Amount newBalance);
-    event LogStakingTotalValueLockedDecreased(NftId targetNftId, address token, Amount amount, Amount newBalance);
 
     uint256 public constant BUNDLE_CAPITAL = 20000;
     uint256 public constant SUM_INSURED = 1000;
@@ -57,6 +56,22 @@ contract TvlCalculation is GifTest {
 
         vm.startPrank(stakingOwner);
         staking.setStakingRate(ChainIdLib.current(), tokenAddress, stakingRate);
+        vm.stopPrank();
+
+        // set minimum required stake amount for instance to zero
+        IStaking.SupportInfo memory isi = stakingReader.getSupportInfo(INSTANCE());
+        vm.startPrank(stakingOwner);
+        staking.setSupportInfo(
+            INSTANCE(),
+            isi.isSupported,
+            isi.allowNewTargets,
+            isi.allowCrossChain,
+            AmountLib.zero(), // minStakingAmount
+            isi.maxStakingAmount,
+            isi.minLockingPeriod,
+            isi.maxLockingPeriod,
+            isi.minRewardRate,
+            isi.maxRewardRate);
         vm.stopPrank();
     }
 
@@ -124,12 +139,13 @@ contract TvlCalculation is GifTest {
         // check tvl log entry from staking
         Blocknumber currentBlocknumber = BlocknumberLib.current();
         Timestamp currentTimestamp = TimestampLib.current();
-        vm.expectEmit(address(staking));
-        emit LogStakingTotalValueLockedIncreased(
+        vm.expectEmit(address(staking.getStakingStore()));
+        emit IStaking.LogStakingTvlIncreased(
             instanceNftId, 
             tokenAddress, 
             sumInsuredAmount, // amount
-            sumInsuredAmount); // new balance
+            sumInsuredAmount, // new balance
+            currentBlocknumber); // lastUpdateIn
 
         // collateralize application
         _collateralize(policyNftId, false, currentTimestamp);
@@ -193,12 +209,15 @@ contract TvlCalculation is GifTest {
         // check tvl decrease log emission
         Blocknumber currentBlocknumber = BlocknumberLib.current();
         Amount zeroAmount = AmountLib.zero();
-        vm.expectEmit(address(staking));
-        emit LogStakingTotalValueLockedDecreased(
+
+        // vm.expectEmit(address(staking));
+        vm.expectEmit(address(staking.getStakingStore()));
+        emit IStaking.LogStakingTvlDecreased(
             instanceNftId, 
             tokenAddress, 
             sumInsuredAmount, // amount
-            zeroAmount); // new balance
+            zeroAmount, // new balance
+            currentBlocknumber); // lastUpdateIn 
 
         _closePolicy(policyNftId);
 
@@ -327,12 +346,13 @@ contract TvlCalculation is GifTest {
         // WHEN processing the payout (includes actual payout token flow)
         Blocknumber currentBlocknumber = BlocknumberLib.current();
         Amount newBalanceAmount = sumInsuredAmount - claimAmount;
-        vm.expectEmit(address(staking));
-        emit LogStakingTotalValueLockedDecreased(
+        vm.expectEmit(address(staking.getStakingStore()));
+        emit IStaking.LogStakingTvlDecreased(
             instanceNftId, 
             tokenAddress, 
             claimAmount, // amount
-            newBalanceAmount); // new balance
+            newBalanceAmount, // new balance
+            currentBlocknumber); // lastUpdateIn 
 
         product.processPayout(policyNftId, payoutId);
 

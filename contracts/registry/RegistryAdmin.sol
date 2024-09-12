@@ -43,8 +43,9 @@ contract RegistryAdmin is
     string public constant REGISTRY_TARGET_NAME = "Registry";
     string public constant RELEASE_REGISTRY_TARGET_NAME = "ReleaseRegistry";
     string public constant STAKING_TARGET_NAME = "Staking";
-    string public constant STAKING_TH_TARGET_NAME = "StakingTH";
+    string public constant STAKING_TARGET_HANDLER_NAME = "TargetHandler";
     string public constant STAKING_STORE_TARGET_NAME = "StakingStore";
+    string public constant STAKING_TH_TARGET_NAME = "StakingTH";
     string public constant TOKEN_REGISTRY_TARGET_NAME = "TokenRegistry";
     string public constant TOKEN_HANDLER_TARGET_NAME = "TokenHandler";
 
@@ -55,6 +56,7 @@ contract RegistryAdmin is
     address private _releaseRegistry;
     address private _tokenRegistry;
     address private _staking;
+    address private _stakingTargetHandler;
     address private _stakingStore;
 
     constructor() {
@@ -93,8 +95,8 @@ contract RegistryAdmin is
         _releaseRegistry = registryContract.getReleaseRegistryAddress();
         _tokenRegistry = registryContract.getTokenRegistryAddress();
         _staking = registryContract.getStakingAddress();
-        _stakingStore = address(
-            IStaking(_staking).getStakingStore());
+        _stakingTargetHandler = address(IStaking(_staking).getTargetHandler());
+        _stakingStore = address(IStaking(_staking).getStakingStore());
 
         // link nft ownability to registry
         _linkToNftOwnable(_registry);
@@ -166,6 +168,7 @@ contract RegistryAdmin is
 
         // staking
         _createUncheckedTarget(_staking, STAKING_TARGET_NAME, TargetType.Core);
+        _createUncheckedTarget(_stakingTargetHandler, STAKING_TARGET_HANDLER_NAME, TargetType.Core);
         _createUncheckedTarget(_stakingStore, STAKING_STORE_TARGET_NAME, TargetType.Core);
     }
 

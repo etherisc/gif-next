@@ -11,6 +11,7 @@ import {Amount, AmountLib} from "../type/Amount.sol";
 import {Blocknumber}  from "../type/Blocknumber.sol";
 import {ChainId}  from "../type/ChainId.sol";
 import {NftId} from "../type/NftId.sol";
+import {ObjectType} from "../type/ObjectType.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {StakingStore} from "./StakingStore.sol";
 import {STAKE, TARGET} from "../type/ObjectType.sol";
@@ -95,6 +96,11 @@ contract StakingReader is
     }
 
 
+    function getLimitInfo(NftId targetNftId) public view returns (IStaking.LimitInfo memory info) {
+        return _store.getLimitInfo(targetNftId);
+    }
+
+
     function getTvlInfo(NftId targetNftId, address token) public view returns (IStaking.TvlInfo memory info) {
         return _store.getTvlInfo(targetNftId, token);
     }
@@ -102,6 +108,16 @@ contract StakingReader is
 
     function getTokenInfo(ChainId chainId, address token) public view returns (IStaking.TokenInfo memory info) {
         return _store.getTokenInfo(chainId, token);
+    }
+
+
+    function isSupportedTargetType(ObjectType targetType) public view returns (bool) {
+        return _store.getSupportInfo(targetType).isSupported;
+    }
+
+
+    function getSupportInfo(ObjectType targetType) public view returns (IStaking.SupportInfo memory info) {
+        return _store.getSupportInfo(targetType);
     }
 
 
@@ -121,7 +137,7 @@ contract StakingReader is
 
     /// @dev Get the max staked amount allowed for the specified target NFT ID.
     function getTargetMaxStakedAmount(NftId targetNftId) external view returns (Amount maxStakedAmount) {
-        return getTargetInfo(targetNftId).maxStakedAmount;
+        return getTargetInfo(targetNftId).limitAmount;
     }
 
 
@@ -142,10 +158,14 @@ contract StakingReader is
     }
 
     function getTotalValueLocked(NftId targetNftId, address token) external view returns (Amount totalValueLocked) {
-        return getTvlInfo(targetNftId, token).tvlAmount;
+        return _store.getTvlInfo(targetNftId, token).tvlAmount;
     }
 
     function getRequiredStakeBalance(NftId targetNftId) external view returns (Amount requiredStakedAmount) {
-        return _store.getRequiredStakeBalance(targetNftId);
+        return _store.getRequiredStakeBalance(targetNftId, true);
+    }
+
+    function getRequiredStakeBalance(NftId targetNftId, bool includeTargetTypeRequirements) external view returns (Amount requiredStakedAmount) {
+        return _store.getRequiredStakeBalance(targetNftId, includeTargetTypeRequirements);
     }
 }

@@ -11,6 +11,7 @@ import {
     Staking, StakingManager,
     StakingReader,
     StakingStore,
+    TargetHandler,
     Staking__factory,
     TokenRegistry
 } from "../../typechain-types";
@@ -51,6 +52,9 @@ export type RegistryAddresses = {
     stakingStoreAddress: AddressLike;
     stakingStore: StakingStore;
 
+    targetHandlerAddress: AddressLike;
+    targetHandler: TargetHandler;
+
     stakingManagerAddress: AddressLike;
     stakingManager: StakingManager;
 
@@ -67,7 +71,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
 
     logger.info("======== Starting deployment of registry ========");
 
-    logger.info("-------- Starting deployment DIP ----------------");
+    logger.info("-------- Starting deployment Dip ----------------");
 
     const COMMIT_HASH = "1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a";
 
@@ -83,7 +87,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     const dip = dipBaseContract as Dip;
     // const dipMainnetAddress = "0xc719d010b63e5bbf2c0551872cd5316ed26acd83";
 
-    logger.info("-------- Starting deployment Registry Authorization ----------------");
+    logger.info("-------- Starting deployment RegistryAuthorization ----------------");
 
     const { address: registryAuthorizationAddress, contract: registryAuthorizationBaseContract } = await deployContract(
         "RegistryAuthorization",
@@ -104,7 +108,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
 
     const registryAuthorization = registryAuthorizationBaseContract as RegistryAuthorization;
 
-    logger.info("-------- Starting deployment Registry Admin ----------------");
+    logger.info("-------- Starting deployment RegistryAdmin ----------------");
 
     const { address: registryAdminAddress, contract: registryAdminBaseContract } = await deployContract(
         "RegistryAdmin",
@@ -147,7 +151,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     const chainNftAddress = await registry.getChainNftAddress();
     const chainNft = ChainNft__factory.connect(chainNftAddress, owner);
 
-    logger.info("-------- Starting deployment Release Manager ----------------");
+    logger.info("-------- Starting deployment ReleaseRegistry ----------------");
 
     const { address: releaseRegistryAddress, contract: releaseRegistryBaseContract } = await deployContract(
         "ReleaseRegistry",
@@ -172,7 +176,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
 
     const releaseRegistry = releaseRegistryBaseContract as ReleaseRegistry;
 
-    logger.info("-------- Starting deployment Token Registry ----------------");
+    logger.info("-------- Starting deployment TokenRegistry ----------------");
 
     const { address: tokenRegistryAddress, contract: tokenRegistryBaseContract } = await deployContract(
         "TokenRegistry",
@@ -190,7 +194,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
 
     const tokenRegistry = tokenRegistryBaseContract as TokenRegistry;
 
-    logger.info("-------- Starting deployment Staking Reader ----------------");
+    logger.info("-------- Starting deployment StakingReader ----------------");
 
     const { address: stakingReaderAddress, contract: stakingReaderBaseContract } = await deployContract(
         "StakingReader",
@@ -203,7 +207,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
 
     const stakingReader = stakingReaderBaseContract as StakingReader;
 
-    logger.info("-------- Starting deployment Staking Store ----------------");
+    logger.info("-------- Starting deployment StakingStore ----------------");
 
     const { address: stakingStoreAddress, contract: stakingStoreBaseContract, } = await deployContract(
         "StakingStore",
@@ -217,12 +221,11 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
                 AmountLib: libraries.amountLibAddress, 
                 BlocknumberLib: libraries.blockNumberLibAddress, 
                 ChainIdLib: libraries.chainIdLibAddress, 
-                Key32Lib: libraries.key32LibAddress, 
-                NftIdLib: libraries.nftIdLibAddress, 
                 LibNftIdSet: libraries.libNftIdSetAddress,
+                NftIdLib: libraries.nftIdLibAddress, 
+                ObjectTypeLib: libraries.objectTypeLibAddress, 
                 SecondsLib: libraries.secondsLibAddress, 
                 StakingLib: libraries.stakingLibAddress, 
-                StateIdLib: libraries.stateIdLibAddress, 
                 TargetManagerLib: libraries.targetManagerLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
                 UFixedLib: libraries.uFixedLibAddress,
@@ -231,7 +234,35 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
 
     const stakingStore = stakingStoreBaseContract as StakingStore;
 
-    logger.info("-------- Starting deployment Staking Manager ----------------");
+    logger.info("-------- Starting deployment TargetHandler ----------------");
+
+    const { address: targetHandlerAddress, contract: targetHandlerBaseContract, } = await deployContract(
+        "TargetHandler",
+        owner,
+        [
+            registryAddress,
+            stakingStoreAddress
+        ],
+        {
+            libraries: {
+                AmountLib: libraries.amountLibAddress, 
+                BlocknumberLib: libraries.blockNumberLibAddress, 
+                // ChainIdLib: libraries.chainIdLibAddress, 
+                // Key32Lib: libraries.key32LibAddress, 
+                // NftIdLib: libraries.nftIdLibAddress, 
+                // LibNftIdSet: libraries.libNftIdSetAddress,
+                // SecondsLib: libraries.secondsLibAddress, 
+                // StakingLib: libraries.stakingLibAddress, 
+                // StateIdLib: libraries.stateIdLibAddress, 
+                // TargetManagerLib: libraries.targetManagerLibAddress,
+                // TimestampLib: libraries.timestampLibAddress,
+                UFixedLib: libraries.uFixedLibAddress,
+            }
+        });
+
+    const targetHandler = targetHandlerBaseContract as TargetHandler;
+
+    logger.info("-------- Starting deployment StakingManager ----------------");
 
     const { address: stakingManagerAddress, contract: stakingManagerBaseContract, proxyAddress: stakingAddress } = await deployProxyManagerContract(
         "StakingManager",
@@ -239,8 +270,9 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         owner,
         [
             registryAddress,
-            tokenRegistryAddress,
+            targetHandlerAddress,
             stakingStoreAddress,
+            tokenRegistryAddress,
             await resolveAddress(owner),
             hhEthers.ZeroHash,
         ],
@@ -313,11 +345,12 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     logger.info(`TokenRegistry deployed at ${tokenRegistryAddress}`);
     logger.info(`StakingReader deployed at ${stakingReaderAddress}`);
     logger.info(`StakingStore deployed at ${stakingStoreAddress}`);
+    logger.info(`TargetHandler deployed at ${targetHandlerAddress}`);
     logger.info(`StakingManager deployed at ${stakingManagerAddress}`);
     logger.info(`Staking deployed at ${stakingAddress}`);
 
 
-    logger.info("-------- Starting deployment Service Authorization v3 ----------------");
+    logger.info("-------- Starting deployment ServiceAuthorizationV3 ----------------");
 
     const { address: serviceAuthorizationV3Address, contract: serviceAuthorizationV3BaseContract, } = await deployContract(
         "ServiceAuthorizationV3",
@@ -367,6 +400,9 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
 
         stakingStoreAddress: stakingStoreAddress,
         stakingStore: stakingStore,
+
+        targetHandlerAddress: targetHandlerAddress,
+        targetHandler: targetHandler,
 
         stakingManager: stakingManager,
         stakingManagerAddress: stakingManagerAddress,

@@ -82,12 +82,12 @@ contract StakingOwnerTest is GifTest {
             "protocol target (lockingPeriod, rewardRate, maxStaking)", 
             protocolTarget.lockingPeriod.toInt(),
             (UFixedLib.toUFixed(1000) * protocolTarget.rewardRate).toInt(),
-            protocolTarget.maxStakedAmount.toInt());
+            protocolTarget.limitAmount.toInt());
 
         assertEq(protocolTarget.objectType.toInt(), PROTOCOL().toInt(), "unexpected protocol object type");
         assertEq(protocolTarget.lockingPeriod.toInt(), TargetManagerLib.getDefaultLockingPeriod().toInt(), "unexpected protocol locking period");
         assertTrue(protocolTarget.rewardRate == TargetManagerLib.getDefaultRewardRate(), "unexpected protocol reward rate");
-        assertEq(protocolTarget.maxStakedAmount.toInt(), AmountLib.max().toInt(), "unexpected protocol max staking amount");
+        assertEq(protocolTarget.limitAmount.toInt(), AmountLib.max().toInt(), "unexpected protocol max staking amount");
 
         // check wallet is set to token handler (default)
         assertEq(staking.getWallet(), address(staking.getTokenHandler()), "unexpected staking wallet");
@@ -163,8 +163,8 @@ contract StakingOwnerTest is GifTest {
         // WHEN
         NftId protocolNftId = registry.getProtocolNftId();
         Blocknumber currentBlock = BlocknumberLib.current();
-        vm.expectEmit(address(staking));
-        emit IStaking.LogStakingProtocolLockingPeriodSet(
+        vm.expectEmit(address(staking.getStakingStore()));
+        emit IStaking.LogStakingTargetLockingPeriodSet(
             protocolNftId,
             newProtocolLockingPeriod,
             protocolLockingPeriod,
@@ -187,8 +187,8 @@ contract StakingOwnerTest is GifTest {
         // WHEN
         NftId protocolNftId = registry.getProtocolNftId();
         Blocknumber currentBlock = BlocknumberLib.current();
-        vm.expectEmit(address(staking));
-        emit IStaking.LogStakingProtocolRewardRateSet(
+        vm.expectEmit(address(staking.getStakingStore()));
+        emit IStaking.LogStakingTargetRewardRateSet(
             protocolNftId,
             newProtocolRewardRate,
             protocolRewardRate,
@@ -243,7 +243,7 @@ contract StakingOwnerTest is GifTest {
             abi.encodeWithSelector(
                 INftOwnable.ErrorNftOwnableNotOwner.selector, outsider));
 
-        staking.setStakingReader(newStakingReader);
+        staking.setStakingReader(address(newStakingReader));
 
         // WHEN + THEN attempt to set staking servie
         VersionPart currentRelase = registry.getLatestRelease();
