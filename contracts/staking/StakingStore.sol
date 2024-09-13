@@ -892,6 +892,10 @@ contract StakingStore is
         return _tokenInfo[chainId][token];
     }
 
+    function hasTokenInfo(ChainId chainId, address token) external view returns (bool) {
+        return _tokenInfo[chainId][token].lastUpdateIn.gtz();
+    }
+
 
     function getTargetSet() external view returns (NftIdSet targetNftIdSet) { 
         return _targetNftIdSet;

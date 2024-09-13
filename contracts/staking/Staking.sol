@@ -413,7 +413,10 @@ contract Staking is
     {
         StakingStorage storage $ = _getStakingStorage();
         ChainId chainId = ChainIdLib.fromNftId(targetNftId);
-        _addToken($, chainId, token);
+
+        if (! $._store.hasTokenInfo(chainId, token)) {
+            _addToken($, chainId, token);
+        }
         
         $._store.addTargetToken(targetNftId, token);
 
@@ -711,9 +714,7 @@ contract Staking is
         internal
         virtual
     {
-        if ($._store.getTokenInfo(chainId, token).lastUpdateIn.eqz()) {
-            $._store.addToken(chainId, token);
-        }
+        $._store.addToken(chainId, token);
     }
 
 

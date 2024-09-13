@@ -22,7 +22,7 @@ import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
 import {TokenHandler} from "../../contracts/shared/TokenHandler.sol";
 import {UFixed, UFixedLib} from "../../contracts/type/UFixed.sol";
 
-
+// solhint-disable func-name-mixedcase
 contract StakingTest is GifTest {
 
     uint256 public constant STAKING_WALLET_APPROVAL = 5000;
@@ -639,7 +639,6 @@ contract StakingTest is GifTest {
     }
 
 
-    // solhint-disable-next-line func-name-mixedcase
     function test_stakingRestakeHappyCase() public {
         // GIVEN
 
@@ -707,7 +706,6 @@ contract StakingTest is GifTest {
         assertEq(stakingReader.getTargetInfo(instanceNftId2).lastUpdateIn.toInt(), block.number, "unexpected instance last updated in (2)");
     }
 
-    // solhint-disable-next-line func-name-mixedcase
     function test_stakingRestakeWithRewards() public {
         // GIVEN
         // set reward rate
@@ -770,7 +768,6 @@ contract StakingTest is GifTest {
         assertEq(stakingReader.getTargetInfo(instanceNftId2).lastUpdateIn.toInt(), block.number, "unexpected instance last updated in (2)");
     }
 
-    // solhint-disable-next-line func-name-mixedcase
     function test_stakingRestakeAlreadyStakedTarget() public {
         // GIVEN
 
@@ -842,7 +839,6 @@ contract StakingTest is GifTest {
     }
 
 
-    // solhint-disable-next-line func-name-mixedcase
     function test_stakingStakeCreateUnknownTarget() public {
         // GIVEN
         (, Amount dipAmount) = _prepareAccount(staker, 3000);
@@ -860,7 +856,6 @@ contract StakingTest is GifTest {
     }
 
 
-    // solhint-disable-next-line func-name-mixedcase
     function test_stakingRestakeNotOwner() public {
         // GIVEN
 
@@ -890,7 +885,6 @@ contract StakingTest is GifTest {
 
 
     /// @dev test restaking when the stake is still locked
-    // solhint-disable-next-line func-name-mixedcase
     function test_stakingRestakeStakeLocked() public {
         // GIVEN
         // create a second instance - restake target
@@ -919,7 +913,6 @@ contract StakingTest is GifTest {
     }
 
     /// @dev test restaking and exceeding the max staked amount
-    // solhint-disable-next-line func-name-mixedcase
     function test_stakingRestakeMaxStakedAmountExceeded() public {
         // GIVEN
 
@@ -958,7 +951,6 @@ contract StakingTest is GifTest {
     }
 
     /// @dev test restaking when the target is an unknown nft
-    // solhint-disable-next-line func-name-mixedcase
     function test_stakingRestakeInvalidTarget() public {
         // GIVEN
 
@@ -987,6 +979,21 @@ contract StakingTest is GifTest {
             invalidTargetNftId));
 
         staking.restake(stakeNftId, invalidTargetNftId);
+    }
+
+    function test_stakingAddTokenTwice() public {
+        // GIVEN
+        vm.startPrank(stakingOwner);
+        staking.addToken(currentChainId, address(token));
+        
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            StakingStore.ErrorStakingStoreTokenAlreadyAdded.selector, 
+            currentChainId,
+            token));
+
+        // WHEN
+        staking.addToken(currentChainId, address(token));
     }
 
 
