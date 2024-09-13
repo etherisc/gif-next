@@ -61,11 +61,14 @@ contract FlightBaseTest is GifTest {
         vm.stopPrank();
 
         // instance owner registeres fire product with instance (and registry)
-        vm.startPrank(instanceOwner);
+        vm.prank(instanceOwner);
         flightProductNftId = instance.registerProduct(
             address(flightProduct), 
             address(flightUSD));
-        vm.stopPrank();
+
+        // complete setup
+        vm.prank(flightOwner);
+        flightProduct.completeSetup();
     }
 
     function _deployFlightPool() internal {
@@ -87,13 +90,13 @@ contract FlightBaseTest is GifTest {
     }
 
 
-    function _createInitialBundle() internal {
+    function _createInitialBundle() internal returns (NftId bundleNftId) {
         vm.startPrank(flightOwner);
         Amount investAmount = AmountLib.toAmount(10000000 * 10 ** 6);
         flightUSD.approve(
             address(flightPool.getTokenHandler()), 
             investAmount.toInt());
-        bundleNftId = flightPool.createBundle(investAmount); // 5 years
+        bundleNftId = flightPool.createBundle(investAmount);
         vm.stopPrank();
     }
 

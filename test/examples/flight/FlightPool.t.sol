@@ -7,7 +7,6 @@ import {INftOwnable} from "../../../contracts/shared/INftOwnable.sol";
 
 import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
 import {ACTIVE} from "../../../contracts/type/StateId.sol";
-import {Fee, FeeLib} from "../../../contracts/type/Fee.sol";
 import {FlightBaseTest} from "./FlightBase.t.sol";
 import {IBundle} from "../../../contracts/instance/module/IBundle.sol";
 import {NftId} from "../../../contracts/type/NftId.sol";
@@ -39,7 +38,6 @@ contract FlightPoolTest is FlightBaseTest {
         console.log("flight owner", flightOwner);
         console.log("flight owner balance [$]", flightUSD.balanceOf(flightOwner) / 10 ** flightUSD.decimals());
         console.log("flight owner allowance [$] (token handler)", flightUSD.allowance(flightOwner, address(flightPool.getTokenHandler())) / 10 ** flightUSD.decimals());
-
         // solhint-enable
 
         // THEN

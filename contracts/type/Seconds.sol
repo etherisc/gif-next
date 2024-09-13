@@ -42,6 +42,10 @@ library SecondsLib {
         return Seconds.wrap(_max());
     }
 
+    function fromHours(uint32 numberOfHours) public pure returns (Seconds duration) {
+        return Seconds.wrap(numberOfHours * 3600);
+    }
+
     function oneDay() public pure returns (Seconds duration) {
         return Seconds.wrap(24 * 3600);
     }

@@ -221,6 +221,12 @@ contract InstanceReader {
     }
 
 
+    /// @dev Returns true if the specified risk exists for the given product NFT ID.
+    function riskExists(NftId productNftId, RiskId riskId) public view returns (bool exists) {
+        return _riskSet.hasRisk(productNftId, riskId);
+    }
+
+
     /// @dev Returns the risk info for the given risk ID.
     function getRiskInfo(RiskId riskId) public view returns (IRisk.RiskInfo memory info) {
         (bytes memory data, bool success) = _getData(riskId.toKey32()); 
