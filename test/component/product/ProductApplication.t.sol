@@ -41,7 +41,7 @@ contract ProductApplicationTest is GifTest {
         sec30 = SecondsLib.toSeconds(30);
     }
 
-    function test_productCreateApplication() public {
+    function test_productCreateApplication_happyCase() public {
 
         Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
 
