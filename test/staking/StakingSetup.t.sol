@@ -152,17 +152,17 @@ contract StakingSetupTest is GifTest {
         assertEq(address(staking.getStakingReader()), address(newStakingReader), "unexpected staking reader address");
     }
 
-    function test_setSupportInfo() public {
+    function test_setSupportInfo_invalidObjectType() public {
         // GIVEN
         vm.startPrank(stakingOwner);
 
         ObjectType objectTypeZero = ObjectTypeLib.zero();
         Amount minStakingAmount = AmountLib.toAmount(0);
         Amount maxStakingAmount = AmountLib.toAmount(100);
-        Seconds minStakingPeriod = SecondsLib.toSeconds(10);
-        Seconds maxStakingPeriod = SecondsLib.toSeconds(100);
-        UFixed minStakingFee = UFixedLib.toUFixed(0);
-        UFixed maxStakingFee = UFixedLib.toUFixed(1);
+        Seconds minLockingPeriod = SecondsLib.toSeconds(10);
+        Seconds maxLockingPeriod = SecondsLib.toSeconds(100);
+        UFixed minRewardRate = UFixedLib.toUFixed(0);
+        UFixed maxRewardRate = UFixedLib.toUFixed(1);
 
         // THEN
         vm.expectRevert(abi.encodeWithSelector(
@@ -177,9 +177,110 @@ contract StakingSetupTest is GifTest {
             false, 
             minStakingAmount,
             maxStakingAmount,
-            minStakingPeriod,
-            maxStakingPeriod,
-            minStakingFee,
-            maxStakingFee);
+            minLockingPeriod,
+            maxLockingPeriod,
+            minRewardRate,
+            maxRewardRate);
     }
+
+    function test_setSupportInfo_invalidStakingAmounts() public {
+        // GIVEN
+        vm.startPrank(stakingOwner);
+
+        ObjectType objectType = INSTANCE();
+        Amount minStakingAmount = AmountLib.toAmount(0);
+        Amount maxStakingAmount = AmountLib.toAmount(100);
+        Seconds minLockingPeriod = SecondsLib.toSeconds(10);
+        Seconds maxLockingPeriod = SecondsLib.toSeconds(100);
+        UFixed minRewardRate = UFixedLib.toUFixed(0);
+        UFixed maxRewardRate = UFixedLib.toUFixed(1);
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IStaking.ErrorStakingStakingAmountsInvalid.selector, 
+            maxStakingAmount,
+            minStakingAmount
+            ));
+        
+        // WHEN
+        staking.setSupportInfo(
+            objectType, 
+            true, 
+            true, 
+            false, 
+            maxStakingAmount,
+            minStakingAmount,
+            minLockingPeriod,
+            maxLockingPeriod,
+            minRewardRate,
+            maxRewardRate);
+    }
+
+    function test_setSupportInfo_invalidLockingPeriods() public {
+        // GIVEN
+        vm.startPrank(stakingOwner);
+
+        ObjectType objectType = INSTANCE();
+        Amount minStakingAmount = AmountLib.toAmount(0);
+        Amount maxStakingAmount = AmountLib.toAmount(100);
+        Seconds minLockingPeriod = SecondsLib.toSeconds(10);
+        Seconds maxLockingPeriod = SecondsLib.toSeconds(100);
+        UFixed minRewardRate = UFixedLib.toUFixed(0);
+        UFixed maxRewardRate = UFixedLib.toUFixed(1);
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IStaking.ErrorStakingLockingPeriodsInvalid.selector, 
+            maxLockingPeriod,
+            minLockingPeriod
+            ));
+        
+        // WHEN
+        staking.setSupportInfo(
+            objectType, 
+            true, 
+            true, 
+            false, 
+            minStakingAmount,
+            maxStakingAmount,
+            maxLockingPeriod,
+            minLockingPeriod,
+            minRewardRate,
+            maxRewardRate);
+    }
+
+    function test_setSupportInfo_invalidRewardRates() public {
+        // GIVEN
+        vm.startPrank(stakingOwner);
+
+        ObjectType objectType = INSTANCE();
+        Amount minStakingAmount = AmountLib.toAmount(0);
+        Amount maxStakingAmount = AmountLib.toAmount(100);
+        Seconds minLockingPeriod = SecondsLib.toSeconds(10);
+        Seconds maxLockingPeriod = SecondsLib.toSeconds(100);
+        UFixed minRewardRate = UFixedLib.toUFixed(0);
+        UFixed maxRewardRate = UFixedLib.toUFixed(1);
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IStaking.ErrorStakingRewardRatesInvalid.selector, 
+            maxRewardRate,
+            minRewardRate
+            ));
+        
+        // WHEN
+        staking.setSupportInfo(
+            objectType, 
+            true, 
+            true, 
+            false, 
+            minStakingAmount,
+            maxStakingAmount,
+            minLockingPeriod,
+            maxLockingPeriod,
+            maxRewardRate,
+            minRewardRate);
+    }
+
+    
 }
