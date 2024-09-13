@@ -19,11 +19,11 @@ services:
         VARIANT: "1-20" 
     volumes:
       - ..:/workspaces/gif-next:cached
-      - gif-next-node_modules:/workspaces/gif-next/node_modules
+      #- gif-next-node_modules:/workspaces/gif-next/node_modules
       #- $HOME/.ssh/:/home/vscode/.ssh/ # Mount the ssh folder to authenticate with github
     # Overrides default command so things don't shut down after the process ends.
     command: sleep infinity
 
 volumes:
-  gif-next-node_modules:
+  #gif-next-node_modules:
   anvil-state:
