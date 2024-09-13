@@ -21,6 +21,7 @@ import {TargetManagerLib} from "../../contracts/staking/TargetManagerLib.sol";
 import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
 import {TokenHandler} from "../../contracts/shared/TokenHandler.sol";
 import {UFixed, UFixedLib} from "../../contracts/type/UFixed.sol";
+import {Usdc} from "../mock/Usdc.sol";
 
 // solhint-disable func-name-mixedcase
 contract StakingTest is GifTest {
@@ -994,6 +995,22 @@ contract StakingTest is GifTest {
 
         // WHEN
         staking.addToken(currentChainId, address(token));
+    }
+
+    function test_stakingSetStakingRateUnknownToken() public {
+        // GIVEN
+        vm.startPrank(stakingOwner);
+        Usdc token2 = new Usdc();
+        UFixed rate = UFixedLib.toUFixed(1);
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            StakingStore.ErrorStakingStoreTokenUnknown.selector, 
+            currentChainId,
+            address(token2)));
+        
+        // WHEN
+        staking.setStakingRate(currentChainId, address(token2), rate);
     }
 
 
