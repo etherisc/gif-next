@@ -683,6 +683,8 @@ contract StakingStore is
 
         // process stake amount
         _stake(stakeNftId, stakeInfo, targetInfo, targetInfo.lockingPeriod, stakeAmount);
+
+        return stakeInfo.lockedUntil;
     }
 
 

@@ -9,17 +9,15 @@ import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {IStaking} from "../../contracts/staking/IStaking.sol";
 import {IStakingService} from "../../contracts/staking/IStakingService.sol";
 import {NftId} from "../../contracts/type/NftId.sol";
-import {INSTANCE, PROTOCOL, SERVICE, STAKE, STAKING} from "../../contracts/type/ObjectType.sol";
+import {ObjectType, ObjectTypeLib, INSTANCE, PROTOCOL, SERVICE, STAKING} from "../../contracts/type/ObjectType.sol";
 import {Seconds, SecondsLib} from "../../contracts/type/Seconds.sol";
-import {StakingLib} from "../../contracts/staking/StakingLib.sol";
 import {StakingReader} from "../../contracts/staking/StakingReader.sol";
 import {TargetManagerLib} from "../../contracts/staking/TargetManagerLib.sol";
-import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
-import {TokenHandler} from "../../contracts/shared/TokenHandler.sol";
 import {UFixed, UFixedLib} from "../../contracts/type/UFixed.sol";
 import {VersionPart} from "../../contracts/type/Version.sol";
 
 
+// solhint-disable func-name-mixedcase
 contract StakingSetupTest is GifTest {
 
     uint256 public constant STAKING_WALLET_APPROVAL = 5000;
@@ -152,5 +150,36 @@ contract StakingSetupTest is GifTest {
 
         // THEN
         assertEq(address(staking.getStakingReader()), address(newStakingReader), "unexpected staking reader address");
+    }
+
+    function test_setSupportInfo() public {
+        // GIVEN
+        vm.startPrank(stakingOwner);
+
+        ObjectType objectTypeZero = ObjectTypeLib.zero();
+        Amount minStakingAmount = AmountLib.toAmount(0);
+        Amount maxStakingAmount = AmountLib.toAmount(100);
+        Seconds minStakingPeriod = SecondsLib.toSeconds(10);
+        Seconds maxStakingPeriod = SecondsLib.toSeconds(100);
+        UFixed minStakingFee = UFixedLib.toUFixed(0);
+        UFixed maxStakingFee = UFixedLib.toUFixed(1);
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IStaking.ErrorStakingSupportTypeInvalid.selector, 
+            objectTypeZero));
+        
+        // WHEN
+        staking.setSupportInfo(
+            objectTypeZero, 
+            true, 
+            true, 
+            false, 
+            minStakingAmount,
+            maxStakingAmount,
+            minStakingPeriod,
+            maxStakingPeriod,
+            minStakingFee,
+            maxStakingFee);
     }
 }
