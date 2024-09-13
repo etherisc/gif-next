@@ -250,14 +250,13 @@ contract InstanceReader {
 
     /// @dev Returns the info for the given policy NFT ID.
     function getPolicyInfo(NftId policyNftId) public view returns (IPolicy.PolicyInfo memory info) {
-        (bytes memory data, bool success) = _getData(_toPolicyKey(policyNftId));
-        if (success) { return abi.decode(data, (IPolicy.PolicyInfo)); }
+        return _store.getPolicy(policyNftId);
     }
 
 
     /// @dev Returns the state for the given policy NFT ID.
     function getPolicyState(NftId policyNftId) public view returns (StateId state) {
-        return getState(_toPolicyKey(policyNftId));
+        return _store.getState2(_toPolicyKey(policyNftId));
     }
 
 

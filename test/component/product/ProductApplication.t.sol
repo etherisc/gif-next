@@ -65,7 +65,7 @@ contract ProductApplicationTest is GifTest {
         assertTrue(policyNftId.gtz(), "policyNftId was zero");
         assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
 
-        assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
+        assertTrue(instance.getInstanceStore().getState2(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
 
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
         assertTrue(eqRiskId(policyInfo.riskId, riskId), "riskId not set");

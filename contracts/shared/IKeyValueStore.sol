@@ -18,6 +18,7 @@ interface IKeyValueStore is ILifecycle {
     error ErrorKeyValueStoreNotExisting(Key32 key);
 
     event LogInfoCreated(ObjectType objectType, KeyId keyId, StateId state, address createdBy, address txOrigin);
+    event LogKeyValueStoreMetadataCreated(ObjectType objectType, KeyId keyId, StateId state, address createdBy, address txOrigin);
     event LogInfoUpdated(ObjectType objectType, KeyId keyId, StateId state, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
     event LogStateUpdated(ObjectType objectType, KeyId keyId, StateId stateOld, StateId stateNew, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
 
@@ -36,6 +37,13 @@ interface IKeyValueStore is ILifecycle {
         // address updatedBy;
         Blocknumber updatedIn;
         Blocknumber createdIn;
+    }
+
+    struct Metadata2 {
+        // slot 0
+        ObjectType objectType;
+        StateId state;
+        Blocknumber updatedIn;
     }
 
     // generic state changing functions

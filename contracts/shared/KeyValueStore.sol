@@ -17,6 +17,7 @@ abstract contract KeyValueStore is
 {
 
     mapping(Key32 key32 => Value value) private _value;
+    mapping(Key32 key32 => IKeyValueStore.Metadata2 metadata) private _metadata;
 
     function _create(
         Key32 key32, 
@@ -52,6 +53,37 @@ abstract contract KeyValueStore is
 
         // solhint-disable-next-line avoid-tx-origin
         emit LogInfoCreated(key32.toObjectType(), key32.toKeyId(), initialState, msg.sender, tx.origin);
+    }
+
+    function _createMetadata(
+        Key32 key32
+    )
+        internal
+    {
+        ObjectType objectType = key32.toObjectType();
+        if (objectType.eqz()) {
+            revert ErrorKeyValueStoreTypeUndefined(objectType);
+        }
+
+        Metadata2 storage metadata = _metadata[key32];
+        if (metadata.updatedIn.gtz()) {
+            revert ErrorKeyValueStoreAlreadyCreated(key32, objectType);
+        }
+
+        if(!hasLifecycle(objectType)) {
+            revert ErrorKeyValueStoreNoLifecycle(objectType);
+        }
+
+        Blocknumber blocknumber = BlocknumberLib.current();
+        StateId initialState = getInitialState(objectType);
+
+        // set metadata
+        metadata.objectType = objectType;
+        metadata.state = initialState;
+        metadata.updatedIn = blocknumber;
+        
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogKeyValueStoreMetadataCreated(key32.toObjectType(), key32.toKeyId(), initialState, msg.sender, tx.origin);
     }
 
 
@@ -105,8 +137,44 @@ abstract contract KeyValueStore is
         metadata.updatedIn = BlocknumberLib.current();
     }
 
+    function _updateState2(
+        Key32 key32, 
+        StateId state
+    )
+        internal
+        returns (Blocknumber lastUpdatedIn)
+    {
+        if (state.eqz()) {
+            revert ErrorKeyValueStoreStateZero(key32);
+        }
+
+        Metadata2 storage metadata = _metadata[key32];
+        StateId stateOld = metadata.state;
+        lastUpdatedIn = metadata.updatedIn;
+
+        if (stateOld.eqz()) {
+            revert ErrorKeyValueStoreNotExisting(key32);
+        }
+
+        // update state 
+        if(state != KEEP_STATE()) {
+            checkTransition(stateOld, metadata.objectType, stateOld, state);
+            metadata.state = state;
+
+            // solhint-disable-next-line avoid-tx-origin
+            emit LogStateUpdated(key32.toObjectType(), key32.toKeyId(), stateOld, state, msg.sender, tx.origin, lastUpdatedIn);
+        }
+
+        // update metadata
+        metadata.updatedIn = BlocknumberLib.current();
+    }
+
     function exists(Key32 key32) public view returns (bool) {
         return _value[key32].metadata.state.gtz();
+    }
+
+    function exists2(Key32 key32) public view returns (bool) {
+        return _metadata[key32].state.gtz();
     }
 
     function get(Key32 key32) public view returns (Value memory value) {
@@ -117,12 +185,20 @@ abstract contract KeyValueStore is
         return _value[key32].metadata;
     }
 
+    function getMetadata2(Key32 key32) public view returns (Metadata2 memory metadata) {
+        return _metadata[key32];
+    }
+
     function getData(Key32 key32) public view returns (bytes memory data) {
         return _value[key32].data;
     }
 
     function getState(Key32 key32) public view returns (StateId state) {
         return _value[key32].metadata.state;
+    }
+
+    function getState2(Key32 key32) public view returns (StateId state) {
+        return _metadata[key32].state;
     }
 
     function toKey32(ObjectType objectType, KeyId id) external pure override returns(Key32) {

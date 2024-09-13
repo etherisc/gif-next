@@ -7,6 +7,7 @@ import {Amount} from "../type/Amount.sol";
 import {Key32} from "../type/Key32.sol";
 import {NftId} from "../type/NftId.sol";
 import {ClaimId} from "../type/ClaimId.sol";
+import {IKeyValueStore} from "../shared/IKeyValueStore.sol";
 import {ObjectType, BUNDLE, POLICY, POOL, PREMIUM, PRODUCT, COMPONENT, DISTRIBUTOR, FEE} from "../type/ObjectType.sol";
 import {RequestId} from "../type/RequestId.sol";
 import {RiskId} from "../type/RiskId.sol";
@@ -37,6 +38,8 @@ contract InstanceStore is
     ObjectCounter,
     ObjectLifecycle
 {
+    mapping(Key32 key32 => IPolicy.PolicyInfo) private _policies;
+
 
     /// @dev This initializer needs to be called from the instance itself.
     function initialize()
@@ -182,28 +185,40 @@ contract InstanceStore is
     //--- Application (Policy) ----------------------------------------------//
     function createApplication(NftId applicationNftId, IPolicy.PolicyInfo memory policy) external restricted() {
         _registerBalanceTarget(applicationNftId);
-        _create(_toNftKey32(applicationNftId, POLICY()), abi.encode(policy));
+        Key32 key = _toNftKey32(applicationNftId, POLICY());
+        _createMetadata(key);
+        _policies[key] = policy;
     }
 
     function updateApplication(NftId applicationNftId, IPolicy.PolicyInfo memory policy, StateId newState) external restricted() {
-        _update(_toNftKey32(applicationNftId, POLICY()), abi.encode(policy), newState);
+        Key32 key = _toNftKey32(applicationNftId, POLICY());
+        _updateState2(key, newState);
+        _policies[key] = policy;
     }
 
     function updateApplicationState(NftId applicationNftId, StateId newState) external restricted() {
-        _updateState(_toNftKey32(applicationNftId, POLICY()), newState);
+        _updateState2(_toNftKey32(applicationNftId, POLICY()), newState);
+    }
+
+    function getPolicy(NftId policyNftId) external view returns (IPolicy.PolicyInfo memory policy) {
+        return _policies[_toNftKey32(policyNftId, POLICY())];
     }
 
     //--- Policy ------------------------------------------------------------//
     function updatePolicy(NftId policyNftId, IPolicy.PolicyInfo memory policy, StateId newState) external restricted() {
-        _update(_toNftKey32(policyNftId, POLICY()), abi.encode(policy), newState);
+        Key32 key = _toNftKey32(policyNftId, POLICY());
+        _updateState2(key, newState);
+        _policies[key] = policy;
     }
 
     function updatePolicyClaims(NftId policyNftId, IPolicy.PolicyInfo memory policy, StateId newState) external restricted() {
-        _update(_toNftKey32(policyNftId, POLICY()), abi.encode(policy), newState);
+        Key32 key = _toNftKey32(policyNftId, POLICY());
+        _updateState2(key, newState);
+        _policies[key] = policy;
     }
 
     function updatePolicyState(NftId policyNftId, StateId newState) external restricted() {
-        _updateState(_toNftKey32(policyNftId, POLICY()), newState);
+        _updateState2(_toNftKey32(policyNftId, POLICY()), newState);
     }
 
     
