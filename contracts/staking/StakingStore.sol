@@ -683,6 +683,8 @@ contract StakingStore is
 
         // process stake amount
         _stake(stakeNftId, stakeInfo, targetInfo, targetInfo.lockingPeriod, stakeAmount);
+
+        return stakeInfo.lockedUntil;
     }
 
 
@@ -888,6 +890,10 @@ contract StakingStore is
     /// @dev Returns the tvl infos for the specified target.
     function getTokenInfo(ChainId chainId, address token) external view returns (IStaking.TokenInfo memory tokenInfo) {
         return _tokenInfo[chainId][token];
+    }
+
+    function hasTokenInfo(ChainId chainId, address token) external view returns (bool) {
+        return _tokenInfo[chainId][token].lastUpdateIn.gtz();
     }
 
 

@@ -279,7 +279,6 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         { 
             libraries: { 
                 AmountLib: libraries.amountLibAddress, 
-                BlocknumberLib: libraries.blockNumberLibAddress, 
                 ChainIdLib: libraries.chainIdLibAddress, 
                 ContractLib: libraries.contractLibAddress,
                 NftIdLib: libraries.nftIdLibAddress, 

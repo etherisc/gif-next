@@ -9,16 +9,15 @@ import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {IStaking} from "../../contracts/staking/IStaking.sol";
 import {IStakingService} from "../../contracts/staking/IStakingService.sol";
 import {NftId} from "../../contracts/type/NftId.sol";
-import {INSTANCE, PROTOCOL, SERVICE, STAKE, STAKING} from "../../contracts/type/ObjectType.sol";
+import {ObjectType, ObjectTypeLib, INSTANCE, PROTOCOL, SERVICE, STAKING} from "../../contracts/type/ObjectType.sol";
 import {Seconds, SecondsLib} from "../../contracts/type/Seconds.sol";
-import {StakingLib} from "../../contracts/staking/StakingLib.sol";
+import {StakingReader} from "../../contracts/staking/StakingReader.sol";
 import {TargetManagerLib} from "../../contracts/staking/TargetManagerLib.sol";
-import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
-import {TokenHandler} from "../../contracts/shared/TokenHandler.sol";
 import {UFixed, UFixedLib} from "../../contracts/type/UFixed.sol";
 import {VersionPart} from "../../contracts/type/Version.sol";
 
 
+// solhint-disable func-name-mixedcase
 contract StakingSetupTest is GifTest {
 
     uint256 public constant STAKING_WALLET_APPROVAL = 5000;
@@ -137,4 +136,151 @@ contract StakingSetupTest is GifTest {
         assertEq(instanceTargetInfo.chainId.toInt(), block.chainid, "unexpected instance chain id");
         assertEq(instanceTargetInfo.lockingPeriod.toInt(), TargetManagerLib.getDefaultLockingPeriod().toInt(), "unexpected locking period");
     }
+
+    function test_stakingServiceSetStakingReader() public {
+        // GIVEN
+        StakingReader newStakingReader = new StakingReader(registry);
+        newStakingReader.initialize(address(staking), address(staking.getStakingStore()));
+
+        vm.startPrank(stakingOwner);
+
+        // WHEN
+        staking.setStakingReader(address(newStakingReader));
+
+
+        // THEN
+        assertEq(address(staking.getStakingReader()), address(newStakingReader), "unexpected staking reader address");
+    }
+
+    function test_setSupportInfo_invalidObjectType() public {
+        // GIVEN
+        vm.startPrank(stakingOwner);
+
+        ObjectType objectTypeZero = ObjectTypeLib.zero();
+        Amount minStakingAmount = AmountLib.toAmount(0);
+        Amount maxStakingAmount = AmountLib.toAmount(100);
+        Seconds minLockingPeriod = SecondsLib.toSeconds(10);
+        Seconds maxLockingPeriod = SecondsLib.toSeconds(100);
+        UFixed minRewardRate = UFixedLib.toUFixed(0);
+        UFixed maxRewardRate = UFixedLib.toUFixed(1);
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IStaking.ErrorStakingSupportTypeInvalid.selector, 
+            objectTypeZero));
+        
+        // WHEN
+        staking.setSupportInfo(
+            objectTypeZero, 
+            true, 
+            true, 
+            false, 
+            minStakingAmount,
+            maxStakingAmount,
+            minLockingPeriod,
+            maxLockingPeriod,
+            minRewardRate,
+            maxRewardRate);
+    }
+
+    function test_setSupportInfo_invalidStakingAmounts() public {
+        // GIVEN
+        vm.startPrank(stakingOwner);
+
+        ObjectType objectType = INSTANCE();
+        Amount minStakingAmount = AmountLib.toAmount(0);
+        Amount maxStakingAmount = AmountLib.toAmount(100);
+        Seconds minLockingPeriod = SecondsLib.toSeconds(10);
+        Seconds maxLockingPeriod = SecondsLib.toSeconds(100);
+        UFixed minRewardRate = UFixedLib.toUFixed(0);
+        UFixed maxRewardRate = UFixedLib.toUFixed(1);
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IStaking.ErrorStakingStakingAmountsInvalid.selector, 
+            maxStakingAmount,
+            minStakingAmount
+            ));
+        
+        // WHEN
+        staking.setSupportInfo(
+            objectType, 
+            true, 
+            true, 
+            false, 
+            maxStakingAmount,
+            minStakingAmount,
+            minLockingPeriod,
+            maxLockingPeriod,
+            minRewardRate,
+            maxRewardRate);
+    }
+
+    function test_setSupportInfo_invalidLockingPeriods() public {
+        // GIVEN
+        vm.startPrank(stakingOwner);
+
+        ObjectType objectType = INSTANCE();
+        Amount minStakingAmount = AmountLib.toAmount(0);
+        Amount maxStakingAmount = AmountLib.toAmount(100);
+        Seconds minLockingPeriod = SecondsLib.toSeconds(10);
+        Seconds maxLockingPeriod = SecondsLib.toSeconds(100);
+        UFixed minRewardRate = UFixedLib.toUFixed(0);
+        UFixed maxRewardRate = UFixedLib.toUFixed(1);
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IStaking.ErrorStakingLockingPeriodsInvalid.selector, 
+            maxLockingPeriod,
+            minLockingPeriod
+            ));
+        
+        // WHEN
+        staking.setSupportInfo(
+            objectType, 
+            true, 
+            true, 
+            false, 
+            minStakingAmount,
+            maxStakingAmount,
+            maxLockingPeriod,
+            minLockingPeriod,
+            minRewardRate,
+            maxRewardRate);
+    }
+
+    function test_setSupportInfo_invalidRewardRates() public {
+        // GIVEN
+        vm.startPrank(stakingOwner);
+
+        ObjectType objectType = INSTANCE();
+        Amount minStakingAmount = AmountLib.toAmount(0);
+        Amount maxStakingAmount = AmountLib.toAmount(100);
+        Seconds minLockingPeriod = SecondsLib.toSeconds(10);
+        Seconds maxLockingPeriod = SecondsLib.toSeconds(100);
+        UFixed minRewardRate = UFixedLib.toUFixed(0);
+        UFixed maxRewardRate = UFixedLib.toUFixed(1);
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IStaking.ErrorStakingRewardRatesInvalid.selector, 
+            maxRewardRate,
+            minRewardRate
+            ));
+        
+        // WHEN
+        staking.setSupportInfo(
+            objectType, 
+            true, 
+            true, 
+            false, 
+            minStakingAmount,
+            maxStakingAmount,
+            minLockingPeriod,
+            maxLockingPeriod,
+            maxRewardRate,
+            minRewardRate);
+    }
+
+    
 }
