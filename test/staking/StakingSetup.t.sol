@@ -12,6 +12,7 @@ import {NftId} from "../../contracts/type/NftId.sol";
 import {INSTANCE, PROTOCOL, SERVICE, STAKE, STAKING} from "../../contracts/type/ObjectType.sol";
 import {Seconds, SecondsLib} from "../../contracts/type/Seconds.sol";
 import {StakingLib} from "../../contracts/staking/StakingLib.sol";
+import {StakingReader} from "../../contracts/staking/StakingReader.sol";
 import {TargetManagerLib} from "../../contracts/staking/TargetManagerLib.sol";
 import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
 import {TokenHandler} from "../../contracts/shared/TokenHandler.sol";
@@ -136,5 +137,20 @@ contract StakingSetupTest is GifTest {
         assertEq(instanceTargetInfo.objectType.toInt(), INSTANCE().toInt(), "unexpected instance object type");
         assertEq(instanceTargetInfo.chainId.toInt(), block.chainid, "unexpected instance chain id");
         assertEq(instanceTargetInfo.lockingPeriod.toInt(), TargetManagerLib.getDefaultLockingPeriod().toInt(), "unexpected locking period");
+    }
+
+    function test_stakingServiceSetStakingReader() public {
+        // GIVEN
+        StakingReader newStakingReader = new StakingReader(registry);
+        newStakingReader.initialize(address(staking), address(staking.getStakingStore()));
+
+        vm.startPrank(stakingOwner);
+
+        // WHEN
+        staking.setStakingReader(address(newStakingReader));
+
+
+        // THEN
+        assertEq(address(staking.getStakingReader()), address(newStakingReader), "unexpected staking reader address");
     }
 }
