@@ -10,8 +10,10 @@ import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
 import {BUNDLE} from "../../../contracts/type/ObjectType.sol";
 import {COLLATERALIZED, PAID} from "../../../contracts/type/StateId.sol";
 import {FlightBaseTest} from "./FlightBase.t.sol";
+import {FlightProduct} from "../../../contracts/examples/flight/FlightProduct.sol";
 import {IBundle} from "../../../contracts/instance/module/IBundle.sol";
 import {NftId} from "../../../contracts/type/NftId.sol";
+import {RiskId} from "../../../contracts/type/RiskId.sol";
 import {SecondsLib} from "../../../contracts/type/Seconds.sol";
 import {Str, StrLib} from "../../../contracts/type/String.sol";
 import {Timestamp, TimestampLib} from "../../../contracts/type/Timestamp.sol";
@@ -105,6 +107,9 @@ contract FlightProductTest is FlightBaseTest {
         uint256 productBalanceBefore = flightUSD.balanceOf(flightProduct.getWallet());
         Amount premiumAmount = AmountLib.toAmount(30 * 10 ** flightUSD.decimals());
 
+        assertEq(instanceReader.risks(flightProductNftId), 0, "unexpected number of risks (before)");
+        assertEq(instanceReader.activeRisks(flightProductNftId), 0, "unexpected number of active risks (before)");
+
         // WHEN
         (NftId policyNftId, ) = flightProduct.createPolicy(
             customer,
@@ -116,12 +121,29 @@ contract FlightProductTest is FlightBaseTest {
             statistics);
 
         // THEN
+        // check risks
+        assertEq(instanceReader.risks(flightProductNftId), 1, "unexpected number of risks (after)");
+        assertEq(instanceReader.activeRisks(flightProductNftId), 1, "unexpected number of active risks (after)");
+
+        RiskId riskId = instanceReader.getRiskId(flightProductNftId, 0);
+        (bool exists, FlightProduct.FlightRisk memory flightRisk) = flightProduct.getFlightRisk(riskId);
+        _printRisk(riskId, flightRisk);
+
+        assertTrue(exists, "risk does not exist");
+        assertEq(instanceReader.policiesForRisk(riskId), 1, "unexpected number of policies for risk");
+        assertEq(instanceReader.getPolicyNftIdForRisk(riskId, 0).toInt(), policyNftId.toInt(), "unexpected 1st policy for risk");
+
+        // check policy
         assertTrue(policyNftId.gtz(), "policy nft id zero");
         assertEq(registry.ownerOf(policyNftId), customer, "unexpected policy holder");
         assertEq(instanceReader.getPolicyState(policyNftId).toInt(), COLLATERALIZED().toInt(), "unexpected policy state");
 
         // check policy info
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
+        _printPolicy(policyNftId, policyInfo);
+
+        // check policy data
+        assertTrue(instanceReader.isProductRisk(flightProductNftId, policyInfo.riskId), "risk does not exist for product");
         assertEq(policyInfo.productNftId.toInt(), flightProductNftId.toInt(), "unexpected product nft id");
         assertEq(policyInfo.bundleNftId.toInt(), bundleNftId.toInt(), "unexpected bundle nft id");
         assertEq(policyInfo.activatedAt.toInt(), departureTime.toInt(), "unexpected activate at timestamp");
@@ -129,15 +151,9 @@ contract FlightProductTest is FlightBaseTest {
         assertTrue(policyInfo.sumInsuredAmount > premiumAmount, "sum insured <= premium amount");
 
         // check premium info
-        assertEq(instanceReader.getPremiumState(policyNftId).toInt(), PAID().toInt(), "unexpected premium state");
         IPolicy.PremiumInfo memory premiumInfo = instanceReader.getPremiumInfo(policyNftId);
-        console.log("policyInfo.sumInsuredAmount", policyInfo.sumInsuredAmount.toInt());
-        console.log("premiumAmount", premiumAmount.toInt());
-        console.log("premium.premiumAmount", premiumInfo.premiumAmount.toInt());
-        console.log("premium.productFeeAmount", premiumInfo.productFeeAmount.toInt());
-        console.log("premium.distributionFeeAndCommissionAmount", premiumInfo.distributionFeeAndCommissionAmount.toInt());
-        console.log("premium.poolPremiumAndFeeAmount", premiumInfo.poolPremiumAndFeeAmount.toInt());
-        console.log("premium.discountAmount", premiumInfo.discountAmount.toInt());
+        _printPremium(policyNftId, premiumInfo);
+        assertEq(instanceReader.getPremiumState(policyNftId).toInt(), PAID().toInt(), "unexpected premium state");
         
         // check token balances
         assertEq(flightUSD.balanceOf(flightProduct.getWallet()), productBalanceBefore, "unexpected product balance");

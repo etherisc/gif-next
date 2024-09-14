@@ -74,7 +74,7 @@ contract FlightProduct is
         Str departureYearMonthDay;
         Timestamp departureTime;
         Timestamp arrivalTime; 
-        Seconds delayInMinutes; // TODO rename to seconds
+        Seconds delaySeconds;
         uint8 delay; // what is this?
         Amount estimatedMaxTotalPayout;
         uint256 premiumMultiplier; // what is this? UFixed?
@@ -98,69 +98,8 @@ contract FlightProduct is
             initialOwner);
     }
 
-    function _initialize(
-        address registry,
-        NftId instanceNftId,
-        string memory componentName,
-        IAuthorization authorization,
-        address initialOwner
-    )
-        internal
-        initializer
-    {
-        _initializeBasicProduct(
-            registry,
-            instanceNftId,
-            componentName,
-            IComponents.ProductInfo({
-                isProcessingFundedClaims: false,
-                isInterceptingPolicyTransfers: false,
-                hasDistribution: false,
-                expectedNumberOfOracles: 0,
-                numberOfOracles: 0,
-                poolNftId: NftIdLib.zero(),
-                distributionNftId: NftIdLib.zero(),
-                oracleNftId: new NftId[](0)
-            }), 
-            IComponents.FeeInfo({
-                productFee: FeeLib.zero(),
-                processingFee: FeeLib.zero(),
-                distributionFee: FeeLib.zero(),
-                minDistributionOwnerFee: FeeLib.zero(),
-                poolFee: FeeLib.zero(),
-                stakingFee: FeeLib.zero(),
-                performanceFee: FeeLib.zero()
-            }),
-            authorization,
-            initialOwner);  // number of oracles
-    }
-
-
-    /// @dev Call after product registration with the instance, when the product token/tokenhandler is available
-    function completeSetup()
-        external
-        virtual
-        restricted()
-        onlyOwner()
-    {
-        IERC20Metadata token = IERC20Metadata(getToken());
-        uint256 tokenMultiplier = 10 ** token.decimals();
-
-        MIN_PREMIUM = AmountLib.toAmount(15 * tokenMultiplier); 
-        MAX_PREMIUM = AmountLib.toAmount(200 * tokenMultiplier); 
-        MAX_PAYOUT = AmountLib.toAmount(500 * tokenMultiplier); 
-        MAX_TOTAL_PAYOUT = AmountLib.toAmount(3 * MAX_PAYOUT.toInt());
-    }
-
-
-    /// @dev Set bundle to be used until further notice.
-    function setDefaultBundle(NftId bundleNftId)
-        external
-        restricted()
-        onlyOwner()
-    {
-        _defaultBundleNftId = bundleNftId;
-    }
+    //--- external functions ------------------------------------------------//
+    //--- unpermissioned functions ------------------------------------------//
 
     function createPolicy(
         address policyHolder,
@@ -183,13 +122,14 @@ contract FlightProduct is
         checkParameters(
             departureTime, 
             arrivalTime, 
-            premiumAmount,
-            statistics); // TODO remove? checked here and in checkAndCalculatePayouts
+            premiumAmount); // TODO remove? checked here and in checkAndCalculatePayouts
 
         (
             uint256 weight, 
             Amount sumInsuredAmount
-        ) = checkAndCalculateSumInsured(premiumAmount, statistics);
+        ) = checkAndCalculateSumInsured(
+            premiumAmount, 
+            statistics);
 
         // more checks and risk handling
         RiskId riskId = _checkAndHandleFlightRisk(
@@ -197,7 +137,7 @@ contract FlightProduct is
             departureYearMonthDay, 
             departureTime, 
             arrivalTime, 
-            premiumAmount,
+            sumInsuredAmount,
             weight);
 
         // effects
@@ -222,9 +162,31 @@ contract FlightProduct is
             departureTime); // activate at
     }
 
+
+    //--- owner functions ---------------------------------------------------//
+
+    /// @dev Call after product registration with the instance, when the product token/tokenhandler is available
+    function completeSetup()
+        external
+        virtual
+        restricted()
+        onlyOwner()
+    {
+        IERC20Metadata token = IERC20Metadata(getToken());
+        uint256 tokenMultiplier = 10 ** token.decimals();
+
+        MIN_PREMIUM = AmountLib.toAmount(15 * tokenMultiplier); 
+        MAX_PREMIUM = AmountLib.toAmount(200 * tokenMultiplier); 
+        MAX_PAYOUT = AmountLib.toAmount(500 * tokenMultiplier); 
+        MAX_TOTAL_PAYOUT = AmountLib.toAmount(3 * MAX_PAYOUT.toInt());
+    }
+
+
+    function setDefaultBundle(NftId bundleNftId) external restricted() onlyOwner() { _defaultBundleNftId = bundleNftId; }
     function approveTokenHandler(IERC20Metadata token, Amount amount) external restricted() onlyOwner() { _approveTokenHandler(token, amount); }
     function setLocked(bool locked) external onlyOwner() { _setLocked(locked); }
     function setWallet(address newWallet) external restricted() onlyOwner() { _setWallet(newWallet); }
+
 
     //--- view functions ----------------------------------------------------//
 
@@ -263,8 +225,7 @@ contract FlightProduct is
     function checkParameters(
         Timestamp departureTime,
         Timestamp arrivalTime,
-        Amount premium,
-        uint256[6] memory statistics
+        Amount premium
     )
         internal
         view
@@ -370,11 +331,14 @@ contract FlightProduct is
             FlightRisk memory flightRisk
         )
     {
+        // check if risk exists
         InstanceReader reader = _getInstanceReader();
-        exists = reader.riskExists(getNftId(), riskId);
+        exists = reader.isProductRisk(getNftId(), riskId);
 
+        // get risk data if risk exists
         if (exists) {
-            flightRisk = abi.decode(reader.getRiskInfo(riskId).data, (FlightRisk));
+            flightRisk = abi.decode(
+                reader.getRiskInfo(riskId).data, (FlightRisk));
         }
     }
 
@@ -420,8 +384,8 @@ contract FlightProduct is
                 departureYearMonthDay: departureYearMonthDay,
                 departureTime: departureTime,
                 arrivalTime: arrivalTime,
-                delayInMinutes: SecondsLib.zero(),
-                delay: 0,
+                delaySeconds: SecondsLib.zero(),
+                delay: 0, // TODO what is this? rename?
                 estimatedMaxTotalPayout: sumInsuredAmount,
                 premiumMultiplier: multiplier,
                 weight: weight
@@ -460,5 +424,43 @@ contract FlightProduct is
 
     function _getRiskId(bytes32 riskKey) internal view returns (RiskId riskId) {
         return RiskIdLib.toRiskId(getNftId(), riskKey);
+    }
+
+
+    function _initialize(
+        address registry,
+        NftId instanceNftId,
+        string memory componentName,
+        IAuthorization authorization,
+        address initialOwner
+    )
+        internal
+        initializer
+    {
+        _initializeBasicProduct(
+            registry,
+            instanceNftId,
+            componentName,
+            IComponents.ProductInfo({
+                isProcessingFundedClaims: false,
+                isInterceptingPolicyTransfers: false,
+                hasDistribution: false,
+                expectedNumberOfOracles: 0,
+                numberOfOracles: 0,
+                poolNftId: NftIdLib.zero(),
+                distributionNftId: NftIdLib.zero(),
+                oracleNftId: new NftId[](0)
+            }), 
+            IComponents.FeeInfo({
+                productFee: FeeLib.zero(),
+                processingFee: FeeLib.zero(),
+                distributionFee: FeeLib.zero(),
+                minDistributionOwnerFee: FeeLib.zero(),
+                poolFee: FeeLib.zero(),
+                stakingFee: FeeLib.zero(),
+                performanceFee: FeeLib.zero()
+            }),
+            authorization,
+            initialOwner);  // number of oracles
     }
 }

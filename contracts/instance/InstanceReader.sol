@@ -222,7 +222,7 @@ contract InstanceReader {
 
 
     /// @dev Returns true if the specified risk exists for the given product NFT ID.
-    function riskExists(NftId productNftId, RiskId riskId) public view returns (bool exists) {
+    function isProductRisk(NftId productNftId, RiskId riskId) public view returns (bool exists) {
         return _riskSet.hasRisk(productNftId, riskId);
     }
 
