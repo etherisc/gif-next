@@ -28,6 +28,9 @@ contract FlightProductAuthorization
         // unpermissioned
         _authorize(functions, FlightProduct.createPolicy.selector, "createPolicy");
 
+        // only oracle
+        _authorize(functions, FlightProduct.flightStatusCallback.selector, "flightStatusCallback");
+
         // only owner
         _authorize(functions, FlightProduct.completeSetup.selector, "completeSetup");
         _authorize(functions, FlightProduct.setDefaultBundle.selector, "setDefaultBundle");

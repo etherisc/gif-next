@@ -34,7 +34,7 @@ contract ComponentTrackingTest is GifTest {
         // THEN
         assertEq(instanceReader.components(), 1, "unexpected components count (after)");
         assertEq(instanceReader.products(), 1, "unexpected products count (after)");
-        assertEq(instanceReader.getProductNftId(0).toInt(), myProductNftId.toInt(), "unexpected product nft id (1)");
+        assertEq(instanceReader.getProduct(0).toInt(), myProductNftId.toInt(), "unexpected product nft id (1)");
     }
 
 
@@ -62,7 +62,7 @@ contract ComponentTrackingTest is GifTest {
         // THEN
         assertEq(instanceReader.components(), 4, "unexpected components count (after)");
         assertEq(instanceReader.products(), 1, "unexpected products count (after)");
-        assertEq(instanceReader.getProductNftId(0).toInt(), myProductNftId.toInt(), "unexpected product nft id (1)");
+        assertEq(instanceReader.getProduct(0).toInt(), myProductNftId.toInt(), "unexpected product nft id (1)");
     }
 
 
@@ -86,9 +86,9 @@ contract ComponentTrackingTest is GifTest {
         // THEN
         assertEq(instanceReader.components(), 3, "unexpected components count (after)");
         assertEq(instanceReader.products(), 3, "unexpected products count (after)");
-        assertEq(instanceReader.getProductNftId(0).toInt(), myProductNftId1.toInt(), "unexpected product nft id (1a)");
-        assertEq(instanceReader.getProductNftId(1).toInt(), myProductNftId2.toInt(), "unexpected product nft id (1b)");
-        assertEq(instanceReader.getProductNftId(2).toInt(), myProductNftId3.toInt(), "unexpected product nft id (1c)");
+        assertEq(instanceReader.getProduct(0).toInt(), myProductNftId1.toInt(), "unexpected product nft id (1a)");
+        assertEq(instanceReader.getProduct(1).toInt(), myProductNftId2.toInt(), "unexpected product nft id (1b)");
+        assertEq(instanceReader.getProduct(2).toInt(), myProductNftId3.toInt(), "unexpected product nft id (1c)");
     }
 
 
@@ -124,9 +124,9 @@ contract ComponentTrackingTest is GifTest {
         // THEN
         assertEq(instanceReader.components(), 9, "unexpected components count (after)");
         assertEq(instanceReader.products(), 3, "unexpected products count (after)");
-        assertEq(instanceReader.getProductNftId(0).toInt(), myProductNftId1.toInt(), "unexpected product nft id (1a)");
-        assertEq(instanceReader.getProductNftId(1).toInt(), myProductNftId2.toInt(), "unexpected product nft id (1b)");
-        assertEq(instanceReader.getProductNftId(2).toInt(), myProductNftId3.toInt(), "unexpected product nft id (1c)");
+        assertEq(instanceReader.getProduct(0).toInt(), myProductNftId1.toInt(), "unexpected product nft id (1a)");
+        assertEq(instanceReader.getProduct(1).toInt(), myProductNftId2.toInt(), "unexpected product nft id (1b)");
+        assertEq(instanceReader.getProduct(2).toInt(), myProductNftId3.toInt(), "unexpected product nft id (1c)");
     }
 
     function test_componentTracking_noDistributionExpected() public {
