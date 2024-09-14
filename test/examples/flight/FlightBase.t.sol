@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {console} from "../../../lib/forge-std/src/Test.sol";
+
+import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
+
 import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
 import {FlightUSD} from "../../../contracts/examples/flight/FlightUSD.sol";
 import {FlightPool} from "../../../contracts/examples/flight/FlightPool.sol";
@@ -9,6 +13,7 @@ import {FlightProduct} from "../../../contracts/examples/flight/FlightProduct.so
 import {FlightProductAuthorization} from "../../../contracts/examples/flight/FlightProductAuthorization.sol";
 import {GifTest} from "../../base/GifTest.sol";
 import {NftId} from "../../../contracts/type/NftId.sol";
+import {RiskId} from "../../../contracts/type/RiskId.sol";
 import {VersionPartLib} from "../../../contracts/type/Version.sol";
 
 
@@ -111,5 +116,47 @@ contract FlightBaseTest is GifTest {
         vm.startPrank(flightOwner);
         flightUSD.transfer(account, amount);
         vm.stopPrank();
+    }
+
+    function _printRisk(RiskId riskId, FlightProduct.FlightRisk memory flightRisk) internal {
+        // solhint-disable
+        console.log("riskId", riskId.toInt());
+        console.log("- carrierFlightNumber", flightRisk.carrierFlightNumber.toString());
+        console.log("- departureYearMonthDay", flightRisk.departureYearMonthDay.toString());
+        console.log("- departureTime", flightRisk.departureTime.toInt());
+        console.log("- arrivalTime", flightRisk.arrivalTime.toInt());
+        console.log("- delaySeconds", flightRisk.delaySeconds.toInt());
+        console.log("- delay", flightRisk.delay);
+        console.log("- estimatedMaxTotalPayout", flightRisk.estimatedMaxTotalPayout.toInt());
+        console.log("- premiumMultiplier", flightRisk.premiumMultiplier);
+        console.log("- weight", flightRisk.weight);   
+        // solhint-enable
+    }
+
+    function _printPolicy(NftId policyNftId, IPolicy.PolicyInfo memory policyInfo) internal {
+        // solhint-disable
+        console.log("policy", policyNftId.toInt());
+        console.log("- productNftId", policyInfo.productNftId.toInt());
+        console.log("- bundleNftId", policyInfo.bundleNftId.toInt());
+        console.log("- riskId referralId", policyInfo.riskId.toInt(), policyInfo.referralId.toInt());
+        console.log("- activatedAt lifetime", policyInfo.activatedAt.toInt(), policyInfo.lifetime.toInt());
+        console.log("- expiredAt closedAt", policyInfo.expiredAt.toInt(), policyInfo.closedAt.toInt());
+        console.log("- sumInsuredAmount", policyInfo.sumInsuredAmount.toInt());
+        console.log("- premiumAmount", policyInfo.premiumAmount.toInt());
+        console.log("- claimsCount claimAmount", policyInfo.claimsCount, policyInfo.claimAmount.toInt());
+        console.log("- payoutAmount", policyInfo.payoutAmount.toInt());
+        // solhint-enable
+    }
+
+    function _printPremium(NftId policyNftId, IPolicy.PremiumInfo memory premiumInfo) internal {
+        // solhint-disable
+        console.log("premium", policyNftId.toInt());
+        console.log("- premiumAmount", premiumInfo.premiumAmount.toInt());
+        console.log("- netPremiumAmount", premiumInfo.netPremiumAmount.toInt());
+        console.log("- productFeeAmount", premiumInfo.productFeeAmount.toInt());
+        console.log("- distributionFeeAndCommissionAmount", premiumInfo.distributionFeeAndCommissionAmount.toInt());
+        console.log("- poolPremiumAndFeeAmount", premiumInfo.poolPremiumAndFeeAmount.toInt());
+        console.log("- discountAmount", premiumInfo.discountAmount.toInt());
+        // solhint-enable
     }
 }
