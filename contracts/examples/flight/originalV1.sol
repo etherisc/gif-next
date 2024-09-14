@@ -268,6 +268,8 @@ contract FlightDelayChainlink {
         }
 
         // It's the first policy for this risk, we accept any premium
+        // REMARK: all policy holders for this flight will share the same max payout estimates
+        // trends during the onboarding of policies are not considered
         // if (risk.premiumMultiplier == 0) {
         //     risk.premiumMultiplier = maxWeight * 10000 / weight;
         //     risk.estimatedMaxTotalPayout = 0;

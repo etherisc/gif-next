@@ -143,7 +143,7 @@ interface IInstance is
 
     // get products
     function products() external view returns (uint256 productCount);
-    function getProductNftId(uint256 idx) external view returns (NftId productNftId);
+    function getProduct(uint256 idx) external view returns (NftId productNftId);
 
     // get supporting contracts
     function getInstanceReader() external view returns (InstanceReader);

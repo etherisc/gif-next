@@ -177,8 +177,8 @@ contract InstanceReader {
 
 
     /// @dev Returns th product NFT ID for the given index.
-    function getProductNftId(uint256 idx) public view returns (NftId productNftId) {
-        return _instance.getProductNftId(idx);
+    function getProduct(uint256 idx) public view returns (NftId productNftId) {
+        return _instance.getProduct(idx);
     }
 
 
@@ -246,8 +246,19 @@ contract InstanceReader {
 
 
     /// @dev Returns the linked policy NFT ID for the given risk ID and index.
-    function getPolicyNftIdForRisk(RiskId riskId, uint256 idx) public view returns (NftId linkedPolicyNftId) {
+    function getPolicyForRisk(RiskId riskId, uint256 idx) public view returns (NftId linkedPolicyNftId) {
         return _riskSet.getLinkedPolicyNftId(riskId, idx);
+    }
+
+    /// @dev Returns the number of linked policies for the given bundle NFT ID.
+    function policiesForBundle(NftId bundleNftId) public view returns (uint256 linkedPolicies) {
+        return _bundleSet.activePolicies(bundleNftId);
+    }
+
+
+    /// @dev Returns the linked policy NFT ID for the given risk ID and index.
+    function getPolicyForBundle(NftId bundleNftId, uint256 idx) public view returns (NftId linkedPolicyNftId) {
+        return _bundleSet.getActivePolicy(bundleNftId, idx);
     }
 
 
