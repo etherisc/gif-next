@@ -3,16 +3,20 @@ pragma solidity ^0.8.20;
 
 import {console} from "../../../lib/forge-std/src/Test.sol";
 
+import {IOracle} from "../../../contracts/oracle/IOracle.sol";
 import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
 
 import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
-import {FlightUSD} from "../../../contracts/examples/flight/FlightUSD.sol";
+import {FlightOracle} from "../../../contracts/examples/flight/FlightOracle.sol";
+import {FlightOracleAuthorization} from "../../../contracts/examples/flight/FlightOracleAuthorization.sol";
 import {FlightPool} from "../../../contracts/examples/flight/FlightPool.sol";
 import {FlightPoolAuthorization} from "../../../contracts/examples/flight/FlightPoolAuthorization.sol";
 import {FlightProduct} from "../../../contracts/examples/flight/FlightProduct.sol";
 import {FlightProductAuthorization} from "../../../contracts/examples/flight/FlightProductAuthorization.sol";
+import {FlightUSD} from "../../../contracts/examples/flight/FlightUSD.sol";
 import {GifTest} from "../../base/GifTest.sol";
 import {NftId} from "../../../contracts/type/NftId.sol";
+import {RequestId} from "../../../contracts/type/RequestId.sol";
 import {RiskId} from "../../../contracts/type/RiskId.sol";
 import {VersionPartLib} from "../../../contracts/type/Version.sol";
 
@@ -22,9 +26,11 @@ contract FlightBaseTest is GifTest {
     address public flightOwner = makeAddr("flightOwner");
 
     FlightUSD public flightUSD;
+    FlightOracle public flightOracle;
     FlightPool public flightPool;
     FlightProduct public flightProduct;
 
+    NftId public flightOracleNftId;
     NftId public flightPoolNftId;
     NftId public flightProductNftId;
 
@@ -33,9 +39,15 @@ contract FlightBaseTest is GifTest {
         
         _deployFlightUSD();
         _deployFlightProduct();
+        _deployFlightOracle();
         _deployFlightPool();
+
+        // fetches oracle nft id via instance
+        flightProduct.setOracleNftId();
+
         _initialFundAccounts();
     }
+
 
     function _deployFlightUSD() internal {
         // deploy fire token
@@ -53,6 +65,7 @@ contract FlightBaseTest is GifTest {
             true);
         vm.stopPrank();
     }
+
 
     function _deployFlightProduct() internal {
         vm.startPrank(flightOwner);
@@ -76,6 +89,7 @@ contract FlightBaseTest is GifTest {
         flightProduct.completeSetup();
     }
 
+
     function _deployFlightPool() internal {
         vm.startPrank(flightOwner);
         FlightPoolAuthorization poolAuthz = new FlightPoolAuthorization("FlightPool");
@@ -92,6 +106,25 @@ contract FlightBaseTest is GifTest {
             flightProduct, 
             address(flightPool), 
             "flightPool");
+    }
+
+
+    function _deployFlightOracle() internal {
+        vm.startPrank(flightOwner);
+        FlightOracleAuthorization oracleAuthz = new FlightOracleAuthorization("FlightOracle", COMMIT_HASH);
+        flightOracle = new FlightOracle(
+            address(registry),
+            flightProductNftId,
+            oracleAuthz,
+            flightOwner
+        );
+        vm.stopPrank();
+
+        flightOracleNftId = _registerComponent(
+            flightOwner, 
+            flightProduct, 
+            address(flightOracle), 
+            "FlightOracle");
     }
 
 
@@ -130,6 +163,20 @@ contract FlightBaseTest is GifTest {
         console.log("- estimatedMaxTotalPayout", flightRisk.estimatedMaxTotalPayout.toInt());
         console.log("- premiumMultiplier", flightRisk.premiumMultiplier);
         console.log("- weight", flightRisk.weight);   
+        // solhint-enable
+    }
+
+    function _printRequest(RequestId requestId, IOracle.RequestInfo memory requestInfo) internal {
+        // solhint-disable
+        console.log("requestId", requestId.toInt());
+        console.log("- requesterNftId", requestInfo.requesterNftId.toInt());
+        console.log("- oracleNftId", requestInfo.oracleNftId.toInt());
+        console.log("- isCancelled", requestInfo.isCancelled);
+        console.log("- respondedAt", requestInfo.respondedAt.toInt());
+        console.log("- expiredAt", requestInfo.expiredAt.toInt());
+        console.log("- callbackMethodName", requestInfo.callbackMethodName);
+        console.log("- requestData.length", requestInfo.requestData.length);
+        console.log("- responseData.length", requestInfo.responseData.length);
         // solhint-enable
     }
 

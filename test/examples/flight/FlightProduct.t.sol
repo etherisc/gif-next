@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {console} from "../../../lib/forge-std/src/Test.sol";
 
 import {INftOwnable} from "../../../contracts/shared/INftOwnable.sol";
+import {IOracle} from "../../../contracts/oracle/IOracle.sol";
 import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
 
 import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
@@ -111,6 +112,7 @@ contract FlightProductTest is FlightBaseTest {
 
         assertEq(instanceReader.risks(flightProductNftId), 0, "unexpected number of risks (before)");
         assertEq(instanceReader.activeRisks(flightProductNftId), 0, "unexpected number of active risks (before)");
+        assertEq(flightOracle.activeRequests(), 0, "unexpected number of active requests (before)");
 
         // WHEN
         (NftId policyNftId, ) = flightProduct.createPolicy(
@@ -161,6 +163,15 @@ contract FlightProductTest is FlightBaseTest {
         assertEq(flightUSD.balanceOf(flightProduct.getWallet()), productBalanceBefore, "unexpected product balance");
         assertEq(flightUSD.balanceOf(flightPool.getWallet()), poolBalanceBefore + premiumAmount.toInt(), "unexpected pool balance");
         assertEq(flightUSD.balanceOf(customer), customerBalanceBefore - premiumAmount.toInt(), "unexpected customer balance");
+
+        // check oracle request
+        assertEq(flightOracle.activeRequests(), 1, "unexpected number of active requests (after policy creation)");
+
+        RequestId requestId = flightOracle.getActiveRequest(0);
+        assertTrue(requestId.gtz(), "request id zero");
+
+        IOracle.RequestInfo memory requestInfo = instanceReader.getRequestInfo(requestId);
+        _printRequest(requestId, requestInfo);
     }
 
 

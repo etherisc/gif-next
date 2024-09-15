@@ -1,27 +1,24 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
-import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IAuthorization} from "../authorization/IAuthorization.sol";
+import {IComponents} from "../instance/module/IComponents.sol";
+import {IComponentService} from "./IComponentService.sol";
+import {IInstance} from "../instance/IInstance.sol";
+import {IInstanceLinkedComponent} from "./IInstanceLinkedComponent.sol";
+import {IInstanceService} from "../instance/IInstanceService.sol";
+import {IOracleService} from "../oracle/IOracleService.sol";
 
 import {Amount} from "../type/Amount.sol";
 import {Component} from "./Component.sol";
-import {IComponentService} from "./IComponentService.sol";
-import {IInstanceLinkedComponent} from "./IInstanceLinkedComponent.sol";
-import {IAuthorization} from "../authorization/IAuthorization.sol";
-import {IComponents} from "../instance/module/IComponents.sol";
-import {IInstanceService} from "../instance/IInstanceService.sol";
-import {IInstance} from "../instance/IInstance.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {NftId} from "../type/NftId.sol";
-import {ObjectType, COMPONENT, INSTANCE, PRODUCT} from "../type/ObjectType.sol";
-import {VersionPart} from "../type/Version.sol";
+import {ObjectType, COMPONENT, INSTANCE, ORACLE, PRODUCT} from "../type/ObjectType.sol";
+import {RequestId} from "../type/RequestId.sol";
 import {RoleId, RoleIdLib} from "../type/RoleId.sol";
-import {IAccess} from "../authorization/IAccess.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
+import {Timestamp} from "../type/Timestamp.sol";
 import {VersionPart} from "../type/Version.sol";
 
 // then add (Distribution|Pool|Product)Upradeable that also intherit from Versionable
@@ -38,7 +35,22 @@ abstract contract InstanceLinkedComponent is
         InstanceReader _instanceReader; // instance reader for this component
         IAuthorization _initialAuthorization;
         IComponentService _componentService;
+        IOracleService _oracleService;
     }
+
+    //--- view functions ----------------------------------------------------//
+
+    /// @inheritdoc IInstanceLinkedComponent
+    function getInstance() public view virtual override returns (IInstance instance) {
+        return _getInstanceLinkedComponentStorage()._instance;
+    }
+
+
+    /// @inheritdoc IInstanceLinkedComponent
+    function getAuthorization() external view virtual returns (IAuthorization authorization) {
+        return _getInstanceLinkedComponentStorage()._initialAuthorization;
+    }
+
 
     /// @inheritdoc IInstanceLinkedComponent
     function withdrawFees(Amount amount)
@@ -51,21 +63,48 @@ abstract contract InstanceLinkedComponent is
         return _withdrawFees(amount);
     }
 
-    /// @inheritdoc IInstanceLinkedComponent
-    function getInstance() public view virtual override returns (IInstance instance) {
-        return _getInstanceLinkedComponentStorage()._instance;
+    //--- internal functions ------------------------------------------------//
+
+    function _sendRequest(
+        NftId oracleNftId,
+        bytes memory requestData,
+        Timestamp expiryAt,
+        string memory callbackMethod
+    )
+        internal
+        virtual
+        returns (RequestId requestId)
+    {
+        return _getInstanceLinkedComponentStorage()._oracleService.request(
+            oracleNftId,
+            requestData,
+            expiryAt,
+            callbackMethod);
     }
 
-    /// @inheritdoc IInstanceLinkedComponent
-    function getAuthorization() external view virtual returns (IAuthorization authorization) {
-        return _getInstanceLinkedComponentStorage()._initialAuthorization;
+
+    function _cancelRequest(RequestId requestId)
+        internal
+        virtual
+    {
+        _getInstanceLinkedComponentStorage()._oracleService.cancel(requestId);
     }
+
+
+    function _resendRequest(RequestId requestId)
+        internal
+        virtual
+    {
+        _getInstanceLinkedComponentStorage()._oracleService.resend(requestId);
+    }
+
 
     function _getInstanceLinkedComponentStorage() private pure returns (InstanceLinkedComponentStorage storage $) {
         assembly {
             $.slot := INSTANCE_LINKED_COMPONENT_LOCATION_V1
         }
     }
+
 
     function __InstanceLinkedComponent_init(
         address registry,
@@ -106,6 +145,7 @@ abstract contract InstanceLinkedComponent is
         $._instanceReader = $._instance.getInstanceReader();
         $._initialAuthorization = authorization;
         $._componentService = IComponentService(_getServiceAddress(COMPONENT())); 
+        $._oracleService = IOracleService(_getServiceAddress(ORACLE()));
 
         // register interfaces
         _registerInterface(type(IInstanceLinkedComponent).interfaceId);
