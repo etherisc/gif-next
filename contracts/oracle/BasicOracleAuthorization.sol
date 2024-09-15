@@ -15,14 +15,13 @@ contract BasicOracleAuthorization
 {
 
      constructor(
-          string memory componentName,
-          string memory commitHash
+          string memory componentName
      )
           Authorization(
                componentName, 
                ORACLE(), 
                3, 
-               commitHash, 
+               COMMIT_HASH,
                true, 
                false)
      {}

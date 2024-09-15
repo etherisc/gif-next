@@ -549,7 +549,7 @@ contract GifTest is GifDeployer {
         oracle = new SimpleOracle(
             address(registry),
             productNftId,
-            new BasicOracleAuthorization("SimpleOracle", COMMIT_HASH),
+            new BasicOracleAuthorization("SimpleOracle"),
             oracleOwner);
         vm.stopPrank();
         oracleNftId = _registerComponent(product, address(oracle), "oracle");

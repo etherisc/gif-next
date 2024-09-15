@@ -287,7 +287,7 @@ contract ComponentTrackingTest is GifTest {
         return new SimpleOracle(
             address(registry),
             productNftId,
-            new BasicOracleAuthorization(name, COMMIT_HASH),
+            new BasicOracleAuthorization(name),
             owner);
     }
 

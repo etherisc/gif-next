@@ -66,7 +66,7 @@ contract AuthorizationTest is Test {
         iDistAuthz = IAuthorization(address(distAuthz));
 
         // oracle authorization
-        oracleAuthz = new BasicOracleAuthorization("SimpleOracle", COMMIT_HASH);
+        oracleAuthz = new BasicOracleAuthorization("SimpleOracle");
         iOracleAuthz = IAuthorization(address(oracleAuthz));
 
         // pool authorization

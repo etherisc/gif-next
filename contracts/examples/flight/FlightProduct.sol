@@ -5,12 +5,12 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 
 import {IAuthorization} from "../../authorization/IAuthorization.sol";
 import {IComponents} from "../../instance/module/IComponents.sol";
-// import {IPolicy} from "../../instance/module/IPolicy.sol";
 
 import {Amount, AmountLib} from "../../type/Amount.sol";
 import {BasicProduct} from "../../product/BasicProduct.sol";
 import {ClaimId} from "../../type/ClaimId.sol";
 import {FeeLib} from "../../type/Fee.sol";
+import {FlightOracle} from "./FlightOracle.sol";
 import {InstanceReader} from "../../instance/InstanceReader.sol";
 import {NftId, NftIdLib} from "../../type/NftId.sol";
 import {PayoutId} from "../../type/PayoutId.sol";
@@ -73,6 +73,7 @@ contract FlightProduct is
 
     // GIF V3 specifics
     NftId internal _defaultBundleNftId;
+    NftId internal _oracleNftId;
 
     // solhint-enable
 
@@ -108,6 +109,14 @@ contract FlightProduct is
 
     //--- external functions ------------------------------------------------//
     //--- unpermissioned functions ------------------------------------------//
+
+
+    function setOracleNftId()
+        external
+    {
+        _oracleNftId = _getInstanceReader().getProductInfo(
+            getNftId()).oracleNftId[0];
+    }
 
 event LogFlightDebug(string message, uint256 value);
 
@@ -179,10 +188,20 @@ emit LogFlightDebug("payoutAmounts[4]", payoutAmounts[4].toInt());
         _collectPremium(
             policyNftId, 
             departureTime); // activate at
+
+        _sendRequest(
+            _oracleNftId, 
+            abi.encode(
+                FlightOracle.FlightStatusRequest(
+                    riskId,
+                    carrierFlightNumber, 
+                    departureYearMonthDay,
+                    departureTime)),
+            arrivalTime.addSeconds(CHECK_OFFSET), 
+            "flightStatusCallback");
     }
 
     // TODO contnue here
-    // [] add test case for flight status handling
     // [] add oracle component for flight status handling
     // [] refactor tests
 
@@ -523,6 +542,16 @@ emit LogFlightDebug("payoutAmounts[4]", payoutAmounts[4].toInt());
         riskId = _getRiskId(riskKey);
     }
 
+
+    function getOracleNftId()
+        public
+        view
+        returns (NftId oracleNftId)
+    { 
+        return _oracleNftId;
+    }
+
+
     //--- internal functions ------------------------------------------------//
 
     function _checkAndHandleFlightRisk(
@@ -611,7 +640,7 @@ emit LogFlightDebug("payoutAmounts[4]", payoutAmounts[4].toInt());
                 isProcessingFundedClaims: false,
                 isInterceptingPolicyTransfers: false,
                 hasDistribution: false,
-                expectedNumberOfOracles: 0,
+                expectedNumberOfOracles: 1,
                 numberOfOracles: 0,
                 poolNftId: NftIdLib.zero(),
                 distributionNftId: NftIdLib.zero(),

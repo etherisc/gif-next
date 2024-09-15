@@ -368,6 +368,11 @@ contract InstanceReader {
         if (success) { return abi.decode(data, (IOracle.RequestInfo)); }
     }
 
+    /// @dev Returns the request info for the given oracle request ID.
+    function getRequestState(RequestId requestId) public view returns (StateId state) {
+        return getState(requestId.toKey32());
+    }
+
     //--- pool functions -----------------------------------------------------------//
 
     /// @dev Returns the pool info for the given pool NFT ID.
