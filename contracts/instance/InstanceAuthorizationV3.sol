@@ -10,6 +10,7 @@ import {ACCOUNTING, ORACLE, POOL, INSTANCE, COMPONENT, DISTRIBUTION, APPLICATION
 import {BundleSet} from "../instance/BundleSet.sol";
 import {InstanceAdmin} from "../instance/InstanceAdmin.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
+import {INSTANCE_TARGET_NAME, INSTANCE_ADMIN_TARGET_NAME, INSTANCE_STORE_TARGET_NAME, PRODUCT_STORE_TARGET_NAME, BUNDLE_SET_TARGET_NAME, RISK_SET_TARGET_NAME} from "./TargetNames.sol";
 import {ProductStore} from "../instance/ProductStore.sol";
 import {ADMIN_ROLE, INSTANCE_OWNER_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {RiskSet} from "../instance/RiskSet.sol"; 
@@ -21,13 +22,6 @@ contract InstanceAuthorizationV3
 
      string public constant INSTANCE_ROLE_NAME = "InstanceRole";
      string public constant INSTANCE_OWNER_ROLE_NAME = "InstanceOwnerRole";
-
-     string public constant INSTANCE_TARGET_NAME = "Instance";
-     string public constant INSTANCE_STORE_TARGET_NAME = "InstanceStore";
-     string public constant PRODUCT_STORE_TARGET_NAME = "ProductStore";
-     string public constant INSTANCE_ADMIN_TARGET_NAME = "InstanceAdmin";
-     string public constant BUNDLE_SET_TARGET_NAME = "BundleSet";
-     string public constant RISK_SET_TARGET_NAME = "RiskSet";
 
      constructor()
           Authorization(
