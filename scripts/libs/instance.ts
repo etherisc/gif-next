@@ -112,6 +112,22 @@ export async function deployAndRegisterMasterInstance(
     );
     const masterInstanceStore = masterInstanceStoreContract as InstanceStore;
 
+    const { address: masterProductStoreAddress, contract: masterProductStoreContract } = await deployContract(
+        "ProductStore",
+        owner,
+        [],
+        { 
+            libraries: {
+                BlocknumberLib: libraries.blockNumberLibAddress,
+                Key32Lib: libraries.key32LibAddress,
+                NftIdLib: libraries.nftIdLibAddress,
+                ObjectTypeLib: libraries.objectTypeLibAddress,
+                StateIdLib: libraries.stateIdLibAddress,
+            }
+        }
+    );
+    const masterProductStore = masterProductStoreContract as InstanceStore;
+
     const {address: masterInstanceBundleSetAddress, contract: masterBundleSetContrat} = await deployContract(
         "BundleSet",
         owner,
@@ -183,11 +199,19 @@ export async function deployAndRegisterMasterInstance(
 
     await executeTx(
         () => masterInstance.initialize(
-            masterInstanceAdmin,
-            masterInstanceStore,
-            masterInstanceBundleSet,
-            masterInstanceRiskSet,
-            masterInstanceReader,
+            // masterInstanceAdmin,
+            // masterInstanceStore,
+            // masterInstanceBundleSet,
+            // masterInstanceRiskSet,
+            // masterInstanceReader,
+            {
+                instanceAdmin: masterInstanceAdminAddress,
+                instanceStore: masterInstanceStoreAddress,
+                productStore: masterProductStoreAddress,
+                bundleSet: masterInstanceBundleSetAddress,
+                riskSet: masterInstanceRiskSetAddress,
+                instanceReader: masterInstanceReaderAddress
+            },
             registry.registryAddress,
             3, 
             resolveAddress(owner),
