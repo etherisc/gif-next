@@ -11,6 +11,7 @@ import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
 import {BUNDLE} from "../../../contracts/type/ObjectType.sol";
 import {COLLATERALIZED, PAID} from "../../../contracts/type/StateId.sol";
 import {FlightBaseTest} from "./FlightBase.t.sol";
+import {FlightLib} from "../../../contracts/examples/flight/FlightLib.sol";
 import {FlightProduct} from "../../../contracts/examples/flight/FlightProduct.sol";
 import {FlightOracle} from "../../../contracts/examples/flight/FlightOracle.sol";
 import {IBundle} from "../../../contracts/instance/module/IBundle.sol";
@@ -117,7 +118,7 @@ contract FlightProductTest is FlightBaseTest {
         assertEq(instanceReader.activeRisks(flightProductNftId), 1, "unexpected number of active risks (after)");
 
         RiskId riskId = instanceReader.getRiskId(flightProductNftId, 0);
-        (bool exists, FlightProduct.FlightRisk memory flightRisk) = flightProduct.getFlightRisk(riskId);
+        (bool exists, FlightProduct.FlightRisk memory flightRisk) = FlightLib.getFlightRisk(instanceReader, flightProductNftId, riskId);
         _printRisk(riskId, flightRisk);
 
         assertTrue(exists, "risk does not exist");
