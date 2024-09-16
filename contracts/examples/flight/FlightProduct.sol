@@ -10,6 +10,7 @@ import {Amount, AmountLib} from "../../type/Amount.sol";
 import {BasicProduct} from "../../product/BasicProduct.sol";
 import {ClaimId} from "../../type/ClaimId.sol";
 import {FeeLib} from "../../type/Fee.sol";
+import {FlightLib} from "./FlightLib.sol";
 import {FlightOracle} from "./FlightOracle.sol";
 import {InstanceReader} from "../../instance/InstanceReader.sol";
 import {NftId, NftIdLib} from "../../type/NftId.sol";
@@ -31,7 +32,7 @@ contract FlightProduct is
     event LogRequestFlightRatings(uint256 requestId, bytes32 carrierFlightNumber, uint256 departureTime, uint256 arrivalTime, bytes32 riskId);
     event LogRequestFlightStatus(uint256 requestId, uint256 arrivalTime, bytes32 carrierFlightNumber, bytes32 departureYearMonthDay);
     event LogPayoutTransferred(bytes32 bpKey, uint256 claimId, uint256 payoutId, uint256 amount);
-    event LogFlightStatusProcessed(RequestId requrestId, RiskId riskId, bytes1 status, int256 delayMinutes, uint8 payoutOption);
+    event LogFlightStatusProcessed(RequestId requestId, RiskId riskId, bytes1 status, int256 delayMinutes, uint8 payoutOption);
 
     // TODO convert error logs to custom errors
     event LogError(string error, uint256 index, uint256 stored, uint256 calculated);
@@ -145,7 +146,8 @@ event LogFlightDebug(string message, uint256 value);
         )
     {
         // check application parameters and calculate payouts
-        checkParameters(
+        FlightLib.checkParameters(
+            this,
             departureTime, 
             arrivalTime, 
             premiumAmount); // TODO remove? checked here and in checkAndCalculatePayouts
@@ -154,7 +156,8 @@ event LogFlightDebug(string message, uint256 value);
             uint256 weight, 
             Amount[5] memory payoutAmounts,            
             Amount sumInsuredAmount
-        ) = calculatePayoutAmounts(
+        ) = FlightLib.calculatePayoutAmounts(
+            this,
             premiumAmount, 
             statistics);
 
@@ -214,7 +217,7 @@ emit LogFlightDebug("payoutAmounts[4]", payoutAmounts[4].toInt());
     /// @dev Callback for flight status oracle.
     /// Function may only be alled by oracle service.
     function flightStatusCallback(
-        RequestId requrestId,
+        RequestId requestId,
         bytes memory responseData
     )
         external
@@ -225,7 +228,7 @@ emit LogFlightDebug("payoutAmounts[4]", payoutAmounts[4].toInt());
             responseData, (FlightOracle.FlightStatusResponse));
 
         _flightStatusProcess(
-            requrestId, 
+            requestId, 
             response.riskId, 
             response.status, 
             response.delayMinutes, 
@@ -235,7 +238,7 @@ emit LogFlightDebug("payoutAmounts[4]", payoutAmounts[4].toInt());
 
     /// @dev Manual fallback function for product owner.
     function flightStatusProcess(
-        RequestId requrestId,
+        RequestId requestId,
         RiskId riskId, 
         bytes1 status, 
         int256 delayMinutes,
@@ -247,49 +250,12 @@ emit LogFlightDebug("payoutAmounts[4]", payoutAmounts[4].toInt());
         onlyOwner()
     {
         _flightStatusProcess(
-            requrestId, 
+            requestId, 
             riskId, 
             status, 
             delayMinutes, 
             maxPoliciesToProcess);
     }    
-
-
-    /// @dev calculates payout option based on flight status and delay minutes.
-    /// Is not a view function as it emits log evens in case of unexpected status.
-    // TODO decide if reverts instead of log events could work too (and convert the function into a view function)
-    function checkAndGetPayoutOption(
-        RequestId requrestId,
-        RiskId riskId, 
-        bytes1 status, 
-        int256 delayMinutes
-    )
-        public
-        virtual
-        returns (uint8 payoutOption)
-    {
-        // default: no payout
-        payoutOption = type(uint8).max;
-
-        // check status
-        if (status != "L" && status != "A" && status != "C" && status != "D") {
-            emit LogErrorUnprocessableStatus(requrestId, riskId, status);
-            return payoutOption;
-        }
-
-        if (status == "A") {
-            // todo: active, reschedule oracle call + 45 min
-            emit LogErrorUnexpectedStatus(requrestId, riskId, status, delayMinutes);
-            return payoutOption;
-        }
-
-        // trigger payout if applicable
-        if (status == "C") { payoutOption = 3; } 
-        else if (status == "D") { payoutOption = 4; } 
-        else if (delayMinutes >= 15 && delayMinutes < 30) { payoutOption = 0; } 
-        else if (delayMinutes >= 30 && delayMinutes < 45) { payoutOption = 1; } 
-        else if (delayMinutes >= 45) { payoutOption = 2; }
-    }
 
     //--- owner functions ---------------------------------------------------//
 
@@ -318,64 +284,6 @@ emit LogFlightDebug("payoutAmounts[4]", payoutAmounts[4].toInt());
 
     //--- view functions ----------------------------------------------------//
 
-    // TODO where do we need this
-    function checkApplication(
-        Str carrierFlightNumber,
-        Timestamp departureTime,
-        Timestamp arrivalTime,
-        Amount premium
-    )
-        external
-        virtual
-        view
-        returns (uint256 errors)
-    {
-        // Validate input parameters
-        if (premium < MIN_PREMIUM) { errors = errors | (uint256(1) << 0); }
-        if (premium > MAX_PREMIUM) { errors = errors | (uint256(1) << 1); }
-        if (arrivalTime < departureTime) { errors = errors | (uint256(1) << 2); }
-        if (arrivalTime > departureTime.addSeconds(MAX_FLIGHT_DURATION)) { errors = errors | (uint256(1) << 3); }
-        if (departureTime < TimestampLib.current().addSeconds(MIN_TIME_BEFORE_DEPARTURE)) { errors = errors | (uint256(1) << 4); }
-        if (departureTime > TimestampLib.current().addSeconds(MAX_TIME_BEFORE_DEPARTURE)) { errors = errors | (uint256(1) << 5); }
-
-        (, bool exists, FlightRisk memory flightRisk) = getFlightRisk(carrierFlightNumber, departureTime, arrivalTime);
-        if (exists) {
-            Amount sumInsured = AmountLib.toAmount(premium.toInt() * flightRisk.premiumMultiplier);
-            if (flightRisk.sumOfSumInsuredAmounts + sumInsured > MAX_TOTAL_PAYOUT) {
-                errors = errors | (uint256(1) << 6);
-            }
-        }
-
-        return errors;
-    }
-
-
-    function checkParameters(
-        Timestamp departureTime,
-        Timestamp arrivalTime,
-        Amount premium
-    )
-        internal
-        view
-    {
-        // solhint-disable
-        require(premium >= MIN_PREMIUM, "ERROR:FDD-001:INVALID_PREMIUM");
-        require(premium <= MAX_PREMIUM, "ERROR:FDD-002:INVALID_PREMIUM");
-        require(arrivalTime > departureTime, "ERROR:FDD-003:ARRIVAL_BEFORE_DEPARTURE_TIME");
-
-        // TODO decide how to handle demo mode
-        require(
-            arrivalTime <= departureTime.addSeconds(MAX_FLIGHT_DURATION),
-            "ERROR:FDD-004:INVALID_ARRIVAL/DEPARTURE_TIME");
-        require(
-            TimestampLib.current() >= departureTime.subtractSeconds(MAX_TIME_BEFORE_DEPARTURE),
-            "ERROR:FDD-005:INVALID_ARRIVAL/DEPARTURE_TIME");
-        require(
-            TimestampLib.current() <= departureTime.subtractSeconds(MIN_TIME_BEFORE_DEPARTURE),
-            "ERROR:FDD-012:INVALID_ARRIVAL/DEPARTURE_TIME");
-        // solhint-enable
-    }
-
 
     function calculateNetPremium(
         Amount, // sumInsuredAmount: not used in this product
@@ -389,63 +297,6 @@ emit LogFlightDebug("payoutAmounts[4]", payoutAmounts[4].toInt());
         returns (Amount netPremiumAmount)
     {
         (netPremiumAmount, ) = abi.decode(applicationData, (Amount, Amount[5]));
-    }
-
-
-    function calculateWeight(
-        uint256[6] memory statistics
-    )
-        public
-        view
-        returns (uint256 weight)
-    {
-        // check we have enough observations
-        require(statistics[0] >= MIN_OBSERVATIONS, "ERROR:FDD-011:LOW_OBSERVATIONS");
-
-        weight = 0;
-        for (uint256 i = 1; i < 6; i++) {
-            weight += WEIGHT_PATTERN[i] * statistics[i] * 10000 / statistics[0];
-        }
-
-        // To avoid div0 in the payout section, we have to make a minimal assumption on weight
-        if (weight == 0) {
-            weight = 100000 / statistics[0];
-        }
-
-        // TODO comment on intended effect
-        weight = (weight * (100 + MARGIN_PERCENT)) / 100;
-    }
-
-
-    // REMARK: each flight may get different payouts depending on the latest statics
-    function calculatePayoutAmounts(
-        Amount premium, 
-        uint256[6] memory statistics
-    )
-        public
-        view
-        returns (
-            uint256 weight, 
-            Amount[5] memory payoutAmounts,
-            Amount sumInsuredAmount // simply the max of payoutAmounts 
-        )
-    {
-        require(premium >= MIN_PREMIUM, "ERROR:FDD-009:INVALID_PREMIUM");
-        require(premium <= MAX_PREMIUM, "ERROR:FDD-010:INVALID_PREMIUM");
-
-        sumInsuredAmount = AmountLib.zero();
-        weight = calculateWeight(statistics);
-
-        for (uint256 i = 0; i < 5; i++) {
-            Amount payoutAmount = AmountLib.toAmount(
-                premium.toInt() * WEIGHT_PATTERN[i + 1] * 10000 / weight);
-
-            // cap payout and update sum insured if applicable
-            if (payoutAmount > MAX_PAYOUT) { payoutAmount = MAX_PAYOUT; }
-            if (payoutAmount > sumInsuredAmount) { sumInsuredAmount = payoutAmount; }
-
-            payoutAmounts[i] = payoutAmount;
-        }
     }
 
 
@@ -567,7 +418,7 @@ emit LogFlightDebug("payoutAmounts[4]", payoutAmounts[4].toInt());
 
 
     function _flightStatusProcess(
-        RequestId requrestId,
+        RequestId requestId,
         RiskId riskId, 
         bytes1 status, 
         int256 delayMinutes,
@@ -583,12 +434,12 @@ emit LogFlightDebug("payoutAmounts[4]", payoutAmounts[4].toInt());
         ) = getFlightRisk(riskId);
 
         if (!exists) {
-            emit LogErrorRiskInvalid(requrestId, riskId);
+            emit LogErrorRiskInvalid(requestId, riskId);
             return;
         }
 
-        uint8 payoutOption = checkAndGetPayoutOption(
-            requrestId, riskId, status, delayMinutes);
+        uint8 payoutOption = FlightLib.checkAndGetPayoutOption(
+            requestId, riskId, status, delayMinutes);
 
         _processPayoutsAndClosePolicies(
             riskId, 
@@ -596,7 +447,7 @@ emit LogFlightDebug("payoutAmounts[4]", payoutAmounts[4].toInt());
             maxPoliciesToProcess);
 
         // logging
-        emit LogFlightStatusProcessed(requrestId, riskId, status, delayMinutes, payoutOption);
+        emit LogFlightStatusProcessed(requestId, riskId, status, delayMinutes, payoutOption);
     }
 
 
