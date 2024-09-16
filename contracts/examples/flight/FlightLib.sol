@@ -44,36 +44,38 @@ library FlightLib {
     }
 
 
-    // TODO where do we need this
-    function checkApplication(
-        FlightProduct flightProduct,
-        Str carrierFlightNumber,
-        Timestamp departureTime,
-        Timestamp arrivalTime,
-        Amount premium
-    )
-        external
-        view
-        returns (uint256 errors)
-    {
-        // Validate input parameters
-        if (premium < flightProduct.MIN_PREMIUM()) { errors = errors | (uint256(1) << 0); }
-        if (premium > flightProduct.MAX_PREMIUM()) { errors = errors | (uint256(1) << 1); }
-        if (arrivalTime < departureTime) { errors = errors | (uint256(1) << 2); }
-        if (arrivalTime > departureTime.addSeconds(flightProduct.MAX_FLIGHT_DURATION())) { errors = errors | (uint256(1) << 3); }
-        if (departureTime < TimestampLib.current().addSeconds(flightProduct.MIN_TIME_BEFORE_DEPARTURE())) { errors = errors | (uint256(1) << 4); }
-        if (departureTime > TimestampLib.current().addSeconds(flightProduct.MAX_TIME_BEFORE_DEPARTURE())) { errors = errors | (uint256(1) << 5); }
+    // TODO fix or cleanup
+    // function checkApplication(
+    //     FlightProduct flightProduct,
+    //     Str carrierFlightNumber,
+    //     Timestamp departureTime,
+    //     Timestamp arrivalTime,
+    //     Amount premium
+    // )
+    //     external
+    //     view
+    //     returns (uint256 errors)
+    // {
+    //     // Validate input parameters
+    //     if (premium < flightProduct.MIN_PREMIUM()) { errors = errors | (uint256(1) << 0); }
+    //     if (premium > flightProduct.MAX_PREMIUM()) { errors = errors | (uint256(1) << 1); }
+    //     if (arrivalTime < departureTime) { errors = errors | (uint256(1) << 2); }
+    //     if (arrivalTime > departureTime.addSeconds(flightProduct.MAX_FLIGHT_DURATION())) { errors = errors | (uint256(1) << 3); }
+    //     if (departureTime < TimestampLib.current().addSeconds(flightProduct.MIN_TIME_BEFORE_DEPARTURE())) { errors = errors | (uint256(1) << 4); }
+    //     if (departureTime > TimestampLib.current().addSeconds(flightProduct.MAX_TIME_BEFORE_DEPARTURE())) { errors = errors | (uint256(1) << 5); }
 
-        (, bool exists, FlightProduct.FlightRisk memory flightRisk) = flightProduct.getFlightRisk(carrierFlightNumber, departureTime, arrivalTime);
-        if (exists) {
-            Amount sumInsured = AmountLib.toAmount(premium.toInt() * flightRisk.premiumMultiplier);
-            if (flightRisk.sumOfSumInsuredAmounts + sumInsured > flightProduct.MAX_TOTAL_PAYOUT()) {
-                errors = errors | (uint256(1) << 6);
-            }
-        }
+    //     (, bool exists, FlightProduct.FlightRisk memory flightRisk) = getFlightRisk(
+    //         flightProduct.getInstanceReader(), flightProduct.getNftId(), carrierFlightNumber, departureTime, arrivalTime);
 
-        return errors;
-    }
+    //     if (exists) {
+    //         Amount sumInsured = AmountLib.toAmount(premium.toInt() * flightRisk.premiumMultiplier);
+    //         if (flightRisk.sumOfSumInsuredAmounts + sumInsured > flightProduct.MAX_TOTAL_PAYOUT()) {
+    //             errors = errors | (uint256(1) << 6);
+    //         }
+    //     }
+
+    //     return errors;
+    // }
 
 
     /// @dev calculates payout option based on flight status and delay minutes.
@@ -167,6 +169,65 @@ library FlightLib {
             if (payoutAmount > sumInsuredAmount) { sumInsuredAmount = payoutAmount; }
 
             payoutAmounts[i] = payoutAmount;
+        }
+    }
+
+
+    function getPayoutAmount(
+        bytes memory applicationData, 
+        uint8 payoutOption
+    )
+        public
+        returns (Amount payoutAmount)
+    {
+        // retrieve payout amounts from application data
+        (, Amount[5] memory payoutAmounts) = abi.decode(
+            applicationData, (Amount, Amount[5]));
+
+        // get payout amount for selected option
+        payoutAmount = payoutAmounts[payoutOption];
+    }
+
+
+    function getFlightRisk(
+        InstanceReader reader,
+        NftId productNftId, 
+        Str carrierFlightNumber, 
+        Timestamp departureTime, 
+        Timestamp arrivalTime
+    )
+        public
+        view
+        returns (
+            RiskId riskId,
+            bool exists,
+            FlightProduct.FlightRisk memory flightRisk
+        )
+    {
+        riskId = getRiskId(productNftId, carrierFlightNumber, departureTime, arrivalTime);
+        (exists, flightRisk) = getFlightRisk(reader, productNftId, riskId);
+    }
+
+
+    function getFlightRisk(
+        InstanceReader reader,
+        NftId productNftId,
+        RiskId riskId
+    )
+        public
+        view
+        returns (
+            bool exists,
+            FlightProduct.FlightRisk memory flightRisk
+        )
+    {
+        // check if risk exists
+        exists = reader.isProductRisk(productNftId, riskId);
+
+        // get risk data if risk exists
+        if (exists) {
+            flightRisk = abi.decode(
+                reader.getRiskInfo(riskId).data, (FlightProduct.FlightRisk));
         }
     }
 

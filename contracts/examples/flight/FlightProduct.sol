@@ -300,44 +300,6 @@ emit LogFlightDebug("payoutAmounts[4]", payoutAmounts[4].toInt());
     }
 
 
-    function getFlightRisk(
-        Str carrierFlightNumber, 
-        Timestamp departureTime, 
-        Timestamp arrivalTime
-    )
-        public
-        view
-        returns (
-            RiskId riskId,
-            bool exists,
-            FlightRisk memory flightRisk
-        )
-    {
-        riskId = FlightLib.getRiskId(getNftId(), carrierFlightNumber, departureTime, arrivalTime);
-        (exists, flightRisk) = getFlightRisk(riskId);
-    }
-
-
-    function getFlightRisk(RiskId riskId)
-        public
-        view
-        returns (
-            bool exists,
-            FlightRisk memory flightRisk
-        )
-    {
-        // check if risk exists
-        InstanceReader reader = _getInstanceReader();
-        exists = reader.isProductRisk(getNftId(), riskId);
-
-        // get risk data if risk exists
-        if (exists) {
-            flightRisk = abi.decode(
-                reader.getRiskInfo(riskId).data, (FlightRisk));
-        }
-    }
-
-
     function getOracleNftId()
         public
         view
@@ -363,7 +325,8 @@ emit LogFlightDebug("payoutAmounts[4]", payoutAmounts[4].toInt());
     {
         bool exists;
         FlightRisk memory flightRisk;
-        (riskId, exists, flightRisk) = getFlightRisk(carrierFlightNumber, departureTime, arrivalTime);
+        (riskId, exists, flightRisk) = FlightLib.getFlightRisk(
+            _getInstanceReader(), getNftId(), carrierFlightNumber, departureTime, arrivalTime);
 
         // first flight for this risk
         if (!exists) {
@@ -400,8 +363,6 @@ emit LogFlightDebug("payoutAmounts[4]", payoutAmounts[4].toInt());
     }
 
 
-
-
     function _flightStatusProcess(
         RequestId requestId,
         RiskId riskId, 
@@ -413,10 +374,11 @@ emit LogFlightDebug("payoutAmounts[4]", payoutAmounts[4].toInt());
         virtual
     {
         // check risk exists
+        InstanceReader reader = _getInstanceReader();
         (
             bool exists,
             FlightRisk memory flightRisk
-        ) = getFlightRisk(riskId);
+        ) = FlightLib.getFlightRisk(reader, getNftId(), riskId);
 
         if (!exists) {
             emit LogErrorRiskInvalid(requestId, riskId);
@@ -461,7 +423,7 @@ emit LogFlightDebug("payoutAmounts[4]", payoutAmounts[4].toInt());
 
                 _resolvePayout(
                     policyNftId, 
-                    _getPayoutAmount(
+                    FlightLib.getPayoutAmount(
                         applicationData, 
                         payoutOption)); 
             }
@@ -470,23 +432,6 @@ emit LogFlightDebug("payoutAmounts[4]", payoutAmounts[4].toInt());
             _expire(policyNftId, TimestampLib.current());
             _close(policyNftId);
         }
-    }
-
-
-    function _getPayoutAmount(
-        bytes memory applicationData, 
-        uint8 payoutOption
-    )
-        internal
-        virtual
-        returns (Amount payoutAmount)
-    {
-        // retrieve payout amounts from application data
-        (, Amount[5] memory payoutAmounts) = abi.decode(
-            applicationData, (Amount, Amount[5]));
-
-        // get payout amount for selected option
-        payoutAmount = payoutAmounts[payoutOption];
     }
 
 
