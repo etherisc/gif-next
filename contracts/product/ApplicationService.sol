@@ -181,7 +181,7 @@ contract ApplicationService is
             applicationData);
 
         // register application with instance
-        instance.getInstanceStore().createApplication(
+        instance.getProductStore().createApplication(
             applicationNftId, 
             applicationInfo);
 
@@ -293,7 +293,7 @@ contract ApplicationService is
         _checkNftType(applicationNftId, POLICY());
 
         (, IInstance instance) = _getAndVerifyActiveProduct();
-        instance.getInstanceStore().updateApplicationState(applicationNftId, REVOKED());
+        instance.getProductStore().updateApplicationState(applicationNftId, REVOKED());
         emit LogApplicationServiceApplicationRevoked(applicationNftId);
     }
 

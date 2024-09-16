@@ -27,6 +27,7 @@ import {Key32} from "../type/Key32.sol";
 import {NftId} from "../type/NftId.sol";
 import {PayoutId, PayoutIdLib} from "../type/PayoutId.sol";
 import {PolicyServiceLib} from "../product/PolicyServiceLib.sol";
+import {ProductStore} from "./ProductStore.sol";
 import {ReferralId, ReferralStatus, ReferralLib} from "../type/Referral.sol";
 import {RequestId} from "../type/RequestId.sol";
 import {RiskId} from "../type/RiskId.sol";
@@ -51,6 +52,7 @@ contract InstanceReader {
     InstanceAdmin internal _instanceAdmin;
 
     InstanceStore internal _store;
+    ProductStore internal _productStore;
     BundleSet internal _bundleSet;
     RiskSet internal _riskSet;
     IDistributionService internal _distributionService;
@@ -79,6 +81,7 @@ contract InstanceReader {
         _registry = _instance.getRegistry();
 
         _store = _instance.getInstanceStore();
+        _productStore = _instance.getProductStore();
         _bundleSet = _instance.getBundleSet();
         _riskSet = _instance.getRiskSet();
         _distributionService = IDistributionService(_registry.getServiceAddress(DISTRIBUTION(), _instance.getRelease()));
@@ -250,13 +253,13 @@ contract InstanceReader {
 
     /// @dev Returns the info for the given policy NFT ID.
     function getPolicyInfo(NftId policyNftId) public view returns (IPolicy.PolicyInfo memory info) {
-        return _store.getPolicy(policyNftId);
+        return _productStore.getPolicy(policyNftId);
     }
 
 
     /// @dev Returns the state for the given policy NFT ID.
     function getPolicyState(NftId policyNftId) public view returns (StateId state) {
-        return _store.getState2(_toPolicyKey(policyNftId));
+        return _productStore.getState(_toPolicyKey(policyNftId));
     }
 
 

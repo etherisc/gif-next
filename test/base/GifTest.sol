@@ -46,6 +46,7 @@ import {InstanceReader} from "../../contracts/instance/InstanceReader.sol";
 import {BundleSet} from "../../contracts/instance/BundleSet.sol";
 import {RiskSet} from "../../contracts/instance/RiskSet.sol";
 import {InstanceStore} from "../../contracts/instance/InstanceStore.sol";
+import {ProductStore} from "../../contracts/instance/ProductStore.sol";
 
 import {Usdc} from "../mock/Usdc.sol";
 import {SimpleDistribution} from "../../contracts/examples/unpermissioned/SimpleDistribution.sol";
@@ -77,6 +78,7 @@ contract GifTest is GifDeployer {
     BundleSet public masterBundleSet;
     RiskSet public masterRiskSet;
     InstanceStore public masterInstanceStore;
+    ProductStore public masterProductStore;
     Instance public masterInstance;
     NftId public masterInstanceNftId;
     InstanceReader public masterInstanceReader;
@@ -256,6 +258,7 @@ contract GifTest is GifDeployer {
         masterAccessManager = new AccessManagerCloneable();
         masterInstanceAdmin = new InstanceAdmin(address(masterAccessManager));
         masterInstanceStore = new InstanceStore();
+        masterProductStore = new ProductStore();
         masterBundleSet = new BundleSet();
         masterRiskSet = new RiskSet();
         masterInstanceReader = new InstanceReader();
@@ -263,11 +266,14 @@ contract GifTest is GifDeployer {
         // crate instance
         masterInstance = new Instance();
         masterInstance.initialize(
-            masterInstanceAdmin,
-            masterInstanceStore,
-            masterBundleSet,
-            masterRiskSet,
-            masterInstanceReader,
+            IInstance.InstanceContracts({
+                instanceAdmin: masterInstanceAdmin,
+                instanceStore: masterInstanceStore,
+                productStore: masterProductStore,
+                bundleSet: masterBundleSet,
+                riskSet: masterRiskSet,
+                instanceReader: masterInstanceReader
+            }),
             registry,
             VersionPartLib.toVersionPart(3),
             registryOwner,

@@ -39,6 +39,7 @@ interface IInstanceService is IService {
     error ErrorInstanceServiceBundleSetZero();
     error ErrorInstanceServiceRiskSetZero();
     error ErrorInstanceServiceInstanceStoreZero();
+    error ErrorInstanceServiceProductStoreZero();
 
     error ErrorInstanceServiceInstanceAuthorityMismatch();
     error ErrorInstanceServiceBundleSetAuthorityMismatch();
@@ -47,6 +48,7 @@ interface IInstanceService is IService {
     error ErrorInstanceServiceBundleSetInstanceMismatch();
     error ErrorInstanceServiceRiskSetInstanceMismatch();
     error ErrorInstanceServiceInstanceStoreAuthorityMismatch();
+    error ErrorInstanceServiceProductStoreAuthorityMismatch();
 
     error ErrorInstanceServiceRequestUnauhorized(address caller);
     error ErrorInstanceServiceNotInstanceNftId(NftId nftId);

@@ -22,6 +22,7 @@ contract InstanceAdmin is
     string public constant INSTANCE_TARGET_NAME = "Instance";
     string public constant INSTANCE_ADMIN_TARGET_NAME = "InstanceAdmin";
     string public constant INSTANCE_STORE_TARGET_NAME = "InstanceStore";
+    string public constant PRODUCT_STORE_TARGET_NAME = "ProductStore";
     string public constant BUNDLE_SET_TARGET_NAME = "BundleSet";
     string public constant RISK_SET_TARGET_NAME = "RiskSet";
 
@@ -141,6 +142,7 @@ contract InstanceAdmin is
         _createManagedTarget(address(_instance), instanceTargetName, TargetType.Instance); 
         _createManagedTarget(address(this), INSTANCE_ADMIN_TARGET_NAME, TargetType.Instance); 
         _createManagedTarget(address(_instance.getInstanceStore()), INSTANCE_STORE_TARGET_NAME, TargetType.Instance); 
+        _createManagedTarget(address(_instance.getProductStore()), PRODUCT_STORE_TARGET_NAME, TargetType.Instance);
         _createManagedTarget(address(_instance.getBundleSet()), BUNDLE_SET_TARGET_NAME, TargetType.Instance); 
         _createManagedTarget(address(_instance.getRiskSet()), RISK_SET_TARGET_NAME, TargetType.Instance); 
     }

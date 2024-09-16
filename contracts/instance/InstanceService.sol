@@ -21,6 +21,7 @@ import {InstanceReader} from "./InstanceReader.sol";
 import {InstanceStore} from "./InstanceStore.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType, INSTANCE, COMPONENT, INSTANCE, REGISTRY, STAKING} from "../type/ObjectType.sol";
+import {ProductStore} from "./ProductStore.sol";
 import {RiskSet} from "./RiskSet.sol";
 import {RoleId} from "../type/RoleId.sol";
 import {Seconds} from "../type/Seconds.sol";
@@ -49,6 +50,7 @@ contract InstanceService is
     address internal _masterInstanceBundleSet;
     address internal _masterInstanceRiskSet;
     address internal _masterInstanceStore;
+    address internal _masterProductStore;
 
 
     modifier onlyInstance() {
@@ -323,45 +325,54 @@ contract InstanceService is
         if(_masterInstanceRiskSet != address(0)) { revert ErrorInstanceServiceMasterRiskSetAlreadySet(); }
         if(instanceAddress == address(0)) { revert ErrorInstanceServiceInstanceAddressZero(); }
 
-        IInstance instance = IInstance(instanceAddress);
-        address accessManagerAddress = instance.authority();
-        InstanceAdmin instanceAdmin = instance.getInstanceAdmin();
-        address instanceAdminAddress = address(instanceAdmin);
-        InstanceReader instanceReader = instance.getInstanceReader();
-        address instanceReaderAddress = address(instanceReader);
-        BundleSet bundleSet = instance.getBundleSet();
-        address bundleSetAddress = address(bundleSet);
-        RiskSet riskSet = instance.getRiskSet();
-        address riskSetAddress = address(riskSet);
-        InstanceStore instanceStore = instance.getInstanceStore();
-        address instanceStoreAddress = address(instanceStore);
+        {
+            IInstance instance = IInstance(instanceAddress);
+            address accessManagerAddress = instance.authority();
+            InstanceAdmin instanceAdmin = instance.getInstanceAdmin();
+            address instanceAdminAddress = address(instanceAdmin);
+            InstanceReader instanceReader = instance.getInstanceReader();
+            address instanceReaderAddress = address(instanceReader);
+            BundleSet bundleSet = instance.getBundleSet();
+            address bundleSetAddress = address(bundleSet);
+            RiskSet riskSet = instance.getRiskSet();
+            address riskSetAddress = address(riskSet);
+            InstanceStore instanceStore = instance.getInstanceStore();
+            address instanceStoreAddress = address(instanceStore);
+            ProductStore productStore = instance.getProductStore();
+            address productStoreAddress = address(productStore);
 
-        if(accessManagerAddress == address(0)) { revert ErrorInstanceServiceAccessManagerZero(); }
-        if(instanceAdminAddress == address(0)) { revert ErrorInstanceServiceInstanceAdminZero(); }
-        if(instanceReaderAddress == address(0)) { revert ErrorInstanceServiceInstanceReaderZero(); }
-        if(bundleSetAddress == address(0)) { revert ErrorInstanceServiceBundleSetZero(); }
-        if(riskSetAddress == address(0)) { revert ErrorInstanceServiceRiskSetZero(); }
-        if(instanceStoreAddress == address(0)) { revert ErrorInstanceServiceInstanceStoreZero(); }
-        
-        if(instance.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceInstanceAuthorityMismatch(); }
-        if(bundleSet.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceBundleSetAuthorityMismatch(); }
-        if(riskSet.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceRiskSetAuthorityMismatch(); }
-        if(instanceStore.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceInstanceStoreAuthorityMismatch(); }
-        if(bundleSet.getInstanceAddress() != address(instance)) { revert ErrorInstanceServiceBundleSetInstanceMismatch(); }
-        if(riskSet.getInstanceAddress() != address(instance)) { revert ErrorInstanceServiceRiskSetInstanceMismatch(); }
-        if(instanceReader.getInstance() != instance) { revert ErrorInstanceServiceInstanceReaderInstanceMismatch2(); }
+            if(accessManagerAddress == address(0)) { revert ErrorInstanceServiceAccessManagerZero(); }
+            if(instanceAdminAddress == address(0)) { revert ErrorInstanceServiceInstanceAdminZero(); }
+            if(instanceReaderAddress == address(0)) { revert ErrorInstanceServiceInstanceReaderZero(); }
+            if(bundleSetAddress == address(0)) { revert ErrorInstanceServiceBundleSetZero(); }
+            if(riskSetAddress == address(0)) { revert ErrorInstanceServiceRiskSetZero(); }
+            if(instanceStoreAddress == address(0)) { revert ErrorInstanceServiceInstanceStoreZero(); }
+            if(productStoreAddress == address(0)) { revert ErrorInstanceServiceProductStoreZero(); } // TODO: rename exception
+            
+            if(instance.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceInstanceAuthorityMismatch(); }
+            if(bundleSet.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceBundleSetAuthorityMismatch(); }
+            if(riskSet.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceRiskSetAuthorityMismatch(); }
+            if(instanceStore.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceInstanceStoreAuthorityMismatch(); }
+            if(productStore.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceProductStoreAuthorityMismatch(); } 
+            if(bundleSet.getInstanceAddress() != address(instance)) { revert ErrorInstanceServiceBundleSetInstanceMismatch(); }
+            if(riskSet.getInstanceAddress() != address(instance)) { revert ErrorInstanceServiceRiskSetInstanceMismatch(); }
+            if(instanceReader.getInstance() != instance) { revert ErrorInstanceServiceInstanceReaderInstanceMismatch2(); }
 
-        _masterAccessManager = accessManagerAddress;
-        _masterInstanceAdmin = instanceAdminAddress;
-        _masterInstance = instanceAddress;
-        _masterInstanceReader = instanceReaderAddress;
-        _masterInstanceBundleSet = bundleSetAddress;
-        _masterInstanceRiskSet = riskSetAddress;
-        _masterInstanceStore = instanceStoreAddress;
+            _masterAccessManager = accessManagerAddress;
+            _masterInstanceAdmin = instanceAdminAddress;
+            _masterInstance = instanceAddress;
+            _masterInstanceReader = instanceReaderAddress;
+            _masterInstanceBundleSet = bundleSetAddress;
+            _masterInstanceRiskSet = riskSetAddress;
+            _masterInstanceStore = instanceStoreAddress;
+            _masterProductStore = productStoreAddress;
+        }
         
-        IInstance masterInstance = IInstance(_masterInstance);
-        IRegistry.ObjectInfo memory info = _registryService.registerInstance(masterInstance, getOwner());
-        masterInstanceNftId = info.nftId;
+        {
+            IInstance masterInstance = IInstance(_masterInstance);
+            IRegistry.ObjectInfo memory info = _registryService.registerInstance(masterInstance, getOwner());
+            masterInstanceNftId = info.nftId;
+        }
     }
 
 
@@ -426,11 +437,14 @@ contract InstanceService is
         // clone instance
         Instance clonedInstance = Instance(Clones.clone(_masterInstance));
         clonedInstance.initialize(
-            instanceAdmin,
-            InstanceStore(Clones.clone(address(_masterInstanceStore))),
-            BundleSet(Clones.clone(_masterInstanceBundleSet)),
-            RiskSet(Clones.clone(_masterInstanceRiskSet)),
-            InstanceReader(Clones.clone(address(_masterInstanceReader))),
+            IInstance.InstanceContracts({
+                instanceAdmin: instanceAdmin,
+                instanceStore: InstanceStore(Clones.clone(address(_masterInstanceStore))),
+                productStore: ProductStore(Clones.clone(address(_masterProductStore))),
+                bundleSet: BundleSet(Clones.clone(_masterInstanceBundleSet)),
+                riskSet: RiskSet(Clones.clone(_masterInstanceRiskSet)),
+                instanceReader: InstanceReader(Clones.clone(address(_masterInstanceReader)))
+            }),
             getRegistry(),
             getRelease(),
             instanceOwner,

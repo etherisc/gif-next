@@ -83,7 +83,7 @@ contract PolicyService is
 
         // effects
         // store updated policy info
-        instance.getInstanceStore().updatePolicyState(
+        instance.getProductStore().updatePolicyState(
             applicationNftId, 
             DECLINED());
 
@@ -132,7 +132,7 @@ contract PolicyService is
         }
 
         // update policy and set state to collateralized
-        instance.getInstanceStore().updatePolicy(
+        instance.getProductStore().updatePolicy(
             applicationNftId, 
             applicationInfo, 
             COLLATERALIZED());
@@ -243,7 +243,7 @@ contract PolicyService is
             policyInfo = PolicyServiceLib.activate(policyNftId, policyInfo, activateAt);
         }
 
-        instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, KEEP_STATE());
+        instance.getProductStore().updatePolicy(policyNftId, policyInfo, KEEP_STATE());
         instance.getInstanceStore().updatePremiumState(policyNftId, PAID());
 
         // log premium collection before interactions with token
@@ -269,7 +269,7 @@ contract PolicyService is
 
         // effects
         policyInfo = PolicyServiceLib.activate(policyNftId, policyInfo, activateAt);
-        instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, KEEP_STATE());
+        instance.getProductStore().updatePolicy(policyNftId, policyInfo, KEEP_STATE());
 
         // log policy activation before interactions with policy holder
         emit LogPolicyServicePolicyActivated(policyNftId, activateAt);
@@ -309,7 +309,7 @@ contract PolicyService is
 
         // effects
         policyInfo.activatedAt = newActivateAt;
-        instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, KEEP_STATE());
+        instance.getProductStore().updatePolicy(policyNftId, policyInfo, KEEP_STATE());
 
         // log policy activation before interactions with policy holder
         emit LogPolicyServicePolicyActivatedUpdated(policyNftId, newActivateAt);
@@ -415,7 +415,7 @@ contract PolicyService is
 
         // update policy state to closed
         policyInfo.closedAt = TimestampLib.current();
-        instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, CLOSED());
+        instance.getProductStore().updatePolicy(policyNftId, policyInfo, CLOSED());
 
         // unlink policy from risk and bundle
         NftId poolNftId = getRegistry().getParentNftId(bundleNftId);
@@ -442,7 +442,7 @@ contract PolicyService is
             policyInfo,
             expireAt);
 
-        instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, KEEP_STATE());
+        instance.getProductStore().updatePolicy(policyNftId, policyInfo, KEEP_STATE());
 
         emit LogPolicyServicePolicyExpirationUpdated(policyNftId, policyInfo.expiredAt);
 

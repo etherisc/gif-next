@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IBaseStore} from "./IBaseStore.sol";
+
 import {Blocknumber, BlocknumberLib} from "../type/Blocknumber.sol";
 import {Key32, KeyId, Key32Lib} from "../type/Key32.sol";
 import {NftId} from "../type/NftId.sol";
@@ -8,19 +10,17 @@ import {ObjectType} from "../type/ObjectType.sol";
 import {StateId, ACTIVE, KEEP_STATE} from "../type/StateId.sol";
 import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
 
-import {Lifecycle} from "./Lifecycle.sol";
-import {IKeyValueStore} from "./IKeyValueStore.sol";
+import {Lifecycle} from "../shared/Lifecycle.sol";
 
-abstract contract KeyValueStore is
+abstract contract BaseStore is
     Lifecycle, 
-    IKeyValueStore
+    IBaseStore
 {
 
-    mapping(Key32 key32 => Value value) private _value;
+    mapping(Key32 key32 => IBaseStore.Metadata metadata) private _metadata;
 
-    function _create(
-        Key32 key32, 
-        bytes memory data
+    function _createMetadata(
+        Key32 key32
     )
         internal
     {
@@ -29,8 +29,8 @@ abstract contract KeyValueStore is
             revert ErrorKeyValueStoreTypeUndefined(objectType);
         }
 
-        Metadata storage metadata = _value[key32].metadata;
-        if (metadata.state.gtz()) {
+        Metadata storage metadata = _metadata[key32];
+        if (metadata.updatedIn.gtz()) {
             revert ErrorKeyValueStoreAlreadyCreated(key32, objectType);
         }
 
@@ -45,33 +45,10 @@ abstract contract KeyValueStore is
         metadata.objectType = objectType;
         metadata.state = initialState;
         metadata.updatedIn = blocknumber;
-        metadata.createdIn = blocknumber;
-
-        // set data
-        _value[key32].data = data;
-
+        
         // solhint-disable-next-line avoid-tx-origin
-        emit LogInfoCreated(key32.toObjectType(), key32.toKeyId(), initialState, msg.sender, tx.origin);
+        emit LogKeyValueStoreMetadataCreated(key32.toObjectType(), key32.toKeyId(), initialState, msg.sender, tx.origin);
     }
-
-
-    function _update(
-        Key32 key32, 
-        bytes memory data,
-        StateId state
-    ) 
-        internal
-    {
-        // update state
-        Blocknumber lastUpdatedIn = _updateState(key32, state);
-
-        // update data
-        _value[key32].data = data;
-
-        // solhint-disable-next-line avoid-tx-origin
-        emit LogInfoUpdated(key32.toObjectType(), key32.toKeyId(), state, msg.sender, tx.origin, lastUpdatedIn);
-    }
-
 
     function _updateState(
         Key32 key32, 
@@ -84,7 +61,7 @@ abstract contract KeyValueStore is
             revert ErrorKeyValueStoreStateZero(key32);
         }
 
-        Metadata storage metadata = _value[key32].metadata;
+        Metadata storage metadata = _metadata[key32];
         StateId stateOld = metadata.state;
         lastUpdatedIn = metadata.updatedIn;
 
@@ -106,23 +83,15 @@ abstract contract KeyValueStore is
     }
 
     function exists(Key32 key32) public view returns (bool) {
-        return _value[key32].metadata.state.gtz();
-    }
-
-    function get(Key32 key32) public view returns (Value memory value) {
-        return _value[key32];
+        return _metadata[key32].state.gtz();
     }
 
     function getMetadata(Key32 key32) public view returns (Metadata memory metadata) {
-        return _value[key32].metadata;
-    }
-
-    function getData(Key32 key32) public view returns (bytes memory data) {
-        return _value[key32].data;
+        return _metadata[key32];
     }
 
     function getState(Key32 key32) public view returns (StateId state) {
-        return _value[key32].metadata.state;
+        return _metadata[key32].state;
     }
 
     function toKey32(ObjectType objectType, KeyId id) external pure override returns(Key32) {

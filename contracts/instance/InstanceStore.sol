@@ -38,8 +38,6 @@ contract InstanceStore is
     ObjectCounter,
     ObjectLifecycle
 {
-    mapping(Key32 key32 => IPolicy.PolicyInfo) private _policies;
-
 
     /// @dev This initializer needs to be called from the instance itself.
     function initialize()
@@ -181,46 +179,6 @@ contract InstanceStore is
     function updateRiskState(RiskId riskId, StateId newState) external restricted() {
         _updateState(riskId.toKey32(), newState);
     }
-
-    //--- Application (Policy) ----------------------------------------------//
-    function createApplication(NftId applicationNftId, IPolicy.PolicyInfo memory policy) external restricted() {
-        _registerBalanceTarget(applicationNftId);
-        Key32 key = _toNftKey32(applicationNftId, POLICY());
-        _createMetadata(key);
-        _policies[key] = policy;
-    }
-
-    function updateApplication(NftId applicationNftId, IPolicy.PolicyInfo memory policy, StateId newState) external restricted() {
-        Key32 key = _toNftKey32(applicationNftId, POLICY());
-        _updateState2(key, newState);
-        _policies[key] = policy;
-    }
-
-    function updateApplicationState(NftId applicationNftId, StateId newState) external restricted() {
-        _updateState2(_toNftKey32(applicationNftId, POLICY()), newState);
-    }
-
-    function getPolicy(NftId policyNftId) external view returns (IPolicy.PolicyInfo memory policy) {
-        return _policies[_toNftKey32(policyNftId, POLICY())];
-    }
-
-    //--- Policy ------------------------------------------------------------//
-    function updatePolicy(NftId policyNftId, IPolicy.PolicyInfo memory policy, StateId newState) external restricted() {
-        Key32 key = _toNftKey32(policyNftId, POLICY());
-        _updateState2(key, newState);
-        _policies[key] = policy;
-    }
-
-    function updatePolicyClaims(NftId policyNftId, IPolicy.PolicyInfo memory policy, StateId newState) external restricted() {
-        Key32 key = _toNftKey32(policyNftId, POLICY());
-        _updateState2(key, newState);
-        _policies[key] = policy;
-    }
-
-    function updatePolicyState(NftId policyNftId, StateId newState) external restricted() {
-        _updateState2(_toNftKey32(policyNftId, POLICY()), newState);
-    }
-
     
     //--- Premium (Policy) ----------------------------------------------//
     function createPremium(NftId policyNftId, IPolicy.PremiumInfo memory premium) external restricted() {

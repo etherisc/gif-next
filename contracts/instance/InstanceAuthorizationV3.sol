@@ -10,6 +10,7 @@ import {ACCOUNTING, ORACLE, POOL, INSTANCE, COMPONENT, DISTRIBUTION, APPLICATION
 import {BundleSet} from "../instance/BundleSet.sol";
 import {InstanceAdmin} from "../instance/InstanceAdmin.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
+import {ProductStore} from "../instance/ProductStore.sol";
 import {ADMIN_ROLE, INSTANCE_OWNER_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {RiskSet} from "../instance/RiskSet.sol"; 
 
@@ -23,6 +24,7 @@ contract InstanceAuthorizationV3
 
      string public constant INSTANCE_TARGET_NAME = "Instance";
      string public constant INSTANCE_STORE_TARGET_NAME = "InstanceStore";
+     string public constant PRODUCT_STORE_TARGET_NAME = "ProductStore";
      string public constant INSTANCE_ADMIN_TARGET_NAME = "InstanceAdmin";
      string public constant BUNDLE_SET_TARGET_NAME = "BundleSet";
      string public constant RISK_SET_TARGET_NAME = "RiskSet";
@@ -72,9 +74,9 @@ contract InstanceAuthorizationV3
           // instance supporting targets
           _addTarget(INSTANCE_ADMIN_TARGET_NAME);
           _addTarget(INSTANCE_STORE_TARGET_NAME);
+          _addTarget(PRODUCT_STORE_TARGET_NAME);
           _addTarget(BUNDLE_SET_TARGET_NAME);
           _addTarget(RISK_SET_TARGET_NAME);
-
      }
 
 
@@ -85,6 +87,7 @@ contract InstanceAuthorizationV3
           _setupInstanceAuthorization();
           _setupInstanceAdminAuthorization();
           _setupInstanceStoreAuthorization();
+          _setupProductStoreAuthorization();
           _setupBundleSetAuthorization();
           _setUpRiskSetAuthorization();
      }
@@ -240,27 +243,39 @@ contract InstanceAuthorizationV3
           _authorize(functions, InstanceStore.updateRisk.selector, "updateRisk");
           _authorize(functions, InstanceStore.updateRiskState.selector, "updateRiskState");
 
-          // authorize application service role
-          functions = _authorizeForTarget(INSTANCE_STORE_TARGET_NAME, getServiceRole(APPLICATION()));
-          _authorize(functions, InstanceStore.createApplication.selector, "createApplication");
-          _authorize(functions, InstanceStore.updateApplication.selector, "updateApplication");
-          _authorize(functions, InstanceStore.updateApplicationState.selector, "updateApplicationState");
-
           // authorize policy service role
           functions = _authorizeForTarget(INSTANCE_STORE_TARGET_NAME, getServiceRole(POLICY()));
-          _authorize(functions, InstanceStore.updatePolicy.selector, "updatePolicy");
-          _authorize(functions, InstanceStore.updatePolicyState.selector, "updatePolicyState");
           _authorize(functions, InstanceStore.createPremium.selector, "createPremium");
           _authorize(functions, InstanceStore.updatePremiumState.selector, "updatePremiumState");
 
           // authorize claim service role
           functions = _authorizeForTarget(INSTANCE_STORE_TARGET_NAME, getServiceRole(CLAIM()));
-          _authorize(functions, InstanceStore.updatePolicyClaims.selector, "updatePolicyClaims");
           _authorize(functions, InstanceStore.createClaim.selector, "createClaim");
           _authorize(functions, InstanceStore.updateClaim.selector, "updateClaim");
           _authorize(functions, InstanceStore.createPayout.selector, "createPayout");
           _authorize(functions, InstanceStore.updatePayout.selector, "updatePayout");
           _authorize(functions, InstanceStore.updatePayoutState.selector, "updatePayoutState");
+     }
+
+     function _setupProductStoreAuthorization()
+          internal
+     {
+          IAccess.FunctionInfo[] storage functions;
+
+          // authorize application service role
+          functions = _authorizeForTarget(PRODUCT_STORE_TARGET_NAME, getServiceRole(APPLICATION()));
+          _authorize(functions, ProductStore.createApplication.selector, "createApplication");
+          _authorize(functions, ProductStore.updateApplication.selector, "updateApplication");
+          _authorize(functions, ProductStore.updateApplicationState.selector, "updateApplicationState");
+
+          // authorize policy service role
+          functions = _authorizeForTarget(PRODUCT_STORE_TARGET_NAME, getServiceRole(POLICY()));
+          _authorize(functions, ProductStore.updatePolicy.selector, "updatePolicy");
+          _authorize(functions, ProductStore.updatePolicyState.selector, "updatePolicyState");
+
+          // authorize claim service role
+          functions = _authorizeForTarget(PRODUCT_STORE_TARGET_NAME, getServiceRole(CLAIM()));
+          _authorize(functions, ProductStore.updatePolicyClaims.selector, "updatePolicyClaims");
      }
 }
 
