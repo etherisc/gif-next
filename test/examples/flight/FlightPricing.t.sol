@@ -83,7 +83,8 @@ contract FlightPricingTest is FlightBaseTest {
     function test_flightPricingPayoutOptions() public {
         // GIVEN
         RequestId rqId = RequestIdLib.toRequestId(1);
-        RiskId rkId = flightProduct.getRiskId(
+        RiskId rkId = FlightLib.getRiskId(
+            flightProductNftId,
             carrierFlightNumber,
             departureTime,
             arrivalTime);

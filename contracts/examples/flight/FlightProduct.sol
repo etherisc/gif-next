@@ -313,7 +313,7 @@ emit LogFlightDebug("payoutAmounts[4]", payoutAmounts[4].toInt());
             FlightRisk memory flightRisk
         )
     {
-        riskId = getRiskId(carrierFlightNumber, departureTime, arrivalTime);
+        riskId = FlightLib.getRiskId(getNftId(), carrierFlightNumber, departureTime, arrivalTime);
         (exists, flightRisk) = getFlightRisk(riskId);
     }
 
@@ -335,21 +335,6 @@ emit LogFlightDebug("payoutAmounts[4]", payoutAmounts[4].toInt());
             flightRisk = abi.decode(
                 reader.getRiskInfo(riskId).data, (FlightRisk));
         }
-    }
-
-
-    function getRiskId(
-        Str carrierFlightNumber, 
-        Timestamp departureTime, 
-        Timestamp arrivalTime
-    )
-        public
-        virtual
-        view 
-        returns (RiskId riskId)
-    {
-        bytes32 riskKey = _getRiskKey(carrierFlightNumber, departureTime, arrivalTime);
-        riskId = _getRiskId(riskKey);
     }
 
 
@@ -397,7 +382,7 @@ emit LogFlightDebug("payoutAmounts[4]", payoutAmounts[4].toInt());
             });
 
             // create new risk including 1st sum insured amount
-            bytes32 riskKey = _getRiskKey(carrierFlightNumber, departureTime, arrivalTime);
+            bytes32 riskKey = FlightLib.getRiskKey(carrierFlightNumber, departureTime, arrivalTime);
             _createRisk(riskKey, abi.encode(flightRisk));
 
         // additional flights for this risk
@@ -519,24 +504,6 @@ emit LogFlightDebug("payoutAmounts[4]", payoutAmounts[4].toInt());
         // create and execute payout
         PayoutId payoutId = _createPayout(policyNftId, claimId, payoutAmount, "");
         _processPayout(policyNftId, payoutId);
-    }
-
-
-    function _getRiskKey(
-        Str carrierFlightNumber, 
-        Timestamp departureTime, 
-        Timestamp arrivalTime
-    )
-        internal
-        pure
-        returns (bytes32 riskKey)
-    {
-        return keccak256(abi.encode(carrierFlightNumber, departureTime, arrivalTime));
-    }
-
-
-    function _getRiskId(bytes32 riskKey) internal view returns (RiskId riskId) {
-        return RiskIdLib.toRiskId(getNftId(), riskKey);
     }
 
 
