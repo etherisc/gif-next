@@ -181,9 +181,8 @@ contract GifTest is GifDeployer {
         // solhint-disable-next-line
         console.log("=== GifTest setup complete =================================");
 
-        // print full authz setup
+        // registry authz setup
         _printAuthz(registryAdmin, "registry");
-        _printAuthz(instance.getInstanceAdmin(), "instance");
     }
 
     /// @dev Helper function to assert that a given NftId is equal to the expected NftId.

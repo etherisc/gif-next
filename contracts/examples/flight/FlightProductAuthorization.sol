@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IAccess} from "../../../contracts/authorization/IAccess.sol";
+
 import {BasicProductAuthorization} from "../../product/BasicProductAuthorization.sol";
 import {FlightProduct} from "./FlightProduct.sol";
-import {IAccess} from "../../../contracts/authorization/IAccess.sol";
+import {ORACLE} from "../../../contracts/type/ObjectType.sol";
 import {PUBLIC_ROLE} from "../../../contracts/type/RoleId.sol";
 
 
@@ -22,16 +24,16 @@ contract FlightProductAuthorization
         super._setupTargetAuthorizations();
         IAccess.FunctionInfo[] storage functions;
 
-        // authorize public role (open access to any account, only allows to lock target)
-        functions = _authorizeForTarget(getMainTargetName(), PUBLIC_ROLE());
-
-        // unpermissioned
-        _authorize(functions, FlightProduct.createPolicy.selector, "createPolicy");
-
-        // only oracle
+        // authorize oracle service
+        functions = _authorizeForTarget(getMainTargetName(), getServiceRole(ORACLE()));
         _authorize(functions, FlightProduct.flightStatusCallback.selector, "flightStatusCallback");
 
+        // authorize public role (open access to any account, only allows to lock target)
+        functions = _authorizeForTarget(getMainTargetName(), PUBLIC_ROLE());
+        _authorize(functions, FlightProduct.createPolicy.selector, "createPolicy");
+
         // only owner
+        _authorize(functions, FlightProduct.flightStatusProcess.selector, "flightStatusProcess");
         _authorize(functions, FlightProduct.completeSetup.selector, "completeSetup");
         _authorize(functions, FlightProduct.setDefaultBundle.selector, "setDefaultBundle");
         _authorize(functions, FlightProduct.approveTokenHandler.selector, "approveTokenHandler");

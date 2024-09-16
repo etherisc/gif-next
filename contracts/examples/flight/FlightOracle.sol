@@ -24,8 +24,9 @@ contract FlightOracle is
     }
 
     struct FlightStatusResponse {
+        RiskId riskId;
         bytes1 status;
-        int256 delay;
+        int256 delayMinutes;
     }
 
     event LogFlightOracleRequestReceived(RequestId requestId, NftId requesterId);
@@ -77,19 +78,25 @@ contract FlightOracle is
     function respondWithFlightStatus(
         RequestId requestId,
         bytes1 status,
-        int256 delay
+        int256 delayMinutes
     )
         external
         restricted()
     {
+        // obtain riskId for request
+        bytes memory requestData = _getInstanceReader().getRequestInfo(requestId).requestData;
+        (RiskId riskId,,,) = abi.decode(requestData, (RiskId, Str, Str, Timestamp));
+        // assemble response data
         bytes memory responseData = abi.encode(
             FlightStatusResponse ({
+                riskId: riskId,
                 status: status,
-                delay: delay}));
+                delayMinutes: delayMinutes}));
 
-        emit LogFlightOracleResponseSent(requestId, status, delay);
+        // logging
+        emit LogFlightOracleResponseSent(requestId, status, delayMinutes);
 
-        // interaction (via framework to receiving component)
+        // effects + interaction (via framework to receiving component)
         _respond(requestId, responseData);
 
         // TODO decide if the code below should be moved to GIF

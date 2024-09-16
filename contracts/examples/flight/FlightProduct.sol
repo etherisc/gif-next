@@ -31,14 +31,15 @@ contract FlightProduct is
     event LogRequestFlightRatings(uint256 requestId, bytes32 carrierFlightNumber, uint256 departureTime, uint256 arrivalTime, bytes32 riskId);
     event LogRequestFlightStatus(uint256 requestId, uint256 arrivalTime, bytes32 carrierFlightNumber, bytes32 departureYearMonthDay);
     event LogPayoutTransferred(bytes32 bpKey, uint256 claimId, uint256 payoutId, uint256 amount);
-    event LogFlightStatusProcessed(RequestId requrestId, RiskId riskId, bytes1 status, int256 delay, uint8 payoutOption);
+    event LogFlightStatusProcessed(RequestId requrestId, RiskId riskId, bytes1 status, int256 delayMinutes, uint8 payoutOption);
 
+    // TODO convert error logs to custom errors
     event LogError(string error, uint256 index, uint256 stored, uint256 calculated);
     event LogPolicyExpired(bytes32 bpKey);
 
     event LogErrorRiskInvalid(RequestId requestId, RiskId riskId);
     event LogErrorUnprocessableStatus(RequestId requestId, RiskId riskId, bytes1 status);
-    event LogErrorUnexpectedStatus(RequestId requestId, RiskId riskId, bytes1 status, int256 delay);
+    event LogErrorUnexpectedStatus(RequestId requestId, RiskId riskId, bytes1 status, int256 delayMinutes);
 
     // solhint-disable
     // Minimum observations for valid prediction
@@ -68,13 +69,18 @@ contract FlightProduct is
     uint8 public MAX_POLICIES_TO_PROCESS = 5;
 
     // ['observations','late15','late30','late45','cancelled','diverted']
+    // no payouts for delays of 30' or less
     uint8[6] public WEIGHT_PATTERN = [0, 0, 0, 30, 50, 50];
     uint8 public constant MAX_WEIGHT = 50;
 
     // GIF V3 specifics
     NftId internal _defaultBundleNftId;
-    NftId internal _oracleNftId;
 
+    // TODO add product (base contract) functions
+    // - getOracleNftId(idx)
+    // - getDistributionNftId() 
+    // - getPoolNftId()
+    NftId internal _oracleNftId; // TODO refactor to getOracleNftId(0)
     // solhint-enable
 
     struct FlightRisk {
@@ -82,11 +88,11 @@ contract FlightProduct is
         Str departureYearMonthDay;
         Timestamp departureTime;
         Timestamp arrivalTime; 
-        Seconds delaySeconds;
-        uint8 delay; // what is this?
-        Amount estimatedMaxTotalPayout;
+        Amount sumOfSumInsuredAmounts;
         uint256 premiumMultiplier; // what is this? UFixed?
         uint256 weight; // what is this? UFixed?
+        bytes1 status; // 'L'ate, 'C'ancelled, 'D'iverted, ...
+        int256 delayMinutes;
     }
 
 
@@ -110,7 +116,6 @@ contract FlightProduct is
     //--- external functions ------------------------------------------------//
     //--- unpermissioned functions ------------------------------------------//
 
-
     function setOracleNftId()
         external
     {
@@ -118,6 +123,8 @@ contract FlightProduct is
             getNftId()).oracleNftId[0];
     }
 
+
+// TODO add payout amount testing
 event LogFlightDebug(string message, uint256 value);
 
     function createPolicy(
@@ -158,7 +165,7 @@ emit LogFlightDebug("payoutAmounts[3]", payoutAmounts[3].toInt());
 emit LogFlightDebug("payoutAmounts[4]", payoutAmounts[4].toInt());
 
         // more checks and risk handling
-        RiskId riskId = _checkAndHandleFlightRisk(
+        RiskId riskId = _checkAndUpdateFlightRisk(
             carrierFlightNumber, 
             departureYearMonthDay, 
             departureTime, 
@@ -181,14 +188,15 @@ emit LogFlightDebug("payoutAmounts[4]", payoutAmounts[4].toInt());
 
         _createPolicy(
             policyNftId, 
-            TimestampLib.zero(), // activate at 
+            TimestampLib.zero(), // do not ativate yet 
             premiumAmount); // max premium amount
 
         // interactions (token transfer + callback to token holder, if contract)
         _collectPremium(
             policyNftId, 
-            departureTime); // activate at
+            departureTime); // activate at scheduled departure time of flight
 
+        // send oracle request for flight status (interacts with flight oracle contrac)
         _sendRequest(
             _oracleNftId, 
             abi.encode(
@@ -197,54 +205,64 @@ emit LogFlightDebug("payoutAmounts[4]", payoutAmounts[4].toInt());
                     carrierFlightNumber, 
                     departureYearMonthDay,
                     departureTime)),
-            arrivalTime.addSeconds(CHECK_OFFSET), 
+            // allow up to 30 days to process the claim
+            arrivalTime.addSeconds(SecondsLib.fromDays(30)), 
             "flightStatusCallback");
     }
 
-    // TODO contnue here
-    // [] add oracle component for flight status handling
-    // [] refactor tests
 
+    /// @dev Callback for flight status oracle.
+    /// Function may only be alled by oracle service.
     function flightStatusCallback(
         RequestId requrestId,
-        RiskId riskId, 
-        bytes1 status, 
-        int256 delay,
-        uint8 maxPoliciesToProcess
+        bytes memory responseData
     )
         external
         virtual
         restricted()
     {
-        // check risk exists
-        (
-            bool exists,
-            FlightRisk memory flightRisk
-        ) = getFlightRisk(riskId);
+        FlightOracle.FlightStatusResponse memory response = abi.decode(
+            responseData, (FlightOracle.FlightStatusResponse));
 
-        if (!exists) {
-            emit LogErrorRiskInvalid(requrestId, riskId);
-            return;
-        }
-
-        uint8 payoutOption = checkAndGetPayoutOption(
-            requrestId, riskId, status, delay);
-
-        _processPayoutsAndClosePolicies(
-            riskId, 
-            payoutOption, 
-            maxPoliciesToProcess);
-
-        // logging
-        emit LogFlightStatusProcessed(requrestId, riskId, status, delay, payoutOption);
+        _flightStatusProcess(
+            requrestId, 
+            response.riskId, 
+            response.status, 
+            response.delayMinutes, 
+            MAX_POLICIES_TO_PROCESS);
     }
 
 
+    /// @dev Manual fallback function for product owner.
+    function flightStatusProcess(
+        RequestId requrestId,
+        RiskId riskId, 
+        bytes1 status, 
+        int256 delayMinutes,
+        uint8 maxPoliciesToProcess
+    )
+        external
+        virtual
+        restricted()
+        onlyOwner()
+    {
+        _flightStatusProcess(
+            requrestId, 
+            riskId, 
+            status, 
+            delayMinutes, 
+            maxPoliciesToProcess);
+    }    
+
+
+    /// @dev calculates payout option based on flight status and delay minutes.
+    /// Is not a view function as it emits log evens in case of unexpected status.
+    // TODO decide if reverts instead of log events could work too (and convert the function into a view function)
     function checkAndGetPayoutOption(
         RequestId requrestId,
         RiskId riskId, 
         bytes1 status, 
-        int256 delay
+        int256 delayMinutes
     )
         public
         virtual
@@ -261,87 +279,16 @@ emit LogFlightDebug("payoutAmounts[4]", payoutAmounts[4].toInt());
 
         if (status == "A") {
             // todo: active, reschedule oracle call + 45 min
-            emit LogErrorUnexpectedStatus(requrestId, riskId, status, delay);
+            emit LogErrorUnexpectedStatus(requrestId, riskId, status, delayMinutes);
             return payoutOption;
         }
 
         // trigger payout if applicable
         if (status == "C") { payoutOption = 3; } 
         else if (status == "D") { payoutOption = 4; } 
-        else if (delay >= 15 && delay < 30) { payoutOption = 0; } 
-        else if (delay >= 30 && delay < 45) { payoutOption = 1; } 
-        else if (delay >= 45) { payoutOption = 2; }
-    }
-
-
-    // REMARK caller responsible to check that risk exists.
-    function _processPayoutsAndClosePolicies(
-        RiskId riskId, 
-        uint8 payoutOption,
-        uint8 maxPoliciesToProcess
-    )
-        internal
-        virtual
-    {
-        // determine numbers of policies to process
-        InstanceReader reader = _getInstanceReader();
-        uint256 policiesToProcess = reader.policiesForRisk(riskId);
-        policiesToProcess = policiesToProcess < maxPoliciesToProcess ? policiesToProcess : maxPoliciesToProcess;
-
-        // go trough policies
-        for (uint256 i = 0; i < policiesToProcess; i++) {
-            NftId policyNftId = reader.getPolicyForRisk(riskId, i);
-
-            // create payout (if any)
-            if (payoutOption < type(uint8).max) { 
-                bytes memory applicationData = reader.getPolicyInfo(
-                    policyNftId).applicationData;
-
-                _resolvePayout(
-                    policyNftId, 
-                    _getPayoutAmount(
-                        applicationData, 
-                        payoutOption)); 
-            }
-
-            // expire and close policy
-            _expire(policyNftId, TimestampLib.current());
-            _close(policyNftId);
-        }
-    }
-
-
-    function _getPayoutAmount(
-        bytes memory applicationData, 
-        uint8 payoutOption
-    )
-        internal
-        virtual
-        returns (Amount payoutAmount)
-    {
-        // retrieve payout amounts from application data
-        (, Amount[5] memory payoutAmounts) = abi.decode(
-            applicationData, (Amount, Amount[5]));
-
-        // get payout amount for selected option
-        payoutAmount = payoutAmounts[payoutOption];
-    }
-
-
-    function _resolvePayout(
-        NftId policyNftId,
-        Amount payoutAmount
-    )
-        internal
-        virtual
-    {
-        // create confirmed claim
-        ClaimId claimId = _submitClaim(policyNftId, payoutAmount, "");
-        _confirmClaim(policyNftId, claimId, payoutAmount, "");
-
-        // create and execute payout
-        PayoutId payoutId = _createPayout(policyNftId, claimId, payoutAmount, "");
-        _processPayout(policyNftId, payoutId);
+        else if (delayMinutes >= 15 && delayMinutes < 30) { payoutOption = 0; } 
+        else if (delayMinutes >= 30 && delayMinutes < 45) { payoutOption = 1; } 
+        else if (delayMinutes >= 45) { payoutOption = 2; }
     }
 
     //--- owner functions ---------------------------------------------------//
@@ -394,7 +341,7 @@ emit LogFlightDebug("payoutAmounts[4]", payoutAmounts[4].toInt());
         (, bool exists, FlightRisk memory flightRisk) = getFlightRisk(carrierFlightNumber, departureTime, arrivalTime);
         if (exists) {
             Amount sumInsured = AmountLib.toAmount(premium.toInt() * flightRisk.premiumMultiplier);
-            if (flightRisk.estimatedMaxTotalPayout + sumInsured > MAX_TOTAL_PAYOUT) {
+            if (flightRisk.sumOfSumInsuredAmounts + sumInsured > MAX_TOTAL_PAYOUT) {
                 errors = errors | (uint256(1) << 6);
             }
         }
@@ -445,6 +392,31 @@ emit LogFlightDebug("payoutAmounts[4]", payoutAmounts[4].toInt());
     }
 
 
+    function calculateWeight(
+        uint256[6] memory statistics
+    )
+        public
+        view
+        returns (uint256 weight)
+    {
+        // check we have enough observations
+        require(statistics[0] >= MIN_OBSERVATIONS, "ERROR:FDD-011:LOW_OBSERVATIONS");
+
+        weight = 0;
+        for (uint256 i = 1; i < 6; i++) {
+            weight += WEIGHT_PATTERN[i] * statistics[i] * 10000 / statistics[0];
+        }
+
+        // To avoid div0 in the payout section, we have to make a minimal assumption on weight
+        if (weight == 0) {
+            weight = 100000 / statistics[0];
+        }
+
+        // TODO comment on intended effect
+        weight = (weight * (100 + MARGIN_PERCENT)) / 100;
+    }
+
+
     // REMARK: each flight may get different payouts depending on the latest statics
     function calculatePayoutAmounts(
         Amount premium, 
@@ -460,22 +432,9 @@ emit LogFlightDebug("payoutAmounts[4]", payoutAmounts[4].toInt());
     {
         require(premium >= MIN_PREMIUM, "ERROR:FDD-009:INVALID_PREMIUM");
         require(premium <= MAX_PREMIUM, "ERROR:FDD-010:INVALID_PREMIUM");
-        require(statistics[0] >= MIN_OBSERVATIONS, "ERROR:FDD-011:LOW_OBSERVATIONS");
 
-        weight = 0;
-
-        for (uint256 i = 1; i < 6; i++) {
-            weight += WEIGHT_PATTERN[i] * statistics[i] * 10000 / statistics[0];
-            // 1% = 100 / 100% = 10,000
-        }
-
-        // To avoid div0 in the payout section, we have to make a minimal assumption on weight
-        if (weight == 0) {
-            weight = 100000 / statistics[0];
-        }
-
-        weight = weight * (100 + MARGIN_PERCENT) / 100;
         sumInsuredAmount = AmountLib.zero();
+        weight = calculateWeight(statistics);
 
         for (uint256 i = 0; i < 5; i++) {
             Amount payoutAmount = AmountLib.toAmount(
@@ -554,7 +513,7 @@ emit LogFlightDebug("payoutAmounts[4]", payoutAmounts[4].toInt());
 
     //--- internal functions ------------------------------------------------//
 
-    function _checkAndHandleFlightRisk(
+    function _checkAndUpdateFlightRisk(
         Str carrierFlightNumber,
         Str departureYearMonthDay,
         Timestamp departureTime,
@@ -579,11 +538,11 @@ emit LogFlightDebug("payoutAmounts[4]", payoutAmounts[4].toInt());
                 departureYearMonthDay: departureYearMonthDay,
                 departureTime: departureTime,
                 arrivalTime: arrivalTime,
-                delaySeconds: SecondsLib.zero(),
-                delay: 0, // TODO what is this? rename?
-                estimatedMaxTotalPayout: sumInsuredAmount,
+                sumOfSumInsuredAmounts: sumInsuredAmount,
                 premiumMultiplier: multiplier,
-                weight: weight
+                weight: weight,
+                status: bytes1(0), 
+                delayMinutes: 0
             });
 
             // create new risk including 1st sum insured amount
@@ -594,15 +553,123 @@ emit LogFlightDebug("payoutAmounts[4]", payoutAmounts[4].toInt());
         } else {
             // check for cluster risk: additional sum insured amount must not exceed MAX_TOTAL_PAYOUT
             require (
-                flightRisk.estimatedMaxTotalPayout + sumInsuredAmount <= MAX_TOTAL_PAYOUT,
+                flightRisk.sumOfSumInsuredAmounts + sumInsuredAmount <= MAX_TOTAL_PAYOUT,
                 "ERROR:FDD-006:CLUSTER_RISK"
             );
 
             // update existing risk with additional sum insured amount
-            flightRisk.estimatedMaxTotalPayout = flightRisk.estimatedMaxTotalPayout + sumInsuredAmount;
+            flightRisk.sumOfSumInsuredAmounts = flightRisk.sumOfSumInsuredAmounts + sumInsuredAmount;
             _updateRisk(riskId, abi.encode(flightRisk));
         }
     }
+
+
+
+
+    function _flightStatusProcess(
+        RequestId requrestId,
+        RiskId riskId, 
+        bytes1 status, 
+        int256 delayMinutes,
+        uint8 maxPoliciesToProcess
+    )
+        internal
+        virtual
+    {
+        // check risk exists
+        (
+            bool exists,
+            FlightRisk memory flightRisk
+        ) = getFlightRisk(riskId);
+
+        if (!exists) {
+            emit LogErrorRiskInvalid(requrestId, riskId);
+            return;
+        }
+
+        uint8 payoutOption = checkAndGetPayoutOption(
+            requrestId, riskId, status, delayMinutes);
+
+        _processPayoutsAndClosePolicies(
+            riskId, 
+            payoutOption, 
+            maxPoliciesToProcess);
+
+        // logging
+        emit LogFlightStatusProcessed(requrestId, riskId, status, delayMinutes, payoutOption);
+    }
+
+
+    // REMARK caller responsible to check that risk exists.
+    function _processPayoutsAndClosePolicies(
+        RiskId riskId, 
+        uint8 payoutOption,
+        uint8 maxPoliciesToProcess
+    )
+        internal
+        virtual
+    {
+        // determine numbers of policies to process
+        InstanceReader reader = _getInstanceReader();
+        uint256 policiesToProcess = reader.policiesForRisk(riskId);
+        policiesToProcess = policiesToProcess < maxPoliciesToProcess ? policiesToProcess : maxPoliciesToProcess;
+
+        // go trough policies
+        for (uint256 i = 0; i < policiesToProcess; i++) {
+            NftId policyNftId = reader.getPolicyForRisk(riskId, i);
+
+            // create payout (if any)
+            if (payoutOption < type(uint8).max) { 
+                bytes memory applicationData = reader.getPolicyInfo(
+                    policyNftId).applicationData;
+
+                _resolvePayout(
+                    policyNftId, 
+                    _getPayoutAmount(
+                        applicationData, 
+                        payoutOption)); 
+            }
+
+            // expire and close policy
+            _expire(policyNftId, TimestampLib.current());
+            _close(policyNftId);
+        }
+    }
+
+
+    function _getPayoutAmount(
+        bytes memory applicationData, 
+        uint8 payoutOption
+    )
+        internal
+        virtual
+        returns (Amount payoutAmount)
+    {
+        // retrieve payout amounts from application data
+        (, Amount[5] memory payoutAmounts) = abi.decode(
+            applicationData, (Amount, Amount[5]));
+
+        // get payout amount for selected option
+        payoutAmount = payoutAmounts[payoutOption];
+    }
+
+
+    function _resolvePayout(
+        NftId policyNftId,
+        Amount payoutAmount
+    )
+        internal
+        virtual
+    {
+        // create confirmed claim
+        ClaimId claimId = _submitClaim(policyNftId, payoutAmount, "");
+        _confirmClaim(policyNftId, claimId, payoutAmount, "");
+
+        // create and execute payout
+        PayoutId payoutId = _createPayout(policyNftId, claimId, payoutAmount, "");
+        _processPayout(policyNftId, payoutId);
+    }
+
 
     function _getRiskKey(
         Str carrierFlightNumber, 
