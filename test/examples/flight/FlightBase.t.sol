@@ -48,7 +48,6 @@ contract FlightBaseTest is GifTest {
         _initialFundAccounts();
     }
 
-
     function _deployFlightUSD() internal {
         // deploy fire token
         vm.startPrank(flightOwner);
@@ -151,6 +150,18 @@ contract FlightBaseTest is GifTest {
         vm.stopPrank();
     }
 
+
+    function _printStatusRequest(FlightOracle.FlightStatusRequest memory statusRequest) internal {
+        // solhint-disable
+        console.log("FlightStatusRequest (requestData)", statusRequest.riskId.toInt());
+        console.log("- riskId", statusRequest.riskId.toInt());
+        console.log("- carrierFlightNumber", statusRequest.carrierFlightNumber.toString());
+        console.log("- departureYearMonthDay", statusRequest.departureYearMonthDay.toString());
+        console.log("- departureTime", statusRequest.departureTime.toInt());
+        // solhint-enable
+    }
+
+
     function _printRisk(RiskId riskId, FlightProduct.FlightRisk memory flightRisk) internal {
         // solhint-disable
         console.log("riskId", riskId.toInt());
@@ -158,17 +169,19 @@ contract FlightBaseTest is GifTest {
         console.log("- departureYearMonthDay", flightRisk.departureYearMonthDay.toString());
         console.log("- departureTime", flightRisk.departureTime.toInt());
         console.log("- arrivalTime", flightRisk.arrivalTime.toInt());
-        console.log("- delaySeconds", flightRisk.delaySeconds.toInt());
-        console.log("- delay", flightRisk.delay);
-        console.log("- estimatedMaxTotalPayout", flightRisk.estimatedMaxTotalPayout.toInt());
+        console.log("- delayMinutes", flightRisk.delayMinutes);
+        console.log("- status", uint8(flightRisk.status));
+        console.log("- sumOfSumInsuredAmounts", flightRisk.sumOfSumInsuredAmounts.toInt());
         console.log("- premiumMultiplier", flightRisk.premiumMultiplier);
         console.log("- weight", flightRisk.weight);   
         // solhint-enable
     }
 
+
     function _printRequest(RequestId requestId, IOracle.RequestInfo memory requestInfo) internal {
         // solhint-disable
         console.log("requestId", requestId.toInt());
+        console.log("- state", instanceReader.getRequestState(requestId).toInt());
         console.log("- requesterNftId", requestInfo.requesterNftId.toInt());
         console.log("- oracleNftId", requestInfo.oracleNftId.toInt());
         console.log("- isCancelled", requestInfo.isCancelled);
@@ -179,6 +192,7 @@ contract FlightBaseTest is GifTest {
         console.log("- responseData.length", requestInfo.responseData.length);
         // solhint-enable
     }
+
 
     function _printPolicy(NftId policyNftId, IPolicy.PolicyInfo memory policyInfo) internal {
         // solhint-disable
@@ -194,6 +208,7 @@ contract FlightBaseTest is GifTest {
         console.log("- payoutAmount", policyInfo.payoutAmount.toInt());
         // solhint-enable
     }
+
 
     function _printPremium(NftId policyNftId, IPolicy.PremiumInfo memory premiumInfo) internal {
         // solhint-disable

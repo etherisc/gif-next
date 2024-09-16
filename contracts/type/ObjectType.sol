@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {StrLib} from "./String.sol";
 import {VersionPart} from "./Version.sol";
 
 type ObjectType is uint8;
@@ -247,7 +248,7 @@ library ObjectTypeLib {
         return string(
             abi.encodePacked(
                 "ObjectType",
-                toString(
+                StrLib.uintToString(
                     toInt(objectType))));
     }
 
@@ -273,35 +274,5 @@ library ObjectTypeLib {
                 suffix,
                 versionName,
                 release.toString()));
-    }
-
-    /// @dev returns the provied int as a string
-    function toString(uint256 value) public pure returns (string memory name) {
-
-        if (value == 0) {
-            return "0";
-        }
-
-        uint256 temp = value;
-        uint256 digits = 0;
-        while (temp != 0) {
-            digits++;
-            temp /= 10;
-        }
-
-        bytes memory buffer = new bytes(digits);
-        uint256 index = digits - 1;
-
-        temp = value;
-        while (temp != 0) {
-            buffer[index] = bytes1(uint8(48 + temp % 10));
-            temp /= 10;
-
-            if (index > 0) {
-                index--;
-            }
-        }
-
-        return string(buffer);
     }
 }

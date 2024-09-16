@@ -12,6 +12,7 @@ import {BUNDLE} from "../../../contracts/type/ObjectType.sol";
 import {COLLATERALIZED, PAID} from "../../../contracts/type/StateId.sol";
 import {FlightBaseTest} from "./FlightBase.t.sol";
 import {FlightProduct} from "../../../contracts/examples/flight/FlightProduct.sol";
+import {FlightOracle} from "../../../contracts/examples/flight/FlightOracle.sol";
 import {IBundle} from "../../../contracts/instance/module/IBundle.sol";
 import {NftId} from "../../../contracts/type/NftId.sol";
 import {RiskId} from "../../../contracts/type/RiskId.sol";
@@ -62,6 +63,8 @@ contract FlightProductTest is FlightBaseTest {
     function test_flightProductSetup() public {
         // GIVEN - setp from flight base test
 
+        _printAuthz(instance.getInstanceAdmin(), "instance");
+
         // solhint-disable
         console.log("");
         console.log("flight product", flightProductNftId.toInt(), address(flightProduct));
@@ -83,22 +86,6 @@ contract FlightProductTest is FlightBaseTest {
         assertEq(registry.getNftIdForAddress(address(flightProduct)).toInt(), flightProductNftId.toInt(), "unexpected pool nft id");
         assertEq(registry.ownerOf(flightProductNftId), flightOwner, "unexpected product owner");
         assertEq(flightProduct.getWallet(), address(flightProduct.getTokenHandler()), "unexpected product wallet address");
-    }
-
-
-    function test_flightProductCalculateSumInsuredHappyCase() public {
-        // GIVEN 
-        Amount premiumAmount = AmountLib.toAmount(30 * 10 ** flightUSD.decimals());
-
-        // WHEN
-        (
-            uint256 weight, 
-            Amount[5] memory payoutAmounts,
-            Amount sumInsuredAmount // simply the max of payoutAmounts 
-        ) = flightProduct.calculatePayoutAmounts(premiumAmount, statistics);
-
-        console.log("weight", weight);
-        console.log("sumInsuredAmount", sumInsuredAmount.toInt() / 10 ** flightUSD.decimals(), sumInsuredAmount.toInt());
     }
 
 
@@ -172,6 +159,14 @@ contract FlightProductTest is FlightBaseTest {
 
         IOracle.RequestInfo memory requestInfo = instanceReader.getRequestInfo(requestId);
         _printRequest(requestId, requestInfo);
+
+        FlightOracle.FlightStatusRequest memory statusRequest = abi.decode(requestInfo.requestData, (FlightOracle.FlightStatusRequest));
+        _printStatusRequest(statusRequest);
+
+        assertEq(statusRequest.riskId.toInt(), riskId.toInt(), "unexpected risk id");
+        assertTrue(statusRequest.carrierFlightNumber == carrierFlightNumber, "unexpected carrier flight number");
+        assertTrue(statusRequest.departureYearMonthDay == departureYearMonthDay, "unexpected departure year month day");
+        assertEq(statusRequest.departureTime.toInt(), departureTime.toInt(), "unexpected departure time");
     }
 
 
@@ -188,59 +183,35 @@ contract FlightProductTest is FlightBaseTest {
             premiumAmount,
             statistics);
 
-        RequestId requestId = RequestIdLib.toRequestId(123);
         RiskId riskId = instanceReader.getPolicyInfo(policyNftId).riskId;
 
-        // WHEN
-        // set cheking time 2h after scheduled arrival time
-        vm.warp(arrivalTime.toInt() + 2 * 3600);
+        assertEq(flightOracle.activeRequests(), 1, "unexpected number of active requests (before status callback)");
+        RequestId requestId = flightOracle.getActiveRequest(0);
+        assertTrue(requestId.gtz(), "request id zero");
 
-        // push flight status (90 min late) to product
+        // create flight status data (90 min late)
         bytes1 status = "L";
         int256 delay = 90; // TODO check why 40' delay seems to have 0 payout
         uint8 maxPoliciesToProcess = 1;
 
-        flightProduct.flightStatusCallback(
-            requestId, riskId, status, delay, maxPoliciesToProcess);
+        // print request before allback
+        IOracle.RequestInfo memory requestInfo = instanceReader.getRequestInfo(requestId);
+        _printRequest(requestId, requestInfo);
+
+        // WHEN
+        // set cheking time 2h after scheduled arrival time
+        vm.warp(arrivalTime.toInt() + 2 * 3600);
+        flightOracle.respondWithFlightStatus(requestId, status, delay);
+
+        // THEN
+        // TODO continue here: callback does not seem to fill in respondedAt and respose data
+        requestInfo = instanceReader.getRequestInfo(requestId);
+        _printRequest(requestId, requestInfo);
+
+        assertEq(flightOracle.activeRequests(), 0, "unexpected number of active requests (after status callback)");
 
         _printPolicy(
             policyNftId, 
             instanceReader.getPolicyInfo(policyNftId));
-    }
-
-
-    function test_flightStatusPayoutOptions() public {
-        // GIVEN
-        RequestId rqId = RequestIdLib.toRequestId(1);
-        RiskId rkId = flightProduct.getRiskId(
-            carrierFlightNumber,
-            departureTime,
-            arrivalTime);
-
-        // solhint-disable
-        console.log("X 42", flightProduct.checkAndGetPayoutOption(rqId, rkId, "X", 42));
-        console.log("A 0", flightProduct.checkAndGetPayoutOption(rqId, rkId, "A", 0));
-        console.log("L -5", flightProduct.checkAndGetPayoutOption(rqId, rkId, "L", -5));
-        console.log("L 10", flightProduct.checkAndGetPayoutOption(rqId, rkId, "L", 10));
-        console.log("L 15", flightProduct.checkAndGetPayoutOption(rqId, rkId, "L", 15));
-        console.log("L 30", flightProduct.checkAndGetPayoutOption(rqId, rkId, "L", 30));
-        console.log("L 44", flightProduct.checkAndGetPayoutOption(rqId, rkId, "L", 44));
-        console.log("L 45", flightProduct.checkAndGetPayoutOption(rqId, rkId, "L", 45));
-        console.log("L 201", flightProduct.checkAndGetPayoutOption(rqId, rkId, "L", 201));
-        console.log("C 0", flightProduct.checkAndGetPayoutOption(rqId, rkId, "C", 0));
-        console.log("D 0", flightProduct.checkAndGetPayoutOption(rqId, rkId, "D", 0));
-        // solhint-enable
-
-        assertEq(flightProduct.checkAndGetPayoutOption(rqId, rkId, "X", 42), 255, "not 255 (no payout X)");
-        assertEq(flightProduct.checkAndGetPayoutOption(rqId, rkId, "A", 0), 255, "not 255 (no payout A)");
-        assertEq(flightProduct.checkAndGetPayoutOption(rqId, rkId, "L", -5), 255, "not 255 (L -5)");
-        assertEq(flightProduct.checkAndGetPayoutOption(rqId, rkId, "L", 10), 255, "not 255 (L 10)");
-        assertEq(flightProduct.checkAndGetPayoutOption(rqId, rkId, "L", 15), 0, "not 0 (L 15)");
-        assertEq(flightProduct.checkAndGetPayoutOption(rqId, rkId, "L", 30), 1, "not 1 (L 30)");
-        assertEq(flightProduct.checkAndGetPayoutOption(rqId, rkId, "L", 44), 1, "not 1 (L 44)");
-        assertEq(flightProduct.checkAndGetPayoutOption(rqId, rkId, "L", 45), 2, "not 2 (L 45)");
-        assertEq(flightProduct.checkAndGetPayoutOption(rqId, rkId, "L", 201), 2, "not 0 (L 201)");
-        assertEq(flightProduct.checkAndGetPayoutOption(rqId, rkId, "C", 0), 3, "not 3 (cancelled)");
-        assertEq(flightProduct.checkAndGetPayoutOption(rqId, rkId, "D", 0), 4, "not 4 (diverted)");
     }
 }
