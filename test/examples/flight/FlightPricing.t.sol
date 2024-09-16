@@ -11,6 +11,7 @@ import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
 import {BUNDLE} from "../../../contracts/type/ObjectType.sol";
 import {COLLATERALIZED, PAID} from "../../../contracts/type/StateId.sol";
 import {FlightBaseTest} from "./FlightBase.t.sol";
+import {FlightLib} from "../../../contracts/examples/flight/FlightLib.sol";
 import {FlightProduct} from "../../../contracts/examples/flight/FlightProduct.sol";
 import {FlightOracle} from "../../../contracts/examples/flight/FlightOracle.sol";
 import {IBundle} from "../../../contracts/instance/module/IBundle.sol";
@@ -88,30 +89,30 @@ contract FlightPricingTest is FlightBaseTest {
             arrivalTime);
 
         // solhint-disable
-        console.log("X 42", flightProduct.checkAndGetPayoutOption(rqId, rkId, "X", 42));
-        console.log("A 0", flightProduct.checkAndGetPayoutOption(rqId, rkId, "A", 0));
-        console.log("L -5", flightProduct.checkAndGetPayoutOption(rqId, rkId, "L", -5));
-        console.log("L 10", flightProduct.checkAndGetPayoutOption(rqId, rkId, "L", 10));
-        console.log("L 15", flightProduct.checkAndGetPayoutOption(rqId, rkId, "L", 15));
-        console.log("L 30", flightProduct.checkAndGetPayoutOption(rqId, rkId, "L", 30));
-        console.log("L 44", flightProduct.checkAndGetPayoutOption(rqId, rkId, "L", 44));
-        console.log("L 45", flightProduct.checkAndGetPayoutOption(rqId, rkId, "L", 45));
-        console.log("L 201", flightProduct.checkAndGetPayoutOption(rqId, rkId, "L", 201));
-        console.log("C 0", flightProduct.checkAndGetPayoutOption(rqId, rkId, "C", 0));
-        console.log("D 0", flightProduct.checkAndGetPayoutOption(rqId, rkId, "D", 0));
+        console.log("X 42", FlightLib.checkAndGetPayoutOption(rqId, rkId, "X", 42));
+        console.log("A 0", FlightLib.checkAndGetPayoutOption(rqId, rkId, "A", 0));
+        console.log("L -5", FlightLib.checkAndGetPayoutOption(rqId, rkId, "L", -5));
+        console.log("L 10", FlightLib.checkAndGetPayoutOption(rqId, rkId, "L", 10));
+        console.log("L 15", FlightLib.checkAndGetPayoutOption(rqId, rkId, "L", 15));
+        console.log("L 30", FlightLib.checkAndGetPayoutOption(rqId, rkId, "L", 30));
+        console.log("L 44", FlightLib.checkAndGetPayoutOption(rqId, rkId, "L", 44));
+        console.log("L 45", FlightLib.checkAndGetPayoutOption(rqId, rkId, "L", 45));
+        console.log("L 201", FlightLib.checkAndGetPayoutOption(rqId, rkId, "L", 201));
+        console.log("C 0", FlightLib.checkAndGetPayoutOption(rqId, rkId, "C", 0));
+        console.log("D 0", FlightLib.checkAndGetPayoutOption(rqId, rkId, "D", 0));
         // solhint-enable
 
-        assertEq(flightProduct.checkAndGetPayoutOption(rqId, rkId, "X", 42), 255, "not 255 (no payout X)");
-        assertEq(flightProduct.checkAndGetPayoutOption(rqId, rkId, "A", 0), 255, "not 255 (no payout A)");
-        assertEq(flightProduct.checkAndGetPayoutOption(rqId, rkId, "L", -5), 255, "not 255 (L -5)");
-        assertEq(flightProduct.checkAndGetPayoutOption(rqId, rkId, "L", 10), 255, "not 255 (L 10)");
-        assertEq(flightProduct.checkAndGetPayoutOption(rqId, rkId, "L", 15), 0, "not 0 (L 15)");
-        assertEq(flightProduct.checkAndGetPayoutOption(rqId, rkId, "L", 30), 1, "not 1 (L 30)");
-        assertEq(flightProduct.checkAndGetPayoutOption(rqId, rkId, "L", 44), 1, "not 1 (L 44)");
-        assertEq(flightProduct.checkAndGetPayoutOption(rqId, rkId, "L", 45), 2, "not 2 (L 45)");
-        assertEq(flightProduct.checkAndGetPayoutOption(rqId, rkId, "L", 201), 2, "not 0 (L 201)");
-        assertEq(flightProduct.checkAndGetPayoutOption(rqId, rkId, "C", 0), 3, "not 3 (cancelled)");
-        assertEq(flightProduct.checkAndGetPayoutOption(rqId, rkId, "D", 0), 4, "not 4 (diverted)");
+        assertEq(FlightLib.checkAndGetPayoutOption(rqId, rkId, "X", 42), 255, "not 255 (no payout X)");
+        assertEq(FlightLib.checkAndGetPayoutOption(rqId, rkId, "A", 0), 255, "not 255 (no payout A)");
+        assertEq(FlightLib.checkAndGetPayoutOption(rqId, rkId, "L", -5), 255, "not 255 (L -5)");
+        assertEq(FlightLib.checkAndGetPayoutOption(rqId, rkId, "L", 10), 255, "not 255 (L 10)");
+        assertEq(FlightLib.checkAndGetPayoutOption(rqId, rkId, "L", 15), 0, "not 0 (L 15)");
+        assertEq(FlightLib.checkAndGetPayoutOption(rqId, rkId, "L", 30), 1, "not 1 (L 30)");
+        assertEq(FlightLib.checkAndGetPayoutOption(rqId, rkId, "L", 44), 1, "not 1 (L 44)");
+        assertEq(FlightLib.checkAndGetPayoutOption(rqId, rkId, "L", 45), 2, "not 2 (L 45)");
+        assertEq(FlightLib.checkAndGetPayoutOption(rqId, rkId, "L", 201), 2, "not 0 (L 201)");
+        assertEq(FlightLib.checkAndGetPayoutOption(rqId, rkId, "C", 0), 3, "not 3 (cancelled)");
+        assertEq(FlightLib.checkAndGetPayoutOption(rqId, rkId, "D", 0), 4, "not 4 (diverted)");
     }
 
 
@@ -124,7 +125,7 @@ contract FlightPricingTest is FlightBaseTest {
             uint256 weight, 
             Amount[5] memory payoutAmounts,
             Amount sumInsuredAmount // simply the max of payoutAmounts 
-        ) = flightProduct.calculatePayoutAmounts(premiumAmount, statistics);
+        ) = FlightLib.calculatePayoutAmounts(flightProduct, premiumAmount, statistics);
 
         // solhint-disable
         console.log("weight", weight);
@@ -135,7 +136,7 @@ contract FlightPricingTest is FlightBaseTest {
 
 
     function _printMultipliers(uint256[6] memory statistics) internal {
-        uint256 weight = flightProduct.calculateWeight(statistics);
+        uint256 weight = FlightLib.calculateWeight(flightProduct, statistics);
 
         string memory stat = string(
             abi.encodePacked(
