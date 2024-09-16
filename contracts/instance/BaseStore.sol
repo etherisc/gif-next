@@ -42,9 +42,6 @@ abstract contract BaseStore is
         metadata.objectType = objectType;
         metadata.state = initialState;
         metadata.updatedIn = blocknumber;
-        
-        // solhint-disable-next-line avoid-tx-origin
-        emit LogBaseStoreMetadataCreated(key32.toObjectType(), key32.toKeyId(), initialState, msg.sender, tx.origin);
     }
 
     function _updateState(
@@ -72,7 +69,6 @@ abstract contract BaseStore is
             metadata.state = state;
 
             // solhint-disable-next-line avoid-tx-origin
-            emit LogBaseStoreStateUpdated(key32.toObjectType(), key32.toKeyId(), stateOld, state, msg.sender, tx.origin, lastUpdatedIn);
         }
 
         // update metadata
