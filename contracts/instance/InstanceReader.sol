@@ -335,14 +335,13 @@ contract InstanceReader {
 
     /// @dev Returns the premium info for the given policy NFT ID.
     function getPremiumInfo(NftId policyNftId) public view returns (IPolicy.PremiumInfo memory info) {
-        (bytes memory data, bool success) = _getData(_toPremiumKey(policyNftId));
-        if (success) { return abi.decode(data, (IPolicy.PremiumInfo)); }
+        return _productStore.getPremium(policyNftId);
     }
 
 
     /// @dev Returns the premium state for the given policy NFT ID.
     function getPremiumState(NftId policyNftId) public view returns (StateId state) {
-        return getState(_toPremiumKey(policyNftId));
+        return _productStore.getState(_toPremiumKey(policyNftId));
     }
 
     //--- oracle functions ---------------------------------------------------------//

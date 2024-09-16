@@ -237,11 +237,6 @@ contract InstanceAuthorizationV3
           _authorize(functions, InstanceStore.updateRisk.selector, "updateRisk");
           _authorize(functions, InstanceStore.updateRiskState.selector, "updateRiskState");
 
-          // authorize policy service role
-          functions = _authorizeForTarget(INSTANCE_STORE_TARGET_NAME, getServiceRole(POLICY()));
-          _authorize(functions, InstanceStore.createPremium.selector, "createPremium");
-          _authorize(functions, InstanceStore.updatePremiumState.selector, "updatePremiumState");
-
           // authorize claim service role
           functions = _authorizeForTarget(INSTANCE_STORE_TARGET_NAME, getServiceRole(CLAIM()));
           _authorize(functions, InstanceStore.createClaim.selector, "createClaim");
@@ -266,6 +261,11 @@ contract InstanceAuthorizationV3
           functions = _authorizeForTarget(PRODUCT_STORE_TARGET_NAME, getServiceRole(POLICY()));
           _authorize(functions, ProductStore.updatePolicy.selector, "updatePolicy");
           _authorize(functions, ProductStore.updatePolicyState.selector, "updatePolicyState");
+
+          // authorize policy service role
+          functions = _authorizeForTarget(PRODUCT_STORE_TARGET_NAME, getServiceRole(POLICY()));
+          _authorize(functions, ProductStore.createPremium.selector, "createPremium");
+          _authorize(functions, ProductStore.updatePremiumState.selector, "updatePremiumState");
 
           // authorize claim service role
           functions = _authorizeForTarget(PRODUCT_STORE_TARGET_NAME, getServiceRole(CLAIM()));

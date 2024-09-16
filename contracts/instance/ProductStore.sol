@@ -14,7 +14,7 @@ import {Key32} from "../type/Key32.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectCounter} from "./base/ObjectCounter.sol";
 import {ObjectLifecycle} from "./base/ObjectLifecycle.sol";
-import {ObjectType, POLICY} from "../type/ObjectType.sol";
+import {ObjectType, POLICY, PREMIUM} from "../type/ObjectType.sol";
 import {PayoutId} from "../type/PayoutId.sol";
 import {StateId} from "../type/StateId.sol";
 
@@ -28,8 +28,11 @@ contract ProductStore is
 {
     event LogProductStorePolicyInfoCreated(NftId policyNftId, StateId state, address createdBy, address txOrigin);
     event LogProductStorePolicyInfoUpdated(NftId policyNftId, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
+    event LogProductStorePremiumInfoCreated(NftId policyNftId, StateId state, address createdBy, address txOrigin);
+    event LogProductStorePremiumInfoUpdated(NftId policyNftId, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
 
     mapping(Key32 key32 => IPolicy.PolicyInfo) private _policies;
+    mapping(Key32 key32 => IPolicy.PremiumInfo) private _premiums;
 
 
     /// @dev This initializer needs to be called from the instance itself.
@@ -102,6 +105,27 @@ contract ProductStore is
 
     function getPolicy(NftId policyNftId) external view returns (IPolicy.PolicyInfo memory policy) {
         return _policies[_toNftKey32(policyNftId, POLICY())];
+    }
+
+    //--- Premium (Policy) ----------------------------------------------//
+    function createPremium(NftId policyNftId, IPolicy.PremiumInfo memory premium) external restricted() {
+        Key32 key = _toNftKey32(policyNftId, PREMIUM());
+        _createMetadata(key);
+        _premiums[key] = premium;
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogProductStorePremiumInfoCreated(policyNftId, getState(key), msg.sender, tx.origin);
+    }
+
+    function updatePremiumState(NftId policyNftId, StateId newState) external restricted() {
+        Key32 key = _toNftKey32(policyNftId, PREMIUM());
+        Blocknumber lastUpdatedIn = _updateState(key, newState);
+        StateId oldState = getState(key);
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogProductStorePremiumInfoUpdated(policyNftId, oldState, newState, msg.sender, tx.origin, lastUpdatedIn);
+    }
+
+    function getPremium(NftId policyNftId) external view returns (IPolicy.PremiumInfo memory premium) {
+        return _premiums[_toNftKey32(policyNftId, PREMIUM())];
     }
 
     //--- internal view/pure functions --------------------------------------//

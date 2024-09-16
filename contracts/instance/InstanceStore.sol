@@ -177,15 +177,6 @@ contract InstanceStore is
         _updateState(riskId.toKey32(), newState);
     }
     
-    //--- Premium (Policy) ----------------------------------------------//
-    function createPremium(NftId policyNftId, IPolicy.PremiumInfo memory premium) external restricted() {
-        _create(_toNftKey32(policyNftId, PREMIUM()), abi.encode(premium));
-    }
-
-    function updatePremiumState(NftId policyNftId, StateId newState) external restricted() {
-        _updateState(_toNftKey32(policyNftId, PREMIUM()), newState);
-    }
-
     //--- Claim -------------------------------------------------------------//
     function createClaim(NftId policyNftId, ClaimId claimId, IPolicy.ClaimInfo memory claim) external restricted() {
         _create(_toClaimKey32(policyNftId, claimId), abi.encode(claim));

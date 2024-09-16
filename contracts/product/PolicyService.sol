@@ -158,7 +158,7 @@ contract PolicyService is
         }
 
         premiumAmount = premium.premiumAmount;
-        instance.getInstanceStore().createPremium(
+        instance.getProductStore().createPremium(
             applicationNftId,
             premium);
 
@@ -244,7 +244,7 @@ contract PolicyService is
         }
 
         instance.getProductStore().updatePolicy(policyNftId, policyInfo, KEEP_STATE());
-        instance.getInstanceStore().updatePremiumState(policyNftId, PAID());
+        instance.getProductStore().updatePremiumState(policyNftId, PAID());
 
         // log premium collection before interactions with token
         emit LogPolicyServicePolicyPremiumCollected(policyNftId, premium.premiumAmount);
