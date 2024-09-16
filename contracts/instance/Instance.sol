@@ -58,13 +58,6 @@ contract Instance is
 
 
     function initialize(
-        // TODO: remove
-        // InstanceAdmin instanceAdmin, 
-        // InstanceStore instanceStore,
-        // ProductStore productStore,
-        // BundleSet bundleSet,
-        // RiskSet riskSet,
-        // InstanceReader instanceReader,
         InstanceContracts memory instanceContracts,
         IRegistry registry, 
         VersionPart release,
