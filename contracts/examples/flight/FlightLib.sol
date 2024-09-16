@@ -9,8 +9,8 @@ import {FlightProduct} from "./FlightProduct.sol";
 import {InstanceReader} from "../../instance/InstanceReader.sol";
 import {NftId} from "../../type/NftId.sol";
 import {RequestId} from "../../type/RequestId.sol";
-import {RiskId} from "../../type/RiskId.sol";
-import {StateId, CLOSED, COLLATERALIZED} from "../../type/StateId.sol";
+import {RiskId, RiskIdLib} from "../../type/RiskId.sol";
+import {StateId} from "../../type/StateId.sol";
 import {Str} from "../../type/String.sol";
 import {Timestamp, TimestampLib} from "../../type/Timestamp.sol";
 
@@ -168,5 +168,38 @@ library FlightLib {
 
             payoutAmounts[i] = payoutAmount;
         }
+    }
+
+
+    function getRiskId(
+        NftId productNftId,
+        Str carrierFlightNumber, 
+        Timestamp departureTime, 
+        Timestamp arrivalTime
+    )
+        public
+        view 
+        returns (RiskId riskId)
+    {
+        bytes32 riskKey = getRiskKey(carrierFlightNumber, departureTime, arrivalTime);
+        riskId = getRiskId(productNftId, riskKey);
+    }
+
+
+    function getRiskKey(
+        Str carrierFlightNumber, 
+        Timestamp departureTime, 
+        Timestamp arrivalTime
+    )
+        internal
+        pure
+        returns (bytes32 riskKey)
+    {
+        return keccak256(abi.encode(carrierFlightNumber, departureTime, arrivalTime));
+    }
+
+
+    function getRiskId(NftId productNftId, bytes32 riskKey) internal view returns (RiskId riskId) {
+        return RiskIdLib.toRiskId(productNftId, riskKey);
     }
 }
