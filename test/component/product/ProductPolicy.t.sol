@@ -71,7 +71,7 @@ contract ProductPolicyTest is GifTest {
 
         assertTrue(policyNftId.gtz(), "policyNftId was zero");
         assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
-        assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
+        assertTrue(instance.getProductStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
 
         vm.stopPrank();
 
@@ -148,7 +148,7 @@ contract ProductPolicyTest is GifTest {
 
         assertTrue(policyNftId.gtz(), "policyNftId was zero");
         assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
-        assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
+        assertTrue(instance.getProductStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
         
         // calculate expected premium/fee amounts
         IPolicy.PremiumInfo memory ep = pricingService.calculatePremium(
@@ -281,7 +281,7 @@ contract ProductPolicyTest is GifTest {
         assertTrue(policyNftId.gtz(), "policyNftId was zero");
         assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
 
-        assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
+        assertTrue(instance.getProductStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
         
         vm.stopPrank();
 
@@ -357,7 +357,7 @@ contract ProductPolicyTest is GifTest {
         assertTrue(policyNftId.gtz(), "policyNftId was zero");
         assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
 
-        assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
+        assertTrue(instance.getProductStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
 
         Amount maxPremiumAmount = AmountLib.toAmount(100);
 
@@ -399,7 +399,7 @@ contract ProductPolicyTest is GifTest {
         assertTrue(policyNftId.gtz(), "policyNftId was zero");
         assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
 
-        assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
+        assertTrue(instance.getProductStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
 
         Amount maxPremiumAmount = AmountLib.toAmount(1000);
         product.decline(policyNftId);
@@ -589,7 +589,7 @@ contract ProductPolicyTest is GifTest {
         assertTrue(policyNftId.gtz(), "policyNftId was zero");
         assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
 
-        assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
+        assertTrue(instance.getProductStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
         
         vm.stopPrank();
 
@@ -734,7 +734,7 @@ contract ProductPolicyTest is GifTest {
         assertTrue(policyNftId.gtz(), "policyNftId was zero");
         assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
 
-        assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
+        assertTrue(instance.getProductStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
 
         // WHEN
         product.createPolicy(policyNftId, false, zeroTimestamp()); 
@@ -788,7 +788,7 @@ contract ProductPolicyTest is GifTest {
         assertTrue(policyNftId.gtz(), "policyNftId was zero");
         assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
 
-        assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
+        assertTrue(instance.getProductStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
 
         Timestamp activateAt = TimestampLib.current();
         product.createPolicy(policyNftId, false, activateAt); 
@@ -837,7 +837,7 @@ contract ProductPolicyTest is GifTest {
 
         vm.stopPrank();
 
-        assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
+        assertTrue(instance.getProductStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
         
         vm.startPrank(productOwner);
 
@@ -890,7 +890,7 @@ contract ProductPolicyTest is GifTest {
 
         vm.stopPrank();
 
-        assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
+        assertTrue(instance.getProductStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
         
         vm.startPrank(productOwner);
 
@@ -948,7 +948,7 @@ contract ProductPolicyTest is GifTest {
 
         vm.stopPrank();
 
-        assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
+        assertTrue(instance.getProductStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
         
         vm.startPrank(productOwner);
 
@@ -1005,7 +1005,7 @@ contract ProductPolicyTest is GifTest {
 
         vm.stopPrank();
 
-        assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
+        assertTrue(instance.getProductStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
         
         vm.startPrank(productOwner);
 
@@ -1088,7 +1088,7 @@ contract ProductPolicyTest is GifTest {
         assertTrue(policyNftId.gtz(), "policyNftId was zero");
         assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
 
-        assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == COLLATERALIZED(), "state not COLLATERALIZED");
+        assertTrue(instanceReader.getPolicyState(policyNftId) == COLLATERALIZED(), "state not COLLATERALIZED");
         
         // solhint-disable-next-line 
         console.log("checking bundle amounts after underwriting (before premium collection)");
@@ -1544,7 +1544,7 @@ contract ProductPolicyTest is GifTest {
         assertTrue(policyNftId.gtz(), "policyNftId was zero");
         assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
 
-        assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
+        assertTrue(instance.getProductStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
 
         Amount maxPremiumAmount = AmountLib.toAmount(1000);
         product.revoke(policyNftId);
@@ -1584,7 +1584,7 @@ contract ProductPolicyTest is GifTest {
         assertTrue(policyNftId.gtz(), "policyNftId was zero");
         assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
 
-        assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
+        assertTrue(instance.getProductStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
 
         Timestamp activateAt = TimestampLib.current();
         vm.startPrank(productOwner);
@@ -1631,7 +1631,7 @@ contract ProductPolicyTest is GifTest {
         assertTrue(policyNftId.gtz(), "policyNftId was zero");
         assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
 
-        assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
+        assertTrue(instance.getProductStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
 
         Timestamp activateAt = TimestampLib.current();
         vm.startPrank(productOwner);

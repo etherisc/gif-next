@@ -3,30 +3,28 @@ pragma solidity ^0.8.20;
 
 import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 
+import {IBundle} from "./module/IBundle.sol";
+import {IComponents} from "./module/IComponents.sol";
+import {IDistribution} from "./module/IDistribution.sol";
+import {IInstance} from "./IInstance.sol";
+import {IPolicy} from "./module/IPolicy.sol";
+import {IOracle} from "../oracle/IOracle.sol";
+import {IRisk} from "./module/IRisk.sol";
+
 import {Amount} from "../type/Amount.sol";
 import {Key32} from "../type/Key32.sol";
 import {NftId} from "../type/NftId.sol";
 import {ClaimId} from "../type/ClaimId.sol";
-import {ObjectType, BUNDLE, POLICY, POOL, PREMIUM, PRODUCT, COMPONENT, DISTRIBUTOR, FEE} from "../type/ObjectType.sol";
+import {ObjectType, BUNDLE, POOL, PREMIUM, PRODUCT, COMPONENT, DISTRIBUTOR, FEE} from "../type/ObjectType.sol";
 import {RequestId} from "../type/RequestId.sol";
 import {RiskId} from "../type/RiskId.sol";
 import {StateId, KEEP_STATE} from "../type/StateId.sol";
 import {ReferralId} from "../type/Referral.sol";
 import {DistributorType} from "../type/DistributorType.sol";
 import {PayoutId} from "../type/PayoutId.sol";
-
 import {BalanceStore} from "./base/BalanceStore.sol";
-import {IInstance} from "./IInstance.sol";
 import {KeyValueStore} from "../shared/KeyValueStore.sol";
 import {ObjectCounter} from "./base/ObjectCounter.sol";
-
-import {IBundle} from "./module/IBundle.sol";
-import {IComponents} from "./module/IComponents.sol";
-import {IDistribution} from "./module/IDistribution.sol";
-import {IPolicy} from "./module/IPolicy.sol";
-import {IOracle} from "../oracle/IOracle.sol";
-import {IRisk} from "./module/IRisk.sol";
-
 import {ObjectLifecycle} from "./base/ObjectLifecycle.sol";
 
 
@@ -178,34 +176,6 @@ contract InstanceStore is
     function updateRiskState(RiskId riskId, StateId newState) external restricted() {
         _updateState(riskId.toKey32(), newState);
     }
-
-    //--- Application (Policy) ----------------------------------------------//
-    function createApplication(NftId applicationNftId, IPolicy.PolicyInfo memory policy) external restricted() {
-        _registerBalanceTarget(applicationNftId);
-        _create(_toNftKey32(applicationNftId, POLICY()), abi.encode(policy));
-    }
-
-    function updateApplication(NftId applicationNftId, IPolicy.PolicyInfo memory policy, StateId newState) external restricted() {
-        _update(_toNftKey32(applicationNftId, POLICY()), abi.encode(policy), newState);
-    }
-
-    function updateApplicationState(NftId applicationNftId, StateId newState) external restricted() {
-        _updateState(_toNftKey32(applicationNftId, POLICY()), newState);
-    }
-
-    //--- Policy ------------------------------------------------------------//
-    function updatePolicy(NftId policyNftId, IPolicy.PolicyInfo memory policy, StateId newState) external restricted() {
-        _update(_toNftKey32(policyNftId, POLICY()), abi.encode(policy), newState);
-    }
-
-    function updatePolicyClaims(NftId policyNftId, IPolicy.PolicyInfo memory policy, StateId newState) external restricted() {
-        _update(_toNftKey32(policyNftId, POLICY()), abi.encode(policy), newState);
-    }
-
-    function updatePolicyState(NftId policyNftId, StateId newState) external restricted() {
-        _updateState(_toNftKey32(policyNftId, POLICY()), newState);
-    }
-
     
     //--- Premium (Policy) ----------------------------------------------//
     function createPremium(NftId policyNftId, IPolicy.PremiumInfo memory premium) external restricted() {

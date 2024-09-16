@@ -11,6 +11,7 @@ import {InstanceAdmin} from "./InstanceAdmin.sol";
 import {InstanceReader} from "./InstanceReader.sol";
 import {InstanceStore} from "./InstanceStore.sol";
 import {NftId} from "../type/NftId.sol";
+import {ProductStore} from "./ProductStore.sol";
 import {RoleId} from "../type/RoleId.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {UFixed} from "../type/UFixed.sol";
@@ -50,6 +51,15 @@ interface IInstance is
 
     error ErrorInstanceInstanceStoreAlreadySet(address instanceStore);
     error ErrorInstanceInstanceStoreAuthorityMismatch(address instanceAuthority);
+
+    struct InstanceContracts {
+        InstanceAdmin instanceAdmin;
+        InstanceStore instanceStore;
+        ProductStore productStore;
+        BundleSet bundleSet;
+        RiskSet riskSet;
+        InstanceReader instanceReader;
+    }
 
     struct InstanceInfo {
         uint64 requestsCount;
@@ -141,5 +151,6 @@ interface IInstance is
     function getRiskSet() external view returns (RiskSet);
     function getInstanceAdmin() external view returns (InstanceAdmin);
     function getInstanceStore() external view returns (InstanceStore);
+    function getProductStore() external view returns (ProductStore);
     function isTokenRegistryDisabled() external view returns (bool);
 }

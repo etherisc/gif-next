@@ -14,17 +14,12 @@ import {ObjectType, INSTANCE} from "../type/ObjectType.sol";
 import {RoleId, ADMIN_ROLE} from "../type/RoleId.sol";
 import {Str} from "../type/String.sol";
 import {VersionPart} from "../type/Version.sol";
+import {INSTANCE_TARGET_NAME, INSTANCE_ADMIN_TARGET_NAME, INSTANCE_STORE_TARGET_NAME, PRODUCT_STORE_TARGET_NAME, BUNDLE_SET_TARGET_NAME, RISK_SET_TARGET_NAME} from "./TargetNames.sol";
 
 
 contract InstanceAdmin is
     AccessAdmin
 {
-    string public constant INSTANCE_TARGET_NAME = "Instance";
-    string public constant INSTANCE_ADMIN_TARGET_NAME = "InstanceAdmin";
-    string public constant INSTANCE_STORE_TARGET_NAME = "InstanceStore";
-    string public constant BUNDLE_SET_TARGET_NAME = "BundleSet";
-    string public constant RISK_SET_TARGET_NAME = "RiskSet";
-
     // onlyInstanceService
     error ErrorInstanceAdminNotInstanceService(address caller);
 
@@ -141,6 +136,7 @@ contract InstanceAdmin is
         _createManagedTarget(address(_instance), instanceTargetName, TargetType.Instance); 
         _createManagedTarget(address(this), INSTANCE_ADMIN_TARGET_NAME, TargetType.Instance); 
         _createManagedTarget(address(_instance.getInstanceStore()), INSTANCE_STORE_TARGET_NAME, TargetType.Instance); 
+        _createManagedTarget(address(_instance.getProductStore()), PRODUCT_STORE_TARGET_NAME, TargetType.Instance);
         _createManagedTarget(address(_instance.getBundleSet()), BUNDLE_SET_TARGET_NAME, TargetType.Instance); 
         _createManagedTarget(address(_instance.getRiskSet()), RISK_SET_TARGET_NAME, TargetType.Instance); 
     }

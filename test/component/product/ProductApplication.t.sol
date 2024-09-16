@@ -41,7 +41,7 @@ contract ProductApplicationTest is GifTest {
         sec30 = SecondsLib.toSeconds(30);
     }
 
-    function test_productCreateApplication() public {
+    function test_productCreateApplication_happyCase() public {
 
         Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
 
@@ -65,7 +65,7 @@ contract ProductApplicationTest is GifTest {
         assertTrue(policyNftId.gtz(), "policyNftId was zero");
         assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
 
-        assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
+        assertTrue(instance.getProductStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
 
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
         assertTrue(eqRiskId(policyInfo.riskId, riskId), "riskId not set");
@@ -223,7 +223,7 @@ contract ProductApplicationTest is GifTest {
 
         assertTrue(policyNftId.gtz(), "policyNftId was zero");
         assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
-        assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
+        assertTrue(instance.getProductStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
         
         // THEN
         vm.expectEmit();
@@ -265,7 +265,7 @@ contract ProductApplicationTest is GifTest {
 
         assertTrue(policyNftId.gtz(), "policyNftId was zero");
         assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
-        assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
+        assertTrue(instance.getProductStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
         
         vm.startPrank(productOwner);
         

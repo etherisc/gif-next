@@ -28,6 +28,12 @@ This repository uses submodules. To checkout or update to the latest submodules,
 git submodule update --recursive
 ```
 
+For initial checkout call
+
+```shell
+git submodule update --init --recursive
+```
+
 ## Example components
 
 A (very early) example of a product and a pool can be found in the [gif-next-sandbox repository](https://github.com/etherisc/gif-next-sandbox). 

@@ -22,8 +22,8 @@ contract InstanceAuthzTargetsTest is InstanceAuthzBaseTest {
         _printTargets();
 
         // check initial roles
-        assertEq(instanceAdmin.targets(), 5, "unexpected initial instance target count (admin)");
-        assertEq(instanceReader.targets(), 5, "unexpected initial instance target count (reader)");
+        assertEq(instanceAdmin.targets(), 6, "unexpected initial instance target count (admin)");
+        assertEq(instanceReader.targets(), 6, "unexpected initial instance target count (reader)");
     }
 
 

@@ -15,6 +15,7 @@ import {InstanceReader} from "./InstanceReader.sol";
 import {InstanceAdmin} from "./InstanceAdmin.sol";
 import {InstanceStore} from "./InstanceStore.sol";
 import {NftId} from "../type/NftId.sol";
+import {ProductStore} from "./ProductStore.sol";
 import {Registerable} from "../shared/Registerable.sol";
 import {RoleId} from "../type/RoleId.sol";
 import {Seconds} from "../type/Seconds.sol";
@@ -35,6 +36,7 @@ contract Instance is
     BundleSet internal _bundleSet;
     RiskSet internal _riskSet;
     InstanceStore internal _instanceStore;
+    ProductStore internal _productStore;
     NftId [] internal _products;
     bool internal _tokenRegistryDisabled;
 
@@ -56,11 +58,7 @@ contract Instance is
 
 
     function initialize(
-        InstanceAdmin instanceAdmin, 
-        InstanceStore instanceStore,
-        BundleSet bundleSet,
-        RiskSet riskSet,
-        InstanceReader instanceReader,
+        InstanceContracts memory instanceContracts,
         IRegistry registry, 
         VersionPart release,
         address initialOwner,
@@ -69,15 +67,15 @@ contract Instance is
         external 
         initializer()
     {
-        if(address(instanceAdmin) == address(0)) {
+        if(address(instanceContracts.instanceAdmin) == address(0)) {
             revert ErrorInstanceInstanceAdminZero();
         }
 
-        _instanceAdmin = instanceAdmin;
+        _instanceAdmin = instanceContracts.instanceAdmin;
 
         // setup instance object info
         __Registerable_init({
-            authority: instanceAdmin.authority(),
+            authority: instanceContracts.instanceAdmin.authority(),
             registry: address(registry), 
             parentNftId: registry.getNftId(), 
             objectType: INSTANCE(), 
@@ -86,15 +84,17 @@ contract Instance is
             data: ""});
 
         // store instance supporting contracts
-        _instanceStore = instanceStore;
-        _bundleSet = bundleSet;
-        _riskSet = riskSet;
-        _instanceReader = instanceReader;
+        _instanceStore = instanceContracts.instanceStore;
+        _productStore = instanceContracts.productStore;
+        _bundleSet = instanceContracts.bundleSet;
+        _riskSet = instanceContracts.riskSet;
+        _instanceReader = instanceContracts.instanceReader;
 
         // initialize instance supporting contracts
         _instanceStore.initialize();
-        _bundleSet.initialize(instanceAdmin.authority(), address(registry));
-        _riskSet.initialize(instanceAdmin.authority(), address(registry));
+        _productStore.initialize();
+        _bundleSet.initialize(instanceContracts.instanceAdmin.authority(), address(registry));
+        _riskSet.initialize(instanceContracts.instanceAdmin.authority(), address(registry));
         _instanceReader.initialize();
 
         _componentService = IComponentService(
@@ -339,6 +339,10 @@ contract Instance is
 
     function getInstanceStore() external view returns (InstanceStore) {
         return _instanceStore;
+    }
+
+    function getProductStore() external view returns (ProductStore) {
+        return _productStore;
     }
 
     function isTokenRegistryDisabled() external view returns (bool) {
