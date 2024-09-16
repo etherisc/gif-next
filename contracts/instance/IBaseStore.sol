@@ -11,16 +11,16 @@ import {ILifecycle} from "../shared/ILifecycle.sol";
 
 interface IBaseStore is ILifecycle {
 
-    error ErrorKeyValueStoreTypeUndefined(ObjectType objectType);
-    error ErrorKeyValueStoreAlreadyCreated(Key32 key, ObjectType objectType);
-    error ErrorKeyValueStoreNoLifecycle(ObjectType objectType);
-    error ErrorKeyValueStoreStateZero(Key32 key);
-    error ErrorKeyValueStoreNotExisting(Key32 key);
+    error ErrorBaseStoreTypeUndefined(ObjectType objectType);
+    error ErrorBaseStoreAlreadyCreated(Key32 key, ObjectType objectType);
+    error ErrorBaseStoreNoLifecycle(ObjectType objectType);
+    error ErrorBaseStoreStateZero(Key32 key);
+    error ErrorBaseStoreNotExisting(Key32 key);
 
-    event LogInfoCreated(ObjectType objectType, KeyId keyId, StateId state, address createdBy, address txOrigin);
-    event LogKeyValueStoreMetadataCreated(ObjectType objectType, KeyId keyId, StateId state, address createdBy, address txOrigin);
-    event LogInfoUpdated(ObjectType objectType, KeyId keyId, StateId state, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
-    event LogStateUpdated(ObjectType objectType, KeyId keyId, StateId stateOld, StateId stateNew, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
+    event LogBaseStoreInfoCreated(ObjectType objectType, KeyId keyId, StateId state, address createdBy, address txOrigin);
+    event LogBaseStoreMetadataCreated(ObjectType objectType, KeyId keyId, StateId state, address createdBy, address txOrigin);
+    event LogBaseStoreInfoUpdated(ObjectType objectType, KeyId keyId, StateId state, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
+    event LogBaseStoreStateUpdated(ObjectType objectType, KeyId keyId, StateId stateOld, StateId stateNew, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
 
     struct Metadata {
         // slot 0

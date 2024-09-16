@@ -5,11 +5,8 @@ import {IBaseStore} from "./IBaseStore.sol";
 
 import {Blocknumber, BlocknumberLib} from "../type/Blocknumber.sol";
 import {Key32, KeyId, Key32Lib} from "../type/Key32.sol";
-import {NftId} from "../type/NftId.sol";
 import {ObjectType} from "../type/ObjectType.sol";
-import {StateId, ACTIVE, KEEP_STATE} from "../type/StateId.sol";
-import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
-
+import {StateId, KEEP_STATE} from "../type/StateId.sol";
 import {Lifecycle} from "../shared/Lifecycle.sol";
 
 abstract contract BaseStore is
@@ -26,16 +23,16 @@ abstract contract BaseStore is
     {
         ObjectType objectType = key32.toObjectType();
         if (objectType.eqz()) {
-            revert ErrorKeyValueStoreTypeUndefined(objectType);
+            revert ErrorBaseStoreTypeUndefined(objectType);
         }
 
         Metadata storage metadata = _metadata[key32];
         if (metadata.updatedIn.gtz()) {
-            revert ErrorKeyValueStoreAlreadyCreated(key32, objectType);
+            revert ErrorBaseStoreAlreadyCreated(key32, objectType);
         }
 
         if(!hasLifecycle(objectType)) {
-            revert ErrorKeyValueStoreNoLifecycle(objectType);
+            revert ErrorBaseStoreNoLifecycle(objectType);
         }
 
         Blocknumber blocknumber = BlocknumberLib.current();
@@ -47,7 +44,7 @@ abstract contract BaseStore is
         metadata.updatedIn = blocknumber;
         
         // solhint-disable-next-line avoid-tx-origin
-        emit LogKeyValueStoreMetadataCreated(key32.toObjectType(), key32.toKeyId(), initialState, msg.sender, tx.origin);
+        emit LogBaseStoreMetadataCreated(key32.toObjectType(), key32.toKeyId(), initialState, msg.sender, tx.origin);
     }
 
     function _updateState(
@@ -58,7 +55,7 @@ abstract contract BaseStore is
         returns (Blocknumber lastUpdatedIn)
     {
         if (state.eqz()) {
-            revert ErrorKeyValueStoreStateZero(key32);
+            revert ErrorBaseStoreStateZero(key32);
         }
 
         Metadata storage metadata = _metadata[key32];
@@ -66,7 +63,7 @@ abstract contract BaseStore is
         lastUpdatedIn = metadata.updatedIn;
 
         if (stateOld.eqz()) {
-            revert ErrorKeyValueStoreNotExisting(key32);
+            revert ErrorBaseStoreNotExisting(key32);
         }
 
         // update state 
@@ -75,7 +72,7 @@ abstract contract BaseStore is
             metadata.state = state;
 
             // solhint-disable-next-line avoid-tx-origin
-            emit LogStateUpdated(key32.toObjectType(), key32.toKeyId(), stateOld, state, msg.sender, tx.origin, lastUpdatedIn);
+            emit LogBaseStoreStateUpdated(key32.toObjectType(), key32.toKeyId(), stateOld, state, msg.sender, tx.origin, lastUpdatedIn);
         }
 
         // update metadata

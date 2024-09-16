@@ -223,7 +223,7 @@ contract ProductApplicationTest is GifTest {
 
         assertTrue(policyNftId.gtz(), "policyNftId was zero");
         assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
-        assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
+        assertTrue(instance.getProductStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
         
         // THEN
         vm.expectEmit();
@@ -265,7 +265,7 @@ contract ProductApplicationTest is GifTest {
 
         assertTrue(policyNftId.gtz(), "policyNftId was zero");
         assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
-        assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
+        assertTrue(instance.getProductStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
         
         vm.startPrank(productOwner);
         

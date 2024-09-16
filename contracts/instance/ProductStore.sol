@@ -3,33 +3,22 @@ pragma solidity ^0.8.20;
 
 import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 
-import {Amount} from "../type/Amount.sol";
+import {IInstance} from "./IInstance.sol";
+import {IPolicy} from "./module/IPolicy.sol";
+
 import {Key32} from "../type/Key32.sol";
 import {NftId} from "../type/NftId.sol";
 import {ClaimId} from "../type/ClaimId.sol";
-import {IKeyValueStore} from "../shared/IKeyValueStore.sol";
-import {ObjectType, BUNDLE, POLICY, POOL, PREMIUM, PRODUCT, COMPONENT, DISTRIBUTOR, FEE} from "../type/ObjectType.sol";
-import {RequestId} from "../type/RequestId.sol";
-import {RiskId} from "../type/RiskId.sol";
-import {StateId, KEEP_STATE} from "../type/StateId.sol";
-import {ReferralId} from "../type/Referral.sol";
-import {DistributorType} from "../type/DistributorType.sol";
+import {ObjectType} from "../type/ObjectType.sol";
+import {StateId} from "../type/StateId.sol";
 import {PayoutId} from "../type/PayoutId.sol";
-
 import {BalanceStore} from "./base/BalanceStore.sol";
 import {BaseStore} from "./BaseStore.sol";
-import {IInstance} from "./IInstance.sol";
-import {KeyValueStore} from "../shared/KeyValueStore.sol";
+import {Blocknumber} from "../type/Blocknumber.sol";
+import {KeyId} from "../type/Key32.sol";
 import {ObjectCounter} from "./base/ObjectCounter.sol";
-
-import {IBundle} from "./module/IBundle.sol";
-import {IComponents} from "./module/IComponents.sol";
-import {IDistribution} from "./module/IDistribution.sol";
-import {IPolicy} from "./module/IPolicy.sol";
-import {IOracle} from "../oracle/IOracle.sol";
-import {IRisk} from "./module/IRisk.sol";
-
 import {ObjectLifecycle} from "./base/ObjectLifecycle.sol";
+import {ObjectType, POLICY} from "../type/ObjectType.sol";
 
 
 contract ProductStore is
@@ -39,6 +28,9 @@ contract ProductStore is
     ObjectCounter,
     ObjectLifecycle
 {
+    event LogProductStoreInfoCreated(ObjectType objectType, KeyId keyId, StateId state, address createdBy, address txOrigin);
+    event LogProductStoreInfoUpdated(ObjectType objectType, KeyId keyId, StateId state, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
+
     mapping(Key32 key32 => IPolicy.PolicyInfo) private _policies;
 
 
@@ -62,37 +54,45 @@ contract ProductStore is
         Key32 key = _toNftKey32(applicationNftId, POLICY());
         _createMetadata(key);
         _policies[key] = policy;
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogProductStoreInfoCreated(POLICY(), applicationNftId.toKeyId(), getState(key), msg.sender, tx.origin);
     }
 
     function updateApplication(NftId applicationNftId, IPolicy.PolicyInfo memory policy, StateId newState) external restricted() {
         Key32 key = _toNftKey32(applicationNftId, POLICY());
-        _updateState(key, newState);
+        Blocknumber lastUpdatedIn = _updateState(key, newState);
         _policies[key] = policy;
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogProductStoreInfoUpdated(POLICY(), applicationNftId.toKeyId(), newState, msg.sender, tx.origin, lastUpdatedIn);
     }
 
     function updateApplicationState(NftId applicationNftId, StateId newState) external restricted() {
         _updateState(_toNftKey32(applicationNftId, POLICY()), newState);
     }
 
-    function getPolicy(NftId policyNftId) external view returns (IPolicy.PolicyInfo memory policy) {
-        return _policies[_toNftKey32(policyNftId, POLICY())];
-    }
-
     //--- Policy ------------------------------------------------------------//
     function updatePolicy(NftId policyNftId, IPolicy.PolicyInfo memory policy, StateId newState) external restricted() {
         Key32 key = _toNftKey32(policyNftId, POLICY());
-        _updateState(key, newState);
+        Blocknumber lastUpdatedIn = _updateState(key, newState);
         _policies[key] = policy;
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogProductStoreInfoUpdated(POLICY(), policyNftId.toKeyId(), newState, msg.sender, tx.origin, lastUpdatedIn);
     }
 
     function updatePolicyClaims(NftId policyNftId, IPolicy.PolicyInfo memory policy, StateId newState) external restricted() {
         Key32 key = _toNftKey32(policyNftId, POLICY());
-        _updateState(key, newState);
+        Blocknumber lastUpdatedIn = _updateState(key, newState);
         _policies[key] = policy;
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogProductStoreInfoUpdated(POLICY(), policyNftId.toKeyId(), newState, msg.sender, tx.origin, lastUpdatedIn);
     }
 
     function updatePolicyState(NftId policyNftId, StateId newState) external restricted() {
         _updateState(_toNftKey32(policyNftId, POLICY()), newState);
+    }
+
+    function getPolicy(NftId policyNftId) external view returns (IPolicy.PolicyInfo memory policy) {
+        return _policies[_toNftKey32(policyNftId, POLICY())];
     }
 
     //--- internal view/pure functions --------------------------------------//
