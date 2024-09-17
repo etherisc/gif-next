@@ -73,17 +73,6 @@ contract InstanceStore is
         _update(_toNftKey32(componentNftId, COMPONENT()), abi.encode(componentInfo), newState);
     }
 
-    //--- Product -----------------------------------------------------------//
-
-    function createProduct(NftId productNftId, IComponents.ProductInfo memory info) external restricted() {
-        _create(_toNftKey32(productNftId, PRODUCT()), abi.encode(info));
-    }
-
-    function updateProduct(NftId productNftId, IComponents.ProductInfo memory info, StateId newState) external restricted() {
-        _update(_toNftKey32(productNftId, PRODUCT()), abi.encode(info), newState);
-    }
-
-
     //--- Fee -----------------------------------------------------------//
     function createFee(NftId productNftId, IComponents.FeeInfo memory info) external restricted() {
         _create(_toNftKey32(productNftId, FEE()), abi.encode(info));

@@ -187,8 +187,7 @@ contract InstanceReader {
 
     /// @dev Returns the product info for the given product NFT ID.
     function getProductInfo(NftId productNftId) public view returns (IComponents.ProductInfo memory info) {
-        (bytes memory data, bool success) = _getData(productNftId.toKey32(PRODUCT()));
-        if (success) { return abi.decode(data, (IComponents.ProductInfo)); }
+        return _productStore.getProductInfo(productNftId);
     }
 
 
@@ -253,7 +252,7 @@ contract InstanceReader {
 
     /// @dev Returns the info for the given policy NFT ID.
     function getPolicyInfo(NftId policyNftId) public view returns (IPolicy.PolicyInfo memory info) {
-        return _productStore.getPolicy(policyNftId);
+        return _productStore.getPolicyInfo(policyNftId);
     }
 
 
@@ -335,7 +334,7 @@ contract InstanceReader {
 
     /// @dev Returns the premium info for the given policy NFT ID.
     function getPremiumInfo(NftId policyNftId) public view returns (IPolicy.PremiumInfo memory info) {
-        return _productStore.getPremium(policyNftId);
+        return _productStore.getPremiumInfo(policyNftId);
     }
 
 

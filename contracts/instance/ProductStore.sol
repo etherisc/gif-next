@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 
+import {IComponents} from "./module/IComponents.sol";
 import {IInstance} from "./IInstance.sol";
 import {IPolicy} from "./module/IPolicy.sol";
 
@@ -14,7 +15,7 @@ import {Key32} from "../type/Key32.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectCounter} from "./base/ObjectCounter.sol";
 import {ObjectLifecycle} from "./base/ObjectLifecycle.sol";
-import {ObjectType, POLICY, PREMIUM} from "../type/ObjectType.sol";
+import {ObjectType, POLICY, PREMIUM, PRODUCT} from "../type/ObjectType.sol";
 import {PayoutId} from "../type/PayoutId.sol";
 import {StateId} from "../type/StateId.sol";
 
@@ -26,11 +27,14 @@ contract ProductStore is
     ObjectCounter,
     ObjectLifecycle
 {
+    event LogProductStoreProductInfoCreated(NftId productNftId, StateId state, address createdBy, address txOrigin);
+    event LogProductStoreProductInfoUpdated(NftId productNftId, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
     event LogProductStorePolicyInfoCreated(NftId policyNftId, StateId state, address createdBy, address txOrigin);
     event LogProductStorePolicyInfoUpdated(NftId policyNftId, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
     event LogProductStorePremiumInfoCreated(NftId policyNftId, StateId state, address createdBy, address txOrigin);
     event LogProductStorePremiumInfoUpdated(NftId policyNftId, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
 
+    mapping(Key32 key32 => IComponents.ProductInfo) private _products;
     mapping(Key32 key32 => IPolicy.PolicyInfo) private _policies;
     mapping(Key32 key32 => IPolicy.PremiumInfo) private _premiums;
 
@@ -49,7 +53,32 @@ contract ProductStore is
     }
 
 
+    //--- Product -----------------------------------------------------------//
+
+    function createProduct(NftId productNftId, IComponents.ProductInfo memory info) external restricted() {
+        Key32 key = _toNftKey32(productNftId, PRODUCT());
+        _createMetadata(key);
+        _products[key] = info;
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogProductStoreProductInfoCreated(productNftId, getState(key), msg.sender, tx.origin);
+    }
+
+    function updateProduct(NftId productNftId, IComponents.ProductInfo memory info, StateId newState) external restricted() {
+        Key32 key = _toNftKey32(productNftId, PRODUCT());
+        Blocknumber lastUpdatedIn = _updateState(key, newState);
+        StateId oldState = getState(key);
+        _products[key] = info;
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogProductStoreProductInfoUpdated(productNftId, oldState, newState, msg.sender, tx.origin, lastUpdatedIn);
+    }
+
+    function getProductInfo(NftId productNftId) external view returns (IComponents.ProductInfo memory info) {
+        return _products[_toNftKey32(productNftId, PRODUCT())];
+    }
+
+
     //--- Application (Policy) ----------------------------------------------//
+
     function createApplication(NftId applicationNftId, IPolicy.PolicyInfo memory policy) external restricted() {
         _registerBalanceTarget(applicationNftId);
         Key32 key = _toNftKey32(applicationNftId, POLICY());
@@ -77,6 +106,7 @@ contract ProductStore is
     }
 
     //--- Policy ------------------------------------------------------------//
+
     function updatePolicy(NftId policyNftId, IPolicy.PolicyInfo memory policy, StateId newState) external restricted() {
         Key32 key = _toNftKey32(policyNftId, POLICY());
         Blocknumber lastUpdatedIn = _updateState(key, newState);
@@ -103,11 +133,12 @@ contract ProductStore is
         emit LogProductStorePolicyInfoUpdated(policyNftId, oldState, newState, msg.sender, tx.origin, lastUpdatedIn);
     }
 
-    function getPolicy(NftId policyNftId) external view returns (IPolicy.PolicyInfo memory policy) {
+    function getPolicyInfo(NftId policyNftId) external view returns (IPolicy.PolicyInfo memory policy) {
         return _policies[_toNftKey32(policyNftId, POLICY())];
     }
 
     //--- Premium (Policy) ----------------------------------------------//
+
     function createPremium(NftId policyNftId, IPolicy.PremiumInfo memory premium) external restricted() {
         Key32 key = _toNftKey32(policyNftId, PREMIUM());
         _createMetadata(key);
@@ -124,7 +155,7 @@ contract ProductStore is
         emit LogProductStorePremiumInfoUpdated(policyNftId, oldState, newState, msg.sender, tx.origin, lastUpdatedIn);
     }
 
-    function getPremium(NftId policyNftId) external view returns (IPolicy.PremiumInfo memory premium) {
+    function getPremiumInfo(NftId policyNftId) external view returns (IPolicy.PremiumInfo memory premium) {
         return _premiums[_toNftKey32(policyNftId, PREMIUM())];
     }
 

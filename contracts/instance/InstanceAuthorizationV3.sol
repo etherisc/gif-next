@@ -196,8 +196,6 @@ contract InstanceAuthorizationV3
           _authorize(functions, InstanceStore.createComponent.selector, "createComponent");
           _authorize(functions, InstanceStore.updateComponent.selector, "updateComponent");
           _authorize(functions, InstanceStore.createPool.selector, "createPool");
-          _authorize(functions, InstanceStore.createProduct.selector, "createProduct");
-          _authorize(functions, InstanceStore.updateProduct.selector, "updateProduct");
           _authorize(functions, InstanceStore.createFee.selector, "createFee");
           _authorize(functions, InstanceStore.updateFee.selector, "updateFee");
           
@@ -250,6 +248,10 @@ contract InstanceAuthorizationV3
           internal
      {
           IAccess.FunctionInfo[] storage functions;
+
+          functions = _authorizeForTarget(PRODUCT_STORE_TARGET_NAME, getServiceRole(COMPONENT()));
+          _authorize(functions, ProductStore.createProduct.selector, "createProduct");
+          _authorize(functions, ProductStore.updateProduct.selector, "updateProduct");
 
           // authorize application service role
           functions = _authorizeForTarget(PRODUCT_STORE_TARGET_NAME, getServiceRole(APPLICATION()));

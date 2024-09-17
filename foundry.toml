@@ -8,7 +8,7 @@ cache_path  = 'cache_forge'
 gas_limit = "18446744073709551615" # u64::MAX
 ffi = true
 
-gas_reports = ["ApplicationService", "PricingService"]
+gas_reports = ["ApplicationService", "PolicyService", "PricingService"]
 
 
 [profile.ci]
