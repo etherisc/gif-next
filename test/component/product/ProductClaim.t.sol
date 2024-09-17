@@ -11,7 +11,7 @@ import {NftId} from "../../../contracts/type/NftId.sol";
 import {ClaimId} from "../../../contracts/type/ClaimId.sol";
 import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
 import {Seconds, SecondsLib} from "../../../contracts/type/Seconds.sol";
-import {Timestamp, TimestampLib, zeroTimestamp} from "../../../contracts/type/Timestamp.sol";
+import {Timestamp, TimestampLib} from "../../../contracts/type/Timestamp.sol";
 import {PayoutId} from "../../../contracts/type/PayoutId.sol";
 import {RiskId} from "../../../contracts/type/RiskId.sol";
 import {ReferralLib} from "../../../contracts/type/Referral.sol";
@@ -206,10 +206,10 @@ contract TestProductClaim is GifTest {
 
         // THEN
         // checking last of 4 logs
-        assertEq(entries.length, 4, "unexpected number of logs");
-        assertEq(entries[3].emitter, address(claimService), "unexpected emitter");
-        assertEq(entries[3].topics[0], keccak256("LogClaimServiceClaimConfirmed(uint96,uint16,uint96)"), "unexpected log signature");
-        (uint96 nftIdInt,uint24 claimIdInt, uint96 amountInt ) = abi.decode(entries[3].data, (uint96,uint16,uint96));
+        assertEq(entries.length, 3, "unexpected number of logs");
+        assertEq(entries[2].emitter, address(claimService), "unexpected emitter");
+        assertEq(entries[2].topics[0], keccak256("LogClaimServiceClaimConfirmed(uint96,uint16,uint96)"), "unexpected log signature");
+        (uint96 nftIdInt,uint24 claimIdInt, uint96 amountInt ) = abi.decode(entries[2].data, (uint96,uint16,uint96));
         assertEq(nftIdInt, policyNftId.toInt(), "unexpected policy nft id");
         assertEq(claimIdInt, claimId.toInt(), "unexpected claim id");
         assertEq(amountInt, confirmedAmount.toInt(), "unexpected amount");
@@ -245,16 +245,16 @@ contract TestProductClaim is GifTest {
         // WHEN
         // emit LogPolicyServiceClaimDeclined(policyNftId, ClaimId.wrap(1));
         vm.recordLogs();
-        string memory processData = "claim invalid";
+        // string memory processData = "claim invalid";
         product.revokeClaim(policyNftId, claimId); 
         Vm.Log[] memory entries = vm.getRecordedLogs();
 
         // THEN
         // checking last of 4 logs
-        assertEq(entries.length, 4, "unexpected number of logs");
-        assertEq(entries[3].emitter, address(claimService), "unexpected emitter");
-        assertEq(entries[3].topics[0], keccak256("LogClaimServiceClaimRevoked(uint96,uint16)"), "unexpected log signature");
-        (uint96 nftIdInt ,uint24 claimIdInt) = abi.decode(entries[3].data, (uint96,uint16));
+        assertEq(entries.length, 3, "unexpected number of logs");
+        assertEq(entries[2].emitter, address(claimService), "unexpected emitter");
+        assertEq(entries[2].topics[0], keccak256("LogClaimServiceClaimRevoked(uint96,uint16)"), "unexpected log signature");
+        (uint96 nftIdInt ,uint24 claimIdInt) = abi.decode(entries[2].data, (uint96,uint16));
         assertEq(nftIdInt, policyNftId.toInt(), "unexpected policy nft id");
         assertEq(claimIdInt, claimId.toInt(), "unexpected claim id");
 
@@ -297,10 +297,10 @@ contract TestProductClaim is GifTest {
 
         // THEN
         // checking last of 4 logs
-        assertEq(entries.length, 4, "unexpected number of logs");
-        assertEq(entries[3].emitter, address(claimService), "unexpected emitter");
-        assertEq(entries[3].topics[0], keccak256("LogClaimServiceClaimDeclined(uint96,uint16)"), "unexpected log signature");
-        (uint96 nftIdInt ,uint24 claimIdInt) = abi.decode(entries[3].data, (uint96,uint16));
+        assertEq(entries.length, 3, "unexpected number of logs");
+        assertEq(entries[2].emitter, address(claimService), "unexpected emitter");
+        assertEq(entries[2].topics[0], keccak256("LogClaimServiceClaimDeclined(uint96,uint16)"), "unexpected log signature");
+        (uint96 nftIdInt ,uint24 claimIdInt) = abi.decode(entries[2].data, (uint96,uint16));
         assertEq(nftIdInt, policyNftId.toInt(), "unexpected policy nft id");
         assertEq(claimIdInt, claimId.toInt(), "unexpected claim id");
 

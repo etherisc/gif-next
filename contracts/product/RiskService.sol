@@ -12,7 +12,6 @@ import {ObjectType, COMPONENT, PRODUCT, RISK} from "../type/ObjectType.sol";
 import {ACTIVE, KEEP_STATE, CLOSED} from "../type/StateId.sol";
 import {NftId} from "../type/NftId.sol";
 import {RiskId, RiskIdLib} from "../type/RiskId.sol";
-import {StateId} from "../type/StateId.sol";
 import {RiskSet} from "../instance/RiskSet.sol";
 import {Service} from "../shared/Service.sol";
 import {TimestampLib} from "../type/Timestamp.sol";

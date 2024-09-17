@@ -321,7 +321,6 @@ contract ComponentService is
 
     /// @dev registers the sending component as a distribution component
     function _createDistribution(
-        InstanceStore instanceStore,
         ProductStore productStore,
         NftId productNftId,
         NftId distributionNftId,
@@ -381,7 +380,6 @@ contract ComponentService is
     //-------- oracle -------------------------------------------------------//
 
     function _createOracle(
-        InstanceStore instanceStore,
         ProductStore productStore,
         NftId productNftId,
         NftId oracleNftId,
@@ -523,9 +521,9 @@ contract ComponentService is
             if(componentType == POOL()) {
                 _createPool(instanceStore, instance.getProductStore(), productNftId, componentNftId, componentAddress, productInfo);
             } else if(componentType == DISTRIBUTION()) {
-                _createDistribution(instanceStore, instance.getProductStore(), productNftId, componentNftId, productInfo);
+                _createDistribution(instance.getProductStore(), productNftId, componentNftId, productInfo);
             } else if(componentType == ORACLE()) {
-                _createOracle(instanceStore, instance.getProductStore(), productNftId, componentNftId, productInfo);
+                _createOracle(instance.getProductStore(), productNftId, componentNftId, productInfo);
             } else {
                 revert ErrorComponentServiceComponentTypeNotSupported(componentAddress, componentType);
             }

@@ -18,7 +18,7 @@ import {IRisk} from "../instance/module/IRisk.sol";
 import {AccessAdminLib} from "../authorization/AccessAdminLib.sol";
 import {Amount} from "../type/Amount.sol";
 import {BundleSet} from "./BundleSet.sol";
-import {BUNDLE, COMPONENT, DISTRIBUTOR, DISTRIBUTION, FEE, PREMIUM, POLICY, POOL, PRODUCT} from "../type/ObjectType.sol";
+import {BUNDLE, COMPONENT, DISTRIBUTOR, DISTRIBUTION, PREMIUM, POLICY, POOL} from "../type/ObjectType.sol";
 import {ClaimId, ClaimIdLib} from "../type/ClaimId.sol";
 import {DistributorType} from "../type/DistributorType.sol";
 import {InstanceAdmin} from "./InstanceAdmin.sol";
@@ -281,16 +281,13 @@ contract InstanceReader {
 
     /// @dev Returns the claim info for the given policy NFT ID and claim ID.
     function getClaimInfo(NftId policyNftId, ClaimId claimId) public view returns (IPolicy.ClaimInfo memory info) {
-        (bytes memory data, bool success) = _getData(claimId.toKey32(policyNftId));
-        if (success) {
-            return abi.decode(data, (IPolicy.ClaimInfo));
-        }
+        return _productStore.getClaimInfo(policyNftId, claimId);
     }
 
 
     /// @dev Returns the current claim state for the given policy NFT ID and claim ID.
     function getClaimState(NftId policyNftId, ClaimId claimId) public view returns (StateId state) {
-        return getState(claimId.toKey32(policyNftId));
+        return _productStore.getState(claimId.toKey32(policyNftId));
     }
 
 

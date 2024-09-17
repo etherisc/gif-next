@@ -229,8 +229,6 @@ contract InstanceAuthorizationV3
 
           // authorize claim service role
           functions = _authorizeForTarget(INSTANCE_STORE_TARGET_NAME, getServiceRole(CLAIM()));
-          _authorize(functions, InstanceStore.createClaim.selector, "createClaim");
-          _authorize(functions, InstanceStore.updateClaim.selector, "updateClaim");
           _authorize(functions, InstanceStore.createPayout.selector, "createPayout");
           _authorize(functions, InstanceStore.updatePayout.selector, "updatePayout");
           _authorize(functions, InstanceStore.updatePayoutState.selector, "updatePayoutState");
@@ -272,6 +270,8 @@ contract InstanceAuthorizationV3
           // authorize claim service role
           functions = _authorizeForTarget(PRODUCT_STORE_TARGET_NAME, getServiceRole(CLAIM()));
           _authorize(functions, ProductStore.updatePolicyClaims.selector, "updatePolicyClaims");
+          _authorize(functions, ProductStore.createClaim.selector, "createClaim");
+          _authorize(functions, ProductStore.updateClaim.selector, "updateClaim");
      }
 }
 

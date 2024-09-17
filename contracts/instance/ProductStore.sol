@@ -39,12 +39,15 @@ contract ProductStore is
     event LogProductStorePolicyInfoUpdated(NftId policyNftId, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
     event LogProductStorePremiumInfoCreated(NftId policyNftId, StateId state, address createdBy, address txOrigin);
     event LogProductStorePremiumInfoUpdated(NftId policyNftId, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
+    event LogProductStoreClaimInfoCreated(NftId policyNftId, ClaimId claimId, StateId state, address createdBy, address txOrigin);
+    event LogProductStoreClaimInfoUpdated(NftId policyNftId, ClaimId claimId, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
 
     mapping(Key32 key32 => IComponents.ProductInfo) private _products;
     mapping(Key32 key32 => IComponents.FeeInfo) private _fees;
     mapping(Key32 key32 => IRisk.RiskInfo) private _risks;
     mapping(Key32 key32 => IPolicy.PolicyInfo) private _policies;
     mapping(Key32 key32 => IPolicy.PremiumInfo) private _premiums;
+    mapping(Key32 key32 => IPolicy.ClaimInfo) private _claims;
 
 
     /// @dev This initializer needs to be called from the instance itself.
@@ -218,6 +221,39 @@ contract ProductStore is
 
     function getPremiumInfo(NftId policyNftId) external view returns (IPolicy.PremiumInfo memory premium) {
         return _premiums[_toNftKey32(policyNftId, PREMIUM())];
+    }
+
+    //--- Claim -------------------------------------------------------------//
+
+    function createClaim(NftId policyNftId, ClaimId claimId, IPolicy.ClaimInfo memory claim) external restricted() {
+        // _create(_toClaimKey32(policyNftId, claimId), abi.encode(claim));
+
+        Key32 key = _toClaimKey32(policyNftId, claimId);
+        _createMetadata(key);
+        _claims[key] = claim;
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogProductStoreClaimInfoCreated(policyNftId, claimId, getState(key), msg.sender, tx.origin);
+    }
+
+    function updateClaim(NftId policyNftId, ClaimId claimId, IPolicy.ClaimInfo memory claim, StateId newState) external restricted() {
+        Key32 key = _toClaimKey32(policyNftId, claimId);
+        Blocknumber lastUpdatedIn = _updateState(key, newState);
+        StateId oldState = getState(key);
+        _claims[key] = claim;
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogProductStoreClaimInfoUpdated(policyNftId, claimId, oldState, newState, msg.sender, tx.origin, lastUpdatedIn);
+    }
+
+    function updateClaimState(NftId policyNftId, ClaimId claimId, StateId newState) external restricted() {
+        Key32 key = _toClaimKey32(policyNftId, claimId);
+        Blocknumber lastUpdatedIn = _updateState(key, newState);
+        StateId oldState = getState(key);
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogProductStoreClaimInfoUpdated(policyNftId, claimId, oldState, newState, msg.sender, tx.origin, lastUpdatedIn);
+    }
+
+    function getClaimInfo(NftId policyNftId, ClaimId claimId) external view returns (IPolicy.ClaimInfo memory claim) {
+        return _claims[_toClaimKey32(policyNftId, claimId)];
     }
 
     //--- internal view/pure functions --------------------------------------//
