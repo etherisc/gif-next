@@ -142,19 +142,6 @@ contract InstanceStore is
     function updateBundleState(NftId bundleNftId, StateId newState) external restricted() {
         _updateState(_toNftKey32(bundleNftId, BUNDLE()), newState);
     }
-
-    //--- Risk --------------------------------------------------------------//
-    function createRisk(RiskId riskId, IRisk.RiskInfo memory risk) external restricted() {
-        _create(riskId.toKey32(), abi.encode(risk));
-    }
-
-    function updateRisk(RiskId riskId, IRisk.RiskInfo memory risk, StateId newState) external restricted() {
-        _update(riskId.toKey32(), abi.encode(risk), newState);
-    }
-
-    function updateRiskState(RiskId riskId, StateId newState) external restricted() {
-        _updateState(riskId.toKey32(), newState);
-    }
     
     //--- Claim -------------------------------------------------------------//
     function createClaim(NftId policyNftId, ClaimId claimId, IPolicy.ClaimInfo memory claim) external restricted() {

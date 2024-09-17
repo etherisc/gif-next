@@ -224,14 +224,13 @@ contract InstanceReader {
 
     /// @dev Returns the risk info for the given risk ID.
     function getRiskInfo(RiskId riskId) public view returns (IRisk.RiskInfo memory info) {
-        (bytes memory data, bool success) = _getData(riskId.toKey32()); 
-        if (success) { return abi.decode(data, (IRisk.RiskInfo)); }
+        return _productStore.getRiskInfo(riskId);
     }
 
 
     /// @dev Returns the risk state for the given risk ID.
     function getRiskState(RiskId riskId) public view returns (StateId stateId) {
-        return getState(riskId.toKey32());
+        return _productStore.getState(riskId.toKey32());
     }
 
 

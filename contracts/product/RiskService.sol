@@ -59,7 +59,7 @@ contract RiskService is
             createdAt: TimestampLib.current(),
             data: data});
 
-        instance.getInstanceStore().createRisk(
+        instance.getProductStore().createRisk(
             riskId,
             riskInfo
         );
@@ -92,7 +92,7 @@ contract RiskService is
         }
 
         riskInfo.data = data;
-        instance.getInstanceStore().updateRisk(riskId, riskInfo, KEEP_STATE());
+        instance.getProductStore().updateRisk(riskId, riskInfo, KEEP_STATE());
 
         emit LogRiskServiceRiskUpdated(productNftId, riskId);
     }
@@ -148,7 +148,7 @@ contract RiskService is
         }
 
         // effects
-        instance.getInstanceStore().updateRiskState(riskId, CLOSED());
+        instance.getProductStore().updateRiskState(riskId, CLOSED());
 
         emit LogRiskServiceRiskClosed(productNftId, riskId);
     }

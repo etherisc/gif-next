@@ -6,6 +6,7 @@ import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/acce
 import {IComponents} from "./module/IComponents.sol";
 import {IInstance} from "./IInstance.sol";
 import {IPolicy} from "./module/IPolicy.sol";
+import {IRisk} from "./module/IRisk.sol";
 
 import {BalanceStore} from "./base/BalanceStore.sol";
 import {BaseStore} from "./BaseStore.sol";
@@ -17,6 +18,7 @@ import {ObjectCounter} from "./base/ObjectCounter.sol";
 import {ObjectLifecycle} from "./base/ObjectLifecycle.sol";
 import {ObjectType, FEE, POLICY, PREMIUM, PRODUCT} from "../type/ObjectType.sol";
 import {PayoutId} from "../type/PayoutId.sol";
+import {RiskId} from "../type/RiskId.sol";
 import {StateId, KEEP_STATE} from "../type/StateId.sol";
 
 
@@ -31,6 +33,8 @@ contract ProductStore is
     event LogProductStoreProductInfoUpdated(NftId productNftId, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
     event LogProductStoreFeeInfoCreated(NftId productNftId, StateId state, address createdBy, address txOrigin);
     event LogProductStoreFeeInfoUpdated(NftId productNftId, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
+    event LogProductStoreRiskInfoCreated(RiskId riskId, StateId state, address createdBy, address txOrigin);
+    event LogProductStoreRiskInfoUpdated(RiskId riskId, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
     event LogProductStorePolicyInfoCreated(NftId policyNftId, StateId state, address createdBy, address txOrigin);
     event LogProductStorePolicyInfoUpdated(NftId policyNftId, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
     event LogProductStorePremiumInfoCreated(NftId policyNftId, StateId state, address createdBy, address txOrigin);
@@ -38,6 +42,7 @@ contract ProductStore is
 
     mapping(Key32 key32 => IComponents.ProductInfo) private _products;
     mapping(Key32 key32 => IComponents.FeeInfo) private _fees;
+    mapping(Key32 key32 => IRisk.RiskInfo) private _risks;
     mapping(Key32 key32 => IPolicy.PolicyInfo) private _policies;
     mapping(Key32 key32 => IPolicy.PremiumInfo) private _premiums;
 
@@ -100,6 +105,37 @@ contract ProductStore is
 
     function getFeeInfo(NftId productNftId) external view returns (IComponents.FeeInfo memory info) {
         return _fees[_toNftKey32(productNftId, FEE())];
+    }
+
+    //--- Risk --------------------------------------------------------------//
+    function createRisk(RiskId riskId, IRisk.RiskInfo memory info) external restricted() {
+        Key32 key = riskId.toKey32();
+        _createMetadata(key);
+        _risks[key] = info;
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogProductStoreRiskInfoCreated(riskId, getState(key), msg.sender, tx.origin);
+    }
+
+    function updateRisk(RiskId riskId, IRisk.RiskInfo memory info, StateId newState) external restricted() {
+        Key32 key = riskId.toKey32();
+        Blocknumber lastUpdatedIn = _updateState(key, newState);
+        StateId oldState = getState(key);
+        _risks[key] = info;
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogProductStoreRiskInfoUpdated(riskId, oldState, newState, msg.sender, tx.origin, lastUpdatedIn);
+    }
+
+    function updateRiskState(RiskId riskId, StateId newState) external restricted() {
+        // _updateState(riskId.toKey32(), newState);
+        Key32 key = riskId.toKey32();
+        Blocknumber lastUpdatedIn = _updateState(key, newState);
+        StateId oldState = getState(key);
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogProductStoreRiskInfoUpdated(riskId, oldState, newState, msg.sender, tx.origin, lastUpdatedIn);
+    }
+
+    function getRiskInfo(RiskId riskId) external view returns (IRisk.RiskInfo memory info) {
+        return _risks[riskId.toKey32()];
     }
 
     //--- Application (Policy) ----------------------------------------------//
