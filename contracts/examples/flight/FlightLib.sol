@@ -193,6 +193,7 @@ library FlightLib {
         InstanceReader reader,
         NftId productNftId, 
         Str carrierFlightNumber, 
+        Str departureYearMonthDay,
         Timestamp departureTime, 
         Timestamp arrivalTime
     )
@@ -206,6 +207,18 @@ library FlightLib {
     {
         riskId = getRiskId(productNftId, carrierFlightNumber, departureTime, arrivalTime);
         (exists, flightRisk) = getFlightRisk(reader, productNftId, riskId);
+
+        if (!exists) {
+            // create new risk
+            flightRisk = FlightProduct.FlightRisk({
+                carrierFlightNumber: carrierFlightNumber,
+                departureYearMonthDay: departureYearMonthDay,
+                departureTime: departureTime,
+                arrivalTime: arrivalTime,
+                sumOfSumInsuredAmounts: AmountLib.toAmount(0),
+                status: bytes1(0),
+                delayMinutes: 0});
+        }
     }
 
 
