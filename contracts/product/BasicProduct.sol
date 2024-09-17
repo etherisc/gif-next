@@ -43,7 +43,6 @@ abstract contract BasicProduct is
             productInfo,
             feeInfo,
             authorization, 
-            initialOwner, 
-            ""); // component data
+            initialOwner); 
     }
 }

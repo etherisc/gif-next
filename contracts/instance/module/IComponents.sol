@@ -14,8 +14,6 @@ interface IComponents {
         string name; // component name (needs to be unique per instance)
         // slot 1
         TokenHandler tokenHandler;
-        // slot 2
-        bytes data; // will hold component type specific additional info (eg encoded pool info)
     }
 
     struct ProductInfo {

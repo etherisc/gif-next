@@ -109,8 +109,7 @@ abstract contract Distribution is
         IAuthorization authorization, 
         bool isInterceptor,
         address initialOwner,
-        string memory name,
-        bytes memory componentData // component specifidc data 
+        string memory name
     )
         internal
         virtual
@@ -123,8 +122,7 @@ abstract contract Distribution is
             DISTRIBUTION(), 
             authorization,
             isInterceptor,
-            initialOwner, 
-            componentData);
+            initialOwner);
 
         DistributionStorage storage $ = _getDistributionStorage();
         $._distributionService = IDistributionService(_getServiceAddress(DISTRIBUTION())); 

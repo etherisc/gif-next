@@ -74,8 +74,7 @@ abstract contract InstanceLinkedComponent is
         ObjectType componentType,
         IAuthorization authorization,
         bool isInterceptor,
-        address initialOwner,
-        bytes memory componentData // data that will saved with the component info in the instance store
+        address initialOwner
     )
         internal
         virtual
@@ -101,8 +100,7 @@ abstract contract InstanceLinkedComponent is
             componentType, 
             isInterceptor, 
             initialOwner, 
-            "", // registry data
-            componentData);
+            ""); // registry data
 
         // set instance linked specific parameters
         $._instanceReader = $._instance.getInstanceReader();

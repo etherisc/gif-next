@@ -753,8 +753,7 @@ contract Staking is
             STAKING(), 
             false, // is interceptor
             owner, 
-            "", // registry data
-            ""); // component data
+            ""); // registry data
 
         // Protocol target is created in the StakingStore constructor.
         // This allows setting up the protocol target before the full 

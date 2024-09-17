@@ -35,8 +35,7 @@ abstract contract BasicPool is
             name, 
             poolInfo, 
             authorization,
-            initialOwner, 
-            ""); // componentData
+            initialOwner);
     }
 
     function stake(
