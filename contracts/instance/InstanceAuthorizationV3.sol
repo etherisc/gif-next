@@ -196,8 +196,6 @@ contract InstanceAuthorizationV3
           _authorize(functions, InstanceStore.createComponent.selector, "createComponent");
           _authorize(functions, InstanceStore.updateComponent.selector, "updateComponent");
           _authorize(functions, InstanceStore.createPool.selector, "createPool");
-          _authorize(functions, InstanceStore.createFee.selector, "createFee");
-          _authorize(functions, InstanceStore.updateFee.selector, "updateFee");
           
           // authorize distribution service role
           functions = _authorizeForTarget(INSTANCE_STORE_TARGET_NAME, getServiceRole(DISTRIBUTION()));
@@ -252,6 +250,8 @@ contract InstanceAuthorizationV3
           functions = _authorizeForTarget(PRODUCT_STORE_TARGET_NAME, getServiceRole(COMPONENT()));
           _authorize(functions, ProductStore.createProduct.selector, "createProduct");
           _authorize(functions, ProductStore.updateProduct.selector, "updateProduct");
+          _authorize(functions, ProductStore.createFee.selector, "createFee");
+          _authorize(functions, ProductStore.updateFee.selector, "updateFee");
 
           // authorize application service role
           functions = _authorizeForTarget(PRODUCT_STORE_TARGET_NAME, getServiceRole(APPLICATION()));

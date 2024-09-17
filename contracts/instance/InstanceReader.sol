@@ -193,8 +193,7 @@ contract InstanceReader {
 
     /// @dev Returns the current fee settings for the given product NFT ID.
     function getFeeInfo(NftId productNftId) public view returns (IComponents.FeeInfo memory feeInfo) {
-        (bytes memory data, bool success) = _getData(productNftId.toKey32(FEE()));
-        if (success) { return abi.decode(data, (IComponents.FeeInfo)); }
+        return _productStore.getFeeInfo(productNftId);
     }
 
     //--- risk functions ---------------------------------------------------------//

@@ -73,16 +73,6 @@ contract InstanceStore is
         _update(_toNftKey32(componentNftId, COMPONENT()), abi.encode(componentInfo), newState);
     }
 
-    //--- Fee -----------------------------------------------------------//
-    function createFee(NftId productNftId, IComponents.FeeInfo memory info) external restricted() {
-        _create(_toNftKey32(productNftId, FEE()), abi.encode(info));
-    }
-
-    // Fee only has one state, so no change change possible
-    function updateFee(NftId productNftId, IComponents.FeeInfo memory info) external restricted() {
-        _update(_toNftKey32(productNftId, FEE()), abi.encode(info), KEEP_STATE());
-    }
-
     //--- Pool --------------------------------------------------------------//
 
     function createPool(

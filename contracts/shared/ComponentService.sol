@@ -284,14 +284,13 @@ contract ComponentService is
         }
         
         if(feesChanged) {
-            instance.getInstanceStore().updateFee(productNftId, feeInfo);
+            instance.getProductStore().updateFee(productNftId, feeInfo);
             emit LogComponentServiceProductFeesUpdated(productNftId);
         }
     }
 
 
     function _createProduct(
-        InstanceStore instanceStore,
         ProductStore productStore,
         NftId productNftId,
         address productAddress
@@ -313,7 +312,7 @@ contract ComponentService is
             productNftId, 
             initialProductInfo);
 
-        instanceStore.createFee(
+        productStore.createFee(
             productNftId, 
             product.getInitialFeeInfo());
     }
@@ -374,7 +373,7 @@ contract ComponentService is
         }
         
         if(feesChanged) {
-            instance.getInstanceStore().updateFee(productNftId, feeInfo);
+            instance.getProductStore().updateFee(productNftId, feeInfo);
             emit LogComponentServiceDistributionFeesUpdated(distributionNftId);
         }
     }
@@ -473,7 +472,7 @@ contract ComponentService is
         }
         
         if(feesChanged) {
-            instance.getInstanceStore().updateFee(productNftId, feeInfo);
+            instance.getProductStore().updateFee(productNftId, feeInfo);
             emit LogComponentServicePoolFeesUpdated(poolNftId);
         }
     }
@@ -508,7 +507,7 @@ contract ComponentService is
                 objectInfo.initialOwner).nftId;
 
             // create product info in instance store
-            _createProduct(instanceStore, instance.getProductStore(), componentNftId, componentAddress);
+            _createProduct(instance.getProductStore(), componentNftId, componentAddress);
         } else {
             // register non product component with registry
             componentNftId = _registryService.registerProductLinkedComponent(
@@ -517,7 +516,7 @@ contract ComponentService is
                 objectInfo.initialOwner).nftId;
 
             InstanceReader instanceReader = instance.getInstanceReader();
-            
+
             // create non product component info in instance store
             NftId productNftId = parentNftId;
             IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);

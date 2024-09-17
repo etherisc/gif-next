@@ -15,9 +15,9 @@ import {Key32} from "../type/Key32.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectCounter} from "./base/ObjectCounter.sol";
 import {ObjectLifecycle} from "./base/ObjectLifecycle.sol";
-import {ObjectType, POLICY, PREMIUM, PRODUCT} from "../type/ObjectType.sol";
+import {ObjectType, FEE, POLICY, PREMIUM, PRODUCT} from "../type/ObjectType.sol";
 import {PayoutId} from "../type/PayoutId.sol";
-import {StateId} from "../type/StateId.sol";
+import {StateId, KEEP_STATE} from "../type/StateId.sol";
 
 
 contract ProductStore is
@@ -29,12 +29,15 @@ contract ProductStore is
 {
     event LogProductStoreProductInfoCreated(NftId productNftId, StateId state, address createdBy, address txOrigin);
     event LogProductStoreProductInfoUpdated(NftId productNftId, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
+    event LogProductStoreFeeInfoCreated(NftId productNftId, StateId state, address createdBy, address txOrigin);
+    event LogProductStoreFeeInfoUpdated(NftId productNftId, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
     event LogProductStorePolicyInfoCreated(NftId policyNftId, StateId state, address createdBy, address txOrigin);
     event LogProductStorePolicyInfoUpdated(NftId policyNftId, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
     event LogProductStorePremiumInfoCreated(NftId policyNftId, StateId state, address createdBy, address txOrigin);
     event LogProductStorePremiumInfoUpdated(NftId policyNftId, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
 
     mapping(Key32 key32 => IComponents.ProductInfo) private _products;
+    mapping(Key32 key32 => IComponents.FeeInfo) private _fees;
     mapping(Key32 key32 => IPolicy.PolicyInfo) private _policies;
     mapping(Key32 key32 => IPolicy.PremiumInfo) private _premiums;
 
@@ -76,6 +79,28 @@ contract ProductStore is
         return _products[_toNftKey32(productNftId, PRODUCT())];
     }
 
+    //--- Fee -----------------------------------------------------------//
+
+    function createFee(NftId productNftId, IComponents.FeeInfo memory info) external restricted() {
+        Key32 key = _toNftKey32(productNftId, FEE());
+        _createMetadata(key);
+        _fees[key] = info;
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogProductStoreFeeInfoCreated(productNftId, getState(key), msg.sender, tx.origin);
+    }
+
+    // Fee only has one state, so no change change possible
+    function updateFee(NftId productNftId, IComponents.FeeInfo memory info) external restricted() {
+        Key32 key = _toNftKey32(productNftId, FEE());
+        Blocknumber lastUpdatedIn = _updateState(key, KEEP_STATE());
+        _fees[key] = info;
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogProductStoreFeeInfoUpdated(productNftId, msg.sender, tx.origin, lastUpdatedIn);
+    }
+
+    function getFeeInfo(NftId productNftId) external view returns (IComponents.FeeInfo memory info) {
+        return _fees[_toNftKey32(productNftId, FEE())];
+    }
 
     //--- Application (Policy) ----------------------------------------------//
 
