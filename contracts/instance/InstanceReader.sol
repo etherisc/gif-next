@@ -4,12 +4,12 @@ pragma solidity ^0.8.20;
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {IAccess} from "../authorization/IAccess.sol";
+import {IBaseStore} from "./IBaseStore.sol";
 import {IBundle} from "../instance/module/IBundle.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {IDistribution} from "../instance/module/IDistribution.sol";
 import {IDistributionService} from "../distribution/IDistributionService.sol";
 import {IInstance} from "./IInstance.sol";
-import {IKeyValueStore} from "../shared/IKeyValueStore.sol";
 import {IOracle} from "../oracle/IOracle.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
@@ -18,7 +18,7 @@ import {IRisk} from "../instance/module/IRisk.sol";
 import {AccessAdminLib} from "../authorization/AccessAdminLib.sol";
 import {Amount} from "../type/Amount.sol";
 import {BundleSet} from "./BundleSet.sol";
-import {BUNDLE, COMPONENT, DISTRIBUTOR, DISTRIBUTION, PREMIUM, POLICY, POOL} from "../type/ObjectType.sol";
+import {BUNDLE, COMPONENT, DISTRIBUTION, PREMIUM, POLICY} from "../type/ObjectType.sol";
 import {ClaimId, ClaimIdLib} from "../type/ClaimId.sol";
 import {DistributorType} from "../type/DistributorType.sol";
 import {InstanceAdmin} from "./InstanceAdmin.sol";
@@ -119,8 +119,7 @@ contract InstanceReader {
 
     /// @dev Returns the component info for the given component NFT ID.
     function getComponentInfo(NftId componentNftId) public view returns (IComponents.ComponentInfo memory info) {
-        (bytes memory data, bool success) = _getData(_toComponentKey(componentNftId));
-        if (success) { return abi.decode(data, (IComponents.ComponentInfo)); }
+        return _store.getComponentInfo(componentNftId);
     }
 
 
@@ -136,8 +135,10 @@ contract InstanceReader {
     /// The wallet holds the component's funds. Tokens collected by the component are transferred to the wallet and 
     /// Tokens distributed from the component are transferred from this wallet.
     function getWallet(NftId componentNftId) public view returns (address wallet) {
-        TokenHandler tokenHandler = getTokenHandler(componentNftId);
-        if (address(tokenHandler) != address(0)) { return tokenHandler.getWallet(); }
+        IComponents.ComponentInfo memory info = getComponentInfo(componentNftId);
+        if (address(info.tokenHandler) != address(0)) { 
+            return info.tokenHandler.getWallet();
+        }
     }
 
 
@@ -146,8 +147,12 @@ contract InstanceReader {
     /// To allow a component to collect funds from an account, it has to create a corresponding allowance from the
     /// account to the address of the component's token handler.
     function getTokenHandler(NftId componentNftId) public view returns (TokenHandler tokenHandler) {
-        (bytes memory data, bool success) = _getData(_toComponentKey(componentNftId));
-        if (success) { return abi.decode(data, (IComponents.ComponentInfo)).tokenHandler; }
+        // (bytes memory data, bool success) = _getData(_toComponentKey(componentNftId));
+        // if (success) { return abi.decode(data, (IComponents.ComponentInfo)).tokenHandler; }
+        IComponents.ComponentInfo memory info = _store.getComponentInfo(componentNftId);
+        if(address(info.tokenHandler) != address(0)) {
+            return info.tokenHandler;
+        }
     }
 
 
@@ -341,16 +346,14 @@ contract InstanceReader {
 
     /// @dev Returns the request info for the given oracle request ID.
     function getRequestInfo(RequestId requestId) public view returns (IOracle.RequestInfo memory requestInfo) {
-        (bytes memory data, bool success) = _getData(requestId.toKey32());
-        if (success) { return abi.decode(data, (IOracle.RequestInfo)); }
+        return _store.getRequestInfo(requestId);
     }
 
     //--- pool functions -----------------------------------------------------------//
 
     /// @dev Returns the pool info for the given pool NFT ID.
     function getPoolInfo(NftId poolNftId) public view returns (IComponents.PoolInfo memory info) {
-        (bytes memory data, bool success) = _getData(poolNftId.toKey32(POOL()));
-        if (success) { return abi.decode(data, (IComponents.PoolInfo)); }
+        return _store.getPoolInfo(poolNftId);
     }
 
     //--- bundle functions -------------------------------------------------------//
@@ -381,8 +384,7 @@ contract InstanceReader {
 
     /// @dev Returns the bundle info for the given bundle NFT ID.
     function getBundleInfo(NftId bundleNftId) public view  returns (IBundle.BundleInfo memory info) {
-        (bytes memory data, bool success) = _getData(_toBundleKey(bundleNftId));
-        if (success) { return abi.decode(data, (IBundle.BundleInfo)); }
+        return _store.getBundleInfo(bundleNftId);
     }
 
 
@@ -394,14 +396,12 @@ contract InstanceReader {
     //--- distribution functions -------------------------------------------------------//
 
     function getDistributorTypeInfo(DistributorType distributorType) public view returns (IDistribution.DistributorTypeInfo memory info) {
-        (bytes memory data, bool success) = _getData(distributorType.toKey32());
-        if (success) { return abi.decode(data, (IDistribution.DistributorTypeInfo)); }
+        return _store.getDistributorTypeInfo(distributorType);
     }
 
 
     function getDistributorInfo(NftId distributorNftId) public view returns (IDistribution.DistributorInfo memory info) {
-        (bytes memory data, bool success) = _getData(distributorNftId.toKey32(DISTRIBUTOR()));
-        if (success) { return abi.decode(data, (IDistribution.DistributorInfo)); }
+        return _store.getDistributorInfo(distributorNftId);
     }
 
 
@@ -418,8 +418,7 @@ contract InstanceReader {
 
 
     function getReferralInfo(ReferralId referralId) public view returns (IDistribution.ReferralInfo memory info) {
-        (bytes memory data, bool success) = _getData(referralId.toKey32());
-        if (success) { return abi.decode(data, (IDistribution.ReferralInfo)); }
+        return _store.getReferralInfo(referralId);
     }
 
 
@@ -563,22 +562,16 @@ contract InstanceReader {
         return _instanceAdmin;
     }
 
-    function getInstanceStore() external view returns (IKeyValueStore store) {
-        return _store;
-    }
-
-
     function getBundleSet() external view returns (BundleSet bundleSet) {
         return _bundleSet;
     }
-
 
     function getRiskSet() external view returns (RiskSet riskSet) {
         return _riskSet;
     }
 
 
-    function getMetadata(Key32 key) public view returns (IKeyValueStore.Metadata memory metadata) {
+    function getMetadata(Key32 key) public view returns (IBaseStore.Metadata memory metadata) {
         return _store.getMetadata(key);
     }
 
@@ -598,11 +591,6 @@ contract InstanceReader {
     }
 
     //--- internal functions ----------------------------------------------------//
-
-    function _getData(Key32 key) internal view returns (bytes memory data, bool success) {
-        data = _store.getData(key);
-        return (data, data.length > 0);
-    }
 
 
     function _toPolicyKey(NftId policyNftId) internal pure returns (Key32) { 
