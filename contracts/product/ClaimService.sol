@@ -341,7 +341,7 @@ contract ClaimService is
             // effects
             // update and save payout info with instance
             payoutInfo.paidAt = TimestampLib.current();
-            instanceContracts.instanceStore.updatePayout(policyNftId, payoutId, payoutInfo, PAID());
+            instanceContracts.productStore.updatePayout(policyNftId, payoutId, payoutInfo, PAID());
         }
 
         // update and save claim info with instance
@@ -402,7 +402,7 @@ contract ClaimService is
 
         // effects
         // update and save payout info with instance
-        instanceContracts.instanceStore.updatePayoutState(policyNftId, payoutId, CANCELLED());
+        instanceContracts.productStore.updatePayoutState(policyNftId, payoutId, CANCELLED());
 
         {
             ClaimId claimId = payoutId.toClaimId();
@@ -481,7 +481,7 @@ contract ClaimService is
             beneficiary = getRegistry().ownerOf(policyNftId);
         }
 
-        instanceContracts.instanceStore.createPayout(
+        instanceContracts.productStore.createPayout(
             policyNftId, 
             payoutId, 
             IPolicy.PayoutInfo({

@@ -7,18 +7,15 @@ import {IBundle} from "./module/IBundle.sol";
 import {IComponents} from "./module/IComponents.sol";
 import {IDistribution} from "./module/IDistribution.sol";
 import {IInstance} from "./IInstance.sol";
-import {IPolicy} from "./module/IPolicy.sol";
 import {IOracle} from "../oracle/IOracle.sol";
-import {IRisk} from "./module/IRisk.sol";
 
 import {Amount} from "../type/Amount.sol";
 import {Key32} from "../type/Key32.sol";
 import {NftId} from "../type/NftId.sol";
 import {ClaimId} from "../type/ClaimId.sol";
-import {ObjectType, BUNDLE, POOL, PREMIUM, PRODUCT, COMPONENT, DISTRIBUTOR, FEE} from "../type/ObjectType.sol";
+import {ObjectType, BUNDLE, POOL, COMPONENT, DISTRIBUTOR} from "../type/ObjectType.sol";
 import {RequestId} from "../type/RequestId.sol";
-import {RiskId} from "../type/RiskId.sol";
-import {StateId, KEEP_STATE} from "../type/StateId.sol";
+import {StateId} from "../type/StateId.sol";
 import {ReferralId} from "../type/Referral.sol";
 import {DistributorType} from "../type/DistributorType.sol";
 import {PayoutId} from "../type/PayoutId.sol";
@@ -143,19 +140,6 @@ contract InstanceStore is
         _updateState(_toNftKey32(bundleNftId, BUNDLE()), newState);
     }
     
-    //--- Payout ------------------------------------------------------------//
-    function createPayout(NftId policyNftId, PayoutId payoutId, IPolicy.PayoutInfo memory payout) external restricted() {
-        _create(_toPayoutKey32(policyNftId, payoutId), abi.encode(payout));
-    }
-
-    function updatePayout(NftId policyNftId, PayoutId payoutId, IPolicy.PayoutInfo memory payout, StateId newState) external restricted() {
-        _update(_toPayoutKey32(policyNftId, payoutId), abi.encode(payout), newState);
-    }
-
-    function updatePayoutState(NftId policyNftId, PayoutId payoutId, StateId newState) external restricted() {
-        _updateState(_toPayoutKey32(policyNftId, payoutId), newState);
-    }
-
     //--- Request -----------------------------------------------------------//
 
     function createRequest(IOracle.RequestInfo memory request) external restricted() returns (RequestId requestId) {

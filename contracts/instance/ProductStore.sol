@@ -41,6 +41,8 @@ contract ProductStore is
     event LogProductStorePremiumInfoUpdated(NftId policyNftId, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
     event LogProductStoreClaimInfoCreated(NftId policyNftId, ClaimId claimId, StateId state, address createdBy, address txOrigin);
     event LogProductStoreClaimInfoUpdated(NftId policyNftId, ClaimId claimId, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
+    event LogProductStorePayoutInfoCreated(NftId policyNftId, PayoutId payoutId, StateId state, address createdBy, address txOrigin);
+    event LogProductStorePayoutInfoUpdated(NftId policyNftId, PayoutId payoutId, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
 
     mapping(Key32 key32 => IComponents.ProductInfo) private _products;
     mapping(Key32 key32 => IComponents.FeeInfo) private _fees;
@@ -48,6 +50,7 @@ contract ProductStore is
     mapping(Key32 key32 => IPolicy.PolicyInfo) private _policies;
     mapping(Key32 key32 => IPolicy.PremiumInfo) private _premiums;
     mapping(Key32 key32 => IPolicy.ClaimInfo) private _claims;
+    mapping(Key32 key32 => IPolicy.PayoutInfo) private _payouts;
 
 
     /// @dev This initializer needs to be called from the instance itself.
@@ -76,8 +79,8 @@ contract ProductStore is
 
     function updateProduct(NftId productNftId, IComponents.ProductInfo memory info, StateId newState) external restricted() {
         Key32 key = _toNftKey32(productNftId, PRODUCT());
-        Blocknumber lastUpdatedIn = _updateState(key, newState);
         StateId oldState = getState(key);
+        Blocknumber lastUpdatedIn = _updateState(key, newState);
         _products[key] = info;
         // solhint-disable-next-line avoid-tx-origin
         emit LogProductStoreProductInfoUpdated(productNftId, oldState, newState, msg.sender, tx.origin, lastUpdatedIn);
@@ -121,8 +124,8 @@ contract ProductStore is
 
     function updateRisk(RiskId riskId, IRisk.RiskInfo memory info, StateId newState) external restricted() {
         Key32 key = riskId.toKey32();
-        Blocknumber lastUpdatedIn = _updateState(key, newState);
         StateId oldState = getState(key);
+        Blocknumber lastUpdatedIn = _updateState(key, newState);
         _risks[key] = info;
         // solhint-disable-next-line avoid-tx-origin
         emit LogProductStoreRiskInfoUpdated(riskId, oldState, newState, msg.sender, tx.origin, lastUpdatedIn);
@@ -131,8 +134,8 @@ contract ProductStore is
     function updateRiskState(RiskId riskId, StateId newState) external restricted() {
         // _updateState(riskId.toKey32(), newState);
         Key32 key = riskId.toKey32();
-        Blocknumber lastUpdatedIn = _updateState(key, newState);
         StateId oldState = getState(key);
+        Blocknumber lastUpdatedIn = _updateState(key, newState);
         // solhint-disable-next-line avoid-tx-origin
         emit LogProductStoreRiskInfoUpdated(riskId, oldState, newState, msg.sender, tx.origin, lastUpdatedIn);
     }
@@ -154,8 +157,8 @@ contract ProductStore is
 
     function updateApplication(NftId applicationNftId, IPolicy.PolicyInfo memory policy, StateId newState) external restricted() {
         Key32 key = _toNftKey32(applicationNftId, POLICY());
-        Blocknumber lastUpdatedIn = _updateState(key, newState);
         StateId oldState = getState(key);
+        Blocknumber lastUpdatedIn = _updateState(key, newState);
         _policies[key] = policy;
         // solhint-disable-next-line avoid-tx-origin
         emit LogProductStorePolicyInfoUpdated(applicationNftId, oldState, newState, msg.sender, tx.origin, lastUpdatedIn);
@@ -163,8 +166,8 @@ contract ProductStore is
 
     function updateApplicationState(NftId applicationNftId, StateId newState) external restricted() {
         Key32 key = _toNftKey32(applicationNftId, POLICY());
-        Blocknumber lastUpdatedIn = _updateState(key, newState);
         StateId oldState = getState(key);
+        Blocknumber lastUpdatedIn = _updateState(key, newState);
         // solhint-disable-next-line avoid-tx-origin
         emit LogProductStorePolicyInfoUpdated(applicationNftId, oldState, newState, msg.sender, tx.origin, lastUpdatedIn);
     }
@@ -173,8 +176,8 @@ contract ProductStore is
 
     function updatePolicy(NftId policyNftId, IPolicy.PolicyInfo memory policy, StateId newState) external restricted() {
         Key32 key = _toNftKey32(policyNftId, POLICY());
-        Blocknumber lastUpdatedIn = _updateState(key, newState);
         StateId oldState = getState(key);
+        Blocknumber lastUpdatedIn = _updateState(key, newState);
         _policies[key] = policy;
         // solhint-disable-next-line avoid-tx-origin
         emit LogProductStorePolicyInfoUpdated(policyNftId, oldState, newState, msg.sender, tx.origin, lastUpdatedIn);
@@ -182,8 +185,8 @@ contract ProductStore is
 
     function updatePolicyClaims(NftId policyNftId, IPolicy.PolicyInfo memory policy, StateId newState) external restricted() {
         Key32 key = _toNftKey32(policyNftId, POLICY());
-        Blocknumber lastUpdatedIn = _updateState(key, newState);
         StateId oldState = getState(key);
+        Blocknumber lastUpdatedIn = _updateState(key, newState);
         _policies[key] = policy;
         // solhint-disable-next-line avoid-tx-origin
         emit LogProductStorePolicyInfoUpdated(policyNftId, oldState, newState, msg.sender, tx.origin, lastUpdatedIn);
@@ -191,8 +194,8 @@ contract ProductStore is
 
     function updatePolicyState(NftId policyNftId, StateId newState) external restricted() {
         Key32 key = _toNftKey32(policyNftId, POLICY());
-        Blocknumber lastUpdatedIn = _updateState(key, newState);
         StateId oldState = getState(key);
+        Blocknumber lastUpdatedIn = _updateState(key, newState);
         // solhint-disable-next-line avoid-tx-origin
         emit LogProductStorePolicyInfoUpdated(policyNftId, oldState, newState, msg.sender, tx.origin, lastUpdatedIn);
     }
@@ -213,8 +216,8 @@ contract ProductStore is
 
     function updatePremiumState(NftId policyNftId, StateId newState) external restricted() {
         Key32 key = _toNftKey32(policyNftId, PREMIUM());
-        Blocknumber lastUpdatedIn = _updateState(key, newState);
         StateId oldState = getState(key);
+        Blocknumber lastUpdatedIn = _updateState(key, newState);
         // solhint-disable-next-line avoid-tx-origin
         emit LogProductStorePremiumInfoUpdated(policyNftId, oldState, newState, msg.sender, tx.origin, lastUpdatedIn);
     }
@@ -226,8 +229,6 @@ contract ProductStore is
     //--- Claim -------------------------------------------------------------//
 
     function createClaim(NftId policyNftId, ClaimId claimId, IPolicy.ClaimInfo memory claim) external restricted() {
-        // _create(_toClaimKey32(policyNftId, claimId), abi.encode(claim));
-
         Key32 key = _toClaimKey32(policyNftId, claimId);
         _createMetadata(key);
         _claims[key] = claim;
@@ -237,8 +238,8 @@ contract ProductStore is
 
     function updateClaim(NftId policyNftId, ClaimId claimId, IPolicy.ClaimInfo memory claim, StateId newState) external restricted() {
         Key32 key = _toClaimKey32(policyNftId, claimId);
-        Blocknumber lastUpdatedIn = _updateState(key, newState);
         StateId oldState = getState(key);
+        Blocknumber lastUpdatedIn = _updateState(key, newState);
         _claims[key] = claim;
         // solhint-disable-next-line avoid-tx-origin
         emit LogProductStoreClaimInfoUpdated(policyNftId, claimId, oldState, newState, msg.sender, tx.origin, lastUpdatedIn);
@@ -246,14 +247,45 @@ contract ProductStore is
 
     function updateClaimState(NftId policyNftId, ClaimId claimId, StateId newState) external restricted() {
         Key32 key = _toClaimKey32(policyNftId, claimId);
-        Blocknumber lastUpdatedIn = _updateState(key, newState);
         StateId oldState = getState(key);
+        Blocknumber lastUpdatedIn = _updateState(key, newState);
         // solhint-disable-next-line avoid-tx-origin
         emit LogProductStoreClaimInfoUpdated(policyNftId, claimId, oldState, newState, msg.sender, tx.origin, lastUpdatedIn);
     }
 
     function getClaimInfo(NftId policyNftId, ClaimId claimId) external view returns (IPolicy.ClaimInfo memory claim) {
         return _claims[_toClaimKey32(policyNftId, claimId)];
+    }
+
+    //--- Payout ------------------------------------------------------------//
+
+    function createPayout(NftId policyNftId, PayoutId payoutId, IPolicy.PayoutInfo memory payout) external restricted() {
+        Key32 key = _toPayoutKey32(policyNftId, payoutId);
+        _createMetadata(key);
+        _payouts[key] = payout;
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogProductStorePayoutInfoCreated(policyNftId, payoutId, getState(key), msg.sender, tx.origin);
+    }
+
+    function updatePayout(NftId policyNftId, PayoutId payoutId, IPolicy.PayoutInfo memory payout, StateId newState) external restricted() {
+        Key32 key = _toPayoutKey32(policyNftId, payoutId);
+        StateId oldState = getState(key);
+        Blocknumber lastUpdatedIn = _updateState(key, newState);
+        _payouts[key] = payout;
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogProductStorePayoutInfoUpdated(policyNftId, payoutId, oldState, newState, msg.sender, tx.origin, lastUpdatedIn);
+    }
+
+    function updatePayoutState(NftId policyNftId, PayoutId payoutId, StateId newState) external restricted() {
+        Key32 key = _toPayoutKey32(policyNftId, payoutId);
+        StateId oldState = getState(key);
+        Blocknumber lastUpdatedIn = _updateState(key, newState);
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogProductStorePayoutInfoUpdated(policyNftId, payoutId, oldState, newState, msg.sender, tx.origin, lastUpdatedIn);
+    }
+
+    function getPayoutInfo(NftId policyNftId, PayoutId payoutId) external view returns (IPolicy.PayoutInfo memory payout) {
+        return _payouts[_toPayoutKey32(policyNftId, payoutId)];
     }
 
     //--- internal view/pure functions --------------------------------------//

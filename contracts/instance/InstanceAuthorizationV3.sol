@@ -227,11 +227,6 @@ contract InstanceAuthorizationV3
           _authorize(functions, InstanceStore.increaseLocked.selector, "increaseLocked");
           _authorize(functions, InstanceStore.decreaseLocked.selector, "decreaseLocked");
 
-          // authorize claim service role
-          functions = _authorizeForTarget(INSTANCE_STORE_TARGET_NAME, getServiceRole(CLAIM()));
-          _authorize(functions, InstanceStore.createPayout.selector, "createPayout");
-          _authorize(functions, InstanceStore.updatePayout.selector, "updatePayout");
-          _authorize(functions, InstanceStore.updatePayoutState.selector, "updatePayoutState");
      }
 
      function _setupProductStoreAuthorization()
@@ -272,6 +267,9 @@ contract InstanceAuthorizationV3
           _authorize(functions, ProductStore.updatePolicyClaims.selector, "updatePolicyClaims");
           _authorize(functions, ProductStore.createClaim.selector, "createClaim");
           _authorize(functions, ProductStore.updateClaim.selector, "updateClaim");
+          _authorize(functions, ProductStore.createPayout.selector, "createPayout");
+          _authorize(functions, ProductStore.updatePayout.selector, "updatePayout");
+          _authorize(functions, ProductStore.updatePayoutState.selector, "updatePayoutState");
      }
 }
 

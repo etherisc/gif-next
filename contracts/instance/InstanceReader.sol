@@ -315,14 +315,13 @@ contract InstanceReader {
 
     /// @dev Returns the payout info for the given policy NFT ID and payout ID.
     function getPayoutInfo(NftId policyNftId, PayoutId payoutId) public view returns (IPolicy.PayoutInfo memory info) {
-        (bytes memory data, bool success) = _getData(payoutId.toKey32(policyNftId));
-        if (success) { return abi.decode(data, (IPolicy.PayoutInfo)); }
+        return _productStore.getPayoutInfo(policyNftId, payoutId);
     }
 
 
     /// @dev Returns the payout state for the given policy NFT ID and payout ID.
     function getPayoutState(NftId policyNftId, PayoutId payoutId) public view returns (StateId state) {
-        return getState(payoutId.toKey32(policyNftId));
+        return _productStore.getState(payoutId.toKey32(policyNftId));
     }
 
     //--- premium functions -------------------------------------------------------//
