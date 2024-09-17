@@ -82,7 +82,7 @@ contract ClaimService is
         // effects
         // create new claim
         claimId = ClaimIdLib.toClaimId(policyInfo.claimsCount + 1);
-        instanceContracts.instanceStore.createClaim(
+        instanceContracts.productStore.createClaim(
             policyNftId, 
             claimId, 
             IPolicy.ClaimInfo({
@@ -132,7 +132,7 @@ contract ClaimService is
         IPolicy.ClaimInfo memory claimInfo = _verifyClaim(instanceContracts.instanceReader, policyNftId, claimId, SUBMITTED());
         claimInfo.claimAmount = confirmedAmount;
         claimInfo.processData = data;
-        instanceContracts.instanceStore.updateClaim(policyNftId, claimId, claimInfo, CONFIRMED());
+        instanceContracts.productStore.updateClaim(policyNftId, claimId, claimInfo, CONFIRMED());
 
         // update and save policy info with instance
         policyInfo.claimAmount = policyInfo.claimAmount + confirmedAmount;
@@ -176,7 +176,7 @@ contract ClaimService is
         IPolicy.ClaimInfo memory claimInfo = _verifyClaim(instanceContracts.instanceReader, policyNftId, claimId, SUBMITTED());
         claimInfo.processData = data;
         claimInfo.closedAt = TimestampLib.current();
-        instanceContracts.instanceStore.updateClaim(policyNftId, claimId, claimInfo, DECLINED());
+        instanceContracts.productStore.updateClaim(policyNftId, claimId, claimInfo, DECLINED());
 
         // update and save policy info with instance
         policyInfo.openClaimsCount -= 1;
@@ -204,7 +204,7 @@ contract ClaimService is
         // check/update claim info
         IPolicy.ClaimInfo memory claimInfo = _verifyClaim(instanceContracts.instanceReader, policyNftId, claimId, SUBMITTED());
         claimInfo.closedAt = TimestampLib.current();
-        instanceContracts.instanceStore.updateClaim(policyNftId, claimId, claimInfo, REVOKED());
+        instanceContracts.productStore.updateClaim(policyNftId, claimId, claimInfo, REVOKED());
 
         // update and save policy info with instance
         policyInfo.openClaimsCount -= 1;
@@ -242,7 +242,7 @@ contract ClaimService is
         }
 
         claimInfo.closedAt = TimestampLib.current();
-        instanceContracts.instanceStore.updateClaim(policyNftId, claimId, claimInfo, CANCELLED());
+        instanceContracts.productStore.updateClaim(policyNftId, claimId, claimInfo, CANCELLED());
 
         emit LogClaimServiceClaimCancelled(policyNftId, claimId);
     }
@@ -341,7 +341,7 @@ contract ClaimService is
             // effects
             // update and save payout info with instance
             payoutInfo.paidAt = TimestampLib.current();
-            instanceContracts.instanceStore.updatePayout(policyNftId, payoutId, payoutInfo, PAID());
+            instanceContracts.productStore.updatePayout(policyNftId, payoutId, payoutInfo, PAID());
         }
 
         // update and save claim info with instance
@@ -354,11 +354,11 @@ contract ClaimService is
             // update claim and policy info accordingly
             if(claimInfo.openPayoutsCount == 0 && claimInfo.paidAmount == claimInfo.claimAmount) {
                 claimInfo.closedAt = TimestampLib.current();
-                instanceContracts.instanceStore.updateClaim(policyNftId, claimId, claimInfo, CLOSED());
+                instanceContracts.productStore.updateClaim(policyNftId, claimId, claimInfo, CLOSED());
 
                 policyInfo.openClaimsCount -= 1;
             } else {
-                instanceContracts.instanceStore.updateClaim(policyNftId, claimId, claimInfo, KEEP_STATE());
+                instanceContracts.productStore.updateClaim(policyNftId, claimId, claimInfo, KEEP_STATE());
             }
         }
 
@@ -402,13 +402,13 @@ contract ClaimService is
 
         // effects
         // update and save payout info with instance
-        instanceContracts.instanceStore.updatePayoutState(policyNftId, payoutId, CANCELLED());
+        instanceContracts.productStore.updatePayoutState(policyNftId, payoutId, CANCELLED());
 
         {
             ClaimId claimId = payoutId.toClaimId();
             IPolicy.ClaimInfo memory claimInfo = instanceContracts.instanceReader.getClaimInfo(policyNftId, claimId);
             claimInfo.openPayoutsCount -= 1;
-            instanceContracts.instanceStore.updateClaim(policyNftId, claimId, claimInfo, KEEP_STATE());
+            instanceContracts.productStore.updateClaim(policyNftId, claimId, claimInfo, KEEP_STATE());
         }
 
         emit LogClaimServicePayoutCancelled(policyNftId, payoutId);
@@ -481,7 +481,7 @@ contract ClaimService is
             beneficiary = getRegistry().ownerOf(policyNftId);
         }
 
-        instanceContracts.instanceStore.createPayout(
+        instanceContracts.productStore.createPayout(
             policyNftId, 
             payoutId, 
             IPolicy.PayoutInfo({
@@ -494,7 +494,7 @@ contract ClaimService is
         // update and save claim info with instance
         claimInfo.payoutsCount += 1;
         claimInfo.openPayoutsCount += 1;
-        instanceContracts.instanceStore.updateClaim(policyNftId, claimId, claimInfo, KEEP_STATE());
+        instanceContracts.productStore.updateClaim(policyNftId, claimId, claimInfo, KEEP_STATE());
 
         emit LogClaimServicePayoutCreated(policyNftId, payoutId, amount, beneficiary);
     }

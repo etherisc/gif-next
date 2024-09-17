@@ -11,7 +11,6 @@ import {Fee, FeeLib} from "../contracts/type/Fee.sol";
 import {IBundle} from "../contracts/instance/module/IBundle.sol";
 import {IBundleService} from "../contracts/pool/IBundleService.sol";
 import {IComponents} from "../contracts/instance/module/IComponents.sol";
-import {IKeyValueStore} from "../contracts/shared/IKeyValueStore.sol";
 import {ILifecycle} from "../contracts/shared/ILifecycle.sol";
 import {IPoolComponent} from "../contracts/pool/IPoolComponent.sol";
 import {Key32} from "../contracts/type/Key32.sol";

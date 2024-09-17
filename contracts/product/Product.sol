@@ -140,8 +140,7 @@ abstract contract Product is
         IComponents.ProductInfo memory productInfo,
         IComponents.FeeInfo memory feeInfo,
         IAuthorization authorization,
-        address initialOwner,
-        bytes memory componentData // writeonly data that will saved in the object info record of the registry
+        address initialOwner
     )
         internal
         virtual
@@ -154,8 +153,7 @@ abstract contract Product is
             PRODUCT(), 
             authorization, 
             productInfo.isInterceptingPolicyTransfers, 
-            initialOwner, 
-            componentData);
+            initialOwner);
 
         ProductStorage storage $ = _getProductStorage();
         $._productInfo = productInfo;

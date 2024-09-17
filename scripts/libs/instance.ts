@@ -97,16 +97,13 @@ export async function deployAndRegisterMasterInstance(
             libraries: {
                 AmountLib: libraries.amountLibAddress,
                 BlocknumberLib: libraries.blockNumberLibAddress,
+                DistributorTypeLib: libraries.distributorTypeLibAddress,
                 Key32Lib: libraries.key32LibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
                 ObjectTypeLib: libraries.objectTypeLibAddress,
-                RiskIdLib: libraries.riskIdLibAddress,
-                StateIdLib: libraries.stateIdLibAddress,
-                ClaimIdLib: libraries.claimIdLibAddress,
-                DistributorTypeLib: libraries.distributorTypeLibAddress,
-                PayoutIdLib: libraries.payoutIdLibAddress,
                 ReferralLib: libraries.referralLibAddress,
                 RequestIdLib: libraries.requestIdLibAddress,
+                StateIdLib: libraries.stateIdLibAddress,
             }
         }
     );
@@ -119,9 +116,12 @@ export async function deployAndRegisterMasterInstance(
         { 
             libraries: {
                 BlocknumberLib: libraries.blockNumberLibAddress,
+                ClaimIdLib: libraries.claimIdLibAddress,
                 Key32Lib: libraries.key32LibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
                 ObjectTypeLib: libraries.objectTypeLibAddress,
+                PayoutIdLib: libraries.payoutIdLibAddress,
+                RiskIdLib: libraries.riskIdLibAddress,
                 StateIdLib: libraries.stateIdLibAddress,
             }
         }
@@ -170,12 +170,10 @@ export async function deployAndRegisterMasterInstance(
                 AccessAdminLib: libraries.accessAdminLibAddress,
                 AmountLib: libraries.amountLibAddress,
                 ClaimIdLib: libraries.claimIdLibAddress,
-                DistributorTypeLib: libraries.distributorTypeLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
                 PayoutIdLib: libraries.payoutIdLibAddress,
                 PolicyServiceLib: libraries.policyServiceLibAddress,
                 ReferralLib: libraries.referralLibAddress,
-                RequestIdLib: libraries.requestIdLibAddress,
                 RiskIdLib: libraries.riskIdLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
                 UFixedLib: libraries.uFixedLibAddress,

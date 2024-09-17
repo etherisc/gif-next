@@ -196,10 +196,6 @@ contract InstanceAuthorizationV3
           _authorize(functions, InstanceStore.createComponent.selector, "createComponent");
           _authorize(functions, InstanceStore.updateComponent.selector, "updateComponent");
           _authorize(functions, InstanceStore.createPool.selector, "createPool");
-          _authorize(functions, InstanceStore.createProduct.selector, "createProduct");
-          _authorize(functions, InstanceStore.updateProduct.selector, "updateProduct");
-          _authorize(functions, InstanceStore.createFee.selector, "createFee");
-          _authorize(functions, InstanceStore.updateFee.selector, "updateFee");
           
           // authorize distribution service role
           functions = _authorizeForTarget(INSTANCE_STORE_TARGET_NAME, getServiceRole(DISTRIBUTION()));
@@ -231,30 +227,18 @@ contract InstanceAuthorizationV3
           _authorize(functions, InstanceStore.increaseLocked.selector, "increaseLocked");
           _authorize(functions, InstanceStore.decreaseLocked.selector, "decreaseLocked");
 
-          // authorize product service role
-          functions = _authorizeForTarget(INSTANCE_STORE_TARGET_NAME, getServiceRole(RISK()));
-          _authorize(functions, InstanceStore.createRisk.selector, "createRisk");
-          _authorize(functions, InstanceStore.updateRisk.selector, "updateRisk");
-          _authorize(functions, InstanceStore.updateRiskState.selector, "updateRiskState");
-
-          // authorize policy service role
-          functions = _authorizeForTarget(INSTANCE_STORE_TARGET_NAME, getServiceRole(POLICY()));
-          _authorize(functions, InstanceStore.createPremium.selector, "createPremium");
-          _authorize(functions, InstanceStore.updatePremiumState.selector, "updatePremiumState");
-
-          // authorize claim service role
-          functions = _authorizeForTarget(INSTANCE_STORE_TARGET_NAME, getServiceRole(CLAIM()));
-          _authorize(functions, InstanceStore.createClaim.selector, "createClaim");
-          _authorize(functions, InstanceStore.updateClaim.selector, "updateClaim");
-          _authorize(functions, InstanceStore.createPayout.selector, "createPayout");
-          _authorize(functions, InstanceStore.updatePayout.selector, "updatePayout");
-          _authorize(functions, InstanceStore.updatePayoutState.selector, "updatePayoutState");
      }
 
      function _setupProductStoreAuthorization()
           internal
      {
           IAccess.FunctionInfo[] storage functions;
+
+          functions = _authorizeForTarget(PRODUCT_STORE_TARGET_NAME, getServiceRole(COMPONENT()));
+          _authorize(functions, ProductStore.createProduct.selector, "createProduct");
+          _authorize(functions, ProductStore.updateProduct.selector, "updateProduct");
+          _authorize(functions, ProductStore.createFee.selector, "createFee");
+          _authorize(functions, ProductStore.updateFee.selector, "updateFee");
 
           // authorize application service role
           functions = _authorizeForTarget(PRODUCT_STORE_TARGET_NAME, getServiceRole(APPLICATION()));
@@ -267,9 +251,25 @@ contract InstanceAuthorizationV3
           _authorize(functions, ProductStore.updatePolicy.selector, "updatePolicy");
           _authorize(functions, ProductStore.updatePolicyState.selector, "updatePolicyState");
 
+          // authorize policy service role
+          functions = _authorizeForTarget(PRODUCT_STORE_TARGET_NAME, getServiceRole(POLICY()));
+          _authorize(functions, ProductStore.createPremium.selector, "createPremium");
+          _authorize(functions, ProductStore.updatePremiumState.selector, "updatePremiumState");
+
+          // authorize risk service role
+          functions = _authorizeForTarget(PRODUCT_STORE_TARGET_NAME, getServiceRole(RISK()));
+          _authorize(functions, ProductStore.createRisk.selector, "createRisk");
+          _authorize(functions, ProductStore.updateRisk.selector, "updateRisk");
+          _authorize(functions, ProductStore.updateRiskState.selector, "updateRiskState");
+
           // authorize claim service role
           functions = _authorizeForTarget(PRODUCT_STORE_TARGET_NAME, getServiceRole(CLAIM()));
           _authorize(functions, ProductStore.updatePolicyClaims.selector, "updatePolicyClaims");
+          _authorize(functions, ProductStore.createClaim.selector, "createClaim");
+          _authorize(functions, ProductStore.updateClaim.selector, "updateClaim");
+          _authorize(functions, ProductStore.createPayout.selector, "createPayout");
+          _authorize(functions, ProductStore.updatePayout.selector, "updatePayout");
+          _authorize(functions, ProductStore.updatePayoutState.selector, "updatePayoutState");
      }
 }
 

@@ -3,23 +3,21 @@ pragma solidity ^0.8.20;
 
 import {console} from "../lib/forge-std/src/Test.sol";
 
-import {Amount, AmountLib} from "../contracts/type/Amount.sol";
+import {IBaseStore} from "../contracts/instance/IBaseStore.sol";
+
+import {AmountLib} from "../contracts/type/Amount.sol";
 import {BasicPoolAuthorization} from "../contracts/pool/BasicPoolAuthorization.sol";
 import {Fee, FeeLib} from "../contracts/type/Fee.sol";
 import {IBundle} from "../contracts/instance/module/IBundle.sol";
 import {IComponents} from "../contracts/instance/module/IComponents.sol";
-import {IKeyValueStore} from "../contracts/shared/IKeyValueStore.sol";
-import {ILifecycle} from "../contracts/shared/ILifecycle.sol";
 import {IPoolService} from "../contracts/pool/IPoolService.sol";
 import {Key32} from "../contracts/type/Key32.sol";
-import {NftId, NftIdLib} from "../contracts/type/NftId.sol";
-import {ObjectType, BUNDLE} from "../contracts/type/ObjectType.sol";
-import {Pool} from "../contracts/pool/Pool.sol";
-import {PUBLIC_ROLE} from "../contracts/type/RoleId.sol";
+import {NftId} from "../contracts/type/NftId.sol";
+import {BUNDLE} from "../contracts/type/ObjectType.sol";
 import {Seconds, SecondsLib} from "../contracts/type/Seconds.sol";
 import {SimplePool} from "../contracts/examples/unpermissioned/SimplePool.sol";
 import {SimpleProduct} from "../contracts/examples/unpermissioned/SimpleProduct.sol";
-import {StateId, ACTIVE, PAUSED, CLOSED} from "../contracts/type/StateId.sol";
+import {StateId, ACTIVE, CLOSED} from "../contracts/type/StateId.sol";
 import {TimestampLib} from "../contracts/type/Timestamp.sol";
 import {GifTest} from "./base/GifTest.sol";
 import {UFixedLib} from "../contracts/type/UFixed.sol";
@@ -325,9 +323,10 @@ contract TestPool is GifTest {
         assertTrue(!bundleNftId.eqz(), "bundle nft id is zero");
 
         // metadata checks
-        IKeyValueStore.Metadata memory metadata = instanceReader.getMetadata(bundleNftId.toKey32(BUNDLE()));
+        IBaseStore.Metadata memory metadata = instanceReader.getMetadata(bundleNftId.toKey32(BUNDLE()));
+        StateId state = instanceReader.getBundleState(bundleNftId);
         assertEq(metadata.objectType.toInt(), BUNDLE().toInt(), "unexpected bundle type");
-        assertEq(metadata.state.toInt(), ACTIVE().toInt(), "unexpected bundle state");
+        assertEq(state.toInt(), ACTIVE().toInt(), "unexpected bundle state");
 
         // bundle manager checks
         assertEq(instanceBundleSet.bundles(poolNftId), 1, "expected only 1 bundle");
@@ -346,8 +345,8 @@ contract TestPool is GifTest {
         bundleNftId = _createBundle();
         Key32 bundleKey = bundleNftId.toKey32(BUNDLE());
 
-        IKeyValueStore.Metadata memory metadata = instanceReader.getMetadata(bundleKey);
-        assertEq(metadata.state.toInt(), ACTIVE().toInt(), "bundle state not active");
+        StateId bundleState = instanceReader.getBundleState(bundleNftId);
+        assertEq(bundleState.toInt(), ACTIVE().toInt(), "bundle state not active");
 
         vm.prank(investor);
         pool.setBundleLocked(bundleNftId, true);
@@ -373,8 +372,8 @@ contract TestPool is GifTest {
         pool.closeBundle(bundleNftId);
 
         // THEN
-        metadata = instanceReader.getMetadata(bundleKey);
-        assertEq(metadata.state.toInt(), CLOSED().toInt(), "bundle state not closed");
+        bundleState = instanceReader.getBundleState(bundleNftId);
+        assertEq(bundleState.toInt(), CLOSED().toInt(), "bundle state not closed");
 
         // bundle manager checks
         assertEq(instanceBundleSet.activeBundles(poolNftId), 0, "expected zero active bundle");

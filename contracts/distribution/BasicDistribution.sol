@@ -135,7 +135,6 @@ contract BasicDistribution is
             authorization,
             false,
             initialOwner, 
-            name, 
-            ""); // component specifc data
+            name); 
     }
 }

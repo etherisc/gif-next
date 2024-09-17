@@ -25,7 +25,6 @@ abstract contract Component is
     struct ComponentStorage {
         string _name; // unique (per instance) component name
         bool _isInterceptor;
-        bytes _data;
         IComponentService _componentService;
     }
 
@@ -54,8 +53,7 @@ abstract contract Component is
         ObjectType componentType,
         bool isInterceptor,
         address initialOwner,
-        bytes memory registryData, // writeonly data that will saved in the object info record of the registry
-        bytes memory componentData // other component specific data
+        bytes memory registryData // writeonly data that will saved in the object info record of the registry
     )
         internal
         virtual
@@ -78,7 +76,6 @@ abstract contract Component is
         ComponentStorage storage $ = _getComponentStorage();
         $._name = name;
         $._isInterceptor = isInterceptor;
-        $._data = componentData;
         $._componentService = IComponentService(_getServiceAddress(COMPONENT()));
 
         _registerInterface(type(IAccessManaged).interfaceId);
@@ -201,8 +198,7 @@ abstract contract Component is
         
         return IComponents.ComponentInfo({
             name: $._name,
-            tokenHandler: TokenHandler(address(0)),
-            data: $._data // user specific component data
+            tokenHandler: TokenHandler(address(0))
         });
     }
 

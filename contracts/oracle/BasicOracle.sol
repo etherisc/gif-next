@@ -39,7 +39,6 @@ contract BasicOracle is
             instanceNftId,
             authorization,
             initialOwner,
-            name,
-            "");
+            name);
     }
 }

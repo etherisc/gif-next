@@ -80,8 +80,7 @@ abstract contract Oracle is
         NftId productNftId,
         IAuthorization authorization,
         address initialOwner,
-        string memory name,
-        bytes memory componentData // component specifidc data 
+        string memory name
     )
         internal
         virtual
@@ -94,8 +93,7 @@ abstract contract Oracle is
             ORACLE(), 
             authorization,
             true, 
-            initialOwner, 
-            componentData);
+            initialOwner);
 
         OracleStorage storage $ = _getOracleStorage();
         $._componentService = IComponentService(_getServiceAddress(COMPONENT())); 

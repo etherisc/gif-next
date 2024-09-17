@@ -7,23 +7,21 @@ import {IBundle} from "./module/IBundle.sol";
 import {IComponents} from "./module/IComponents.sol";
 import {IDistribution} from "./module/IDistribution.sol";
 import {IInstance} from "./IInstance.sol";
-import {IPolicy} from "./module/IPolicy.sol";
 import {IOracle} from "../oracle/IOracle.sol";
-import {IRisk} from "./module/IRisk.sol";
 
 import {Amount} from "../type/Amount.sol";
+import {BaseStore} from "./BaseStore.sol";
+import {Blocknumber} from "../type/Blocknumber.sol";
 import {Key32} from "../type/Key32.sol";
 import {NftId} from "../type/NftId.sol";
 import {ClaimId} from "../type/ClaimId.sol";
-import {ObjectType, BUNDLE, POOL, PREMIUM, PRODUCT, COMPONENT, DISTRIBUTOR, FEE} from "../type/ObjectType.sol";
+import {ObjectType, BUNDLE, POOL, COMPONENT, DISTRIBUTOR} from "../type/ObjectType.sol";
 import {RequestId} from "../type/RequestId.sol";
-import {RiskId} from "../type/RiskId.sol";
-import {StateId, KEEP_STATE} from "../type/StateId.sol";
+import {StateId} from "../type/StateId.sol";
 import {ReferralId} from "../type/Referral.sol";
 import {DistributorType} from "../type/DistributorType.sol";
 import {PayoutId} from "../type/PayoutId.sol";
 import {BalanceStore} from "./base/BalanceStore.sol";
-import {KeyValueStore} from "../shared/KeyValueStore.sol";
 import {ObjectCounter} from "./base/ObjectCounter.sol";
 import {ObjectLifecycle} from "./base/ObjectLifecycle.sol";
 
@@ -31,10 +29,35 @@ import {ObjectLifecycle} from "./base/ObjectLifecycle.sol";
 contract InstanceStore is
     AccessManagedUpgradeable, 
     BalanceStore,
-    KeyValueStore,
     ObjectCounter,
-    ObjectLifecycle
+    ObjectLifecycle,
+    BaseStore
 {
+
+    event LogProductStoreComponentInfoCreated(NftId componentNftId, StateId state, address createdby, address txOrigin);
+    event LogProductStoreComponentInfoUpdated(NftId componentNftId, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
+    event LogProductStorePoolInfoCreated(NftId poolNftId, StateId state, address createdBy, address txOrigin);
+    event LogProductStorePoolInfoUpdated(NftId poolNftId, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
+    event LogProductStoreDistributorTypeInfoCreated(DistributorType distributorType, StateId state, address createdBy, address txOrigin);
+    event LogProductStoreDistributorTypeInfoUpdated(DistributorType distributorType, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
+    event LogProductStoreDistributorInfoCreated(NftId distributorNftId, StateId state, address createdBy, address txOrigin);
+    event LogProductStoreDistributorInfoUpdated(NftId distributorNftId, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
+    event LogProductStoreReferralInfoCreated(ReferralId referralId, StateId state, address createdBy, address txOrigin);
+    event LogProductStoreReferralInfoUpdated(ReferralId referralId, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
+    event LogProductStoreBundleInfoCreated(NftId bundleNftId, StateId state, address createdBy, address txOrigin);
+    event LogProductStoreBundleInfoUpdated(NftId bundleNftId, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
+    event LogProductStoreRequestInfoCreated(RequestId requestId, StateId state, address createdBy, address txOrigin);
+    event LogProductStoreRequestInfoUpdated(RequestId requestId, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
+
+
+    mapping(Key32 => IComponents.ComponentInfo) private _components;
+    mapping(Key32 => IComponents.PoolInfo) private _pools;
+    mapping(Key32 => IDistribution.DistributorTypeInfo) private _distributorTypes;
+    mapping(Key32 => IDistribution.DistributorInfo) private _distributors;
+    mapping(Key32 => IDistribution.ReferralInfo) private _referrals;
+    mapping(Key32 => IBundle.BundleInfo) private _bundles;
+    mapping(Key32 => IOracle.RequestInfo) private _requests;
+
 
     /// @dev This initializer needs to be called from the instance itself.
     function initialize()
@@ -59,7 +82,12 @@ contract InstanceStore is
         restricted()
     {
         _registerBalanceTarget(componentNftId);
-        _create(_toNftKey32(componentNftId, COMPONENT()), abi.encode(componentInfo));
+        // _create(_toNftKey32(componentNftId, COMPONENT()), abi.encode(componentInfo));
+        Key32 key = _toNftKey32(componentNftId, COMPONENT());
+        _createMetadata(key);
+        _components[key] = componentInfo;
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogProductStoreComponentInfoCreated(componentNftId, getState(key), msg.sender, tx.origin);
     }
 
     function updateComponent(
@@ -70,28 +98,16 @@ contract InstanceStore is
         external 
         restricted()
     {
-        _update(_toNftKey32(componentNftId, COMPONENT()), abi.encode(componentInfo), newState);
+        // _update(_toNftKey32(componentNftId, COMPONENT()), abi.encode(componentInfo), newState);
+        Key32 key = _toNftKey32(componentNftId, COMPONENT());
+        (Blocknumber updatedIn, StateId oldState) = _updateState(key, newState);
+        _components[key] = componentInfo;
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogProductStoreComponentInfoUpdated(componentNftId, oldState, newState, msg.sender, tx.origin, updatedIn);
     }
 
-    //--- Product -----------------------------------------------------------//
-
-    function createProduct(NftId productNftId, IComponents.ProductInfo memory info) external restricted() {
-        _create(_toNftKey32(productNftId, PRODUCT()), abi.encode(info));
-    }
-
-    function updateProduct(NftId productNftId, IComponents.ProductInfo memory info, StateId newState) external restricted() {
-        _update(_toNftKey32(productNftId, PRODUCT()), abi.encode(info), newState);
-    }
-
-
-    //--- Fee -----------------------------------------------------------//
-    function createFee(NftId productNftId, IComponents.FeeInfo memory info) external restricted() {
-        _create(_toNftKey32(productNftId, FEE()), abi.encode(info));
-    }
-
-    // Fee only has one state, so no change change possible
-    function updateFee(NftId productNftId, IComponents.FeeInfo memory info) external restricted() {
-        _update(_toNftKey32(productNftId, FEE()), abi.encode(info), KEEP_STATE());
+    function getComponentInfo(NftId componentNftId) external view returns (IComponents.ComponentInfo memory componentInfo) {
+        return _components[_toNftKey32(componentNftId, COMPONENT())];
     }
 
     //--- Pool --------------------------------------------------------------//
@@ -103,128 +119,167 @@ contract InstanceStore is
         external 
         restricted()
     {
-        _create(_toNftKey32(poolNftId, POOL()), abi.encode(info));
+        Key32 key = _toNftKey32(poolNftId, POOL());
+        _createMetadata(key);
+        _pools[key] = info;
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogProductStorePoolInfoCreated(poolNftId, getState(key), msg.sender, tx.origin);
     }
 
     function updatePool(NftId poolNftId, IComponents.PoolInfo memory info, StateId newState) external restricted() {
-        _update(_toNftKey32(poolNftId, POOL()), abi.encode(info), newState);
+        Key32 key = _toNftKey32(poolNftId, POOL());
+        (Blocknumber updatedIn, StateId oldState) = _updateState(key, newState);
+        _pools[key] = info;
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogProductStorePoolInfoUpdated(poolNftId, oldState, newState, msg.sender, tx.origin, updatedIn);
+    }
+
+    function getPoolInfo(NftId poolNftId) external view returns (IComponents.PoolInfo memory info) {
+        return _pools[_toNftKey32(poolNftId, POOL())];
     }
 
     //--- DistributorType ---------------------------------------------------//
     function createDistributorType(DistributorType distributorType, IDistribution.DistributorTypeInfo memory info) external restricted() {
-        _create(distributorType.toKey32(), abi.encode(info));
+        Key32 key = distributorType.toKey32();
+        _createMetadata(key);
+        _distributorTypes[key] = info;
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogProductStoreDistributorTypeInfoCreated(distributorType, getState(key), msg.sender, tx.origin);
     }
 
     function updateDistributorType(DistributorType distributorType, IDistribution.DistributorTypeInfo memory info, StateId newState) external restricted() {
-        _update(distributorType.toKey32(), abi.encode(info), newState);
+        Key32 key = distributorType.toKey32();
+        (Blocknumber updatedIn, StateId oldState) = _updateState(key, newState);
+        _distributorTypes[key] = info;
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogProductStoreDistributorTypeInfoUpdated(distributorType, oldState, newState, msg.sender, tx.origin, updatedIn);
     }
 
     function updateDistributorTypeState(DistributorType distributorType, StateId newState) external restricted() {
-        _updateState(distributorType.toKey32(), newState);
+        Key32 key = distributorType.toKey32();
+        (Blocknumber updatedIn, StateId oldState) = _updateState(key, newState);
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogProductStoreDistributorTypeInfoUpdated(distributorType, oldState, newState, msg.sender, tx.origin, updatedIn);
+    }
+
+    function getDistributorTypeInfo(DistributorType distributorType) external view returns (IDistribution.DistributorTypeInfo memory info) {
+        return _distributorTypes[distributorType.toKey32()];
     }
 
     //--- Distributor -------------------------------------------------------//
     function createDistributor(NftId distributorNftId, IDistribution.DistributorInfo memory info) external restricted() {
         _registerBalanceTarget(distributorNftId);
-        _create(_toNftKey32(distributorNftId, DISTRIBUTOR()), abi.encode(info));
+        Key32 key = _toNftKey32(distributorNftId, DISTRIBUTOR());
+        _createMetadata(key);
+        _distributors[key] = info;
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogProductStoreDistributorInfoCreated(distributorNftId, getState(key), msg.sender, tx.origin);
     }
 
     function updateDistributor(NftId distributorNftId, IDistribution.DistributorInfo memory info, StateId newState) external restricted() {
-        _update(_toNftKey32(distributorNftId, DISTRIBUTOR()), abi.encode(info), newState);
+        Key32 key = _toNftKey32(distributorNftId, DISTRIBUTOR());
+        (Blocknumber updatedIn, StateId oldState) = _updateState(key, newState);
+        _distributors[key] = info;
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogProductStoreDistributorInfoUpdated(distributorNftId, oldState, newState, msg.sender, tx.origin, updatedIn);
     }
 
     function updateDistributorState(NftId distributorNftId, StateId newState) external restricted() {
-        _updateState(_toNftKey32(distributorNftId, DISTRIBUTOR()), newState);
+        Key32 key = _toNftKey32(distributorNftId, DISTRIBUTOR());
+        (Blocknumber updatedIn, StateId oldState) = _updateState(key, newState);
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogProductStoreDistributorInfoUpdated(distributorNftId, oldState, newState, msg.sender, tx.origin, updatedIn);
+    }
+
+    function getDistributorInfo(NftId distributorNftId) external view returns (IDistribution.DistributorInfo memory info) {
+        return _distributors[_toNftKey32(distributorNftId, DISTRIBUTOR())];
     }
 
     //--- Referral ----------------------------------------------------------//
     function createReferral(ReferralId referralId, IDistribution.ReferralInfo memory referralInfo) external restricted() {
-        _create(referralId.toKey32(), abi.encode(referralInfo));
+        Key32 key = referralId.toKey32();
+        _createMetadata(key);
+        _referrals[key] = referralInfo;
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogProductStoreReferralInfoCreated(referralId, getState(key), msg.sender, tx.origin);
     }
 
     function updateReferral(ReferralId referralId, IDistribution.ReferralInfo memory referralInfo, StateId newState) external restricted() {
-        _update(referralId.toKey32(), abi.encode(referralInfo), newState);
+        Key32 key = referralId.toKey32();
+        (Blocknumber updatedIn, StateId oldState) = _updateState(key, newState);
+        _referrals[key] = referralInfo;
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogProductStoreReferralInfoUpdated(referralId, oldState, newState, msg.sender, tx.origin, updatedIn);
     }
 
     function updateReferralState(ReferralId referralId, StateId newState) external restricted() {
-        _updateState(referralId.toKey32(), newState);
+        Key32 key = referralId.toKey32();
+        (Blocknumber updatedIn, StateId oldState) = _updateState(key, newState);
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogProductStoreReferralInfoUpdated(referralId, oldState, newState, msg.sender, tx.origin, updatedIn);
+    }
+
+    function getReferralInfo(ReferralId referralId) external view returns (IDistribution.ReferralInfo memory referralInfo) {
+        return _referrals[referralId.toKey32()];
     }
 
     //--- Bundle ------------------------------------------------------------//
     function createBundle(NftId bundleNftId, IBundle.BundleInfo memory bundle) external restricted() {
         _registerBalanceTarget(bundleNftId);
-        _create(_toNftKey32(bundleNftId, BUNDLE()), abi.encode(bundle));
+        Key32 key = _toNftKey32(bundleNftId, BUNDLE());
+        _createMetadata(key);
+        _bundles[key] = bundle;
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogProductStoreBundleInfoCreated(bundleNftId, getState(key), msg.sender, tx.origin);
     }
 
     function updateBundle(NftId bundleNftId, IBundle.BundleInfo memory bundle, StateId newState) external restricted() {
-        _update(_toNftKey32(bundleNftId, BUNDLE()), abi.encode(bundle), newState);
+        Key32 key = _toNftKey32(bundleNftId, BUNDLE());
+        (Blocknumber updatedIn, StateId oldState) = _updateState(key, newState);
+        _bundles[key] = bundle;
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogProductStoreBundleInfoUpdated(bundleNftId, oldState, newState, msg.sender, tx.origin, updatedIn);
     }
 
     function updateBundleState(NftId bundleNftId, StateId newState) external restricted() {
-        _updateState(_toNftKey32(bundleNftId, BUNDLE()), newState);
+        Key32 key = _toNftKey32(bundleNftId, BUNDLE());
+        (Blocknumber updatedIn, StateId oldState) = _updateState(key, newState);
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogProductStoreBundleInfoUpdated(bundleNftId, oldState, newState, msg.sender, tx.origin, updatedIn);
     }
 
-    //--- Risk --------------------------------------------------------------//
-    function createRisk(RiskId riskId, IRisk.RiskInfo memory risk) external restricted() {
-        _create(riskId.toKey32(), abi.encode(risk));
-    }
-
-    function updateRisk(RiskId riskId, IRisk.RiskInfo memory risk, StateId newState) external restricted() {
-        _update(riskId.toKey32(), abi.encode(risk), newState);
-    }
-
-    function updateRiskState(RiskId riskId, StateId newState) external restricted() {
-        _updateState(riskId.toKey32(), newState);
+    function getBundleInfo(NftId bundleNftId) external view returns (IBundle.BundleInfo memory bundle) {
+        return _bundles[_toNftKey32(bundleNftId, BUNDLE())];
     }
     
-    //--- Premium (Policy) ----------------------------------------------//
-    function createPremium(NftId policyNftId, IPolicy.PremiumInfo memory premium) external restricted() {
-        _create(_toNftKey32(policyNftId, PREMIUM()), abi.encode(premium));
-    }
-
-    function updatePremiumState(NftId policyNftId, StateId newState) external restricted() {
-        _updateState(_toNftKey32(policyNftId, PREMIUM()), newState);
-    }
-
-    //--- Claim -------------------------------------------------------------//
-    function createClaim(NftId policyNftId, ClaimId claimId, IPolicy.ClaimInfo memory claim) external restricted() {
-        _create(_toClaimKey32(policyNftId, claimId), abi.encode(claim));
-    }
-
-    function updateClaim(NftId policyNftId, ClaimId claimId, IPolicy.ClaimInfo memory claim, StateId newState) external restricted() {
-        _update(_toClaimKey32(policyNftId, claimId), abi.encode(claim), newState);
-    }
-
-    function updateClaimState(NftId policyNftId, ClaimId claimId, StateId newState) external restricted() {
-        _updateState(_toClaimKey32(policyNftId, claimId), newState);
-    }
-
-    //--- Payout ------------------------------------------------------------//
-    function createPayout(NftId policyNftId, PayoutId payoutId, IPolicy.PayoutInfo memory payout) external restricted() {
-        _create(_toPayoutKey32(policyNftId, payoutId), abi.encode(payout));
-    }
-
-    function updatePayout(NftId policyNftId, PayoutId payoutId, IPolicy.PayoutInfo memory payout, StateId newState) external restricted() {
-        _update(_toPayoutKey32(policyNftId, payoutId), abi.encode(payout), newState);
-    }
-
-    function updatePayoutState(NftId policyNftId, PayoutId payoutId, StateId newState) external restricted() {
-        _updateState(_toPayoutKey32(policyNftId, payoutId), newState);
-    }
-
     //--- Request -----------------------------------------------------------//
 
     function createRequest(IOracle.RequestInfo memory request) external restricted() returns (RequestId requestId) {
         requestId = _createNextRequestId();
-        _create(requestId.toKey32(), abi.encode(request));
+        Key32 key = requestId.toKey32();
+        _createMetadata(key);
+        _requests[key] = request;
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogProductStoreRequestInfoCreated(requestId, getState(key), msg.sender, tx.origin);
     }
 
     function updateRequest(RequestId requestId, IOracle.RequestInfo memory request, StateId newState) external restricted() {
-        _update(requestId.toKey32(), abi.encode(request), newState);
+        Key32 key = requestId.toKey32();
+        (Blocknumber updatedIn, StateId oldState) = _updateState(key, newState);
+        _requests[key] = request;
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogProductStoreRequestInfoUpdated(requestId, oldState, newState, msg.sender, tx.origin, updatedIn);
     }
 
     function updateRequestState(RequestId requestId, StateId newState) external restricted() {
-        _updateState(requestId.toKey32(), newState);
+        Key32 key = requestId.toKey32();
+        (Blocknumber updatedIn, StateId oldState) = _updateState(key, newState);
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogProductStoreRequestInfoUpdated(requestId, oldState, newState, msg.sender, tx.origin, updatedIn);
+    }
+
+    function getRequestInfo(RequestId requestId) external view returns (IOracle.RequestInfo memory request) {
+        return _requests[requestId.toKey32()];
     }
 
     //--- balance and fee management functions ------------------------------//

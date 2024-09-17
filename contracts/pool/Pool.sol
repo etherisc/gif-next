@@ -129,8 +129,7 @@ abstract contract Pool is
         string memory name,
         IComponents.PoolInfo memory poolInfo,
         IAuthorization authorization,
-        address initialOwner,
-        bytes memory componentData // component specifidc data 
+        address initialOwner
     )
         internal
         virtual
@@ -143,8 +142,7 @@ abstract contract Pool is
             POOL(), 
             authorization, 
             poolInfo.isInterceptingBundleTransfers, 
-            initialOwner, 
-            componentData);
+            initialOwner);
 
         PoolStorage storage $ = _getPoolStorage();
 

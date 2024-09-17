@@ -26,6 +26,7 @@ import {Fee, FeeLib} from "../type/Fee.sol";
 import {KEEP_STATE} from "../type/StateId.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
 import {ObjectType, ACCOUNTING, REGISTRY, COMPONENT, DISTRIBUTION, INSTANCE, ORACLE, POOL, PRODUCT, STAKING} from "../type/ObjectType.sol";
+import {ProductStore} from "../instance/ProductStore.sol";
 import {Service} from "../shared/Service.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {TokenHandlerDeployerLib} from "../shared/TokenHandlerDeployerLib.sol";
@@ -283,14 +284,14 @@ contract ComponentService is
         }
         
         if(feesChanged) {
-            instance.getInstanceStore().updateFee(productNftId, feeInfo);
+            instance.getProductStore().updateFee(productNftId, feeInfo);
             emit LogComponentServiceProductFeesUpdated(productNftId);
         }
     }
 
 
     function _createProduct(
-        InstanceStore instanceStore,
+        ProductStore productStore,
         NftId productNftId,
         address productAddress
     )
@@ -307,11 +308,11 @@ contract ComponentService is
         initialProductInfo.oracleNftId = new NftId[](initialProductInfo.expectedNumberOfOracles);
 
         // create info
-        instanceStore.createProduct(
+        productStore.createProduct(
             productNftId, 
             initialProductInfo);
 
-        instanceStore.createFee(
+        productStore.createFee(
             productNftId, 
             product.getInitialFeeInfo());
     }
@@ -320,7 +321,7 @@ contract ComponentService is
 
     /// @dev registers the sending component as a distribution component
     function _createDistribution(
-        InstanceStore instanceStore,
+        ProductStore productStore,
         NftId productNftId,
         NftId distributionNftId,
         IComponents.ProductInfo memory productInfo
@@ -339,7 +340,7 @@ contract ComponentService is
 
         // set distribution in product info
         productInfo.distributionNftId = distributionNftId;
-        instanceStore.updateProduct(productNftId, productInfo, KEEP_STATE());
+        productStore.updateProduct(productNftId, productInfo, KEEP_STATE());
     }
 
 
@@ -371,7 +372,7 @@ contract ComponentService is
         }
         
         if(feesChanged) {
-            instance.getInstanceStore().updateFee(productNftId, feeInfo);
+            instance.getProductStore().updateFee(productNftId, feeInfo);
             emit LogComponentServiceDistributionFeesUpdated(distributionNftId);
         }
     }
@@ -379,7 +380,7 @@ contract ComponentService is
     //-------- oracle -------------------------------------------------------//
 
     function _createOracle(
-        InstanceStore instanceStore,
+        ProductStore productStore,
         NftId productNftId,
         NftId oracleNftId,
         IComponents.ProductInfo memory productInfo
@@ -398,13 +399,14 @@ contract ComponentService is
         // update/add oracle to product info
         productInfo.oracleNftId[productInfo.numberOfOracles] = oracleNftId;
         productInfo.numberOfOracles++;
-        instanceStore.updateProduct(productNftId, productInfo, KEEP_STATE());
+        productStore.updateProduct(productNftId, productInfo, KEEP_STATE());
     }
 
     //-------- pool ---------------------------------------------------------//
 
     function _createPool(
         InstanceStore instanceStore,
+        ProductStore productStore,
         NftId productNftId,
         NftId poolNftId,
         address componentAddress,
@@ -427,7 +429,7 @@ contract ComponentService is
 
         // update pool in product info
         productInfo.poolNftId = poolNftId;
-        instanceStore.updateProduct(productNftId, productInfo, KEEP_STATE());
+        productStore.updateProduct(productNftId, productInfo, KEEP_STATE());
     }
 
 
@@ -468,7 +470,7 @@ contract ComponentService is
         }
         
         if(feesChanged) {
-            instance.getInstanceStore().updateFee(productNftId, feeInfo);
+            instance.getProductStore().updateFee(productNftId, feeInfo);
             emit LogComponentServicePoolFeesUpdated(poolNftId);
         }
     }
@@ -493,9 +495,7 @@ contract ComponentService is
             componentAddress,
             parentNftId);
 
-        InstanceAdmin instanceAdmin = instance.getInstanceAdmin();
         InstanceStore instanceStore = instance.getInstanceStore();
-        InstanceReader instanceReader = instance.getInstanceReader();
         ObjectType componentType = objectInfo.objectType;
 
         if(componentType == PRODUCT()) {
@@ -505,7 +505,7 @@ contract ComponentService is
                 objectInfo.initialOwner).nftId;
 
             // create product info in instance store
-            _createProduct(instanceStore, componentNftId, componentAddress);
+            _createProduct(instance.getProductStore(), componentNftId, componentAddress);
         } else {
             // register non product component with registry
             componentNftId = _registryService.registerProductLinkedComponent(
@@ -513,15 +513,17 @@ contract ComponentService is
                 objectInfo.objectType, 
                 objectInfo.initialOwner).nftId;
 
+            InstanceReader instanceReader = instance.getInstanceReader();
+
             // create non product component info in instance store
             NftId productNftId = parentNftId;
             IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
             if(componentType == POOL()) {
-                _createPool(instanceStore, productNftId, componentNftId, componentAddress, productInfo);
+                _createPool(instanceStore, instance.getProductStore(), productNftId, componentNftId, componentAddress, productInfo);
             } else if(componentType == DISTRIBUTION()) {
-                _createDistribution(instanceStore, productNftId, componentNftId, productInfo);
+                _createDistribution(instance.getProductStore(), productNftId, componentNftId, productInfo);
             } else if(componentType == ORACLE()) {
-                _createOracle(instanceStore, productNftId, componentNftId, productInfo);
+                _createOracle(instance.getProductStore(), productNftId, componentNftId, productInfo);
             } else {
                 revert ErrorComponentServiceComponentTypeNotSupported(componentAddress, componentType);
             }
@@ -532,6 +534,8 @@ contract ComponentService is
 
         _checkToken(instance, token);
 
+        InstanceAdmin instanceAdmin = instance.getInstanceAdmin();
+        
         // deploy and wire token handler
         IComponents.ComponentInfo memory componentInfo = component.getInitialComponentInfo();
         componentInfo.tokenHandler = TokenHandlerDeployerLib.deployTokenHandler(

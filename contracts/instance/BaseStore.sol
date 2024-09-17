@@ -49,23 +49,23 @@ abstract contract BaseStore is
         StateId state
     )
         internal
-        returns (Blocknumber lastUpdatedIn)
+        returns (Blocknumber lastUpdatedIn, StateId oldState)
     {
         if (state.eqz()) {
             revert ErrorBaseStoreStateZero(key32);
         }
 
         Metadata storage metadata = _metadata[key32];
-        StateId stateOld = metadata.state;
+        oldState = metadata.state;
         lastUpdatedIn = metadata.updatedIn;
 
-        if (stateOld.eqz()) {
+        if (oldState.eqz()) {
             revert ErrorBaseStoreNotExisting(key32);
         }
 
         // update state 
         if(state != KEEP_STATE()) {
-            checkTransition(stateOld, metadata.objectType, stateOld, state);
+            checkTransition(oldState, metadata.objectType, oldState, state);
             metadata.state = state;
 
             // solhint-disable-next-line avoid-tx-origin
