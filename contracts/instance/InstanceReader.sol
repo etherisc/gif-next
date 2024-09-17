@@ -147,8 +147,6 @@ contract InstanceReader {
     /// To allow a component to collect funds from an account, it has to create a corresponding allowance from the
     /// account to the address of the component's token handler.
     function getTokenHandler(NftId componentNftId) public view returns (TokenHandler tokenHandler) {
-        // (bytes memory data, bool success) = _getData(_toComponentKey(componentNftId));
-        // if (success) { return abi.decode(data, (IComponents.ComponentInfo)).tokenHandler; }
         IComponents.ComponentInfo memory info = _store.getComponentInfo(componentNftId);
         if(address(info.tokenHandler) != address(0)) {
             return info.tokenHandler;
