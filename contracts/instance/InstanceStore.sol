@@ -100,8 +100,7 @@ contract InstanceStore is
     {
         // _update(_toNftKey32(componentNftId, COMPONENT()), abi.encode(componentInfo), newState);
         Key32 key = _toNftKey32(componentNftId, COMPONENT());
-        StateId oldState = getState(key);
-        Blocknumber updatedIn = _updateState(key, newState);
+        (Blocknumber updatedIn, StateId oldState) = _updateState(key, newState);
         _components[key] = componentInfo;
         // solhint-disable-next-line avoid-tx-origin
         emit LogProductStoreComponentInfoUpdated(componentNftId, oldState, newState, msg.sender, tx.origin, updatedIn);
@@ -129,8 +128,7 @@ contract InstanceStore is
 
     function updatePool(NftId poolNftId, IComponents.PoolInfo memory info, StateId newState) external restricted() {
         Key32 key = _toNftKey32(poolNftId, POOL());
-        StateId oldState = getState(key);
-        Blocknumber updatedIn = _updateState(key, newState);
+        (Blocknumber updatedIn, StateId oldState) = _updateState(key, newState);
         _pools[key] = info;
         // solhint-disable-next-line avoid-tx-origin
         emit LogProductStorePoolInfoUpdated(poolNftId, oldState, newState, msg.sender, tx.origin, updatedIn);
@@ -151,8 +149,7 @@ contract InstanceStore is
 
     function updateDistributorType(DistributorType distributorType, IDistribution.DistributorTypeInfo memory info, StateId newState) external restricted() {
         Key32 key = distributorType.toKey32();
-        StateId oldState = getState(key);
-        Blocknumber updatedIn = _updateState(key, newState);
+        (Blocknumber updatedIn, StateId oldState) = _updateState(key, newState);
         _distributorTypes[key] = info;
         // solhint-disable-next-line avoid-tx-origin
         emit LogProductStoreDistributorTypeInfoUpdated(distributorType, oldState, newState, msg.sender, tx.origin, updatedIn);
@@ -160,8 +157,7 @@ contract InstanceStore is
 
     function updateDistributorTypeState(DistributorType distributorType, StateId newState) external restricted() {
         Key32 key = distributorType.toKey32();
-        StateId oldState = getState(key);
-        Blocknumber updatedIn = _updateState(key, newState);
+        (Blocknumber updatedIn, StateId oldState) = _updateState(key, newState);
         // solhint-disable-next-line avoid-tx-origin
         emit LogProductStoreDistributorTypeInfoUpdated(distributorType, oldState, newState, msg.sender, tx.origin, updatedIn);
     }
@@ -182,8 +178,7 @@ contract InstanceStore is
 
     function updateDistributor(NftId distributorNftId, IDistribution.DistributorInfo memory info, StateId newState) external restricted() {
         Key32 key = _toNftKey32(distributorNftId, DISTRIBUTOR());
-        StateId oldState = getState(key);
-        Blocknumber updatedIn = _updateState(key, newState);
+        (Blocknumber updatedIn, StateId oldState) = _updateState(key, newState);
         _distributors[key] = info;
         // solhint-disable-next-line avoid-tx-origin
         emit LogProductStoreDistributorInfoUpdated(distributorNftId, oldState, newState, msg.sender, tx.origin, updatedIn);
@@ -191,8 +186,7 @@ contract InstanceStore is
 
     function updateDistributorState(NftId distributorNftId, StateId newState) external restricted() {
         Key32 key = _toNftKey32(distributorNftId, DISTRIBUTOR());
-        StateId oldState = getState(key);
-        Blocknumber updatedIn = _updateState(key, newState);
+        (Blocknumber updatedIn, StateId oldState) = _updateState(key, newState);
         // solhint-disable-next-line avoid-tx-origin
         emit LogProductStoreDistributorInfoUpdated(distributorNftId, oldState, newState, msg.sender, tx.origin, updatedIn);
     }
@@ -212,8 +206,7 @@ contract InstanceStore is
 
     function updateReferral(ReferralId referralId, IDistribution.ReferralInfo memory referralInfo, StateId newState) external restricted() {
         Key32 key = referralId.toKey32();
-        StateId oldState = getState(key);
-        Blocknumber updatedIn = _updateState(key, newState);
+        (Blocknumber updatedIn, StateId oldState) = _updateState(key, newState);
         _referrals[key] = referralInfo;
         // solhint-disable-next-line avoid-tx-origin
         emit LogProductStoreReferralInfoUpdated(referralId, oldState, newState, msg.sender, tx.origin, updatedIn);
@@ -221,8 +214,7 @@ contract InstanceStore is
 
     function updateReferralState(ReferralId referralId, StateId newState) external restricted() {
         Key32 key = referralId.toKey32();
-        StateId oldState = getState(key);
-        Blocknumber updatedIn = _updateState(key, newState);
+        (Blocknumber updatedIn, StateId oldState) = _updateState(key, newState);
         // solhint-disable-next-line avoid-tx-origin
         emit LogProductStoreReferralInfoUpdated(referralId, oldState, newState, msg.sender, tx.origin, updatedIn);
     }
@@ -243,8 +235,7 @@ contract InstanceStore is
 
     function updateBundle(NftId bundleNftId, IBundle.BundleInfo memory bundle, StateId newState) external restricted() {
         Key32 key = _toNftKey32(bundleNftId, BUNDLE());
-        StateId oldState = getState(key);
-        Blocknumber updatedIn = _updateState(key, newState);
+        (Blocknumber updatedIn, StateId oldState) = _updateState(key, newState);
         _bundles[key] = bundle;
         // solhint-disable-next-line avoid-tx-origin
         emit LogProductStoreBundleInfoUpdated(bundleNftId, oldState, newState, msg.sender, tx.origin, updatedIn);
@@ -252,8 +243,7 @@ contract InstanceStore is
 
     function updateBundleState(NftId bundleNftId, StateId newState) external restricted() {
         Key32 key = _toNftKey32(bundleNftId, BUNDLE());
-        StateId oldState = getState(key);
-        Blocknumber updatedIn = _updateState(key, newState);
+        (Blocknumber updatedIn, StateId oldState) = _updateState(key, newState);
         // solhint-disable-next-line avoid-tx-origin
         emit LogProductStoreBundleInfoUpdated(bundleNftId, oldState, newState, msg.sender, tx.origin, updatedIn);
     }
@@ -275,8 +265,7 @@ contract InstanceStore is
 
     function updateRequest(RequestId requestId, IOracle.RequestInfo memory request, StateId newState) external restricted() {
         Key32 key = requestId.toKey32();
-        StateId oldState = getState(key);
-        Blocknumber updatedIn = _updateState(key, newState);
+        (Blocknumber updatedIn, StateId oldState) = _updateState(key, newState);
         _requests[key] = request;
         // solhint-disable-next-line avoid-tx-origin
         emit LogProductStoreRequestInfoUpdated(requestId, oldState, newState, msg.sender, tx.origin, updatedIn);
@@ -284,8 +273,7 @@ contract InstanceStore is
 
     function updateRequestState(RequestId requestId, StateId newState) external restricted() {
         Key32 key = requestId.toKey32();
-        StateId oldState = getState(key);
-        Blocknumber updatedIn = _updateState(key, newState);
+        (Blocknumber updatedIn, StateId oldState) = _updateState(key, newState);
         // solhint-disable-next-line avoid-tx-origin
         emit LogProductStoreRequestInfoUpdated(requestId, oldState, newState, msg.sender, tx.origin, updatedIn);
     }

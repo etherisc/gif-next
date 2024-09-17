@@ -79,8 +79,7 @@ contract ProductStore is
 
     function updateProduct(NftId productNftId, IComponents.ProductInfo memory info, StateId newState) external restricted() {
         Key32 key = _toNftKey32(productNftId, PRODUCT());
-        StateId oldState = getState(key);
-        Blocknumber lastUpdatedIn = _updateState(key, newState);
+        (Blocknumber lastUpdatedIn, StateId oldState) = _updateState(key, newState);
         _products[key] = info;
         // solhint-disable-next-line avoid-tx-origin
         emit LogProductStoreProductInfoUpdated(productNftId, oldState, newState, msg.sender, tx.origin, lastUpdatedIn);
@@ -103,7 +102,7 @@ contract ProductStore is
     // Fee only has one state, so no change change possible
     function updateFee(NftId productNftId, IComponents.FeeInfo memory info) external restricted() {
         Key32 key = _toNftKey32(productNftId, FEE());
-        Blocknumber lastUpdatedIn = _updateState(key, KEEP_STATE());
+        (Blocknumber lastUpdatedIn,) = _updateState(key, KEEP_STATE());
         _fees[key] = info;
         // solhint-disable-next-line avoid-tx-origin
         emit LogProductStoreFeeInfoUpdated(productNftId, msg.sender, tx.origin, lastUpdatedIn);
@@ -124,8 +123,7 @@ contract ProductStore is
 
     function updateRisk(RiskId riskId, IRisk.RiskInfo memory info, StateId newState) external restricted() {
         Key32 key = riskId.toKey32();
-        StateId oldState = getState(key);
-        Blocknumber lastUpdatedIn = _updateState(key, newState);
+        (Blocknumber lastUpdatedIn, StateId oldState) = _updateState(key, newState);
         _risks[key] = info;
         // solhint-disable-next-line avoid-tx-origin
         emit LogProductStoreRiskInfoUpdated(riskId, oldState, newState, msg.sender, tx.origin, lastUpdatedIn);
@@ -134,8 +132,7 @@ contract ProductStore is
     function updateRiskState(RiskId riskId, StateId newState) external restricted() {
         // _updateState(riskId.toKey32(), newState);
         Key32 key = riskId.toKey32();
-        StateId oldState = getState(key);
-        Blocknumber lastUpdatedIn = _updateState(key, newState);
+        (Blocknumber lastUpdatedIn, StateId oldState) = _updateState(key, newState);
         // solhint-disable-next-line avoid-tx-origin
         emit LogProductStoreRiskInfoUpdated(riskId, oldState, newState, msg.sender, tx.origin, lastUpdatedIn);
     }
@@ -157,8 +154,7 @@ contract ProductStore is
 
     function updateApplication(NftId applicationNftId, IPolicy.PolicyInfo memory policy, StateId newState) external restricted() {
         Key32 key = _toNftKey32(applicationNftId, POLICY());
-        StateId oldState = getState(key);
-        Blocknumber lastUpdatedIn = _updateState(key, newState);
+        (Blocknumber lastUpdatedIn, StateId oldState) = _updateState(key, newState);
         _policies[key] = policy;
         // solhint-disable-next-line avoid-tx-origin
         emit LogProductStorePolicyInfoUpdated(applicationNftId, oldState, newState, msg.sender, tx.origin, lastUpdatedIn);
@@ -166,8 +162,7 @@ contract ProductStore is
 
     function updateApplicationState(NftId applicationNftId, StateId newState) external restricted() {
         Key32 key = _toNftKey32(applicationNftId, POLICY());
-        StateId oldState = getState(key);
-        Blocknumber lastUpdatedIn = _updateState(key, newState);
+        (Blocknumber lastUpdatedIn, StateId oldState) = _updateState(key, newState);
         // solhint-disable-next-line avoid-tx-origin
         emit LogProductStorePolicyInfoUpdated(applicationNftId, oldState, newState, msg.sender, tx.origin, lastUpdatedIn);
     }
@@ -176,8 +171,7 @@ contract ProductStore is
 
     function updatePolicy(NftId policyNftId, IPolicy.PolicyInfo memory policy, StateId newState) external restricted() {
         Key32 key = _toNftKey32(policyNftId, POLICY());
-        StateId oldState = getState(key);
-        Blocknumber lastUpdatedIn = _updateState(key, newState);
+        (Blocknumber lastUpdatedIn, StateId oldState) = _updateState(key, newState);
         _policies[key] = policy;
         // solhint-disable-next-line avoid-tx-origin
         emit LogProductStorePolicyInfoUpdated(policyNftId, oldState, newState, msg.sender, tx.origin, lastUpdatedIn);
@@ -185,8 +179,7 @@ contract ProductStore is
 
     function updatePolicyClaims(NftId policyNftId, IPolicy.PolicyInfo memory policy, StateId newState) external restricted() {
         Key32 key = _toNftKey32(policyNftId, POLICY());
-        StateId oldState = getState(key);
-        Blocknumber lastUpdatedIn = _updateState(key, newState);
+        (Blocknumber lastUpdatedIn, StateId oldState) = _updateState(key, newState);
         _policies[key] = policy;
         // solhint-disable-next-line avoid-tx-origin
         emit LogProductStorePolicyInfoUpdated(policyNftId, oldState, newState, msg.sender, tx.origin, lastUpdatedIn);
@@ -194,8 +187,7 @@ contract ProductStore is
 
     function updatePolicyState(NftId policyNftId, StateId newState) external restricted() {
         Key32 key = _toNftKey32(policyNftId, POLICY());
-        StateId oldState = getState(key);
-        Blocknumber lastUpdatedIn = _updateState(key, newState);
+        (Blocknumber lastUpdatedIn, StateId oldState) = _updateState(key, newState);
         // solhint-disable-next-line avoid-tx-origin
         emit LogProductStorePolicyInfoUpdated(policyNftId, oldState, newState, msg.sender, tx.origin, lastUpdatedIn);
     }
@@ -216,8 +208,7 @@ contract ProductStore is
 
     function updatePremiumState(NftId policyNftId, StateId newState) external restricted() {
         Key32 key = _toNftKey32(policyNftId, PREMIUM());
-        StateId oldState = getState(key);
-        Blocknumber lastUpdatedIn = _updateState(key, newState);
+        (Blocknumber lastUpdatedIn, StateId oldState) = _updateState(key, newState);
         // solhint-disable-next-line avoid-tx-origin
         emit LogProductStorePremiumInfoUpdated(policyNftId, oldState, newState, msg.sender, tx.origin, lastUpdatedIn);
     }
@@ -238,8 +229,7 @@ contract ProductStore is
 
     function updateClaim(NftId policyNftId, ClaimId claimId, IPolicy.ClaimInfo memory claim, StateId newState) external restricted() {
         Key32 key = _toClaimKey32(policyNftId, claimId);
-        StateId oldState = getState(key);
-        Blocknumber lastUpdatedIn = _updateState(key, newState);
+        (Blocknumber lastUpdatedIn, StateId oldState) = _updateState(key, newState);
         _claims[key] = claim;
         // solhint-disable-next-line avoid-tx-origin
         emit LogProductStoreClaimInfoUpdated(policyNftId, claimId, oldState, newState, msg.sender, tx.origin, lastUpdatedIn);
@@ -247,8 +237,7 @@ contract ProductStore is
 
     function updateClaimState(NftId policyNftId, ClaimId claimId, StateId newState) external restricted() {
         Key32 key = _toClaimKey32(policyNftId, claimId);
-        StateId oldState = getState(key);
-        Blocknumber lastUpdatedIn = _updateState(key, newState);
+        (Blocknumber lastUpdatedIn, StateId oldState) = _updateState(key, newState);
         // solhint-disable-next-line avoid-tx-origin
         emit LogProductStoreClaimInfoUpdated(policyNftId, claimId, oldState, newState, msg.sender, tx.origin, lastUpdatedIn);
     }
@@ -269,8 +258,7 @@ contract ProductStore is
 
     function updatePayout(NftId policyNftId, PayoutId payoutId, IPolicy.PayoutInfo memory payout, StateId newState) external restricted() {
         Key32 key = _toPayoutKey32(policyNftId, payoutId);
-        StateId oldState = getState(key);
-        Blocknumber lastUpdatedIn = _updateState(key, newState);
+        (Blocknumber lastUpdatedIn, StateId oldState) = _updateState(key, newState);
         _payouts[key] = payout;
         // solhint-disable-next-line avoid-tx-origin
         emit LogProductStorePayoutInfoUpdated(policyNftId, payoutId, oldState, newState, msg.sender, tx.origin, lastUpdatedIn);
@@ -278,8 +266,7 @@ contract ProductStore is
 
     function updatePayoutState(NftId policyNftId, PayoutId payoutId, StateId newState) external restricted() {
         Key32 key = _toPayoutKey32(policyNftId, payoutId);
-        StateId oldState = getState(key);
-        Blocknumber lastUpdatedIn = _updateState(key, newState);
+        (Blocknumber lastUpdatedIn, StateId oldState) = _updateState(key, newState);
         // solhint-disable-next-line avoid-tx-origin
         emit LogProductStorePayoutInfoUpdated(policyNftId, payoutId, oldState, newState, msg.sender, tx.origin, lastUpdatedIn);
     }
