@@ -93,7 +93,7 @@ export async function deployProxyManagerContract(
 
     await prepareVerificationData(
         "UpgradableProxyWithAdmin", 
-        deployment.address, 
+        proxyAddress, 
         [
             serviceImplAddress,
             deployment.address,
