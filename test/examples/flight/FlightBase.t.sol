@@ -172,8 +172,6 @@ contract FlightBaseTest is GifTest {
         console.log("- delayMinutes", flightRisk.delayMinutes);
         console.log("- status", uint8(flightRisk.status));
         console.log("- sumOfSumInsuredAmounts", flightRisk.sumOfSumInsuredAmounts.toInt());
-        console.log("- premiumMultiplier", flightRisk.premiumMultiplier);
-        console.log("- weight", flightRisk.weight);   
         // solhint-enable
     }
 

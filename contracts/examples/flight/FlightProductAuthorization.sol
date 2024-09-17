@@ -33,7 +33,7 @@ contract FlightProductAuthorization
         _authorize(functions, FlightProduct.createPolicy.selector, "createPolicy");
 
         // only owner
-        _authorize(functions, FlightProduct.flightStatusProcess.selector, "flightStatusProcess");
+        _authorize(functions, FlightProduct.processFlightStatus.selector, "processFlightStatus");
         _authorize(functions, FlightProduct.completeSetup.selector, "completeSetup");
         _authorize(functions, FlightProduct.setDefaultBundle.selector, "setDefaultBundle");
         _authorize(functions, FlightProduct.approveTokenHandler.selector, "approveTokenHandler");

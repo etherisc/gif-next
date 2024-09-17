@@ -90,8 +90,8 @@ contract FlightProduct is
         Timestamp departureTime;
         Timestamp arrivalTime; 
         Amount sumOfSumInsuredAmounts;
-        uint256 premiumMultiplier; // what is this? UFixed?
-        uint256 weight; // what is this? UFixed?
+        // uint256 premiumMultiplier; // what is this? UFixed?
+        // uint256 weight; // what is this? UFixed?
         bytes1 status; // 'L'ate, 'C'ancelled, 'D'iverted, ...
         int256 delayMinutes;
     }
@@ -125,9 +125,6 @@ contract FlightProduct is
     }
 
 
-// TODO add payout amount testing
-event LogFlightDebug(string message, uint256 value);
-
     function createPolicy(
         address policyHolder,
         Str carrierFlightNumber,
@@ -150,7 +147,7 @@ event LogFlightDebug(string message, uint256 value);
             this,
             departureTime, 
             arrivalTime, 
-            premiumAmount); // TODO remove? checked here and in checkAndCalculatePayouts
+            premiumAmount); 
 
         (
             uint256 weight, 
@@ -160,12 +157,6 @@ event LogFlightDebug(string message, uint256 value);
             this,
             premiumAmount, 
             statistics);
-
-emit LogFlightDebug("payoutAmounts[0]", payoutAmounts[0].toInt());
-emit LogFlightDebug("payoutAmounts[1]", payoutAmounts[1].toInt());
-emit LogFlightDebug("payoutAmounts[2]", payoutAmounts[2].toInt());
-emit LogFlightDebug("payoutAmounts[3]", payoutAmounts[3].toInt());
-emit LogFlightDebug("payoutAmounts[4]", payoutAmounts[4].toInt());
 
         // more checks and risk handling
         RiskId riskId = _checkAndUpdateFlightRisk(
@@ -227,7 +218,7 @@ emit LogFlightDebug("payoutAmounts[4]", payoutAmounts[4].toInt());
         FlightOracle.FlightStatusResponse memory response = abi.decode(
             responseData, (FlightOracle.FlightStatusResponse));
 
-        _flightStatusProcess(
+        _processFlightStatus(
             requestId, 
             response.riskId, 
             response.status, 
@@ -237,7 +228,7 @@ emit LogFlightDebug("payoutAmounts[4]", payoutAmounts[4].toInt());
 
 
     /// @dev Manual fallback function for product owner.
-    function flightStatusProcess(
+    function processFlightStatus(
         RequestId requestId,
         RiskId riskId, 
         bytes1 status, 
@@ -249,7 +240,7 @@ emit LogFlightDebug("payoutAmounts[4]", payoutAmounts[4].toInt());
         restricted()
         onlyOwner()
     {
-        _flightStatusProcess(
+        _processFlightStatus(
             requestId, 
             riskId, 
             status, 
@@ -326,44 +317,32 @@ emit LogFlightDebug("payoutAmounts[4]", payoutAmounts[4].toInt());
         bool exists;
         FlightRisk memory flightRisk;
         (riskId, exists, flightRisk) = FlightLib.getFlightRisk(
-            _getInstanceReader(), getNftId(), carrierFlightNumber, departureTime, arrivalTime);
+            _getInstanceReader(), 
+            getNftId(), 
+            carrierFlightNumber, 
+            departureYearMonthDay, 
+            departureTime, 
+            arrivalTime);
 
-        // first flight for this risk
+        // create risk, if new
         if (!exists) {
-            uint256 multiplier = (uint256(MAX_WEIGHT) * 10000) / weight;
-
-            flightRisk = FlightRisk({
-                carrierFlightNumber: carrierFlightNumber,
-                departureYearMonthDay: departureYearMonthDay,
-                departureTime: departureTime,
-                arrivalTime: arrivalTime,
-                sumOfSumInsuredAmounts: sumInsuredAmount,
-                premiumMultiplier: multiplier,
-                weight: weight,
-                status: bytes1(0), 
-                delayMinutes: 0
-            });
-
-            // create new risk including 1st sum insured amount
             bytes32 riskKey = FlightLib.getRiskKey(carrierFlightNumber, departureTime, arrivalTime);
             _createRisk(riskKey, abi.encode(flightRisk));
-
-        // additional flights for this risk
-        } else {
-            // check for cluster risk: additional sum insured amount must not exceed MAX_TOTAL_PAYOUT
-            require (
-                flightRisk.sumOfSumInsuredAmounts + sumInsuredAmount <= MAX_TOTAL_PAYOUT,
-                "ERROR:FDD-006:CLUSTER_RISK"
-            );
-
-            // update existing risk with additional sum insured amount
-            flightRisk.sumOfSumInsuredAmounts = flightRisk.sumOfSumInsuredAmounts + sumInsuredAmount;
-            _updateRisk(riskId, abi.encode(flightRisk));
         }
+
+        // check for cluster risk: additional sum insured amount must not exceed MAX_TOTAL_PAYOUT
+        require (
+            flightRisk.sumOfSumInsuredAmounts + sumInsuredAmount <= MAX_TOTAL_PAYOUT,
+            "ERROR:FDD-006:CLUSTER_RISK"
+        );
+
+        // update existing risk with additional sum insured amount
+        flightRisk.sumOfSumInsuredAmounts = flightRisk.sumOfSumInsuredAmounts + sumInsuredAmount;
+        _updateRisk(riskId, abi.encode(flightRisk));
     }
 
 
-    function _flightStatusProcess(
+    function _processFlightStatus(
         RequestId requestId,
         RiskId riskId, 
         bytes1 status, 
