@@ -99,12 +99,23 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         });
     LIBRARY_ADDRESSES.set("AmountLib", amountLibAddress);
 
+    const { address: strLibAddress } = await deployContract(
+        "StrLib",
+        owner,
+        undefined,
+        {
+            libraries: {
+            }
+        });
+    LIBRARY_ADDRESSES.set("StrLib", strLibAddress);
+
     const { address: objectTypeLibAddress } = await deployContract(
         "ObjectTypeLib",
         owner,
         undefined,
         {
             libraries: {
+                StrLib: strLibAddress,
                 VersionPartLib: versionPartLibAddress,
             }
         });
@@ -317,18 +328,6 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
             }
         });
     LIBRARY_ADDRESSES.set("SelectorSetLib", selectorSetLibAddress);
-
-    const { address: strLibAddress } = await deployContract(
-        "StrLib",
-        owner,
-        undefined,
-        {
-            libraries: {
-                // ObjectTypeLib: objectTypeLibAddress,
-                // RoleIdLib: roleIdLibAddress
-            }
-        });
-    LIBRARY_ADDRESSES.set("StrLib", strLibAddress);
 
     const { address: tokenHandlerDeployerLibAddress } = await deployContract(
         "TokenHandlerDeployerLib",
