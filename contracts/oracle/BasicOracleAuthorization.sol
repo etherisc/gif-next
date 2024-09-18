@@ -8,6 +8,7 @@ import {IAccess} from "../authorization/IAccess.sol";
 import {IOracle} from "./IOracle.sol"; 
 import {PUBLIC_ROLE} from "../../contracts/type/RoleId.sol";
 import {RoleId} from "../type/RoleId.sol";
+import {VersionPartLib} from "../type/Version.sol";
 
 
 contract BasicOracleAuthorization
@@ -21,7 +22,7 @@ contract BasicOracleAuthorization
           Authorization(
                componentName, 
                ORACLE(), 
-               3, 
+               VersionPartLib.toVersionPart(3),
                commitHash, 
                TargetType.Component, 
                false)

@@ -21,6 +21,7 @@ import {IRegistryService} from "./IRegistryService.sol";
 import {IRiskService} from "../product/IRiskService.sol";
 
 import {ServiceAuthorization} from "../authorization/ServiceAuthorization.sol";
+import {VersionPartLib} from "../../contracts/type/Version.sol";
 
 
 contract ServiceAuthorizationV3
@@ -31,7 +32,7 @@ contract ServiceAuthorizationV3
           ServiceAuthorization(
                "ReleaseAdmin",
                RELEASE(),
-               3,
+               VersionPartLib.toVersionPart(3),
                commitHash)
      {}
 

@@ -85,7 +85,7 @@ contract BasicDistribution is
         virtual
         restricted()
         onlyOwner()
-        onlyNftOfType(distributorNftId, DISTRIBUTOR(), getRelease())
+        onlyNftOfType(distributorNftId, DISTRIBUTOR())
     {
         _changeDistributorType(distributorNftId, distributorType, data);
     }
@@ -108,7 +108,7 @@ contract BasicDistribution is
         onlyNftOwner(distributorNftId)
         returns (ReferralId referralId)
     {
-        _checkNftType(distributorNftId, DISTRIBUTOR(), getRelease());
+        _checkNftType(distributorNftId, DISTRIBUTOR());
         return _createReferral(
             distributorNftId,
             code,

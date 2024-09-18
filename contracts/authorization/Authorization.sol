@@ -9,7 +9,7 @@ import {ObjectType} from "../type/ObjectType.sol";
 import {RoleId, RoleIdLib} from "../type/RoleId.sol";
 import {ServiceAuthorization} from "../authorization/ServiceAuthorization.sol";
 import {Str, StrLib} from "../type/String.sol";
-
+import {VersionPart} from "../type/Version.sol";
 
 contract Authorization is
     ServiceAuthorization,
@@ -30,7 +30,7 @@ contract Authorization is
     constructor(
         string memory mainTargetName, 
         ObjectType domain,
-        uint8 release,
+        VersionPart release,
         string memory commitHash,
         IAccess.TargetType targetType,
         bool includeTokenHandler

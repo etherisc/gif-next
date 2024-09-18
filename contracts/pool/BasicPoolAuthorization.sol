@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {IAccess} from "../authorization/IAccess.sol";
-import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
+import {IComponent} from "../shared/IInstanceLinkedComponent.sol";
 import {IPoolComponent} from "./IPoolComponent.sol";
 
 import {Authorization} from "../authorization/Authorization.sol";
@@ -11,7 +11,7 @@ import {COMPONENT, POOL} from "../type/ObjectType.sol";
 import {PUBLIC_ROLE} from "../../contracts/type/RoleId.sol";
 import {RoleId} from "../type/RoleId.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
-
+import {VersionPartLib} from "../type/Version.sol";
 
 contract BasicPoolAuthorization
      is Authorization
@@ -21,7 +21,7 @@ contract BasicPoolAuthorization
           Authorization(
                poolName, 
                POOL(), 
-               3,
+               VersionPartLib.toVersionPart(3),
                COMMIT_HASH,
                TargetType.Component, 
                true)
@@ -70,7 +70,7 @@ contract BasicPoolAuthorization
           _authorize(functions, BasicPool.unstake.selector, "unstake");
           _authorize(functions, BasicPool.extend.selector, "extend");
 
-          _authorize(functions, IInstanceLinkedComponent.withdrawFees.selector, "withdrawFees");
+          _authorize(functions, IComponent.withdrawFees.selector, "withdrawFees");
           _authorize(functions, BasicPool.withdrawBundleFees.selector, "withdrawBundleFees");
 
           // authorize pool service

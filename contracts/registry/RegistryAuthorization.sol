@@ -49,7 +49,7 @@ contract RegistryAuthorization
           Authorization(
                REGISTRY_TARGET_NAME, 
                REGISTRY(), 
-               3, 
+               VersionPartLib.toVersionPart(3),
                commitHash, 
                TargetType.Core,
                false) // includeTokenHandler

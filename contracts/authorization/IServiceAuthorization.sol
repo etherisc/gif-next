@@ -16,7 +16,7 @@ interface IServiceAuthorization is
 
      error ErrorAuthorizationMainTargetNameEmpty();
      error ErrorAuthorizationTargetDomainZero();
-     error ErrorAuthorizationReleaseInvalid(uint8 release);
+     error ErrorAuthorizationReleaseInvalid(VersionPart release);
      error ErrorAuthorizationCommitHashInvalid(string commitHash);
 
      /// @dev Returns the main domain of the authorization.

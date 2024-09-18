@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {IAccess} from "../authorization/IAccess.sol";
-import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
+import {IComponent} from "../shared/IInstanceLinkedComponent.sol";
 import {IProductComponent} from "./IProductComponent.sol";
 
 import {Authorization} from "../authorization/Authorization.sol";
@@ -10,7 +10,7 @@ import {BasicProduct} from "./BasicProduct.sol";
 import {COMPONENT, ORACLE, PRODUCT, POLICY} from "../type/ObjectType.sol";
 import {RoleId, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
-
+import {VersionPartLib} from "../type/Version.sol";
 
 contract BasicProductAuthorization
      is Authorization
@@ -19,7 +19,7 @@ contract BasicProductAuthorization
           Authorization(
                componentName, 
                PRODUCT(), 
-               3,
+               VersionPartLib.toVersionPart(3),
                COMMIT_HASH,
                TargetType.Component, 
                true)
@@ -58,7 +58,7 @@ contract BasicProductAuthorization
           functions = _authorizeForTarget(getMainTargetName(), PUBLIC_ROLE());
           _authorize(functions, BasicProduct.setFees.selector, "setFees");
           _authorize(functions, IProductComponent.registerComponent.selector, "registerComponent");
-          _authorize(functions, IInstanceLinkedComponent.withdrawFees.selector, "withdrawFees");
+          _authorize(functions, IComponent.withdrawFees.selector, "withdrawFees");
      }
 }
 

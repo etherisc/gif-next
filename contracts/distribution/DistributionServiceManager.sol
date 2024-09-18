@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IVersionable} from "../upgradeability/IVersionable.sol";
+import {IUpgradeable} from "../upgradeability/IUpgradeable.sol";
 import {ProxyManager} from "../upgradeability/ProxyManager.sol";
 import {DistributionService} from "./DistributionService.sol";
 
@@ -18,13 +18,13 @@ contract DistributionServiceManager is ProxyManager {
     {
         DistributionService svc = new DistributionService{salt: salt}();
         bytes memory data = abi.encode(authority, registry);
-        IVersionable versionable = initialize(
+        IUpgradeable upgradeable = initialize(
             registry,
             address(svc), 
             data,
             salt);
 
-        _distributionService = DistributionService(address(versionable));
+        _distributionService = DistributionService(address(upgradeable));
     }
 
     //--- view functions ----------------------------------------------------//
