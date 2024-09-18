@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IVersionable} from "../upgradeability/IVersionable.sol";
+import {IUpgradeable} from "../upgradeability/IUpgradeable.sol";
 import {ProxyManager} from "../upgradeability/ProxyManager.sol";
 import {RegistryService} from "./RegistryService.sol";
 
@@ -32,13 +32,13 @@ contract RegistryServiceManager is
         
         RegistryService srv = new RegistryService{ salt: salt }();
         bytes memory data = abi.encode(authority, registry);
-        IVersionable versionable = initialize(
+        IUpgradeable upgradeable = initialize(
             registry,
             address(srv), 
             data,
             salt);
 
-        _registryService = RegistryService(address(versionable));
+        _registryService = RegistryService(address(upgradeable));
     }
 
     //--- view functions ----------------------------------------------------//

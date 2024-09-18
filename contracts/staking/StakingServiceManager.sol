@@ -2,8 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {IRegistry} from "../registry/IRegistry.sol";
-import {IVersionable} from "../upgradeability/IVersionable.sol";
-
+import {IUpgradeable} from "../upgradeability/IUpgradeable.sol";
 import {ProxyManager} from "../upgradeability/ProxyManager.sol";
 import {StakingService} from "./StakingService.sol";
 
@@ -26,13 +25,13 @@ contract StakingServiceManager is
             registry, 
             IRegistry(registry).getStakingAddress());
 
-        IVersionable versionable = initialize(
+        IUpgradeable upgradeable = initialize(
             registry,
             address(svc), 
             data,
             salt);
 
-        _stakingService = StakingService(address(versionable));
+        _stakingService = StakingService(address(upgradeable));
     }
 
     //--- view functions ----------------------------------------------------//

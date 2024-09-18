@@ -12,7 +12,7 @@ import {NftId} from "../type/NftId.sol";
 import {ObjectType, COMPONENT} from "../type/ObjectType.sol";
 import {Registerable} from "../shared/Registerable.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
-import {Version, VersionLib} from "../type/Version.sol";
+import {Version, VersionPart, VersionLib} from "../type/Version.sol";
 
 
 abstract contract Component is
@@ -23,9 +23,12 @@ abstract contract Component is
     bytes32 public constant COMPONENT_LOCATION_V1 = 0xffe8d4462baed26a47154f4b8f6db497d2f772496965791d25bd456e342b7f00;
 
     struct ComponentStorage {
-        string _name; // unique (per instance) component name
-        bool _isInterceptor;
+        // slot 0
         IComponentService _componentService;
+        // slot 1
+        string _name; // unique (per instance) component name -> make pure to save gas?
+        // slot 2
+        bytes _data;
     }
 
 
@@ -44,7 +47,7 @@ abstract contract Component is
         }
     }
 
-
+    /// @dev requires component parent to be registered 
     function __Component_init(
         address authority,
         address registry,
@@ -75,7 +78,6 @@ abstract contract Component is
         // set component state
         ComponentStorage storage $ = _getComponentStorage();
         $._name = name;
-        $._isInterceptor = isInterceptor;
         $._componentService = IComponentService(_getServiceAddress(COMPONENT()));
 
         _registerInterface(type(IAccessManaged).interfaceId);
@@ -91,6 +93,17 @@ abstract contract Component is
         onlyChainNft
     {
         _nftTransferFrom(from, to, tokenId, operator);
+    }
+
+    /// @inheritdoc IComponent
+    function withdrawFees(Amount amount)
+        external
+        virtual
+        restricted()
+        onlyOwner()
+        returns (Amount withdrawnAmount)
+    {
+        return _withdrawFees(amount);
     }
 
 
@@ -110,10 +123,6 @@ abstract contract Component is
         return getComponentInfo().name;
     }
 
-    function getVersion() public view virtual returns (Version version) {
-        return VersionLib.toVersion(1, 0, 0);
-    }
-
     function getComponentInfo() public virtual view returns (IComponents.ComponentInfo memory info) {
         if (isRegistered()) {
             return _getComponentInfo();
@@ -128,14 +137,6 @@ abstract contract Component is
         return _getComponentInfo();
     }
 
-
-    function isNftInterceptor() public virtual view returns(bool isInterceptor) {
-        if (isRegistered()) {
-            return getRegistry().getObjectInfo(address(this)).isInterceptor;
-        } else {
-            return _getComponentStorage()._isInterceptor;
-        }
-    }
 
 
     function isRegistered() public virtual view returns (bool) {
@@ -170,6 +171,12 @@ abstract contract Component is
         // empty default implementation
     }
 
+    function _withdrawFees(Amount amount)
+        internal
+        returns (Amount withdrawnAmount)
+    {
+        return _getComponentStorage()._componentService.withdrawFees(amount);
+    }
 
     /// @dev Sets the components wallet to the specified address.
     /// Depending on the source of the component information this function needs to be overwritten. 

@@ -53,6 +53,7 @@ contract StakingStore is
     error ErrorStakingStoreTvlBalanceAlreadyInitialized(NftId nftId, address token);
     error ErrorStakingStoreTvlBalanceNotInitialized(NftId nftId, address token);
 
+    // TODO never used in this contract and have no getter -> consider deleting this
     IRegistry private _registry;
     ITargetLimitHandler private _targetLimitHandler;
     StakingReader private _reader;

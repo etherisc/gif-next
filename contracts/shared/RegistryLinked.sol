@@ -12,20 +12,32 @@ contract RegistryLinked is
     IRegistryLinked
 {
 
-    // priorize simplicity and size over using standard upgradeability structs
+    // priorize simplicity and size over using standard upgradeability structs 
+    // registry address MUST NOT be upgraded
     IRegistry private _registry;
 
     /// @dev initialization for upgradable contracts
-    // used in _initializeRegisterable
+    // used in RegistryAdmin / InstanceAdmin / ReleaseAdmin.completeSetup()
     function __RegistryLinked_init(
         address registry
     )
         internal
         virtual
-        onlyInitializing()
+        //onlyInitializing()
     {
+        //if(address(_registry) != address(0) ) {
+        //    revert ErrorRegistryLinkedRegistryAlreadyInitialized(address(this), address(_registry));
+        //}
+
+        if(address(_registry) != address(0) ) {
+            if(_registry != IRegistry(registry)) {
+                revert ErrorRegistryLinkedRegistryAlreadyInitialized(address(this), address(_registry));
+            }
+            return;
+        }
+
         if (!ContractLib.isRegistry(registry)) {
-            revert ErrorNotRegistry(registry);
+            revert ErrorRegistryLinkedNotRegistry(address(this), registry);
         }
 
         _registry = IRegistry(registry);

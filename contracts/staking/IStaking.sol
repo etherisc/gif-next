@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {IComponent} from "../shared/IComponent.sol";
-import {IVersionable} from "../upgradeability/IVersionable.sol";
+import {IUpgradeable} from "../upgradeability/IUpgradeable.sol";
 
 import {Amount} from "../type/Amount.sol";
 import {Blocknumber} from "../type/Blocknumber.sol";
@@ -22,7 +22,7 @@ import {VersionPart} from "../type/Version.sol";
 
 interface IStaking is 
     IComponent,
-    IVersionable
+    IUpgradeable
 {
 
     // owner functions

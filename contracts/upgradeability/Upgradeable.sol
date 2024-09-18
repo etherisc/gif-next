@@ -3,38 +3,39 @@ pragma solidity ^0.8.20;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-import {IVersionable} from "./IVersionable.sol";
-import {Version, VersionLib} from "../type/Version.sol";
+import {IUpgradeable} from "./IUpgradeable.sol";
+import {Version} from "../type/Version.sol";
+import {Versionable} from "../shared/Versionable.sol";
 
-
-abstract contract Versionable is 
-    Initializable,
-    IVersionable 
+abstract contract Upgradeable is
+    Initializable, 
+    Versionable,
+    IUpgradeable 
 {
     constructor() {
         _disableInitializers();
     }
 
-    function initializeVersionable(
+    function initialize(
         address activatedBy,
         bytes memory data
     )
-        public
-        initializer()
+        external
     {
-        _initialize(activatedBy, data);
+        if(_getInitializedVersion() != 0) {
+            revert InvalidInitialization();
+        }
+        __Upgradeable_init(activatedBy, data);
     }
 
-    function upgradeVersionable(
+    function upgrade(
         bytes memory data
     )
         external
-        reinitializer(VersionLib.toUint64(getVersion()))
+        reinitializer(getVersion().toInt())
     {
         _upgrade(data);
     }
-
-    function getVersion() public pure virtual returns(Version);
 
     // IMPORTANT each version must implement this function 
     // each implementation MUST use onlyInitialising modifier
@@ -58,5 +59,15 @@ abstract contract Versionable is
         virtual
     {
         revert ErrorVersionableUpgradeNotImplemented();
+    }
+
+    function __Upgradeable_init(
+        address activatedBy,
+        bytes memory data
+    )
+        private
+        reinitializer(getVersion().toInt())
+    {
+        _initialize(activatedBy, data);
     }
 }

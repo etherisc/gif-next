@@ -206,7 +206,6 @@ contract InstanceService is
         instanceAdmin.completeSetup(
             address(getRegistry()),
             address(instanceAuthorization),
-            getRelease(),
             address(instance));
 
         // hard checks for newly cloned instance
@@ -349,6 +348,7 @@ contract InstanceService is
             if(instanceStoreAddress == address(0)) { revert ErrorInstanceServiceInstanceStoreZero(); }
             if(productStoreAddress == address(0)) { revert ErrorInstanceServiceProductStoreZero(); } // TODO: rename exception
             
+            // TODO check instance cluster release
             if(instance.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceInstanceAuthorityMismatch(); }
             if(bundleSet.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceBundleSetAuthorityMismatch(); }
             if(riskSet.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceRiskSetAuthorityMismatch(); }
@@ -419,7 +419,8 @@ contract InstanceService is
 
         clonedAdmin.initialize(
             address(clonedAccessManager),
-            "InstanceAdmin");
+            "InstanceAdmin",
+            getRelease());
     }
 
 
@@ -446,7 +447,6 @@ contract InstanceService is
                 instanceReader: InstanceReader(Clones.clone(address(_masterInstanceReader)))
             }),
             getRegistry(),
-            getRelease(),
             instanceOwner,
             allowAnyToken);
 
@@ -461,7 +461,7 @@ contract InstanceService is
     )
         internal
         virtual override
-        initializer()
+        onlyInitializing()
     {
         (
             address authority,

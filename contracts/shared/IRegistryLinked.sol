@@ -5,7 +5,9 @@ import {IRegistry} from "../registry/IRegistry.sol";
 
 interface IRegistryLinked {
 
-    error ErrorNotRegistry(address registryAddress);
+    error ErrorRegistryLinkedRegistryAlreadyInitialized(address target, address registry);
+    error ErrorRegistryLinkedNotRegistry(address target, address notRegistry);
+    error ErrorRegistryLinkedRegistryMismatch(address target, address givenRegistry, address pureRegistry);
 
     function getRegistry() external view returns (IRegistry);
 }

@@ -5,7 +5,6 @@ import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManaged.sol";
 
 import {IAccessAdmin} from "../authorization/IAccessAdmin.sol";
-import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
 import {IRegistry} from "./IRegistry.sol";
 import {IRelease} from "./IRelease.sol";
 import {IRegistryLinked} from "../shared/IRegistryLinked.sol";
@@ -36,7 +35,7 @@ contract ReleaseRegistry is
     ReleaseLifecycle, 
     IRegistryLinked
 {
-    uint256 public constant INITIAL_GIF_VERSION = 3;// first active release version  
+    uint8 public constant INITIAL_GIF_VERSION = 3;// first active release version  
 
     event LogReleaseCreation(IAccessAdmin admin, VersionPart release, bytes32 salt); 
     event LogReleaseActivation(VersionPart release);
@@ -62,7 +61,7 @@ contract ReleaseRegistry is
     error ErrorReleaseRegistryServiceAuthorityMismatch(IService service, address expectedAuthority, address actualAuthority);
     error ErrorReleaseRegistryServiceDomainMismatch(IService service, ObjectType expectedDomain, ObjectType actualDomain);
 
-    // _verifyServiceInfo
+    // _getAndVerifyServiceInfo
     error ErrorReleaseRegistryServiceInfoAddressInvalid(IService service, address expected);
     error ErrorReleaseRegistryServiceInfoInterceptorInvalid(IService service, bool isInterceptor);
     error ErrorReleaseRegistryServiceInfoTypeInvalid(IService service, ObjectType expected, ObjectType found);
@@ -386,12 +385,12 @@ contract ReleaseRegistry is
 
         clonedAdmin.initialize(
             address(_cloneNewAccessManager()),
-            releaseAdminName);
+            releaseAdminName,
+            release);
 
         clonedAdmin.completeSetup(
             address(_registry), 
             address(serviceAuthorization),
-            release,
             address(this)); // release registry (this contract)
 
         // lock release (remains locked until activation)
@@ -457,7 +456,7 @@ contract ReleaseRegistry is
         address authority = service.authority();
         domain = service.getDomain();// checked in registry
 
-        (info,, data) = _verifyServiceInfo(
+        (info,, data) = _getAndVerifyServiceInfo(
             service,
             expectedOwner,
             expectedVersion);
@@ -478,7 +477,7 @@ contract ReleaseRegistry is
     }
 
 
-    function _verifyServiceInfo(
+    function _getAndVerifyServiceInfo(
         IService service,
         address expectedOwner, // assume always valid, can not be 0
         VersionPart expectedVersion
@@ -505,11 +504,11 @@ contract ReleaseRegistry is
             revert ErrorReleaseRegistryServiceInfoTypeInvalid(service, SERVICE(), info.objectType);
         }
 
-        if(info.objectRelease != expectedVersion) {
+        if(info.release != expectedVersion) {
             revert ErrorReleaseRegistryServiceInfoVersionMismatch(
                 service,
                 expectedVersion,
-                info.objectRelease);            
+                info.release);            
         }
 
         if(initialOwner != expectedOwner) { // registerable owner protection

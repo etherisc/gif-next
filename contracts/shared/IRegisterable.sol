@@ -4,8 +4,8 @@ pragma solidity ^0.8.20;
 import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 
 import {INftOwnable} from "./INftOwnable.sol";
-import {IRelease} from "../registry/IRelease.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
+import {IVersionable} from "./IVersionable.sol";
 
 /// @title IRegisterable
 /// @dev Marks contracts that are intended to be registered in the registry.
@@ -13,7 +13,7 @@ import {IRegistry} from "../registry/IRegistry.sol";
 interface IRegisterable is
     IAccessManaged,
     INftOwnable,
-    IRelease
+    IVersionable
 {
     // __Registerable_init
     error ErrorAuthorityInvalid(address authority);

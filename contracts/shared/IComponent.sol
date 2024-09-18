@@ -29,6 +29,11 @@ interface IComponent is
     event LogComponentWalletTokensTransferred(address from, address to, uint256 amount);
     event LogComponentTokenHandlerApproved(address tokenHandler, address token, Amount limit, bool isMaxAmount);
 
+    /// @dev Withdraw fees from the distribution component. Only component owner is allowed to withdraw fees.
+    /// @param amount the amount to withdraw
+    /// @return withdrawnAmount the amount that was actually withdrawn
+    function withdrawFees(Amount amount) external returns (Amount withdrawnAmount);
+
     /// @dev returns the name of this component
     /// to successfully register the component with an instance the name MUST be unique in the linked instance
     function getName() external view returns (string memory name);
@@ -42,9 +47,6 @@ interface IComponent is
     /// @dev defines the wallet address used to hold the ERC20 tokens related to this component
     /// the default address is the token handler address
     function getWallet() external view returns (address walletAddress);
-
-    /// @dev returns true iff this compoent intercepts nft minting and transfers for objects registered by this component
-    function isNftInterceptor() external view returns(bool isInterceptor);
 
     /// @dev returns true iff this component is registered with the registry
     function isRegistered() external view returns (bool);

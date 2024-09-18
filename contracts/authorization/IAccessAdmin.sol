@@ -6,7 +6,6 @@ import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessMana
 import {IAccess} from "./IAccess.sol";
 import {IAuthorization} from "./IAuthorization.sol";
 import {IRegistryLinked} from "../shared/IRegistryLinked.sol";
-import {IRelease} from "../registry/IRelease.sol";
 
 import {Blocknumber} from "../type/Blocknumber.sol";
 import {NftId} from "../type/NftId.sol";
@@ -19,8 +18,7 @@ import {VersionPart} from "../type/Version.sol";
 interface IAccessAdmin is 
     IAccessManaged,
     IAccess,
-    IRegistryLinked,
-    IRelease
+    IRegistryLinked
 {
 
     // roles, targets and functions
@@ -139,4 +137,5 @@ interface IAccessAdmin is
 
     function authorizedFunctions(address target) external view returns (uint256 numberOfFunctions);
     function getAuthorizedFunction(address target, uint256 idx) external view returns (FunctionInfo memory func, RoleId roleId);
+        function getRelease() external view returns (VersionPart);
 }

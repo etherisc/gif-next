@@ -12,7 +12,7 @@ import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.so
 import {ObjectType, ObjectTypeLib, RELEASE} from "../type/ObjectType.sol";
 import {RoleId, ADMIN_ROLE, RELEASE_REGISTRY_ROLE} from "../type/RoleId.sol";
 import {Str} from "../type/String.sol";
-import {VersionPart} from "../type/Version.sol";
+import {VersionPartLib, VersionPart} from "../type/Version.sol";
 
 
 /// @dev The ReleaseAdmin contract implements the central authorization for the services of a specific release.
@@ -46,37 +46,39 @@ contract ReleaseAdmin is
     }
 
 
-    // @dev Only used for master release admin
+    /// @dev Only used for master release admin
     constructor(address accessManager) {
         initialize(
             accessManager,
-            "MasterReleaseAdmin");
+            "MasterReleaseAdmin",
+            VersionPartLib.toVersionPart(3));
     }
 
 
     function completeSetup(
         address registry,
         address authorization,
-        VersionPart release,
         address releaseRegistry
     )
         external
-        reinitializer(uint64(release.toInt()))
+        //onlyDeployer()
     {
         // checks
         AccessAdminLib.checkRegistry(registry);
 
-        AccessManagerCloneable(
-            authority()).completeSetup(
-                registry, 
-                release);
+        // effects
+        //AccessManagerCloneable(
+        //    authority()).completeSetup(
+        //        registry);
+
+        __RegistryLinked_init(registry);
 
         IServiceAuthorization serviceAuthorization = IServiceAuthorization(authorization);
         AccessAdminLib.checkAuthorization(
             address(_authorization),
             address(serviceAuthorization), 
             RELEASE(), 
-            release, 
+            getRelease(), 
             true, // expectServiceAuthorization
             true); // checkAlreadyInitialized);
 
@@ -180,8 +182,7 @@ contract ReleaseAdmin is
     //--- private initialization functions -------------------------------------------//
 
     function _setupReleaseRegistry(address releaseRegistry)
-        private 
-        onlyInitializing()
+        private
     {
 
         _createRole(

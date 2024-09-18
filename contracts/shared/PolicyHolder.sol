@@ -10,27 +10,30 @@ import {ClaimId} from "../type/ClaimId.sol";
 import {InitializableERC165} from "./InitializableERC165.sol";
 import {NftId} from "../type/NftId.sol";
 import {PayoutId} from "../type/PayoutId.sol";
-import {RegistryLinked} from "./RegistryLinked.sol";
+import {RegistryLinkedPure} from "./RegistryLinkedPure.sol";
+//import {RegistryLinked} from "./RegistryLinked.sol";
 import {Timestamp} from "../type/Timestamp.sol";
 
 /// @dev template implementation for IPolicyHolder
 contract PolicyHolder is
     InitializableERC165,
-    RegistryLinked,
+    RegistryLinkedPure,
+    //RegistryLinked,
     IPolicyHolder
 {
     // TODO add modifier to protect callback functions from unauthorized access
     // callbacks must only be allowed from the policy and claim services
     // will need a release parameter to fetch the right service addresses for the modifiers
 
-    function _initializePolicyHolder(
+    function __PolicyHolder_init(
         address registryAddress
     )
         internal
         virtual
         onlyInitializing()
     {
-        __RegistryLinked_init(registryAddress);
+        __RegistryLinkedPure_init(registryAddress);
+        //__RegistryLinked_init(registryAddress);
         _initializeERC165();
         _registerInterface(type(IPolicyHolder).interfaceId);
     }
@@ -47,7 +50,7 @@ contract PolicyHolder is
     /// @dev empty default implementation
     function payoutExecuted(NftId policyNftId, PayoutId payoutId, Amount amount, address beneficiary) external virtual {}
 
-    //--- IERC165 functions ---------------// 
+    //--- IERC721 functions ---------------// 
     function onERC721Received(
         address, // operator
         address, // from

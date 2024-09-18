@@ -4,11 +4,10 @@ pragma solidity ^0.8.20;
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {IRegistry} from "../registry/IRegistry.sol";
-import {IRelease} from "../registry/IRelease.sol";
 import {IStaking} from "./IStaking.sol";
 import {IStakingService} from "./IStakingService.sol";
 import {ITargetLimitHandler} from "./ITargetLimitHandler.sol";
-import {IVersionable} from "../upgradeability/IVersionable.sol";
+import {IVersionable} from "../shared/IVersionable.sol";
 
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {Blocknumber} from "../type/Blocknumber.sol";
@@ -16,7 +15,7 @@ import {ChainId, ChainIdLib} from "../type/ChainId.sol";
 import {Component} from "../shared/Component.sol";
 import {IComponent} from "../shared/IComponent.sol";
 import {NftId} from "../type/NftId.sol";
-import {ObjectType, PROTOCOL, INSTANCE, STAKE, STAKING, TARGET} from "../type/ObjectType.sol";
+import {ObjectType, PROTOCOL, STAKE, STAKING, TARGET} from "../type/ObjectType.sol";
 import {Seconds, SecondsLib} from "../type/Seconds.sol";
 import {Registerable} from "../shared/Registerable.sol";
 import {StakingLib} from "./StakingLib.sol";
@@ -28,12 +27,13 @@ import {TokenHandlerDeployerLib} from "../shared/TokenHandlerDeployerLib.sol";
 import {TokenRegistry} from "../registry/TokenRegistry.sol";
 import {UFixed, UFixedLib} from "../type/UFixed.sol";
 import {Version, VersionLib, VersionPart, VersionPartLib} from "../type/Version.sol";
-import {Versionable} from "../upgradeability/Versionable.sol";
+import {Versionable} from "../shared/Versionable.sol";
+import {Upgradeable} from "../upgradeability/Upgradeable.sol";
 
 
 contract Staking is 
     Component,
-    Versionable,
+    Upgradeable,
     IStaking
 {
     string public constant CONTRACT_NAME = "Staking";
@@ -649,21 +649,11 @@ contract Staking is
         return _getStakingStorage()._tokenHandler;
     }
 
-    // from IRegisterable
-    function getRelease()
-        public 
-        pure 
-        virtual override (IRelease, Registerable)
-        returns(VersionPart)
-    {
-        return VersionPartLib.toVersionPart(3);
-    }
-
     // from IVersionable
     function getVersion()
         public 
         pure 
-        virtual override (Component, IVersionable, Versionable)
+        virtual override (IVersionable, Versionable)
         returns(Version)
     {
         return VersionLib.toVersion(3,0,0);

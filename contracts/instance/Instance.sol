@@ -26,8 +26,6 @@ contract Instance is
     IInstance,
     Registerable
 {
-    bool private _initialized;
-
     IComponentService internal _componentService;
     IInstanceService internal _instanceService;
 
@@ -60,7 +58,6 @@ contract Instance is
     function initialize(
         InstanceContracts memory instanceContracts,
         IRegistry registry, 
-        VersionPart release,
         address initialOwner,
         bool tokenRegistryDisabled // only disable for testing
     ) 
@@ -100,12 +97,12 @@ contract Instance is
         _componentService = IComponentService(
             getRegistry().getServiceAddress(
                 COMPONENT(), 
-                release));
+                getRelease()));
 
         _instanceService = IInstanceService(
             getRegistry().getServiceAddress(
                 INSTANCE(), 
-                release));
+                getRelease()));
 
         _tokenRegistryDisabled = tokenRegistryDisabled;
 

@@ -9,15 +9,16 @@ import {ContractLib} from "../shared/ContractLib.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
 import {NftOwnable} from "../shared/NftOwnable.sol";
 import {ObjectType} from "../type/ObjectType.sol";
+import {Versionable} from "../shared/Versionable.sol";
 import {VersionPart, VersionPartLib} from "../type/Version.sol";
 
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegisterable} from "./IRegisterable.sol";
-import {IRelease} from "../registry/IRelease.sol";
 
 abstract contract Registerable is
     AccessManagedUpgradeable,
     NftOwnable,
+    Versionable,
     IRegisterable
 {
     // keccak256(abi.encode(uint256(keccak256("gif-next.contracts.shared.Registerable.sol")) - 1)) & ~bytes32(uint256(0xff));
@@ -37,6 +38,19 @@ abstract contract Registerable is
         _;
     }
 
+    // TODO move to registerables verification library
+    modifier onlyNftOfType(NftId nftId, ObjectType expectedObjectType) {
+        _checkNftType(nftId, expectedObjectType);
+        _;
+    }
+
+    // TODO move to registerables verification library
+    function _checkNftType(NftId nftId, ObjectType expectedObjectType) internal view {
+        if(expectedObjectType.eqz() || !getRegistry().isObjectType(nftId, expectedObjectType, getRelease())) {
+            revert ErrorNftOwnableInvalidType(nftId, expectedObjectType);
+        }
+    }
+
     function __Registerable_init(
         address authority,
         address registry,
@@ -44,7 +58,7 @@ abstract contract Registerable is
         ObjectType objectType,
         bool isInterceptor,
         address initialOwner,
-        bytes memory data // writeonly data that will saved in the object info record of the registry
+        bytes memory data
     )
         internal
         virtual
@@ -54,8 +68,12 @@ abstract contract Registerable is
             revert ErrorAuthorityInvalid(authority);
         }
 
+        // release must allign with authority -> not a release check of third contract...
+        VersionPart release = AccessManagerCloneable(authority).getRelease();
+
         __AccessManaged_init(authority);
         __NftOwnable_init(registry, initialOwner);
+        __Versionable_init(release);
 
         RegisterableStorage storage $ = _getRegisterableStorage();
         $._parentNftId = parentNftId;
@@ -73,13 +91,6 @@ abstract contract Registerable is
     function isActive() public virtual view returns (bool active) {
         return !AccessManagerCloneable(authority()).isTargetClosed(address(this));
     }
-
-
-    /// @inheritdoc IRelease
-    function getRelease() public virtual view returns (VersionPart release) {
-        return AccessManagerCloneable(authority()).getRelease();
-    }
-
 
     /// @inheritdoc IRegisterable
     function getInitialInfo() 

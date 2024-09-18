@@ -5,14 +5,14 @@ import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.s
 import {ITransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 import {Blocknumber, BlocknumberLib} from "../type/Blocknumber.sol";
-import {IVersionable} from "./IVersionable.sol";
+import {IUpgradeable} from "./IUpgradeable.sol";
 import {NftId} from "../type/NftId.sol";
 import {NftOwnable} from "../shared/NftOwnable.sol";
 import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
 import {UpgradableProxyWithAdmin} from "./UpgradableProxyWithAdmin.sol";
-import {Version, VersionLib} from "../type/Version.sol";
+import {Version, VersionPart, VersionLib} from "../type/Version.sol";
 
-/// @dev manages proxy deployments for upgradable contracs of type IVersionable
+/// @dev manages proxy deployments for upgradable contracs of type IUpgradeable
 contract ProxyManager is
     NftOwnable
 {
@@ -27,14 +27,15 @@ contract ProxyManager is
         address activatedBy;
     }
 
-    event LogProxyManagerVersionableDeployed(address indexed proxy, address initialImplementation);
-    event LogProxyManagerVersionableUpgraded(address indexed proxy, address upgradedImplementation);
+    event LogProxyManagerProxyDeployed(address indexed proxy, address initialImplementation);
+    event LogProxyManagerProxyUpgraded(address indexed proxy, address upgradedImplementation);
 
     error ErrorProxyManagerAlreadyDeployed();
     error ErrorProxyManagerNotYetDeployed();
 
     error ErrorProxyManagerZeroVersion();
     error ErrorProxyManagerNextVersionNotIncreasing(Version nextVersion);
+    error ErrorProxyManagerNextVersionReleaseInvalid(Version nextVersion);
 
     UpgradableProxyWithAdmin internal _proxy;
 
@@ -51,9 +52,13 @@ contract ProxyManager is
     )
         public
         initializer()
-        returns (IVersionable versionable)
+        returns (IUpgradeable upgradeable)
     {
-        versionable = deployDetermenistic(
+        address initialOwner = msg.sender;
+
+        __NftOwnable_init(registry, initialOwner);
+
+        upgradeable = deployDetermenistic(
             registry,
             implementation, 
             data,
@@ -69,12 +74,14 @@ contract ProxyManager is
         public
         virtual
         onlyInitializing()
-        returns (IVersionable versionable)
+        returns (IUpgradeable upgradeable)
     {
-        (
-            address currentProxyOwner, 
-            address initialProxyAdminOwner
-        ) = _preDeployChecksAndSetup(registry);
+        if (_versions.length > 0) {
+            revert ErrorProxyManagerAlreadyDeployed();
+        }
+
+        address currentProxyOwner = getOwner(); // used by implementation
+        address initialProxyAdminOwner = address(this); // used by proxy
 
         _proxy = new UpgradableProxyWithAdmin(
             initialImplementation,
@@ -82,11 +89,11 @@ contract ProxyManager is
             getDeployData(currentProxyOwner, initializationData)
         );
 
-        versionable = _updateVersionHistory(
+        upgradeable = _updateVersionHistory(
             initialImplementation, 
             currentProxyOwner);
 
-        emit LogProxyManagerVersionableDeployed(address(versionable), initialImplementation);
+        emit LogProxyManagerProxyDeployed(address(upgradeable), initialImplementation);
     }
 
     function deployDetermenistic(
@@ -98,12 +105,14 @@ contract ProxyManager is
         public
         virtual
         onlyInitializing()
-        returns (IVersionable versionable)
+        returns (IUpgradeable upgradeable)
     {
-        (
-            address currentProxyOwner, 
-            address initialProxyAdminOwner
-        ) = _preDeployChecksAndSetup(registry);
+        if (_versions.length > 0) {
+            revert ErrorProxyManagerAlreadyDeployed();
+        }
+
+        address currentProxyOwner = getOwner(); // used by implementation
+        address initialProxyAdminOwner = address(this); // used by proxy
 
         _proxy = new UpgradableProxyWithAdmin{salt: salt}(
             initialImplementation,
@@ -111,11 +120,11 @@ contract ProxyManager is
             getDeployData(currentProxyOwner, initializationData)
         );
 
-        versionable = _updateVersionHistory(
+        upgradeable = _updateVersionHistory(
             initialImplementation, 
             currentProxyOwner);
 
-        emit LogProxyManagerVersionableDeployed(address(versionable), initialImplementation);
+        emit LogProxyManagerProxyDeployed(address(upgradeable), initialImplementation);
     }
 
     /// @dev upgrade existing contract.
@@ -124,7 +133,7 @@ contract ProxyManager is
         public
         virtual
         onlyOwner()
-        returns (IVersionable versionable)
+        returns (IUpgradeable upgradeable)
     {
         bytes memory emptyUpgradeData;
         return upgrade(newImplementation, emptyUpgradeData);
@@ -135,7 +144,7 @@ contract ProxyManager is
         public
         virtual
         onlyOwner()
-        returns (IVersionable versionable)
+        returns (IUpgradeable upgradeable)
     {
         if (_versions.length == 0) { 
             revert ErrorProxyManagerNotYetDeployed();
@@ -150,11 +159,11 @@ contract ProxyManager is
             newImplementation, 
             getUpgradeData(upgradeData));
 
-        versionable = _updateVersionHistory(
+        upgradeable = _updateVersionHistory(
             newImplementation, 
             currentProxyOwner);
 
-        emit LogProxyManagerVersionableUpgraded(address(versionable), newImplementation);
+        emit LogProxyManagerProxyUpgraded(address(upgradeable), newImplementation);
 
     }
 
@@ -164,14 +173,14 @@ contract ProxyManager is
 
     function getDeployData(address proxyOwner, bytes memory deployData) public pure returns (bytes memory data) {
         return abi.encodeWithSelector(
-            IVersionable.initializeVersionable.selector, 
+            IUpgradeable.initialize.selector, 
             proxyOwner, 
             deployData);
     }
 
     function getUpgradeData(bytes memory upgradeData) public pure returns (bytes memory data) {
         return abi.encodeWithSelector(
-            IVersionable.upgradeVersionable.selector, 
+            IUpgradeable.upgrade.selector, 
             upgradeData);
     }
 
@@ -180,7 +189,8 @@ contract ProxyManager is
     }
 
     function getVersion() external view virtual returns(Version) {
-        return IVersionable(address(_proxy)).getVersion();
+        //return _versionHistory[_versions[_versions.length]];
+        return IUpgradeable(address(_proxy)).getVersion();
     }
 
     function getVersionCount() external view returns(uint256) {
@@ -195,41 +205,28 @@ contract ProxyManager is
         return _versionHistory[_version];
     }
 
-    function _preDeployChecksAndSetup(address registry)
-        private
-        returns (
-            address currentProxyOwner,
-            address initialProxyAdminOwner
-        )
-    {
-        if (_versions.length > 0) {
-            revert ErrorProxyManagerAlreadyDeployed();
-        }
-
-        address initialOwner = msg.sender;
-        __NftOwnable_init(registry, initialOwner);
-
-        currentProxyOwner = getOwner(); // used by implementation
-        initialProxyAdminOwner = address(this); // used by proxy
-    }
-
     function _updateVersionHistory(
         address implementation,
         address activatedBy
     )
         private
-        returns (IVersionable versionable)
+        returns (IUpgradeable upgradeable)
     {
-        versionable = IVersionable(address(_proxy));
-        Version newVersion = versionable.getVersion();
+        upgradeable = IUpgradeable(address(_proxy));
+        Version newVersion = upgradeable.getVersion();
 
         if(newVersion == VersionLib.zeroVersion()) {
             revert ErrorProxyManagerZeroVersion();
         }
 
         if(_versions.length > 0) {
-            if(newVersion.toInt() <= _versions[_versions.length-1].toInt()) {
+            Version version = _versions[_versions.length-1];
+            if(newVersion.toInt() <= version.toInt()) {
                 revert ErrorProxyManagerNextVersionNotIncreasing(newVersion);
+            }
+
+            if(newVersion.toMajorPart() != version.toMajorPart()) {
+                revert ErrorProxyManagerNextVersionReleaseInvalid(newVersion);
             }
         }
 

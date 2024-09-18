@@ -23,7 +23,4 @@ interface IRelease {
         bytes32 salt;
     }
 
-    /// @dev Registers a registry contract for a specified chain.
-    /// Only one chain registry may be registered per chain
-    function getRelease() external view returns (VersionPart release);
 }

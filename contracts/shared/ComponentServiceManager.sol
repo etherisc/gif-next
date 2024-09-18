@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {ComponentService} from "./ComponentService.sol";
-import {IVersionable} from "../upgradeability/IVersionable.sol";
+import {IUpgradeable} from "../upgradeability/IUpgradeable.sol";
 import {ProxyManager} from "../upgradeability/ProxyManager.sol";
 
 contract ComponentServiceManager is ProxyManager {
@@ -18,13 +18,13 @@ contract ComponentServiceManager is ProxyManager {
     {
         ComponentService svc = new ComponentService();
         bytes memory data = abi.encode(authority, registry);
-        IVersionable versionable = initialize(
+        IUpgradeable upgradeable = initialize(
             registry,
             address(svc), 
             data,
             salt);
 
-        _componentService = ComponentService(address(versionable));
+        _componentService = ComponentService(address(upgradeable));
     }
 
     //--- view functions ----------------------------------------------------//

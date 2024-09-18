@@ -12,7 +12,7 @@ import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.so
 import {ObjectType, REGISTRY} from "../type/ObjectType.sol";
 import {RoleId, RoleIdLib, GIF_MANAGER_ROLE, GIF_ADMIN_ROLE} from "../type/RoleId.sol";
 import {Str} from "../type/String.sol";
-import {VersionPart} from "../type/Version.sol";
+import {VersionPartLib} from "../type/Version.sol";
 
 /*
     1) GIF_MANAGER_ROLE
@@ -52,7 +52,6 @@ contract RegistryAdmin is
     // completeSetup
     error ErrorRegistryAdminNotRegistry(address registry);
 
-    address internal _registry;
     address private _releaseRegistry;
     address private _tokenRegistry;
     address private _staking;
@@ -62,29 +61,21 @@ contract RegistryAdmin is
     constructor() {
         initialize(
             address(new AccessManagerCloneable()),
-            "RegistryAdmin");
+            "RegistryAdmin",
+            VersionPartLib.toVersionPart(3));
     }
 
 
     function completeSetup(
         address registry,
         address authorization,
-        VersionPart release,
         address gifAdmin, 
         address gifManager
     )
         public
         virtual
-        reinitializer(type(uint8).max)
     {
         // checks
-        AccessAdminLib.checkRegistry(registry);
-
-        AccessManagerCloneable(
-            authority()).completeSetup(
-                registry, 
-                release); 
-
         AccessAdminLib.checkAuthorization(
             address(_authorization),
             authorization, 
@@ -93,7 +84,8 @@ contract RegistryAdmin is
             false, // expectServiceAuthorization
             false); // checkAlreadyInitialized);
 
-        _registry = registry;
+        __RegistryLinked_init(registry);
+
         _authorization = IAuthorization(authorization);
 
         IRegistry registryContract = IRegistry(registry);
@@ -104,7 +96,7 @@ contract RegistryAdmin is
         _stakingStore = address(IStaking(_staking).getStakingStore());
 
         // link nft ownability to registry
-        _linkToNftOwnable(_registry);
+        _linkToNftOwnable(address(getRegistry()));
 
         _createRoles(_authorization);
 
@@ -149,7 +141,7 @@ contract RegistryAdmin is
         internal
     {
         // create unchecked registry targets
-        _createTarget(_registry, registryTargetName, TargetType.Core, false);
+        _createTarget(address(getRegistry()), registryTargetName, TargetType.Core, false);
         _createTarget(address(this), REGISTRY_ADMIN_TARGET_NAME, TargetType.Core, false);
         _createTarget(_releaseRegistry, RELEASE_REGISTRY_TARGET_NAME, TargetType.Core, false);
         _createTarget(_tokenRegistry, TOKEN_REGISTRY_TARGET_NAME, TargetType.Core, false);

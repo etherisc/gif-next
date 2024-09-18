@@ -14,13 +14,14 @@ import {AccessAdminLib} from "./AccessAdminLib.sol";
 import {AccessManagerCloneable} from "./AccessManagerCloneable.sol";
 import {Blocknumber, BlocknumberLib} from "../type/Blocknumber.sol";
 import {ContractLib} from "../shared/ContractLib.sol";
-import {NftId, NftIdLib} from "../type/NftId.sol";
+import {NftId} from "../type/NftId.sol";
 import {ObjectType} from "../type/ObjectType.sol";
 import {RoleId, RoleIdLib, ADMIN_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
+import {RegistryLinked} from "../shared/RegistryLinked.sol";
 import {Selector, SelectorSetLib} from "../type/Selector.sol";
 import {Str, StrLib} from "../type/String.sol";
 import {TimestampLib} from "../type/Timestamp.sol";
-import {VersionPart} from "../type/Version.sol";
+import {VersionPartLib, VersionPart} from "../type/Version.sol";
 
 
 /**
@@ -30,6 +31,7 @@ import {VersionPart} from "../type/Version.sol";
  */ 
 contract AccessAdmin is
     AccessManagedUpgradeable,
+    RegistryLinked,
     IAccessAdmin
 {
     using EnumerableSet for EnumerableSet.AddressSet;
@@ -91,12 +93,16 @@ contract AccessAdmin is
     /// Internally initializes access manager with this admin and creates basic role setup.
     function initialize(
         address authority,
-        string memory adminName 
+        string memory adminName,
+        VersionPart release 
     )
         public
-        initializer()
     {
-        __AccessAdmin_init(authority, adminName);
+        if(_getInitializedVersion() != 0) {
+            revert InvalidInitialization();
+        }
+
+        __AccessAdmin_init(authority, adminName, release);
     }
 
 
@@ -106,14 +112,16 @@ contract AccessAdmin is
     /// - this function as well as any completeSetup functions MUST be called in the same tx.
     function __AccessAdmin_init(
         address authority, 
-        string memory adminName 
+        string memory adminName,
+        VersionPart release
     )
         internal
-        onlyInitializing()
+        reinitializer(release.toInt())
     {
         AccessAdminLib.checkInitParameters(authority, adminName);
+
         _authority = AccessManagerCloneable(authority);
-        _authority.initialize(address(this));
+        _authority.initialize(address(this), release);
 
         // delayed additional check for authority after its initialization
         if (!ContractLib.isAuthority(authority)) {
@@ -121,7 +129,7 @@ contract AccessAdmin is
         }
 
         // effects
-        // set and initialize this access manager contract as
+        // set and initialize this contract as
         // the admin (ADMIN_ROLE) of the provided authority
         __AccessManaged_init(authority);
 
@@ -129,7 +137,7 @@ contract AccessAdmin is
         _adminName = adminName;
 
         // set initial linked NFT ID to zero
-        _linkedNftId = NftIdLib.zero();
+        //_linkedNftId = NftIdLib.zero();
 
         // setup admin role
         _createRoleUnchecked(
@@ -149,12 +157,7 @@ contract AccessAdmin is
     //--- view functions for access admin ---------------------------------------//
 
     function getRelease() public view virtual returns (VersionPart release) {
-        return _authority.getRelease();
-    }
-
-
-    function getRegistry() public view returns (IRegistry registry) {
-        return _authority.getRegistry();
+        return VersionPartLib.toVersionPart(uint8(_getInitializedVersion()));
     }
 
 

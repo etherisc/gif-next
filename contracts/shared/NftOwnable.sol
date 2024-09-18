@@ -4,13 +4,13 @@ pragma solidity ^0.8.20;
 import {InitializableERC165} from "./InitializableERC165.sol";
 import {INftOwnable} from "./INftOwnable.sol";
 import {NftId} from "../type/NftId.sol";
-import {ObjectType} from "../type/ObjectType.sol";
-import {RegistryLinked} from "./RegistryLinked.sol";
-import {VersionPart} from "../type/Version.sol";
+import {RegistryLinkedPure} from "./RegistryLinkedPure.sol";
+//import {RegistryLinked} from "./RegistryLinked.sol";
 
 contract NftOwnable is
     InitializableERC165,
-    RegistryLinked,
+    RegistryLinkedPure,
+    //RegistryLinked,
     INftOwnable
 {
     // keccak256(abi.encode(uint256(keccak256("etherisc.storage.NftOwnable")) - 1)) & ~bytes32(uint256(0xff));
@@ -36,20 +36,8 @@ contract NftOwnable is
         _;
     }
 
-    modifier onlyNftOfType(NftId nftId, ObjectType expectedObjectType, VersionPart release) {
-        _checkNftType(nftId, expectedObjectType, release);
-        _;
-    }
-
-    function _checkNftType(NftId nftId, ObjectType expectedObjectType, VersionPart release) internal view {
-        if(expectedObjectType.eqz() || !getRegistry().isObjectType(nftId, expectedObjectType, release)) {
-            revert ErrorNftOwnableInvalidType(nftId, expectedObjectType);
-        }
-    }
-
-
     /// @dev Initialization for upgradable contracts.
-    // used in __Registerable_init, ProxyManager._preDeployChecksAndSetup
+    // used in __Registerable_init, ProxyManager.initialize
     function __NftOwnable_init(
         address registry,
         address initialOwner
@@ -59,7 +47,8 @@ contract NftOwnable is
         onlyInitializing()
     {
         __ERC165_init();
-        __RegistryLinked_init(registry);
+        __RegistryLinkedPure_init(registry);
+        //__RegistryLinked_init(registry);
 
         if(initialOwner == address(0)) {
             revert ErrorNftOwnableInitialOwnerZero();

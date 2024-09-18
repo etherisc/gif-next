@@ -12,7 +12,7 @@ import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.so
 import {ObjectType, INSTANCE} from "../type/ObjectType.sol";
 import {RoleId, ADMIN_ROLE} from "../type/RoleId.sol";
 import {Str} from "../type/String.sol";
-import {VersionPart} from "../type/Version.sol";
+import {VersionPartLib, VersionPart} from "../type/Version.sol";
 import {INSTANCE_TARGET_NAME, INSTANCE_ADMIN_TARGET_NAME, INSTANCE_STORE_TARGET_NAME, PRODUCT_STORE_TARGET_NAME, BUNDLE_SET_TARGET_NAME, RISK_SET_TARGET_NAME} from "./TargetNames.sol";
 
 
@@ -26,13 +26,12 @@ contract InstanceAdmin is
     error ErrorInstanceAdminNotComponentOrCustomTarget(address target);
 
     IInstance internal _instance;
-    IRegistry internal _registry;
 
     uint64 internal _customRoleIdNext;
 
 
     modifier onlyInstanceService() {
-        if (msg.sender != _registry.getServiceAddress(INSTANCE(), getRelease())) {
+        if (msg.sender != getRegistry().getServiceAddress(INSTANCE(), getRelease())) {
             revert ErrorInstanceAdminNotInstanceService(msg.sender);
         }
         _;
@@ -43,7 +42,8 @@ contract InstanceAdmin is
     constructor(address accessManager) {
         initialize(
             accessManager,
-            "MasterInstanceAdmin");
+            "MasterInstanceAdmin",
+            VersionPartLib.toVersionPart(3));
     }
 
 
@@ -53,21 +53,14 @@ contract InstanceAdmin is
     function completeSetup(
         address registry,
         address authorization,
-        VersionPart release,
         address instance
     )
         external
-        reinitializer(uint64(release.toInt()))
     {
         // checks
         AccessAdminLib.checkIsRegistered(registry, instance, INSTANCE());
 
         // effects
-        AccessManagerCloneable(
-            authority()).completeSetup(
-                registry, 
-                release); 
-
         AccessAdminLib.checkAuthorization(
             address(_authorization), 
             authorization, 
@@ -76,7 +69,8 @@ contract InstanceAdmin is
             false, // expectServiceAuthorization
             true); // checkAlreadyInitialized
 
-        _registry = IRegistry(registry);
+        __RegistryLinked_init(registry);
+
         _instance = IInstance(instance);
         _authorization = IAuthorization(authorization);
         _customRoleIdNext = 0;
