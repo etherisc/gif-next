@@ -91,8 +91,7 @@ contract ServiceAuthorizationV3
           _authorize(functions, IRegistryService.registerBundle.selector, "registerBundle");
 
           functions = _authorizeForService(REGISTRY(), COMPONENT());
-          _authorize(functions, IRegistryService.registerProduct.selector, "registerProduct");
-          _authorize(functions, IRegistryService.registerProductLinkedComponent.selector, "registerProductLinkedComponent");
+          _authorize(functions, IRegistryService.registerComponent.selector, "registerComponent");
 
           functions = _authorizeForService(REGISTRY(), DISTRIBUTION());
           _authorize(functions, IRegistryService.registerDistributor.selector, "registerDistributor");

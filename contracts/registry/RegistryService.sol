@@ -1,16 +1,21 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IComponent} from "../../contracts/shared/IComponent.sol";
+import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
+
 import {IDistributionComponent} from "../../contracts/distribution/IDistributionComponent.sol";
 import {IInstance} from "../instance/IInstance.sol";
+import {IInstanceLinkedComponent} from "../../contracts/shared/IInstanceLinkedComponent.sol";
 import {IPoolComponent} from "../../contracts/pool/IPoolComponent.sol";
 import {IProductComponent} from "../../contracts/product/IProductComponent.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {IRegistry} from "./IRegistry.sol";
 import {IRegistryService} from "./IRegistryService.sol";
+import {IStaking} from "../../contracts/staking/IStaking.sol";
 
-import {ObjectType, REGISTRY, SERVICE, PRODUCT, ORACLE, POOL, INSTANCE, COMPONENT, DISTRIBUTION, DISTRIBUTOR, APPLICATION, POLICY, CLAIM, BUNDLE, STAKE, STAKING, PRICE} from "../../contracts/type/ObjectType.sol";
+import {ContractLib} from "../shared/ContractLib.sol";
+import {ObjectType, REGISTRY, SERVICE, PRODUCT, ORACLE, POOL, INSTANCE, COMPONENT, DISTRIBUTION, DISTRIBUTOR, POLICY, BUNDLE, STAKE, STAKING} from "../../contracts/type/ObjectType.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {Service} from "../shared/Service.sol";
 
@@ -20,8 +25,6 @@ contract RegistryService is
 {
     // TODO update to real hash when registry is stable
     bytes32 public constant REGISTRY_CREATION_CODE_HASH = bytes32(0);
-
-    // from Versionable
 
     /// @dev top level initializer
     function _initialize(
@@ -41,8 +44,8 @@ contract RegistryService is
         _registerInterface(type(IRegistryService).interfaceId);
     }
 
-
-    function registerStaking(IRegisterable staking, address initialOwner)
+    // TODO register have no combos with STAKING; decide on parentNftId arg
+    function registerStaking(IRegisterable staking, address owner)
         external
         virtual
         restricted()
@@ -50,13 +53,15 @@ contract RegistryService is
             IRegistry.ObjectInfo memory info
         )
     {
+        _checkInterface(staking, type(IStaking).interfaceId);
+
         bytes memory data;
-        (info, initialOwner, data) = _getAndVerifyContractInfo(staking, STAKING(), initialOwner);
-        info.nftId = getRegistry().register(info, initialOwner, data);
+        (info, owner, data) = _getAndVerifyContractInfo(staking, NftIdLib.zero(), STAKING(), owner);
+        info.nftId = getRegistry().register(info, owner, data);
     }
 
 
-    function registerInstance(IRegisterable instance, address initialOwner)
+    function registerInstance(IRegisterable instance, address owner)
         external
         virtual
         restricted()
@@ -64,20 +69,20 @@ contract RegistryService is
             IRegistry.ObjectInfo memory info
         ) 
     {
-        if(!instance.supportsInterface(type(IInstance).interfaceId)) {
-            revert ErrorRegistryServiceNotInstance(address(instance));
-        }
+        _checkInterface(instance, type(IInstance).interfaceId);
 
         bytes memory data;
-        (info, initialOwner, data) = _getAndVerifyContractInfo(instance, INSTANCE(), initialOwner);
-        info.nftId = getRegistry().register(info, initialOwner, data);
+        (info, owner, data) = _getAndVerifyContractInfo(instance, NftIdLib.zero(), INSTANCE(), owner);
+        info.nftId = getRegistry().register(info, owner, data);
 
         instance.linkToRegisteredNftId(); // asume safe
     }
 
-    function registerProduct(
-        IComponent product, 
-        address initialOwner
+    function registerComponent(
+        IRegisterable component, 
+        NftId parentNftId, 
+        ObjectType componentType, 
+        address owner
     )
         external
         virtual
@@ -86,85 +91,74 @@ contract RegistryService is
             IRegistry.ObjectInfo memory info
         ) 
     {
-        if(!product.supportsInterface(type(IProductComponent).interfaceId)) {
-            revert ErrorRegistryServiceNotProduct(address(product));
-        }
+        _checkInterface(
+            component, 
+            type(IInstanceLinkedComponent).interfaceId);
 
         bytes memory data;
-        (info, initialOwner, data) = _getAndVerifyContractInfo(product, PRODUCT(), initialOwner);
-        info.nftId = getRegistry().register(info, initialOwner, data);
+        (info, owner, data) = _getAndVerifyContractInfo(component, parentNftId, componentType, owner);
+        info.nftId = getRegistry().register(info, owner, data);
     }
 
-    function registerProductLinkedComponent(
-        IComponent component, 
-        ObjectType objectType,
-        address initialOwner
-    )
-        external
-        virtual
-        restricted()
-        returns(
-            IRegistry.ObjectInfo memory info
-        ) 
-    {
-        // CAN revert if no ERC165 support -> will revert with empty message 
-        if(!component.supportsInterface(type(IComponent).interfaceId)) {
-            revert ErrorRegistryServiceNotComponent(address(component));
-        }
-
-        if (!(objectType == DISTRIBUTION() || objectType == ORACLE() || objectType == POOL())) {
-            revert ErrorRegistryServiceNotProductLinkedComponent(address(component));
-        }
-
-        bytes memory data;
-        (info, initialOwner, data) = _getAndVerifyContractInfo(component, objectType, initialOwner);
-        info.nftId = getRegistry().register(info, initialOwner, data);
-    }
-
-    function registerDistributor(IRegistry.ObjectInfo memory info, address initialOwner, bytes memory data)
+    function registerDistributor(IRegistry.ObjectInfo memory info, address owner, bytes memory data)
         external
         virtual
         restricted()
         returns(NftId nftId) 
     {
-        _verifyObjectInfo(info, initialOwner, DISTRIBUTOR());
-        nftId = getRegistry().register(info, initialOwner, data);
+        _verifyObjectInfo(info, owner, DISTRIBUTOR());
+        nftId = getRegistry().register(info, owner, data);
     }
 
-    function registerPolicy(IRegistry.ObjectInfo memory info, address initialOwner, bytes memory data)
+    function registerPolicy(IRegistry.ObjectInfo memory info, address owner, bytes memory data)
         external
         virtual
         restricted()
         returns(NftId nftId) 
     {
-        _verifyObjectInfo(info, initialOwner, POLICY());
-        nftId = getRegistry().register(info, initialOwner, data);
+        _verifyObjectInfo(info, owner, POLICY());
+        nftId = getRegistry().register(info, owner, data);
     }
 
-    function registerBundle(IRegistry.ObjectInfo memory info, address initialOwner, bytes memory data)
+    function registerBundle(IRegistry.ObjectInfo memory info, address owner, bytes memory data)
         external
         virtual
         restricted()
         returns(NftId nftId) 
     {
-        _verifyObjectInfo(info, initialOwner, BUNDLE());
-        nftId = getRegistry().register(info, initialOwner, data);
+        _verifyObjectInfo(info, owner, BUNDLE());
+        nftId = getRegistry().register(info, owner, data);
     }
 
-    function registerStake(IRegistry.ObjectInfo memory info, address initialOwner, bytes memory data)
+    function registerStake(IRegistry.ObjectInfo memory info, address owner, bytes memory data)
         external
         virtual
         restricted()
         returns(NftId nftId) 
     {
-        _verifyObjectInfo(info, initialOwner, STAKE());
-        nftId = getRegistry().register(info, initialOwner, data);
+        _verifyObjectInfo(info, owner, STAKE());
+        nftId = getRegistry().register(info, owner, data);
     }
 
     // Internal
 
+    function _checkInterface(IRegisterable registerable, bytes4 interfaceId) internal view
+    {
+        if(!ERC165Checker.supportsInterface(address(registerable), interfaceId)) {
+            revert ErrorRegistryServiceInterfaceNotSupported(address(registerable), interfaceId);
+        }
+    }
+
+    /// @dev Based on the provided component address, parent, type and owner this function reverts iff:
+    /// - the component address does not match with address stored in component's initial info
+    /// - the component type does not match with the required type
+    /// - the component parent does not match with the required parent (when required parent is not zero)
+    /// - the component initialOwner does not match with the required owner (when required owner is not zero)
+    /// - the component initialOwner is zero (redundant, consider deleting)
+    /// - the component initialOwner is already registered
     function _getAndVerifyContractInfo(
         IRegisterable registerable,
+        NftId expectedParent,
         ObjectType expectedType, // assume can be valid only
         address expectedOwner // assume can be 0 when given by other service
     )
@@ -183,18 +177,37 @@ contract RegistryService is
             revert ErrorRegistryServiceRegisterableAddressInvalid(registerable, info.objectAddress);
         }
 
-        if(info.objectType != expectedType) {// type is checked in registry anyway...but service logic may depend on expected value
-            revert ErrorRegistryServiceRegisterableTypeInvalid(registerable, expectedType, info.objectType);
+        if(expectedType != COMPONENT()) {
+            // exact match
+            if(info.objectType != expectedType) {// type is checked in registry anyway...but service logic may depend on expected value
+                revert ErrorRegistryServiceRegisterableTypeInvalid(registerable, expectedType, info.objectType);
+            }
+        } else {
+            // match any component except product
+            if(!(info.objectType == DISTRIBUTION() || info.objectType == ORACLE() || info.objectType == POOL())) {
+                revert ErrorRegistryServiceRegisterableTypeInvalid(registerable, expectedType, info.objectType);
+            }
         }
 
-        if(initialOwner != expectedOwner) { // registerable owner protection
-            revert ErrorRegistryServiceRegisterableOwnerInvalid(registerable, expectedOwner, initialOwner);
+        if(expectedParent.gtz()) {
+            // exact parent is important
+            if(info.parentNftId != expectedParent) {
+                revert ErrorRegistryServiceRegisterableParentInvalid(registerable, expectedParent, info.parentNftId);
+            }
+        }
+
+        if(expectedOwner > address(0)) {
+            // exact owner is important
+            if(initialOwner != expectedOwner) { // registerable owner protection
+                revert ErrorRegistryServiceRegisterableOwnerInvalid(registerable, expectedOwner, initialOwner);
+            }
         }
 
         if(initialOwner == address(registerable)) {
             revert ErrorRegistryServiceRegisterableSelfRegistration(registerable);
         }
 
+        // redundant, checked by chainNft
         if(initialOwner == address(0)) {
             revert ErrorRegistryServiceRegisterableOwnerZero(registerable);
         }

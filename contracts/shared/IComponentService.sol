@@ -18,18 +18,11 @@ interface IComponentService is
 {
     // registerProduct
     error ErrorComponentServiceCallerNotInstance(address caller);
-    error ErrorComponentServiceNotProduct(address product);
     error ErrorComponentServiceTokenInvalid(address token);
 
     // registerComponent
     error ErrorComponentServiceCallerNotProduct(address caller);
-    error ErrorComponentServiceNotComponent(address component);
-
-    error ErrorComponentServiceNotInstanceLinkedComponent(address component);
     error ErrorComponentServiceComponentTypeNotSupported(address component, ObjectType invalid);
-    error ErrorComponentServiceComponentParentInvalid(address component, NftId required, NftId actual);
-    error ErrorComponentServiceComponentReleaseMismatch(address component, VersionPart serviceRelease, VersionPart componentRelease);
-    error ErrorComponentServiceComponentAlreadyRegistered(address component);
     
     error ErrorProductServiceNoDistributionExpected(NftId productNftId);
     error ErrorProductServiceDistributionAlreadyRegistered(NftId productNftId, NftId distributionNftId);
@@ -37,18 +30,11 @@ interface IComponentService is
     error ErrorProductServiceOraclesAlreadyRegistered(NftId productNftId, uint8 expectedOracles);
     error ErrorProductServicePoolAlreadyRegistered(NftId productNftId, NftId poolNftId);
 
-    error ErrorComponentServiceNewWalletAddressZero();
-    error ErrorComponentServiceWalletAddressZero();
-    error ErrorComponentServiceWalletAddressIsSameAsCurrent();
-
     error ErrorComponentServiceWithdrawAmountIsZero();
     error ErrorComponentServiceWithdrawAmountExceedsLimit(Amount withdrawnAmount, Amount withdrawLimit);
-    error ErrorComponentServiceWalletAllowanceTooSmall(address wallet, address spender, uint256 allowance, uint256 amount);
 
     event LogComponentServiceComponentLocked(address component, bool locked);
     event LogComponentServiceRegistered(NftId instanceNftId, NftId componentNftId, ObjectType componentType, address component, address token, address initialOwner); 
-    event LogComponentServiceWalletAddressChanged(NftId componentNftId, address currentWallet, address newWallet);
-    event LogComponentServiceWalletTokensTransferred(NftId componentNftId, address currentWallet, address newWallet, uint256 currentBalance);
     event LogComponentServiceComponentFeesWithdrawn(NftId componentNftId, address recipient, address token, Amount withdrawnAmount);
     event LogComponentServiceProductFeesUpdated(NftId productNftId);
     event LogComponentServiceDistributionFeesUpdated(NftId distributionNftId);
