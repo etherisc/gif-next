@@ -2,8 +2,8 @@
 pragma solidity ^0.8.20;
 
 import {Test, Vm, console} from "../lib/forge-std/src/Test.sol";
-import {VersionLib} from "../contracts/type/Version.sol";
-import {IVersionable} from "../contracts/upgradeability/IVersionable.sol";
+import {VersionLib, VersionPartLib, VersionPart} from "../contracts/type/Version.sol";
+import {IUpgradeable} from "../contracts/upgradeability/IUpgradeable.sol";
 import {ProxyManager} from "../contracts/upgradeability/ProxyManager.sol";
 
 import {GifTest} from "./base/GifTest.sol";
@@ -20,23 +20,23 @@ contract ProxyManagerTest is GifTest {
         assertTrue(address(proxyManager) != address(0), "proxyManager address zero");
 
         bytes memory initializationData = abi.encode(uint(42));
-        IVersionable versionable = proxyManager.initialize(
+        IUpgradeable upgradeable = proxyManager.initialize(
             address(registry),
             address(new ContractV01()), 
             initializationData,
             bytes32(""));
         // solhint-disable-next-line
-        console.log("versionable[address]", address(versionable));
-        assertTrue(address(versionable) != address(0), "versionable address zero");
+        console.log("upgradeable[address]", address(upgradeable));
+        assertTrue(address(upgradeable) != address(0), "upgradeable address zero");
 
         // solhint-disable-next-line
-        console.log("version[int]", versionable.getVersion().toInt());
-        assertTrue(versionable.getVersion() == VersionLib.toVersion(1,0,0), "version not (1,0,0)");
+        console.log("version[int]", upgradeable.getVersion().toInt());
+        assertTrue(upgradeable.getVersion() == VersionLib.toVersion(3,0,0), "version not (3,0,0)");
 
-        ContractV01 productV1 = ContractV01(address(versionable));
+        ContractV01 productV1 = ContractV01(address(upgradeable));
         assertEq(productV1.getDataV01(), "hi from version 1", "unexpected message for getDataV01");
 
-        ContractV02 productV2 = ContractV02(address(versionable));
+        ContractV02 productV2 = ContractV02(address(upgradeable));
         vm.expectRevert();
         productV2.getDataV02();
     }
@@ -44,18 +44,19 @@ contract ProxyManagerTest is GifTest {
     function testProductV01DeployAndUpgrade() public {
 
         ProxyManager proxyManager = new ProxyManager();
+        VersionPart release = VersionPartLib.toVersionPart(4);
         bytes memory initializationData = abi.encode(uint(0));
         bytes memory upgradeData = abi.encode(uint(0));
-        IVersionable versionable = proxyManager.initialize(
+        IUpgradeable upgradeable = proxyManager.initialize(
             address(registry),
-            address(new ContractV01()), 
+            address(new ContractV01()),
             initializationData,
             bytes32(""));
         proxyManager.upgrade(address(new ContractV02()), upgradeData);
 
-        assertTrue(versionable.getVersion() == VersionLib.toVersion(1,0,1), "version not (1,0,1)");
+        assertTrue(upgradeable.getVersion() == VersionLib.toVersion(3,0,1), "version not (3,0,1)");
 
-        ContractV02 productV2 = ContractV02(address(versionable));
+        ContractV02 productV2 = ContractV02(address(upgradeable));
         assertEq(productV2.getDataV01(), "hi from version 1", "unexpected message for getDataV01");
         assertEq(productV2.getDataV02(), "hi from version 2", "unexpected message for getDataV02");
     }
@@ -69,7 +70,7 @@ contract ProxyManagerTest is GifTest {
         bytes memory initializationData = abi.encode(uint(0));
         proxyManager.initialize(
             address(registry),
-            address(new ContractV01()), 
+            address(new ContractV01()),
             initializationData,
             bytes32(""));
 

@@ -275,7 +275,6 @@ contract GifTest is GifDeployer {
                 instanceReader: masterInstanceReader
             }),
             registry,
-            VersionPartLib.toVersionPart(3),
             registryOwner,
             false);
 
@@ -288,7 +287,6 @@ contract GifTest is GifDeployer {
         masterInstanceAdmin.completeSetup(
             address(registry),
             address(instanceAuthorizationV3),
-            VersionPartLib.toVersionPart(3),
             address(masterInstance));
 
         require(address(masterInstanceAdmin.getRegistry()) == address(registry), "unexpected master instance registry");

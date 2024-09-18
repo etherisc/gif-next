@@ -68,7 +68,7 @@ contract PoolWithReinsurance is
         internal 
         initializer()
     {
-        _initializePolicyHolder(registry);
+        __PolicyHolder_init(registry);
     }
 
     function createReinsurance(

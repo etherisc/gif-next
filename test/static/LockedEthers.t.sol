@@ -2,8 +2,10 @@
 pragma solidity ^0.8.20;
 
 import {console, Test} from "../../lib/forge-std/src/Test.sol";
+import {AccessAdmin} from "../../contracts/authorization/AccessAdmin.sol";
 import {AccessManagerCloneable} from "../../contracts/authorization/AccessManagerCloneable.sol";
 import {UpgradableProxyWithAdmin} from "../../contracts/upgradeability/UpgradableProxyWithAdmin.sol";
+import {VersionPartLib} from "../../contracts/type/Version.sol";
 
 contract MockContract {
     function hello() public pure returns (string memory) {
@@ -24,8 +26,13 @@ contract LockedEthersTest is Test {
 
     function setUp() public {
         accessManagerMaster = new AccessManagerCloneable();
+        AccessAdmin admin = new AccessAdmin();
+
         vm.startPrank(initialAdmin);
-        accessManagerMaster.initialize(initialAdmin);
+        admin.initialize(
+            address(accessManagerMaster), 
+            "Test", 
+            VersionPartLib.toVersionPart(5));
         vm.stopPrank();
 
         upgradeableProxyWithAdmin = new UpgradableProxyWithAdmin(

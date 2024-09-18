@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
@@ -70,7 +71,6 @@ import {StakingServiceManager} from "../../contracts/staking/StakingServiceManag
 
 contract GifDeployer is Test {
 
-    uint8 public constant GIF_RELEASE = 3;
     string public constant COMMIT_HASH = "1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a";
 
     struct DeployedServiceInfo {
@@ -84,7 +84,7 @@ contract GifDeployer is Test {
     address public registryOwner = makeAddr("registryOwner");
     address public stakingOwner = registryOwner;
     address public gifAdmin = registryOwner;
-    address public gifManager = registryOwner;
+    address public gifManager = makeAddr("gifManager"); // must be different from gifAdmin
 
     // deploy core
     IERC20Metadata public dip;
@@ -213,7 +213,6 @@ contract GifDeployer is Test {
         registryAdmin.completeSetup(
             address(registry),
             address(new RegistryAuthorization(COMMIT_HASH)),
-            VersionPartLib.toVersionPart(GIF_RELEASE),
             gifAdmin,
             gifManager);
 
@@ -222,7 +221,6 @@ contract GifDeployer is Test {
         vm.stopPrank();
         // solhint-disable enable
     }
-
 
     function _deployRegistry(IERC20Metadata dip)
         internal
@@ -233,12 +231,21 @@ contract GifDeployer is Test {
             RegistryAdmin registryAdmin
         )
     {
+        console.log("gifManager ", gifManager);
+
+        address deployer = gifManager;
+        address globalRegistry = address(0x1234);
+        bytes32 salt = "0x1234";
+
+        address registryAddress = _computeRegistryAddress(deployer, globalRegistry, salt);
+        console.log("calculated registry address ", registryAddress);
 
         console.log("   a) deploy registry admin");
-        registryAdmin = new RegistryAdmin();
+        registryAdmin = new RegistryAdmin{salt: salt}();
 
         console.log("   b) deploy registry");
-        registry = new Registry(registryAdmin, globalRegistry);
+        registry = new Registry{salt: salt}(registryAdmin, address(0x1234));
+        require(address(registry) == registryAddress, "unexpected registry address");
 
         console.log("   c) deploy release registry");
         releaseRegistry = new ReleaseRegistry(registry);
@@ -494,19 +501,15 @@ contract GifDeployer is Test {
         assertEq(a.nftId.toInt(), b.nftId.toInt(), "getObjectInfo(address).nftId returned unexpected value");
         assertEq(a.parentNftId.toInt(), b.parentNftId.toInt(), "getObjectInfo(address).parentNftId returned unexpected value");
         assertEq(a.objectType.toInt(), b.objectType.toInt(), "getObjectInfo(address).objectType returned unexpected value");
+        assertEq(a.release.toInt(), b.release.toInt(), "getObjectInfo(address).release returned unexpected value");
         assertEq(a.objectAddress, b.objectAddress, "getObjectInfo(address).objectAddress returned unexpected value");
-        assertEq(a.initialOwner, b.initialOwner, "getObjectInfo(address).initialOwner returned unexpected value");
-        assertEq(a.data.length, b.data.length, "getObjectInfo(address).data.length returned unexpected value");
-        assertEq(keccak256(a.data), keccak256(b.data), "getObjectInfo(address).data returned unexpected value");
 
         return (
             (a.nftId == b.nftId) &&
             (a.parentNftId == b.parentNftId) &&
             (a.objectType == b.objectType) &&
-            (a.objectAddress == b.objectAddress) &&
-            (a.initialOwner == b.initialOwner) &&
-            (a.data.length == b.data.length) &&
-            keccak256(a.data) == keccak256(b.data)
+            (a.release == b.release) &&
+            (a.objectAddress == b.objectAddress)
         );
     }
 
@@ -516,10 +519,9 @@ contract GifDeployer is Test {
                 NftIdLib.zero(),
                 NftIdLib.zero(),
                 ObjectTypeLib.zero(),
+                VersionPartLib.zero(),
                 false,
-                address(0),
-                address(0),
-                bytes("")
+                address(0)
             )
         );
     }
@@ -700,5 +702,22 @@ contract GifDeployer is Test {
 
         console.log("");
         // solhint-enable
+    }
+
+    function _computeRegistryAddress(address deployer, address globalRegistry, bytes32 salt) internal pure returns (address) {
+        address accessAdmin = Create2.computeAddress(
+            salt, 
+            keccak256(abi.encodePacked(
+                type(RegistryAdmin).creationCode)), // bytecodeHash
+            deployer); 
+        
+        return Create2.computeAddress(
+            salt, 
+            keccak256(abi.encodePacked(
+                type(Registry).creationCode,
+                abi.encode(
+                    accessAdmin,
+                    globalRegistry))), // bytecodeHash 
+            deployer);
     }
 }

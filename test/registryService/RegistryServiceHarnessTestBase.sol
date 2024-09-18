@@ -107,7 +107,9 @@ contract RegistryServiceHarnessTestBase is GifDeployer, FoundryRandom {
         address expectedOwner)
         internal
     {
-        IRegistry.ObjectInfo memory info = registerable.getInitialInfo();
+        IRegistry.ObjectInfo memory info;
+        address initialOwner;
+        (info, initialOwner, /*data*/) = registerable.getInitialInfo();
         bool expectRevert = false;
 
         if(info.objectAddress != address(registerable)) {
@@ -123,26 +125,26 @@ contract RegistryServiceHarnessTestBase is GifDeployer, FoundryRandom {
                 expectedType,
                 info.objectType));
             expectRevert = true;
-        } else if(info.initialOwner != expectedOwner) { 
+        } else if(initialOwner != expectedOwner) { 
             vm.expectRevert(abi.encodeWithSelector(
                 IRegistryService.ErrorRegistryServiceRegisterableOwnerInvalid.selector,
                 info.objectAddress,
                 expectedOwner,
-                info.initialOwner));
+                initialOwner));
             expectRevert = true;
-        } else if(info.initialOwner == address(registerable)) {
+        } else if(initialOwner == address(registerable)) {
             vm.expectRevert(abi.encodeWithSelector(
                 IRegistryService.ErrorRegistryServiceRegisterableSelfRegistration.selector,
                 info.objectAddress));
             expectRevert = true;
-        } else if(info.initialOwner == address(0)) {
+        } else if(initialOwner == address(0)) {
             vm.expectRevert(abi.encodeWithSelector(IRegistryService.ErrorRegistryServiceRegisterableOwnerZero.selector,
             info.objectAddress));
             expectRevert = true;
-        }else if(registry.isRegistered(info.initialOwner)) { 
+        }else if(registry.isRegistered(initialOwner)) { 
             vm.expectRevert(abi.encodeWithSelector(IRegistryService.ErrorRegistryServiceRegisterableOwnerRegistered.selector,
             info.objectAddress,
-            info.initialOwner));
+            initialOwner));
             expectRevert = true;
         }
 
@@ -165,7 +167,8 @@ contract RegistryServiceHarnessTestBase is GifDeployer, FoundryRandom {
     }
 
     function _assert_verifyObjectInfo(
-        IRegistry.ObjectInfo memory info, 
+        IRegistry.ObjectInfo memory info,
+        address initialOwner, 
         ObjectType expectedType)
         internal
     {
@@ -178,19 +181,20 @@ contract RegistryServiceHarnessTestBase is GifDeployer, FoundryRandom {
                 IRegistryService.ErrorRegistryServiceObjectTypeInvalid.selector,
                 expectedType,
                 info.objectType));
-        } else if(info.initialOwner == address(0)) {
+        } else if(initialOwner == address(0)) {
             vm.expectRevert(abi.encodeWithSelector(
                 IRegistryService.ErrorRegistryServiceObjectOwnerZero.selector,
                 info.objectType));
-        } else if(registry.isRegistered(info.initialOwner)) { 
+        } else if(registry.isRegistered(initialOwner)) { 
             vm.expectRevert(abi.encodeWithSelector(
                 IRegistryService.ErrorRegistryServiceObjectOwnerRegistered.selector,
                 info.objectType, 
-                info.initialOwner));
+                initialOwner));
         }
 
         registryServiceHarness.exposed_verifyObjectInfo(
             info, 
+            initialOwner,
             expectedType);
     }
 }

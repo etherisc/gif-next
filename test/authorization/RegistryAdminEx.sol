@@ -16,7 +16,6 @@ contract RegistryAdminEx is RegistryAdmin {
     function completeSetup(
         address registry,
         address authorization,
-        VersionPart release,
         address gifAdmin, 
         address gifManager
     )
@@ -26,7 +25,6 @@ contract RegistryAdminEx is RegistryAdmin {
         super.completeSetup(
             registry, 
             authorization,
-            release,
             gifAdmin, 
             gifManager);
 

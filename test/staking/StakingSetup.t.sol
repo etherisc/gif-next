@@ -63,13 +63,13 @@ contract StakingSetupTest is GifTest {
         assertEq(staking.getNftId().toInt(), registry.getNftIdForAddress(address(staking)).toInt(), "unexpected staking nft id (2)");
 
         // staking registry entry
-        IRegistry.ObjectInfo memory stakingInfo = registry.getObjectInfo(staking.getNftId());
+        IRegistry.ObjectInfo memory stakingInfo = registry.getObjectInfo(stakingNftId);
         assertEq(stakingInfo.nftId.toInt(), stakingNftId.toInt(), "unexpected staking nft id (3)");
         assertEq(stakingInfo.parentNftId.toInt(), registryNftId.toInt(), "unexpected parent nft id");
         assertEq(stakingInfo.objectType.toInt(), STAKING().toInt(), "unexpected object type");
         assertFalse(stakingInfo.isInterceptor, "staking should not be interceptor");
         assertEq(stakingInfo.objectAddress, address(staking), "unexpected contract address");
-        assertEq(stakingInfo.initialOwner, registryOwner, "unexpected initial owner");
+        assertEq(registry.ownerOf(stakingNftId), registryOwner, "unexpected initial owner");
 
         // staking service manager
         assertEq(stakingServiceManager.getOwner(), stakingService.getOwner(), "unexpected staking service manager owner");
@@ -81,13 +81,13 @@ contract StakingSetupTest is GifTest {
         assertEq(stakingService.getNftId().toInt(), stakingServiceNftId.toInt(), "unexpected staking service nft id (1)");
         assertEq(stakingService.getNftId().toInt(), registry.getNftIdForAddress(address(stakingService)).toInt(), "unexpected staking service nft id (2)");
 
-        IRegistry.ObjectInfo memory serviceInfo = registry.getObjectInfo(stakingService.getNftId());
+        IRegistry.ObjectInfo memory serviceInfo = registry.getObjectInfo(stakingServiceNftId);
         assertEq(serviceInfo.nftId.toInt(), stakingServiceNftId.toInt(), "unexpected staking service nft id (3)");
         assertEq(serviceInfo.parentNftId.toInt(), registryNftId.toInt(), "unexpected parent nft id");
         assertEq(serviceInfo.objectType.toInt(), SERVICE().toInt(), "unexpected object type");
         assertFalse(serviceInfo.isInterceptor, "staking service should not be interceptor");
         assertEq(serviceInfo.objectAddress, address(stakingService), "unexpected contract address");
-        assertEq(serviceInfo.initialOwner, registryOwner, "unexpected initial owner");
+        assertEq(registry.ownerOf(stakingServiceNftId), registryOwner, "unexpected initial owner");
     }
 
 

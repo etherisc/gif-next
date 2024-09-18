@@ -6,7 +6,7 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
-import {IVersionable} from "../../contracts/upgradeability/IVersionable.sol";
+import {IUpgradeable} from "../../contracts/upgradeability/IUpgradeable.sol";
 
 import {ChainNft} from "../../contracts/registry/ChainNft.sol";
 import {Dip} from "../../contracts/mock/Dip.sol";

@@ -5,8 +5,8 @@ import {ObjectType, REGISTRY} from "../../contracts/type/ObjectType.sol";
 
 import {Version, VersionLib} from "../../contracts/type/Version.sol";
 import {Service} from "../../contracts/shared/Service.sol";
-import {IVersionable} from "../../contracts/upgradeability/IVersionable.sol";
-import {Versionable} from "../../contracts/upgradeability/Versionable.sol";
+import {IUpgradeable} from "../../contracts/upgradeability/IUpgradeable.sol";
+import {Upgradeable} from "../../contracts/upgradeability/Upgradeable.sol";
 
 /*
 contract RegistryServiceMock is Versionable {

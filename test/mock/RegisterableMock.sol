@@ -7,18 +7,19 @@ import {FoundryRandom} from "foundry-random/FoundryRandom.sol";
 import {InitializableERC165} from "../../contracts/shared/InitializableERC165.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
-import {IRelease} from "../../contracts/registry/IRelease.sol";
 import {MockInterceptor} from "./MockInterceptor.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {ObjectType} from "../../contracts/type/ObjectType.sol";
-import {VersionPart, VersionPartLib} from "../../contracts/type/Version.sol";
+import {Versionable} from "../../contracts/shared/Versionable.sol";
 
 
-contract RegisterableMockWithAuthority is InitializableERC165, IRegisterable, MockInterceptor, AccessManaged {
+contract RegisterableMockWithAuthority is IRegisterable, InitializableERC165, Versionable, MockInterceptor, AccessManaged {
 
     error ErrorRegisterableMockIsNotInterceptor(address registerable);
 
     IRegistry.ObjectInfo internal _info;
+    address _initialOwner;
+    bytes _data;
 
     constructor(
         address authority,
@@ -35,11 +36,12 @@ contract RegisterableMockWithAuthority is InitializableERC165, IRegisterable, Mo
             nftId,
             parentNftId,
             objectType,
+            getRelease(),
             isInterceptor,
-            address(this),
-            initialOwner,
-            data
+            address(this)
         );
+        _initialOwner = initialOwner;
+        _data = data;
 
         initializeMock();
     }
@@ -54,18 +56,13 @@ contract RegisterableMockWithAuthority is InitializableERC165, IRegisterable, Mo
 
     function isActive() external view returns (bool active) { return true; }
 
-    // from IRegisterable
-    function getRelease() public virtual override pure returns (VersionPart release) {
-        return VersionPartLib.toVersionPart(3);
-    }
-
     function getInitialInfo() 
         public 
         view 
         virtual 
-        returns (IRegistry.ObjectInfo memory) 
+        returns (IRegistry.ObjectInfo memory, address, bytes memory) 
     {
-        return _info;
+        return (_info, _initialOwner, _data);
     }
 
     function nftTransferFrom(address from, address to, uint256 tokenId, address operator) public override {

@@ -737,7 +737,7 @@ contract Staking is
         // initialize component
         __Component_init(
             registry.getAuthority(),
-            address(registry), 
+            registryAddress, 
             registry.getNftId(), // parent nft id
             CONTRACT_NAME,
             STAKING(), 

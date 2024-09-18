@@ -32,7 +32,7 @@ contract MyPolicyHolder is PolicyHolder {
     }
 
     function _initialize(address registryAddress) internal initializer() {
-        _initializePolicyHolder(registryAddress);
+        __PolicyHolder_init(registryAddress);
     }
 
     // callback when policy is activated
