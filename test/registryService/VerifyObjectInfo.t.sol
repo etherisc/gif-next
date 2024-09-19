@@ -21,7 +21,7 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
             nftId: NftIdLib.toNftId(randomNumber(type(uint96).max)),
             parentNftId: NftIdLib.toNftId(randomNumber(type(uint96).max)), 
             objectType: objectType,
-            release: VersionPartLib.toVersionPart(randomNumber(type(uint8).max)),
+            release: VersionPartLib.toVersionPart(uint8(randomNumber(type(uint8).max))),
             isInterceptor: toBool(randomNumber(1)), 
             objectAddress: address(0)
         });
@@ -45,7 +45,7 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
             nftId: NftIdLib.toNftId(randomNumber(type(uint96).max)),
             parentNftId: NftIdLib.toNftId(randomNumber(type(uint96).max)),
             objectType: objectType,
-            release: VersionPartLib.toVersionPart(randomNumber(type(uint8).max)),
+            release: VersionPartLib.toVersionPart(uint8(randomNumber(type(uint8).max))),
             isInterceptor: toBool(randomNumber(1)), 
             objectAddress: address(0)
         });
@@ -74,7 +74,7 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
             nftId: NftIdLib.toNftId(randomNumber(type(uint96).max)), 
             parentNftId: NftIdLib.toNftId(randomNumber(type(uint96).max)),
             objectType: objectType,
-            release: VersionPartLib.toVersionPart(randomNumber(type(uint8).max)),
+            release: VersionPartLib.toVersionPart(uint8(randomNumber(type(uint8).max))),
             isInterceptor: toBool(randomNumber(1)),
             objectAddress: address(0)
         });
@@ -103,7 +103,7 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
             nftId: NftIdLib.toNftId(randomNumber(type(uint96).max)),
             parentNftId: NftIdLib.toNftId(randomNumber(type(uint96).max)),
             objectType: objectType,
-            release: VersionPartLib.toVersionPart(randomNumber(type(uint8).max)),
+            release: VersionPartLib.toVersionPart(uint8(randomNumber(type(uint8).max))),
             isInterceptor: toBool(randomNumber(1)),
             objectAddress: address(0)
         });
@@ -157,7 +157,7 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
             nftId: NftIdLib.toNftId(randomNumber(type(uint96).max)),
             parentNftId: NftIdLib.toNftId(randomNumber(type(uint96).max)),
             objectType: objectType,
-            release: VersionPartLib.toVersionPart(randomNumber(type(uint8).max)),
+            release: VersionPartLib.toVersionPart(uint8(randomNumber(type(uint8).max))),
             isInterceptor: toBool(randomNumber(1)),
             objectAddress: address(0)
         });
@@ -180,7 +180,7 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
             nftId: NftIdLib.toNftId(randomNumber(type(uint96).max)),
             parentNftId: NftIdLib.toNftId(randomNumber(type(uint96).max)),
             objectType: objectType,
-            release: VersionPartLib.toVersionPart(randomNumber(type(uint8).max)),
+            release: VersionPartLib.toVersionPart(uint8(randomNumber(type(uint8).max))),
             isInterceptor: toBool(randomNumber(1)),
             objectAddress: address(0)
         });

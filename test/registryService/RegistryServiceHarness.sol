@@ -10,6 +10,7 @@ import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {Service} from "../../contracts/shared/Service.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
+import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 
 
 contract RegistryServiceHarness is RegistryService {
@@ -20,12 +21,14 @@ contract RegistryServiceHarness is RegistryService {
         ObjectType expectedType, 
         address expectedOwner)
         public
-        // view
+        view
         returns(
-            IRegistry.ObjectInfo memory info
+            IRegistry.ObjectInfo memory info,
+            address owner,
+            bytes memory data
         )
     {
-        info = _getAndVerifyContractInfo(
+        (info, owner, data) = _getAndVerifyContractInfo(
             registerable,
             expectedParent,
             expectedType,

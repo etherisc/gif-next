@@ -7,7 +7,7 @@ import {Vm, console} from "../../lib/forge-std/src/Test.sol";
 
 import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
-import {ObjectType} from "../../contracts/type/ObjectType.sol";
+import {ObjectType, COMPONENT, DISTRIBUTION, ORACLE, POOL} from "../../contracts/type/ObjectType.sol";
 import {VersionPartLib, VersionPart} from "../../contracts/type/Version.sol";
 import {RoleId} from "../../contracts/type/RoleId.sol";
 
@@ -40,15 +40,8 @@ contract RegistryServiceHarnessTestBase is GifDeployer, FoundryRandom {
 
     function setUp() public virtual
     {
-        globalRegistry = makeAddr("globalRegistry");
-        registryOwner = makeAddr("registryOwner");
-
         // solhint-disable-next-line
         console.log("tx origin", tx.origin);
-
-        address gifAdmin = registryOwner;
-        address gifManager = registryOwner;
-        address stakingOwner = registryOwner;
 
         (
             , // dip,
@@ -103,13 +96,14 @@ contract RegistryServiceHarnessTestBase is GifDeployer, FoundryRandom {
 
     function _assert_getAndVerifyContractInfo(
         IRegisterable registerable, 
+        NftId expectedParent,
         ObjectType expectedType, 
         address expectedOwner)
         internal
     {
-        IRegistry.ObjectInfo memory info;
-        address initialOwner;
-        (info, initialOwner, /*data*/) = registerable.getInitialInfo();
+        IRegistry.ObjectInfo memory info = registerable.getInitialInfo();
+        address initialOwner = registerable.getOwner();
+        bytes memory data = registerable.getInitialData();
         bool expectRevert = false;
 
         if(info.objectAddress != address(registerable)) {
@@ -118,20 +112,40 @@ contract RegistryServiceHarnessTestBase is GifDeployer, FoundryRandom {
                 address(registerable), 
                 info.objectAddress));
             expectRevert = true;
-        } else if(info.objectType != expectedType) {
+        } else if(expectedType != COMPONENT()) {
+            if(info.objectType != expectedType) {
+                vm.expectRevert(abi.encodeWithSelector(
+                    IRegistryService.ErrorRegistryServiceRegisterableTypeInvalid.selector,
+                    info.objectAddress,
+                    expectedType,
+                    info.objectType));
+                expectRevert = true;
+            }
+        } else if(!(info.objectType == DISTRIBUTION() || info.objectType == ORACLE() || info.objectType == POOL())) {
             vm.expectRevert(abi.encodeWithSelector(
                 IRegistryService.ErrorRegistryServiceRegisterableTypeInvalid.selector,
                 info.objectAddress,
                 expectedType,
                 info.objectType));
             expectRevert = true;
-        } else if(initialOwner != expectedOwner) { 
-            vm.expectRevert(abi.encodeWithSelector(
-                IRegistryService.ErrorRegistryServiceRegisterableOwnerInvalid.selector,
-                info.objectAddress,
-                expectedOwner,
-                initialOwner));
-            expectRevert = true;
+        } else if(expectedParent.gtz()) {
+            if(info.parentNftId != expectedParent) {
+                vm.expectRevert(abi.encodeWithSelector(
+                    IRegistryService.ErrorRegistryServiceRegisterableParentInvalid.selector,
+                    info.objectAddress,
+                    expectedParent,
+                    info.parentNftId));
+                expectRevert = true;
+            }
+        } else if(expectedOwner > address(0)) {        
+            if(initialOwner != expectedOwner) { 
+                vm.expectRevert(abi.encodeWithSelector(
+                    IRegistryService.ErrorRegistryServiceRegisterableOwnerInvalid.selector,
+                    info.objectAddress,
+                    expectedOwner,
+                    initialOwner));
+                expectRevert = true;
+            }
         } else if(initialOwner == address(registerable)) {
             vm.expectRevert(abi.encodeWithSelector(
                 IRegistryService.ErrorRegistryServiceRegisterableSelfRegistration.selector,
@@ -151,18 +165,27 @@ contract RegistryServiceHarnessTestBase is GifDeployer, FoundryRandom {
         if(expectRevert) {
             registryServiceHarness.exposed_getAndVerifyContractInfo(
                 registerable,
+                expectedParent,
                 expectedType,
                 expectedOwner);
         } else {
-            IRegistry.ObjectInfo memory infoFromRegistryService = registryServiceHarness.exposed_getAndVerifyContractInfo(
+            (
+                IRegistry.ObjectInfo memory infoFromRegistryService,
+                address ownerFromRegistryService,
+                bytes memory dataFromRegistryService
+            ) = registryServiceHarness.exposed_getAndVerifyContractInfo(
                 registerable,
+                expectedParent,
                 expectedType,
                 expectedOwner);  
 
-            IRegistry.ObjectInfo memory infoFromRegistry = registry.getObjectInfo(address(registerable));
+            assertTrue(eqObjectInfo(infoFromRegistryService, info), "Info returned by getAndVerifyContractInfo() is different from the one in registrable");
+            assertEq(ownerFromRegistryService, initialOwner, "Owner returned by getAndVerifyContractInfo() is different from the one in registerable");
+            assertTrue(eqBytes(dataFromRegistryService, data), "Data returned by getAndVerifyContractInfo() is different from the one in registrable");
 
-            eqObjectInfo(info, infoFromRegistryService);
-            eqObjectInfo(infoFromRegistry, infoFromRegistryService);
+            assertTrue(eqObjectInfo(infoFromRegistryService, registry.getObjectInfo(address(registerable))), "Info returned by getAndVerifyContractInfo() is different from the one in registry");
+            assertEq(ownerFromRegistryService, registry.ownerOf(address(registerable)), "Owner returned by getAndVerifyContractInfo() is different from the one in registry");
+            assertTrue(eqBytes(dataFromRegistryService, registry.getObjectData(address(registerable))), "Data returned by getAndVerifyContractInfo() is different from the one in registry");
         }
     }
 

@@ -60,9 +60,18 @@ contract RegisterableMockWithAuthority is IRegisterable, InitializableERC165, Ve
         public 
         view 
         virtual 
-        returns (IRegistry.ObjectInfo memory, address, bytes memory) 
+        returns (IRegistry.ObjectInfo memory) 
     {
-        return (_info, _initialOwner, _data);
+        return _info;
+    }
+
+    function getInitialData() 
+        public 
+        view 
+        virtual 
+        returns (bytes memory) 
+    {
+        return _data;
     }
 
     function nftTransferFrom(address from, address to, uint256 tokenId, address operator) public override {

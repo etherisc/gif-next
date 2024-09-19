@@ -171,7 +171,9 @@ contract RegistryService is
             bytes memory data
         )
     {
-        (info, initialOwner, data) = registerable.getInitialInfo();
+        info = registerable.getInitialInfo();
+        data = registerable.getInitialData();
+        initialOwner = registerable.getOwner();
 
         if(info.objectAddress != address(registerable)) {
             revert ErrorRegistryServiceRegisterableAddressInvalid(registerable, info.objectAddress);

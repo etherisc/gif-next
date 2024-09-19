@@ -22,31 +22,40 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
     function test_withValidRegisterableHappyCase() public
     {
         ObjectType registerableType = ObjectTypeLib.toObjectType(randomNumber(type(uint8).max));
+        NftId parentNftId = NftIdLib.toNftId(randomNumber(type(uint96).max));
         
         RegisterableMock registerable = new RegisterableMock(
             NftIdLib.toNftId(randomNumber(type(uint96).max)), // nftId
-            NftIdLib.toNftId(randomNumber(type(uint96).max)), // parentNftId
+            parentNftId,
             registerableType,
             toBool(randomNumber(1)), // isInterceptor
             registerableOwner,
             ""
         );
 
-        IRegistry.ObjectInfo memory infoFromRegistryService = registryServiceHarness.exposed_getAndVerifyContractInfo(
+        (
+            IRegistry.ObjectInfo memory info,
+            address owner,
+            bytes memory data
+        ) = registryServiceHarness.exposed_getAndVerifyContractInfo(
                 registerable,
+                parentNftId,
                 registerableType,
                 registerableOwner);
 
-        eqObjectInfo(infoFromRegistryService, registerable.getInitialInfo());//, "Info returned by registry service is different from info stored in registerable");
+        assertTrue(eqObjectInfo(info, registerable.getInitialInfo()), "Info returned by getAndVerifyContractInfo() is different from info stored in registerable");
+        assertEq(owner, registerable.getOwner(), "Owner returned by getAndVerifyContractInfo() is different from owner stored in registerable");
+        assertTrue(eqBytes(data, registerable.getInitialData()), "Data returned by getAndVerifyContractInfo() is different from data stored in registerable");
     } 
 
     function test_withInvalidRegisterableAddress() public 
     {
         ObjectType registerableType = ObjectTypeLib.toObjectType(randomNumber(type(uint8).max));
+        NftId parentNftId = NftIdLib.toNftId(randomNumber(type(uint96).max));
 
         RegisterableMockWithInvalidAddress registerable = new RegisterableMockWithInvalidAddress(
             NftIdLib.toNftId(randomNumber(type(uint96).max)), // nftId
-            NftIdLib.toNftId(randomNumber(type(uint96).max)), // parentNftId
+            parentNftId,
             registerableType,
             toBool(randomNumber(1)), // isInterceptor
             address(uint160(randomNumber(type(uint160).max))),
@@ -59,8 +68,9 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
             address(registerable),
             registerable.getInitialInfo().objectAddress));
 
-        IRegistry.ObjectInfo memory infoFromRegistryService = registryServiceHarness.exposed_getAndVerifyContractInfo(
+        registryServiceHarness.exposed_getAndVerifyContractInfo(
                 registerable,
+                parentNftId,
                 registerableType,
                 registerableOwner);
     }
@@ -69,6 +79,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
     {
         ObjectType registerableType = ObjectTypeLib.toObjectType(randomNumber(type(uint8).max));
         ObjectType expectedType = ObjectTypeLib.toObjectType(randomNumber(type(uint8).max));
+        NftId parentNftId = NftIdLib.toNftId(randomNumber(type(uint96).max));
 
         if(registerableType == expectedType) {
             expectedType = ObjectTypeLib.toObjectType(expectedType.toInt() + 1);
@@ -76,7 +87,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
 
         RegisterableMock registerable = new RegisterableMock(
             NftIdLib.toNftId(randomNumber(type(uint96).max)), // nftId
-            NftIdLib.toNftId(randomNumber(type(uint96).max)), // parentNftId
+            parentNftId,
             registerableType,
             toBool(randomNumber(1)), // isInterceptor
             registerableOwner, 
@@ -91,6 +102,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
 
         registryServiceHarness.exposed_getAndVerifyContractInfo(
             registerable,
+            parentNftId,
             expectedType,
             registerableOwner);
     }
@@ -99,6 +111,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
     {
         ObjectType registerableType = ObjectTypeLib.zero();
         ObjectType expectedType = ObjectTypeLib.toObjectType(randomNumber(type(uint8).max));
+        NftId parentNftId = NftIdLib.toNftId(randomNumber(type(uint96).max));
 
         if(registerableType == expectedType) {
             expectedType = ObjectTypeLib.toObjectType(expectedType.toInt() + 1);
@@ -106,7 +119,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
 
         RegisterableMock registerable = new RegisterableMock(
             NftIdLib.toNftId(randomNumber(type(uint96).max)), // nftId
-            NftIdLib.toNftId(randomNumber(type(uint96).max)), // parentNftId
+            parentNftId,
             registerableType,
             toBool(randomNumber(1)), // isInterceptor
             registerableOwner, 
@@ -121,6 +134,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
 
         registryServiceHarness.exposed_getAndVerifyContractInfo(
             registerable,
+            parentNftId,
             expectedType,
             registerableOwner);
     }
@@ -129,6 +143,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
     {
         ObjectType registerableType = ObjectTypeLib.toObjectType(randomNumber(type(uint8).max));
         ObjectType expectedType = ObjectTypeLib.zero();
+        NftId parentNftId = NftIdLib.toNftId(randomNumber(type(uint96).max));
 
         if(registerableType == expectedType) {
             registerableType = ObjectTypeLib.toObjectType(registerableType.toInt() + 1);
@@ -136,7 +151,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
 
         RegisterableMock registerable = new RegisterableMock(
             NftIdLib.toNftId(randomNumber(type(uint96).max)), // nftId
-            NftIdLib.toNftId(randomNumber(type(uint96).max)), // parentNftId
+            parentNftId,
             registerableType,
             toBool(randomNumber(1)), // isInterceptor
             registerableOwner, 
@@ -151,6 +166,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
 
         registryServiceHarness.exposed_getAndVerifyContractInfo(
             registerable,
+            parentNftId,
             expectedType,
             registerableOwner);       
     }
@@ -158,10 +174,11 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
     function test_withRegisterableOwnerDifferentFromExpectedOwner() public
     {
         ObjectType registerableType = ObjectTypeLib.toObjectType(randomNumber(type(uint8).max));
+        NftId parentNftId = NftIdLib.toNftId(randomNumber(type(uint96).max));
 
         RegisterableMock registerable = new RegisterableMock(
             NftIdLib.toNftId(randomNumber(type(uint96).max)), // nftId
-            NftIdLib.toNftId(randomNumber(type(uint96).max)), // parentNftId
+            parentNftId,
             registerableType,
             toBool(randomNumber(1)), // isInterceptor
             registerableOwner, // initialOwner
@@ -176,6 +193,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
 
         registryServiceHarness.exposed_getAndVerifyContractInfo(
             registerable,
+            parentNftId,
             registerableType,
             outsider); // expectedOwner
     }
@@ -183,10 +201,11 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
     function test_whenExpectedOwnerIsZero() public
     {
         ObjectType registerableType = ObjectTypeLib.toObjectType(randomNumber(type(uint8).max));
+        NftId parentNftId = NftIdLib.toNftId(randomNumber(type(uint96).max));
 
         RegisterableMock registerable = new RegisterableMock(
             NftIdLib.toNftId(randomNumber(type(uint96).max)), // nftId
-            NftIdLib.toNftId(randomNumber(type(uint96).max)), // parentNftId
+            parentNftId,
             registerableType,
             toBool(randomNumber(1)), // isInterceptor
             registerableOwner, // initialOwner
@@ -201,6 +220,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
 
         registryServiceHarness.exposed_getAndVerifyContractInfo(
             registerable,
+            parentNftId,
             registerableType,
             address(0)); // expectedOwner
     }
@@ -208,10 +228,11 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
     function test_withZeroRegisterableOwner() public
     {
         ObjectType registerableType = ObjectTypeLib.toObjectType(randomNumber(type(uint8).max));
+        NftId parentNftId = NftIdLib.toNftId(randomNumber(type(uint96).max));
 
         RegisterableMock registerable = new RegisterableMock(
             NftIdLib.toNftId(randomNumber(type(uint96).max)), // nftId
-            NftIdLib.toNftId(randomNumber(type(uint96).max)), // parentNftId
+            parentNftId,
             registerableType,
             toBool(randomNumber(1)), // isInterceptor
             address(0), // initialOwner
@@ -226,6 +247,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
 
         registryServiceHarness.exposed_getAndVerifyContractInfo(
             registerable,
+            parentNftId,
             registerableType,
             registerableOwner); 
     }
@@ -233,10 +255,11 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
     function test_withZeroRegisterableOwnerAndZeroExpectedOwner() public
     {
         ObjectType registerableType = ObjectTypeLib.toObjectType(randomNumber(type(uint8).max));
+        NftId parentNftId = NftIdLib.toNftId(randomNumber(type(uint96).max));
 
         RegisterableMock registerable = new RegisterableMock(
             NftIdLib.toNftId(randomNumber(type(uint96).max)), // nftId
-            NftIdLib.toNftId(randomNumber(type(uint96).max)), // parentNftId
+            parentNftId,
             registerableType,
             toBool(randomNumber(1)), // isInterceptor
             address(0), // initialOwner
@@ -249,6 +272,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
 
         registryServiceHarness.exposed_getAndVerifyContractInfo(
             registerable,
+            parentNftId,
             registerableType,
             address(0)); // expectedOwner
     }

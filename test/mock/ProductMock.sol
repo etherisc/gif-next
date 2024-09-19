@@ -48,7 +48,7 @@ contract ProductMockWithoutInstanceCheck is SimpleProduct {
         bytes memory componentData
     )
         internal 
-        virtual override
+        virtual //override
         onlyInitializing()
     {
         // need v4, for some reason ProductMockV4 have V3...
@@ -64,8 +64,7 @@ contract ProductMockWithoutInstanceCheck is SimpleProduct {
             componentType,
             isInterceptor, 
             initialOwner, 
-            "", // registry data
-            componentData);
+            ""); // registry data
 
         // set instance linked specific parameters
         //InstanceLinkedComponentStorage storage $ = _getInstanceLinkedComponentStorage();

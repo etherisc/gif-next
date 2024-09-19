@@ -566,6 +566,13 @@ contract GifDeployer is Test {
         );
     }
 
+    function eqBytes(bytes memory a, bytes memory b) public pure returns (bool isSame) {
+            return (
+                a.length == b.length &&
+                keccak256(a) == keccak256(b)
+            );
+    }
+
 
     function _deployCore(
         address gifAdmin,

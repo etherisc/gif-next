@@ -97,7 +97,7 @@ abstract contract Registerable is
         public 
         view 
         virtual 
-        returns (IRegistry.ObjectInfo memory info, address initialOwner, bytes memory data) 
+        returns (IRegistry.ObjectInfo memory info) 
     {
         RegisterableStorage storage $ = _getRegisterableStorage();
         return (
@@ -107,10 +107,12 @@ abstract contract Registerable is
                 $._objectType,
                 getRelease(),
                 $._isInterceptor,
-                address(this)),
-            getOwner(),
-            $._data
+                address(this))
         );
+    }
+
+    function getInitialData() public view virtual returns (bytes memory data) {
+        return _getRegisterableStorage()._data;
     }
 
 

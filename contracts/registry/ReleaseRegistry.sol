@@ -490,7 +490,9 @@ contract ReleaseRegistry is
             bytes memory data
         )
     {
-        (info, initialOwner, data) = service.getInitialInfo();
+        info = service.getInitialInfo();
+        initialOwner = service.getOwner();
+        data = service.getInitialData();
 
         if(info.objectAddress != address(service)) {
             revert ErrorReleaseRegistryServiceInfoAddressInvalid(service, info.objectAddress);
