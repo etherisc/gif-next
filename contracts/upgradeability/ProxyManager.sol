@@ -189,8 +189,7 @@ contract ProxyManager is
     }
 
     function getVersion() external view virtual returns(Version) {
-        //return _versionHistory[_versions[_versions.length]];
-        return IUpgradeable(address(_proxy)).getVersion();
+        return _versionHistory[_versions[_versions.length]].version;
     }
 
     function getVersionCount() external view returns(uint256) {

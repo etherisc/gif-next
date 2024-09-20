@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
-
 import {IDistributionComponent} from "../../contracts/distribution/IDistributionComponent.sol";
 import {IInstance} from "../instance/IInstance.sol";
 import {IInstanceLinkedComponent} from "../../contracts/shared/IInstanceLinkedComponent.sol";
@@ -45,7 +42,8 @@ contract RegistryService is
     }
 
     // TODO register have no combos with STAKING; decide on parentNftId arg
-    function registerStaking(IRegisterable staking, address owner)
+    // used by staking service to register already registered staking?
+    function registerStaking(IRegisterable staking, address expectedOwner)
         external
         virtual
         restricted()
@@ -53,15 +51,19 @@ contract RegistryService is
             IRegistry.ObjectInfo memory info
         )
     {
+        assert(false);
+        require(getRegistry().getStakingAddress() == address(staking), "RegistryService: staking address mismatch");
+        require(getRegistry().getObjectInfo(address(staking)).nftId.eqz());
         _checkInterface(staking, type(IStaking).interfaceId);
 
+        address owner;
         bytes memory data;
-        (info, owner, data) = _getAndVerifyContractInfo(staking, NftIdLib.zero(), STAKING(), owner);
+        (info, owner, data) = _getAndVerifyContractInfo(staking, NftIdLib.zero(), STAKING(), expectedOwner);
         info.nftId = getRegistry().register(info, owner, data);
     }
 
 
-    function registerInstance(IRegisterable instance, address owner)
+    function registerInstance(IRegisterable instance, address expectedOwner)
         external
         virtual
         restricted()
@@ -71,8 +73,9 @@ contract RegistryService is
     {
         _checkInterface(instance, type(IInstance).interfaceId);
 
+        address owner;
         bytes memory data;
-        (info, owner, data) = _getAndVerifyContractInfo(instance, NftIdLib.zero(), INSTANCE(), owner);
+        (info, owner, data) = _getAndVerifyContractInfo(instance, getRegistry().getNftId(), INSTANCE(), expectedOwner);
         info.nftId = getRegistry().register(info, owner, data);
 
         instance.linkToRegisteredNftId(); // asume safe
@@ -80,9 +83,9 @@ contract RegistryService is
 
     function registerComponent(
         IRegisterable component, 
-        NftId parentNftId, 
-        ObjectType componentType, 
-        address owner
+        NftId expectedParentNftId, 
+        ObjectType expectedType, 
+        address expectedOwner
     )
         external
         virtual
@@ -95,8 +98,9 @@ contract RegistryService is
             component, 
             type(IInstanceLinkedComponent).interfaceId);
 
+        address owner;
         bytes memory data;
-        (info, owner, data) = _getAndVerifyContractInfo(component, parentNftId, componentType, owner);
+        (info, owner, data) = _getAndVerifyContractInfo(component, expectedParentNftId, expectedType, expectedOwner);
         info.nftId = getRegistry().register(info, owner, data);
     }
 
@@ -144,7 +148,7 @@ contract RegistryService is
 
     function _checkInterface(IRegisterable registerable, bytes4 interfaceId) internal view
     {
-        if(!ERC165Checker.supportsInterface(address(registerable), interfaceId)) {
+        if(!ContractLib.supportsInterface(address(registerable), interfaceId)) {
             revert ErrorRegistryServiceInterfaceNotSupported(address(registerable), interfaceId);
         }
     }

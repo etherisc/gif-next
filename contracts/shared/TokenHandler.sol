@@ -50,7 +50,7 @@ contract TokenHandlerBase {
     IERC20Metadata public immutable TOKEN;
     address public immutable COMPONENT;
     NftId public immutable NFT_ID;
-    VersionPart RELEASE;
+    VersionPart public immutable RELEASE;
 
     address internal _wallet;
 

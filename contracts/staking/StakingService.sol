@@ -294,6 +294,9 @@ contract StakingService is
             return IStaking(stakingAddress);
         }
 
+        // TODO staking is registered in registry.initialize()
+        // consider deleting the rest of the function
+
         // check that contract implements IStaking
         if(!IStaking(stakingAddress).supportsInterface(type(IStaking).interfaceId)) {
             revert ErrorStakingServiceNotSupportingIStaking(stakingAddress);
