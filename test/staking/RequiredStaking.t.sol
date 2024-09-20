@@ -61,7 +61,7 @@ contract RequiredStakingTest is GifTest {
         vm.stopPrank();
 
         // fund customer
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(customer, 100000 * 10 ** token.decimals());
         vm.stopPrank();
 
@@ -497,7 +497,7 @@ contract RequiredStakingTest is GifTest {
             FeeLib.zero()); // performance fees
         vm.stopPrank();
 
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(investor, bundleCapital);
         vm.stopPrank();
 

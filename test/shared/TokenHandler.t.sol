@@ -270,7 +270,7 @@ contract TokenHandlerTest is GifTest {
 
     function _fundAndApprove(TokenHandlerEx th, address sender, Amount amount, Amount approval) internal {
 
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         dip.transfer(sender, amount.toInt());
         vm.stopPrank();
 
@@ -282,13 +282,13 @@ contract TokenHandlerTest is GifTest {
     function _makeAddrWithFunds(string memory name, uint256 amount) internal returns (address addr) {
         addr = makeAddr(name);
 
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         dip.transfer(addr, amount);
         vm.stopPrank();
     }
 
     function _fundAddr(address addr, uint256 amount) internal {
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         dip.transfer(addr, amount);
         vm.stopPrank();
     }

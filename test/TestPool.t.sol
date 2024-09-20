@@ -417,7 +417,7 @@ contract TestPool is GifTest {
     }
 
     function _fundInvestor(uint256 amount) internal {
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(investor, amount);
         vm.stopPrank();
 

@@ -66,7 +66,7 @@ contract ExternallyManagedPoolTest is GifTest {
         uint256 funding = 12345;
         Amount fundingAmount = AmountLib.toAmount(funding);
 
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(poolOwner, fundingAmount.toInt());
         vm.stopPrank();
 
@@ -113,7 +113,7 @@ contract ExternallyManagedPoolTest is GifTest {
 
         address tokenHandlerAddress = address(emPool.getTokenHandler());
 
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(poolOwner, fundingAmount.toInt());
         vm.stopPrank();
 
@@ -162,7 +162,7 @@ contract ExternallyManagedPoolTest is GifTest {
 
         Amount bundleAmount = AmountLib.toAmount(10042);
 
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(investor, bundleAmount.toInt());
         vm.stopPrank();
 
@@ -200,7 +200,7 @@ contract ExternallyManagedPoolTest is GifTest {
         // WHEN creating a bundle and fund pool wallet
         Amount bundleAmount = AmountLib.toAmount(10042);
 
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(poolOwner, bundleAmount.toInt());
         vm.stopPrank();
 
@@ -254,7 +254,7 @@ contract ExternallyManagedPoolTest is GifTest {
         Amount sumInsuredAmount = AmountLib.toAmount(1000);
         Amount estimatedPremiumAmount = AmountLib.toAmount(150);
 
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(customer, estimatedPremiumAmount.toInt());
         vm.stopPrank();
 
@@ -296,7 +296,7 @@ contract ExternallyManagedPoolTest is GifTest {
         Amount sumInsuredAmount = AmountLib.toAmount(1000);
         Amount estimatedPremiumAmount = AmountLib.toAmount(150);
 
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(customer, estimatedPremiumAmount.toInt());
         vm.stopPrank();
 
@@ -339,7 +339,7 @@ contract ExternallyManagedPoolTest is GifTest {
         Amount sumInsuredAmount = AmountLib.toAmount(1000);
         Amount estimatedPremiumAmount = AmountLib.toAmount(150);
 
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(customer, estimatedPremiumAmount.toInt());
         vm.stopPrank();
 
@@ -379,7 +379,7 @@ contract ExternallyManagedPoolTest is GifTest {
         Amount sumInsuredAmount = AmountLib.toAmount(1000);
         Amount estimatedPremiumAmount = AmountLib.toAmount(150);
 
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(customer, estimatedPremiumAmount.toInt());
         vm.stopPrank();
 

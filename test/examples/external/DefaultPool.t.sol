@@ -48,7 +48,7 @@ contract DefaultPoolTest is GifTest {
         uint256 funding = 12345;
         Amount fundingAmount = AmountLib.toAmount(funding);
 
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(poolOwner, fundingAmount.toInt());
         vm.stopPrank();
 
@@ -76,7 +76,7 @@ contract DefaultPoolTest is GifTest {
         uint256 funding = 12345;
         Amount fundingAmount = AmountLib.toAmount(funding);
 
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(poolOwner, fundingAmount.toInt());
         vm.stopPrank();
 

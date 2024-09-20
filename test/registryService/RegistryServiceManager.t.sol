@@ -86,8 +86,8 @@ contract RegistryServiceManagerTest is RegistryServiceTestBase {
         assertEq(registryService.getNftId().toInt(), registry.getNftIdForAddress(address(registryService)).toInt(), "registry service nft id mismatch");
         
         // check ownership
-        assertEq(registryServiceManager.getOwner(), address(registryOwner), "service manager owner not registry owner");
-        assertEq(registryService.getOwner(), address(registryOwner), "registry owner not owner of registry");
+        assertEq(registryServiceManager.getOwner(), address(gifManager), "service manager owner not registry owner");
+        assertEq(registryService.getOwner(), address(gifManager), "registry owner not owner of registry");
         assertEq(registry.getOwner(), address(0x1), "registry owner not owner of registry");
         assertEq(registry.getOwner(), registry.ownerOf(address(registry)), "non matching registry owners");
 
@@ -101,7 +101,7 @@ contract RegistryServiceManagerTest is RegistryServiceTestBase {
         bytes memory emptyInitializationData;
 
         // check ownership
-        assertEq(registryServiceManager.getOwner(), address(registryOwner), "service manager owner not registry owner");
+        assertEq(registryServiceManager.getOwner(), address(gifManager), "service manager owner not registry owner");
 
         // attempt to redeploy with non-owner account
         vm.expectRevert(
@@ -121,14 +121,14 @@ contract RegistryServiceManagerTest is RegistryServiceTestBase {
         bytes memory emptyInitializationData;
 
         // check ownership
-        assertEq(registryServiceManager.getOwner(), address(registryOwner), "service manager owner not registry owner");
+        assertEq(registryServiceManager.getOwner(), address(gifManager), "service manager owner not registry owner");
 
         // attempt to redeploy with owner account
         vm.expectRevert(
             abi.encodeWithSelector(
                 Initializable.InvalidInitialization.selector));
 
-        vm.prank(registryOwner);
+        vm.prank(gifManager);
         registryServiceManager.initialize(
             address(registry),
             mockImplementation,
@@ -141,7 +141,7 @@ contract RegistryServiceManagerTest is RegistryServiceTestBase {
         bytes memory emptyUpgradeData;
 
         // check ownership
-        assertEq(registryServiceManager.getOwner(), address(registryOwner), "service manager owner not registry owner");
+        assertEq(registryServiceManager.getOwner(), address(gifManager), "service manager owner not registry owner");
 
         // attempt to upgrade with non-owner account
         vm.expectRevert(
@@ -157,7 +157,7 @@ contract RegistryServiceManagerTest is RegistryServiceTestBase {
         assertEq(registryServiceManager.getVersionCount(), 1, "version count not 1 before upgrade");
 
         // attempt to upgrade with owner account
-        vm.prank(registryOwner);
+        vm.prank(gifManager);
         registryServiceManager.upgrade(
             upgradeMockImplementation,
             emptyUpgradeData);
@@ -179,15 +179,15 @@ contract RegistryServiceManagerTest is RegistryServiceTestBase {
         bytes memory emptyUpgradeData;
 
         // check initial ownership
-        assertEq(registry.ownerOf(registryServiceAddress), registryOwner, "registry service owner not registry owner");
-        assertEq(registryServiceManager.getOwner(), registryOwner, "registry service manager owner not registry owner");
+        assertEq(registry.ownerOf(registryServiceAddress), gifManager, "registry service owner not registry owner");
+        assertEq(registryServiceManager.getOwner(), gifManager, "registry service manager owner not registry owner");
 
         // transfer ownership by transferring nft
         NftId registryServiceNft = registry.getNftIdForAddress(registryServiceAddress);
 
-        vm.startPrank(registryOwner);
+        vm.startPrank(gifManager);
         chainNft.approve(registryOwnerNew, registryServiceNft.toInt());
-        chainNft.safeTransferFrom(registryOwner, registryOwnerNew, registryServiceNft.toInt(), "");
+        chainNft.safeTransferFrom(gifManager, registryOwnerNew, registryServiceNft.toInt(), "");
         vm.stopPrank();
 
         // check ownership after transfer
@@ -198,8 +198,8 @@ contract RegistryServiceManagerTest is RegistryServiceTestBase {
         vm.expectRevert(
             abi.encodeWithSelector(
                 INftOwnable.ErrorNotOwner.selector,
-                registryOwner));
-        vm.prank(registryOwner);
+                gifManager));
+        vm.prank(gifManager);
         registryServiceManager.upgrade(
             upgradeMockImplementation,
             emptyUpgradeData);

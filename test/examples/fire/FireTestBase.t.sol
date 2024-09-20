@@ -38,7 +38,7 @@ contract FireTestBase is GifTest {
         vm.stopPrank();
 
         // whitelist fire token and make it active for release 3
-        vm.startPrank(registryOwner);
+        vm.startPrank(gifManager);
         tokenRegistry.registerToken(address(fireUSD));
         tokenRegistry.setActiveForVersion(
             currentChainId, 

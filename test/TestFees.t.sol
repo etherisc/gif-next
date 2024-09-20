@@ -674,7 +674,7 @@ contract TestFees is GifTest {
 
 
     function _setupWithActivePolicy(bool purchaseWithReferral) internal returns (NftId policyNftId) {
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(customer, 1000);
         vm.stopPrank();
 

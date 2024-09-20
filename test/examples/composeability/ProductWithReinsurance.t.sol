@@ -395,7 +395,7 @@ contract ProductWithReinsuranceTest is
         // solhint-disable-next-line
         console.log("--- fund investor and customer");
 
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(investor, DEFAULT_BUNDLE_CAPITALIZATION * 10**token.decimals());
         token.transfer(customer, DEFAULT_CUSTOMER_FUNDS * 10**token.decimals());
         vm.stopPrank();

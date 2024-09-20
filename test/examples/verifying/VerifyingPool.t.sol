@@ -33,7 +33,7 @@ contract VerifyingPoolTest is GifTest {
         vProduct.init();
         vm.stopPrank();
 
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(productOwner, 10000);
         vm.stopPrank();
 

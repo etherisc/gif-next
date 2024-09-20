@@ -13,7 +13,7 @@ import {GIF_MANAGER_ROLE, GIF_ADMIN_ROLE} from "../../contracts/type/RoleId.sol"
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {IServiceAuthorization} from "../../contracts/authorization/IServiceAuthorization.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
-import {Registry} from "../../contracts/registry/Registry.sol";
+import {Registry, GIF_INITIAL_RELEASE} from "../../contracts/registry/Registry.sol";
 import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
 import {ReleaseAdmin} from "../../contracts/registry/ReleaseAdmin.sol";
 import {ReleaseRegistry} from "../../contracts/registry/ReleaseRegistry.sol";
@@ -39,7 +39,7 @@ contract GifDeployerTest is GifDeployer {
         gifV3 = VersionPartLib.toVersionPart(3);
         serviceAuthorization = new ServiceAuthorizationV3(COMMIT_HASH);
 
-        _deployCore(gifAdmin, gifManager);
+        _deployCore();
     }
 
 
@@ -124,7 +124,7 @@ contract GifDeployerTest is GifDeployer {
 
         // check linked contracts
         assertEq(address(releaseRegistry.getRegistry()), address(registry), "unexpected registry address");
-        assertEq(releaseRegistry.INITIAL_GIF_VERSION(), gifV3.toInt(), "unexpected initial gif version");
+        assertEq(GIF_INITIAL_RELEASE().toInt(), gifV3.toInt(), "unexpected initial gif version");
         assertEq(address(releaseRegistry.getRegistryAdmin()), address(registryAdmin), "unexpected registry address");
 
         // TODO amend once full gif setup is streamlined
@@ -154,7 +154,7 @@ contract GifDeployerTest is GifDeployer {
 
         // check linked contracts
         assertEq(address(releaseRegistry.getRegistry()), address(registry), "unexpected registry address");
-        assertEq(releaseRegistry.INITIAL_GIF_VERSION(), gifV3.toInt(), "unexpected initial gif version");
+        assertEq(GIF_INITIAL_RELEASE().toInt(), gifV3.toInt(), "unexpected initial gif version");
         assertEq(address(releaseRegistry.getRegistryAdmin()), address(registryAdmin), "unexpected registry address");
 
         // TODO amend once full gif setup is streamlined
@@ -179,7 +179,6 @@ contract GifDeployerTest is GifDeployer {
         assertEq(stakingNftId.toInt(), registry.getNftIdForAddress(address(staking)).toInt(), "unexpected staking nft id");
 
         // check ownership
-        assertEq(stakingOwner, registryOwner, "unexpected staking owner");
         assertEq(staking.getOwner(), stakingOwner, "unexpected staking owner (via staking)");
         assertEq(registry.ownerOf(address(staking)), stakingOwner, "unexpected staking owner (via registry)");
 
@@ -219,8 +218,6 @@ contract GifDeployerTest is GifDeployer {
     function _deployRelease() internal {
         deployRelease(
             releaseRegistry,
-            serviceAuthorization,
-            gifAdmin,
-            gifManager);
+            serviceAuthorization);
     }
 }

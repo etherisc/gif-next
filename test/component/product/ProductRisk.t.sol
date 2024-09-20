@@ -40,7 +40,7 @@ contract TestProductRisk is GifTest {
         initialPolicyNftId = _createApplication(initialRiskId); 
 
         // fund and approve customer
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(customer, CUSTOMER_FUNDS);
         vm.stopPrank();
 

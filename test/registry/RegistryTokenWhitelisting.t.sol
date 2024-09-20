@@ -74,7 +74,7 @@ contract RegistryTokenWhitelisting is GifTest {
         assertTrue(tokenRegistry.getTokenInfo(currentChainId, address(dip)).active, "dip not active (1a)");
         assertFalse(tokenRegistry.isActive(currentChainId, address(usdc2), releaseRegistry.getLatestVersion()), "usdc2 active in current relase (1)");
 
-        vm.startPrank(registryOwner);
+        vm.startPrank(gifManager);
         tokenRegistry.setActive(currentChainId, address(dip), false);
         vm.stopPrank();
 
@@ -82,7 +82,7 @@ contract RegistryTokenWhitelisting is GifTest {
         assertFalse(tokenRegistry.getTokenInfo(currentChainId, address(dip)).active, "dip active (2a)");
         assertFalse(tokenRegistry.isActive(currentChainId, address(usdc2), releaseRegistry.getLatestVersion()), "usdc2 active in current relase (2)");
 
-        vm.startPrank(registryOwner);
+        vm.startPrank(gifManager);
         tokenRegistry.setActive(currentChainId, address(dip), true);
         vm.stopPrank();
 
@@ -94,7 +94,7 @@ contract RegistryTokenWhitelisting is GifTest {
 
     function test_tokenRegistryWhitelistHappyCase() public {
 
-        vm.startPrank(address(registryOwner));
+        vm.startPrank(address(gifManager));
         tokenRegistry.registerToken(address(usdc2));
         tokenRegistry.setActiveForVersion(currentChainId, address(usdc2), majorVersion3, whitelist);
         vm.stopPrank();
@@ -110,7 +110,7 @@ contract RegistryTokenWhitelisting is GifTest {
 
     function test_tokenRegistryWhitelistTwoReleasesHappyCase() public {
 
-        vm.startPrank(address(registryOwner));
+        vm.startPrank(address(gifManager));
         tokenRegistry.registerToken(address(usdc2));
         tokenRegistry.setActiveForVersion(currentChainId, address(usdc2), majorVersion3, whitelist);
         vm.stopPrank();
@@ -121,7 +121,7 @@ contract RegistryTokenWhitelisting is GifTest {
         assertTrue(tokenRegistry.isActive(currentChainId, address(usdc2), majorVersion3), "usdc2 not whitelisted in version 3");
         assertFalse(tokenRegistry.isActive(currentChainId, address(usdc2), majorVersion4), "usdc2 whitelisted in version 4");
 
-        vm.startPrank(registryOwner);
+        vm.startPrank(gifManager);
         bool enforceVersionCheck = false;
         tokenRegistry.setActiveWithVersionCheck(currentChainId, address(usdc2), majorVersion4, whitelist, enforceVersionCheck);
         vm.stopPrank();
@@ -138,7 +138,7 @@ contract RegistryTokenWhitelisting is GifTest {
         uint8 quakDecimals = 3;
         string memory quakSymbol = "QUAK123";
 
-        vm.startPrank(address(registryOwner));
+        vm.startPrank(address(gifManager));
         tokenRegistry.registerRemoteToken(quakChainId, quakAddress, quakDecimals, quakSymbol);
         vm.stopPrank();
 
@@ -157,7 +157,7 @@ contract RegistryTokenWhitelisting is GifTest {
         // check is active
         assertFalse(tokenRegistry.isActive(quakChainId, quakAddress, majorVersion3), "quack active for version 3");
 
-        vm.startPrank(address(registryOwner));
+        vm.startPrank(address(gifManager));
         tokenRegistry.setActiveForVersion(quakChainId, quakAddress, majorVersion3, whitelist);
         vm.stopPrank();
 
@@ -172,7 +172,7 @@ contract RegistryTokenWhitelisting is GifTest {
                 currentChainId,
                 address(usdc2)));
 
-        vm.startPrank(address(registryOwner));
+        vm.startPrank(address(gifManager));
         tokenRegistry.registerRemoteToken(currentChainId, address(usdc2), 3, "dummy");
         vm.stopPrank();
     }
@@ -185,7 +185,7 @@ contract RegistryTokenWhitelisting is GifTest {
         uint8 quakDecimals = 3;
         string memory quakSymbol = "QUAK123";
 
-        vm.startPrank(address(registryOwner));
+        vm.startPrank(address(gifManager));
         tokenRegistry.registerRemoteToken(quakChainId, quakAddress, quakDecimals, quakSymbol);
 
         // attempt to register quak token 2nd time
@@ -211,7 +211,7 @@ contract RegistryTokenWhitelisting is GifTest {
 
 
     function test_tokenRegistryBlacklistHappyCase() public {
-        vm.startPrank(address(registryOwner));
+        vm.startPrank(address(gifManager));
 
         tokenRegistry.registerToken(address(usdc2));
         tokenRegistry.setActiveForVersion(currentChainId, address(usdc2), majorVersion3, whitelist);
@@ -232,7 +232,7 @@ contract RegistryTokenWhitelisting is GifTest {
                 currentChainId,
                 address(registryService)));
 
-        vm.startPrank(address(registryOwner));
+        vm.startPrank(address(gifManager));
         tokenRegistry.registerToken(address(registryService));
         vm.stopPrank();
     }
@@ -244,7 +244,7 @@ contract RegistryTokenWhitelisting is GifTest {
                 currentChainId,
                 address(usdc2)));
 
-        vm.startPrank(address(registryOwner));
+        vm.startPrank(address(gifManager));
         tokenRegistry.setActiveForVersion(currentChainId, address(usdc2), majorVersion4, whitelist);
         vm.stopPrank();
     }
@@ -256,7 +256,7 @@ contract RegistryTokenWhitelisting is GifTest {
                 currentChainId,
                 address(outsider)));
 
-        vm.prank(address(registryOwner));
+        vm.prank(address(gifManager));
         tokenRegistry.registerToken(outsider);
     }
 
@@ -269,7 +269,7 @@ contract RegistryTokenWhitelisting is GifTest {
                 TokenRegistry.ErrorTokenRegistryMajorVersionInvalid.selector,
                 majorVersion2));
 
-        vm.prank(registryOwner);
+        vm.prank(gifManager);
         tokenRegistry.setActiveForVersion(currentChainId, address(dip), majorVersion2, whitelist);
 
         // attempt to whitelist for version 4 (too high)
@@ -277,7 +277,7 @@ contract RegistryTokenWhitelisting is GifTest {
             abi.encodeWithSelector(
                 TokenRegistry.ErrorTokenRegistryMajorVersionInvalid.selector,
                 majorVersion4));
-        vm.prank(registryOwner);
+        vm.prank(gifManager);
         tokenRegistry.setActiveForVersion(currentChainId, address(dip), majorVersion4, whitelist);
 
     }

@@ -63,7 +63,6 @@ contract StakingOwnerTest is GifTest {
         console.log("staking nft id (actual)", staking.getNftId().toInt());
 
         // check staking owner
-        assertEq(stakingOwner, registryOwner, "staking owner not registry owner");
         assertTrue(stakingOwner != outsider, "staking owner not outsider");
         assertEq(staking.getOwner(), stakingOwner, "unexpected staking owner");
 

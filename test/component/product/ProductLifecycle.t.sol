@@ -419,7 +419,7 @@ contract TestProductLifecycle
     function _fundAccount(
         address policyHolderAddress
     ) internal {
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(policyHolderAddress, CUSTOMER_FUNDS);
         vm.stopPrank();
     }

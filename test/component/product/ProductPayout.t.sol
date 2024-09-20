@@ -1196,7 +1196,7 @@ contract TestProductClaim is GifTest {
         uint256 premiumAmountInt = instanceReader.getPolicyInfo(policyNftId).premiumAmount.toInt();
 
         // add token allowance to pay premiums
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(policyHolder, premiumAmountInt);
         vm.stopPrank();
 
@@ -1371,7 +1371,7 @@ contract TestProductClaim is GifTest {
     //     vm.stopPrank();
 
     //     // fund investor and customer
-    //     vm.startPrank(registryOwner);
+    //     vm.startPrank(tokenIssuer);
     //     token.transfer(investor, BUNDLE_CAPITAL);
     //     token.transfer(customer, CUSTOMER_FUNDS);
     //     vm.stopPrank();

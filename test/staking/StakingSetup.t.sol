@@ -69,7 +69,7 @@ contract StakingSetupTest is GifTest {
         assertEq(stakingInfo.objectType.toInt(), STAKING().toInt(), "unexpected object type");
         assertFalse(stakingInfo.isInterceptor, "staking should not be interceptor");
         assertEq(stakingInfo.objectAddress, address(staking), "unexpected contract address");
-        assertEq(registry.ownerOf(stakingNftId), registryOwner, "unexpected initial owner");
+        assertEq(registry.ownerOf(stakingNftId), stakingOwner, "unexpected initial owner");
 
         // staking service manager
         assertEq(stakingServiceManager.getOwner(), stakingService.getOwner(), "unexpected staking service manager owner");
@@ -87,7 +87,7 @@ contract StakingSetupTest is GifTest {
         assertEq(serviceInfo.objectType.toInt(), SERVICE().toInt(), "unexpected object type");
         assertFalse(serviceInfo.isInterceptor, "staking service should not be interceptor");
         assertEq(serviceInfo.objectAddress, address(stakingService), "unexpected contract address");
-        assertEq(registry.ownerOf(stakingServiceNftId), registryOwner, "unexpected initial owner");
+        assertEq(registry.ownerOf(stakingServiceNftId), gifManager, "unexpected initial owner");
     }
 
 

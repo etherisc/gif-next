@@ -82,9 +82,10 @@ contract GifDeployer is Test {
     // global accounts
     address public globalRegistry = makeAddr("globalRegistry");
     address public registryOwner = makeAddr("registryOwner");
-    address public stakingOwner = registryOwner;
+    address public stakingOwner = makeAddr("stakingOwner");
     address public gifAdmin = registryOwner;
     address public gifManager = makeAddr("gifManager"); // must be different from gifAdmin
+    address public tokenIssuer = makeAddr("tokenIssuer");
 
     // deploy core
     IERC20Metadata public dip;
@@ -161,12 +162,7 @@ contract GifDeployer is Test {
     mapping(ObjectType domain => DeployedServiceInfo info) public serviceForDomain;
 
 
-    function deployCore(
-        address globalRegistry,
-        address gifAdmin,
-        address gifManager,
-        address stakingOwner
-    )
+    function deployCore()
         public
         returns (
             IERC20Metadata dip,
@@ -178,13 +174,13 @@ contract GifDeployer is Test {
             Staking staking
         )
     {
-        // solhint-disable 
-        vm.startPrank(gifManager);
-
+        // solhint-disable
         console.log("1) deploy dip token");
+        vm.prank(tokenIssuer);
         dip = new Dip();
 
         console.log("2) deploy registry contracts");
+        vm.startPrank(gifManager);
         (
             registry,
             tokenRegistry,
@@ -192,11 +188,17 @@ contract GifDeployer is Test {
             registryAdmin
         ) = _deployRegistry(dip);
 
+        vm.stopPrank();
+        vm.startPrank(stakingOwner);
+
         console.log("3) deploy staking contracts");
         (
             stakingManager,
             staking
         ) = _deployStaking(registry, tokenRegistry);
+
+        vm.stopPrank();
+        vm.startPrank(gifManager);
 
         console.log("4) complete setup for GIF core contracts");
 
@@ -233,19 +235,11 @@ contract GifDeployer is Test {
     {
         console.log("gifManager ", gifManager);
 
-        address deployer = gifManager;
-        address globalRegistry = address(0x1234);
-        bytes32 salt = "0x1234";
-
-        address registryAddress = _computeRegistryAddress(deployer, globalRegistry, salt);
-        console.log("calculated registry address ", registryAddress);
-
         console.log("   a) deploy registry admin");
-        registryAdmin = new RegistryAdmin{salt: salt}();
+        registryAdmin = new RegistryAdmin();
 
         console.log("   b) deploy registry");
-        registry = new Registry{salt: salt}(registryAdmin, address(0x1234));
-        require(address(registry) == registryAddress, "unexpected registry address");
+        registry = new Registry(registryAdmin, globalRegistry);
 
         console.log("   c) deploy release registry");
         releaseRegistry = new ReleaseRegistry(registry);
@@ -270,7 +264,7 @@ contract GifDeployer is Test {
 
         console.log("   b) deploy staking store");
         StakingStore stakingStore = new StakingStore(
-            registry,
+            address(registry),
             stakingReader);
 
         console.log("   c) deploy target handler");
@@ -302,23 +296,21 @@ contract GifDeployer is Test {
 
     function deployRelease(
         ReleaseRegistry releaseRegistry,
-        IServiceAuthorization serviceAuthorization,
-        address admin,
-        address manager
+        IServiceAuthorization serviceAuthorization
     )
         public
     {
-        vm.startPrank(admin);
+        vm.startPrank(gifAdmin);
         releaseRegistry.createNextRelease();
         vm.stopPrank();
 
-        vm.startPrank(manager);
+        vm.startPrank(gifManager);
         _deployReleaseServices(
             releaseRegistry,
             serviceAuthorization);
         vm.stopPrank();
 
-        vm.startPrank(admin);
+        vm.startPrank(gifAdmin);
         releaseRegistry.activateNextRelease();
         vm.stopPrank();
     }
@@ -574,10 +566,7 @@ contract GifDeployer is Test {
     }
 
 
-    function _deployCore(
-        address gifAdmin,
-        address gifManager
-    )
+    function _deployCore()
         internal
     {
         (
@@ -588,11 +577,7 @@ contract GifDeployer is Test {
             registryAdmin,
             stakingManager,
             staking
-        ) = deployCore(
-            globalRegistry,
-            gifAdmin,
-            gifManager,
-            stakingOwner);
+        ) = deployCore();
 
         // obtain some references
         registryAddress = address(registry);

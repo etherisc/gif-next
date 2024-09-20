@@ -16,7 +16,7 @@ import {IAccessAdmin} from "../../contracts/authorization/IAccessAdmin.sol";
 import {Dip} from "../../contracts/mock/Dip.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
-import {Registry} from "../../contracts/registry/Registry.sol";
+import {Registry, GIF_INITIAL_RELEASE} from "../../contracts/registry/Registry.sol";
 import {IRegistryService} from "../../contracts/registry/IRegistryService.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
@@ -51,31 +51,28 @@ contract RegistryServiceHarnessTestBase is GifDeployer, FoundryRandom {
             , // registryAdmin,
             , // stakingManager,
             // staking
-        ) = deployCore(
-            globalRegistry,
-            gifAdmin,
-            gifManager,
-            stakingOwner);
+        ) = deployCore();
 
         registryAddress = address(registry);
 
-        vm.startPrank(registryOwner);
         _deployRegistryServiceHarness();
-        vm.stopPrank();
     }
 
     function _deployRegistryServiceHarness() internal 
     {
         bytes32 salt = "0x2222";
 
+        vm.prank(gifAdmin);
         releaseRegistry.createNextRelease();
+
+        vm.startPrank(gifManager);
 
         (
             IAccessAdmin releaseAdmin,
             VersionPart releaseVersion,
             bytes32 releaseSalt
         ) = releaseRegistry.prepareNextRelease(
-            new ServiceAuthorizationMockWithRegistryService(VersionPartLib.toVersionPart(3)),
+            new ServiceAuthorizationMockWithRegistryService(GIF_INITIAL_RELEASE()),
             salt);
 
         registryServiceManagerWithHarness = new RegistryServiceManagerMockWithHarness{salt: releaseSalt}(
@@ -87,9 +84,12 @@ contract RegistryServiceHarnessTestBase is GifDeployer, FoundryRandom {
         releaseRegistry.registerService(registryServiceHarness);
         registryServiceManagerWithHarness.linkToProxy();
 
+        vm.stopPrank();
+
         // TODO check if this nees to be re-enabled
         // assertEq(serviceAddresses[0], address(registryServiceHarness), "error: registry service address mismatch");
 
+        vm.prank(gifAdmin);
         releaseRegistry.activateNextRelease();
 
     }
@@ -112,40 +112,34 @@ contract RegistryServiceHarnessTestBase is GifDeployer, FoundryRandom {
                 address(registerable), 
                 info.objectAddress));
             expectRevert = true;
-        } else if(expectedType != COMPONENT()) {
-            if(info.objectType != expectedType) {
+        } else if(expectedType != COMPONENT() && info.objectType != expectedType) {
                 vm.expectRevert(abi.encodeWithSelector(
                     IRegistryService.ErrorRegistryServiceRegisterableTypeInvalid.selector,
                     info.objectAddress,
                     expectedType,
                     info.objectType));
                 expectRevert = true;
-            }
-        } else if(!(info.objectType == DISTRIBUTION() || info.objectType == ORACLE() || info.objectType == POOL())) {
+        } else if(expectedType == COMPONENT() && !(info.objectType == DISTRIBUTION() || info.objectType == ORACLE() || info.objectType == POOL())) {
             vm.expectRevert(abi.encodeWithSelector(
                 IRegistryService.ErrorRegistryServiceRegisterableTypeInvalid.selector,
                 info.objectAddress,
                 expectedType,
                 info.objectType));
             expectRevert = true;
-        } else if(expectedParent.gtz()) {
-            if(info.parentNftId != expectedParent) {
+        } else if(expectedParent.gtz() && info.parentNftId != expectedParent) {
                 vm.expectRevert(abi.encodeWithSelector(
                     IRegistryService.ErrorRegistryServiceRegisterableParentInvalid.selector,
                     info.objectAddress,
                     expectedParent,
                     info.parentNftId));
                 expectRevert = true;
-            }
-        } else if(expectedOwner > address(0)) {        
-            if(initialOwner != expectedOwner) { 
+        } else if(expectedOwner > address(0) && initialOwner != expectedOwner) { 
                 vm.expectRevert(abi.encodeWithSelector(
                     IRegistryService.ErrorRegistryServiceRegisterableOwnerInvalid.selector,
                     info.objectAddress,
                     expectedOwner,
                     initialOwner));
                 expectRevert = true;
-            }
         } else if(initialOwner == address(registerable)) {
             vm.expectRevert(abi.encodeWithSelector(
                 IRegistryService.ErrorRegistryServiceRegisterableSelfRegistration.selector,

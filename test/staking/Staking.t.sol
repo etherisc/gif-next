@@ -1085,7 +1085,7 @@ contract StakingTest is GifTest {
         dipAmount = AmountLib.toAmount(myStakeAmount * 10 ** dip.decimals());
 
         if (withFunding) {
-            vm.startPrank(registryOwner);
+            vm.startPrank(tokenIssuer);
             dip.transfer(myStaker, dipAmount.toInt());
             vm.stopPrank();
         }

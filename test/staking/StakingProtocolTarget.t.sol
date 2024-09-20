@@ -36,15 +36,17 @@ contract StakingProtocolTargetTest is GifTest {
         protocolNftId = registry.getProtocolNftId();
         protocolRewardRate = stakingReader.getRewardRate(protocolNftId);
 
-        vm.startPrank(staking.getOwner());
+        // fund staking owner with DIPs
+        _prepareAccount(stakingOwner, STAKING_PROTOCOL_REWARD_BALANCE);
 
-        // needs component service to be registered
+        vm.startPrank(stakingOwner);
+
+        // needs staking service to be registered
         // can therefore only be called after service registration
         staking.approveTokenHandler(dip, AmountLib.max());
 
         // approve token handler to pull dips from staking owner
         Amount refillAmount = AmountLib.toAmount(STAKING_PROTOCOL_REWARD_BALANCE * 10 ** dip.decimals());
-
         dip.approve(
             address(staking.getTokenHandler()),
             refillAmount.toInt());
@@ -63,6 +65,7 @@ contract StakingProtocolTargetTest is GifTest {
         assertEq(protocolNftId.toInt(), 1101, "unexpected protocol nft id");
         assertTrue(protocolRewardRate == UFixedLib.toUFixed(5, -2), "unexpected protocol reward rate");
         assertEq(staking.getWallet(), address(staking.getTokenHandler()), "unexpected staking wallet");
+        assertEq(staking.getOwner(), stakingOwner, "unexpected staking owner");
         assertEq(dip.allowance(staking.getWallet(), address(staking.getTokenHandler())), type(uint256).max, "unexpected allowance for staking token handler");
 
         // solhint-disable
@@ -255,7 +258,7 @@ contract StakingProtocolTargetTest is GifTest {
         dipAmount = AmountLib.toAmount(myStakeAmount * 10 ** dip.decimals());
 
         if (withFunding) {
-            vm.startPrank(registryOwner);
+            vm.startPrank(tokenIssuer);
             dip.transfer(myStaker, dipAmount.toInt());
             vm.stopPrank();
         }

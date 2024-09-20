@@ -259,7 +259,7 @@ contract GifClusterTest is GifTest {
 
     function _fundInstanceOwnerAndCreateApprovals() internal {
 
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(instanceOwner, INSTANCE_OWNER_FUNDING);
         vm.stopPrank();
 
