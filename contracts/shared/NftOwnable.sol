@@ -4,13 +4,11 @@ pragma solidity ^0.8.20;
 import {InitializableERC165} from "./InitializableERC165.sol";
 import {INftOwnable} from "./INftOwnable.sol";
 import {NftId} from "../type/NftId.sol";
-import {RegistryLinkedPure} from "./RegistryLinkedPure.sol";
-//import {RegistryLinked} from "./RegistryLinked.sol";
+import {RegistryLinked} from "./RegistryLinked.sol";
 
 contract NftOwnable is
     InitializableERC165,
-    RegistryLinkedPure,
-    //RegistryLinked,
+    RegistryLinked,
     INftOwnable
 {
     // keccak256(abi.encode(uint256(keccak256("etherisc.storage.NftOwnable")) - 1)) & ~bytes32(uint256(0xff));
@@ -47,8 +45,7 @@ contract NftOwnable is
         onlyInitializing()
     {
         __ERC165_init();
-        __RegistryLinkedPure_init(registry);
-        //__RegistryLinked_init(registry);
+        __RegistryLinked_init(registry);
 
         if(initialOwner == address(0)) {
             revert ErrorNftOwnableInitialOwnerZero();

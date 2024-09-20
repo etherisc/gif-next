@@ -10,15 +10,13 @@ import {ClaimId} from "../type/ClaimId.sol";
 import {InitializableERC165} from "./InitializableERC165.sol";
 import {NftId} from "../type/NftId.sol";
 import {PayoutId} from "../type/PayoutId.sol";
-import {RegistryLinkedPure} from "./RegistryLinkedPure.sol";
-//import {RegistryLinked} from "./RegistryLinked.sol";
+import {RegistryLinked} from "./RegistryLinked.sol";
 import {Timestamp} from "../type/Timestamp.sol";
 
 /// @dev template implementation for IPolicyHolder
 contract PolicyHolder is
     InitializableERC165,
-    RegistryLinkedPure,
-    //RegistryLinked,
+    RegistryLinked,
     IPolicyHolder
 {
     // TODO add modifier to protect callback functions from unauthorized access
@@ -32,8 +30,7 @@ contract PolicyHolder is
         virtual
         onlyInitializing()
     {
-        __RegistryLinkedPure_init(registryAddress);
-        //__RegistryLinked_init(registryAddress);
+        __RegistryLinked_init(registryAddress);
         _initializeERC165();
         _registerInterface(type(IPolicyHolder).interfaceId);
     }
