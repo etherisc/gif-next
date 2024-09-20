@@ -23,12 +23,7 @@ contract RegistryLinked is
     )
         internal
         virtual
-        //onlyInitializing()
     {
-        //if(address(_registry) != address(0) ) {
-        //    revert ErrorRegistryLinkedRegistryAlreadyInitialized(address(this), address(_registry));
-        //}
-
         if(address(_registry) != address(0) ) {
             if(_registry != IRegistry(registry)) {
                 revert ErrorRegistryLinkedRegistryAlreadyInitialized(address(this), address(_registry));

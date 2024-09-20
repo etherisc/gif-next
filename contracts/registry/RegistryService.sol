@@ -42,8 +42,7 @@ contract RegistryService is
     }
 
     // TODO register have no combos with STAKING; decide on parentNftId arg
-    // used by staking service to register already registered staking?
-    function registerStaking(IRegisterable staking, address expectedOwner)
+    function registerStaking(IRegisterable staking, address owner)
         external
         virtual
         restricted()
@@ -51,9 +50,6 @@ contract RegistryService is
             IRegistry.ObjectInfo memory info
         )
     {
-        assert(false);
-        require(getRegistry().getStakingAddress() == address(staking), "RegistryService: staking address mismatch");
-        require(getRegistry().getObjectInfo(address(staking)).nftId.eqz());
         _checkInterface(staking, type(IStaking).interfaceId);
 
         address owner;

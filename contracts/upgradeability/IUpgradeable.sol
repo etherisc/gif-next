@@ -47,12 +47,4 @@ interface IUpgradeable is IVersionable {
      * the first verion MUST revert 
      */
     function upgrade(bytes memory upgradeData) external;
-
-    /**
-     * @dev returns version of this contract
-     * each new implementation MUST implement this function
-     * version number MUST increase 
-     */
-    //function getVersion() external pure returns(Version);
-
 }

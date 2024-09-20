@@ -211,8 +211,6 @@ contract ComponentService is
             revert ErrorComponentServiceCallerNotInstance(msg.sender);
         }
 
-        // TODO still need to check for IProductComponent support?
-
         IInstance instance = IInstance(msg.sender);
         NftId instanceNftId = registry.getNftIdForAddress(msg.sender);
         productNftId = _register(

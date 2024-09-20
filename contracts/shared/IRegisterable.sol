@@ -32,7 +32,7 @@ interface IRegisterable is
     function getInitialInfo() 
         external 
         view
-        returns (IRegistry.ObjectInfo memory info);//, address initialOwner, bytes memory data);
+        returns (IRegistry.ObjectInfo memory info);
 
     function getInitialData() 
         external 
