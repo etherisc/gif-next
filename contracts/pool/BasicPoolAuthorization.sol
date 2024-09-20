@@ -10,6 +10,7 @@ import {BasicPool} from "./BasicPool.sol";
 import {COMPONENT, POOL} from "../type/ObjectType.sol";
 import {PUBLIC_ROLE} from "../../contracts/type/RoleId.sol";
 import {RoleId} from "../type/RoleId.sol";
+import {GIF_INITIAL_RELEASE} from "../registry/Registry.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {VersionPartLib} from "../type/Version.sol";
 
@@ -21,7 +22,7 @@ contract BasicPoolAuthorization
           Authorization(
                poolName, 
                POOL(), 
-               VersionPartLib.toVersionPart(3),
+               GIF_INITIAL_RELEASE(),
                COMMIT_HASH,
                TargetType.Component, 
                true)

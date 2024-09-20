@@ -12,6 +12,7 @@ import {PUBLIC_ROLE} from "../type/RoleId.sol";
 import {ReleaseRegistry} from "./ReleaseRegistry.sol";
 import {RegistryAdmin} from "./RegistryAdmin.sol";
 import {RoleIdLib, ADMIN_ROLE, GIF_ADMIN_ROLE, GIF_MANAGER_ROLE} from "../type/RoleId.sol";
+import {GIF_INITIAL_RELEASE} from "../registry/Registry.sol";
 import {StakingStore} from "../staking/StakingStore.sol";
 import {TargetHandler} from "../staking/TargetHandler.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
@@ -49,7 +50,7 @@ contract RegistryAuthorization
           Authorization(
                REGISTRY_TARGET_NAME, 
                REGISTRY(), 
-               VersionPartLib.toVersionPart(3),
+               GIF_INITIAL_RELEASE(),
                commitHash, 
                TargetType.Core,
                false) // includeTokenHandler

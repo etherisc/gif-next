@@ -15,7 +15,7 @@ import {ContractLib} from "../shared/ContractLib.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType, ObjectTypeLib, COMPONENT, POOL, RELEASE, REGISTRY, SERVICE, STAKING} from "../type/ObjectType.sol";
 import {RegistryAdmin} from "./RegistryAdmin.sol";
-import {Registry} from "./Registry.sol";
+import {Registry, GIF_INITIAL_RELEASE} from "./Registry.sol";
 import {ReleaseAdmin} from "./ReleaseAdmin.sol";
 import {ReleaseLifecycle} from "./ReleaseLifecycle.sol";
 import {Seconds} from "../type/Seconds.sol";
@@ -35,8 +35,6 @@ contract ReleaseRegistry is
     ReleaseLifecycle, 
     IRegistryLinked
 {
-    uint8 public constant INITIAL_GIF_VERSION = 3;// first active release version  
-
     event LogReleaseCreation(IAccessAdmin admin, VersionPart release, bytes32 salt); 
     event LogReleaseActivation(VersionPart release);
     event LogReleaseDisabled(VersionPart release);
@@ -65,7 +63,7 @@ contract ReleaseRegistry is
     error ErrorReleaseRegistryServiceInfoAddressInvalid(IService service, address expected);
     error ErrorReleaseRegistryServiceInfoInterceptorInvalid(IService service, bool isInterceptor);
     error ErrorReleaseRegistryServiceInfoTypeInvalid(IService service, ObjectType expected, ObjectType found);
-    error ErrorReleaseRegistryServiceInfoVersionMismatch(IService service, VersionPart expected, VersionPart actual);
+    error ErrorReleaseRegistryServiceInfoReleaseMismatch(IService service, VersionPart expected, VersionPart actual);
     error ErrorReleaseRegistryServiceInfoOwnerInvalid(IService service, address expected, address found);
     error ErrorReleaseRegistryServiceSelfRegistration(IService service);
     error ErrorReleaseRegistryServiceOwnerRegistered(IService service, address owner);
@@ -99,7 +97,7 @@ contract ReleaseRegistry is
         _masterReleaseAdmin = new ReleaseAdmin(
             _cloneNewAccessManager());
 
-        _next = VersionPartLib.toVersionPart(INITIAL_GIF_VERSION - 1);
+        _next = VersionPartLib.toVersionPart(GIF_INITIAL_RELEASE().toInt() - 1);
     }
 
     /// @dev Initiates the creation of a new GIF release by the GIF admin.
@@ -438,7 +436,7 @@ contract ReleaseRegistry is
         IService service,
         address expectedOwner,
         address expectedAuthority, 
-        VersionPart expectedVersion,
+        VersionPart expectedRelease,
         ObjectType expectedDomain
     )
         internal
@@ -459,7 +457,7 @@ contract ReleaseRegistry is
         (info,, data) = _getAndVerifyServiceInfo(
             service,
             expectedOwner,
-            expectedVersion);
+            expectedRelease);
 
         if(authority != expectedAuthority) {
             revert ErrorReleaseRegistryServiceAuthorityMismatch(
@@ -480,7 +478,7 @@ contract ReleaseRegistry is
     function _getAndVerifyServiceInfo(
         IService service,
         address expectedOwner, // assume always valid, can not be 0
-        VersionPart expectedVersion
+        VersionPart expectedRelease
     )
         internal
         view
@@ -506,10 +504,10 @@ contract ReleaseRegistry is
             revert ErrorReleaseRegistryServiceInfoTypeInvalid(service, SERVICE(), info.objectType);
         }
 
-        if(info.release != expectedVersion) {
-            revert ErrorReleaseRegistryServiceInfoVersionMismatch(
+        if(info.release != expectedRelease) {
+            revert ErrorReleaseRegistryServiceInfoReleaseMismatch(
                 service,
-                expectedVersion,
+                expectedRelease,
                 info.release);            
         }
 

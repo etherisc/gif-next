@@ -22,6 +22,7 @@ import {IRiskService} from "../product/IRiskService.sol";
 
 import {ServiceAuthorization} from "../authorization/ServiceAuthorization.sol";
 import {VersionPartLib} from "../../contracts/type/Version.sol";
+import {GIF_INITIAL_RELEASE} from "../registry/Registry.sol";
 
 
 contract ServiceAuthorizationV3
@@ -32,7 +33,7 @@ contract ServiceAuthorizationV3
           ServiceAuthorization(
                "ReleaseAdmin",
                RELEASE(),
-               VersionPartLib.toVersionPart(3),
+               GIF_INITIAL_RELEASE(),
                commitHash)
      {}
 

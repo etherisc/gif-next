@@ -11,6 +11,7 @@ import {AccessAdminLib} from "../authorization/AccessAdminLib.sol";
 import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
 import {ObjectType, REGISTRY} from "../type/ObjectType.sol";
 import {RoleId, RoleIdLib, GIF_MANAGER_ROLE, GIF_ADMIN_ROLE} from "../type/RoleId.sol";
+import {GIF_INITIAL_RELEASE} from "../registry/Registry.sol";
 import {Str} from "../type/String.sol";
 import {VersionPartLib} from "../type/Version.sol";
 
@@ -62,7 +63,7 @@ contract RegistryAdmin is
         initialize(
             address(new AccessManagerCloneable()),
             "RegistryAdmin",
-            VersionPartLib.toVersionPart(3));
+            GIF_INITIAL_RELEASE());
     }
 
 
@@ -80,10 +81,11 @@ contract RegistryAdmin is
             address(_authorization),
             authorization, 
             REGISTRY(), 
-            release, 
+            getRelease(), 
             false, // expectServiceAuthorization
             false); // checkAlreadyInitialized);
-
+        
+        // effects
         __RegistryLinked_init(registry);
 
         _authorization = IAuthorization(authorization);

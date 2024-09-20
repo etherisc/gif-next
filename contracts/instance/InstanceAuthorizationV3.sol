@@ -13,6 +13,7 @@ import {InstanceStore} from "../instance/InstanceStore.sol";
 import {INSTANCE_TARGET_NAME, INSTANCE_ADMIN_TARGET_NAME, INSTANCE_STORE_TARGET_NAME, PRODUCT_STORE_TARGET_NAME, BUNDLE_SET_TARGET_NAME, RISK_SET_TARGET_NAME} from "./TargetNames.sol";
 import {ProductStore} from "../instance/ProductStore.sol";
 import {ADMIN_ROLE, INSTANCE_OWNER_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
+import {GIF_INITIAL_RELEASE} from "../registry/Registry.sol";
 import {RiskSet} from "../instance/RiskSet.sol";
 import {VersionPartLib} from "../type/Version.sol";
 
@@ -28,7 +29,7 @@ contract InstanceAuthorizationV3
           Authorization(
                INSTANCE_TARGET_NAME, 
                INSTANCE(), 
-               VersionPartLib.toVersionPart(3), 
+               GIF_INITIAL_RELEASE(), 
                COMMIT_HASH,
                TargetType.Instance, 
                false)

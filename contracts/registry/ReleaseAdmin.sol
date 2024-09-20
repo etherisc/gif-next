@@ -10,6 +10,7 @@ import {AccessAdmin} from "../authorization/AccessAdmin.sol";
 import {AccessAdminLib} from "../authorization/AccessAdminLib.sol";
 import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
 import {ObjectType, ObjectTypeLib, RELEASE} from "../type/ObjectType.sol";
+import {GIF_INITIAL_RELEASE} from "../registry/Registry.sol";
 import {RoleId, ADMIN_ROLE, RELEASE_REGISTRY_ROLE} from "../type/RoleId.sol";
 import {Str} from "../type/String.sol";
 import {VersionPartLib, VersionPart} from "../type/Version.sol";
@@ -51,7 +52,7 @@ contract ReleaseAdmin is
         initialize(
             accessManager,
             "MasterReleaseAdmin",
-            VersionPartLib.toVersionPart(3));
+            GIF_INITIAL_RELEASE());
     }
 
 

@@ -11,6 +11,7 @@ import {AccessAdminLib} from "../authorization/AccessAdminLib.sol";
 import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
 import {ObjectType, INSTANCE} from "../type/ObjectType.sol";
 import {RoleId, ADMIN_ROLE} from "../type/RoleId.sol";
+import {GIF_INITIAL_RELEASE} from "../registry/Registry.sol";
 import {Str} from "../type/String.sol";
 import {VersionPartLib, VersionPart} from "../type/Version.sol";
 import {INSTANCE_TARGET_NAME, INSTANCE_ADMIN_TARGET_NAME, INSTANCE_STORE_TARGET_NAME, PRODUCT_STORE_TARGET_NAME, BUNDLE_SET_TARGET_NAME, RISK_SET_TARGET_NAME} from "./TargetNames.sol";
@@ -43,7 +44,7 @@ contract InstanceAdmin is
         initialize(
             accessManager,
             "MasterInstanceAdmin",
-            VersionPartLib.toVersionPart(3));
+            GIF_INITIAL_RELEASE());
     }
 
 
@@ -65,7 +66,7 @@ contract InstanceAdmin is
             address(_authorization), 
             authorization, 
             INSTANCE(), // expectedDomain
-            release, // expectedRelease
+            getRelease(), // expectedRelease
             false, // expectServiceAuthorization
             true); // checkAlreadyInitialized
 

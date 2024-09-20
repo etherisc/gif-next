@@ -31,6 +31,12 @@ import {RegistryAdmin} from "./RegistryAdmin.sol";
 // 5) registerRegistry() -> registers IRegistry address (from different chain) by GifAdmin. Works ONLY on mainnet. 
 //                          Note: getters by address MUST not be used with this address (will return 0 or data related to different object or even revert)
 
+
+function GIF_INITIAL_RELEASE() pure returns (VersionPart) {
+    return VersionPartLib.toVersionPart(3);
+}
+
+
 /// @dev Chain Registry contract implementing IRegistry.
 /// IRegistry for method details.
 contract Registry is
@@ -143,7 +149,6 @@ contract Registry is
         _stakingNftId = _registerStaking();
     }
 
-    // TODO consider adding `version` argument
     /// @inheritdoc IRegistry
     function registerRegistry(
         NftId nftId,
@@ -182,10 +187,9 @@ contract Registry is
                 nftId: nftId,
                 parentNftId: REGISTRY_NFT_ID,
                 objectType: REGISTRY(),
-                release: VersionPartLib.toVersionPart(3),
+                release: GIF_INITIAL_RELEASE,
                 isInterceptor: false,
                 objectAddress: registryAddress}),
-            "", // data
             false); // do not update address lookup for objects on a different chain
     }
 
@@ -332,7 +336,7 @@ contract Registry is
 
     /// @dev earliest GIF major version 
     function getInitialRelease() external view returns (VersionPart) {
-        return VersionPartLib.toVersionPart(_releaseRegistry.INITIAL_GIF_VERSION());
+        return GIF_INITIAL_RELEASE();
     }
 
     /// @dev next GIF release version to be released
@@ -504,20 +508,8 @@ contract Registry is
         internal
         returns(NftId nftId)
     {
-        //ObjectType objectType = info.objectType; // do not care here, never PROTOCOL(), REGISTRY()
-        //bool isInterceptor = info.isInterceptor;
-        //address objectAddress = info.objectAddress; // do not care here, can be 0
-
         NftId parentNftId = info.parentNftId; // do not care here, can not be 0
         ObjectInfo memory parentInfo = _info[parentNftId];
-
-        // Parent can have 0 address in case of STAKE for PROTOCOL / CUSTOM_TYPE for POLICY
-        // But it MUST be registered -> parentType != 0 && parentNftId != 0
-        /*if(objectType != STAKE()) {
-            if(parentAddress == address(0)) {
-                revert ErrorRegistryParentAddressZero();
-            }
-        }*/
     
         // global registry is never parent when not on mainnet
         if(block.chainid != 1) {
@@ -610,7 +602,6 @@ contract Registry is
                 isInterceptor: false, 
                 objectAddress: address(0)}),
             NFT_LOCK_ADDRESS, // initial owner of protocol
-            "", // data
             true);
     }
 
@@ -630,10 +621,9 @@ contract Registry is
                 nftId: GLOBAL_REGISTRY_NFT_ID,
                 parentNftId: PROTOCOL_NFT_ID,
                 objectType: REGISTRY(),
-                release: VersionPartLib.toVersionPart(3),
+                release: GIF_INITIAL_RELEASE,
                 isInterceptor: false,
                 objectAddress: GLOBAL_REGISTRY_ADDRESS}),
-            "", // data
             block.chainid == 1);// update address lookup for global registry only on mainnet
 
         // if not on mainnet: register this registry with global registry as parent
@@ -649,10 +639,9 @@ contract Registry is
                     nftId: registryNftId,
                     parentNftId: GLOBAL_REGISTRY_NFT_ID,
                     objectType: REGISTRY(),
-                    release: VersionPartLib.toVersionPart(3),
+                    release: GIF_INITIAL_RELEASE,
                     isInterceptor: false,
                     objectAddress: address(this)}),
-                "", // data
                 true);
         }
     }

@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {IVersionable} from "./IVersionable.sol";
+import {GIF_INITIAL_RELEASE} from "../registry/Registry.sol";
 import {Version, VersionPart, VersionLib, VersionPartLib} from "../type/Version.sol";
 
 
@@ -24,12 +25,12 @@ abstract contract Versionable is
         //Version initializedVersion = VersionLib.toVersion(_getInitializedVersion());
         //if(initializedVersion != getVersion()) {}
 
-        checkRelease(release);
+        _checkRelease(release);
     }
 
     function getVersion() public pure virtual returns(Version)
     {
-        return VersionLib.toVersion(3, 0, 0);
+        return VersionLib.toVersion(GIF_INITIAL_RELEASE().toInt(), 0, 0);
     }
 
     function getRelease() public pure returns(VersionPart)
@@ -37,7 +38,7 @@ abstract contract Versionable is
         return getVersion().toMajorPart();
     }
 
-    function checkRelease(VersionPart release) internal view {
+    function _checkRelease(VersionPart release) internal view {
         VersionPart currentRelease = getRelease();
         if(currentRelease != release) {
             revert ErrorVersionableReleaseMismatch(address(this), release, currentRelease);
