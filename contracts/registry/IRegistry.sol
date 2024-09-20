@@ -20,7 +20,7 @@ interface IRegistry is
 {
 
     event LogRegistryObjectRegistered(NftId nftId, NftId parentNftId, ObjectType objectType, VersionPart objectVersion, bool isInterceptor, address objectAddress, address initialOwner);
-    event LogRegistryServiceRegistered(VersionPart version, ObjectType domain);
+    event LogRegistryServiceRegistered(VersionPart release, ObjectType domain);
     event LogRegistryChainRegistryRegistered(NftId nftId, uint256 chainId, address chainRegistryAddress);
 
     // initialize
@@ -70,7 +70,8 @@ interface IRegistry is
     function registerRegistry(
         NftId nftId, 
         uint256 chainId, 
-        address chainRegistryAddress
+        address chainRegistryAddress,
+        VersionPart release
     ) external;
 
     /// @dev Register a service with using the provided domain and version.

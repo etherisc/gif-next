@@ -18,6 +18,8 @@ import {IStaking} from "../staking/IStaking.sol";
 import {ReleaseRegistry} from "./ReleaseRegistry.sol";
 import {TokenRegistry} from "./TokenRegistry.sol";
 import {RegistryAdmin} from "./RegistryAdmin.sol";
+import {Versionable} from "../shared/Versionable.sol";
+import {VersionLib, Version} from "../type/Version.sol";
 
 /// @dev IMPORTANT
 // Each NFT minted by registry is accosiated with:
@@ -42,6 +44,7 @@ function GIF_INITIAL_RELEASE() pure returns (VersionPart) {
 contract Registry is
     Initializable,
     AccessManaged,
+    Versionable,
     IRegistry
 {
     /// @dev Protocol NFT ID
@@ -153,7 +156,8 @@ contract Registry is
     function registerRegistry(
         NftId nftId,
         uint256 chainId, 
-        address registryAddress
+        address registryAddress,
+        VersionPart release
     )
         external
         restricted()
@@ -187,7 +191,7 @@ contract Registry is
                 nftId: nftId,
                 parentNftId: REGISTRY_NFT_ID,
                 objectType: REGISTRY(),
-                release: GIF_INITIAL_RELEASE,
+                release: release,
                 isInterceptor: false,
                 objectAddress: registryAddress}),
             false); // do not update address lookup for objects on a different chain
@@ -254,7 +258,6 @@ contract Registry is
         ObjectType objectType = info.objectType;
         VersionPart parentRelease = _info[info.parentNftId].release;
 
-        // TODO consider deleting this -> objectType is checks against core types combinations
         // specialized functions have to be used to register registries and services
         if(objectType == REGISTRY() || objectType == STAKING() || objectType == SERVICE()) {
             revert ErrorRegistryObjectTypeNotSupported(objectType);
@@ -491,6 +494,12 @@ contract Registry is
         return ownerOf(address(this));
     }
 
+    // Versionable
+
+    function getVersion() public pure override returns (Version) {
+        return VersionLib.toVersion(GIF_INITIAL_RELEASE().toInt(), 0 , 0);
+    }
+
     // IERC165
 
     function supportsInterface(bytes4 interfaceId) external pure returns (bool) {
@@ -621,7 +630,7 @@ contract Registry is
                 nftId: GLOBAL_REGISTRY_NFT_ID,
                 parentNftId: PROTOCOL_NFT_ID,
                 objectType: REGISTRY(),
-                release: GIF_INITIAL_RELEASE,
+                release: getRelease(),
                 isInterceptor: false,
                 objectAddress: GLOBAL_REGISTRY_ADDRESS}),
             block.chainid == 1);// update address lookup for global registry only on mainnet
@@ -639,7 +648,7 @@ contract Registry is
                     nftId: registryNftId,
                     parentNftId: GLOBAL_REGISTRY_NFT_ID,
                     objectType: REGISTRY(),
-                    release: GIF_INITIAL_RELEASE,
+                    release: getRelease(),
                     isInterceptor: false,
                     objectAddress: address(this)}),
                 true);
@@ -650,7 +659,6 @@ contract Registry is
     function _registerRegistryForNft(
         uint256 chainId,
         ObjectInfo memory info,
-        bytes memory data,
         bool updateAddressLookup
     )
         private
@@ -667,7 +675,6 @@ contract Registry is
         _registerForNft(
             info,
             NFT_LOCK_ADDRESS, // initial owner of any registry
-            data,
             updateAddressLookup); 
     }
 
@@ -689,7 +696,6 @@ contract Registry is
                 isInterceptor: false,
                 objectAddress: _stakingAddress}),
             stakingOwner,
-            "", // data
             true); 
 
         IStaking(_stakingAddress).initializeTokenHandler();
@@ -699,16 +705,11 @@ contract Registry is
     function _registerForNft(
         ObjectInfo memory info,
         address initialOwner,
-        bytes memory data,
         bool updateAddressLookup
     )
         internal
     {
         _info[info.nftId] = info;
-
-        if(data.length > 0) {
-            _data[info.nftId] = data;
-        }
 
         if (updateAddressLookup) {
             _setAddressForNftId(info.nftId, info.objectAddress);
