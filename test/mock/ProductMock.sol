@@ -44,17 +44,15 @@ contract ProductMockWithoutInstanceCheck is SimpleProduct {
         ObjectType componentType,
         IAuthorization authorization,
         bool isInterceptor,
-        address initialOwner,
-        bytes memory componentData
+        address initialOwner
     )
         internal 
-        virtual //override
+        virtual override
         onlyInitializing()
     {
         // need v4, for some reason ProductMockV4 have V3...
         AccessManagerCloneable accessManager = new AccessManagerCloneable();
         accessManager.initialize(address(this), getRelease());
-        //accessManager.completeSetup(registry);
 
         __Component_init(
             address(accessManager),

@@ -7,6 +7,7 @@ import {FoundryRandom} from "foundry-random/FoundryRandom.sol";
 import {NftId} from "../../contracts/type/NftId.sol";
 import {Version, VersionPart, VersionLib, VersionPartLib} from "../../contracts/type/Version.sol";
 import {ObjectType, ObjectTypeLib, REGISTRY, SERVICE, PRODUCT, POOL, ORACLE, DISTRIBUTION} from "../../contracts/type/ObjectType.sol";
+import {INftOwnable} from "../../contracts/shared/INftOwnable.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 import {IService} from "../../contracts/shared/IService.sol";
@@ -24,12 +25,12 @@ contract ServiceMock is RegisterableMockWithAuthority, IService {
             SERVICE(),
             isInterceptor,
             initialOwner,
-            abi.encode(getDomain(), getVersion().toMajorPart()))
+            abi.encode(getDomain(), getRelease()))
     {
-        initialize(initialAuthority);
+        initialize();
     }
 
-    function initialize(address initialAuthority) internal initializer() {
+    function initialize() internal initializer() {
         _registerInterface(type(IService).interfaceId);
     }
 

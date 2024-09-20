@@ -18,8 +18,8 @@ contract RegisterableMockWithAuthority is IRegisterable, InitializableERC165, Ve
     error ErrorRegisterableMockIsNotInterceptor(address registerable);
 
     IRegistry.ObjectInfo internal _info;
-    address _initialOwner;
-    bytes _data;
+    address internal _initialOwner;
+    bytes internal _data;
 
     constructor(
         address authority,
@@ -83,12 +83,13 @@ contract RegisterableMockWithAuthority is IRegisterable, InitializableERC165, Ve
 
     // from INftOwnable
     function linkToRegisteredNftId() external returns (NftId) { /*do nothing*/ }
+    function getOwner() external virtual view returns (address) {return _initialOwner; }
 
-    // from INftOwnable, DO NOT USE
-    function getRegistry() external view returns (IRegistry) { revert(); }
-    function getRegistryAddress() external view returns (address) { revert(); }
-    function getNftId() external view returns (NftId) { revert(); }
-    function getOwner() external view returns (address) { revert(); }
+    // from INftOwnable
+    function getRegistry() external view returns (IRegistry) { revert("NotSupported"); }
+    function getRegistryAddress() external view returns (address) { revert("NotSupported"); }
+    function getNftId() external view returns (NftId) { revert("NotSupported"); }
+
 }
 
 
