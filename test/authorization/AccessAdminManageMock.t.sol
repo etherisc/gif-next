@@ -8,7 +8,7 @@ import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
-import {AccessAdmin, ADMIN_ROLE_NAME, PUBLIC_ROLE_NAME} from "../../contracts/authorization/AccessAdmin.sol";
+import {AccessAdmin} from "../../contracts/authorization/AccessAdmin.sol";
 import {AccessAdminLib} from "../../contracts/authorization/AccessAdminLib.sol";
 import {AccessAdminForTesting} from "./AccessAdmin.t.sol";
 import {AccessManagedMock} from "../mock/AccessManagedMock.sol";
@@ -340,7 +340,7 @@ contract AccessAdminManageMockTest is AccessAdminBaseTest {
             aa,
             aa.getAdminRole(), 
             aa.getAdminRole(),
-            ADMIN_ROLE_NAME(),
+            AccessAdminLib.ADMIN_ROLE_NAME(),
             TimestampLib.max(), 
             TimestampLib.current());
 
@@ -349,7 +349,7 @@ contract AccessAdminManageMockTest is AccessAdminBaseTest {
             aa,
             aa.getPublicRole(), 
             aa.getAdminRole(),
-            PUBLIC_ROLE_NAME(),
+            AccessAdminLib.PUBLIC_ROLE_NAME(),
             TimestampLib.max(), 
             TimestampLib.current());
 

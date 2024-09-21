@@ -3,16 +3,15 @@ pragma solidity ^0.8.20;
 
 import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
 import {IAccess} from "./IAccess.sol";
 import {IAccessAdmin} from "./IAccessAdmin.sol";
 import {IAuthorization} from "./IAuthorization.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 
-import {ADMIN_ROLE_NAME, PUBLIC_ROLE_NAME} from "./AccessAdmin.sol";
 import {AccessAdminLib} from "./AccessAdminLib.sol";
 import {AccessManagerCloneable} from "./AccessManagerCloneable.sol";
+import {Blocknumber, BlocknumberLib} from "../type/Blocknumber.sol";
 import {ContractLib} from "../shared/ContractLib.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
 import {ObjectType} from "../type/ObjectType.sol";
@@ -22,9 +21,6 @@ import {Str, StrLib} from "../type/String.sol";
 import {TimestampLib} from "../type/Timestamp.sol";
 import {VersionPart} from "../type/Version.sol";
 
-function ADMIN_ROLE_NAME() pure returns (string memory) { return "AdminRole"; }
-function PUBLIC_ROLE_NAME() pure returns (string memory) { return "PublicRole"; }
-
 
 /**
  * @dev A generic access amin contract that implements role based access control based on OpenZeppelin's AccessManager contract.
@@ -33,7 +29,6 @@ function PUBLIC_ROLE_NAME() pure returns (string memory) { return "PublicRole"; 
  */ 
 contract AccessAdmin is
     AccessManagedUpgradeable,
-    ReentrancyGuardUpgradeable,
     IAccessAdmin
 {
     using EnumerableSet for EnumerableSet.AddressSet;
@@ -125,17 +120,19 @@ contract AccessAdmin is
         onlyInitializing()
         onlyDeployer()
     {
+        // TODO cleanup
         // checks
-        // only contract check (authority might not yet be initialized at this time)
-        if (!ContractLib.isContract(authority)) {
-            revert ErrorAccessAdminAuthorityNotContract(authority);
-        }
+        // // only contract check (authority might not yet be initialized at this time)
+        // if (!ContractLib.isContract(authority)) {
+        //     revert ErrorAccessAdminAuthorityNotContract(authority);
+        // }
 
-        // check name not empty
-        if (bytes(adminName).length == 0) {
-            revert ErrorAccessAdminAccessManagerEmptyName();
-        }
+        // // check name not empty
+        // if (bytes(adminName).length == 0) {
+        //     revert ErrorAccessAdminAccessManagerEmptyName();
+        // }
 
+        AccessAdminLib.checkInitParameters(authority, adminName);
         _authority = AccessManagerCloneable(authority);
         _authority.initialize(address(this));
 
@@ -208,9 +205,9 @@ contract AccessAdmin is
         return RoleId.wrap(_authority.PUBLIC_ROLE());
     }
 
-    function roleExists(string memory name) public view returns (bool exists) {
+    function roleForNameExists(string memory name) public view returns (bool exists) {
         // special case for admin and public roles
-        if (StrLib.eq(name, ADMIN_ROLE_NAME()) || StrLib.eq(name, PUBLIC_ROLE_NAME())) {
+        if (AccessAdminLib.isAdminOrPublicRole(name)) {
             return true;
         }
 
@@ -218,11 +215,16 @@ contract AccessAdmin is
     }
 
     function roleExists(RoleId roleId) public view returns (bool exists) {
-        return _roleInfo[roleId].createdAt.gtz();
+        return _roleInfo[roleId].roleType != RoleType.Undefined;
     }
 
-    function getRoleForName(string memory name) public view returns (RoleId roleId) {
-        return _roleForName[StrLib.toStr(name)].roleId;
+    function getRoleForName(string memory name) public view returns (RoleId roleId, bool exists) {
+        roleId = _roleForName[StrLib.toStr(name)].roleId;
+        exists = false;
+
+        if (roleId.gtz() || AccessAdminLib.isAdminRoleName(name)) {
+            exists = true;
+        }
     }
 
     function getRoleInfo(RoleId roleId) public view returns (RoleInfo memory) {
@@ -305,6 +307,14 @@ contract AccessAdmin is
                 selector.toBytes4()));
     }
 
+    function getFunctionInfo(address target, Selector selector)
+        external
+        view
+        returns (FunctionInfo memory functionInfo)
+    {
+        return _functionInfo[target][selector];
+    }
+
     function deployer() public view returns (address) {
         return _deployer;
     }
@@ -327,12 +337,7 @@ contract AccessAdmin is
     {
         // setup admin role
         _createRoleUnchecked(
-            ADMIN_ROLE(),
-            AccessAdminLib.toRole({
-                adminRoleId: ADMIN_ROLE(),
-                roleType: RoleType.Contract,
-                maxMemberCount: 1,
-                name: ADMIN_ROLE_NAME()}));
+            ADMIN_ROLE(), AccessAdminLib.adminRoleInfo());
 
         // add this contract as admin role member, as contract roles cannot be revoked
         // and max member count is 1 for admin role this access admin contract will
@@ -342,12 +347,32 @@ contract AccessAdmin is
 
         // setup public role
         _createRoleUnchecked(
-            PUBLIC_ROLE(),
-            AccessAdminLib.toRole({
-                adminRoleId: ADMIN_ROLE(),
-                roleType: RoleType.Core,
-                maxMemberCount: type(uint32).max,
-                name: PUBLIC_ROLE_NAME()}));
+            PUBLIC_ROLE(), AccessAdminLib.publicRoleInfo());
+    }
+
+
+    function _createRoles(
+        IAuthorization authorization
+    )
+        internal
+    {
+        RoleId[] memory roles = authorization.getRoles();
+
+        for(uint256 i = 0; i < roles.length; i++) {
+            RoleId authzRoleId = roles[i];
+            IAccess.RoleInfo memory roleInfo = authorization.getRoleInfo(authzRoleId);
+            (RoleId roleId, bool exists) = getRoleForName(roleInfo.name.toString());
+
+emit LogAccessAdminDebug("_createRoles", roleId, roleInfo.name.toString(), exists);
+
+            if (!exists) {
+                
+                _createRole(
+                    roleId,
+                    roleInfo,
+                    true);
+            }
+        }
     }
 
 
@@ -364,7 +389,8 @@ contract AccessAdmin is
             true);
     }
 
-
+    // TODO analize, function crates role when not existing
+    // why is this necessary? shouldn't roles be created in advance?
     function _toAuthorizedRoleId(IAuthorization authorization, RoleId roleId)
         internal
         returns (RoleId authorizedRoleId)
@@ -373,24 +399,25 @@ contract AccessAdmin is
         if (roleId.isServiceRole()) {
 
             // create service role if missing
-            if (!roleExists(roleId)) {
-                _createRole(
-                    roleId, 
-                    AccessAdminLib.toRole(
-                        ADMIN_ROLE(), 
-                        RoleType.Contract, 
-                        1, 
-                        authorization.getRoleName(roleId)));
-            }
+            _createRole(
+                roleId, 
+                AccessAdminLib.toRole(
+                    ADMIN_ROLE(), 
+                    RoleType.Contract, 
+                    1, 
+                    authorization.getRoleName(roleId)),
+                false); // no revert on existing role
 
             return roleId;
         }
 
         string memory roleName = authorization.getRoleInfo(roleId).name.toString();
-        return authorizedRoleId = getRoleForName(roleName);
+        (authorizedRoleId, ) = getRoleForName(roleName);
     }
 
 
+    /// @dev Authorize the functions of the target for the specified role.
+    /// Flag addFunctions determines if functions are added or removed.
     function _authorizeTargetFunctions(
         address target, 
         RoleId roleId, 
@@ -421,7 +448,7 @@ contract AccessAdmin is
     )
         internal
     {
-        _checkTargetExists(target);
+        AccessAdminLib.checkTargetExists(this, target);
         _checkRoleExists(roleId, true, true);
 
         _authority.setTargetFunctionRole(
@@ -439,6 +466,8 @@ contract AccessAdmin is
         }
     }
 
+// TODO cleanup
+event LogAccessAdminDebug(string message, uint256 value, address target, bytes4 selector);
 
     function _updateFunctionAccess(
         address target, 
@@ -450,11 +479,14 @@ contract AccessAdmin is
     {
         // update functions info
         Selector selector = func.selector;
-        _functionInfo[target][selector] = func;
+        Blocknumber lastUpdateIn = _functionInfo[target][selector].lastUpdateIn;
 
         // update function sets
         if (addFunction) { SelectorSetLib.add(_targetFunctions[target], selector); } 
         else { SelectorSetLib.remove(_targetFunctions[target], selector); }
+
+        _functionInfo[target][selector] = func;
+        _functionInfo[target][selector].lastUpdateIn = BlocknumberLib.current();
 
         // logging
         emit LogAccessAdminFunctionGranted(
@@ -463,7 +495,8 @@ contract AccessAdmin is
             string(abi.encodePacked(
                 func.name.toString(), 
                 "(): ",
-                _getRoleName(roleId))));
+                _getRoleName(roleId))),
+            lastUpdateIn);
     }
 
 
@@ -522,7 +555,8 @@ contract AccessAdmin is
     /// Checks that the provided role and role id and role name not already used.
     function _createRole(
         RoleId roleId, 
-        RoleInfo memory info
+        RoleInfo memory info,
+        bool revertOnExistingRole
     )
         internal
     {
@@ -531,7 +565,7 @@ contract AccessAdmin is
             return;
         }
         
-        AccessAdminLib.checkRoleCreation(this, roleId, info);
+        AccessAdminLib.checkRoleCreation(this, roleId, info, revertOnExistingRole);
         _createRoleUnchecked(roleId, info);
     }
 
@@ -541,11 +575,18 @@ contract AccessAdmin is
     function _setRoleActive(RoleId roleId, bool active)
         internal
     {
+        _checkRoleExists(roleId, false, false);
+
         if (active) {
             _roleInfo[roleId].pausedAt = TimestampLib.max();
         } else {
             _roleInfo[roleId].pausedAt = TimestampLib.current();
         }
+
+        Blocknumber lastUpdateIn = _roleInfo[roleId].lastUpdateIn;
+        _roleInfo[roleId].lastUpdateIn = BlocknumberLib.current();
+
+        emit LogAccessAdminRoleActivatedSet(_adminName, roleId, active, lastUpdateIn);
     }
 
 
@@ -558,17 +599,6 @@ contract AccessAdmin is
         returns (RoleId contractRoleId)
     {
         return _createTarget(target, targetName, targetType, true);
-    }
-
-
-    function _createUncheckedTarget(
-        address target, 
-        string memory targetName, 
-        TargetType targetType
-    )
-        internal
-    {
-        _createTarget(target, targetName, targetType, false);
     }
 
 
@@ -607,6 +637,17 @@ contract AccessAdmin is
     }
 
 
+    function _createUncheckedTarget(
+        address target, 
+        string memory targetName, 
+        TargetType targetType
+    )
+        internal
+    {
+        _createTarget(target, targetName, targetType, false);
+    }
+
+
     function _createRoleUnchecked(
         RoleId roleId, 
         RoleInfo memory info
@@ -629,6 +670,7 @@ contract AccessAdmin is
         emit LogAccessAdminRoleCreated(_adminName, roleId, info.roleType, info.adminRoleId, info.name.toString());
     }
 
+event LogAccessAdminDebug(string message, RoleId roleId, string roleName, bool exists);
 
     /// @dev Creates a new target and a corresponding contract role.
     /// The function assigns the role to the target and logs the creation.
@@ -643,12 +685,17 @@ contract AccessAdmin is
     {
         // create target role (if not existing)
         string memory roleName;
-        (targetRoleId, roleName) = _getOrCreateTargetRoleIdAndName(target, targetName, targetType);
+        bool roleExists;
+        (targetRoleId, roleName, roleExists) = _getOrCreateTargetRoleIdAndName(target, targetName, targetType);
 
-        if (!roleExists(targetRoleId)) {
+        if (!roleExists) {
             _createRole(
                 targetRoleId, 
-                AccessAdminLib.toRole(ADMIN_ROLE(), IAccess.RoleType.Contract, 1, roleName));
+                AccessAdminLib.toRole(ADMIN_ROLE(), 
+                IAccess.RoleType.Contract, 
+                1, 
+                roleName),
+                true); // revert on existing role
         }
 
         // create target info
@@ -657,8 +704,8 @@ contract AccessAdmin is
             name: name,
             targetType: targetType,
             roleId: targetRoleId,
-            createdAt: TimestampLib.current()
-        });
+            createdAt: TimestampLib.current(),
+            lastUpdateIn: BlocknumberLib.current()});
 
         // create name to target mapping
         _targetForName[name] = target;
@@ -681,29 +728,44 @@ contract AccessAdmin is
         internal
         returns (
             RoleId roleId,
-            string memory roleName
+            string memory roleName,
+            bool exists
         )
     {
+        roleName = AccessAdminLib.toRoleName(targetName);
+        (roleId, exists) = getRoleForName(roleName);
+
+        if (exists) {
+emit LogAccessAdminDebug("_getOrCreateTargetRoleIdAndName (exists)", roleId, roleName, exists);
+            return (roleId, roleName, true);
+        } 
+
         // get roleId
         if (targetType == TargetType.Service || targetType == TargetType.GenericService) {
             roleId = AccessAdminLib.getServiceRoleId(target, targetType); 
         } else {
-            roleId = AccessAdminLib.getTargetRoleId(target, targetType, _nextRoleId[targetType]);
+            uint64 nextRoleId = _nextRoleId[targetType];
+            roleId = AccessAdminLib.getTargetRoleId(target, targetType, nextRoleId);
 
             // increment target type specific role id counter
             _nextRoleId[targetType]++;
         }
 
-        // create role name
-        roleName = AccessAdminLib.toRoleName(targetName);
+emit LogAccessAdminDebug("_getOrCreateTargetRoleIdAndName (!exists)", roleId, roleName, exists);
     }
 
 
     function _setTargetLocked(address target, bool locked)
         internal
     {
-        _checkTargetExists(target);
+        AccessAdminLib.checkTargetExists(this, target);
         _authority.setTargetClosed(target, locked);
+
+        // logging
+        Blocknumber lastUpdateIn = _targetInfo[target].lastUpdateIn;
+        _targetInfo[target].lastUpdateIn = BlocknumberLib.current();
+
+        emit LogAccessAdminTargetLockedSet(_adminName, target, locked, lastUpdateIn);
     }
 
 
@@ -761,20 +823,6 @@ contract AccessAdmin is
         // check if role is disabled
         if (onlyActiveRole && _roleInfo[roleId].pausedAt <= TimestampLib.current()) {
             revert ErrorAccessAdminRoleIsPaused(roleId);
-        }
-    }
-
-
-    /// @dev check if target exists and reverts if it doesn't
-    function _checkTargetExists(
-        address target
-    )
-        internal
-        view
-    {
-        // check not yet created
-        if (!targetExists(target)) {
-            revert ErrorAccessAdminTargetNotCreated(target);
         }
     }
 }

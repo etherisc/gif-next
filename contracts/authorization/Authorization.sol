@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {IAuthorization} from "./IAuthorization.sol";
 
+import {AccessAdminLib} from "./AccessAdminLib.sol";
 import {ObjectType} from "../type/ObjectType.sol";
 import {RoleId, RoleIdLib} from "../type/RoleId.sol";
 import {ServiceAuthorization} from "../authorization/ServiceAuthorization.sol";
@@ -33,7 +34,8 @@ contract Authorization is
     )
         ServiceAuthorization(mainTargetName, domain, release, commitHash)
     {
-        _nextGifContractRoleId = 10;
+        // IMPORTANT must match with AccessAdminLib.CORE_ROLE_MIN
+        _nextGifContractRoleId = 100;
 
         // setup main target
         if (isComponent) {
@@ -120,7 +122,7 @@ contract Authorization is
     function _addCustomRole(RoleId roleId, RoleId adminRoleId, uint32 maxMemberCount, string memory name) internal {
         _addRole(
             roleId,
-            _toRoleInfo(
+            AccessAdminLib.roleInfo(
                 adminRoleId,
                 RoleType.Custom,
                 maxMemberCount,

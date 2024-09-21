@@ -18,7 +18,7 @@ contract DeployAllTest is GifTest {
 
     function test_deployAllSetup() public {
         _printAuthz(instanceAdmin, "instance with components");
-        assertTrue(true);
+        // assertTrue(false, "oops");
     }
 
     function test_deploySimpleProduct() public {

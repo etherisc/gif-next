@@ -89,18 +89,17 @@ contract InstanceAdmin is
         // setup instance targets
         _createInstanceTargets(_authorization.getMainTargetName());
 
-        // setup non-contract roles
-        _setupServiceRoles(_authorization);
+        // setup roles and services
         _createRoles(_authorization);
+        _setupServices(_authorization);
 
         // authorize functions of instance contracts
         _createTargetAuthorizations(_authorization);
     }
 
-
     /// @dev grants the service roles to the service addresses based on the authorization specification.
     /// Service addresses used for the granting are determined by the registry and the release of this instance.
-    function _setupServiceRoles(IAuthorization authorization)
+    function _setupServices(IAuthorization authorization)
         internal
     {
         ObjectType[] memory serviceDomains = authorization.getServiceDomains();
@@ -108,21 +107,8 @@ contract InstanceAdmin is
         for(uint256 i = 0; i < serviceDomains.length; i++) {
             ObjectType serviceDomain = serviceDomains[i];
             RoleId serviceRoleId = authorization.getServiceRole(serviceDomain);
-            string memory serviceRoleName = authorization.getRoleName(serviceRoleId);
-
-            // create service role if missing
-            if (!roleExists(serviceRoleId)) {
-                _createRole(
-                    serviceRoleId, 
-                    AccessAdminLib.toRole(
-                        ADMIN_ROLE(), 
-                        IAccess.RoleType.Contract, 
-                        1, 
-                        serviceRoleName));
-            }
-
-            // grant service role to service
             address service = _registry.getServiceAddress(serviceDomain, _release);
+
             _grantRoleToAccount(
                 serviceRoleId,
                 service);
@@ -167,15 +153,6 @@ contract InstanceAdmin is
         _components++;
     }
 
-    function getRelease()
-        public
-        view
-        override
-        returns (VersionPart release)
-    {
-        return _release;
-    }
-
 
     /// @dev Creates a custom role.
     function createRole(
@@ -188,9 +165,11 @@ contract InstanceAdmin is
         returns (RoleId roleId)
     {
         // check role does not yet exist
-        if (roleExists(name)) {
+        bool exists;
+        (roleId, exists) = getRoleForName(name);
+        if (exists) {
             revert ErrorAccessAdminRoleAlreadyCreated(
-                getRoleForName(name),
+                roleId,
                 name);
         }
 
@@ -204,7 +183,8 @@ contract InstanceAdmin is
                 adminRoleId, 
                 IAccess.RoleType.Custom, 
                 maxMemberCount, 
-                name));
+                name),
+            true); // revert on existing role
     }
 
 
@@ -283,6 +263,14 @@ contract InstanceAdmin is
     }
 
 
+    function setComponentLocked(address target, bool locked) 
+        external 
+        restricted()
+    {
+        _setTargetLocked(target, locked);
+    }
+
+
     /// @dev locks the instance and all its releated targets including component and custom targets.
     function setInstanceLocked(bool locked)
         external
@@ -303,13 +291,6 @@ contract InstanceAdmin is
     }
 
 
-    function setComponentLocked(address target, bool locked) 
-        external 
-        restricted()
-    {
-        _setTargetLocked(target, locked);
-    }
-
     /// @dev Returns the number of components that have been registered with this instance.   
     function components() 
         external 
@@ -318,6 +299,7 @@ contract InstanceAdmin is
     {
         return _components;
     }
+
 
     /// @dev Returns the instance authorization specification used to set up this instance admin.
     function getInstanceAuthorization()
@@ -328,26 +310,17 @@ contract InstanceAdmin is
         return _authorization;
     }
 
-    // ------------------- Internal functions ------------------- //
 
-    function _createRoles(IAuthorization authorization)
-        internal
+    function getRelease()
+        public
+        view
+        override
+        returns (VersionPart release)
     {
-        RoleId[] memory roles = authorization.getRoles();
-        RoleId mainTargetRoleId = authorization.getTargetRole(
-            authorization.getMainTarget());
-
-        for(uint256 i = 0; i < roles.length; i++) {
-            RoleId roleId = roles[i];
-
-            // skip main target role, create role if not exists
-            if (roleId != mainTargetRoleId && !roleExists(roleId)) {
-                _createRole(
-                    roleId,
-                    authorization.getRoleInfo(roleId));
-            }
-        }
+        return _release;
     }
+
+    // ------------------- Internal functions ------------------- //
 
 
     function _createTargetAuthorizations(IAuthorization authorization)
@@ -366,7 +339,7 @@ contract InstanceAdmin is
         }
     }
 
-
+    // CANDIDATE AccessAdminLib
     function _checkComponentOrCustomTarget(address target) 
         internal
         view

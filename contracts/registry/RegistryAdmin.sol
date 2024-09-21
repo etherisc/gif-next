@@ -101,11 +101,12 @@ contract RegistryAdmin is
         // link nft ownability to registry
         _linkToNftOwnable(_registry);
 
+        _createRoles(_authorization);
+
         // setup registry core targets
         _createCoreTargets(_authorization.getMainTargetName());
 
         // setup non-contract roles
-        _createRoles(_authorization);
         _grantRoleToAccount(GIF_ADMIN_ROLE(), gifAdmin);
         _grantRoleToAccount(GIF_MANAGER_ROLE(), gifManager);
 
@@ -138,23 +139,23 @@ contract RegistryAdmin is
 
     //--- private initialization functions -------------------------------------------//
 
-    function _createRoles(IAuthorization authorization)
-        internal
-    {
-        RoleId[] memory roles = authorization.getRoles();
+    // TODO cleanup
+    // function _createRoles(IAuthorization authorization)
+    //     internal
+    // {
+    //     RoleId[] memory roles = authorization.getRoles();
 
-        for(uint256 i = 0; i < roles.length; i++) {
-            RoleId roleId = roles[i];
-            RoleInfo memory roleInfo = authorization.getRoleInfo(roleId);
+    //     for(uint256 i = 0; i < roles.length; i++) {
+    //         RoleId roleId = roles[i];
+    //         RoleInfo memory roleInfo = authorization.getRoleInfo(roleId);
 
-            // create role if not exists
-            if (!roleExists(roleInfo.name.toString())) {
-                _createRole(
-                    roleId,
-                    roleInfo);
-            }
-        }
-    }
+    //         // create role if not exists
+    //         _createRole(
+    //             roleId,
+    //             roleInfo,
+    //             false); // no revert on existing role
+    //     }
+    // }
 
 
     function _createCoreTargets(string memory registryTargetName)

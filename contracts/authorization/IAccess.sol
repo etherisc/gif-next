@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
+import {Blocknumber} from "../type/Blocknumber.sol";
 import {RoleId} from "../type/RoleId.sol";
 import {Selector} from "../type/Selector.sol";
 import {Str} from "../type/String.sol";
@@ -27,14 +28,16 @@ interface IAccess {
 
     struct RoleInfo {
         // slot 0
-        RoleId adminRoleId; 
-        RoleType roleType; 
-        uint32 maxMemberCount; 
-        Timestamp createdAt; 
-        Timestamp pausedAt; 
+        RoleId adminRoleId;  // 64
+        RoleType roleType; // ?
+        uint32 maxMemberCount; // 32
+        Timestamp createdAt; // 40
+        Timestamp pausedAt; // 40
+        Blocknumber lastUpdateIn; // 40
         // slot 1
-        Str name;
+        Str name; // 256
     }
+
 
     // TODO recalc slot allocation
     struct TargetInfo {
@@ -42,6 +45,7 @@ interface IAccess {
         TargetType targetType;
         RoleId roleId;
         Timestamp createdAt;
+        Blocknumber lastUpdateIn;
     }
 
     struct FunctionInfo {
@@ -50,6 +54,7 @@ interface IAccess {
         // slot 1
         Selector selector; // function selector
         Timestamp createdAt;
+        Blocknumber lastUpdateIn;
     }
 
     struct RoleNameInfo {

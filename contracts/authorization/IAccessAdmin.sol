@@ -8,6 +8,7 @@ import {IAuthorization} from "./IAuthorization.sol";
 import {IRegistryLinked} from "../shared/IRegistryLinked.sol";
 import {IRelease} from "../registry/IRelease.sol";
 
+import {Blocknumber} from "../type/Blocknumber.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType} from "../type/ObjectType.sol";
 import {RoleId} from "../type/RoleId.sol";
@@ -26,9 +27,11 @@ interface IAccessAdmin is
     event LogAccessAdminRoleCreated(string admin, RoleId roleId, RoleType roleType, RoleId roleAdminId, string name);
     event LogAccessAdminTargetCreated(string admin, string name, bool managed, address target, RoleId roleId);
 
+    event LogAccessAdminRoleActivatedSet(string admin, RoleId roleId, bool active, Blocknumber lastUpdateIn);
     event LogAccessAdminRoleGranted(string admin, address account, string roleName);
     event LogAccessAdminRoleRevoked(string admin, address account, string roleName);
-    event LogAccessAdminFunctionGranted(string admin, address target, string func);
+    event LogAccessAdminTargetLockedSet(string admin, address target, bool locked, Blocknumber lastUpdateIn);
+    event LogAccessAdminFunctionGranted(string admin, address target, string func, Blocknumber lastUpdateIn);
 
     // only deployer modifier
     error ErrorAccessAdminNotDeployer();
@@ -115,12 +118,10 @@ interface IAccessAdmin is
 
     function roles() external view returns (uint256 numberOfRoles);
     function getRoleId(uint256 idx) external view returns (RoleId roleId);
-    function getAdminRole() external view returns (RoleId roleId);
-    function getPublicRole() external view returns (RoleId roleId);
 
     function roleExists(RoleId roleId) external view returns (bool exists); 
-    function roleExists(string memory roleName) external view returns (bool exists); 
-    function getRoleForName(string memory name) external view returns (RoleId roleId);
+    function roleForNameExists(string memory roleName) external view returns (bool exists); 
+    function getRoleForName(string memory name) external view returns (RoleId roleId, bool exists);
     function getRoleInfo(RoleId roleId) external view returns (RoleInfo memory roleInfo);
     function isRoleActive(RoleId roleId) external view returns (bool isActive);
     function isRoleCustom(RoleId roleId) external view returns (bool isCustom);

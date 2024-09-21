@@ -174,7 +174,6 @@ contract ReleaseAdmin is
         private 
         onlyInitializing()
     {
-        _createManagedTarget(address(this), RELEASE_ADMIN_TARGET_NAME, IAccess.TargetType.Core);
 
         _createRole(
             RELEASE_REGISTRY_ROLE(), 
@@ -182,7 +181,10 @@ contract ReleaseAdmin is
                 adminRoleId: ADMIN_ROLE(),
                 roleType: RoleType.Contract,
                 maxMemberCount: 1,
-                name: RELEASE_REGISTRY_ROLE_NAME}));
+                name: RELEASE_REGISTRY_ROLE_NAME}),
+            true);
+
+        _createManagedTarget(address(this), RELEASE_ADMIN_TARGET_NAME, IAccess.TargetType.Core);
 
         FunctionInfo[] memory functions;
         functions = new FunctionInfo[](2);

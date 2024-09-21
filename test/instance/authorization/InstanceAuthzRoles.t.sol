@@ -259,7 +259,7 @@ contract InstanceAuthzRolesTest is InstanceAuthzBaseTest {
 
     function test_instanceAuthzRolesSetActiveRoleNotCustom() public {
         // GIVEN setup
-        RoleId instanceRoleId = instance.getInstanceAdmin().getRoleForName("InstanceRole");
+        (RoleId instanceRoleId, ) = instance.getInstanceAdmin().getRoleForName("InstanceRole");
         // WHEN + THEN
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -514,8 +514,10 @@ contract InstanceAuthzRolesTest is InstanceAuthzBaseTest {
 
     function test_instanceAuthzRolesGrantRoleNotCustomRole() public {
         // GIVEN
-        RoleId instanceRoleId = instanceAdmin.getRoleForName("InstanceRole");
+        (RoleId instanceRoleId, bool exists) = instanceAdmin.getRoleForName("InstanceRole");
         address someAccount = makeAddr("someAccount");
+
+        assertTrue(exists, "instance role not existing");
 
         // WHEN + THEN
         vm.expectRevert(
