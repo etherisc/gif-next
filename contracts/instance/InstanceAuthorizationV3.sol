@@ -66,11 +66,11 @@ contract InstanceAuthorizationV3
           override
      {
           // instance supporting targets
-          _addTarget(INSTANCE_ADMIN_TARGET_NAME);
-          _addTarget(INSTANCE_STORE_TARGET_NAME);
-          _addTarget(PRODUCT_STORE_TARGET_NAME);
-          _addTarget(BUNDLE_SET_TARGET_NAME);
-          _addTarget(RISK_SET_TARGET_NAME);
+          _addInstanceTarget(INSTANCE_ADMIN_TARGET_NAME);
+          _addInstanceTarget(INSTANCE_STORE_TARGET_NAME);
+          _addInstanceTarget(PRODUCT_STORE_TARGET_NAME);
+          _addInstanceTarget(BUNDLE_SET_TARGET_NAME);
+          _addInstanceTarget(RISK_SET_TARGET_NAME);
      }
 
 
@@ -175,7 +175,7 @@ contract InstanceAuthorizationV3
           // authorize component service role
           functions = _authorizeForTarget(INSTANCE_ADMIN_TARGET_NAME, getServiceRole(COMPONENT()));
           _authorize(functions, InstanceAdmin.initializeComponentAuthorization.selector, "initializeComponentAuthoriz");
-          _authorize(functions, InstanceAdmin.setComponentLocked.selector, "setComponentLocked");
+          _authorize(functions, InstanceAdmin.setContractLocked.selector, "setContractLocked");
      }
 
 

@@ -22,7 +22,6 @@ contract ComponentTrackingTest is GifTest {
 
     function test_componentTrackingSimpleProductOnly() public {
         // GIVEN
-        assertEq(instanceReader.components(), 0, "unexpected components count (before)");
         assertEq(instanceReader.products(), 0, "unexpected products count (before)");
 
         // WHEN
@@ -32,7 +31,6 @@ contract ComponentTrackingTest is GifTest {
         vm.stopPrank();
 
         // THEN
-        assertEq(instanceReader.components(), 1, "unexpected components count (after)");
         assertEq(instanceReader.products(), 1, "unexpected products count (after)");
         assertEq(instanceReader.getProductNftId(0).toInt(), myProductNftId.toInt(), "unexpected product nft id (1)");
     }
@@ -40,7 +38,6 @@ contract ComponentTrackingTest is GifTest {
 
     function test_componentTrackingSimpleProductComplete() public {
         // GIVEN
-        assertEq(instanceReader.components(), 0, "unexpected components count (before)");
         assertEq(instanceReader.products(), 0, "unexpected products count (before)");
 
         // WHEN
@@ -60,7 +57,6 @@ contract ComponentTrackingTest is GifTest {
         vm.stopPrank();
 
         // THEN
-        assertEq(instanceReader.components(), 4, "unexpected components count (after)");
         assertEq(instanceReader.products(), 1, "unexpected products count (after)");
         assertEq(instanceReader.getProductNftId(0).toInt(), myProductNftId.toInt(), "unexpected product nft id (1)");
     }
@@ -68,7 +64,6 @@ contract ComponentTrackingTest is GifTest {
 
     function test_componentTrackingMultipleProductsOnly() public {
         // GIVEN
-        assertEq(instanceReader.components(), 0, "unexpected components count (before)");
         assertEq(instanceReader.products(), 0, "unexpected products count (before)");
 
         // WHEN
@@ -84,7 +79,6 @@ contract ComponentTrackingTest is GifTest {
         vm.stopPrank();
 
         // THEN
-        assertEq(instanceReader.components(), 3, "unexpected components count (after)");
         assertEq(instanceReader.products(), 3, "unexpected products count (after)");
         assertEq(instanceReader.getProductNftId(0).toInt(), myProductNftId1.toInt(), "unexpected product nft id (1a)");
         assertEq(instanceReader.getProductNftId(1).toInt(), myProductNftId2.toInt(), "unexpected product nft id (1b)");
@@ -94,7 +88,6 @@ contract ComponentTrackingTest is GifTest {
 
     function test_componentTrackingMultipleProductsComplete() public {
         // GIVEN
-        assertEq(instanceReader.components(), 0, "unexpected components count (before)");
         assertEq(instanceReader.products(), 0, "unexpected products count (before)");
 
         // WHEN
@@ -122,7 +115,6 @@ contract ComponentTrackingTest is GifTest {
         vm.stopPrank();
 
         // THEN
-        assertEq(instanceReader.components(), 9, "unexpected components count (after)");
         assertEq(instanceReader.products(), 3, "unexpected products count (after)");
         assertEq(instanceReader.getProductNftId(0).toInt(), myProductNftId1.toInt(), "unexpected product nft id (1a)");
         assertEq(instanceReader.getProductNftId(1).toInt(), myProductNftId2.toInt(), "unexpected product nft id (1b)");
@@ -131,7 +123,6 @@ contract ComponentTrackingTest is GifTest {
 
     function test_componentTracking_noDistributionExpected() public {
         // GIVEN
-        assertEq(instanceReader.components(), 0, "unexpected components count (before)");
         assertEq(instanceReader.products(), 0, "unexpected products count (before)");
 
         // WHEN
@@ -150,7 +141,6 @@ contract ComponentTrackingTest is GifTest {
 
     function test_componentTracking_distributionAlreadyRegistered() public {
         // GIVEN
-        assertEq(instanceReader.components(), 0, "unexpected components count (before)");
         assertEq(instanceReader.products(), 0, "unexpected products count (before)");
 
         // WHEN
@@ -172,7 +162,6 @@ contract ComponentTrackingTest is GifTest {
 
     function test_componentTracking_noOracleExpected() public {
         // GIVEN
-        assertEq(instanceReader.components(), 0, "unexpected components count (before)");
         assertEq(instanceReader.products(), 0, "unexpected products count (before)");
 
         // WHEN
@@ -191,7 +180,6 @@ contract ComponentTrackingTest is GifTest {
 
     function test_componentTracking_oracleAlreadyRegistered() public {
         // GIVEN
-        assertEq(instanceReader.components(), 0, "unexpected components count (before)");
         assertEq(instanceReader.products(), 0, "unexpected products count (before)");
 
         // WHEN
@@ -214,7 +202,6 @@ contract ComponentTrackingTest is GifTest {
 
     function test_componentEmptyName() public {
         // GIVEN
-        assertEq(instanceReader.components(), 0, "unexpected components count (before)");
         assertEq(instanceReader.products(), 0, "unexpected products count (before)");
 
         // WHEN

@@ -9,14 +9,6 @@ import {Timestamp} from "../type/Timestamp.sol";
 
 interface IAccess {
 
-    // TODO cleanup
-    // enum RoleType {
-    //     Undefined, // no role must have this type
-    //     Core, // GIF core roles
-    //     Contract, // roles assigned to contracts, cannot be revoked
-    //     Custom // use case specific rules for components
-    // }
-
     enum TargetType {
         Undefined, // no target must have this type
         Core, // GIF core contracts

@@ -142,7 +142,7 @@ contract ComponentService is
         (, IInstance instance) = _getAndVerifyComponent(COMPONENT(), false);
 
         address component = msg.sender;
-        instance.getInstanceAdmin().setComponentLocked(
+        instance.getInstanceAdmin().setContractLocked(
             component, 
             locked);
         emit LogComponentServiceComponentLocked(component, locked);

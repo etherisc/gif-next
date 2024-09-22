@@ -7,6 +7,7 @@ import {IAccess} from "./IAccess.sol";
 import {IAccessAdmin} from "./IAccessAdmin.sol";
 import {IAuthorization} from "./IAuthorization.sol";
 import {IComponent} from "../shared/IComponent.sol";
+import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IService} from "../shared/IService.sol";
 import {IServiceAuthorization} from "./IServiceAuthorization.sol";
@@ -14,7 +15,7 @@ import {IServiceAuthorization} from "./IServiceAuthorization.sol";
 import {BlocknumberLib} from "../type/Blocknumber.sol";
 import {ContractLib} from "../shared/ContractLib.sol";
 import {ObjectType} from "../type/ObjectType.sol";
-import {RoleId, RoleIdLib, ADMIN_ROLE} from "../type/RoleId.sol";
+import {RoleId, RoleIdLib, ADMIN_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {SelectorLib} from "../type/Selector.sol";
 import {Str, StrLib} from "../type/String.sol";
 import {TimestampLib} from "../type/Timestamp.sol";
@@ -205,8 +206,14 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
     )
         public 
         view
+        returns (bool isAdminOrPublicRole)
     {
-        // check role does not yet exist    // ACCESS_ADMIN_LIB role creation checks
+        // check 
+        if (roleId == ADMIN_ROLE() || roleId == PUBLIC_ROLE()) {
+            return true;
+        }
+
+        // check role does not yet exist 
         if(revertOnExistingRole && accessAdmin.roleExists(roleId)) {
             revert IAccessAdmin.ErrorAccessAdminRoleAlreadyCreated(
                 roleId, 
@@ -231,8 +238,46 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
                 info.name.toString(),
                 roleIdForName);
         }
+
+        return false;
     }
 
+
+    function checkRoleExists(
+        IAccessAdmin accessAdmin,
+        RoleId roleId, 
+        bool onlyActiveRole,
+        bool allowAdminAndPublicRoles
+    )
+        internal
+        view
+    {
+        // check role exists
+        if (!accessAdmin.roleExists(roleId)) {
+            revert IAccessAdmin.ErrorAccessAdminRoleUnknown(roleId);
+        }
+
+        // if onlyActiveRoles: check if role is disabled
+        if (onlyActiveRole && accessAdmin.getRoleInfo(roleId).pausedAt <= TimestampLib.current()) {
+            revert IAccessAdmin.ErrorAccessAdminRoleIsPaused(roleId);
+        }
+
+        // if not allowAdminAndPublicRoles, check if role is admin or public role
+        if (!allowAdminAndPublicRoles) {
+            checkNotAdminOrPublicRole(roleId);
+        }
+    }
+
+
+    function checkNotAdminOrPublicRole(RoleId roleId) public pure {
+        if (roleId == ADMIN_ROLE()) {
+            revert IAccessAdmin.ErrorAccessAdminInvalidUseOfAdminRole();
+        }
+
+        if (roleId == PUBLIC_ROLE()) {
+            revert IAccessAdmin.ErrorAccessAdminInvalidUseOfPublicRole();
+        }
+    }
 
     function checkTargetCreation(
         IAccessAdmin accessAdmin,
@@ -278,6 +323,59 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
             }
         }
     }
+
+
+    function checkComponentInitialization(
+        IAccessAdmin accessAdmin,
+        IAuthorization instanceAuthorization,
+        address componentAddress,
+        ObjectType expectedType
+    )
+        public
+        view
+        returns (IAuthorization componentAuthorization)
+    {
+        checkIsRegistered(address(accessAdmin.getRegistry()), componentAddress, expectedType);
+
+        VersionPart expecteRelease = accessAdmin.getRelease();
+        IInstanceLinkedComponent component = IInstanceLinkedComponent(componentAddress);
+        componentAuthorization = component.getAuthorization();
+
+        checkAuthorization(
+            address(instanceAuthorization), 
+            address(componentAuthorization), 
+            expectedType, 
+            expecteRelease,
+            false, // expectServiceAuthorization,
+            false); // checkAlreadyInitialized
+    }
+
+
+    function checkTargetAndRoleForFunctions(
+        IAccessAdmin accessAdmin,
+        address target,
+        RoleId roleId,
+        bool onlyComponentOrContractTargets
+    ) 
+        public
+        view
+    {
+        // check target exists
+        IAccess.TargetType targetType = accessAdmin.getTargetInfo(target).targetType;
+        if (targetType == IAccess.TargetType.Undefined) {
+            revert IAccessAdmin.ErrorAccessAdminTargetNotCreated(target);
+        }
+
+        // check target type
+        if (onlyComponentOrContractTargets) {
+            if (targetType != IAccess.TargetType.Component && targetType != IAccess.TargetType.Contract) {
+                revert IAccessAdmin.ErrorAccessAdminNotComponentOrCustomTarget(target);
+            }
+        }
+
+        // check role exist
+        checkRoleExists(accessAdmin, roleId, true, true);
+    } 
 
 
     function checkTargetExists(
@@ -366,6 +464,20 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
         if (!ContractLib.isRegistry(registry)) {
             revert IAccessAdmin.ErrorAccessAdminNotRegistry(registry);
         }
+    }
+
+
+    function getAuthorizedRole(
+        IAccessAdmin accessAdmin,
+        IAuthorization authorization, 
+        RoleId roleId
+    )
+        public
+        view 
+        returns (RoleId authorizedRoleId)
+    {
+        string memory roleName = authorization.getRoleInfo(roleId).name.toString();
+        (authorizedRoleId, ) = accessAdmin.getRoleForName(roleName);
     }
 
 
@@ -496,6 +608,39 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
 
         tokenHandler = address(IComponent(target).getTokenHandler());
         tokenHandlerName = string(abi.encodePacked(targetName, TOKEN_HANDLER_SUFFIX));
+    }
+
+
+    function toFunctionGrantingString(
+        IAccessAdmin accessAdmin,
+        Str functionName,
+        RoleId roleId
+    )
+        public
+        view
+        returns (string memory)
+    {
+        return string(
+            abi.encodePacked(
+                functionName.toString(),
+                "(): ",
+                getRoleName(accessAdmin, roleId)));
+    }
+
+
+    function getRoleName(
+        IAccessAdmin accessAdmin,
+        RoleId roleId
+    )
+        public
+        view 
+        returns (string memory)
+    {
+        if (accessAdmin.roleExists(roleId)) {
+            return accessAdmin.getRoleInfo(roleId).name.toString();
+        }
+
+        return "<unknown-role>";
     }
 
 

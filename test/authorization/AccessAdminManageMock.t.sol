@@ -309,8 +309,6 @@ contract AccessAdminManageMockTest is AccessAdminBaseTest {
         assertTrue(address(aa) != address(0), "access admin is 0");
         assertTrue(aa.authority() != address(0), "access admin authority is 0");
 
-        assertEq(aa.deployer(), expectedDeployer, "unexpected deployer");
-
         // check aa roles
         assertTrue(aa.isRoleMember(aa.getAdminRole(), address(aa)), "access admin missing admin role");
         assertFalse(aa.isRoleMember(aa.getManagerRole(), address(aa)), "access admin has manager role");

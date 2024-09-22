@@ -62,7 +62,6 @@ interface IStaking is
     // target parameters
     event LogStakingTargetLockingPeriodSet(NftId targetNftId, Seconds oldLockingPeriod, Seconds lockingPeriod, Blocknumber lastUpdateIn);
     event LogStakingTargetRewardRateSet(NftId targetNftId, UFixed rewardRate, UFixed oldRewardRate, Blocknumber lastUpdateIn);
-    // TODO cleanup LogStakingTargetMaxStakedAmountSet
     event LogStakingTargetMaxStakedAmountSet(NftId targetNftId, Amount stakeLimitAmount, Blocknumber lastUpdateIn);
     event LogStakingTargetLimitsSet(NftId targetNftId, Amount stakeLimitAmount, Amount marginAmount, Amount limitAmount);
 

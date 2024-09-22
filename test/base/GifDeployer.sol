@@ -625,7 +625,7 @@ contract GifDeployer is Test {
         console.log("==========================================");
         console.log(aaName, registry.getObjectAddress(aa.getLinkedNftId()));
         console.log(aaName, "nft id", aa.getLinkedNftId().toInt());
-        console.log(aaName, "owner", aa.getLinkedOwner());
+        console.log(aaName, "owner", registry.ownerOf(aa.getLinkedNftId()));
         console.log(aaName, "admin authorization");
         console.log(aaName, "admin contract:", address(aa));
         console.log(aaName, "admin authority:", aa.authority());

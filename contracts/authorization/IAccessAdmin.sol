@@ -43,8 +43,8 @@ interface IAccessAdmin is
     error ErrorAccessAdminNotRoleOwner(RoleId roleId, address account);
 
     // role management
-    error ErrorAccessAdminInvalidUserOfAdminRole();
-    error ErrorAccessAdminInvalidUserOfPublicRole();
+    error ErrorAccessAdminInvalidUseOfAdminRole();
+    error ErrorAccessAdminInvalidUseOfPublicRole();
     error ErrorAccessAdminRoleNotCustom(RoleId roleId);
 
     // initialization
@@ -99,6 +99,7 @@ interface IAccessAdmin is
     error ErrorAccessAdminTargetAlreadyLocked(address target, bool isLocked);
 
     // authorize target functions
+    error ErrorAccessAdminNotComponentOrCustomTarget(address target);
     error ErrorAccessAdminAuthorizeForAdminRoleInvalid(address target);
 
     // toFunction
@@ -112,7 +113,6 @@ interface IAccessAdmin is
 
     function getAuthorization() external view returns (IAuthorization authorization);
     function getLinkedNftId() external view returns (NftId linkedNftId);
-    function getLinkedOwner() external view returns (address linkedOwner);
 
     function isLocked() external view returns (bool locked);
 
@@ -120,7 +120,6 @@ interface IAccessAdmin is
     function getRoleId(uint256 idx) external view returns (RoleId roleId);
 
     function roleExists(RoleId roleId) external view returns (bool exists); 
-    function roleForNameExists(string memory roleName) external view returns (bool exists); 
     function getRoleForName(string memory name) external view returns (RoleId roleId, bool exists);
     function getRoleInfo(RoleId roleId) external view returns (RoleInfo memory roleInfo);
     function isRoleActive(RoleId roleId) external view returns (bool isActive);
@@ -140,6 +139,4 @@ interface IAccessAdmin is
 
     function authorizedFunctions(address target) external view returns (uint256 numberOfFunctions);
     function getAuthorizedFunction(address target, uint256 idx) external view returns (FunctionInfo memory func, RoleId roleId);
-
-    function deployer() external view returns (address);
 }

@@ -21,6 +21,7 @@ contract Authorization is
     uint64 public constant INSTANCE_ROLE_MIN = 100000;
 
     uint64 internal _nextGifContractRoleId;
+    uint64 internal _nextInstanceContractRoleId;
 
     string internal _tokenHandlerName = "ComponentTh";
     Str internal _tokenHandlerTarget;
@@ -38,6 +39,7 @@ contract Authorization is
     {
         // IMPORTANT must match with AccessAdminLib.CORE_ROLE_MIN
         _nextGifContractRoleId = 100;
+        _nextInstanceContractRoleId = INSTANCE_ROLE_MIN;
 
         // setup main target
         // special case: core targets
@@ -45,13 +47,7 @@ contract Authorization is
             _addGifTarget(_mainTargetName);
         // special case instances
         } else if (targetType == IAccess.TargetType.Instance) {
-            RoleId roleId = RoleIdLib.toRoleId(INSTANCE_ROLE_MIN);
-            string memory roleName = _toTargetRoleName(_mainTargetName);
-
-            _addTargetWithRole(
-                _mainTargetName, 
-                roleId,
-                roleName);
+            _addInstanceTarget(_mainTargetName);
         // all other target types
         } else {
             if (domain.eqz()) {
@@ -156,6 +152,16 @@ contract Authorization is
             contractRoleName);
     }
 
+    /// @dev Add an instance target with its corresponding contract role
+    function _addInstanceTarget(string memory contractName) internal {
+        RoleId contractRoleId = RoleIdLib.toRoleId(_nextInstanceContractRoleId++);
+        string memory contractRoleName = _toTargetRoleName(contractName);
+
+        _addTargetWithRole(
+            contractName, 
+            contractRoleId,
+            contractRoleName);
+    }
 
     /// @dev Use this method to to add an authorized target.
     function _addTarget(string memory name) internal {

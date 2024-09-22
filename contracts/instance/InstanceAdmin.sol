@@ -3,7 +3,6 @@ pragma solidity ^0.8.20;
 
 import {IAccess} from "../authorization/IAccess.sol";
 import {IAuthorization} from "../authorization/IAuthorization.sol";
-import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IInstance} from "./IInstance.sol";
 
@@ -28,12 +27,8 @@ contract InstanceAdmin is
 
     IInstance internal _instance;
     IRegistry internal _registry;
-    VersionPart internal _release;
 
     uint64 internal _customRoleIdNext;
-
-    mapping(address target => RoleId roleId) internal _targetRoleId;
-    uint64 internal _components;
 
 
     modifier onlyInstanceService() {
@@ -42,6 +37,7 @@ contract InstanceAdmin is
         }
         _;
     }
+
 
     /// @dev Only used for master instance admin.
     constructor(address accessManager) {
@@ -62,36 +58,38 @@ contract InstanceAdmin is
     )
         external
         reinitializer(uint64(release.toInt()))
-        onlyDeployer()
     {
         // checks
         AccessAdminLib.checkIsRegistered(registry, instance, INSTANCE());
 
+        // effects
         AccessManagerCloneable(
             authority()).completeSetup(
                 registry, 
                 release); 
 
-        _checkAuthorization(authorization, INSTANCE(), release, false, true);
+        AccessAdminLib.checkAuthorization(
+            address(_authorization), 
+            authorization, 
+            INSTANCE(), // expectedDomain
+            release, // expectedRelease
+            false, // expectServiceAuthorization
+            true); // checkAlreadyInitialized
 
-        // effects
         _registry = IRegistry(registry);
-        _release = release;
-
         _instance = IInstance(instance);
         _authorization = IAuthorization(authorization);
-        _components = 0;
         _customRoleIdNext = 0;
 
         // link nft ownability to instance
         _linkToNftOwnable(instance);
 
-        // setup instance targets
-        _createInstanceTargets(_authorization.getMainTargetName());
-
         // setup roles and services
         _createRoles(_authorization);
         _setupServices(_authorization);
+
+        // setup instance targets
+        _createInstanceTargets(_authorization.getMainTargetName());
 
         // authorize functions of instance contracts
         _createTargetAuthorizations(_authorization);
@@ -107,7 +105,7 @@ contract InstanceAdmin is
         for(uint256 i = 0; i < serviceDomains.length; i++) {
             ObjectType serviceDomain = serviceDomains[i];
             RoleId serviceRoleId = authorization.getServiceRole(serviceDomain);
-            address service = _registry.getServiceAddress(serviceDomain, _release);
+            address service = _registry.getServiceAddress(serviceDomain, getRelease());
 
             _grantRoleToAccount(
                 serviceRoleId,
@@ -119,12 +117,17 @@ contract InstanceAdmin is
     function _createInstanceTargets(string memory instanceTargetName)
         internal
     {
-        _createManagedTarget(address(_instance), instanceTargetName, TargetType.Instance); 
-        _createManagedTarget(address(this), INSTANCE_ADMIN_TARGET_NAME, TargetType.Instance); 
-        _createManagedTarget(address(_instance.getInstanceStore()), INSTANCE_STORE_TARGET_NAME, TargetType.Instance); 
-        _createManagedTarget(address(_instance.getProductStore()), PRODUCT_STORE_TARGET_NAME, TargetType.Instance);
-        _createManagedTarget(address(_instance.getBundleSet()), BUNDLE_SET_TARGET_NAME, TargetType.Instance); 
-        _createManagedTarget(address(_instance.getRiskSet()), RISK_SET_TARGET_NAME, TargetType.Instance); 
+        _createInstanceTarget(address(_instance), instanceTargetName); 
+        _createInstanceTarget(address(this), INSTANCE_ADMIN_TARGET_NAME); 
+        _createInstanceTarget(address(_instance.getInstanceStore()), INSTANCE_STORE_TARGET_NAME); 
+        _createInstanceTarget(address(_instance.getProductStore()), PRODUCT_STORE_TARGET_NAME); 
+        _createInstanceTarget(address(_instance.getBundleSet()), BUNDLE_SET_TARGET_NAME); 
+        _createInstanceTarget(address(_instance.getRiskSet()), RISK_SET_TARGET_NAME); 
+    }
+
+
+    function _createInstanceTarget(address target, string memory name) internal {
+        _createTarget(target, name, TargetType.Instance, true); 
     }
 
 
@@ -137,20 +140,13 @@ contract InstanceAdmin is
         external
         restricted()
     {
-        // checks
-        AccessAdminLib.checkIsRegistered(address(getRegistry()), componentAddress, expectedType);
-
-        IInstanceLinkedComponent component = IInstanceLinkedComponent(componentAddress);
-        IAuthorization authorization = component.getAuthorization();
-        _checkAuthorization(address(authorization), expectedType, getRelease(), false, false);
+        IAuthorization authorization = AccessAdminLib.checkComponentInitialization(
+            this, _authorization, componentAddress, expectedType);
 
         // effects
         _createRoles(authorization);
-        _createManagedTarget(componentAddress, authorization.getMainTargetName(), TargetType.Component);
+        _createTarget(componentAddress, authorization.getMainTargetName(), TargetType.Component, true);
         _createTargetAuthorizations(authorization);
-
-        // increase component count
-        _components++;
     }
 
 
@@ -164,15 +160,6 @@ contract InstanceAdmin is
         restricted()
         returns (RoleId roleId)
     {
-        // check role does not yet exist
-        bool exists;
-        (roleId, exists) = getRoleForName(name);
-        if (exists) {
-            revert ErrorAccessAdminRoleAlreadyCreated(
-                roleId,
-                name);
-        }
-
         // create roleId
         roleId = AccessAdminLib.getCustomRoleId(_customRoleIdNext++);
 
@@ -219,7 +206,7 @@ contract InstanceAdmin is
     }
 
 
-    /// @dev Create a new custom target.
+    /// @dev Create a new contract target.
     /// The target needs to be an access managed contract.
     function createTarget(
         address target, 
@@ -229,10 +216,11 @@ contract InstanceAdmin is
         restricted()
         returns (RoleId contractRoleId)
     {
-        return _createManagedTarget(
+        return _createTarget(
             target, 
             name, 
-            TargetType.Custom);
+            TargetType.Contract,
+            true); // check authority matches
     }
 
 
@@ -245,8 +233,7 @@ contract InstanceAdmin is
         external
         restricted()
     {
-        _checkComponentOrCustomTarget(target);
-        _authorizeTargetFunctions(target, roleId, functions, true);
+        _authorizeTargetFunctions(target, roleId, functions, true, true);
     }
 
 
@@ -258,16 +245,7 @@ contract InstanceAdmin is
         external
         restricted()
     {
-        _checkComponentOrCustomTarget(target);
-        _authorizeTargetFunctions(target, ADMIN_ROLE(), functions, false);
-    }
-
-
-    function setComponentLocked(address target, bool locked) 
-        external 
-        restricted()
-    {
-        _setTargetLocked(target, locked);
+        _authorizeTargetFunctions(target, ADMIN_ROLE(), functions, true, false);
     }
 
 
@@ -284,20 +262,18 @@ contract InstanceAdmin is
 
     function setTargetLocked(address target, bool locked) 
         external 
-        // not restricted(): might need to operate on targets while instance is locked
+        // not restricted(): need to operate on locked instances to unlock instance
         onlyInstanceService()
     {
         _setTargetLocked(target, locked);
     }
 
 
-    /// @dev Returns the number of components that have been registered with this instance.   
-    function components() 
+    function setContractLocked(address target, bool locked) 
         external 
-        view 
-        returns (uint64)
+        restricted() // component service
     {
-        return _components;
+        _setTargetLocked(target, locked);
     }
 
 
@@ -308,16 +284,6 @@ contract InstanceAdmin is
         returns (IAuthorization instanceAuthorizaion)
     {
         return _authorization;
-    }
-
-
-    function getRelease()
-        public
-        view
-        override
-        returns (VersionPart release)
-    {
-        return _release;
     }
 
     // ------------------- Internal functions ------------------- //
@@ -336,17 +302,6 @@ contract InstanceAdmin is
             for(uint256 j = 0; j < authorizedRoles.length; j++) {
                 _authorizeFunctions(authorization, target, authorizedRoles[j]);
             }
-        }
-    }
-
-    // CANDIDATE AccessAdminLib
-    function _checkComponentOrCustomTarget(address target) 
-        internal
-        view
-    {
-        IAccess.TargetType targetType = getTargetInfo(target).targetType;
-        if (targetType != TargetType.Component && targetType != TargetType.Custom) {
-            revert ErrorInstanceAdminNotComponentOrCustomTarget(target);
         }
     }
 }
