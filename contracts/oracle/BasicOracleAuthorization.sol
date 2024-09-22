@@ -23,7 +23,7 @@ contract BasicOracleAuthorization
                ORACLE(), 
                3, 
                commitHash, 
-               true, 
+               TargetType.Component, 
                false)
      {}
 

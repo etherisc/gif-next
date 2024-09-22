@@ -63,13 +63,13 @@ contract InstanceAuthzTargetsTest is InstanceAuthzBaseTest {
 
         // check role
         assertTrue(instanceReader.roleExists(targetInfo.roleId), "role not existing after create");
-        assertFalse(instanceReader.isRoleCustom(targetInfo.roleId), "role is custom");
+        assertTrue(instanceReader.isRoleCustom(targetInfo.roleId), "role is not custom");
         assertEq(instanceReader.roleMembers(targetInfo.roleId), 1, "unexpected role member count");
         assertEq(instanceReader.getRoleMember(targetInfo.roleId, 0), address(target), "target not role member");
 
         IAccess.RoleInfo memory roleInfo = instanceReader.getRoleInfo(targetInfo.roleId);
         assertEq(roleInfo.name.toString(), "MyTarget_Role", "unexpected role name");
-        assertTrue(roleInfo.roleType == IAccess.RoleType.Contract, "unexpected role type");
+        assertTrue(roleInfo.targetType == IAccess.TargetType.Custom, "unexpected role type");
         assertEq(roleInfo.maxMemberCount, 1, "unexpected max member count");
         assertEq(roleInfo.createdAt.toInt(), TimestampLib.current().toInt(), "unexpected role creation time");
         assertEq(roleInfo.pausedAt.toInt(), TimestampLib.max().toInt(), "unexpected role pausing time");

@@ -179,9 +179,9 @@ contract InstanceAdmin is
         // create role
         _createRole(
             roleId, 
-            AccessAdminLib.toRole(
+            AccessAdminLib.roleInfo(
                 adminRoleId, 
-                IAccess.RoleType.Custom, 
+                IAccess.TargetType.Custom, 
                 maxMemberCount, 
                 name),
             true); // revert on existing role

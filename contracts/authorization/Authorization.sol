@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IAccess} from "./IAccess.sol";
 import {IAuthorization} from "./IAuthorization.sol";
 
 import {AccessAdminLib} from "./AccessAdminLib.sol";
@@ -17,6 +18,7 @@ contract Authorization is
 
     // MUST match with AccessAdminLib.COMPONENT_ROLE_MIN
     uint64 public constant COMPONENT_ROLE_MIN = 110000;
+    uint64 public constant INSTANCE_ROLE_MIN = 100000;
 
     uint64 internal _nextGifContractRoleId;
 
@@ -29,7 +31,7 @@ contract Authorization is
         ObjectType domain,
         uint8 release,
         string memory commitHash,
-        bool isComponent,
+        IAccess.TargetType targetType,
         bool includeTokenHandler
     )
         ServiceAuthorization(mainTargetName, domain, release, commitHash)
@@ -38,20 +40,31 @@ contract Authorization is
         _nextGifContractRoleId = 100;
 
         // setup main target
-        if (isComponent) {
+        // special case: core targets
+        if (targetType == IAccess.TargetType.Core) {
+            _addGifTarget(_mainTargetName);
+        // special case instances
+        } else if (targetType == IAccess.TargetType.Instance) {
+            RoleId roleId = RoleIdLib.toRoleId(INSTANCE_ROLE_MIN);
+            string memory roleName = _toTargetRoleName(_mainTargetName);
+
+            _addTargetWithRole(
+                _mainTargetName, 
+                roleId,
+                roleName);
+        // all other target types
+        } else {
             if (domain.eqz()) {
                 revert ErrorAuthorizationTargetDomainZero();
             }
 
             RoleId mainRoleId = RoleIdLib.toRoleId(COMPONENT_ROLE_MIN);
-            string memory mainRolName = _toTargetRoleName(_mainTargetName);
+            string memory mainRoleName = _toTargetRoleName(_mainTargetName);
 
             _addTargetWithRole(
                 _mainTargetName, 
                 mainRoleId,
-                mainRolName);
-        } else {
-            _addGifTarget(_mainTargetName);
+                mainRoleName);
         }
 
         // setup use case specific parts
@@ -124,7 +137,7 @@ contract Authorization is
             roleId,
             AccessAdminLib.roleInfo(
                 adminRoleId,
-                RoleType.Custom,
+                TargetType.Custom,
                 maxMemberCount,
                 name));
     }

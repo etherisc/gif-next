@@ -62,7 +62,7 @@ contract InstanceAuthzRolesTest is InstanceAuthzBaseTest {
 
         IAccess.RoleInfo memory roleInfo = instanceReader.getRoleInfo(myCustomRoleId);
         assertEq(roleInfo.adminRoleId.toInt(), INSTANCE_OWNER_ROLE().toInt(), "instance owner role not role admin");
-        assertTrue(roleInfo.roleType == IAccess.RoleType.Custom, "not custom role type");
+        assertTrue(roleInfo.targetType == IAccess.TargetType.Custom, "not custom role type");
         assertEq(roleInfo.maxMemberCount, maxMemberCount, "unexpected max member count");
         assertEq(roleInfo.name.toString(), "MyCustomRole", "unexpected role name");
         assertEq(roleInfo.createdAt.toInt(), TimestampLib.current().toInt(), "unexpected created at timestamp");
@@ -96,7 +96,7 @@ contract InstanceAuthzRolesTest is InstanceAuthzBaseTest {
 
         IAccess.RoleInfo memory roleInfo = instanceReader.getRoleInfo(myStackedRoleId);
         assertEq(roleInfo.adminRoleId.toInt(), myCustomRoleId.toInt(), "custom role not role admin");
-        assertTrue(roleInfo.roleType == IAccess.RoleType.Custom, "not custom role type");
+        assertTrue(roleInfo.targetType == IAccess.TargetType.Custom, "not custom role type");
         assertEq(roleInfo.maxMemberCount, maxMemberCount, "unexpected max member count");
         assertEq(roleInfo.name.toString(), "MySackedRole", "unexpected role name");
         assertEq(roleInfo.createdAt.toInt(), TimestampLib.current().toInt(), "unexpected created at timestamp");
@@ -514,7 +514,7 @@ contract InstanceAuthzRolesTest is InstanceAuthzBaseTest {
 
     function test_instanceAuthzRolesGrantRoleNotCustomRole() public {
         // GIVEN
-        (RoleId instanceRoleId, bool exists) = instanceAdmin.getRoleForName("InstanceRole");
+        (RoleId instanceRoleId, bool exists) = instanceAdmin.getRoleForName("Instance_Role");
         address someAccount = makeAddr("someAccount");
 
         assertTrue(exists, "instance role not existing");

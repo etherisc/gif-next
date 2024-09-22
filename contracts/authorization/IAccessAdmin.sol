@@ -24,7 +24,7 @@ interface IAccessAdmin is
 {
 
     // roles, targets and functions
-    event LogAccessAdminRoleCreated(string admin, RoleId roleId, RoleType roleType, RoleId roleAdminId, string name);
+    event LogAccessAdminRoleCreated(string admin, RoleId roleId, TargetType targetType, RoleId roleAdminId, string name);
     event LogAccessAdminTargetCreated(string admin, string name, bool managed, address target, RoleId roleId);
 
     event LogAccessAdminRoleActivatedSet(string admin, RoleId roleId, bool active, Blocknumber lastUpdateIn);

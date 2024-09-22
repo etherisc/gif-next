@@ -27,7 +27,7 @@ contract PolicyServiceLibTest is GifTest {
         _configureProduct(DEFAULT_BUNDLE_CAPITALIZATION);
     }
 
-    function test_PolicyServiceLib_policyIsActive() public {
+    function test_policyServiceLibPolicyIsActive() public {
         // GIVEN
         vm.startPrank(productOwner);
 
@@ -63,28 +63,35 @@ contract PolicyServiceLibTest is GifTest {
         // THEN - activatedAt is 0
         assertFalse(PolicyServiceLib.policyIsActive(instanceReader, policyNftId));
 
-        vm.warp(1);
+        vm.warp(block.timestamp + 1);
 
+        uint256 currentTime = block.timestamp;
         Timestamp activateAt = TimestampLib.current().addSeconds(SecondsLib.toSeconds(10));
+        Timestamp expiryAt = activateAt.addSeconds(lifetime);
+
         product.activate(policyNftId, activateAt);
         
         // THEN - activatedAt is 11, expiredAt is 41
+        assertEq(activateAt.toInt(), currentTime + 10, "unexpected activateAt");
+        assertEq(expiryAt.toInt(), currentTime + 40, "unexpected expiryAt");
         assertFalse(PolicyServiceLib.policyIsActive(instanceReader, policyNftId));
 
-        vm.warp(11);
+        vm.warp(activateAt.toInt());
 
         assertTrue(PolicyServiceLib.policyIsActive(instanceReader, policyNftId));
 
-        vm.warp(41);
+        vm.warp(expiryAt.toInt() - 1);
+        assertTrue(PolicyServiceLib.policyIsActive(instanceReader, policyNftId));
 
+        vm.warp(expiryAt.toInt());
         assertFalse(PolicyServiceLib.policyIsActive(instanceReader, policyNftId));
 
-        vm.warp(42);
-
+        vm.warp(expiryAt.toInt() + 1);
         assertFalse(PolicyServiceLib.policyIsActive(instanceReader, policyNftId));
     }
 
-    function test_PolicyServiceLib_policyIsCloseable_noPayout() public {
+
+    function test_policyServiceLibPolicyIsCloseableNoPayout() public {
         // GIVEN
         vm.startPrank(productOwner);
 
@@ -120,20 +127,24 @@ contract PolicyServiceLibTest is GifTest {
         // THEN - activatedAt is 0
         assertFalse(PolicyServiceLib.policyIsCloseable(instanceReader, policyNftId));
 
-        vm.warp(1);
+        vm.warp(block.timestamp + 1);
 
+        uint256 currentTime = block.timestamp;
         Timestamp activateAt = TimestampLib.current().addSeconds(SecondsLib.toSeconds(10));
+        Timestamp expiryAt = activateAt.addSeconds(lifetime);
+
         product.activate(policyNftId, activateAt);
         
         // THEN - activatedAt is 11, expiredAt is 41
-        vm.warp(11);
+        vm.warp(activateAt.toInt());
         assertFalse(PolicyServiceLib.policyIsCloseable(instanceReader, policyNftId));
 
-        vm.warp(41);
+        vm.warp(expiryAt.toInt());
         assertTrue(PolicyServiceLib.policyIsCloseable(instanceReader, policyNftId));
     }
 
-    function test_PolicyServiceLib_policyIsCloseable_withPayout() public {
+
+    function test_policyServiceLibPolicyIsCloseableWithPayout() public {
         // GIVEN
         vm.startPrank(productOwner);
 
@@ -163,15 +174,19 @@ contract PolicyServiceLibTest is GifTest {
         vm.stopPrank();
 
         // WHEN - collateralize application
-        bool requirePremiumPayment = false;
+        uint256 currentTime = block.timestamp;
         Timestamp activateAt = TimestampLib.current().addSeconds(SecondsLib.toSeconds(10));
+        Timestamp expiryAt = activateAt.addSeconds(lifetime);
+
+        bool requirePremiumPayment = false;
         product.createPolicy(policyNftId, requirePremiumPayment, activateAt); 
 
-        // THEN - activatedAt is 0
-        assertFalse(PolicyServiceLib.policyIsCloseable(instanceReader, policyNftId));
+        // THEN 
+        assertFalse(PolicyServiceLib.policyIsCloseable(instanceReader, policyNftId), "policy can be closed (but should not be closeable)");
 
-        // THEN - activatedAt is 11, expiredAt is 41
-        vm.warp(15);
+        // THEN - set time to a point where a claim can be submitted
+        vm.warp(activateAt.toInt() + lifetime.toInt() / 2);
+
         assertFalse(PolicyServiceLib.policyIsCloseable(instanceReader, policyNftId));
 
         Amount claimAmount = AmountLib.toAmount(500);
@@ -182,8 +197,10 @@ contract PolicyServiceLibTest is GifTest {
 
         assertFalse(PolicyServiceLib.policyIsCloseable(instanceReader, policyNftId));
 
-        vm.warp(25);
+        // THEN - set time to a later time that is still within claimable period of policy
+        vm.warp(activateAt.toInt() + 2 * lifetime.toInt() / 3);
 
+        // 2nd claim will push policy payout amount to policy sum insured amount (1000 = 500 + 500)
         ClaimId claimId2 = product.submitClaim(policyNftId, claimAmount, "");
         product.confirmClaim(policyNftId, claimId2, claimAmount, "");
         PayoutId payoutId2 = product.createPayout(policyNftId, claimId2, claimAmount, "");

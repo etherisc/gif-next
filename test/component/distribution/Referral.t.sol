@@ -308,9 +308,10 @@ contract ReferralTest is ReferralTestBase {
         vm.stopPrank();
     }
 
-    function test_createReferral_codeEmpty() public {
+    function test_referralCreateCodeEmpty() public {
         // GIVEN
         _setupTestData(true);
+    
         vm.startPrank(customer);
 
         // THEN
@@ -327,17 +328,20 @@ contract ReferralTest is ReferralTestBase {
             referralData);
     }
 
-    function test_createReferral_expirationInvalid() public {
+    function test_referralCreateExpirationInvalid() public {
         // GIVEN
-        vm.warp(500);
         _setupTestData(true);
+
+        vm.warp(500);
+
         vm.startPrank(customer);
         Timestamp tsZero = TimestampLib.zero();
 
         // THEN
-        vm.expectRevert(abi.encodeWithSelector(
-            IDistributionService.ErrorDistributionServiceExpirationInvalid.selector,
-            0));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IDistributionService.ErrorDistributionServiceExpirationInvalid.selector,
+                0));
 
         // WHEN
         referralId = distribution.createReferral(
@@ -381,6 +385,7 @@ contract ReferralTest is ReferralTestBase {
             exp,
             referralData);
     }
+
 
     function test_createReferral_referralCountInvalid() public {
         // GIVEN

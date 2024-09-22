@@ -8,6 +8,7 @@ import {IAccess} from "./IAccess.sol";
 import {IAccessAdmin} from "./IAccessAdmin.sol";
 import {IAuthorization} from "./IAuthorization.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
+import {IServiceAuthorization} from "./IServiceAuthorization.sol";
 
 import {AccessAdminLib} from "./AccessAdminLib.sol";
 import {AccessManagerCloneable} from "./AccessManagerCloneable.sol";
@@ -215,7 +216,7 @@ contract AccessAdmin is
     }
 
     function roleExists(RoleId roleId) public view returns (bool exists) {
-        return _roleInfo[roleId].roleType != RoleType.Undefined;
+        return _roleInfo[roleId].targetType != TargetType.Undefined;
     }
 
     function getRoleForName(string memory name) public view returns (RoleId roleId, bool exists) {
@@ -236,7 +237,7 @@ contract AccessAdmin is
     }
 
     function isRoleCustom(RoleId roleId) external view returns (bool isActive) {
-        return _roleInfo[roleId].roleType == RoleType.Custom;
+        return _roleInfo[roleId].targetType == TargetType.Custom;
     }
 
     function roleMembers(RoleId roleId) external view returns (uint256 numberOfMembers) {
@@ -352,7 +353,7 @@ contract AccessAdmin is
 
 
     function _createRoles(
-        IAuthorization authorization
+        IServiceAuthorization authorization
     )
         internal
     {
@@ -363,10 +364,13 @@ contract AccessAdmin is
             IAccess.RoleInfo memory roleInfo = authorization.getRoleInfo(authzRoleId);
             (RoleId roleId, bool exists) = getRoleForName(roleInfo.name.toString());
 
+            if (!exists) {
+                if (!AccessAdminLib.isDynamicRoleId(authzRoleId)) {
+                    roleId = authzRoleId;
+                }
+
 emit LogAccessAdminDebug("_createRoles", roleId, roleInfo.name.toString(), exists);
 
-            if (!exists) {
-                
                 _createRole(
                     roleId,
                     roleInfo,
@@ -395,21 +399,22 @@ emit LogAccessAdminDebug("_createRoles", roleId, roleInfo.name.toString(), exist
         internal
         returns (RoleId authorizedRoleId)
     {
-        // special case for service roles (service roles have predefined role ids)
-        if (roleId.isServiceRole()) {
+        // TODO cleanup
+        // // special case for service roles (service roles have predefined role ids)
+        // if (roleId.isServiceRole()) {
 
-            // create service role if missing
-            _createRole(
-                roleId, 
-                AccessAdminLib.toRole(
-                    ADMIN_ROLE(), 
-                    RoleType.Contract, 
-                    1, 
-                    authorization.getRoleName(roleId)),
-                false); // no revert on existing role
+        //     // create service role if missing
+        //     _createRole(
+        //         roleId, 
+        //         AccessAdminLib.toRole(
+        //             ADMIN_ROLE(), 
+        //             RoleType.Contract, 
+        //             1, 
+        //             authorization.getRoleName(roleId)),
+        //         false); // no revert on existing role
 
-            return roleId;
-        }
+        //     return roleId;
+        // }
 
         string memory roleName = authorization.getRoleInfo(roleId).name.toString();
         (authorizedRoleId, ) = getRoleForName(roleName);
@@ -513,7 +518,7 @@ event LogAccessAdminDebug(string message, uint256 value, address target, bytes4 
 
         // check account is contract for contract role
         if (
-            _roleInfo[roleId].roleType == RoleType.Contract &&
+            _roleInfo[roleId].targetType != TargetType.Custom &&
             !ContractLib.isContract(account) // will fail in account's constructor
         ) {
             revert ErrorAccessAdminRoleMemberNotContract(roleId, account);
@@ -537,7 +542,7 @@ event LogAccessAdminDebug(string message, uint256 value, address target, bytes4 
         _checkRoleExists(roleId, false, false);
 
         // check for attempt to revoke contract role
-        if (_roleInfo[roleId].roleType == RoleType.Contract) {
+        if (_roleInfo[roleId].targetType != TargetType.Custom) {
             revert ErrorAccessAdminRoleMemberRemovalDisabled(roleId, account);
         }
 
@@ -667,7 +672,7 @@ event LogAccessAdminDebug(string message, uint256 value, address target, bytes4 
         // add role to list of roles
         _roleIds.push(roleId);
 
-        emit LogAccessAdminRoleCreated(_adminName, roleId, info.roleType, info.adminRoleId, info.name.toString());
+        emit LogAccessAdminRoleCreated(_adminName, roleId, info.targetType, info.adminRoleId, info.name.toString());
     }
 
 event LogAccessAdminDebug(string message, RoleId roleId, string roleName, bool exists);
@@ -691,10 +696,11 @@ event LogAccessAdminDebug(string message, RoleId roleId, string roleName, bool e
         if (!roleExists) {
             _createRole(
                 targetRoleId, 
-                AccessAdminLib.toRole(ADMIN_ROLE(), 
-                IAccess.RoleType.Contract, 
-                1, 
-                roleName),
+                AccessAdminLib.roleInfo(
+                    ADMIN_ROLE(), 
+                    targetType, 
+                    1, 
+                    roleName),
                 true); // revert on existing role
         }
 

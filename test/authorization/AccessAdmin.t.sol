@@ -60,9 +60,9 @@ contract AccessAdminForTesting is AccessAdmin {
         _managerRoleId = RoleIdLib.toRoleId(MANAGER_ROLE);
         _createRole(
             _managerRoleId, 
-            AccessAdminLib.toRole(
+            AccessAdminLib.roleInfo(
                 getAdminRole(),
-                RoleType.Custom,
+                TargetType.Custom,
                 3, // max accounts with this role
                 MANAGER_ROLE_NAME),
             true); 
@@ -116,18 +116,18 @@ contract AccessAdminForTesting is AccessAdmin {
         }
 
         if (roleForNameExists(name)) {
-            (RoleId roleId, ) = getRoleForName(name);
+            (RoleId existingRoleId, ) = getRoleForName(name);
             revert IAccessAdmin.ErrorAccessAdminRoleNameAlreadyExists(
                 roleId,
                 name,
-                roleId);
+                existingRoleId);
         }
 
         _createRole(
             roleId,
-            AccessAdminLib.toRole(
+            AccessAdminLib.roleInfo(
                 adminRoleId, 
-                RoleType.Custom, 
+                TargetType.Custom, 
                 type(uint32).max, 
                 name),
             true);
@@ -136,7 +136,7 @@ contract AccessAdminForTesting is AccessAdmin {
     function createRoleExtended(
         RoleId roleId, 
         RoleId adminRoleId, 
-        RoleType roleType,
+        TargetType targetType,
         string memory name, 
         uint32 maxOneRoleMember
     )
@@ -145,9 +145,9 @@ contract AccessAdminForTesting is AccessAdmin {
     {
         _createRole(
             roleId, 
-            AccessAdminLib.toRole(
+            AccessAdminLib.roleInfo(
                 adminRoleId, 
-                roleType, 
+                targetType, 
                 maxOneRoleMember, 
                 name),
             true);
@@ -502,7 +502,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         accessAdmin.createRoleExtended(
             newRoleId, 
             adminRoleId, 
-            IAccess.RoleType.Contract,
+            IAccess.TargetType.Contract,
             newRoleName,
             maxOneRoleMember); 
 
@@ -633,7 +633,7 @@ contract AccessAdminTest is AccessAdminBaseTest {
         accessAdmin.createRole(
             newRoleId, 
             adminRoleId, 
-            "SomeOtherRule");
+            "SomeOtherRole");
         vm.stopPrank();
 
         // WHEN + THEN - use existing role name with different role id

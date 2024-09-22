@@ -167,10 +167,14 @@ contract TestOracle is GifTest {
 
         RequestId expectedRequestId = RequestIdLib.toRequestId(1);
 
-        vm.expectRevert(abi.encodeWithSelector(
-            IOracleService.ErrorOracleServiceExpiryInThePast.selector, 
-            1,
-            0));
+        // THEN
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IOracleService.ErrorOracleServiceExpiryInThePast.selector, 
+                block.timestamp,
+                0));
+
+        // WHEN
         product.createOracleRequest(
             oracleNftId, 
             requestText,

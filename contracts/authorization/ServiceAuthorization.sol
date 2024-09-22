@@ -164,7 +164,7 @@ contract ServiceAuthorization is
 
      /// @inheritdoc IServiceAuthorization
      function roleExists(RoleId roleId) public view returns(bool exists) {
-          return _roleInfo[roleId].roleType != RoleType.Undefined;
+          return _roleInfo[roleId].targetType != TargetType.Undefined;
      }
 
      /// @inheritdoc IServiceAuthorization
@@ -241,8 +241,7 @@ contract ServiceAuthorization is
                if (!roleExists(roleId)) {
                     _addRole(
                          roleId, 
-                         AccessAdminLib.contractRoleInfo(
-                              roleName));
+                         AccessAdminLib.serviceRoleInfo(roleName));
                }
 
                // link target to role

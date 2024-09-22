@@ -63,7 +63,6 @@ contract ReleaseAdmin is
         external
         reinitializer(uint64(release.toInt()))
     {
-
         // checks
         AccessAdminLib.checkRegistry(registry);
 
@@ -78,6 +77,8 @@ contract ReleaseAdmin is
 
         // link nft ownability to registry
         _linkToNftOwnable(registry);
+
+        _createRoles(_serviceAuthorization);
 
         // setup release contract
         _setupReleaseRegistry(releaseRegistry);
@@ -177,11 +178,7 @@ contract ReleaseAdmin is
 
         _createRole(
             RELEASE_REGISTRY_ROLE(), 
-            AccessAdminLib.toRole({
-                adminRoleId: ADMIN_ROLE(),
-                roleType: RoleType.Contract,
-                maxMemberCount: 1,
-                name: RELEASE_REGISTRY_ROLE_NAME}),
+            AccessAdminLib.coreRoleInfo(RELEASE_REGISTRY_ROLE_NAME),
             true);
 
         _createManagedTarget(address(this), RELEASE_ADMIN_TARGET_NAME, IAccess.TargetType.Core);

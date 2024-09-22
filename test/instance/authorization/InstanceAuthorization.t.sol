@@ -25,6 +25,7 @@ contract InstanceAuthorizationV3Instance is Test {
 
         assertEq(instAuthz.getMainTargetName(), "Instance", "unexpected main target name");
         assertEq(instAuthz.getMainTarget().toString(), "Instance", "unexpected main target");
-        assertEq(instAuthz.getTargetRole(instAuthz.getMainTarget()).toInt(), 10, "unexpected main target role");
+        // see AccessAdminLib.INSTANCE_ROLE_MIN
+        assertEq(instAuthz.getTargetRole(instAuthz.getMainTarget()).toInt(), 100000, "unexpected main target role");
     }
 }

@@ -45,9 +45,12 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
         return "AdminRole"; 
     }
 
+
     function isAdminRoleName(string memory name) public pure returns (bool) { 
         return StrLib.eq(name, ADMIN_ROLE_NAME()); 
     }
+
+
     function PUBLIC_ROLE_NAME() public pure returns (string memory) { 
         return "PublicRole"; 
     }
@@ -75,6 +78,15 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
     }
 
 
+    function isDynamicRoleId(RoleId roleId) 
+        public 
+        pure 
+        returns (bool)
+    {
+        return roleId.toInt() >= COMPONENT_ROLE_MIN;
+    }
+
+
     function adminRoleInfo()
         public 
         view 
@@ -82,7 +94,7 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
     {
         return roleInfo(
             getAdminRole(), 
-            IAccess.RoleType.Contract, 
+            IAccess.TargetType.Core, 
             1, 
             ADMIN_ROLE_NAME());
     }
@@ -95,31 +107,42 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
     {
         return roleInfo(
             getAdminRole(), 
-            IAccess.RoleType.Core, 
+            IAccess.TargetType.Custom, 
             type(uint32).max, 
-            PUBLIC_ROLE_NAME()
-        );
+            PUBLIC_ROLE_NAME());
     }
 
 
-    function contractRoleInfo(string memory roleName)
+    function coreRoleInfo(string memory name)
         public 
         view 
         returns (IAccess.RoleInfo memory)
     {
         return roleInfo(
-            ADMIN_ROLE(),
-            IAccess.RoleType.Contract,
-            1,
-            roleName
-        );
+            getAdminRole(), 
+            IAccess.TargetType.Core, 
+            1, 
+            name);
+    }
+
+
+    function serviceRoleInfo(string memory serviceName)
+        public 
+        view 
+        returns (IAccess.RoleInfo memory)
+    {
+        return roleInfo(
+            getAdminRole(), 
+            IAccess.TargetType.Service, 
+            1, 
+            serviceName);
     }
 
 
     /// @dev Creates a role info object from the provided parameters
     function roleInfo(
         RoleId adminRoleId, 
-        IAccess.RoleType roleType, 
+        IAccess.TargetType targetType, 
         uint32 maxMemberCount, 
         string memory roleName
     )
@@ -130,7 +153,7 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
         return IAccess.RoleInfo({
             name: StrLib.toStr(roleName),
             adminRoleId: adminRoleId,
-            roleType: roleType,
+            targetType: targetType,
             maxMemberCount: maxMemberCount,
             createdAt: TimestampLib.current(),
             pausedAt: TimestampLib.max(),
@@ -434,7 +457,9 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
             return RoleIdLib.toRoleId(COMPONENT_ROLE_MIN + index);
         }
 
-        if (targetType == IAccess.TargetType.Custom) { 
+        if (targetType == IAccess.TargetType.Custom
+            || targetType == IAccess.TargetType.Contract) 
+        { 
             return RoleIdLib.toRoleId(CUSTOM_ROLE_MIN + index);
         }
 
@@ -479,27 +504,6 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
             abi.encodePacked(
                 name,
                 ROLE_SUFFIX));
-    }
-
-
-    function toRole(
-        RoleId adminRoleId, 
-        IAccessAdmin.RoleType roleType, 
-        uint32 maxMemberCount, 
-        string memory name
-    )
-        public 
-        view 
-        returns (IAccess.RoleInfo memory)
-    { 
-        return IAccess.RoleInfo({
-            name: StrLib.toStr(name),
-            adminRoleId: adminRoleId,
-            roleType: roleType,
-            maxMemberCount: maxMemberCount,
-            createdAt: TimestampLib.current(),
-            pausedAt: TimestampLib.max(),
-            lastUpdateIn: BlocknumberLib.current()});
     }
 
 

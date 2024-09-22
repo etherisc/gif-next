@@ -9,12 +9,13 @@ import {Timestamp} from "../type/Timestamp.sol";
 
 interface IAccess {
 
-    enum RoleType {
-        Undefined, // no role must have this type
-        Core, // GIF core roles
-        Contract, // roles assigned to contracts, cannot be revoked
-        Custom // use case specific rules for components
-    }
+    // TODO cleanup
+    // enum RoleType {
+    //     Undefined, // no role must have this type
+    //     Core, // GIF core roles
+    //     Contract, // roles assigned to contracts, cannot be revoked
+    //     Custom // use case specific rules for components
+    // }
 
     enum TargetType {
         Undefined, // no target must have this type
@@ -23,13 +24,14 @@ interface IAccess {
         Service, // service contracts
         Instance, // instance contracts
         Component, // instance contracts
-        Custom // use case specific rules for components
+        Contract, // normal contracts
+        Custom // use case specific rules for contracts or normal accounts
     }
 
     struct RoleInfo {
         // slot 0
         RoleId adminRoleId;  // 64
-        RoleType roleType; // ?
+        TargetType targetType; // ?
         uint32 maxMemberCount; // 32
         Timestamp createdAt; // 40
         Timestamp pausedAt; // 40

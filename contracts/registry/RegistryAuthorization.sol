@@ -51,7 +51,7 @@ contract RegistryAuthorization
                REGISTRY(), 
                3, 
                commitHash, 
-               false, // isComponent
+               TargetType.Core,
                false) // includeTokenHandler
      { }
 
@@ -66,7 +66,7 @@ contract RegistryAuthorization
                RoleIdLib.toGenericServiceRoleId(REGISTRY()), 
                AccessAdminLib.roleInfo(
                     ADMIN_ROLE(),
-                    RoleType.Core,
+                    TargetType.Core,
                     maxReleases, 
                     REGISTRY_SERVICE_ROLE_NAME));
 
@@ -74,7 +74,7 @@ contract RegistryAuthorization
                RoleIdLib.toGenericServiceRoleId(STAKING()), 
                AccessAdminLib.roleInfo(
                     ADMIN_ROLE(),
-                    RoleType.Core,
+                    TargetType.Core,
                     maxReleases, 
                     STAKING_SERVICE_ROLE_NAME));
 
@@ -82,7 +82,7 @@ contract RegistryAuthorization
                RoleIdLib.toGenericServiceRoleId(COMPONENT()), 
                AccessAdminLib.roleInfo(
                     ADMIN_ROLE(),
-                    RoleType.Core,
+                    TargetType.Core,
                     maxReleases, 
                     COMPONENT_SERVICE_ROLE_NAME));
 
@@ -90,7 +90,7 @@ contract RegistryAuthorization
                RoleIdLib.toGenericServiceRoleId(POOL()), 
                AccessAdminLib.roleInfo(
                     ADMIN_ROLE(),
-                    RoleType.Core,
+                    TargetType.Core,
                     maxReleases, 
                     POOL_SERVICE_ROLE_NAME));
 
@@ -99,7 +99,7 @@ contract RegistryAuthorization
                GIF_ADMIN_ROLE(),
                AccessAdminLib.roleInfo(
                     ADMIN_ROLE(),
-                    RoleType.Core,
+                    TargetType.Custom, // custom is only type that allows role removal
                     2, // TODO decide on max member count
                     GIF_ADMIN_ROLE_NAME));
 
@@ -108,7 +108,7 @@ contract RegistryAuthorization
                GIF_MANAGER_ROLE(), 
                AccessAdminLib.roleInfo(
                     ADMIN_ROLE(),
-                    RoleType.Core,
+                    TargetType.Custom, // custom is only type that allows role removal
                     1, // TODO decide on max member count
                     GIF_MANAGER_ROLE_NAME));
 

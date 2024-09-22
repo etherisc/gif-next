@@ -29,7 +29,7 @@ contract InstanceAuthorizationV3
                INSTANCE(), 
                3, 
                COMMIT_HASH,
-               false, 
+               TargetType.Instance, 
                false)
      { }
 
@@ -54,9 +54,9 @@ contract InstanceAuthorizationV3
      {
           _addRole(
                INSTANCE_OWNER_ROLE(),
-               AccessAdminLib.toRole(
+               AccessAdminLib.roleInfo(
                     ADMIN_ROLE(),
-                    RoleType.Custom,
+                    TargetType.Custom,
                     0, // max member count special case: instance nft owner is sole role owner
                     INSTANCE_OWNER_ROLE_NAME));
      }
