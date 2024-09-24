@@ -1,4 +1,4 @@
-import { AddressLike, Signer, resolveAddress } from "ethers";
+import { AddressLike, BaseContract, Contract, Signer, resolveAddress } from "ethers";
 import { ethers as hhEthers } from "hardhat";
 import {
     ChainNft, ChainNft__factory,
@@ -13,7 +13,8 @@ import {
     StakingStore,
     TargetHandler,
     Staking__factory,
-    TokenRegistry
+    TokenRegistry,
+    Dip__factory
 } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract, deployProxyManagerContract } from "./deployment";
@@ -71,22 +72,33 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
 
     logger.info("======== Starting deployment of registry ========");
 
-    logger.info("-------- Starting deployment Dip ----------------");
-
+    
     const COMMIT_HASH = "1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a";
 
-    const { address: dipAddress, contract: dipBaseContract } = await deployContract(
-        "Dip",
-        owner, // GIF_ADMIN_ROLE
-        [], 
-        {
-            libraries: {
-            }
-        });
+    const existingDipAddress = process.env.DIP_ADDRESS;
+    let dipAddress: AddressLike;
+    let dipBaseContract: BaseContract;
+
+    if (existingDipAddress) {
+        logger.info(`-------- Using existing Dip @ ${existingDipAddress} ----------------`);
+        dipAddress = existingDipAddress;
+        dipBaseContract = Dip__factory.connect(dipAddress, owner);
+    } else {
+        logger.info("-------- Starting deployment Dip ----------------");
+        const { address: deployedDipAddress, contract: newDipBaseContract } = await deployContract(
+            "Dip",
+            owner, // GIF_ADMIN_ROLE
+            [], 
+            {
+                libraries: {
+                }
+            });
+        dipAddress = deployedDipAddress;
+        dipBaseContract = newDipBaseContract!;
+    }
 
     const dip = dipBaseContract as Dip;
-    // const dipMainnetAddress = "0xc719d010b63e5bbf2c0551872cd5316ed26acd83";
-
+    
     logger.info("-------- Starting deployment RegistryAuthorization ----------------");
 
     const { address: registryAuthorizationAddress, contract: registryAuthorizationBaseContract } = await deployContract(

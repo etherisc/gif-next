@@ -99,7 +99,7 @@ Environment variables:
 - `RESUMEABLE_DEPLOYMENT` set to `true` to have all (deployment) transactions written to a state file so the script can be resumed after a failure (or after a manual stop) (default: `false`)
 - `GAS_PRICE` set to the gas price to use for deployment (default: `undefined`)
 - `WALLET_MNEMONIC` the mnemonic of the wallet to use for deployment (required for mumbai and mainnet)
-
+- `DIP_ADDRESS` the address of the already deployed DIP token. if not set, the script will deploy a new DIP token
 - `WEB3_INFURA_PROJECT_ID` set to infura project id (required for mumbai and mainnet)
 - `ETHERSCAN_API_KEY` `POLYGONSCAN_API_KEY` the api key for etherscan/polygonscan (required for mumbai and mainnet)
 
