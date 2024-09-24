@@ -1,0 +1,2954 @@
+:github-icon: pass:[<svg class="icon"><use href="#github-icon"/></svg>]
+:xref-InstanceAdmin-onlyInstanceService--: xref:instance.adoc#InstanceAdmin-onlyInstanceService--
+:xref-InstanceService-onlyInstance--: xref:instance.adoc#InstanceService-onlyInstance--
+:xref-Instance-onlyCustomRoleAdmin-RoleId-: xref:instance.adoc#Instance-onlyCustomRoleAdmin-RoleId-
+= Instance
+ 
+Contains the instance related contracts. 
+
+== Contracts
+
+:ErrorInstanceAdminNotInstanceService: pass:normal[xref:#InstanceAdmin-ErrorInstanceAdminNotInstanceService-address-[`++ErrorInstanceAdminNotInstanceService++`]]
+:ErrorInstanceAdminNotComponentOrCustomTarget: pass:normal[xref:#InstanceAdmin-ErrorInstanceAdminNotComponentOrCustomTarget-address-[`++ErrorInstanceAdminNotComponentOrCustomTarget++`]]
+:_instance: pass:normal[xref:#InstanceAdmin-_instance-contract-IInstance[`++_instance++`]]
+:_registry: pass:normal[xref:#InstanceAdmin-_registry-contract-IRegistry[`++_registry++`]]
+:_release: pass:normal[xref:#InstanceAdmin-_release-VersionPart[`++_release++`]]
+:_customRoleIdNext: pass:normal[xref:#InstanceAdmin-_customRoleIdNext-uint64[`++_customRoleIdNext++`]]
+:_targetRoleId: pass:normal[xref:#InstanceAdmin-_targetRoleId-mapping-address----RoleId-[`++_targetRoleId++`]]
+:_components: pass:normal[xref:#InstanceAdmin-_components-uint64[`++_components++`]]
+:onlyInstanceService: pass:normal[xref:#InstanceAdmin-onlyInstanceService--[`++onlyInstanceService++`]]
+:constructor: pass:normal[xref:#InstanceAdmin-constructor-address-[`++constructor++`]]
+:completeSetup: pass:normal[xref:#InstanceAdmin-completeSetup-address-address-VersionPart-address-[`++completeSetup++`]]
+:_setupServiceRoles: pass:normal[xref:#InstanceAdmin-_setupServiceRoles-contract-IAuthorization-[`++_setupServiceRoles++`]]
+:_createInstanceTargets: pass:normal[xref:#InstanceAdmin-_createInstanceTargets-string-[`++_createInstanceTargets++`]]
+:initializeComponentAuthorization: pass:normal[xref:#InstanceAdmin-initializeComponentAuthorization-address-ObjectType-[`++initializeComponentAuthorization++`]]
+:getRelease: pass:normal[xref:#InstanceAdmin-getRelease--[`++getRelease++`]]
+:createRole: pass:normal[xref:#InstanceAdmin-createRole-string-RoleId-uint32-[`++createRole++`]]
+:setRoleActive: pass:normal[xref:#InstanceAdmin-setRoleActive-RoleId-bool-[`++setRoleActive++`]]
+:grantRole: pass:normal[xref:#InstanceAdmin-grantRole-RoleId-address-[`++grantRole++`]]
+:revokeRole: pass:normal[xref:#InstanceAdmin-revokeRole-RoleId-address-[`++revokeRole++`]]
+:createTarget: pass:normal[xref:#InstanceAdmin-createTarget-address-string-[`++createTarget++`]]
+:authorizeFunctions: pass:normal[xref:#InstanceAdmin-authorizeFunctions-address-RoleId-struct-IAccess-FunctionInfo---[`++authorizeFunctions++`]]
+:unauthorizeFunctions: pass:normal[xref:#InstanceAdmin-unauthorizeFunctions-address-struct-IAccess-FunctionInfo---[`++unauthorizeFunctions++`]]
+:setInstanceLocked: pass:normal[xref:#InstanceAdmin-setInstanceLocked-bool-[`++setInstanceLocked++`]]
+:setTargetLocked: pass:normal[xref:#InstanceAdmin-setTargetLocked-address-bool-[`++setTargetLocked++`]]
+:setComponentLocked: pass:normal[xref:#InstanceAdmin-setComponentLocked-address-bool-[`++setComponentLocked++`]]
+:components: pass:normal[xref:#InstanceAdmin-components--[`++components++`]]
+:getInstanceAuthorization: pass:normal[xref:#InstanceAdmin-getInstanceAuthorization--[`++getInstanceAuthorization++`]]
+:_createRoles: pass:normal[xref:#InstanceAdmin-_createRoles-contract-IAuthorization-[`++_createRoles++`]]
+:_createTargetAuthorizations: pass:normal[xref:#InstanceAdmin-_createTargetAuthorizations-contract-IAuthorization-[`++_createTargetAuthorizations++`]]
+:_checkComponentOrCustomTarget: pass:normal[xref:#InstanceAdmin-_checkComponentOrCustomTarget-address-[`++_checkComponentOrCustomTarget++`]]
+
+[.contract]
+[[InstanceAdmin]]
+=== `++InstanceAdmin++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/instance/InstanceAdmin.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/instance/InstanceAdmin.sol";
+```
+
+[.contract-index]
+.Modifiers
+--
+* {xref-InstanceAdmin-onlyInstanceService--}[`++onlyInstanceService()++`]
+--
+
+[.contract-index]
+.Functions
+--
+* [`++constructor(accessManager)++`]
+* [`++completeSetup(registry, authorization, release, instance)++`]
+* [`++_setupServiceRoles(authorization)++`]
+* [`++_createInstanceTargets(instanceTargetName)++`]
+* [`++initializeComponentAuthorization(componentAddress, expectedType)++`]
+* [`++getRelease()++`]
+* [`++createRole(name, adminRoleId, maxMemberCount)++`]
+* [`++setRoleActive(roleId, active)++`]
+* [`++grantRole(roleId, account)++`]
+* [`++revokeRole(roleId, account)++`]
+* [`++createTarget(target, name)++`]
+* [`++authorizeFunctions(target, roleId, functions)++`]
+* [`++unauthorizeFunctions(target, functions)++`]
+* [`++setInstanceLocked(locked)++`]
+* [`++setTargetLocked(target, locked)++`]
+* [`++setComponentLocked(target, locked)++`]
+* [`++components()++`]
+* [`++getInstanceAuthorization()++`]
+* [`++_createRoles(authorization)++`]
+* [`++_createTargetAuthorizations(authorization)++`]
+* [`++_checkComponentOrCustomTarget(target)++`]
+
+[.contract-subindex-inherited]
+.AccessAdmin
+* [`++initialize(authority, adminName)++`]
+* [`++__AccessAdmin_init(authority, adminName)++`]
+* [`++getRegistry()++`]
+* [`++getLinkedNftId()++`]
+* [`++getLinkedOwner()++`]
+* [`++getAuthorization()++`]
+* [`++isLocked()++`]
+* [`++roles()++`]
+* [`++getRoleId(idx)++`]
+* [`++getAdminRole()++`]
+* [`++getPublicRole()++`]
+* [`++roleExists(name)++`]
+* [`++roleExists(roleId)++`]
+* [`++getRoleForName(name)++`]
+* [`++getRoleInfo(roleId)++`]
+* [`++isRoleActive(roleId)++`]
+* [`++isRoleCustom(roleId)++`]
+* [`++roleMembers(roleId)++`]
+* [`++getRoleMember(roleId, idx)++`]
+* [`++isRoleMember(roleId, account)++`]
+* [`++isRoleAdmin(roleId, account)++`]
+* [`++targetExists(target)++`]
+* [`++targets()++`]
+* [`++getTargetAddress(idx)++`]
+* [`++getTargetInfo(target)++`]
+* [`++getTargetForName(name)++`]
+* [`++isTargetLocked(target)++`]
+* [`++authorizedFunctions(target)++`]
+* [`++getAuthorizedFunction(target, idx)++`]
+* [`++deployer()++`]
+* [`++_linkToNftOwnable(registerable)++`]
+* [`++_initializeAdminAndPublicRoles()++`]
+* [`++_authorizeFunctions(authorization, target, roleId)++`]
+* [`++_toAuthorizedRoleId(authorization, roleId)++`]
+* [`++_authorizeTargetFunctions(target, roleId, functions, addFunctions)++`]
+* [`++_grantRoleAccessToFunctions(target, roleId, functions, addFunctions)++`]
+* [`++_updateFunctionAccess(target, roleId, func, addFunction)++`]
+* [`++_grantRoleToAccount(roleId, account)++`]
+* [`++_revokeRoleFromAccount(roleId, account)++`]
+* [`++_createRole(roleId, info)++`]
+* [`++_setRoleActive(roleId, active)++`]
+* [`++_createManagedTarget(target, targetName, targetType)++`]
+* [`++_createUncheckedTarget(target, targetName, targetType)++`]
+* [`++_createTargetUnchecked(target, targetName, targetType, managed)++`]
+* [`++_getOrCreateTargetRoleIdAndName(target, targetName, targetType)++`]
+* [`++_setTargetLocked(target, locked)++`]
+* [`++_getRoleName(roleId)++`]
+* [`++_checkAuthorization(authorization, expectedDomain, expectedRelease, expectServiceAuthorization, checkAlreadyInitialized)++`]
+* [`++_checkRoleExists(roleId, onlyActiveRole, allowAdminAndPublicRoles)++`]
+* [`++_checkTargetExists(target)++`]
+
+[.contract-subindex-inherited]
+.IAccessAdmin
+
+[.contract-subindex-inherited]
+.IRelease
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.IAccess
+
+[.contract-subindex-inherited]
+.ReentrancyGuardUpgradeable
+* [`++__ReentrancyGuard_init()++`]
+* [`++__ReentrancyGuard_init_unchained()++`]
+* [`++_reentrancyGuardEntered()++`]
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+* [`++__AccessManaged_init(initialAuthority)++`]
+* [`++__AccessManaged_init_unchained(initialAuthority)++`]
+* [`++authority()++`]
+* [`++setAuthority(newAuthority)++`]
+* [`++isConsumingScheduledOp()++`]
+* [`++_setAuthority(newAuthority)++`]
+* [`++_checkCanCall(caller, data)++`]
+
+[.contract-subindex-inherited]
+.IAccessManaged
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+* [`++__Context_init()++`]
+* [`++__Context_init_unchained()++`]
+* [`++_msgSender()++`]
+* [`++_msgData()++`]
+* [`++_contextSuffixLength()++`]
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.AccessAdmin
+
+[.contract-subindex-inherited]
+.IAccessAdmin
+* [`++LogAccessAdminRoleCreated(admin, roleId, roleType, roleAdminId, name)++`]
+* [`++LogAccessAdminTargetCreated(admin, name, managed, target, roleId)++`]
+* [`++LogAccessAdminRoleGranted(admin, account, roleName)++`]
+* [`++LogAccessAdminRoleRevoked(admin, account, roleName)++`]
+* [`++LogAccessAdminFunctionGranted(admin, target, func)++`]
+
+[.contract-subindex-inherited]
+.IRelease
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.IAccess
+
+[.contract-subindex-inherited]
+.ReentrancyGuardUpgradeable
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[InstanceAdmin-onlyInstanceService--]]
+==== `[.contract-item-name]#++onlyInstanceService++#++()++` [.item-kind]#modifier#
+
+[.contract-item]
+[[InstanceAdmin-constructor-address-]]
+==== `[.contract-item-name]#++constructor++#++(address accessManager)++` [.item-kind]#public#
+
+Only used for master instance admin.
+
+[.contract-item]
+[[InstanceAdmin-completeSetup-address-address-VersionPart-address-]]
+==== `[.contract-item-name]#++completeSetup++#++(address registry, address authorization, VersionPart release, address instance)++` [.item-kind]#external#
+
+Completes the initialization of this instance admin using the provided instance, registry and version.
+Important: Initialization of instance admin is only complete after calling this function. 
+Important: The instance MUST be registered and all instance supporting contracts must be wired to this instance.
+
+[.contract-item]
+[[InstanceAdmin-_setupServiceRoles-contract-IAuthorization-]]
+==== `[.contract-item-name]#++_setupServiceRoles++#++(contract IAuthorization authorization)++` [.item-kind]#internal#
+
+grants the service roles to the service addresses based on the authorization specification.
+Service addresses used for the granting are determined by the registry and the release of this instance.
+
+[.contract-item]
+[[InstanceAdmin-_createInstanceTargets-string-]]
+==== `[.contract-item-name]#++_createInstanceTargets++#++(string instanceTargetName)++` [.item-kind]#internal#
+
+[.contract-item]
+[[InstanceAdmin-initializeComponentAuthorization-address-ObjectType-]]
+==== `[.contract-item-name]#++initializeComponentAuthorization++#++(address componentAddress, ObjectType expectedType)++` [.item-kind]#external#
+
+Initializes the authorization for the specified component.
+Important: The component MUST be registered.
+
+[.contract-item]
+[[InstanceAdmin-getRelease--]]
+==== `[.contract-item-name]#++getRelease++#++() → VersionPart release++` [.item-kind]#public#
+
+Registers a registry contract for a specified chain.
+Only one chain registry may be registered per chain
+
+[.contract-item]
+[[InstanceAdmin-createRole-string-RoleId-uint32-]]
+==== `[.contract-item-name]#++createRole++#++(string name, RoleId adminRoleId, uint32 maxMemberCount) → RoleId roleId++` [.item-kind]#external#
+
+Creates a custom role.
+
+[.contract-item]
+[[InstanceAdmin-setRoleActive-RoleId-bool-]]
+==== `[.contract-item-name]#++setRoleActive++#++(RoleId roleId, bool active)++` [.item-kind]#external#
+
+Activtes/pauses the specified role.
+
+[.contract-item]
+[[InstanceAdmin-grantRole-RoleId-address-]]
+==== `[.contract-item-name]#++grantRole++#++(RoleId roleId, address account)++` [.item-kind]#external#
+
+Grants the provided role to the specified account
+
+[.contract-item]
+[[InstanceAdmin-revokeRole-RoleId-address-]]
+==== `[.contract-item-name]#++revokeRole++#++(RoleId roleId, address account)++` [.item-kind]#external#
+
+Revokes the provided role from the specified account
+
+[.contract-item]
+[[InstanceAdmin-createTarget-address-string-]]
+==== `[.contract-item-name]#++createTarget++#++(address target, string name) → RoleId contractRoleId++` [.item-kind]#external#
+
+Create a new custom target.
+The target needs to be an access managed contract.
+
+[.contract-item]
+[[InstanceAdmin-authorizeFunctions-address-RoleId-struct-IAccess-FunctionInfo---]]
+==== `[.contract-item-name]#++authorizeFunctions++#++(address target, RoleId roleId, struct IAccess.FunctionInfo[] functions)++` [.item-kind]#external#
+
+Add function authorizations for the specified component or custom target.
+
+[.contract-item]
+[[InstanceAdmin-unauthorizeFunctions-address-struct-IAccess-FunctionInfo---]]
+==== `[.contract-item-name]#++unauthorizeFunctions++#++(address target, struct IAccess.FunctionInfo[] functions)++` [.item-kind]#external#
+
+Removes function authorizations for the specified component or custom target.
+
+[.contract-item]
+[[InstanceAdmin-setInstanceLocked-bool-]]
+==== `[.contract-item-name]#++setInstanceLocked++#++(bool locked)++` [.item-kind]#external#
+
+locks the instance and all its releated targets including component and custom targets.
+
+[.contract-item]
+[[InstanceAdmin-setTargetLocked-address-bool-]]
+==== `[.contract-item-name]#++setTargetLocked++#++(address target, bool locked)++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceAdmin-setComponentLocked-address-bool-]]
+==== `[.contract-item-name]#++setComponentLocked++#++(address target, bool locked)++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceAdmin-components--]]
+==== `[.contract-item-name]#++components++#++() → uint64++` [.item-kind]#external#
+
+Returns the number of components that have been registered with this instance.
+
+[.contract-item]
+[[InstanceAdmin-getInstanceAuthorization--]]
+==== `[.contract-item-name]#++getInstanceAuthorization++#++() → contract IAuthorization instanceAuthorizaion++` [.item-kind]#external#
+
+Returns the instance authorization specification used to set up this instance admin.
+
+[.contract-item]
+[[InstanceAdmin-_createRoles-contract-IAuthorization-]]
+==== `[.contract-item-name]#++_createRoles++#++(contract IAuthorization authorization)++` [.item-kind]#internal#
+
+[.contract-item]
+[[InstanceAdmin-_createTargetAuthorizations-contract-IAuthorization-]]
+==== `[.contract-item-name]#++_createTargetAuthorizations++#++(contract IAuthorization authorization)++` [.item-kind]#internal#
+
+[.contract-item]
+[[InstanceAdmin-_checkComponentOrCustomTarget-address-]]
+==== `[.contract-item-name]#++_checkComponentOrCustomTarget++#++(address target)++` [.item-kind]#internal#
+
+:INSTANCE_CREATION_CODE_HASH: pass:normal[xref:#InstanceService-INSTANCE_CREATION_CODE_HASH-bytes32[`++INSTANCE_CREATION_CODE_HASH++`]]
+:INSTANCE_SERVICE_STORAGE_LOCATION_V3_0: pass:normal[xref:#InstanceService-INSTANCE_SERVICE_STORAGE_LOCATION_V3_0-bytes32[`++INSTANCE_SERVICE_STORAGE_LOCATION_V3_0++`]]
+:InstanceServiceStorage: pass:normal[xref:#InstanceService-InstanceServiceStorage[`++InstanceServiceStorage++`]]
+:onlyInstance: pass:normal[xref:#InstanceService-onlyInstance--[`++onlyInstance++`]]
+:createRole: pass:normal[xref:#InstanceService-createRole-string-RoleId-uint32-[`++createRole++`]]
+:setRoleActive: pass:normal[xref:#InstanceService-setRoleActive-RoleId-bool-[`++setRoleActive++`]]
+:grantRole: pass:normal[xref:#InstanceService-grantRole-RoleId-address-[`++grantRole++`]]
+:revokeRole: pass:normal[xref:#InstanceService-revokeRole-RoleId-address-[`++revokeRole++`]]
+:createTarget: pass:normal[xref:#InstanceService-createTarget-address-string-[`++createTarget++`]]
+:authorizeFunctions: pass:normal[xref:#InstanceService-authorizeFunctions-address-RoleId-struct-IAccess-FunctionInfo---[`++authorizeFunctions++`]]
+:unauthorizeFunctions: pass:normal[xref:#InstanceService-unauthorizeFunctions-address-struct-IAccess-FunctionInfo---[`++unauthorizeFunctions++`]]
+:setTargetLocked: pass:normal[xref:#InstanceService-setTargetLocked-address-bool-[`++setTargetLocked++`]]
+:setInstanceLocked: pass:normal[xref:#InstanceService-setInstanceLocked-bool-[`++setInstanceLocked++`]]
+:createInstance: pass:normal[xref:#InstanceService-createInstance-bool-[`++createInstance++`]]
+:setStakingLockingPeriod: pass:normal[xref:#InstanceService-setStakingLockingPeriod-Seconds-[`++setStakingLockingPeriod++`]]
+:setStakingRewardRate: pass:normal[xref:#InstanceService-setStakingRewardRate-UFixed-[`++setStakingRewardRate++`]]
+:setStakingMaxAmount: pass:normal[xref:#InstanceService-setStakingMaxAmount-Amount-[`++setStakingMaxAmount++`]]
+:refillInstanceRewardReserves: pass:normal[xref:#InstanceService-refillInstanceRewardReserves-address-Amount-[`++refillInstanceRewardReserves++`]]
+:withdrawInstanceRewardReserves: pass:normal[xref:#InstanceService-withdrawInstanceRewardReserves-Amount-[`++withdrawInstanceRewardReserves++`]]
+:upgradeInstanceReader: pass:normal[xref:#InstanceService-upgradeInstanceReader--[`++upgradeInstanceReader++`]]
+:setAndRegisterMasterInstance: pass:normal[xref:#InstanceService-setAndRegisterMasterInstance-address-[`++setAndRegisterMasterInstance++`]]
+:upgradeMasterInstanceReader: pass:normal[xref:#InstanceService-upgradeMasterInstanceReader-address-[`++upgradeMasterInstanceReader++`]]
+:getMasterInstanceReader: pass:normal[xref:#InstanceService-getMasterInstanceReader--[`++getMasterInstanceReader++`]]
+:_cloneNewInstanceAdmin: pass:normal[xref:#InstanceService-_cloneNewInstanceAdmin--[`++_cloneNewInstanceAdmin++`]]
+:_createInstance: pass:normal[xref:#InstanceService-_createInstance-contract-InstanceAdmin-address-bool-[`++_createInstance++`]]
+:_initialize: pass:normal[xref:#InstanceService-_initialize-address-bytes-[`++_initialize++`]]
+:_checkInstance: pass:normal[xref:#InstanceService-_checkInstance-address-VersionPart-[`++_checkInstance++`]]
+:_getDomain: pass:normal[xref:#InstanceService-_getDomain--[`++_getDomain++`]]
+
+[.contract]
+[[InstanceService]]
+=== `++InstanceService++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/instance/InstanceService.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/instance/InstanceService.sol";
+```
+
+[.contract-index]
+.Modifiers
+--
+* {xref-InstanceService-onlyInstance--}[`++onlyInstance()++`]
+--
+
+[.contract-index]
+.Functions
+--
+* [`++createRole(roleName, adminRoleId, maxMemberCount)++`]
+* [`++setRoleActive(roleId, active)++`]
+* [`++grantRole(roleId, account)++`]
+* [`++revokeRole(roleId, account)++`]
+* [`++createTarget(target, name)++`]
+* [`++authorizeFunctions(target, roleId, functions)++`]
+* [`++unauthorizeFunctions(target, functions)++`]
+* [`++setTargetLocked(target, locked)++`]
+* [`++setInstanceLocked(locked)++`]
+* [`++createInstance(allowAnyToken)++`]
+* [`++setStakingLockingPeriod(stakeLockingPeriod)++`]
+* [`++setStakingRewardRate(rewardRate)++`]
+* [`++setStakingMaxAmount(maxStakedAmount)++`]
+* [`++refillInstanceRewardReserves(rewardProvider, dipAmount)++`]
+* [`++withdrawInstanceRewardReserves(dipAmount)++`]
+* [`++upgradeInstanceReader()++`]
+* [`++setAndRegisterMasterInstance(instanceAddress)++`]
+* [`++upgradeMasterInstanceReader(instanceReaderAddress)++`]
+* [`++getMasterInstanceReader()++`]
+* [`++_cloneNewInstanceAdmin()++`]
+* [`++_createInstance(instanceAdmin, instanceOwner, allowAnyToken)++`]
+* [`++_initialize(owner, data)++`]
+* [`++_checkInstance(instanceAddress, expectedRelease)++`]
+* [`++_getDomain()++`]
+
+[.contract-subindex-inherited]
+.IInstanceService
+
+[.contract-subindex-inherited]
+.Service
+* [`++__Service_init(authority, registry, initialOwner)++`]
+* [`++getDomain()++`]
+* [`++getVersion()++`]
+* [`++getRoleId()++`]
+* [`++_getServiceAddress(domain)++`]
+
+[.contract-subindex-inherited]
+.IService
+
+[.contract-subindex-inherited]
+.ReentrancyGuardUpgradeable
+* [`++__ReentrancyGuard_init()++`]
+* [`++__ReentrancyGuard_init_unchained()++`]
+* [`++_reentrancyGuardEntered()++`]
+
+[.contract-subindex-inherited]
+.Versionable
+* [`++initializeVersionable(activatedBy, data)++`]
+* [`++upgradeVersionable(data)++`]
+* [`++_upgrade(data)++`]
+
+[.contract-subindex-inherited]
+.IVersionable
+
+[.contract-subindex-inherited]
+.Registerable
+* [`++__Registerable_init(authority, registry, parentNftId, objectType, isInterceptor, initialOwner, data)++`]
+* [`++isActive()++`]
+* [`++getRelease()++`]
+* [`++getInitialInfo()++`]
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.IRelease
+
+[.contract-subindex-inherited]
+.NftOwnable
+* [`++_checkNftType(nftId, expectedObjectType)++`]
+* [`++__NftOwnable_init(registry, initialOwner)++`]
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+* [`++_linkToNftOwnable(nftOwnableAddress)++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+* [`++__RegistryLinked_init(registry)++`]
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+* [`++__ERC165_init()++`]
+* [`++_initializeERC165()++`]
+* [`++_registerInterface(interfaceId)++`]
+* [`++_registerInterfaceNotInitializing(interfaceId)++`]
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+* [`++__AccessManaged_init(initialAuthority)++`]
+* [`++__AccessManaged_init_unchained(initialAuthority)++`]
+* [`++authority()++`]
+* [`++setAuthority(newAuthority)++`]
+* [`++isConsumingScheduledOp()++`]
+* [`++_setAuthority(newAuthority)++`]
+* [`++_checkCanCall(caller, data)++`]
+
+[.contract-subindex-inherited]
+.IAccessManaged
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+* [`++__Context_init()++`]
+* [`++__Context_init_unchained()++`]
+* [`++_msgSender()++`]
+* [`++_msgData()++`]
+* [`++_contextSuffixLength()++`]
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.IInstanceService
+* [`++LogInstanceServiceInstanceLocked(instanceNftId, locked)++`]
+* [`++LogInstanceServiceInstanceCreated(instanceNftId, instance)++`]
+* [`++LogInstanceServiceMasterInstanceReaderUpgraded(instanceNfId, newInstanceReader)++`]
+* [`++LogInstanceServiceInstanceReaderUpgraded(instanceNfId, newInstanceReader)++`]
+
+[.contract-subindex-inherited]
+.Service
+
+[.contract-subindex-inherited]
+.IService
+
+[.contract-subindex-inherited]
+.ReentrancyGuardUpgradeable
+
+[.contract-subindex-inherited]
+.Versionable
+
+[.contract-subindex-inherited]
+.IVersionable
+
+[.contract-subindex-inherited]
+.Registerable
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.IRelease
+
+[.contract-subindex-inherited]
+.NftOwnable
+
+[.contract-subindex-inherited]
+.INftOwnable
+* [`++LogNftOwnableNftLinkedToAddress(nftId, owner)++`]
+
+[.contract-subindex-inherited]
+.RegistryLinked
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[InstanceService-onlyInstance--]]
+==== `[.contract-item-name]#++onlyInstance++#++()++` [.item-kind]#modifier#
+
+[.contract-item]
+[[InstanceService-createRole-string-RoleId-uint32-]]
+==== `[.contract-item-name]#++createRole++#++(string roleName, RoleId adminRoleId, uint32 maxMemberCount) → RoleId roleId++` [.item-kind]#external#
+
+Creates a new custom role for the calling instance.
+
+[.contract-item]
+[[InstanceService-setRoleActive-RoleId-bool-]]
+==== `[.contract-item-name]#++setRoleActive++#++(RoleId roleId, bool active)++` [.item-kind]#external#
+
+Sets the specified custom role as active or inactive for the calling instance.
+
+[.contract-item]
+[[InstanceService-grantRole-RoleId-address-]]
+==== `[.contract-item-name]#++grantRole++#++(RoleId roleId, address account)++` [.item-kind]#external#
+
+Grants the specified custom role to the specified account for the calling instance.
+
+[.contract-item]
+[[InstanceService-revokeRole-RoleId-address-]]
+==== `[.contract-item-name]#++revokeRole++#++(RoleId roleId, address account)++` [.item-kind]#external#
+
+Revokes the specified custom role from the specified account for the calling instance.
+
+[.contract-item]
+[[InstanceService-createTarget-address-string-]]
+==== `[.contract-item-name]#++createTarget++#++(address target, string name) → RoleId contractRoleId++` [.item-kind]#external#
+
+Creates a new custom target for the calling instance.
+All custom trargets are created with a corresponding contract role.
+
+[.contract-item]
+[[InstanceService-authorizeFunctions-address-RoleId-struct-IAccess-FunctionInfo---]]
+==== `[.contract-item-name]#++authorizeFunctions++#++(address target, RoleId roleId, struct IAccess.FunctionInfo[] functions)++` [.item-kind]#external#
+
+Authorizes the specified functions for the specified target.
+
+[.contract-item]
+[[InstanceService-unauthorizeFunctions-address-struct-IAccess-FunctionInfo---]]
+==== `[.contract-item-name]#++unauthorizeFunctions++#++(address target, struct IAccess.FunctionInfo[] functions)++` [.item-kind]#external#
+
+Removes any role authorization for the specified functions.
+
+[.contract-item]
+[[InstanceService-setTargetLocked-address-bool-]]
+==== `[.contract-item-name]#++setTargetLocked++#++(address target, bool locked)++` [.item-kind]#external#
+
+Locks/unlocks the specified target constrolled by the corresponding instance admin.
+
+[.contract-item]
+[[InstanceService-setInstanceLocked-bool-]]
+==== `[.contract-item-name]#++setInstanceLocked++#++(bool locked)++` [.item-kind]#external#
+
+Locks the complete instance, including all its components.
+
+[.contract-item]
+[[InstanceService-createInstance-bool-]]
+==== `[.contract-item-name]#++createInstance++#++(bool allowAnyToken) → contract IInstance instance, NftId instanceNftId++` [.item-kind]#external#
+
+Creates a new instance.
+The caller becomes the owner of the new instance.
+Creation of a new instance is achieved by this service through the creation and registration 
+of a new clone of the master instance and then setting up the initial wiring and authorization 
+of the necessary components.
+
+[.contract-item]
+[[InstanceService-setStakingLockingPeriod-Seconds-]]
+==== `[.contract-item-name]#++setStakingLockingPeriod++#++(Seconds stakeLockingPeriod)++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceService-setStakingRewardRate-UFixed-]]
+==== `[.contract-item-name]#++setStakingRewardRate++#++(UFixed rewardRate)++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceService-setStakingMaxAmount-Amount-]]
+==== `[.contract-item-name]#++setStakingMaxAmount++#++(Amount maxStakedAmount)++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceService-refillInstanceRewardReserves-address-Amount-]]
+==== `[.contract-item-name]#++refillInstanceRewardReserves++#++(address rewardProvider, Amount dipAmount) → Amount newBalance++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceService-withdrawInstanceRewardReserves-Amount-]]
+==== `[.contract-item-name]#++withdrawInstanceRewardReserves++#++(Amount dipAmount) → Amount newBalance++` [.item-kind]#external#
+
+Defunds the staking reward reserves for the specified target.
+
+[.contract-item]
+[[InstanceService-upgradeInstanceReader--]]
+==== `[.contract-item-name]#++upgradeInstanceReader++#++()++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceService-setAndRegisterMasterInstance-address-]]
+==== `[.contract-item-name]#++setAndRegisterMasterInstance++#++(address instanceAddress) → NftId masterInstanceNftId++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceService-upgradeMasterInstanceReader-address-]]
+==== `[.contract-item-name]#++upgradeMasterInstanceReader++#++(address instanceReaderAddress)++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceService-getMasterInstanceReader--]]
+==== `[.contract-item-name]#++getMasterInstanceReader++#++() → address++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceService-_cloneNewInstanceAdmin--]]
+==== `[.contract-item-name]#++_cloneNewInstanceAdmin++#++() → contract InstanceAdmin clonedAdmin++` [.item-kind]#internal#
+
+create new cloned instance admin
+function used to setup a new instance
+
+[.contract-item]
+[[InstanceService-_createInstance-contract-InstanceAdmin-address-bool-]]
+==== `[.contract-item-name]#++_createInstance++#++(contract InstanceAdmin instanceAdmin, address instanceOwner, bool allowAnyToken) → contract IInstance++` [.item-kind]#internal#
+
+create new cloned instance
+function used to setup a new instance
+
+[.contract-item]
+[[InstanceService-_initialize-address-bytes-]]
+==== `[.contract-item-name]#++_initialize++#++(address owner, bytes data)++` [.item-kind]#internal#
+
+top level initializer (upgradable contract)
+
+[.contract-item]
+[[InstanceService-_checkInstance-address-VersionPart-]]
+==== `[.contract-item-name]#++_checkInstance++#++(address instanceAddress, VersionPart expectedRelease)++` [.item-kind]#internal#
+
+[.contract-item]
+[[InstanceService-_getDomain--]]
+==== `[.contract-item-name]#++_getDomain++#++() → ObjectType++` [.item-kind]#internal#
+
+:ErrorInstanceServiceNotRegistered: pass:normal[xref:#IInstanceService-ErrorInstanceServiceNotRegistered-address-[`++ErrorInstanceServiceNotRegistered++`]]
+:ErrorInstanceServiceNotInstance: pass:normal[xref:#IInstanceService-ErrorInstanceServiceNotInstance-address-ObjectType-[`++ErrorInstanceServiceNotInstance++`]]
+:ErrorInstanceServiceInstanceVersionMismatch: pass:normal[xref:#IInstanceService-ErrorInstanceServiceInstanceVersionMismatch-NftId-VersionPart-VersionPart-[`++ErrorInstanceServiceInstanceVersionMismatch++`]]
+:ErrorInstanceServiceComponentNotInstanceLinked: pass:normal[xref:#IInstanceService-ErrorInstanceServiceComponentNotInstanceLinked-address-[`++ErrorInstanceServiceComponentNotInstanceLinked++`]]
+:ErrorInstanceServiceMasterInstanceAlreadySet: pass:normal[xref:#IInstanceService-ErrorInstanceServiceMasterInstanceAlreadySet--[`++ErrorInstanceServiceMasterInstanceAlreadySet++`]]
+:ErrorInstanceServiceMasterInstanceAdminAlreadySet: pass:normal[xref:#IInstanceService-ErrorInstanceServiceMasterInstanceAdminAlreadySet--[`++ErrorInstanceServiceMasterInstanceAdminAlreadySet++`]]
+:ErrorInstanceServiceMasterBundleSetAlreadySet: pass:normal[xref:#IInstanceService-ErrorInstanceServiceMasterBundleSetAlreadySet--[`++ErrorInstanceServiceMasterBundleSetAlreadySet++`]]
+:ErrorInstanceServiceMasterRiskSetAlreadySet: pass:normal[xref:#IInstanceService-ErrorInstanceServiceMasterRiskSetAlreadySet--[`++ErrorInstanceServiceMasterRiskSetAlreadySet++`]]
+:ErrorInstanceServiceInstanceAddressZero: pass:normal[xref:#IInstanceService-ErrorInstanceServiceInstanceAddressZero--[`++ErrorInstanceServiceInstanceAddressZero++`]]
+:ErrorInstanceServiceMasterInstanceReaderNotSet: pass:normal[xref:#IInstanceService-ErrorInstanceServiceMasterInstanceReaderNotSet--[`++ErrorInstanceServiceMasterInstanceReaderNotSet++`]]
+:ErrorInstanceServiceInstanceReaderAddressZero: pass:normal[xref:#IInstanceService-ErrorInstanceServiceInstanceReaderAddressZero--[`++ErrorInstanceServiceInstanceReaderAddressZero++`]]
+:ErrorInstanceServiceInstanceReaderSameAsMasterInstanceReader: pass:normal[xref:#IInstanceService-ErrorInstanceServiceInstanceReaderSameAsMasterInstanceReader--[`++ErrorInstanceServiceInstanceReaderSameAsMasterInstanceReader++`]]
+:ErrorInstanceServiceInstanceReaderInstanceMismatch: pass:normal[xref:#IInstanceService-ErrorInstanceServiceInstanceReaderInstanceMismatch--[`++ErrorInstanceServiceInstanceReaderInstanceMismatch++`]]
+:ErrorInstanceServiceAccessManagerZero: pass:normal[xref:#IInstanceService-ErrorInstanceServiceAccessManagerZero--[`++ErrorInstanceServiceAccessManagerZero++`]]
+:ErrorInstanceServiceInstanceAdminZero: pass:normal[xref:#IInstanceService-ErrorInstanceServiceInstanceAdminZero--[`++ErrorInstanceServiceInstanceAdminZero++`]]
+:ErrorInstanceServiceInstanceReaderZero: pass:normal[xref:#IInstanceService-ErrorInstanceServiceInstanceReaderZero--[`++ErrorInstanceServiceInstanceReaderZero++`]]
+:ErrorInstanceServiceBundleSetZero: pass:normal[xref:#IInstanceService-ErrorInstanceServiceBundleSetZero--[`++ErrorInstanceServiceBundleSetZero++`]]
+:ErrorInstanceServiceRiskSetZero: pass:normal[xref:#IInstanceService-ErrorInstanceServiceRiskSetZero--[`++ErrorInstanceServiceRiskSetZero++`]]
+:ErrorInstanceServiceInstanceStoreZero: pass:normal[xref:#IInstanceService-ErrorInstanceServiceInstanceStoreZero--[`++ErrorInstanceServiceInstanceStoreZero++`]]
+:ErrorInstanceServiceProductStoreZero: pass:normal[xref:#IInstanceService-ErrorInstanceServiceProductStoreZero--[`++ErrorInstanceServiceProductStoreZero++`]]
+:ErrorInstanceServiceInstanceAuthorityMismatch: pass:normal[xref:#IInstanceService-ErrorInstanceServiceInstanceAuthorityMismatch--[`++ErrorInstanceServiceInstanceAuthorityMismatch++`]]
+:ErrorInstanceServiceBundleSetAuthorityMismatch: pass:normal[xref:#IInstanceService-ErrorInstanceServiceBundleSetAuthorityMismatch--[`++ErrorInstanceServiceBundleSetAuthorityMismatch++`]]
+:ErrorInstanceServiceRiskSetAuthorityMismatch: pass:normal[xref:#IInstanceService-ErrorInstanceServiceRiskSetAuthorityMismatch--[`++ErrorInstanceServiceRiskSetAuthorityMismatch++`]]
+:ErrorInstanceServiceInstanceReaderInstanceMismatch2: pass:normal[xref:#IInstanceService-ErrorInstanceServiceInstanceReaderInstanceMismatch2--[`++ErrorInstanceServiceInstanceReaderInstanceMismatch2++`]]
+:ErrorInstanceServiceBundleSetInstanceMismatch: pass:normal[xref:#IInstanceService-ErrorInstanceServiceBundleSetInstanceMismatch--[`++ErrorInstanceServiceBundleSetInstanceMismatch++`]]
+:ErrorInstanceServiceRiskSetInstanceMismatch: pass:normal[xref:#IInstanceService-ErrorInstanceServiceRiskSetInstanceMismatch--[`++ErrorInstanceServiceRiskSetInstanceMismatch++`]]
+:ErrorInstanceServiceInstanceStoreAuthorityMismatch: pass:normal[xref:#IInstanceService-ErrorInstanceServiceInstanceStoreAuthorityMismatch--[`++ErrorInstanceServiceInstanceStoreAuthorityMismatch++`]]
+:ErrorInstanceServiceProductStoreAuthorityMismatch: pass:normal[xref:#IInstanceService-ErrorInstanceServiceProductStoreAuthorityMismatch--[`++ErrorInstanceServiceProductStoreAuthorityMismatch++`]]
+:ErrorInstanceServiceRequestUnauhorized: pass:normal[xref:#IInstanceService-ErrorInstanceServiceRequestUnauhorized-address-[`++ErrorInstanceServiceRequestUnauhorized++`]]
+:ErrorInstanceServiceNotInstanceNftId: pass:normal[xref:#IInstanceService-ErrorInstanceServiceNotInstanceNftId-NftId-[`++ErrorInstanceServiceNotInstanceNftId++`]]
+:ErrorInstanceServiceComponentNotRegistered: pass:normal[xref:#IInstanceService-ErrorInstanceServiceComponentNotRegistered-address-[`++ErrorInstanceServiceComponentNotRegistered++`]]
+:ErrorInstanceServiceInstanceComponentMismatch: pass:normal[xref:#IInstanceService-ErrorInstanceServiceInstanceComponentMismatch-NftId-NftId-[`++ErrorInstanceServiceInstanceComponentMismatch++`]]
+:ErrorInstanceServiceInvalidComponentType: pass:normal[xref:#IInstanceService-ErrorInstanceServiceInvalidComponentType-address-ObjectType-ObjectType-[`++ErrorInstanceServiceInvalidComponentType++`]]
+:LogInstanceServiceInstanceLocked: pass:normal[xref:#IInstanceService-LogInstanceServiceInstanceLocked-NftId-bool-[`++LogInstanceServiceInstanceLocked++`]]
+:LogInstanceServiceInstanceCreated: pass:normal[xref:#IInstanceService-LogInstanceServiceInstanceCreated-NftId-address-[`++LogInstanceServiceInstanceCreated++`]]
+:LogInstanceServiceMasterInstanceReaderUpgraded: pass:normal[xref:#IInstanceService-LogInstanceServiceMasterInstanceReaderUpgraded-NftId-address-[`++LogInstanceServiceMasterInstanceReaderUpgraded++`]]
+:LogInstanceServiceInstanceReaderUpgraded: pass:normal[xref:#IInstanceService-LogInstanceServiceInstanceReaderUpgraded-NftId-address-[`++LogInstanceServiceInstanceReaderUpgraded++`]]
+:createRole: pass:normal[xref:#IInstanceService-createRole-string-RoleId-uint32-[`++createRole++`]]
+:setRoleActive: pass:normal[xref:#IInstanceService-setRoleActive-RoleId-bool-[`++setRoleActive++`]]
+:grantRole: pass:normal[xref:#IInstanceService-grantRole-RoleId-address-[`++grantRole++`]]
+:revokeRole: pass:normal[xref:#IInstanceService-revokeRole-RoleId-address-[`++revokeRole++`]]
+:createTarget: pass:normal[xref:#IInstanceService-createTarget-address-string-[`++createTarget++`]]
+:authorizeFunctions: pass:normal[xref:#IInstanceService-authorizeFunctions-address-RoleId-struct-IAccess-FunctionInfo---[`++authorizeFunctions++`]]
+:unauthorizeFunctions: pass:normal[xref:#IInstanceService-unauthorizeFunctions-address-struct-IAccess-FunctionInfo---[`++unauthorizeFunctions++`]]
+:setTargetLocked: pass:normal[xref:#IInstanceService-setTargetLocked-address-bool-[`++setTargetLocked++`]]
+:setInstanceLocked: pass:normal[xref:#IInstanceService-setInstanceLocked-bool-[`++setInstanceLocked++`]]
+:createInstance: pass:normal[xref:#IInstanceService-createInstance-bool-[`++createInstance++`]]
+:upgradeInstanceReader: pass:normal[xref:#IInstanceService-upgradeInstanceReader--[`++upgradeInstanceReader++`]]
+:upgradeMasterInstanceReader: pass:normal[xref:#IInstanceService-upgradeMasterInstanceReader-address-[`++upgradeMasterInstanceReader++`]]
+:setStakingLockingPeriod: pass:normal[xref:#IInstanceService-setStakingLockingPeriod-Seconds-[`++setStakingLockingPeriod++`]]
+:setStakingRewardRate: pass:normal[xref:#IInstanceService-setStakingRewardRate-UFixed-[`++setStakingRewardRate++`]]
+:setStakingMaxAmount: pass:normal[xref:#IInstanceService-setStakingMaxAmount-Amount-[`++setStakingMaxAmount++`]]
+:refillInstanceRewardReserves: pass:normal[xref:#IInstanceService-refillInstanceRewardReserves-address-Amount-[`++refillInstanceRewardReserves++`]]
+:withdrawInstanceRewardReserves: pass:normal[xref:#IInstanceService-withdrawInstanceRewardReserves-Amount-[`++withdrawInstanceRewardReserves++`]]
+
+[.contract]
+[[IInstanceService]]
+=== `++IInstanceService++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/instance/IInstanceService.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/instance/IInstanceService.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++createRole(roleName, adminRoleId, maxMemberCount)++`]
+* [`++setRoleActive(roleId, active)++`]
+* [`++grantRole(roleId, account)++`]
+* [`++revokeRole(roleId, account)++`]
+* [`++createTarget(target, name)++`]
+* [`++authorizeFunctions(target, roleId, functions)++`]
+* [`++unauthorizeFunctions(target, functions)++`]
+* [`++setTargetLocked(target, locked)++`]
+* [`++setInstanceLocked(locked)++`]
+* [`++createInstance(allowAnyToken)++`]
+* [`++upgradeInstanceReader()++`]
+* [`++upgradeMasterInstanceReader(instanceReaderAddress)++`]
+* [`++setStakingLockingPeriod(stakeLockingPeriod)++`]
+* [`++setStakingRewardRate(rewardRate)++`]
+* [`++setStakingMaxAmount(maxStakedAmount)++`]
+* [`++refillInstanceRewardReserves(rewardProvider, dipAmount)++`]
+* [`++withdrawInstanceRewardReserves(dipAmount)++`]
+
+[.contract-subindex-inherited]
+.IService
+* [`++getDomain()++`]
+* [`++getRoleId()++`]
+
+[.contract-subindex-inherited]
+.IVersionable
+* [`++initializeVersionable(activatedBy, activationData)++`]
+* [`++upgradeVersionable(upgradeData)++`]
+* [`++getVersion()++`]
+
+[.contract-subindex-inherited]
+.IRegisterable
+* [`++isActive()++`]
+* [`++getInitialInfo()++`]
+
+[.contract-subindex-inherited]
+.IRelease
+* [`++getRelease()++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IERC165
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++authority()++`]
+* [`++setAuthority()++`]
+* [`++isConsumingScheduledOp()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+* [`++LogInstanceServiceInstanceLocked(instanceNftId, locked)++`]
+* [`++LogInstanceServiceInstanceCreated(instanceNftId, instance)++`]
+* [`++LogInstanceServiceMasterInstanceReaderUpgraded(instanceNfId, newInstanceReader)++`]
+* [`++LogInstanceServiceInstanceReaderUpgraded(instanceNfId, newInstanceReader)++`]
+
+[.contract-subindex-inherited]
+.IService
+
+[.contract-subindex-inherited]
+.IVersionable
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.IRelease
+
+[.contract-subindex-inherited]
+.INftOwnable
+* [`++LogNftOwnableNftLinkedToAddress(nftId, owner)++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+--
+
+[.contract-item]
+[[IInstanceService-createRole-string-RoleId-uint32-]]
+==== `[.contract-item-name]#++createRole++#++(string roleName, RoleId adminRoleId, uint32 maxMemberCount) → RoleId roleId++` [.item-kind]#external#
+
+Creates a new custom role for the calling instance.
+
+[.contract-item]
+[[IInstanceService-setRoleActive-RoleId-bool-]]
+==== `[.contract-item-name]#++setRoleActive++#++(RoleId roleId, bool active)++` [.item-kind]#external#
+
+Sets the specified custom role as active or inactive for the calling instance.
+
+[.contract-item]
+[[IInstanceService-grantRole-RoleId-address-]]
+==== `[.contract-item-name]#++grantRole++#++(RoleId roleId, address account)++` [.item-kind]#external#
+
+Grants the specified custom role to the specified account for the calling instance.
+
+[.contract-item]
+[[IInstanceService-revokeRole-RoleId-address-]]
+==== `[.contract-item-name]#++revokeRole++#++(RoleId roleId, address account)++` [.item-kind]#external#
+
+Revokes the specified custom role from the specified account for the calling instance.
+
+[.contract-item]
+[[IInstanceService-createTarget-address-string-]]
+==== `[.contract-item-name]#++createTarget++#++(address target, string name) → RoleId contractRoleId++` [.item-kind]#external#
+
+Creates a new custom target for the calling instance.
+All custom trargets are created with a corresponding contract role.
+
+[.contract-item]
+[[IInstanceService-authorizeFunctions-address-RoleId-struct-IAccess-FunctionInfo---]]
+==== `[.contract-item-name]#++authorizeFunctions++#++(address target, RoleId roleId, struct IAccess.FunctionInfo[] functions)++` [.item-kind]#external#
+
+Authorizes the specified functions for the specified target.
+
+[.contract-item]
+[[IInstanceService-unauthorizeFunctions-address-struct-IAccess-FunctionInfo---]]
+==== `[.contract-item-name]#++unauthorizeFunctions++#++(address target, struct IAccess.FunctionInfo[] functions)++` [.item-kind]#external#
+
+Removes any role authorization for the specified functions.
+
+[.contract-item]
+[[IInstanceService-setTargetLocked-address-bool-]]
+==== `[.contract-item-name]#++setTargetLocked++#++(address target, bool locked)++` [.item-kind]#external#
+
+Locks/unlocks the specified target constrolled by the corresponding instance admin.
+
+[.contract-item]
+[[IInstanceService-setInstanceLocked-bool-]]
+==== `[.contract-item-name]#++setInstanceLocked++#++(bool locked)++` [.item-kind]#external#
+
+Locks the complete instance, including all its components.
+
+[.contract-item]
+[[IInstanceService-createInstance-bool-]]
+==== `[.contract-item-name]#++createInstance++#++(bool allowAnyToken) → contract IInstance instance, NftId instanceNftId++` [.item-kind]#external#
+
+Creates a new instance.
+The caller becomes the owner of the new instance.
+Creation of a new instance is achieved by this service through the creation and registration 
+of a new clone of the master instance and then setting up the initial wiring and authorization 
+of the necessary components.
+
+[.contract-item]
+[[IInstanceService-upgradeInstanceReader--]]
+==== `[.contract-item-name]#++upgradeInstanceReader++#++()++` [.item-kind]#external#
+
+[.contract-item]
+[[IInstanceService-upgradeMasterInstanceReader-address-]]
+==== `[.contract-item-name]#++upgradeMasterInstanceReader++#++(address instanceReaderAddress)++` [.item-kind]#external#
+
+[.contract-item]
+[[IInstanceService-setStakingLockingPeriod-Seconds-]]
+==== `[.contract-item-name]#++setStakingLockingPeriod++#++(Seconds stakeLockingPeriod)++` [.item-kind]#external#
+
+[.contract-item]
+[[IInstanceService-setStakingRewardRate-UFixed-]]
+==== `[.contract-item-name]#++setStakingRewardRate++#++(UFixed rewardRate)++` [.item-kind]#external#
+
+[.contract-item]
+[[IInstanceService-setStakingMaxAmount-Amount-]]
+==== `[.contract-item-name]#++setStakingMaxAmount++#++(Amount maxStakedAmount)++` [.item-kind]#external#
+
+[.contract-item]
+[[IInstanceService-refillInstanceRewardReserves-address-Amount-]]
+==== `[.contract-item-name]#++refillInstanceRewardReserves++#++(address rewardProvider, Amount dipAmount) → Amount newBalance++` [.item-kind]#external#
+
+[.contract-item]
+[[IInstanceService-withdrawInstanceRewardReserves-Amount-]]
+==== `[.contract-item-name]#++withdrawInstanceRewardReserves++#++(Amount dipAmount) → Amount newBalance++` [.item-kind]#external#
+
+Defunds the staking reward reserves for the specified target.
+
+[.contract-item]
+[[IInstanceService-LogInstanceServiceInstanceLocked-NftId-bool-]]
+==== `[.contract-item-name]#++LogInstanceServiceInstanceLocked++#++(NftId instanceNftId, bool locked)++` [.item-kind]#event#
+
+[.contract-item]
+[[IInstanceService-LogInstanceServiceInstanceCreated-NftId-address-]]
+==== `[.contract-item-name]#++LogInstanceServiceInstanceCreated++#++(NftId instanceNftId, address instance)++` [.item-kind]#event#
+
+[.contract-item]
+[[IInstanceService-LogInstanceServiceMasterInstanceReaderUpgraded-NftId-address-]]
+==== `[.contract-item-name]#++LogInstanceServiceMasterInstanceReaderUpgraded++#++(NftId instanceNfId, address newInstanceReader)++` [.item-kind]#event#
+
+[.contract-item]
+[[IInstanceService-LogInstanceServiceInstanceReaderUpgraded-NftId-address-]]
+==== `[.contract-item-name]#++LogInstanceServiceInstanceReaderUpgraded++#++(NftId instanceNfId, address newInstanceReader)++` [.item-kind]#event#
+
+:ErrorInstanceReaderAlreadyInitialized: pass:normal[xref:#InstanceReader-ErrorInstanceReaderAlreadyInitialized--[`++ErrorInstanceReaderAlreadyInitialized++`]]
+:ErrorInstanceReaderInstanceAddressZero: pass:normal[xref:#InstanceReader-ErrorInstanceReaderInstanceAddressZero--[`++ErrorInstanceReaderInstanceAddressZero++`]]
+:_registry: pass:normal[xref:#InstanceReader-_registry-contract-IRegistry[`++_registry++`]]
+:_instance: pass:normal[xref:#InstanceReader-_instance-contract-IInstance[`++_instance++`]]
+:_instanceAdmin: pass:normal[xref:#InstanceReader-_instanceAdmin-contract-InstanceAdmin[`++_instanceAdmin++`]]
+:_store: pass:normal[xref:#InstanceReader-_store-contract-InstanceStore[`++_store++`]]
+:_productStore: pass:normal[xref:#InstanceReader-_productStore-contract-ProductStore[`++_productStore++`]]
+:_bundleSet: pass:normal[xref:#InstanceReader-_bundleSet-contract-BundleSet[`++_bundleSet++`]]
+:_riskSet: pass:normal[xref:#InstanceReader-_riskSet-contract-RiskSet[`++_riskSet++`]]
+:_distributionService: pass:normal[xref:#InstanceReader-_distributionService-contract-IDistributionService[`++_distributionService++`]]
+:initialize: pass:normal[xref:#InstanceReader-initialize--[`++initialize++`]]
+:initializeWithInstance: pass:normal[xref:#InstanceReader-initializeWithInstance-address-[`++initializeWithInstance++`]]
+:getRegistry: pass:normal[xref:#InstanceReader-getRegistry--[`++getRegistry++`]]
+:getInstanceNftId: pass:normal[xref:#InstanceReader-getInstanceNftId--[`++getInstanceNftId++`]]
+:getInstance: pass:normal[xref:#InstanceReader-getInstance--[`++getInstance++`]]
+:components: pass:normal[xref:#InstanceReader-components--[`++components++`]]
+:getComponentInfo: pass:normal[xref:#InstanceReader-getComponentInfo-NftId-[`++getComponentInfo++`]]
+:getToken: pass:normal[xref:#InstanceReader-getToken-NftId-[`++getToken++`]]
+:getWallet: pass:normal[xref:#InstanceReader-getWallet-NftId-[`++getWallet++`]]
+:getTokenHandler: pass:normal[xref:#InstanceReader-getTokenHandler-NftId-[`++getTokenHandler++`]]
+:getBalanceAmount: pass:normal[xref:#InstanceReader-getBalanceAmount-NftId-[`++getBalanceAmount++`]]
+:getFeeAmount: pass:normal[xref:#InstanceReader-getFeeAmount-NftId-[`++getFeeAmount++`]]
+:getLockedAmount: pass:normal[xref:#InstanceReader-getLockedAmount-NftId-[`++getLockedAmount++`]]
+:products: pass:normal[xref:#InstanceReader-products--[`++products++`]]
+:getProductNftId: pass:normal[xref:#InstanceReader-getProductNftId-uint256-[`++getProductNftId++`]]
+:getProductInfo: pass:normal[xref:#InstanceReader-getProductInfo-NftId-[`++getProductInfo++`]]
+:getFeeInfo: pass:normal[xref:#InstanceReader-getFeeInfo-NftId-[`++getFeeInfo++`]]
+:risks: pass:normal[xref:#InstanceReader-risks-NftId-[`++risks++`]]
+:activeRisks: pass:normal[xref:#InstanceReader-activeRisks-NftId-[`++activeRisks++`]]
+:getRiskId: pass:normal[xref:#InstanceReader-getRiskId-NftId-uint256-[`++getRiskId++`]]
+:getActiveRiskId: pass:normal[xref:#InstanceReader-getActiveRiskId-NftId-uint256-[`++getActiveRiskId++`]]
+:getRiskInfo: pass:normal[xref:#InstanceReader-getRiskInfo-RiskId-[`++getRiskInfo++`]]
+:getRiskState: pass:normal[xref:#InstanceReader-getRiskState-RiskId-[`++getRiskState++`]]
+:policiesForRisk: pass:normal[xref:#InstanceReader-policiesForRisk-RiskId-[`++policiesForRisk++`]]
+:getPolicyNftIdForRisk: pass:normal[xref:#InstanceReader-getPolicyNftIdForRisk-RiskId-uint256-[`++getPolicyNftIdForRisk++`]]
+:getPolicyInfo: pass:normal[xref:#InstanceReader-getPolicyInfo-NftId-[`++getPolicyInfo++`]]
+:getPolicyState: pass:normal[xref:#InstanceReader-getPolicyState-NftId-[`++getPolicyState++`]]
+:policyIsActive: pass:normal[xref:#InstanceReader-policyIsActive-NftId-[`++policyIsActive++`]]
+:claims: pass:normal[xref:#InstanceReader-claims-NftId-[`++claims++`]]
+:getClaimId: pass:normal[xref:#InstanceReader-getClaimId-uint256-[`++getClaimId++`]]
+:getClaimInfo: pass:normal[xref:#InstanceReader-getClaimInfo-NftId-ClaimId-[`++getClaimInfo++`]]
+:getClaimState: pass:normal[xref:#InstanceReader-getClaimState-NftId-ClaimId-[`++getClaimState++`]]
+:getRemainingClaimableAmount: pass:normal[xref:#InstanceReader-getRemainingClaimableAmount-NftId-[`++getRemainingClaimableAmount++`]]
+:payouts: pass:normal[xref:#InstanceReader-payouts-NftId-ClaimId-[`++payouts++`]]
+:getPayoutId: pass:normal[xref:#InstanceReader-getPayoutId-ClaimId-uint24-[`++getPayoutId++`]]
+:getPayoutInfo: pass:normal[xref:#InstanceReader-getPayoutInfo-NftId-PayoutId-[`++getPayoutInfo++`]]
+:getPayoutState: pass:normal[xref:#InstanceReader-getPayoutState-NftId-PayoutId-[`++getPayoutState++`]]
+:getPremiumInfo: pass:normal[xref:#InstanceReader-getPremiumInfo-NftId-[`++getPremiumInfo++`]]
+:getPremiumState: pass:normal[xref:#InstanceReader-getPremiumState-NftId-[`++getPremiumState++`]]
+:getRequestInfo: pass:normal[xref:#InstanceReader-getRequestInfo-RequestId-[`++getRequestInfo++`]]
+:getPoolInfo: pass:normal[xref:#InstanceReader-getPoolInfo-NftId-[`++getPoolInfo++`]]
+:bundles: pass:normal[xref:#InstanceReader-bundles-NftId-[`++bundles++`]]
+:activeBundles: pass:normal[xref:#InstanceReader-activeBundles-NftId-[`++activeBundles++`]]
+:getBundleNftId: pass:normal[xref:#InstanceReader-getBundleNftId-NftId-uint256-[`++getBundleNftId++`]]
+:getActiveBundleNftId: pass:normal[xref:#InstanceReader-getActiveBundleNftId-NftId-uint256-[`++getActiveBundleNftId++`]]
+:getBundleInfo: pass:normal[xref:#InstanceReader-getBundleInfo-NftId-[`++getBundleInfo++`]]
+:getBundleState: pass:normal[xref:#InstanceReader-getBundleState-NftId-[`++getBundleState++`]]
+:getDistributorTypeInfo: pass:normal[xref:#InstanceReader-getDistributorTypeInfo-DistributorType-[`++getDistributorTypeInfo++`]]
+:getDistributorInfo: pass:normal[xref:#InstanceReader-getDistributorInfo-NftId-[`++getDistributorInfo++`]]
+:toReferralId: pass:normal[xref:#InstanceReader-toReferralId-NftId-string-[`++toReferralId++`]]
+:isReferralValid: pass:normal[xref:#InstanceReader-isReferralValid-NftId-ReferralId-[`++isReferralValid++`]]
+:getReferralInfo: pass:normal[xref:#InstanceReader-getReferralInfo-ReferralId-[`++getReferralInfo++`]]
+:getDiscountPercentage: pass:normal[xref:#InstanceReader-getDiscountPercentage-ReferralId-[`++getDiscountPercentage++`]]
+:roles: pass:normal[xref:#InstanceReader-roles--[`++roles++`]]
+:getRoleId: pass:normal[xref:#InstanceReader-getRoleId-uint256-[`++getRoleId++`]]
+:getInstanceOwnerRole: pass:normal[xref:#InstanceReader-getInstanceOwnerRole--[`++getInstanceOwnerRole++`]]
+:getRoleInfo: pass:normal[xref:#InstanceReader-getRoleInfo-RoleId-[`++getRoleInfo++`]]
+:roleExists: pass:normal[xref:#InstanceReader-roleExists-RoleId-[`++roleExists++`]]
+:isRoleCustom: pass:normal[xref:#InstanceReader-isRoleCustom-RoleId-[`++isRoleCustom++`]]
+:isRoleActive: pass:normal[xref:#InstanceReader-isRoleActive-RoleId-[`++isRoleActive++`]]
+:roleMembers: pass:normal[xref:#InstanceReader-roleMembers-RoleId-[`++roleMembers++`]]
+:getRoleMember: pass:normal[xref:#InstanceReader-getRoleMember-RoleId-uint256-[`++getRoleMember++`]]
+:isRoleMember: pass:normal[xref:#InstanceReader-isRoleMember-RoleId-address-[`++isRoleMember++`]]
+:isRoleAdmin: pass:normal[xref:#InstanceReader-isRoleAdmin-RoleId-address-[`++isRoleAdmin++`]]
+:targets: pass:normal[xref:#InstanceReader-targets--[`++targets++`]]
+:getTargetAddress: pass:normal[xref:#InstanceReader-getTargetAddress-uint256-[`++getTargetAddress++`]]
+:getTargetInfo: pass:normal[xref:#InstanceReader-getTargetInfo-address-[`++getTargetInfo++`]]
+:targetExists: pass:normal[xref:#InstanceReader-targetExists-address-[`++targetExists++`]]
+:isLocked: pass:normal[xref:#InstanceReader-isLocked-address-[`++isLocked++`]]
+:authorizedFunctions: pass:normal[xref:#InstanceReader-authorizedFunctions-address-[`++authorizedFunctions++`]]
+:getAuthorizedFunction: pass:normal[xref:#InstanceReader-getAuthorizedFunction-address-uint256-[`++getAuthorizedFunction++`]]
+:toFunction: pass:normal[xref:#InstanceReader-toFunction-bytes4-string-[`++toFunction++`]]
+:getInstanceAdmin: pass:normal[xref:#InstanceReader-getInstanceAdmin--[`++getInstanceAdmin++`]]
+:getBundleSet: pass:normal[xref:#InstanceReader-getBundleSet--[`++getBundleSet++`]]
+:getRiskSet: pass:normal[xref:#InstanceReader-getRiskSet--[`++getRiskSet++`]]
+:getMetadata: pass:normal[xref:#InstanceReader-getMetadata-Key32-[`++getMetadata++`]]
+:getState: pass:normal[xref:#InstanceReader-getState-Key32-[`++getState++`]]
+:toUFixed: pass:normal[xref:#InstanceReader-toUFixed-uint256-int8-[`++toUFixed++`]]
+:toInt: pass:normal[xref:#InstanceReader-toInt-UFixed-[`++toInt++`]]
+:_toPolicyKey: pass:normal[xref:#InstanceReader-_toPolicyKey-NftId-[`++_toPolicyKey++`]]
+:_toPremiumKey: pass:normal[xref:#InstanceReader-_toPremiumKey-NftId-[`++_toPremiumKey++`]]
+:_toBundleKey: pass:normal[xref:#InstanceReader-_toBundleKey-NftId-[`++_toBundleKey++`]]
+:_toComponentKey: pass:normal[xref:#InstanceReader-_toComponentKey-NftId-[`++_toComponentKey++`]]
+
+[.contract]
+[[InstanceReader]]
+=== `++InstanceReader++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/instance/InstanceReader.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/instance/InstanceReader.sol";
+```
+
+Central reader contract for a specific instance.
+Provides reading functions for all instance data and related component data.
+
+[.contract-index]
+.Functions
+--
+* [`++initialize()++`]
+* [`++initializeWithInstance(instanceAddress)++`]
+* [`++getRegistry()++`]
+* [`++getInstanceNftId()++`]
+* [`++getInstance()++`]
+* [`++components()++`]
+* [`++getComponentInfo(componentNftId)++`]
+* [`++getToken(componentNftId)++`]
+* [`++getWallet(componentNftId)++`]
+* [`++getTokenHandler(componentNftId)++`]
+* [`++getBalanceAmount(targetNftId)++`]
+* [`++getFeeAmount(targetNftId)++`]
+* [`++getLockedAmount(targetNftId)++`]
+* [`++products()++`]
+* [`++getProductNftId(idx)++`]
+* [`++getProductInfo(productNftId)++`]
+* [`++getFeeInfo(productNftId)++`]
+* [`++risks(productNftId)++`]
+* [`++activeRisks(productNftId)++`]
+* [`++getRiskId(productNftId, idx)++`]
+* [`++getActiveRiskId(productNftId, idx)++`]
+* [`++getRiskInfo(riskId)++`]
+* [`++getRiskState(riskId)++`]
+* [`++policiesForRisk(riskId)++`]
+* [`++getPolicyNftIdForRisk(riskId, idx)++`]
+* [`++getPolicyInfo(policyNftId)++`]
+* [`++getPolicyState(policyNftId)++`]
+* [`++policyIsActive(policyNftId)++`]
+* [`++claims(policyNftId)++`]
+* [`++getClaimId(idx)++`]
+* [`++getClaimInfo(policyNftId, claimId)++`]
+* [`++getClaimState(policyNftId, claimId)++`]
+* [`++getRemainingClaimableAmount(policyNftId)++`]
+* [`++payouts(policyNftId, claimId)++`]
+* [`++getPayoutId(claimId, idx)++`]
+* [`++getPayoutInfo(policyNftId, payoutId)++`]
+* [`++getPayoutState(policyNftId, payoutId)++`]
+* [`++getPremiumInfo(policyNftId)++`]
+* [`++getPremiumState(policyNftId)++`]
+* [`++getRequestInfo(requestId)++`]
+* [`++getPoolInfo(poolNftId)++`]
+* [`++bundles(poolNftId)++`]
+* [`++activeBundles(poolNftId)++`]
+* [`++getBundleNftId(poolNftId, idx)++`]
+* [`++getActiveBundleNftId(poolNftId, idx)++`]
+* [`++getBundleInfo(bundleNftId)++`]
+* [`++getBundleState(bundleNftId)++`]
+* [`++getDistributorTypeInfo(distributorType)++`]
+* [`++getDistributorInfo(distributorNftId)++`]
+* [`++toReferralId(distributionNftId, referralCode)++`]
+* [`++isReferralValid(distributionNftId, referralId)++`]
+* [`++getReferralInfo(referralId)++`]
+* [`++getDiscountPercentage(referralId)++`]
+* [`++roles()++`]
+* [`++getRoleId(idx)++`]
+* [`++getInstanceOwnerRole()++`]
+* [`++getRoleInfo(roleId)++`]
+* [`++roleExists(roleId)++`]
+* [`++isRoleCustom(roleId)++`]
+* [`++isRoleActive(roleId)++`]
+* [`++roleMembers(roleId)++`]
+* [`++getRoleMember(roleId, idx)++`]
+* [`++isRoleMember(roleId, account)++`]
+* [`++isRoleAdmin(roleId, account)++`]
+* [`++targets()++`]
+* [`++getTargetAddress(idx)++`]
+* [`++getTargetInfo(target)++`]
+* [`++targetExists(target)++`]
+* [`++isLocked(target)++`]
+* [`++authorizedFunctions(target)++`]
+* [`++getAuthorizedFunction(target, idx)++`]
+* [`++toFunction(signature, name)++`]
+* [`++getInstanceAdmin()++`]
+* [`++getBundleSet()++`]
+* [`++getRiskSet()++`]
+* [`++getMetadata(key)++`]
+* [`++getState(key)++`]
+* [`++toUFixed(value, exp)++`]
+* [`++toInt(value)++`]
+* [`++_toPolicyKey(policyNftId)++`]
+* [`++_toPremiumKey(policyNftId)++`]
+* [`++_toBundleKey(poolNftId)++`]
+* [`++_toComponentKey(componentNftId)++`]
+
+--
+
+[.contract-item]
+[[InstanceReader-initialize--]]
+==== `[.contract-item-name]#++initialize++#++()++` [.item-kind]#public#
+
+This initializer needs to be called from the instance itself.
+
+[.contract-item]
+[[InstanceReader-initializeWithInstance-address-]]
+==== `[.contract-item-name]#++initializeWithInstance++#++(address instanceAddress)++` [.item-kind]#public#
+
+Initializer to upgrade instance reader via instance service
+
+[.contract-item]
+[[InstanceReader-getRegistry--]]
+==== `[.contract-item-name]#++getRegistry++#++() → contract IRegistry registry++` [.item-kind]#public#
+
+Returns the registry this instance is registered in.
+
+[.contract-item]
+[[InstanceReader-getInstanceNftId--]]
+==== `[.contract-item-name]#++getInstanceNftId++#++() → NftId instanceNftid++` [.item-kind]#public#
+
+Returns the instance NFT ID.
+
+[.contract-item]
+[[InstanceReader-getInstance--]]
+==== `[.contract-item-name]#++getInstance++#++() → contract IInstance instance++` [.item-kind]#public#
+
+Returns the instance contract.
+
+[.contract-item]
+[[InstanceReader-components--]]
+==== `[.contract-item-name]#++components++#++() → uint256 componentCount++` [.item-kind]#public#
+
+Returns the number of registered components.
+Components may be products, distributions, oracles or pools.
+
+[.contract-item]
+[[InstanceReader-getComponentInfo-NftId-]]
+==== `[.contract-item-name]#++getComponentInfo++#++(NftId componentNftId) → struct IComponents.ComponentInfo info++` [.item-kind]#public#
+
+Returns the component info for the given component NFT ID.
+
+[.contract-item]
+[[InstanceReader-getToken-NftId-]]
+==== `[.contract-item-name]#++getToken++#++(NftId componentNftId) → contract IERC20Metadata token++` [.item-kind]#public#
+
+Returns the registered token for the given component NFT ID.
+
+[.contract-item]
+[[InstanceReader-getWallet-NftId-]]
+==== `[.contract-item-name]#++getWallet++#++(NftId componentNftId) → address wallet++` [.item-kind]#public#
+
+Returns the current wallet address for the given component NFT ID.
+The wallet address is either the component's own address or any other wallet address specified by the component owner.
+The wallet holds the component's funds. Tokens collected by the component are transferred to the wallet and 
+Tokens distributed from the component are transferred from this wallet.
+
+[.contract-item]
+[[InstanceReader-getTokenHandler-NftId-]]
+==== `[.contract-item-name]#++getTokenHandler++#++(NftId componentNftId) → contract TokenHandler tokenHandler++` [.item-kind]#public#
+
+Returns the token handler for the given component NFT ID.
+The token handler manages all transfers from/to the component's wallet.
+To allow a component to collect funds from an account, it has to create a corresponding allowance from the
+account to the address of the component's token handler.
+
+[.contract-item]
+[[InstanceReader-getBalanceAmount-NftId-]]
+==== `[.contract-item-name]#++getBalanceAmount++#++(NftId targetNftId) → Amount++` [.item-kind]#external#
+
+Returns the current token balance amount for the given component NFT ID.
+The balance amount includes the fee amount.
+
+[.contract-item]
+[[InstanceReader-getFeeAmount-NftId-]]
+==== `[.contract-item-name]#++getFeeAmount++#++(NftId targetNftId) → Amount++` [.item-kind]#external#
+
+Returns the current fee amount for the given NFT ID.
+The target NFT ID may reference a component, a distributor or a bundle.
+
+[.contract-item]
+[[InstanceReader-getLockedAmount-NftId-]]
+==== `[.contract-item-name]#++getLockedAmount++#++(NftId targetNftId) → Amount++` [.item-kind]#external#
+
+Returns the currently locked amount for the given NFT ID.
+The target NFT ID may reference a pool or a bundle.
+
+[.contract-item]
+[[InstanceReader-products--]]
+==== `[.contract-item-name]#++products++#++() → uint256 productCount++` [.item-kind]#public#
+
+Returns the number of registered products.
+
+[.contract-item]
+[[InstanceReader-getProductNftId-uint256-]]
+==== `[.contract-item-name]#++getProductNftId++#++(uint256 idx) → NftId productNftId++` [.item-kind]#public#
+
+Returns th product NFT ID for the given index.
+
+[.contract-item]
+[[InstanceReader-getProductInfo-NftId-]]
+==== `[.contract-item-name]#++getProductInfo++#++(NftId productNftId) → struct IComponents.ProductInfo info++` [.item-kind]#public#
+
+Returns the product info for the given product NFT ID.
+
+[.contract-item]
+[[InstanceReader-getFeeInfo-NftId-]]
+==== `[.contract-item-name]#++getFeeInfo++#++(NftId productNftId) → struct IComponents.FeeInfo feeInfo++` [.item-kind]#public#
+
+Returns the current fee settings for the given product NFT ID.
+
+[.contract-item]
+[[InstanceReader-risks-NftId-]]
+==== `[.contract-item-name]#++risks++#++(NftId productNftId) → uint256 riskCount++` [.item-kind]#public#
+
+Returns the total number of registered risks for the specified product.
+
+[.contract-item]
+[[InstanceReader-activeRisks-NftId-]]
+==== `[.contract-item-name]#++activeRisks++#++(NftId productNftId) → uint256 activeRiskCount++` [.item-kind]#public#
+
+Returns the number of active risks for the specified product.
+
+[.contract-item]
+[[InstanceReader-getRiskId-NftId-uint256-]]
+==== `[.contract-item-name]#++getRiskId++#++(NftId productNftId, uint256 idx) → RiskId riskId++` [.item-kind]#public#
+
+Returns the risk ID for the given product NFT ID and (registered) risk index.
+
+[.contract-item]
+[[InstanceReader-getActiveRiskId-NftId-uint256-]]
+==== `[.contract-item-name]#++getActiveRiskId++#++(NftId productNftId, uint256 idx) → RiskId riskId++` [.item-kind]#public#
+
+Returns the active risk ID for the given product NFT ID and (active) risk index.
+
+[.contract-item]
+[[InstanceReader-getRiskInfo-RiskId-]]
+==== `[.contract-item-name]#++getRiskInfo++#++(RiskId riskId) → struct IRisk.RiskInfo info++` [.item-kind]#public#
+
+Returns the risk info for the given risk ID.
+
+[.contract-item]
+[[InstanceReader-getRiskState-RiskId-]]
+==== `[.contract-item-name]#++getRiskState++#++(RiskId riskId) → StateId stateId++` [.item-kind]#public#
+
+Returns the risk state for the given risk ID.
+
+[.contract-item]
+[[InstanceReader-policiesForRisk-RiskId-]]
+==== `[.contract-item-name]#++policiesForRisk++#++(RiskId riskId) → uint256 linkedPolicies++` [.item-kind]#public#
+
+Returns the number of linked policies for the given risk ID.
+
+[.contract-item]
+[[InstanceReader-getPolicyNftIdForRisk-RiskId-uint256-]]
+==== `[.contract-item-name]#++getPolicyNftIdForRisk++#++(RiskId riskId, uint256 idx) → NftId linkedPolicyNftId++` [.item-kind]#public#
+
+Returns the linked policy NFT ID for the given risk ID and index.
+
+[.contract-item]
+[[InstanceReader-getPolicyInfo-NftId-]]
+==== `[.contract-item-name]#++getPolicyInfo++#++(NftId policyNftId) → struct IPolicy.PolicyInfo info++` [.item-kind]#public#
+
+Returns the info for the given policy NFT ID.
+
+[.contract-item]
+[[InstanceReader-getPolicyState-NftId-]]
+==== `[.contract-item-name]#++getPolicyState++#++(NftId policyNftId) → StateId state++` [.item-kind]#public#
+
+Returns the state for the given policy NFT ID.
+
+[.contract-item]
+[[InstanceReader-policyIsActive-NftId-]]
+==== `[.contract-item-name]#++policyIsActive++#++(NftId policyNftId) → bool isCloseable++` [.item-kind]#public#
+
+Returns true iff policy is active.
+
+[.contract-item]
+[[InstanceReader-claims-NftId-]]
+==== `[.contract-item-name]#++claims++#++(NftId policyNftId) → uint16 claimCount++` [.item-kind]#public#
+
+Returns the number of claims for the given policy NFT ID.
+
+[.contract-item]
+[[InstanceReader-getClaimId-uint256-]]
+==== `[.contract-item-name]#++getClaimId++#++(uint256 idx) → ClaimId claimId++` [.item-kind]#public#
+
+Returns the claim ID for the given policy NFT ID and index.
+
+[.contract-item]
+[[InstanceReader-getClaimInfo-NftId-ClaimId-]]
+==== `[.contract-item-name]#++getClaimInfo++#++(NftId policyNftId, ClaimId claimId) → struct IPolicy.ClaimInfo info++` [.item-kind]#public#
+
+Returns the claim info for the given policy NFT ID and claim ID.
+
+[.contract-item]
+[[InstanceReader-getClaimState-NftId-ClaimId-]]
+==== `[.contract-item-name]#++getClaimState++#++(NftId policyNftId, ClaimId claimId) → StateId state++` [.item-kind]#public#
+
+Returns the current claim state for the given policy NFT ID and claim ID.
+
+[.contract-item]
+[[InstanceReader-getRemainingClaimableAmount-NftId-]]
+==== `[.contract-item-name]#++getRemainingClaimableAmount++#++(NftId policyNftId) → Amount remainingClaimableAmount++` [.item-kind]#public#
+
+Returns the remaining claimable amount for the given policy NFT ID.
+The remaining claimable amount is the difference between the sum insured amount and total approved claim amounts so far.
+
+[.contract-item]
+[[InstanceReader-payouts-NftId-ClaimId-]]
+==== `[.contract-item-name]#++payouts++#++(NftId policyNftId, ClaimId claimId) → uint24 payoutCount++` [.item-kind]#public#
+
+Returns the number of payouts for the given policy NFT ID and claim ID.
+
+[.contract-item]
+[[InstanceReader-getPayoutId-ClaimId-uint24-]]
+==== `[.contract-item-name]#++getPayoutId++#++(ClaimId claimId, uint24 idx) → PayoutId payoutId++` [.item-kind]#public#
+
+Returns the payout ID for the given claim ID and index.
+
+[.contract-item]
+[[InstanceReader-getPayoutInfo-NftId-PayoutId-]]
+==== `[.contract-item-name]#++getPayoutInfo++#++(NftId policyNftId, PayoutId payoutId) → struct IPolicy.PayoutInfo info++` [.item-kind]#public#
+
+Returns the payout info for the given policy NFT ID and payout ID.
+
+[.contract-item]
+[[InstanceReader-getPayoutState-NftId-PayoutId-]]
+==== `[.contract-item-name]#++getPayoutState++#++(NftId policyNftId, PayoutId payoutId) → StateId state++` [.item-kind]#public#
+
+Returns the payout state for the given policy NFT ID and payout ID.
+
+[.contract-item]
+[[InstanceReader-getPremiumInfo-NftId-]]
+==== `[.contract-item-name]#++getPremiumInfo++#++(NftId policyNftId) → struct IPolicy.PremiumInfo info++` [.item-kind]#public#
+
+Returns the premium info for the given policy NFT ID.
+
+[.contract-item]
+[[InstanceReader-getPremiumState-NftId-]]
+==== `[.contract-item-name]#++getPremiumState++#++(NftId policyNftId) → StateId state++` [.item-kind]#public#
+
+Returns the premium state for the given policy NFT ID.
+
+[.contract-item]
+[[InstanceReader-getRequestInfo-RequestId-]]
+==== `[.contract-item-name]#++getRequestInfo++#++(RequestId requestId) → struct IOracle.RequestInfo requestInfo++` [.item-kind]#public#
+
+Returns the request info for the given oracle request ID.
+
+[.contract-item]
+[[InstanceReader-getPoolInfo-NftId-]]
+==== `[.contract-item-name]#++getPoolInfo++#++(NftId poolNftId) → struct IComponents.PoolInfo info++` [.item-kind]#public#
+
+Returns the pool info for the given pool NFT ID.
+
+[.contract-item]
+[[InstanceReader-bundles-NftId-]]
+==== `[.contract-item-name]#++bundles++#++(NftId poolNftId) → uint256 bundleCount++` [.item-kind]#public#
+
+Returns the total number of registered bundles for the given pool.
+
+[.contract-item]
+[[InstanceReader-activeBundles-NftId-]]
+==== `[.contract-item-name]#++activeBundles++#++(NftId poolNftId) → uint256 bundleCount++` [.item-kind]#public#
+
+Returns the number of active bundles for the given pool.
+
+[.contract-item]
+[[InstanceReader-getBundleNftId-NftId-uint256-]]
+==== `[.contract-item-name]#++getBundleNftId++#++(NftId poolNftId, uint256 idx) → NftId bundleNftId++` [.item-kind]#public#
+
+Returns the bunde NFT ID for the given pool and index.
+
+[.contract-item]
+[[InstanceReader-getActiveBundleNftId-NftId-uint256-]]
+==== `[.contract-item-name]#++getActiveBundleNftId++#++(NftId poolNftId, uint256 idx) → NftId bundleNftId++` [.item-kind]#public#
+
+Returns the active bunde NFT ID for the given pool and index.
+
+[.contract-item]
+[[InstanceReader-getBundleInfo-NftId-]]
+==== `[.contract-item-name]#++getBundleInfo++#++(NftId bundleNftId) → struct IBundle.BundleInfo info++` [.item-kind]#public#
+
+Returns the bundle info for the given bundle NFT ID.
+
+[.contract-item]
+[[InstanceReader-getBundleState-NftId-]]
+==== `[.contract-item-name]#++getBundleState++#++(NftId bundleNftId) → StateId state++` [.item-kind]#public#
+
+Returns the bundle state for the given bundle NFT ID.
+
+[.contract-item]
+[[InstanceReader-getDistributorTypeInfo-DistributorType-]]
+==== `[.contract-item-name]#++getDistributorTypeInfo++#++(DistributorType distributorType) → struct IDistribution.DistributorTypeInfo info++` [.item-kind]#public#
+
+[.contract-item]
+[[InstanceReader-getDistributorInfo-NftId-]]
+==== `[.contract-item-name]#++getDistributorInfo++#++(NftId distributorNftId) → struct IDistribution.DistributorInfo info++` [.item-kind]#public#
+
+[.contract-item]
+[[InstanceReader-toReferralId-NftId-string-]]
+==== `[.contract-item-name]#++toReferralId++#++(NftId distributionNftId, string referralCode) → ReferralId referralId++` [.item-kind]#public#
+
+[.contract-item]
+[[InstanceReader-isReferralValid-NftId-ReferralId-]]
+==== `[.contract-item-name]#++isReferralValid++#++(NftId distributionNftId, ReferralId referralId) → bool isValid++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceReader-getReferralInfo-ReferralId-]]
+==== `[.contract-item-name]#++getReferralInfo++#++(ReferralId referralId) → struct IDistribution.ReferralInfo info++` [.item-kind]#public#
+
+[.contract-item]
+[[InstanceReader-getDiscountPercentage-ReferralId-]]
+==== `[.contract-item-name]#++getDiscountPercentage++#++(ReferralId referralId) → UFixed discountPercentage, ReferralStatus status++` [.item-kind]#public#
+
+[.contract-item]
+[[InstanceReader-roles--]]
+==== `[.contract-item-name]#++roles++#++() → uint256++` [.item-kind]#public#
+
+Returns the number of defined roles.
+
+[.contract-item]
+[[InstanceReader-getRoleId-uint256-]]
+==== `[.contract-item-name]#++getRoleId++#++(uint256 idx) → RoleId roleId++` [.item-kind]#public#
+
+Returns the role ID for the given index.
+
+[.contract-item]
+[[InstanceReader-getInstanceOwnerRole--]]
+==== `[.contract-item-name]#++getInstanceOwnerRole++#++() → RoleId roleId++` [.item-kind]#public#
+
+Returns the role ID for the instance owner role.
+This role may be used as a "root" admin role for other custom roles defined for this instance.
+
+[.contract-item]
+[[InstanceReader-getRoleInfo-RoleId-]]
+==== `[.contract-item-name]#++getRoleInfo++#++(RoleId roleId) → struct IAccess.RoleInfo roleInfo++` [.item-kind]#public#
+
+Returns the role info for the given role ID.
+
+[.contract-item]
+[[InstanceReader-roleExists-RoleId-]]
+==== `[.contract-item-name]#++roleExists++#++(RoleId roleId) → bool exists++` [.item-kind]#public#
+
+Returns true iff the provided role ID is defined for this instance.
+
+[.contract-item]
+[[InstanceReader-isRoleCustom-RoleId-]]
+==== `[.contract-item-name]#++isRoleCustom++#++(RoleId roleId) → bool isCustom++` [.item-kind]#public#
+
+Returns true iff the provided role ID represents a custom role ID.
+
+[.contract-item]
+[[InstanceReader-isRoleActive-RoleId-]]
+==== `[.contract-item-name]#++isRoleActive++#++(RoleId roleId) → bool isActive++` [.item-kind]#public#
+
+Returns true iff the provided role ID is active.
+
+[.contract-item]
+[[InstanceReader-roleMembers-RoleId-]]
+==== `[.contract-item-name]#++roleMembers++#++(RoleId roleId) → uint256 numberOfMembers++` [.item-kind]#public#
+
+Returns the number of members (accounts) for the given role ID.
+
+[.contract-item]
+[[InstanceReader-getRoleMember-RoleId-uint256-]]
+==== `[.contract-item-name]#++getRoleMember++#++(RoleId roleId, uint256 idx) → address account++` [.item-kind]#public#
+
+Returns the member (account address) for the given role ID and index.
+
+[.contract-item]
+[[InstanceReader-isRoleMember-RoleId-address-]]
+==== `[.contract-item-name]#++isRoleMember++#++(RoleId roleId, address account) → bool isMember++` [.item-kind]#public#
+
+Returns true iff the given account is a member of the specified role ID.
+
+[.contract-item]
+[[InstanceReader-isRoleAdmin-RoleId-address-]]
+==== `[.contract-item-name]#++isRoleAdmin++#++(RoleId roleId, address account) → bool isMember++` [.item-kind]#public#
+
+Returns true iff the given account is an admin of the specified role ID.
+Role admins may grant and revoke the role to other accounts.
+
+[.contract-item]
+[[InstanceReader-targets--]]
+==== `[.contract-item-name]#++targets++#++() → uint256 targetCount++` [.item-kind]#public#
+
+Returns the number of targets (contracts) defined for this instance.
+
+[.contract-item]
+[[InstanceReader-getTargetAddress-uint256-]]
+==== `[.contract-item-name]#++getTargetAddress++#++(uint256 idx) → address target++` [.item-kind]#public#
+
+Returns the target address for the given index.
+
+[.contract-item]
+[[InstanceReader-getTargetInfo-address-]]
+==== `[.contract-item-name]#++getTargetInfo++#++(address target) → struct IAccess.TargetInfo targetInfo++` [.item-kind]#public#
+
+Returns the target info for the given target address.
+
+[.contract-item]
+[[InstanceReader-targetExists-address-]]
+==== `[.contract-item-name]#++targetExists++#++(address target) → bool exists++` [.item-kind]#public#
+
+Returns true iff the given target is defined for this instance.
+
+[.contract-item]
+[[InstanceReader-isLocked-address-]]
+==== `[.contract-item-name]#++isLocked++#++(address target) → bool++` [.item-kind]#public#
+
+Returns true iff the given target is locked.
+
+[.contract-item]
+[[InstanceReader-authorizedFunctions-address-]]
+==== `[.contract-item-name]#++authorizedFunctions++#++(address target) → uint256 numberOfFunctions++` [.item-kind]#external#
+
+Returns the number of authorized functions for the given target.
+
+[.contract-item]
+[[InstanceReader-getAuthorizedFunction-address-uint256-]]
+==== `[.contract-item-name]#++getAuthorizedFunction++#++(address target, uint256 idx) → struct IAccess.FunctionInfo func, RoleId roleId++` [.item-kind]#external#
+
+Returns the authorized function info for the given target and index.
+
+[.contract-item]
+[[InstanceReader-toFunction-bytes4-string-]]
+==== `[.contract-item-name]#++toFunction++#++(bytes4 signature, string name) → struct IAccess.FunctionInfo++` [.item-kind]#public#
+
+Returns a function info for the given function signature and function name.
+The function signature must not be zero and the function name must not be empty.
+
+[.contract-item]
+[[InstanceReader-getInstanceAdmin--]]
+==== `[.contract-item-name]#++getInstanceAdmin++#++() → contract InstanceAdmin instanceAdmin++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceReader-getBundleSet--]]
+==== `[.contract-item-name]#++getBundleSet++#++() → contract BundleSet bundleSet++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceReader-getRiskSet--]]
+==== `[.contract-item-name]#++getRiskSet++#++() → contract RiskSet riskSet++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceReader-getMetadata-Key32-]]
+==== `[.contract-item-name]#++getMetadata++#++(Key32 key) → struct IBaseStore.Metadata metadata++` [.item-kind]#public#
+
+[.contract-item]
+[[InstanceReader-getState-Key32-]]
+==== `[.contract-item-name]#++getState++#++(Key32 key) → StateId state++` [.item-kind]#public#
+
+[.contract-item]
+[[InstanceReader-toUFixed-uint256-int8-]]
+==== `[.contract-item-name]#++toUFixed++#++(uint256 value, int8 exp) → UFixed++` [.item-kind]#public#
+
+[.contract-item]
+[[InstanceReader-toInt-UFixed-]]
+==== `[.contract-item-name]#++toInt++#++(UFixed value) → uint256++` [.item-kind]#public#
+
+[.contract-item]
+[[InstanceReader-_toPolicyKey-NftId-]]
+==== `[.contract-item-name]#++_toPolicyKey++#++(NftId policyNftId) → Key32++` [.item-kind]#internal#
+
+[.contract-item]
+[[InstanceReader-_toPremiumKey-NftId-]]
+==== `[.contract-item-name]#++_toPremiumKey++#++(NftId policyNftId) → Key32++` [.item-kind]#internal#
+
+[.contract-item]
+[[InstanceReader-_toBundleKey-NftId-]]
+==== `[.contract-item-name]#++_toBundleKey++#++(NftId poolNftId) → Key32++` [.item-kind]#internal#
+
+[.contract-item]
+[[InstanceReader-_toComponentKey-NftId-]]
+==== `[.contract-item-name]#++_toComponentKey++#++(NftId componentNftId) → Key32++` [.item-kind]#internal#
+
+:_componentService: pass:normal[xref:#Instance-_componentService-contract-IComponentService[`++_componentService++`]]
+:_instanceService: pass:normal[xref:#Instance-_instanceService-contract-IInstanceService[`++_instanceService++`]]
+:_instanceAdmin: pass:normal[xref:#Instance-_instanceAdmin-contract-InstanceAdmin[`++_instanceAdmin++`]]
+:_instanceReader: pass:normal[xref:#Instance-_instanceReader-contract-InstanceReader[`++_instanceReader++`]]
+:_bundleSet: pass:normal[xref:#Instance-_bundleSet-contract-BundleSet[`++_bundleSet++`]]
+:_riskSet: pass:normal[xref:#Instance-_riskSet-contract-RiskSet[`++_riskSet++`]]
+:_instanceStore: pass:normal[xref:#Instance-_instanceStore-contract-InstanceStore[`++_instanceStore++`]]
+:_productStore: pass:normal[xref:#Instance-_productStore-contract-ProductStore[`++_productStore++`]]
+:_products: pass:normal[xref:#Instance-_products-NftId--[`++_products++`]]
+:_tokenRegistryDisabled: pass:normal[xref:#Instance-_tokenRegistryDisabled-bool[`++_tokenRegistryDisabled++`]]
+:onlyCustomRoleAdmin: pass:normal[xref:#Instance-onlyCustomRoleAdmin-RoleId-[`++onlyCustomRoleAdmin++`]]
+:initialize: pass:normal[xref:#Instance-initialize-struct-IInstance-InstanceContracts-contract-IRegistry-VersionPart-address-bool-[`++initialize++`]]
+:setInstanceLocked: pass:normal[xref:#Instance-setInstanceLocked-bool-[`++setInstanceLocked++`]]
+:upgradeInstanceReader: pass:normal[xref:#Instance-upgradeInstanceReader--[`++upgradeInstanceReader++`]]
+:registerProduct: pass:normal[xref:#Instance-registerProduct-address-address-[`++registerProduct++`]]
+:setStakingLockingPeriod: pass:normal[xref:#Instance-setStakingLockingPeriod-Seconds-[`++setStakingLockingPeriod++`]]
+:setStakingRewardRate: pass:normal[xref:#Instance-setStakingRewardRate-UFixed-[`++setStakingRewardRate++`]]
+:setStakingMaxAmount: pass:normal[xref:#Instance-setStakingMaxAmount-Amount-[`++setStakingMaxAmount++`]]
+:refillStakingRewardReserves: pass:normal[xref:#Instance-refillStakingRewardReserves-Amount-[`++refillStakingRewardReserves++`]]
+:withdrawStakingRewardReserves: pass:normal[xref:#Instance-withdrawStakingRewardReserves-Amount-[`++withdrawStakingRewardReserves++`]]
+:createRole: pass:normal[xref:#Instance-createRole-string-RoleId-uint32-[`++createRole++`]]
+:setRoleActive: pass:normal[xref:#Instance-setRoleActive-RoleId-bool-[`++setRoleActive++`]]
+:grantRole: pass:normal[xref:#Instance-grantRole-RoleId-address-[`++grantRole++`]]
+:revokeRole: pass:normal[xref:#Instance-revokeRole-RoleId-address-[`++revokeRole++`]]
+:createTarget: pass:normal[xref:#Instance-createTarget-address-string-[`++createTarget++`]]
+:setTargetLocked: pass:normal[xref:#Instance-setTargetLocked-address-bool-[`++setTargetLocked++`]]
+:authorizeFunctions: pass:normal[xref:#Instance-authorizeFunctions-address-RoleId-struct-IAccess-FunctionInfo---[`++authorizeFunctions++`]]
+:unauthorizeFunctions: pass:normal[xref:#Instance-unauthorizeFunctions-address-struct-IAccess-FunctionInfo---[`++unauthorizeFunctions++`]]
+:setInstanceReader: pass:normal[xref:#Instance-setInstanceReader-contract-InstanceReader-[`++setInstanceReader++`]]
+:isInstanceLocked: pass:normal[xref:#Instance-isInstanceLocked--[`++isInstanceLocked++`]]
+:isTargetLocked: pass:normal[xref:#Instance-isTargetLocked-address-[`++isTargetLocked++`]]
+:products: pass:normal[xref:#Instance-products--[`++products++`]]
+:getProductNftId: pass:normal[xref:#Instance-getProductNftId-uint256-[`++getProductNftId++`]]
+:getInstanceReader: pass:normal[xref:#Instance-getInstanceReader--[`++getInstanceReader++`]]
+:getBundleSet: pass:normal[xref:#Instance-getBundleSet--[`++getBundleSet++`]]
+:getRiskSet: pass:normal[xref:#Instance-getRiskSet--[`++getRiskSet++`]]
+:getInstanceAdmin: pass:normal[xref:#Instance-getInstanceAdmin--[`++getInstanceAdmin++`]]
+:getInstanceStore: pass:normal[xref:#Instance-getInstanceStore--[`++getInstanceStore++`]]
+:getProductStore: pass:normal[xref:#Instance-getProductStore--[`++getProductStore++`]]
+:isTokenRegistryDisabled: pass:normal[xref:#Instance-isTokenRegistryDisabled--[`++isTokenRegistryDisabled++`]]
+
+[.contract]
+[[Instance]]
+=== `++Instance++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/instance/Instance.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/instance/Instance.sol";
+```
+
+[.contract-index]
+.Modifiers
+--
+* {xref-Instance-onlyCustomRoleAdmin-RoleId-}[`++onlyCustomRoleAdmin(roleId)++`]
+--
+
+[.contract-index]
+.Functions
+--
+* [`++initialize(instanceContracts, registry, release, initialOwner, tokenRegistryDisabled)++`]
+* [`++setInstanceLocked(locked)++`]
+* [`++upgradeInstanceReader()++`]
+* [`++registerProduct(product, token)++`]
+* [`++setStakingLockingPeriod(stakeLockingPeriod)++`]
+* [`++setStakingRewardRate(rewardRate)++`]
+* [`++setStakingMaxAmount(maxStakedAmount)++`]
+* [`++refillStakingRewardReserves(dipAmount)++`]
+* [`++withdrawStakingRewardReserves(dipAmount)++`]
+* [`++createRole(roleName, adminRoleId, maxMemberCount)++`]
+* [`++setRoleActive(roleId, active)++`]
+* [`++grantRole(roleId, account)++`]
+* [`++revokeRole(roleId, account)++`]
+* [`++createTarget(target, name)++`]
+* [`++setTargetLocked(target, locked)++`]
+* [`++authorizeFunctions(target, roleId, functions)++`]
+* [`++unauthorizeFunctions(target, functions)++`]
+* [`++setInstanceReader(instanceReader)++`]
+* [`++isInstanceLocked()++`]
+* [`++isTargetLocked(target)++`]
+* [`++products()++`]
+* [`++getProductNftId(idx)++`]
+* [`++getInstanceReader()++`]
+* [`++getBundleSet()++`]
+* [`++getRiskSet()++`]
+* [`++getInstanceAdmin()++`]
+* [`++getInstanceStore()++`]
+* [`++getProductStore()++`]
+* [`++isTokenRegistryDisabled()++`]
+
+[.contract-subindex-inherited]
+.Registerable
+* [`++__Registerable_init(authority, registry, parentNftId, objectType, isInterceptor, initialOwner, data)++`]
+* [`++isActive()++`]
+* [`++getRelease()++`]
+* [`++getInitialInfo()++`]
+
+[.contract-subindex-inherited]
+.IInstance
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.IRelease
+
+[.contract-subindex-inherited]
+.NftOwnable
+* [`++_checkNftType(nftId, expectedObjectType)++`]
+* [`++__NftOwnable_init(registry, initialOwner)++`]
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+* [`++_linkToNftOwnable(nftOwnableAddress)++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+* [`++__RegistryLinked_init(registry)++`]
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+* [`++__ERC165_init()++`]
+* [`++_initializeERC165()++`]
+* [`++_registerInterface(interfaceId)++`]
+* [`++_registerInterfaceNotInitializing(interfaceId)++`]
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+* [`++__AccessManaged_init(initialAuthority)++`]
+* [`++__AccessManaged_init_unchained(initialAuthority)++`]
+* [`++authority()++`]
+* [`++setAuthority(newAuthority)++`]
+* [`++isConsumingScheduledOp()++`]
+* [`++_setAuthority(newAuthority)++`]
+* [`++_checkCanCall(caller, data)++`]
+
+[.contract-subindex-inherited]
+.IAccessManaged
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+* [`++__Context_init()++`]
+* [`++__Context_init_unchained()++`]
+* [`++_msgSender()++`]
+* [`++_msgData()++`]
+* [`++_contextSuffixLength()++`]
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.Registerable
+
+[.contract-subindex-inherited]
+.IInstance
+* [`++LogInstanceCustomRoleCreated(roleId, roleName, adminRoleId, maxMemberCount)++`]
+* [`++LogInstanceCustomRoleActiveSet(roleId, active, caller)++`]
+* [`++LogInstanceCustomRoleGranted(roleId, account, caller)++`]
+* [`++LogInstanceCustomRoleRevoked(roleId, account, caller)++`]
+* [`++LogInstanceCustomTargetCreated(target, targetRoleId, name)++`]
+* [`++LogInstanceTargetLocked(target, locked)++`]
+* [`++LogInstanceCustomTargetFunctionRoleSet(target, selectors, roleId)++`]
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.IRelease
+
+[.contract-subindex-inherited]
+.NftOwnable
+
+[.contract-subindex-inherited]
+.INftOwnable
+* [`++LogNftOwnableNftLinkedToAddress(nftId, owner)++`]
+
+[.contract-subindex-inherited]
+.RegistryLinked
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[Instance-onlyCustomRoleAdmin-RoleId-]]
+==== `[.contract-item-name]#++onlyCustomRoleAdmin++#++(RoleId roleId)++` [.item-kind]#modifier#
+
+[.contract-item]
+[[Instance-initialize-struct-IInstance-InstanceContracts-contract-IRegistry-VersionPart-address-bool-]]
+==== `[.contract-item-name]#++initialize++#++(struct IInstance.InstanceContracts instanceContracts, contract IRegistry registry, VersionPart release, address initialOwner, bool tokenRegistryDisabled)++` [.item-kind]#external#
+
+[.contract-item]
+[[Instance-setInstanceLocked-bool-]]
+==== `[.contract-item-name]#++setInstanceLocked++#++(bool locked)++` [.item-kind]#external#
+
+Locks/unlocks the complete instance, including all its components.
+
+[.contract-item]
+[[Instance-upgradeInstanceReader--]]
+==== `[.contract-item-name]#++upgradeInstanceReader++#++()++` [.item-kind]#external#
+
+Upgrades the instance reader to the specified target.
+
+[.contract-item]
+[[Instance-registerProduct-address-address-]]
+==== `[.contract-item-name]#++registerProduct++#++(address product, address token) → NftId productNftId++` [.item-kind]#external#
+
+Register a product with the instance.
+
+[.contract-item]
+[[Instance-setStakingLockingPeriod-Seconds-]]
+==== `[.contract-item-name]#++setStakingLockingPeriod++#++(Seconds stakeLockingPeriod)++` [.item-kind]#external#
+
+Sets the duration for locking new stakes on this instance..
+
+[.contract-item]
+[[Instance-setStakingRewardRate-UFixed-]]
+==== `[.contract-item-name]#++setStakingRewardRate++#++(UFixed rewardRate)++` [.item-kind]#external#
+
+Sets the staking reward rate [apr] for this instance.
+
+[.contract-item]
+[[Instance-setStakingMaxAmount-Amount-]]
+==== `[.contract-item-name]#++setStakingMaxAmount++#++(Amount maxStakedAmount)++` [.item-kind]#external#
+
+Sets the maximum staked amount for this instance.
+
+[.contract-item]
+[[Instance-refillStakingRewardReserves-Amount-]]
+==== `[.contract-item-name]#++refillStakingRewardReserves++#++(Amount dipAmount) → Amount newRewardReserveBalance++` [.item-kind]#external#
+
+Refills the staking reward reserves for the specified target.
+
+[.contract-item]
+[[Instance-withdrawStakingRewardReserves-Amount-]]
+==== `[.contract-item-name]#++withdrawStakingRewardReserves++#++(Amount dipAmount) → Amount newRewardReserveBalance++` [.item-kind]#external#
+
+Defunds the staking reward reserves for the specified target.
+
+[.contract-item]
+[[Instance-createRole-string-RoleId-uint32-]]
+==== `[.contract-item-name]#++createRole++#++(string roleName, RoleId adminRoleId, uint32 maxMemberCount) → RoleId roleId++` [.item-kind]#external#
+
+Creates a new custom role for the calling instance.
+Custom roles are intended to be used for access control of custom components and its helper contracts.
+Custom roles are not intended to be used as target roles for custom contracts.
+
+[.contract-item]
+[[Instance-setRoleActive-RoleId-bool-]]
+==== `[.contract-item-name]#++setRoleActive++#++(RoleId roleId, bool active)++` [.item-kind]#external#
+
+Activates/deactivates the specified role.
+Only instance owner or account with role admin role can call this function.
+
+[.contract-item]
+[[Instance-grantRole-RoleId-address-]]
+==== `[.contract-item-name]#++grantRole++#++(RoleId roleId, address account)++` [.item-kind]#external#
+
+Grants the specified role to the account.
+Only active roles can be granted.
+Only instance owner or account with role admin role can call this function.
+
+[.contract-item]
+[[Instance-revokeRole-RoleId-address-]]
+==== `[.contract-item-name]#++revokeRole++#++(RoleId roleId, address account)++` [.item-kind]#external#
+
+Revokes the specified role from the account.
+Only instance owner or account with role admin role can call this function.
+
+[.contract-item]
+[[Instance-createTarget-address-string-]]
+==== `[.contract-item-name]#++createTarget++#++(address target, string name) → RoleId targetRoleId++` [.item-kind]#external#
+
+Creates a new custom target.
+Custom targets are intended to be used for access control helper contracts of components.
+Custom targets are not intended to be used for components.
+
+[.contract-item]
+[[Instance-setTargetLocked-address-bool-]]
+==== `[.contract-item-name]#++setTargetLocked++#++(address target, bool locked)++` [.item-kind]#external#
+
+Locks/unlocks the specified target.
+
+[.contract-item]
+[[Instance-authorizeFunctions-address-RoleId-struct-IAccess-FunctionInfo---]]
+==== `[.contract-item-name]#++authorizeFunctions++#++(address target, RoleId roleId, struct IAccess.FunctionInfo[] functions)++` [.item-kind]#external#
+
+Authorizes the specified functions for the target and provided role.
+
+[.contract-item]
+[[Instance-unauthorizeFunctions-address-struct-IAccess-FunctionInfo---]]
+==== `[.contract-item-name]#++unauthorizeFunctions++#++(address target, struct IAccess.FunctionInfo[] functions)++` [.item-kind]#external#
+
+Removes any role authorization for the specified functions.
+
+[.contract-item]
+[[Instance-setInstanceReader-contract-InstanceReader-]]
+==== `[.contract-item-name]#++setInstanceReader++#++(contract InstanceReader instanceReader)++` [.item-kind]#external#
+
+Sets the instance reader for the instance.
+Permissioned: only the instance service may call this function.
+
+[.contract-item]
+[[Instance-isInstanceLocked--]]
+==== `[.contract-item-name]#++isInstanceLocked++#++() → bool++` [.item-kind]#external#
+
+returns the overall locking state of the instance (including all components)
+
+[.contract-item]
+[[Instance-isTargetLocked-address-]]
+==== `[.contract-item-name]#++isTargetLocked++#++(address target) → bool++` [.item-kind]#external#
+
+returns the locking state of the specified target
+
+[.contract-item]
+[[Instance-products--]]
+==== `[.contract-item-name]#++products++#++() → uint256 productCount++` [.item-kind]#external#
+
+[.contract-item]
+[[Instance-getProductNftId-uint256-]]
+==== `[.contract-item-name]#++getProductNftId++#++(uint256 idx) → NftId productNftId++` [.item-kind]#external#
+
+[.contract-item]
+[[Instance-getInstanceReader--]]
+==== `[.contract-item-name]#++getInstanceReader++#++() → contract InstanceReader++` [.item-kind]#external#
+
+[.contract-item]
+[[Instance-getBundleSet--]]
+==== `[.contract-item-name]#++getBundleSet++#++() → contract BundleSet++` [.item-kind]#external#
+
+[.contract-item]
+[[Instance-getRiskSet--]]
+==== `[.contract-item-name]#++getRiskSet++#++() → contract RiskSet++` [.item-kind]#external#
+
+[.contract-item]
+[[Instance-getInstanceAdmin--]]
+==== `[.contract-item-name]#++getInstanceAdmin++#++() → contract InstanceAdmin++` [.item-kind]#external#
+
+[.contract-item]
+[[Instance-getInstanceStore--]]
+==== `[.contract-item-name]#++getInstanceStore++#++() → contract InstanceStore++` [.item-kind]#external#
+
+[.contract-item]
+[[Instance-getProductStore--]]
+==== `[.contract-item-name]#++getProductStore++#++() → contract ProductStore++` [.item-kind]#external#
+
+[.contract-item]
+[[Instance-isTokenRegistryDisabled--]]
+==== `[.contract-item-name]#++isTokenRegistryDisabled++#++() → bool++` [.item-kind]#external#
+
+:LogInstanceCustomRoleCreated: pass:normal[xref:#IInstance-LogInstanceCustomRoleCreated-RoleId-string-RoleId-uint32-[`++LogInstanceCustomRoleCreated++`]]
+:LogInstanceCustomRoleActiveSet: pass:normal[xref:#IInstance-LogInstanceCustomRoleActiveSet-RoleId-bool-address-[`++LogInstanceCustomRoleActiveSet++`]]
+:LogInstanceCustomRoleGranted: pass:normal[xref:#IInstance-LogInstanceCustomRoleGranted-RoleId-address-address-[`++LogInstanceCustomRoleGranted++`]]
+:LogInstanceCustomRoleRevoked: pass:normal[xref:#IInstance-LogInstanceCustomRoleRevoked-RoleId-address-address-[`++LogInstanceCustomRoleRevoked++`]]
+:LogInstanceCustomTargetCreated: pass:normal[xref:#IInstance-LogInstanceCustomTargetCreated-address-RoleId-string-[`++LogInstanceCustomTargetCreated++`]]
+:LogInstanceTargetLocked: pass:normal[xref:#IInstance-LogInstanceTargetLocked-address-bool-[`++LogInstanceTargetLocked++`]]
+:LogInstanceCustomTargetFunctionRoleSet: pass:normal[xref:#IInstance-LogInstanceCustomTargetFunctionRoleSet-address-bytes4---RoleId-[`++LogInstanceCustomTargetFunctionRoleSet++`]]
+:ErrorInstanceNotCustomRole: pass:normal[xref:#IInstance-ErrorInstanceNotCustomRole-RoleId-[`++ErrorInstanceNotCustomRole++`]]
+:ErrorInstanceNotRoleAdmin: pass:normal[xref:#IInstance-ErrorInstanceNotRoleAdmin-RoleId-address-[`++ErrorInstanceNotRoleAdmin++`]]
+:ErrorInstanceInstanceAdminZero: pass:normal[xref:#IInstance-ErrorInstanceInstanceAdminZero--[`++ErrorInstanceInstanceAdminZero++`]]
+:ErrorInstanceInstanceAdminAlreadySet: pass:normal[xref:#IInstance-ErrorInstanceInstanceAdminAlreadySet-address-[`++ErrorInstanceInstanceAdminAlreadySet++`]]
+:ErrorInstanceInstanceAdminAuthorityMismatch: pass:normal[xref:#IInstance-ErrorInstanceInstanceAdminAuthorityMismatch-address-[`++ErrorInstanceInstanceAdminAuthorityMismatch++`]]
+:ErrorInstanceBundleSetAlreadySet: pass:normal[xref:#IInstance-ErrorInstanceBundleSetAlreadySet-address-[`++ErrorInstanceBundleSetAlreadySet++`]]
+:ErrorInstanceBundleSetInstanceMismatch: pass:normal[xref:#IInstance-ErrorInstanceBundleSetInstanceMismatch-address-[`++ErrorInstanceBundleSetInstanceMismatch++`]]
+:ErrorInstanceBundleSetAuthorityMismatch: pass:normal[xref:#IInstance-ErrorInstanceBundleSetAuthorityMismatch-address-[`++ErrorInstanceBundleSetAuthorityMismatch++`]]
+:ErrorInstanceRiskSetAlreadySet: pass:normal[xref:#IInstance-ErrorInstanceRiskSetAlreadySet-address-[`++ErrorInstanceRiskSetAlreadySet++`]]
+:ErrorInstanceRiskSetInstanceMismatch: pass:normal[xref:#IInstance-ErrorInstanceRiskSetInstanceMismatch-address-[`++ErrorInstanceRiskSetInstanceMismatch++`]]
+:ErrorInstanceRiskSetAuthorityMismatch: pass:normal[xref:#IInstance-ErrorInstanceRiskSetAuthorityMismatch-address-[`++ErrorInstanceRiskSetAuthorityMismatch++`]]
+:ErrorInstanceInstanceReaderInstanceMismatch: pass:normal[xref:#IInstance-ErrorInstanceInstanceReaderInstanceMismatch-address-[`++ErrorInstanceInstanceReaderInstanceMismatch++`]]
+:ErrorInstanceInstanceStoreAlreadySet: pass:normal[xref:#IInstance-ErrorInstanceInstanceStoreAlreadySet-address-[`++ErrorInstanceInstanceStoreAlreadySet++`]]
+:ErrorInstanceInstanceStoreAuthorityMismatch: pass:normal[xref:#IInstance-ErrorInstanceInstanceStoreAuthorityMismatch-address-[`++ErrorInstanceInstanceStoreAuthorityMismatch++`]]
+:InstanceContracts: pass:normal[xref:#IInstance-InstanceContracts[`++InstanceContracts++`]]
+:InstanceInfo: pass:normal[xref:#IInstance-InstanceInfo[`++InstanceInfo++`]]
+:setInstanceLocked: pass:normal[xref:#IInstance-setInstanceLocked-bool-[`++setInstanceLocked++`]]
+:upgradeInstanceReader: pass:normal[xref:#IInstance-upgradeInstanceReader--[`++upgradeInstanceReader++`]]
+:setInstanceReader: pass:normal[xref:#IInstance-setInstanceReader-contract-InstanceReader-[`++setInstanceReader++`]]
+:setStakingLockingPeriod: pass:normal[xref:#IInstance-setStakingLockingPeriod-Seconds-[`++setStakingLockingPeriod++`]]
+:setStakingRewardRate: pass:normal[xref:#IInstance-setStakingRewardRate-UFixed-[`++setStakingRewardRate++`]]
+:setStakingMaxAmount: pass:normal[xref:#IInstance-setStakingMaxAmount-Amount-[`++setStakingMaxAmount++`]]
+:refillStakingRewardReserves: pass:normal[xref:#IInstance-refillStakingRewardReserves-Amount-[`++refillStakingRewardReserves++`]]
+:withdrawStakingRewardReserves: pass:normal[xref:#IInstance-withdrawStakingRewardReserves-Amount-[`++withdrawStakingRewardReserves++`]]
+:setTargetLocked: pass:normal[xref:#IInstance-setTargetLocked-address-bool-[`++setTargetLocked++`]]
+:registerProduct: pass:normal[xref:#IInstance-registerProduct-address-address-[`++registerProduct++`]]
+:createRole: pass:normal[xref:#IInstance-createRole-string-RoleId-uint32-[`++createRole++`]]
+:setRoleActive: pass:normal[xref:#IInstance-setRoleActive-RoleId-bool-[`++setRoleActive++`]]
+:grantRole: pass:normal[xref:#IInstance-grantRole-RoleId-address-[`++grantRole++`]]
+:revokeRole: pass:normal[xref:#IInstance-revokeRole-RoleId-address-[`++revokeRole++`]]
+:createTarget: pass:normal[xref:#IInstance-createTarget-address-string-[`++createTarget++`]]
+:authorizeFunctions: pass:normal[xref:#IInstance-authorizeFunctions-address-RoleId-struct-IAccess-FunctionInfo---[`++authorizeFunctions++`]]
+:unauthorizeFunctions: pass:normal[xref:#IInstance-unauthorizeFunctions-address-struct-IAccess-FunctionInfo---[`++unauthorizeFunctions++`]]
+:isInstanceLocked: pass:normal[xref:#IInstance-isInstanceLocked--[`++isInstanceLocked++`]]
+:isTargetLocked: pass:normal[xref:#IInstance-isTargetLocked-address-[`++isTargetLocked++`]]
+:products: pass:normal[xref:#IInstance-products--[`++products++`]]
+:getProductNftId: pass:normal[xref:#IInstance-getProductNftId-uint256-[`++getProductNftId++`]]
+:getInstanceReader: pass:normal[xref:#IInstance-getInstanceReader--[`++getInstanceReader++`]]
+:getBundleSet: pass:normal[xref:#IInstance-getBundleSet--[`++getBundleSet++`]]
+:getRiskSet: pass:normal[xref:#IInstance-getRiskSet--[`++getRiskSet++`]]
+:getInstanceAdmin: pass:normal[xref:#IInstance-getInstanceAdmin--[`++getInstanceAdmin++`]]
+:getInstanceStore: pass:normal[xref:#IInstance-getInstanceStore--[`++getInstanceStore++`]]
+:getProductStore: pass:normal[xref:#IInstance-getProductStore--[`++getProductStore++`]]
+:isTokenRegistryDisabled: pass:normal[xref:#IInstance-isTokenRegistryDisabled--[`++isTokenRegistryDisabled++`]]
+
+[.contract]
+[[IInstance]]
+=== `++IInstance++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/instance/IInstance.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/instance/IInstance.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++setInstanceLocked(locked)++`]
+* [`++upgradeInstanceReader()++`]
+* [`++setInstanceReader(instanceReader)++`]
+* [`++setStakingLockingPeriod(stakeLockingPeriod)++`]
+* [`++setStakingRewardRate(rewardRate)++`]
+* [`++setStakingMaxAmount(maxStakedAmount)++`]
+* [`++refillStakingRewardReserves(dipAmount)++`]
+* [`++withdrawStakingRewardReserves(dipAmount)++`]
+* [`++setTargetLocked(target, locked)++`]
+* [`++registerProduct(product, token)++`]
+* [`++createRole(roleName, adminRoleId, maxMemberCount)++`]
+* [`++setRoleActive(roleId, active)++`]
+* [`++grantRole(roleId, account)++`]
+* [`++revokeRole(roleId, account)++`]
+* [`++createTarget(target, name)++`]
+* [`++authorizeFunctions(target, roleId, functions)++`]
+* [`++unauthorizeFunctions(target, functions)++`]
+* [`++isInstanceLocked()++`]
+* [`++isTargetLocked(target)++`]
+* [`++products()++`]
+* [`++getProductNftId(idx)++`]
+* [`++getInstanceReader()++`]
+* [`++getBundleSet()++`]
+* [`++getRiskSet()++`]
+* [`++getInstanceAdmin()++`]
+* [`++getInstanceStore()++`]
+* [`++getProductStore()++`]
+* [`++isTokenRegistryDisabled()++`]
+
+[.contract-subindex-inherited]
+.IRegisterable
+* [`++isActive()++`]
+* [`++getInitialInfo()++`]
+
+[.contract-subindex-inherited]
+.IRelease
+* [`++getRelease()++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IERC165
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++authority()++`]
+* [`++setAuthority()++`]
+* [`++isConsumingScheduledOp()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+* [`++LogInstanceCustomRoleCreated(roleId, roleName, adminRoleId, maxMemberCount)++`]
+* [`++LogInstanceCustomRoleActiveSet(roleId, active, caller)++`]
+* [`++LogInstanceCustomRoleGranted(roleId, account, caller)++`]
+* [`++LogInstanceCustomRoleRevoked(roleId, account, caller)++`]
+* [`++LogInstanceCustomTargetCreated(target, targetRoleId, name)++`]
+* [`++LogInstanceTargetLocked(target, locked)++`]
+* [`++LogInstanceCustomTargetFunctionRoleSet(target, selectors, roleId)++`]
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.IRelease
+
+[.contract-subindex-inherited]
+.INftOwnable
+* [`++LogNftOwnableNftLinkedToAddress(nftId, owner)++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+--
+
+[.contract-item]
+[[IInstance-setInstanceLocked-bool-]]
+==== `[.contract-item-name]#++setInstanceLocked++#++(bool locked)++` [.item-kind]#external#
+
+Locks/unlocks the complete instance, including all its components.
+
+[.contract-item]
+[[IInstance-upgradeInstanceReader--]]
+==== `[.contract-item-name]#++upgradeInstanceReader++#++()++` [.item-kind]#external#
+
+Upgrades the instance reader to the specified target.
+
+[.contract-item]
+[[IInstance-setInstanceReader-contract-InstanceReader-]]
+==== `[.contract-item-name]#++setInstanceReader++#++(contract InstanceReader instanceReader)++` [.item-kind]#external#
+
+Sets the instance reader for the instance.
+Permissioned: only the instance service may call this function.
+
+[.contract-item]
+[[IInstance-setStakingLockingPeriod-Seconds-]]
+==== `[.contract-item-name]#++setStakingLockingPeriod++#++(Seconds stakeLockingPeriod)++` [.item-kind]#external#
+
+Sets the duration for locking new stakes on this instance..
+
+[.contract-item]
+[[IInstance-setStakingRewardRate-UFixed-]]
+==== `[.contract-item-name]#++setStakingRewardRate++#++(UFixed rewardRate)++` [.item-kind]#external#
+
+Sets the staking reward rate [apr] for this instance.
+
+[.contract-item]
+[[IInstance-setStakingMaxAmount-Amount-]]
+==== `[.contract-item-name]#++setStakingMaxAmount++#++(Amount maxStakedAmount)++` [.item-kind]#external#
+
+Sets the maximum staked amount for this instance.
+
+[.contract-item]
+[[IInstance-refillStakingRewardReserves-Amount-]]
+==== `[.contract-item-name]#++refillStakingRewardReserves++#++(Amount dipAmount) → Amount newBalance++` [.item-kind]#external#
+
+Refills the staking reward reserves for the specified target.
+
+[.contract-item]
+[[IInstance-withdrawStakingRewardReserves-Amount-]]
+==== `[.contract-item-name]#++withdrawStakingRewardReserves++#++(Amount dipAmount) → Amount newBalance++` [.item-kind]#external#
+
+Defunds the staking reward reserves for the specified target.
+
+[.contract-item]
+[[IInstance-setTargetLocked-address-bool-]]
+==== `[.contract-item-name]#++setTargetLocked++#++(address target, bool locked)++` [.item-kind]#external#
+
+Locks/unlocks the specified target.
+
+[.contract-item]
+[[IInstance-registerProduct-address-address-]]
+==== `[.contract-item-name]#++registerProduct++#++(address product, address token) → NftId productNftId++` [.item-kind]#external#
+
+Register a product with the instance.
+
+[.contract-item]
+[[IInstance-createRole-string-RoleId-uint32-]]
+==== `[.contract-item-name]#++createRole++#++(string roleName, RoleId adminRoleId, uint32 maxMemberCount) → RoleId roleId++` [.item-kind]#external#
+
+Creates a new custom role for the calling instance.
+Custom roles are intended to be used for access control of custom components and its helper contracts.
+Custom roles are not intended to be used as target roles for custom contracts.
+
+[.contract-item]
+[[IInstance-setRoleActive-RoleId-bool-]]
+==== `[.contract-item-name]#++setRoleActive++#++(RoleId roleId, bool active)++` [.item-kind]#external#
+
+Activates/deactivates the specified role.
+Only instance owner or account with role admin role can call this function.
+
+[.contract-item]
+[[IInstance-grantRole-RoleId-address-]]
+==== `[.contract-item-name]#++grantRole++#++(RoleId roleId, address account)++` [.item-kind]#external#
+
+Grants the specified role to the account.
+Only active roles can be granted.
+Only instance owner or account with role admin role can call this function.
+
+[.contract-item]
+[[IInstance-revokeRole-RoleId-address-]]
+==== `[.contract-item-name]#++revokeRole++#++(RoleId roleId, address account)++` [.item-kind]#external#
+
+Revokes the specified role from the account.
+Only instance owner or account with role admin role can call this function.
+
+[.contract-item]
+[[IInstance-createTarget-address-string-]]
+==== `[.contract-item-name]#++createTarget++#++(address target, string name) → RoleId contractRoleId++` [.item-kind]#external#
+
+Creates a new custom target.
+Custom targets are intended to be used for access control helper contracts of components.
+Custom targets are not intended to be used for components.
+
+[.contract-item]
+[[IInstance-authorizeFunctions-address-RoleId-struct-IAccess-FunctionInfo---]]
+==== `[.contract-item-name]#++authorizeFunctions++#++(address target, RoleId roleId, struct IAccess.FunctionInfo[] functions)++` [.item-kind]#external#
+
+Authorizes the specified functions for the target and provided role.
+
+[.contract-item]
+[[IInstance-unauthorizeFunctions-address-struct-IAccess-FunctionInfo---]]
+==== `[.contract-item-name]#++unauthorizeFunctions++#++(address target, struct IAccess.FunctionInfo[] functions)++` [.item-kind]#external#
+
+Removes any role authorization for the specified functions.
+
+[.contract-item]
+[[IInstance-isInstanceLocked--]]
+==== `[.contract-item-name]#++isInstanceLocked++#++() → bool isLocked++` [.item-kind]#external#
+
+returns the overall locking state of the instance (including all components)
+
+[.contract-item]
+[[IInstance-isTargetLocked-address-]]
+==== `[.contract-item-name]#++isTargetLocked++#++(address target) → bool isLocked++` [.item-kind]#external#
+
+returns the locking state of the specified target
+
+[.contract-item]
+[[IInstance-products--]]
+==== `[.contract-item-name]#++products++#++() → uint256 productCount++` [.item-kind]#external#
+
+[.contract-item]
+[[IInstance-getProductNftId-uint256-]]
+==== `[.contract-item-name]#++getProductNftId++#++(uint256 idx) → NftId productNftId++` [.item-kind]#external#
+
+[.contract-item]
+[[IInstance-getInstanceReader--]]
+==== `[.contract-item-name]#++getInstanceReader++#++() → contract InstanceReader++` [.item-kind]#external#
+
+[.contract-item]
+[[IInstance-getBundleSet--]]
+==== `[.contract-item-name]#++getBundleSet++#++() → contract BundleSet++` [.item-kind]#external#
+
+[.contract-item]
+[[IInstance-getRiskSet--]]
+==== `[.contract-item-name]#++getRiskSet++#++() → contract RiskSet++` [.item-kind]#external#
+
+[.contract-item]
+[[IInstance-getInstanceAdmin--]]
+==== `[.contract-item-name]#++getInstanceAdmin++#++() → contract InstanceAdmin++` [.item-kind]#external#
+
+[.contract-item]
+[[IInstance-getInstanceStore--]]
+==== `[.contract-item-name]#++getInstanceStore++#++() → contract InstanceStore++` [.item-kind]#external#
+
+[.contract-item]
+[[IInstance-getProductStore--]]
+==== `[.contract-item-name]#++getProductStore++#++() → contract ProductStore++` [.item-kind]#external#
+
+[.contract-item]
+[[IInstance-isTokenRegistryDisabled--]]
+==== `[.contract-item-name]#++isTokenRegistryDisabled++#++() → bool++` [.item-kind]#external#
+
+[.contract-item]
+[[IInstance-LogInstanceCustomRoleCreated-RoleId-string-RoleId-uint32-]]
+==== `[.contract-item-name]#++LogInstanceCustomRoleCreated++#++(RoleId roleId, string roleName, RoleId adminRoleId, uint32 maxMemberCount)++` [.item-kind]#event#
+
+[.contract-item]
+[[IInstance-LogInstanceCustomRoleActiveSet-RoleId-bool-address-]]
+==== `[.contract-item-name]#++LogInstanceCustomRoleActiveSet++#++(RoleId roleId, bool active, address caller)++` [.item-kind]#event#
+
+[.contract-item]
+[[IInstance-LogInstanceCustomRoleGranted-RoleId-address-address-]]
+==== `[.contract-item-name]#++LogInstanceCustomRoleGranted++#++(RoleId roleId, address account, address caller)++` [.item-kind]#event#
+
+[.contract-item]
+[[IInstance-LogInstanceCustomRoleRevoked-RoleId-address-address-]]
+==== `[.contract-item-name]#++LogInstanceCustomRoleRevoked++#++(RoleId roleId, address account, address caller)++` [.item-kind]#event#
+
+[.contract-item]
+[[IInstance-LogInstanceCustomTargetCreated-address-RoleId-string-]]
+==== `[.contract-item-name]#++LogInstanceCustomTargetCreated++#++(address target, RoleId targetRoleId, string name)++` [.item-kind]#event#
+
+[.contract-item]
+[[IInstance-LogInstanceTargetLocked-address-bool-]]
+==== `[.contract-item-name]#++LogInstanceTargetLocked++#++(address target, bool locked)++` [.item-kind]#event#
+
+[.contract-item]
+[[IInstance-LogInstanceCustomTargetFunctionRoleSet-address-bytes4---RoleId-]]
+==== `[.contract-item-name]#++LogInstanceCustomTargetFunctionRoleSet++#++(address target, bytes4[] selectors, RoleId roleId)++` [.item-kind]#event#
+
+:constructor: pass:normal[xref:#InstanceServiceManager-constructor-address-address-bytes32-[`++constructor++`]]
+:getInstanceService: pass:normal[xref:#InstanceServiceManager-getInstanceService--[`++getInstanceService++`]]
+
+[.contract]
+[[InstanceServiceManager]]
+=== `++InstanceServiceManager++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/instance/InstanceServiceManager.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/instance/InstanceServiceManager.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++constructor(authority, registry, salt)++`]
+* [`++getInstanceService()++`]
+
+[.contract-subindex-inherited]
+.ProxyManager
+* [`++initialize(registry, implementation, data, salt)++`]
+* [`++deploy(registry, initialImplementation, initializationData)++`]
+* [`++deployDetermenistic(registry, initialImplementation, initializationData, salt)++`]
+* [`++upgrade(newImplementation)++`]
+* [`++upgrade(newImplementation, upgradeData)++`]
+* [`++linkToProxy()++`]
+* [`++getDeployData(proxyOwner, deployData)++`]
+* [`++getUpgradeData(upgradeData)++`]
+* [`++getProxy()++`]
+* [`++getVersion()++`]
+* [`++getVersionCount()++`]
+* [`++getVersion(idx)++`]
+* [`++getVersionInfo(_version)++`]
+* [`++getDeployData()++`]
+
+[.contract-subindex-inherited]
+.NftOwnable
+* [`++_checkNftType(nftId, expectedObjectType)++`]
+* [`++__NftOwnable_init(registry, initialOwner)++`]
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+* [`++_linkToNftOwnable(nftOwnableAddress)++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+* [`++__RegistryLinked_init(registry)++`]
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+* [`++__ERC165_init()++`]
+* [`++_initializeERC165()++`]
+* [`++_registerInterface(interfaceId)++`]
+* [`++_registerInterfaceNotInitializing(interfaceId)++`]
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.ProxyManager
+* [`++LogProxyManagerVersionableDeployed(proxy, initialImplementation)++`]
+* [`++LogProxyManagerVersionableUpgraded(proxy, upgradedImplementation)++`]
+
+[.contract-subindex-inherited]
+.NftOwnable
+
+[.contract-subindex-inherited]
+.INftOwnable
+* [`++LogNftOwnableNftLinkedToAddress(nftId, owner)++`]
+
+[.contract-subindex-inherited]
+.RegistryLinked
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[InstanceServiceManager-constructor-address-address-bytes32-]]
+==== `[.contract-item-name]#++constructor++#++(address authority, address registry, bytes32 salt)++` [.item-kind]#public#
+
+initializes proxy manager with instance service implementation
+
+[.contract-item]
+[[InstanceServiceManager-getInstanceService--]]
+==== `[.contract-item-name]#++getInstanceService++#++() → contract InstanceService instanceService++` [.item-kind]#external#
+
+:LogProductStoreComponentInfoCreated: pass:normal[xref:#InstanceStore-LogProductStoreComponentInfoCreated-NftId-StateId-address-address-[`++LogProductStoreComponentInfoCreated++`]]
+:LogProductStoreComponentInfoUpdated: pass:normal[xref:#InstanceStore-LogProductStoreComponentInfoUpdated-NftId-StateId-StateId-address-address-Blocknumber-[`++LogProductStoreComponentInfoUpdated++`]]
+:LogProductStorePoolInfoCreated: pass:normal[xref:#InstanceStore-LogProductStorePoolInfoCreated-NftId-StateId-address-address-[`++LogProductStorePoolInfoCreated++`]]
+:LogProductStorePoolInfoUpdated: pass:normal[xref:#InstanceStore-LogProductStorePoolInfoUpdated-NftId-StateId-StateId-address-address-Blocknumber-[`++LogProductStorePoolInfoUpdated++`]]
+:LogProductStoreDistributorTypeInfoCreated: pass:normal[xref:#InstanceStore-LogProductStoreDistributorTypeInfoCreated-DistributorType-StateId-address-address-[`++LogProductStoreDistributorTypeInfoCreated++`]]
+:LogProductStoreDistributorTypeInfoUpdated: pass:normal[xref:#InstanceStore-LogProductStoreDistributorTypeInfoUpdated-DistributorType-StateId-StateId-address-address-Blocknumber-[`++LogProductStoreDistributorTypeInfoUpdated++`]]
+:LogProductStoreDistributorInfoCreated: pass:normal[xref:#InstanceStore-LogProductStoreDistributorInfoCreated-NftId-StateId-address-address-[`++LogProductStoreDistributorInfoCreated++`]]
+:LogProductStoreDistributorInfoUpdated: pass:normal[xref:#InstanceStore-LogProductStoreDistributorInfoUpdated-NftId-StateId-StateId-address-address-Blocknumber-[`++LogProductStoreDistributorInfoUpdated++`]]
+:LogProductStoreReferralInfoCreated: pass:normal[xref:#InstanceStore-LogProductStoreReferralInfoCreated-ReferralId-StateId-address-address-[`++LogProductStoreReferralInfoCreated++`]]
+:LogProductStoreReferralInfoUpdated: pass:normal[xref:#InstanceStore-LogProductStoreReferralInfoUpdated-ReferralId-StateId-StateId-address-address-Blocknumber-[`++LogProductStoreReferralInfoUpdated++`]]
+:LogProductStoreBundleInfoCreated: pass:normal[xref:#InstanceStore-LogProductStoreBundleInfoCreated-NftId-StateId-address-address-[`++LogProductStoreBundleInfoCreated++`]]
+:LogProductStoreBundleInfoUpdated: pass:normal[xref:#InstanceStore-LogProductStoreBundleInfoUpdated-NftId-StateId-StateId-address-address-Blocknumber-[`++LogProductStoreBundleInfoUpdated++`]]
+:LogProductStoreRequestInfoCreated: pass:normal[xref:#InstanceStore-LogProductStoreRequestInfoCreated-RequestId-StateId-address-address-[`++LogProductStoreRequestInfoCreated++`]]
+:LogProductStoreRequestInfoUpdated: pass:normal[xref:#InstanceStore-LogProductStoreRequestInfoUpdated-RequestId-StateId-StateId-address-address-Blocknumber-[`++LogProductStoreRequestInfoUpdated++`]]
+:initialize: pass:normal[xref:#InstanceStore-initialize--[`++initialize++`]]
+:createComponent: pass:normal[xref:#InstanceStore-createComponent-NftId-struct-IComponents-ComponentInfo-[`++createComponent++`]]
+:updateComponent: pass:normal[xref:#InstanceStore-updateComponent-NftId-struct-IComponents-ComponentInfo-StateId-[`++updateComponent++`]]
+:getComponentInfo: pass:normal[xref:#InstanceStore-getComponentInfo-NftId-[`++getComponentInfo++`]]
+:createPool: pass:normal[xref:#InstanceStore-createPool-NftId-struct-IComponents-PoolInfo-[`++createPool++`]]
+:updatePool: pass:normal[xref:#InstanceStore-updatePool-NftId-struct-IComponents-PoolInfo-StateId-[`++updatePool++`]]
+:getPoolInfo: pass:normal[xref:#InstanceStore-getPoolInfo-NftId-[`++getPoolInfo++`]]
+:createDistributorType: pass:normal[xref:#InstanceStore-createDistributorType-DistributorType-struct-IDistribution-DistributorTypeInfo-[`++createDistributorType++`]]
+:updateDistributorType: pass:normal[xref:#InstanceStore-updateDistributorType-DistributorType-struct-IDistribution-DistributorTypeInfo-StateId-[`++updateDistributorType++`]]
+:updateDistributorTypeState: pass:normal[xref:#InstanceStore-updateDistributorTypeState-DistributorType-StateId-[`++updateDistributorTypeState++`]]
+:getDistributorTypeInfo: pass:normal[xref:#InstanceStore-getDistributorTypeInfo-DistributorType-[`++getDistributorTypeInfo++`]]
+:createDistributor: pass:normal[xref:#InstanceStore-createDistributor-NftId-struct-IDistribution-DistributorInfo-[`++createDistributor++`]]
+:updateDistributor: pass:normal[xref:#InstanceStore-updateDistributor-NftId-struct-IDistribution-DistributorInfo-StateId-[`++updateDistributor++`]]
+:updateDistributorState: pass:normal[xref:#InstanceStore-updateDistributorState-NftId-StateId-[`++updateDistributorState++`]]
+:getDistributorInfo: pass:normal[xref:#InstanceStore-getDistributorInfo-NftId-[`++getDistributorInfo++`]]
+:createReferral: pass:normal[xref:#InstanceStore-createReferral-ReferralId-struct-IDistribution-ReferralInfo-[`++createReferral++`]]
+:updateReferral: pass:normal[xref:#InstanceStore-updateReferral-ReferralId-struct-IDistribution-ReferralInfo-StateId-[`++updateReferral++`]]
+:updateReferralState: pass:normal[xref:#InstanceStore-updateReferralState-ReferralId-StateId-[`++updateReferralState++`]]
+:getReferralInfo: pass:normal[xref:#InstanceStore-getReferralInfo-ReferralId-[`++getReferralInfo++`]]
+:createBundle: pass:normal[xref:#InstanceStore-createBundle-NftId-struct-IBundle-BundleInfo-[`++createBundle++`]]
+:updateBundle: pass:normal[xref:#InstanceStore-updateBundle-NftId-struct-IBundle-BundleInfo-StateId-[`++updateBundle++`]]
+:updateBundleState: pass:normal[xref:#InstanceStore-updateBundleState-NftId-StateId-[`++updateBundleState++`]]
+:getBundleInfo: pass:normal[xref:#InstanceStore-getBundleInfo-NftId-[`++getBundleInfo++`]]
+:createRequest: pass:normal[xref:#InstanceStore-createRequest-struct-IOracle-RequestInfo-[`++createRequest++`]]
+:updateRequest: pass:normal[xref:#InstanceStore-updateRequest-RequestId-struct-IOracle-RequestInfo-StateId-[`++updateRequest++`]]
+:updateRequestState: pass:normal[xref:#InstanceStore-updateRequestState-RequestId-StateId-[`++updateRequestState++`]]
+:getRequestInfo: pass:normal[xref:#InstanceStore-getRequestInfo-RequestId-[`++getRequestInfo++`]]
+:increaseBalance: pass:normal[xref:#InstanceStore-increaseBalance-NftId-Amount-[`++increaseBalance++`]]
+:decreaseBalance: pass:normal[xref:#InstanceStore-decreaseBalance-NftId-Amount-[`++decreaseBalance++`]]
+:increaseFees: pass:normal[xref:#InstanceStore-increaseFees-NftId-Amount-[`++increaseFees++`]]
+:decreaseFees: pass:normal[xref:#InstanceStore-decreaseFees-NftId-Amount-[`++decreaseFees++`]]
+:increaseLocked: pass:normal[xref:#InstanceStore-increaseLocked-NftId-Amount-[`++increaseLocked++`]]
+:decreaseLocked: pass:normal[xref:#InstanceStore-decreaseLocked-NftId-Amount-[`++decreaseLocked++`]]
+
+[.contract]
+[[InstanceStore]]
+=== `++InstanceStore++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/instance/InstanceStore.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/instance/InstanceStore.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++initialize()++`]
+* [`++createComponent(componentNftId, componentInfo)++`]
+* [`++updateComponent(componentNftId, componentInfo, newState)++`]
+* [`++getComponentInfo(componentNftId)++`]
+* [`++createPool(poolNftId, info)++`]
+* [`++updatePool(poolNftId, info, newState)++`]
+* [`++getPoolInfo(poolNftId)++`]
+* [`++createDistributorType(distributorType, info)++`]
+* [`++updateDistributorType(distributorType, info, newState)++`]
+* [`++updateDistributorTypeState(distributorType, newState)++`]
+* [`++getDistributorTypeInfo(distributorType)++`]
+* [`++createDistributor(distributorNftId, info)++`]
+* [`++updateDistributor(distributorNftId, info, newState)++`]
+* [`++updateDistributorState(distributorNftId, newState)++`]
+* [`++getDistributorInfo(distributorNftId)++`]
+* [`++createReferral(referralId, referralInfo)++`]
+* [`++updateReferral(referralId, referralInfo, newState)++`]
+* [`++updateReferralState(referralId, newState)++`]
+* [`++getReferralInfo(referralId)++`]
+* [`++createBundle(bundleNftId, bundle)++`]
+* [`++updateBundle(bundleNftId, bundle, newState)++`]
+* [`++updateBundleState(bundleNftId, newState)++`]
+* [`++getBundleInfo(bundleNftId)++`]
+* [`++createRequest(request)++`]
+* [`++updateRequest(requestId, request, newState)++`]
+* [`++updateRequestState(requestId, newState)++`]
+* [`++getRequestInfo(requestId)++`]
+* [`++increaseBalance(targetNftId, amount)++`]
+* [`++decreaseBalance(targetNftId, amount)++`]
+* [`++increaseFees(targetNftId, amount)++`]
+* [`++decreaseFees(targetNftId, amount)++`]
+* [`++increaseLocked(targetNftId, amount)++`]
+* [`++decreaseLocked(targetNftId, amount)++`]
+
+[.contract-subindex-inherited]
+.BaseStore
+* [`++_createMetadata(key32)++`]
+* [`++_updateState(key32, state)++`]
+* [`++exists(key32)++`]
+* [`++getMetadata(key32)++`]
+* [`++getState(key32)++`]
+* [`++toKey32(objectType, id)++`]
+
+[.contract-subindex-inherited]
+.IBaseStore
+
+[.contract-subindex-inherited]
+.ObjectLifecycle
+* [`++_initializeLifecycle()++`]
+* [`++_setupLifecycle()++`]
+
+[.contract-subindex-inherited]
+.ObjectCounter
+* [`++_createNextRequestId()++`]
+
+[.contract-subindex-inherited]
+.BalanceStore
+* [`++getBalanceAmount(targetNftId)++`]
+* [`++getLockedAmount(targetNftId)++`]
+* [`++getFeeAmount(targetNftId)++`]
+* [`++getAmounts(targetNftId)++`]
+* [`++_registerBalanceTarget(targetNftId)++`]
+* [`++_increaseFees(targetNftId, amount)++`]
+* [`++_decreaseFees(targetNftId, amount)++`]
+* [`++_increaseLocked(targetNftId, amount)++`]
+* [`++_decreaseLocked(targetNftId, amount)++`]
+* [`++_increaseBalance(targetNftId, amount)++`]
+* [`++_decreaseBalance(targetNftId, amount)++`]
+* [`++_setLastUpdatedIn(targetNftId)++`]
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+* [`++__AccessManaged_init(initialAuthority)++`]
+* [`++__AccessManaged_init_unchained(initialAuthority)++`]
+* [`++authority()++`]
+* [`++setAuthority(newAuthority)++`]
+* [`++isConsumingScheduledOp()++`]
+* [`++_setAuthority(newAuthority)++`]
+* [`++_checkCanCall(caller, data)++`]
+
+[.contract-subindex-inherited]
+.IAccessManaged
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+* [`++__Context_init()++`]
+* [`++__Context_init_unchained()++`]
+* [`++_msgSender()++`]
+* [`++_msgData()++`]
+* [`++_contextSuffixLength()++`]
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+[.contract-subindex-inherited]
+.Lifecycle
+* [`++setInitialState(ttype, state)++`]
+* [`++setStateTransition(ttype, oldState, newState)++`]
+* [`++hasLifecycle(objectType)++`]
+* [`++getInitialState(objectType)++`]
+* [`++checkTransition(stateId, objectType, expectedFromId, toId)++`]
+* [`++isValidTransition(objectType, fromId, toId)++`]
+
+[.contract-subindex-inherited]
+.ILifecycle
+
+--
+
+[.contract-index]
+.Events
+--
+* [`++LogProductStoreComponentInfoCreated(componentNftId, state, createdby, txOrigin)++`]
+* [`++LogProductStoreComponentInfoUpdated(componentNftId, oldState, newState, updatedBy, txOrigin, lastUpdatedIn)++`]
+* [`++LogProductStorePoolInfoCreated(poolNftId, state, createdBy, txOrigin)++`]
+* [`++LogProductStorePoolInfoUpdated(poolNftId, oldState, newState, updatedBy, txOrigin, lastUpdatedIn)++`]
+* [`++LogProductStoreDistributorTypeInfoCreated(distributorType, state, createdBy, txOrigin)++`]
+* [`++LogProductStoreDistributorTypeInfoUpdated(distributorType, oldState, newState, updatedBy, txOrigin, lastUpdatedIn)++`]
+* [`++LogProductStoreDistributorInfoCreated(distributorNftId, state, createdBy, txOrigin)++`]
+* [`++LogProductStoreDistributorInfoUpdated(distributorNftId, oldState, newState, updatedBy, txOrigin, lastUpdatedIn)++`]
+* [`++LogProductStoreReferralInfoCreated(referralId, state, createdBy, txOrigin)++`]
+* [`++LogProductStoreReferralInfoUpdated(referralId, oldState, newState, updatedBy, txOrigin, lastUpdatedIn)++`]
+* [`++LogProductStoreBundleInfoCreated(bundleNftId, state, createdBy, txOrigin)++`]
+* [`++LogProductStoreBundleInfoUpdated(bundleNftId, oldState, newState, updatedBy, txOrigin, lastUpdatedIn)++`]
+* [`++LogProductStoreRequestInfoCreated(requestId, state, createdBy, txOrigin)++`]
+* [`++LogProductStoreRequestInfoUpdated(requestId, oldState, newState, updatedBy, txOrigin, lastUpdatedIn)++`]
+
+[.contract-subindex-inherited]
+.BaseStore
+
+[.contract-subindex-inherited]
+.IBaseStore
+
+[.contract-subindex-inherited]
+.ObjectLifecycle
+
+[.contract-subindex-inherited]
+.ObjectCounter
+
+[.contract-subindex-inherited]
+.BalanceStore
+* [`++LogBalanceStoreTargetRegistered(targetNftId)++`]
+* [`++LogBalanceStoreFeesIncreased(targetNftId, addedAmount, newBalance, lastUpdatedIn)++`]
+* [`++LogBalanceStoreFeesDecreased(targetNftId, addedAmount, newBalance, lastUpdatedIn)++`]
+* [`++LogBalanceStoreLockedIncreased(targetNftId, addedAmount, newBalance, lastUpdatedIn)++`]
+* [`++LogBalanceStoreLockedDecreased(targetNftId, addedAmount, newBalance, lastUpdatedIn)++`]
+* [`++LogBalanceStoreBalanceIncreased(targetNftId, addedAmount, newBalance, lastUpdatedIn)++`]
+* [`++LogBalanceStoreBalanceDecreased(targetNftId, addedAmount, newBalance, lastUpdatedIn)++`]
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+[.contract-subindex-inherited]
+.Lifecycle
+
+[.contract-subindex-inherited]
+.ILifecycle
+
+--
+
+[.contract-item]
+[[InstanceStore-initialize--]]
+==== `[.contract-item-name]#++initialize++#++()++` [.item-kind]#public#
+
+This initializer needs to be called from the instance itself.
+
+[.contract-item]
+[[InstanceStore-createComponent-NftId-struct-IComponents-ComponentInfo-]]
+==== `[.contract-item-name]#++createComponent++#++(NftId componentNftId, struct IComponents.ComponentInfo componentInfo)++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceStore-updateComponent-NftId-struct-IComponents-ComponentInfo-StateId-]]
+==== `[.contract-item-name]#++updateComponent++#++(NftId componentNftId, struct IComponents.ComponentInfo componentInfo, StateId newState)++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceStore-getComponentInfo-NftId-]]
+==== `[.contract-item-name]#++getComponentInfo++#++(NftId componentNftId) → struct IComponents.ComponentInfo componentInfo++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceStore-createPool-NftId-struct-IComponents-PoolInfo-]]
+==== `[.contract-item-name]#++createPool++#++(NftId poolNftId, struct IComponents.PoolInfo info)++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceStore-updatePool-NftId-struct-IComponents-PoolInfo-StateId-]]
+==== `[.contract-item-name]#++updatePool++#++(NftId poolNftId, struct IComponents.PoolInfo info, StateId newState)++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceStore-getPoolInfo-NftId-]]
+==== `[.contract-item-name]#++getPoolInfo++#++(NftId poolNftId) → struct IComponents.PoolInfo info++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceStore-createDistributorType-DistributorType-struct-IDistribution-DistributorTypeInfo-]]
+==== `[.contract-item-name]#++createDistributorType++#++(DistributorType distributorType, struct IDistribution.DistributorTypeInfo info)++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceStore-updateDistributorType-DistributorType-struct-IDistribution-DistributorTypeInfo-StateId-]]
+==== `[.contract-item-name]#++updateDistributorType++#++(DistributorType distributorType, struct IDistribution.DistributorTypeInfo info, StateId newState)++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceStore-updateDistributorTypeState-DistributorType-StateId-]]
+==== `[.contract-item-name]#++updateDistributorTypeState++#++(DistributorType distributorType, StateId newState)++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceStore-getDistributorTypeInfo-DistributorType-]]
+==== `[.contract-item-name]#++getDistributorTypeInfo++#++(DistributorType distributorType) → struct IDistribution.DistributorTypeInfo info++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceStore-createDistributor-NftId-struct-IDistribution-DistributorInfo-]]
+==== `[.contract-item-name]#++createDistributor++#++(NftId distributorNftId, struct IDistribution.DistributorInfo info)++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceStore-updateDistributor-NftId-struct-IDistribution-DistributorInfo-StateId-]]
+==== `[.contract-item-name]#++updateDistributor++#++(NftId distributorNftId, struct IDistribution.DistributorInfo info, StateId newState)++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceStore-updateDistributorState-NftId-StateId-]]
+==== `[.contract-item-name]#++updateDistributorState++#++(NftId distributorNftId, StateId newState)++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceStore-getDistributorInfo-NftId-]]
+==== `[.contract-item-name]#++getDistributorInfo++#++(NftId distributorNftId) → struct IDistribution.DistributorInfo info++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceStore-createReferral-ReferralId-struct-IDistribution-ReferralInfo-]]
+==== `[.contract-item-name]#++createReferral++#++(ReferralId referralId, struct IDistribution.ReferralInfo referralInfo)++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceStore-updateReferral-ReferralId-struct-IDistribution-ReferralInfo-StateId-]]
+==== `[.contract-item-name]#++updateReferral++#++(ReferralId referralId, struct IDistribution.ReferralInfo referralInfo, StateId newState)++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceStore-updateReferralState-ReferralId-StateId-]]
+==== `[.contract-item-name]#++updateReferralState++#++(ReferralId referralId, StateId newState)++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceStore-getReferralInfo-ReferralId-]]
+==== `[.contract-item-name]#++getReferralInfo++#++(ReferralId referralId) → struct IDistribution.ReferralInfo referralInfo++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceStore-createBundle-NftId-struct-IBundle-BundleInfo-]]
+==== `[.contract-item-name]#++createBundle++#++(NftId bundleNftId, struct IBundle.BundleInfo bundle)++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceStore-updateBundle-NftId-struct-IBundle-BundleInfo-StateId-]]
+==== `[.contract-item-name]#++updateBundle++#++(NftId bundleNftId, struct IBundle.BundleInfo bundle, StateId newState)++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceStore-updateBundleState-NftId-StateId-]]
+==== `[.contract-item-name]#++updateBundleState++#++(NftId bundleNftId, StateId newState)++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceStore-getBundleInfo-NftId-]]
+==== `[.contract-item-name]#++getBundleInfo++#++(NftId bundleNftId) → struct IBundle.BundleInfo bundle++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceStore-createRequest-struct-IOracle-RequestInfo-]]
+==== `[.contract-item-name]#++createRequest++#++(struct IOracle.RequestInfo request) → RequestId requestId++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceStore-updateRequest-RequestId-struct-IOracle-RequestInfo-StateId-]]
+==== `[.contract-item-name]#++updateRequest++#++(RequestId requestId, struct IOracle.RequestInfo request, StateId newState)++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceStore-updateRequestState-RequestId-StateId-]]
+==== `[.contract-item-name]#++updateRequestState++#++(RequestId requestId, StateId newState)++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceStore-getRequestInfo-RequestId-]]
+==== `[.contract-item-name]#++getRequestInfo++#++(RequestId requestId) → struct IOracle.RequestInfo request++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceStore-increaseBalance-NftId-Amount-]]
+==== `[.contract-item-name]#++increaseBalance++#++(NftId targetNftId, Amount amount) → Amount newBalance++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceStore-decreaseBalance-NftId-Amount-]]
+==== `[.contract-item-name]#++decreaseBalance++#++(NftId targetNftId, Amount amount) → Amount newBalance++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceStore-increaseFees-NftId-Amount-]]
+==== `[.contract-item-name]#++increaseFees++#++(NftId targetNftId, Amount amount) → Amount newFeeBalance++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceStore-decreaseFees-NftId-Amount-]]
+==== `[.contract-item-name]#++decreaseFees++#++(NftId targetNftId, Amount amount) → Amount newFeeBalance++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceStore-increaseLocked-NftId-Amount-]]
+==== `[.contract-item-name]#++increaseLocked++#++(NftId targetNftId, Amount amount) → Amount newBalance++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceStore-decreaseLocked-NftId-Amount-]]
+==== `[.contract-item-name]#++decreaseLocked++#++(NftId targetNftId, Amount amount) → Amount newBalance++` [.item-kind]#external#
+
+[.contract-item]
+[[InstanceStore-LogProductStoreComponentInfoCreated-NftId-StateId-address-address-]]
+==== `[.contract-item-name]#++LogProductStoreComponentInfoCreated++#++(NftId componentNftId, StateId state, address createdby, address txOrigin)++` [.item-kind]#event#
+
+[.contract-item]
+[[InstanceStore-LogProductStoreComponentInfoUpdated-NftId-StateId-StateId-address-address-Blocknumber-]]
+==== `[.contract-item-name]#++LogProductStoreComponentInfoUpdated++#++(NftId componentNftId, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn)++` [.item-kind]#event#
+
+[.contract-item]
+[[InstanceStore-LogProductStorePoolInfoCreated-NftId-StateId-address-address-]]
+==== `[.contract-item-name]#++LogProductStorePoolInfoCreated++#++(NftId poolNftId, StateId state, address createdBy, address txOrigin)++` [.item-kind]#event#
+
+[.contract-item]
+[[InstanceStore-LogProductStorePoolInfoUpdated-NftId-StateId-StateId-address-address-Blocknumber-]]
+==== `[.contract-item-name]#++LogProductStorePoolInfoUpdated++#++(NftId poolNftId, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn)++` [.item-kind]#event#
+
+[.contract-item]
+[[InstanceStore-LogProductStoreDistributorTypeInfoCreated-DistributorType-StateId-address-address-]]
+==== `[.contract-item-name]#++LogProductStoreDistributorTypeInfoCreated++#++(DistributorType distributorType, StateId state, address createdBy, address txOrigin)++` [.item-kind]#event#
+
+[.contract-item]
+[[InstanceStore-LogProductStoreDistributorTypeInfoUpdated-DistributorType-StateId-StateId-address-address-Blocknumber-]]
+==== `[.contract-item-name]#++LogProductStoreDistributorTypeInfoUpdated++#++(DistributorType distributorType, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn)++` [.item-kind]#event#
+
+[.contract-item]
+[[InstanceStore-LogProductStoreDistributorInfoCreated-NftId-StateId-address-address-]]
+==== `[.contract-item-name]#++LogProductStoreDistributorInfoCreated++#++(NftId distributorNftId, StateId state, address createdBy, address txOrigin)++` [.item-kind]#event#
+
+[.contract-item]
+[[InstanceStore-LogProductStoreDistributorInfoUpdated-NftId-StateId-StateId-address-address-Blocknumber-]]
+==== `[.contract-item-name]#++LogProductStoreDistributorInfoUpdated++#++(NftId distributorNftId, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn)++` [.item-kind]#event#
+
+[.contract-item]
+[[InstanceStore-LogProductStoreReferralInfoCreated-ReferralId-StateId-address-address-]]
+==== `[.contract-item-name]#++LogProductStoreReferralInfoCreated++#++(ReferralId referralId, StateId state, address createdBy, address txOrigin)++` [.item-kind]#event#
+
+[.contract-item]
+[[InstanceStore-LogProductStoreReferralInfoUpdated-ReferralId-StateId-StateId-address-address-Blocknumber-]]
+==== `[.contract-item-name]#++LogProductStoreReferralInfoUpdated++#++(ReferralId referralId, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn)++` [.item-kind]#event#
+
+[.contract-item]
+[[InstanceStore-LogProductStoreBundleInfoCreated-NftId-StateId-address-address-]]
+==== `[.contract-item-name]#++LogProductStoreBundleInfoCreated++#++(NftId bundleNftId, StateId state, address createdBy, address txOrigin)++` [.item-kind]#event#
+
+[.contract-item]
+[[InstanceStore-LogProductStoreBundleInfoUpdated-NftId-StateId-StateId-address-address-Blocknumber-]]
+==== `[.contract-item-name]#++LogProductStoreBundleInfoUpdated++#++(NftId bundleNftId, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn)++` [.item-kind]#event#
+
+[.contract-item]
+[[InstanceStore-LogProductStoreRequestInfoCreated-RequestId-StateId-address-address-]]
+==== `[.contract-item-name]#++LogProductStoreRequestInfoCreated++#++(RequestId requestId, StateId state, address createdBy, address txOrigin)++` [.item-kind]#event#
+
+[.contract-item]
+[[InstanceStore-LogProductStoreRequestInfoUpdated-RequestId-StateId-StateId-address-address-Blocknumber-]]
+==== `[.contract-item-name]#++LogProductStoreRequestInfoUpdated++#++(RequestId requestId, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn)++` [.item-kind]#event#
+
