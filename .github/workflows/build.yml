@@ -5,8 +5,8 @@ on:
     branches: [main, develop]
     tags: '*'
   pull_request:
-  schedule:
-    - cron: "33 3 * * *"
+  # schedule:
+  #   - cron: "33 3 * * *"
 
 jobs:
   build_hardhat:
@@ -86,27 +86,12 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
 
-      - name: Run fasts tests without long running tests
+      - name: Run tests 
         # trigger fast tests for regular pull requests
         if: | 
           github.event_name != 'pull_request' || 
           ! contains(github.event.pull_request.labels.*.name, 'run_all_tests')
-        # env:
-        #   FOUNDRY_PROFILE: ci
-        run: forge test -vv --nmt "_longRunning"
-      
-      - name: Run all tests (label 'run_all_tests')
-        # run all tests for pull requests with label 'run_all_tests' 
-        # or once a day when triggered thru schedule
-        if: |
-          (
-            github.event_name == 'pull_request' 
-            && contains(github.event.pull_request.labels.*.name, 'run_all_tests')
-          ) || 
-          github.event.schedule == '33 3 * * *'
-        # env:
-        #   FOUNDRY_PROFILE: ci
-        run: forge test -vv
+        run: forge test -vv 
 
   publish:
     name: Publish npm package to npmjs
