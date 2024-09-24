@@ -368,6 +368,7 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         undefined,
         {
             libraries: {
+                BlocknumberLib: blockNumberLibAddress,
                 ContractLib: contractLibAddress,
                 ObjectTypeLib: objectTypeLibAddress,
                 RoleIdLib: roleIdLibAddress,
