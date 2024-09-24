@@ -20,8 +20,8 @@ abstract contract Registerable is
     NftOwnable,
     IRegisterable
 {
-    // keccak256(abi.encode(uint256(keccak256("gif-next.contracts.shared.Registerable.sol")) - 1)) & ~bytes32(uint256(0xff));
-    bytes32 public constant REGISTERABLE_LOCATION_V1 = 0x6548007c3f4340f82f348c576c0ff69f4f529cadd5ad41f96aae61abceeaa300;
+    // keccak256(abi.encode(uint256(keccak256("etherisc.gif.Registerable@3.0.0")) - 1)) & ~bytes32(uint256(0xff));
+    bytes32 public constant REGISTERABLE_STORAGE_LOCATION_V3_0 = 0x66ed5788a8bec6ff1e7b389e8e939876404dd6c85eb5e16ebccc687f21cd6200;
 
     struct RegisterableStorage {
         NftId _parentNftId;
@@ -100,7 +100,7 @@ abstract contract Registerable is
 
     function _getRegisterableStorage() private pure returns (RegisterableStorage storage $) {
         assembly {
-            $.slot := REGISTERABLE_LOCATION_V1
+            $.slot := REGISTERABLE_STORAGE_LOCATION_V3_0
         }
     }
 }

@@ -33,11 +33,16 @@ contract PolicyService is
     Service, 
     IPolicyService
 {
-    IAccountingService private _accountingService;
-    IComponentService internal _componentService;
-    IDistributionService internal _distributionService;
-    IPoolService internal _poolService;
-    IPricingService internal _pricingService;
+    // keccak256(abi.encode(uint256(keccak256("etherisc.gif.PolicyService@3.0.0")) - 1)) & ~bytes32(uint256(0xff));
+    bytes32 private constant POLICY_SERVICE_STORAGE_LOCATION_V3_0 = 0x862c7110061e72e577b74a9231a4d5d6d7c0698598767dc8092f941bca614500;
+
+    struct PolicyServiceStorage {
+        IAccountingService _accountingService;
+        IComponentService _componentService;
+        IDistributionService _distributionService;
+        IPoolService _poolService;
+        IPricingService _pricingService;
+    }
 
     function _initialize(
         address owner, 
@@ -55,11 +60,12 @@ contract PolicyService is
         __Service_init(authority, registry, owner);
 
         VersionPart majorVersion = getVersion().toMajorPart();
-        _accountingService = IAccountingService(getRegistry().getServiceAddress(ACCOUNTING(), majorVersion));
-        _componentService = IComponentService(getRegistry().getServiceAddress(COMPONENT(), majorVersion));
-        _poolService = IPoolService(getRegistry().getServiceAddress(POOL(), majorVersion));
-        _distributionService = IDistributionService(getRegistry().getServiceAddress(DISTRIBUTION(), majorVersion));
-        _pricingService = IPricingService(getRegistry().getServiceAddress(PRICE(), majorVersion));
+        PolicyServiceStorage storage $ = _getPolicyServiceStorage();
+        $._accountingService = IAccountingService(getRegistry().getServiceAddress(ACCOUNTING(), majorVersion));
+        $._componentService = IComponentService(getRegistry().getServiceAddress(COMPONENT(), majorVersion));
+        $._poolService = IPoolService(getRegistry().getServiceAddress(POOL(), majorVersion));
+        $._distributionService = IDistributionService(getRegistry().getServiceAddress(DISTRIBUTION(), majorVersion));
+        $._pricingService = IPricingService(getRegistry().getServiceAddress(PRICE(), majorVersion));
 
         _registerInterface(type(IPolicyService).interfaceId);
     }
@@ -77,9 +83,10 @@ contract PolicyService is
         (IInstance instance,,) = _getAndVerifyCallerForPolicy(applicationNftId);
 
         // check policy is in state applied
-        if (instance.getInstanceReader().getPolicyState(applicationNftId) != APPLIED()) {
-            revert ErrorPolicyServicePolicyStateNotApplied(applicationNftId);
-        }
+        // commented to reduce contract size, the only "APPLIED -> DECLINED" transition exists
+        //if (instance.getInstanceReader().getPolicyState(applicationNftId) != APPLIED()) {
+        //    revert ErrorPolicyServicePolicyStateNotApplied(applicationNftId);
+        //}
 
         // effects
         // store updated policy info
@@ -111,74 +118,89 @@ contract PolicyService is
         ) = _getAndVerifyCallerForPolicy(applicationNftId);
 
         // check policy is in state applied
+        // commented to reduce contract size, the only "APPLIED -> COLLATERALIZED" transition exists
         InstanceReader instanceReader = instance.getInstanceReader();
-        if (instanceReader.getPolicyState(applicationNftId) != APPLIED()) {
-            revert ErrorPolicyServicePolicyStateNotApplied(applicationNftId);
-        }
+        //if (instanceReader.getPolicyState(applicationNftId) != APPLIED()) {
+        //    revert ErrorPolicyServicePolicyStateNotApplied(applicationNftId);
+        //}
 
-        // effects
-        // actual collateralizaion
-        _poolService.lockCollateral(
-            instance,
-            address(instanceReader.getToken(productNftId)),
-            productNftId,
-            applicationNftId,
-            applicationInfo.bundleNftId,
-            applicationInfo.sumInsuredAmount);
+        PolicyServiceStorage storage $ = _getPolicyServiceStorage();
 
-        // optional activation of policy
-        if(activateAt.gtz()) {
-            applicationInfo = PolicyServiceLib.activate(applicationNftId, applicationInfo, activateAt);
-        }
+        {
+            RiskId riskId = applicationInfo.riskId;
+            NftId bundleNftId = applicationInfo.bundleNftId;
 
-        // update policy and set state to collateralized
-        instance.getProductStore().updatePolicy(
-            applicationNftId, 
-            applicationInfo, 
-            COLLATERALIZED());
+            {
+                // calculate premium
+                IPolicy.PremiumInfo memory premium = $._pricingService.calculatePremium(
+                    productNftId,
+                    riskId,
+                    applicationInfo.sumInsuredAmount,
+                    applicationInfo.lifetime,
+                    applicationInfo.applicationData,
+                    bundleNftId,
+                    applicationInfo.referralId);
 
-        // calculate and store premium
-        RiskId riskId = applicationInfo.riskId;
-        NftId bundleNftId = applicationInfo.bundleNftId;
+                premiumAmount = premium.premiumAmount;
 
-        IPolicy.PremiumInfo memory premium = _pricingService.calculatePremium(
-            productNftId,
-            riskId,
-            applicationInfo.sumInsuredAmount,
-            applicationInfo.lifetime,
-            applicationInfo.applicationData,
-            bundleNftId,
-            applicationInfo.referralId);
+                // check calculated premium does not exceed max premium amount
+                if (premiumAmount > maxPremiumAmount) {
+                    revert LogPolicyServiceMaxPremiumAmountExceeded(
+                        applicationNftId, 
+                        maxPremiumAmount, 
+                        premiumAmount);
+                }
 
-        if (premium.premiumAmount > maxPremiumAmount) {
-            revert LogPolicyServiceMaxPremiumAmountExceeded(
+                // create premium in instance
+                instance.getProductStore().createPremium(
+                    applicationNftId,
+                    premium);
+            }
+
+            // optional activation of policy
+            if(activateAt.gtz()) {
+                applicationInfo = PolicyServiceLib.activate(applicationNftId, applicationInfo, activateAt);
+            }
+
+            // TODO do not write applicationInfo if no changes where made -> add/use updatePolicyState()
+            // update policy and set state to collateralized
+            instance.getProductStore().updatePolicy(
                 applicationNftId, 
-                maxPremiumAmount, 
-                premium.premiumAmount);
+                applicationInfo, 
+                COLLATERALIZED());
+
+            // link policy to risk and bundle
+            {
+                NftId poolNftId = getRegistry().getParentNftId(bundleNftId);
+                instance.getRiskSet().linkPolicy(productNftId, riskId, applicationNftId);
+                instance.getBundleSet().linkPolicy(
+                    poolNftId,//getRegistry().getParentNftId(bundleNftId), 
+                    bundleNftId, 
+                    applicationNftId);
+            }
+
+            // actual collateralizaion
+            $._poolService.lockCollateral(
+                instance,
+                address(instanceReader.getToken(productNftId)),
+                productNftId,
+                applicationNftId,
+                bundleNftId,
+                applicationInfo.sumInsuredAmount);
         }
 
-        premiumAmount = premium.premiumAmount;
-        instance.getProductStore().createPremium(
-            applicationNftId,
-            premium);
-
-        // update referral counter if product has linked distributino component
+        // update referral counter if product has linked distribution component
         {
             IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
             if (productInfo.hasDistribution) {    
-                _distributionService.processReferral(
+                $._distributionService.processReferral(
                     productInfo.distributionNftId, 
                     applicationInfo.referralId);
             }
         }
 
-        // link policy to risk and bundle
-        NftId poolNftId = getRegistry().getParentNftId(bundleNftId);
-        instance.getRiskSet().linkPolicy(productNftId, riskId, applicationNftId);
-        instance.getBundleSet().linkPolicy(poolNftId, bundleNftId, applicationNftId);
-
         // log policy creation before interactions with token and policy holder
-        emit LogPolicyServicePolicyCreated(applicationNftId, premium.premiumAmount, activateAt);
+        emit LogPolicyServicePolicyCreated(applicationNftId, premiumAmount, activateAt);
 
         // interactions
         // callback to policy holder if applicable
@@ -404,9 +426,11 @@ contract PolicyService is
             revert ErrorPolicyServicePremiumNotPaid(policyNftId, policyInfo.premiumAmount);
         }
 
+        PolicyServiceStorage storage $ = _getPolicyServiceStorage();
+
         // effects
         // release (remaining) collateral that was blocked by policy
-        _poolService.releaseCollateral(
+        $._poolService.releaseCollateral(
             instance, 
             policyNftId, 
             policyInfo);
@@ -469,22 +493,24 @@ contract PolicyService is
             instanceReader, 
             productNftId);
 
+        PolicyServiceStorage storage $ = _getPolicyServiceStorage();
+
         // update product fees, distribution and pool fees 
-        _accountingService.increaseProductFees(
+        $._accountingService.increaseProductFees(
             instanceStore, 
             productNftId, 
             premium.productFeeVarAmount + premium.productFeeFixAmount);
 
         // update distribution fees and distributor commission and pool fees 
         if (!distributionNftId.eqz()) { // only call distribution service if a distribution component is connected to the product
-            _distributionService.processSale(
+            $._distributionService.processSale(
                 distributionNftId, 
                 referralId, 
                 premium);
         }
 
         // update pool and bundle fees 
-        _poolService.processSale(
+        $._poolService.processSale(
             bundleNftId, 
             premium);
     }
@@ -631,10 +657,19 @@ contract PolicyService is
         policyInfo = instance.getInstanceReader().getPolicyInfo(policyNftId);
 
         if (policyInfo.productNftId != productNftId) {
+            // TODO rename: ...or productNftId does not exist
+            // check with registry instead of store
             revert ErrorPolicyServicePolicyProductMismatch(
                 policyNftId, 
                 productNftId,
                 policyInfo.productNftId);
+        }
+    }
+
+    function _getPolicyServiceStorage() private pure returns (PolicyServiceStorage storage $) {
+        // solhint-disable-next-line no-inline-assembly
+        assembly {
+            $.slot := POLICY_SERVICE_STORAGE_LOCATION_V3_0
         }
     }
 

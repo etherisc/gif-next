@@ -18,7 +18,6 @@ interface IPoolService is IService {
     event LogPoolServiceWalletFunded(NftId poolNftId, address poolOwner, Amount amount);
     event LogPoolServiceWalletDefunded(NftId poolNftId, address poolOwner, Amount amount);
 
-    event LogPoolServiceBundleCreated(NftId instanceNftId, NftId poolNftId, NftId bundleNftId);
     event LogPoolServiceBundleClosed(NftId instanceNftId, NftId poolNftId, NftId bundleNftId);
 
     event LogPoolServiceBundleStaked(NftId instanceNftId, NftId poolNftId, NftId bundleNftId, Amount amount, Amount netAmount);
@@ -36,8 +35,6 @@ interface IPoolService is IService {
 
     error ErrorPoolServicePoolNotExternallyManaged(NftId poolNftId);
     error ErrorPoolServicePolicyPoolMismatch(NftId policyNftId, NftId productNftId, NftId expectedProductNftId);
-    error ErrorPoolServiceBundleOwnerRoleAlreadySet(NftId poolNftId);
-    error ErrorPoolServiceInvalidTransferAmount(Amount expectedAmount, Amount actualAmount);
     error ErrorPoolServiceBundlePoolMismatch(NftId bundleNftId, NftId poolNftId);
     error ErrorPoolServiceMaxBalanceAmountExceeded(NftId poolNftId, Amount maxBalanceAmount, Amount currentBalanceAmount, Amount transferAmount);
     error ErrorPoolServiceFeesWithdrawAmountExceedsLimit(Amount amount, Amount limit);

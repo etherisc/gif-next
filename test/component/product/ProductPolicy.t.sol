@@ -6,7 +6,7 @@ import {console} from "../../../lib/forge-std/src/Test.sol";
 import {IBundleService} from "../../../contracts/pool/IBundleService.sol";
 import {BundleSet} from "../../../contracts/instance/BundleSet.sol";
 import {GifTest} from "../../base/GifTest.sol";
-import {NftId} from "../../../contracts/type/NftId.sol";
+import {NftIdLib, NftId} from "../../../contracts/type/NftId.sol";
 import {IComponents} from "../../../contracts/instance/module/IComponents.sol";
 import {IDistribution} from "../../../contracts/instance/module/IDistribution.sol";
 import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
@@ -18,10 +18,12 @@ import {Timestamp, TimestampLib, zeroTimestamp} from "../../../contracts/type/Ti
 import {RiskId} from "../../../contracts/type/RiskId.sol";
 import {ReferralId, ReferralLib} from "../../../contracts/type/Referral.sol";
 import {ReferralId, ReferralLib} from "../../../contracts/type/Referral.sol";
-import {APPLIED, COLLATERALIZED, CLOSED, DECLINED, PAID, EXPECTED} from "../../../contracts/type/StateId.sol";
+import {StateIdLib, APPLIED, COLLATERALIZED, CLOSED, DECLINED, REVOKED, PAID, EXPECTED} from "../../../contracts/type/StateId.sol";
 import {POLICY} from "../../../contracts/type/ObjectType.sol";
 import {DistributorType} from "../../../contracts/type/DistributorType.sol";
 import {IPolicyService} from "../../../contracts/product/IPolicyService.sol";
+import {ILifecycle} from "../../../contracts/shared/ILifecycle.sol";
+
 
 // solhint-disable func-name-mixedcase
 contract ProductPolicyTest is GifTest {
@@ -375,7 +377,29 @@ contract ProductPolicyTest is GifTest {
         
     }
 
-    function test_productCreatePolicy_notApplied() public {
+    function test_productCreatePolicy_whenApplicationNotExist() public {
+       // GIVEN
+
+        vm.startPrank(productOwner);
+
+        NftId applicationNftId = NftIdLib.toNftId(1234567890);
+
+        assertTrue(instance.getProductStore().getState(applicationNftId.toKey32(POLICY())) == StateIdLib.zero(), "state not zero");
+
+        Amount maxPremiumAmount = AmountLib.toAmount(1000);
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IPolicyService.ErrorPolicyServicePolicyProductMismatch.selector,
+            applicationNftId,
+            productNftId,
+            NftIdLib.zero()));
+
+        // WHEN - policyNftId not exist
+        product.createPolicy2(applicationNftId, false, zeroTimestamp(), maxPremiumAmount); 
+    }
+
+    function test_productCreatePolicy_whenApplicationDeclined() public {
         // GIVEN
 
         vm.startPrank(productOwner);
@@ -387,7 +411,7 @@ contract ProductPolicyTest is GifTest {
         RiskId riskId = product.createRisk("42x4711", data);
 
         uint sumInsuredAmount = 1000;
-        NftId policyNftId = product.createApplication(
+        NftId applicationNftId = product.createApplication(
             customer,
             riskId,
             sumInsuredAmount,
@@ -396,21 +420,26 @@ contract ProductPolicyTest is GifTest {
             bundleNftId,
             ReferralLib.zero()
         );
-        assertTrue(policyNftId.gtz(), "policyNftId was zero");
-        assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
+        assertTrue(applicationNftId.gtz(), "applicationNftId was zero");
+        assertEq(chainNft.ownerOf(applicationNftId.toInt()), customer, "customer not owner of policyNftId");
 
-        assertTrue(instance.getProductStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
+        assertTrue(instance.getProductStore().getState(applicationNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
 
         Amount maxPremiumAmount = AmountLib.toAmount(1000);
-        product.decline(policyNftId);
+        product.decline(applicationNftId);
+
+        assertTrue(instance.getProductStore().getState(applicationNftId.toKey32(POLICY())) == DECLINED(), "state not DECLINED");
 
         // THEN
         vm.expectRevert(abi.encodeWithSelector(
-            IPolicyService.ErrorPolicyServicePolicyStateNotApplied.selector,
-            policyNftId));
+            ILifecycle.ErrorInvalidStateTransition.selector,
+            address(product.getInstance().getProductStore()),
+            POLICY(),
+            DECLINED(),
+            COLLATERALIZED()));
 
-        // WHEN - state not applied
-        product.createPolicy2(policyNftId, false, zeroTimestamp(), maxPremiumAmount); 
+        // WHEN - state declined
+        product.createPolicy2(applicationNftId, false, zeroTimestamp(), maxPremiumAmount); 
     }
 
 
@@ -1520,7 +1549,29 @@ contract ProductPolicyTest is GifTest {
         product.expire(policyNftId, expireAtTs);
     }
 
-    function test_productDeclinePolicy_notApplied() public {
+    function test_productDeclineApplication_whenApplicationNotExist() public {
+        // GIVEN
+        // !!! COMPILES WITH DOUBLE START PRANK !!! -> Foundry issue?
+        vm.startPrank(productOwner);
+
+        NftId applicationNftId = NftIdLib.toNftId(1234567890);
+
+        assertTrue(instance.getProductStore().getState(applicationNftId.toKey32(POLICY())) == StateIdLib.zero(), "state not zero");
+
+        vm.startPrank(productOwner);
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IPolicyService.ErrorPolicyServicePolicyProductMismatch.selector,
+            applicationNftId,
+            productNftId,
+            NftIdLib.zero()));
+
+        // WHEN - state not applied
+        product.decline(applicationNftId); 
+    }
+
+    function test_productDeclineApplication_whenApplicationRevoked() public {
         // GIVEN
 
         vm.startPrank(productOwner);
@@ -1532,7 +1583,7 @@ contract ProductPolicyTest is GifTest {
         RiskId riskId = product.createRisk("42x4711", data);
 
         uint sumInsuredAmount = 1000;
-        NftId policyNftId = product.createApplication(
+        NftId applicationNftId = product.createApplication(
             customer,
             riskId,
             sumInsuredAmount,
@@ -1541,23 +1592,27 @@ contract ProductPolicyTest is GifTest {
             bundleNftId,
             ReferralLib.zero()
         );
-        assertTrue(policyNftId.gtz(), "policyNftId was zero");
-        assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
+        assertTrue(applicationNftId.gtz(), "policyNftId was zero");
+        assertEq(chainNft.ownerOf(applicationNftId.toInt()), customer, "customer not owner of policyNftId");
 
-        assertTrue(instance.getProductStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
+        assertTrue(instance.getProductStore().getState(applicationNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
 
-        Amount maxPremiumAmount = AmountLib.toAmount(1000);
-        product.revoke(policyNftId);
+        product.revoke(applicationNftId);
+
+        assertTrue(instance.getProductStore().getState(applicationNftId.toKey32(POLICY())) == REVOKED(), "state not REVOKED");
 
         vm.startPrank(productOwner);
 
         // THEN
         vm.expectRevert(abi.encodeWithSelector(
-            IPolicyService.ErrorPolicyServicePolicyStateNotApplied.selector,
-            policyNftId));
+            ILifecycle.ErrorInvalidStateTransition.selector,
+            address(product.getInstance().getProductStore()),
+            POLICY(),
+            REVOKED(),
+            DECLINED()));
 
         // WHEN - state not applied
-        product.decline(policyNftId); 
+        product.decline(applicationNftId); 
     }
 
     function test_productCollectPremium_notCollateralized() public {

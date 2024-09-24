@@ -28,7 +28,12 @@ contract PricingService is
     Service, 
     IPricingService
 {
-    IDistributionService internal _distributionService;
+    // keccak256(abi.encode(uint256(keccak256("etherisc.gif.PricingService@3.0.0")) - 1)) & ~bytes32(uint256(0xff));
+    bytes32 public constant PRICING_SERVICE_STORAGE_LOCATION_V3_0 = 0x69339118ac24f243948ace3f64dcbea8699f7f0061492066c280ac597f7bd500;
+
+    struct PricingServiceStorage {
+        IDistributionService _distributionService;
+    }
 
     function _initialize(
         address owner, 
@@ -45,7 +50,8 @@ contract PricingService is
 
         __Service_init(authority, registry, owner);
 
-        _distributionService = IDistributionService(_getServiceAddress(DISTRIBUTION()));
+        PricingServiceStorage storage $ = _getPricingServiceStorage();
+        $._distributionService = IDistributionService(_getServiceAddress(DISTRIBUTION()));
 
         _registerInterface(type(IPricingService).interfaceId);
     }
@@ -243,9 +249,9 @@ contract PricingService is
         view 
         returns (IPolicy.PremiumInfo memory finalPremium)
     {
-
+        PricingServiceStorage storage $ = _getPricingServiceStorage();
         // if the referral is not valid, then the distribution owner gets everything
-        if (distributionNftId.eqz() || ! _distributionService.referralIsValid(distributionNftId, referralId)) {
+        if (distributionNftId.eqz() || ! $._distributionService.referralIsValid(distributionNftId, referralId)) {
             premium.distributionOwnerFeeFixAmount = premium.distributionFeeFixAmount;
             premium.distributionOwnerFeeVarAmount = premium.distributionFeeVarAmount;
             premium.premiumAmount = premium.fullPremiumAmount;
@@ -254,7 +260,7 @@ contract PricingService is
 
         Fee memory minDistributionOwnerFee = feeInfo.minDistributionOwnerFee;
 
-        // if the referral is valid, the the commission and discount are calculated based in the full premium
+        // if the referral is valid, then the commission and discount are calculated based in the full premium
         // the remaing amount goes to the distribution owner
         {
             IDistribution.ReferralInfo memory referralInfo = reader.getReferralInfo(referralId);
@@ -299,6 +305,12 @@ contract PricingService is
         premiumWithTargetWalletAmounts = premium;
     }
 
+    function _getPricingServiceStorage() private pure returns (PricingServiceStorage storage $) {
+        // solhint-disable-next-line no-inline-assembly
+        assembly {
+            $.slot := PRICING_SERVICE_STORAGE_LOCATION_V3_0
+        }
+    }
 
     function _getDomain() internal pure override returns(ObjectType) {
         return PRICE();
