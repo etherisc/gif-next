@@ -1,4 +1,4 @@
-import { AddressLike, Signer, resolveAddress } from "ethers";
+import { AddressLike, Block, Signer, resolveAddress } from "ethers";
 import { ethers as hhEthers } from "hardhat";
 import {
     ChainNft, ChainNft__factory,
@@ -97,6 +97,8 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         ],
         {
             libraries: {
+                AccessAdminLib: libraries.accessAdminLibAddress,
+                BlocknumberLib: libraries.blockNumberLibAddress,
                 ObjectTypeLib: libraries.objectTypeLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
                 SelectorLib: libraries.selectorLibAddress,
@@ -117,6 +119,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         {
             libraries: {
                 AccessAdminLib: libraries.accessAdminLibAddress,
+                BlocknumberLib: libraries.blockNumberLibAddress,
                 ContractLib: libraries.contractLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
@@ -160,6 +163,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         {
             libraries: {
                 AccessAdminLib: libraries.accessAdminLibAddress,
+                BlocknumberLib: libraries.blockNumberLibAddress,
                 ContractLib: libraries.contractLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
                 ObjectTypeLib: libraries.objectTypeLibAddress,
@@ -357,6 +361,8 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         [ "a41a84af9a430ef22e00d9c4a8012ce24830e7bf" ],
         { 
             libraries: { 
+                AccessAdminLib: libraries.accessAdminLibAddress,
+                BlocknumberLib: libraries.blockNumberLibAddress,
                 ObjectTypeLib: libraries.objectTypeLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
                 SelectorLib: libraries.selectorLibAddress,
