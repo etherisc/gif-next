@@ -170,7 +170,6 @@ export async function deployAndRegisterMasterInstance(
         { 
             libraries: {
                 AccessAdminLib: libraries.accessAdminLibAddress,
-                BlocknumberLib: libraries.blockNumberLibAddress,
                 AmountLib: libraries.amountLibAddress,
                 ClaimIdLib: libraries.claimIdLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
