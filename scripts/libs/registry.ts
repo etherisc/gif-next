@@ -1,4 +1,4 @@
-import { AddressLike, Block, Signer, resolveAddress } from "ethers";
+import { AddressLike, BaseContract, Contract, Signer, resolveAddress } from "ethers";
 import { ethers as hhEthers } from "hardhat";
 import {
     ChainNft, ChainNft__factory,
