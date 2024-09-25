@@ -90,6 +90,7 @@ export async function deployFireComponentContracts(libraries: LibraryAddresses, 
         [fireProductName],
         {
             libraries: {
+                BlocknumberLib: libraries.blockNumberLibAddress,
                 ObjectTypeLib: objectTypeLibAddress,
                 RoleIdLib: roleIdLibAddress,
                 SelectorLib: selectorLibAddress,
@@ -162,6 +163,7 @@ export async function deployFireComponentContracts(libraries: LibraryAddresses, 
         [firePoolName],
         {
             libraries: {
+                BlocknumberLib: libraries.blockNumberLibAddress,
                 ObjectTypeLib: objectTypeLibAddress,
                 RoleIdLib: roleIdLibAddress,
                 SelectorLib: selectorLibAddress,
