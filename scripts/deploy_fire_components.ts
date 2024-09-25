@@ -43,6 +43,7 @@ async function main() {
 export async function deployFireComponentContracts(libraries: LibraryAddresses, services: ServiceAddresses, fireOwner: Signer, registryOwner: Signer) {
     logger.info("===== deploying fire insurance components ...");
     
+    const accessAdminLibAddress = libraries.accessAdminLibAddress;
     const amountLibAddress = libraries.amountLibAddress;
     const blockNumberLibAddress = libraries.blockNumberLibAddress,;
     const contractLibAddress = libraries.contractLibAddress;
@@ -91,6 +92,7 @@ export async function deployFireComponentContracts(libraries: LibraryAddresses, 
         [fireProductName],
         {
             libraries: {
+                AccessAdminLib: accessAdminLibAddress,
                 BlocknumberLib: blockNumberLibAddress,
                 ObjectTypeLib: objectTypeLibAddress,
                 RoleIdLib: roleIdLibAddress,
@@ -164,6 +166,7 @@ export async function deployFireComponentContracts(libraries: LibraryAddresses, 
         [firePoolName],
         {
             libraries: {
+                AccessAdminLib: accessAdminLibAddress,
                 BlocknumberLib: blockNumberLibAddress,
                 ObjectTypeLib: objectTypeLibAddress,
                 RoleIdLib: roleIdLibAddress,
