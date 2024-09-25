@@ -164,7 +164,7 @@ export async function deployFireComponentContracts(libraries: LibraryAddresses, 
         [firePoolName],
         {
             libraries: {
-                BlocknumberLib: libraries.blocknumberLibAddress,
+                BlocknumberLib: blockNumberLibAddress,
                 ObjectTypeLib: objectTypeLibAddress,
                 RoleIdLib: roleIdLibAddress,
                 SelectorLib: selectorLibAddress,
