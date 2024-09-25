@@ -124,12 +124,13 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             release.salt
         ],
         { libraries: { 
-                ContractLib: libraries.contractLibAddress,
-                NftIdLib: libraries.nftIdLibAddress, 
-                RoleIdLib: libraries.roleIdLibAddress,
-                TimestampLib: libraries.timestampLibAddress,
-                VersionLib: libraries.versionLibAddress,
-            }});
+            BlocknumberLib: libraries.blockNumberLibAddress,
+            ContractLib: libraries.contractLibAddress,
+            NftIdLib: libraries.nftIdLibAddress, 
+            RoleIdLib: libraries.roleIdLibAddress,
+            TimestampLib: libraries.timestampLibAddress,
+            VersionLib: libraries.versionLibAddress,
+        }});
 
     const registryService = RegistryService__factory.connect(registryServiceAddress, owner);
 
