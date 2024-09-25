@@ -45,6 +45,7 @@ export async function deployAndRegisterMasterInstance(
         {
             libraries: {
                 AccessAdminLib: libraries.accessAdminLibAddress,
+                BlocknumberLib: libraries.blockNumberLibAddress,
                 ObjectTypeLib: libraries.objectTypeLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
                 SelectorLib: libraries.selectorLibAddress,
@@ -76,6 +77,7 @@ export async function deployAndRegisterMasterInstance(
         {
             libraries: {
                 AccessAdminLib: libraries.accessAdminLibAddress,
+                BlocknumberLib: libraries.blockNumberLibAddress,
                 ContractLib: libraries.contractLibAddress,
                 NftIdLib: libraries.nftIdLibAddress, 
                 RoleIdLib: libraries.roleIdLibAddress,
@@ -168,6 +170,7 @@ export async function deployAndRegisterMasterInstance(
         { 
             libraries: {
                 AccessAdminLib: libraries.accessAdminLibAddress,
+                BlocknumberLib: libraries.blockNumberLibAddress,
                 AmountLib: libraries.amountLibAddress,
                 ClaimIdLib: libraries.claimIdLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
