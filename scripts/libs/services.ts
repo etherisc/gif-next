@@ -157,6 +157,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             release.salt
         ],
         { libraries: {
+            BlocknumberLib: libraries.blockNumberLibAddress,
             ContractLib: libraries.contractLibAddress,
             NftIdLib: libraries.nftIdLibAddress,
             ObjectTypeLib: libraries.objectTypeLibAddress, 
@@ -182,6 +183,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             release.salt
         ],
         { libraries: { 
+            BlocknumberLib: libraries.blockNumberLibAddress,
             ContractLib: libraries.contractLibAddress,
             NftIdLib: libraries.nftIdLibAddress, 
             RoleIdLib: libraries.roleIdLibAddress,
