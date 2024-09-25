@@ -211,6 +211,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         ],
         { libraries: { 
             AmountLib: libraries.amountLibAddress,
+            BlocknumberLib: libraries.blockNumberLibAddress,
             ContractLib: libraries.contractLibAddress,
             NftIdLib: libraries.nftIdLibAddress, 
             RoleIdLib: libraries.roleIdLibAddress,
@@ -236,6 +237,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         ],
         { libraries: { 
             AmountLib: libraries.amountLibAddress,
+            BlocknumberLib: libraries.blockNumberLibAddress,
             ChainIdLib: libraries.chainIdLibAddress,
             ContractLib: libraries.contractLibAddress,
             FeeLib: libraries.feeLibAddress,
@@ -268,6 +270,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         ],
         { libraries: {
                 AmountLib: libraries.amountLibAddress,
+                BlocknumberLib: libraries.blockNumberLibAddress,
                 ContractLib: libraries.contractLibAddress,
                 DistributorTypeLib: libraries.distributorTypeLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
@@ -298,6 +301,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         ],
         { libraries: {
             AmountLib: libraries.amountLibAddress,
+            BlocknumberLib: libraries.blockNumberLibAddress,
             ContractLib: libraries.contractLibAddress,
             NftIdLib: libraries.nftIdLibAddress,
             RoleIdLib: libraries.roleIdLibAddress,
@@ -323,6 +327,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         ],
         { libraries: {
                 AmountLib: libraries.amountLibAddress,
+                BlocknumberLib: libraries.blockNumberLibAddress,
                 ContractLib: libraries.contractLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
                 PoolLib: libraries.poolLibAddress,
@@ -350,6 +355,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         ],
         { libraries: {
                 AmountLib: libraries.amountLibAddress,
+                BlocknumberLib: libraries.blockNumberLibAddress,
                 ContractLib: libraries.contractLibAddress,
                 PoolLib: libraries.poolLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
@@ -376,13 +382,14 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         ],
         { libraries: {
             ContractLib: libraries.contractLibAddress,
+            BlocknumberLib: libraries.blockNumberLibAddress,
             NftIdLib: libraries.nftIdLibAddress,
-                RequestIdLib: libraries.requestIdLibAddress,
-                RoleIdLib: libraries.roleIdLibAddress,
-                TimestampLib: libraries.timestampLibAddress,
-                VersionLib: libraries.versionLibAddress, 
-                ObjectTypeLib: libraries.objectTypeLibAddress,
-            }});
+            RequestIdLib: libraries.requestIdLibAddress,
+            RoleIdLib: libraries.roleIdLibAddress,
+            TimestampLib: libraries.timestampLibAddress,
+            VersionLib: libraries.versionLibAddress, 
+            ObjectTypeLib: libraries.objectTypeLibAddress,
+        }});
     
     const oracleServiceManager = oracleServiceManagerBaseContract as OracleServiceManager;
     const oracleService = OracleService__factory.connect(oracleServiceAddress, owner);
@@ -401,6 +408,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         ],
         { libraries: {
             ContractLib: libraries.contractLibAddress,
+            BlocknumberLib: libraries.blockNumberLibAddress,
             NftIdLib: libraries.nftIdLibAddress,
             RiskIdLib: libraries.riskIdLibAddress,
             RoleIdLib: libraries.roleIdLibAddress,
@@ -425,6 +433,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         ],
         { libraries: {
             AmountLib: libraries.amountLibAddress,
+            BlocknumberLib: libraries.blockNumberLibAddress,
             ContractLib: libraries.contractLibAddress,
             NftIdLib: libraries.nftIdLibAddress,
             PolicyServiceLib: libraries.policyServiceLibAddress,
@@ -451,6 +460,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         ],
         { libraries: {
                 AmountLib: libraries.amountLibAddress,
+                BlocknumberLib: libraries.blockNumberLibAddress,
                 ClaimIdLib: libraries.claimIdLibAddress,
                 ContractLib: libraries.contractLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
@@ -478,6 +488,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         ],
         { libraries: {
             AmountLib: libraries.amountLibAddress,
+            BlocknumberLib: libraries.blockNumberLibAddress,
             ContractLib: libraries.contractLibAddress,
             NftIdLib: libraries.nftIdLibAddress,
             ReferralLib: libraries.referralLibAddress,
