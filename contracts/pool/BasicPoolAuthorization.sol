@@ -23,7 +23,7 @@ contract BasicPoolAuthorization
                POOL(), 
                3,
                COMMIT_HASH,
-               true, 
+               TargetType.Component, 
                true)
      {}
 

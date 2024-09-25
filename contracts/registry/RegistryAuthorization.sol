@@ -5,6 +5,7 @@ import {IAccess} from "../authorization/IAccess.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IStaking} from "../staking/IStaking.sol";
 
+import {AccessAdminLib} from "../authorization/AccessAdminLib.sol";
 import {Authorization} from "../authorization/Authorization.sol";
 import {COMPONENT, POOL, REGISTRY, STAKING} from "../../contracts/type/ObjectType.sol";
 import {PUBLIC_ROLE} from "../type/RoleId.sol";
@@ -50,7 +51,7 @@ contract RegistryAuthorization
                REGISTRY(), 
                3, 
                commitHash, 
-               false, // isComponent
+               TargetType.Core,
                false) // includeTokenHandler
      { }
 
@@ -63,53 +64,53 @@ contract RegistryAuthorization
           // service roles (for all releases)
           _addRole(
                RoleIdLib.toGenericServiceRoleId(REGISTRY()), 
-               _toRoleInfo({
-                    adminRoleId: ADMIN_ROLE(),
-                    roleType: RoleType.Core,
-                    maxMemberCount: maxReleases, 
-                    name: REGISTRY_SERVICE_ROLE_NAME}));
+               AccessAdminLib.roleInfo(
+                    ADMIN_ROLE(),
+                    TargetType.Core,
+                    maxReleases, 
+                    REGISTRY_SERVICE_ROLE_NAME));
 
           _addRole(
                RoleIdLib.toGenericServiceRoleId(STAKING()), 
-               _toRoleInfo({
-                    adminRoleId: ADMIN_ROLE(),
-                    roleType: RoleType.Core,
-                    maxMemberCount: maxReleases, 
-                    name: STAKING_SERVICE_ROLE_NAME}));
+               AccessAdminLib.roleInfo(
+                    ADMIN_ROLE(),
+                    TargetType.Core,
+                    maxReleases, 
+                    STAKING_SERVICE_ROLE_NAME));
 
           _addRole(
                RoleIdLib.toGenericServiceRoleId(COMPONENT()), 
-               _toRoleInfo({
-                    adminRoleId: ADMIN_ROLE(),
-                    roleType: RoleType.Core,
-                    maxMemberCount: maxReleases, 
-                    name: COMPONENT_SERVICE_ROLE_NAME}));
+               AccessAdminLib.roleInfo(
+                    ADMIN_ROLE(),
+                    TargetType.Core,
+                    maxReleases, 
+                    COMPONENT_SERVICE_ROLE_NAME));
 
           _addRole(
                RoleIdLib.toGenericServiceRoleId(POOL()), 
-               _toRoleInfo({
-                    adminRoleId: ADMIN_ROLE(),
-                    roleType: RoleType.Core,
-                    maxMemberCount: maxReleases, 
-                    name: POOL_SERVICE_ROLE_NAME}));
+               AccessAdminLib.roleInfo(
+                    ADMIN_ROLE(),
+                    TargetType.Core,
+                    maxReleases, 
+                    POOL_SERVICE_ROLE_NAME));
 
           // gif admin role
           _addRole(
                GIF_ADMIN_ROLE(),
-               _toRoleInfo({
-                    adminRoleId: ADMIN_ROLE(),
-                    roleType: RoleType.Core,
-                    maxMemberCount: 2, // TODO decide on max member count
-                    name: GIF_ADMIN_ROLE_NAME}));
+               AccessAdminLib.roleInfo(
+                    ADMIN_ROLE(),
+                    TargetType.Custom, // custom is only type that allows role removal
+                    2, // TODO decide on max member count
+                    GIF_ADMIN_ROLE_NAME));
 
           // gif manager role
           _addRole(
                GIF_MANAGER_ROLE(), 
-               _toRoleInfo({
-                    adminRoleId: ADMIN_ROLE(),
-                    roleType: RoleType.Core,
-                    maxMemberCount: 1, // TODO decide on max member count
-                    name: GIF_MANAGER_ROLE_NAME}));
+               AccessAdminLib.roleInfo(
+                    ADMIN_ROLE(),
+                    TargetType.Custom, // custom is only type that allows role removal
+                    1, // TODO decide on max member count
+                    GIF_MANAGER_ROLE_NAME));
 
      }
 

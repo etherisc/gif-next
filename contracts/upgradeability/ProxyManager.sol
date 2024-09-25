@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import {ITransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
-import {Blocknumber, blockNumber} from "../type/Blocknumber.sol";
+import {Blocknumber, BlocknumberLib} from "../type/Blocknumber.sol";
 import {IVersionable} from "./IVersionable.sol";
 import {NftId} from "../type/NftId.sol";
 import {NftOwnable} from "../shared/NftOwnable.sol";
@@ -240,7 +240,7 @@ contract ProxyManager is
             implementation: implementation,
             activatedBy: activatedBy,
             activatedAt: TimestampLib.current(),
-            activatedIn: blockNumber()
+            activatedIn: BlocknumberLib.current()
         });
     }
 }

@@ -598,7 +598,7 @@ contract ProductPolicyTest is GifTest {
         
         // WHEN
         // wait 20 seconds to expire referral
-        vm.warp(20); 
+        vm.warp(block.timestamp + 20); 
 
         // THEN
         Timestamp activationAt = TimestampLib.current();
@@ -1132,7 +1132,8 @@ contract ProductPolicyTest is GifTest {
         assertEq(token.balanceOf(pool.getWallet()) - pb[pool.getWallet()], ep.poolPremiumAndFeeAmount.toInt(), "unexpecte pool balance (after)");
     }
 
-    function test_productPolicyClose() public {
+
+    function test_productPolicyCloseWithPremiumPayment() public {
         // GIVEN
         vm.startPrank(registryOwner);
         token.transfer(customer, 1000);
@@ -1194,13 +1195,13 @@ contract ProductPolicyTest is GifTest {
         console.log("before collateralization of", policyNftId.toInt());
         product.createPolicy(
             policyNftId, 
-            true, 
+            true, // require premium payment
             TimestampLib.current()); 
 
         assertTrue(instanceReader.getPolicyState(policyNftId) == COLLATERALIZED(), "policy state not COLLATERALIZED");
 
         // WHEN
-        vm.warp(100); // warp 100 seconds
+        vm.warp(block.timestamp + 100); // warp 100 seconds
         // solhint-disable-next-line 
         console.log("before close");
         product.close(policyNftId);
@@ -1226,7 +1227,8 @@ contract ProductPolicyTest is GifTest {
         assertEq(instanceBundleSet.activePolicies(bundleNftId), 0, "expected no active policy");
     }
 
-    function test_productPolicyClose_notPaid() public {
+
+    function test_productPolicyCloseNoPremiumPayment() public {
         // GIVEN
         vm.startPrank(registryOwner);
         token.transfer(customer, 1000);
@@ -1273,7 +1275,7 @@ contract ProductPolicyTest is GifTest {
             false, 
             TimestampLib.current()); 
 
-        vm.warp(100); // warp 100 seconds
+        vm.warp(block.timestamp + 100); // warp 100 seconds
 
         // THEN
         vm.expectRevert(abi.encodeWithSelector(

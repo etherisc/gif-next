@@ -22,7 +22,7 @@ contract BasicDistributionAuthorization
                DISTRIBUTION(), 
                3,
                COMMIT_HASH,
-               true, 
+               TargetType.Component, 
                true)
      {}
 

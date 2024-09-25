@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IAccessAdmin} from "../../contracts/authorization/IAccessAdmin.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 
+import {BUNDLE, COMPONENT, DISTRIBUTION, ORACLE, POOL, PRODUCT, POLICY, RISK, REQUEST} from "../../contracts/type/ObjectType.sol";
 import {GifTest} from "./GifTest.sol";
 import {InstanceLinkedComponent} from "../../contracts/shared/InstanceLinkedComponent.sol";
 import {NftId} from "../../contracts/type/NftId.sol";
 import {ObjectType} from "../../contracts/type/ObjectType.sol";
-import {BUNDLE, COMPONENT, DISTRIBUTION, ORACLE, POOL, PRODUCT, POLICY, RISK, REQUEST} from "../../contracts/type/ObjectType.sol";
+import {VersionPartLib} from "../../contracts/type/Version.sol";
 
 contract DeployAllTest is GifTest {
 
@@ -17,8 +19,10 @@ contract DeployAllTest is GifTest {
     }
 
     function test_deployAllSetup() public {
+        address releaseAdmin = releaseRegistry.getReleaseInfo(VersionPartLib.toVersionPart(3)).releaseAdmin;
+        _printAuthz(IAccessAdmin(releaseAdmin), "release v3");
         _printAuthz(instanceAdmin, "instance with components");
-        assertTrue(true);
+        // assertTrue(false, "oops");
     }
 
     function test_deploySimpleProduct() public {

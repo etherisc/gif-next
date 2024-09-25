@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IAccess} from "./IAccess.sol";
 import {IAuthorization} from "./IAuthorization.sol";
 
+import {AccessAdminLib} from "./AccessAdminLib.sol";
 import {ObjectType} from "../type/ObjectType.sol";
 import {RoleId, RoleIdLib} from "../type/RoleId.sol";
 import {ServiceAuthorization} from "../authorization/ServiceAuthorization.sol";
@@ -16,8 +18,10 @@ contract Authorization is
 
     // MUST match with AccessAdminLib.COMPONENT_ROLE_MIN
     uint64 public constant COMPONENT_ROLE_MIN = 110000;
+    uint64 public constant INSTANCE_ROLE_MIN = 100000;
 
     uint64 internal _nextGifContractRoleId;
+    uint64 internal _nextInstanceContractRoleId;
 
     string internal _tokenHandlerName = "ComponentTh";
     Str internal _tokenHandlerTarget;
@@ -28,28 +32,35 @@ contract Authorization is
         ObjectType domain,
         uint8 release,
         string memory commitHash,
-        bool isComponent,
+        IAccess.TargetType targetType,
         bool includeTokenHandler
     )
         ServiceAuthorization(mainTargetName, domain, release, commitHash)
     {
-        _nextGifContractRoleId = 10;
+        // IMPORTANT must match with AccessAdminLib.CORE_ROLE_MIN
+        _nextGifContractRoleId = 100;
+        _nextInstanceContractRoleId = INSTANCE_ROLE_MIN;
 
         // setup main target
-        if (isComponent) {
+        // special case: core targets
+        if (targetType == IAccess.TargetType.Core) {
+            _addGifTarget(_mainTargetName);
+        // special case instances
+        } else if (targetType == IAccess.TargetType.Instance) {
+            _addInstanceTarget(_mainTargetName);
+        // all other target types
+        } else {
             if (domain.eqz()) {
                 revert ErrorAuthorizationTargetDomainZero();
             }
 
             RoleId mainRoleId = RoleIdLib.toRoleId(COMPONENT_ROLE_MIN);
-            string memory mainRolName = _toTargetRoleName(_mainTargetName);
+            string memory mainRoleName = _toTargetRoleName(_mainTargetName);
 
             _addTargetWithRole(
                 _mainTargetName, 
                 mainRoleId,
-                mainRolName);
-        } else {
-            _addGifTarget(_mainTargetName);
+                mainRoleName);
         }
 
         // setup use case specific parts
@@ -120,9 +131,9 @@ contract Authorization is
     function _addCustomRole(RoleId roleId, RoleId adminRoleId, uint32 maxMemberCount, string memory name) internal {
         _addRole(
             roleId,
-            _toRoleInfo(
+            AccessAdminLib.roleInfo(
                 adminRoleId,
-                RoleType.Custom,
+                TargetType.Custom,
                 maxMemberCount,
                 name));
     }
@@ -141,6 +152,16 @@ contract Authorization is
             contractRoleName);
     }
 
+    /// @dev Add an instance target with its corresponding contract role
+    function _addInstanceTarget(string memory contractName) internal {
+        RoleId contractRoleId = RoleIdLib.toRoleId(_nextInstanceContractRoleId++);
+        string memory contractRoleName = _toTargetRoleName(contractName);
+
+        _addTargetWithRole(
+            contractName, 
+            contractRoleId,
+            contractRoleName);
+    }
 
     /// @dev Use this method to to add an authorized target.
     function _addTarget(string memory name) internal {

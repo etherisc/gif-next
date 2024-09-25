@@ -63,7 +63,6 @@ contract ReleaseAdmin is
         external
         reinitializer(uint64(release.toInt()))
     {
-
         // checks
         AccessAdminLib.checkRegistry(registry);
 
@@ -78,6 +77,8 @@ contract ReleaseAdmin is
 
         // link nft ownability to registry
         _linkToNftOwnable(registry);
+
+        _createRoles(_serviceAuthorization);
 
         // setup release contract
         _setupReleaseRegistry(releaseRegistry);
@@ -165,7 +166,8 @@ contract ReleaseAdmin is
         string memory serviceTargetName = ObjectTypeLib.toVersionedName(
             baseName, "Service", release);
 
-        _createUncheckedTarget(address(service), serviceTargetName, TargetType.Service);
+        // create unchecked target
+        _createTarget(address(service), serviceTargetName, TargetType.Service, false);
     }
 
     //--- private initialization functions -------------------------------------------//
@@ -174,21 +176,23 @@ contract ReleaseAdmin is
         private 
         onlyInitializing()
     {
-        _createManagedTarget(address(this), RELEASE_ADMIN_TARGET_NAME, IAccess.TargetType.Core);
 
         _createRole(
             RELEASE_REGISTRY_ROLE(), 
-            AccessAdminLib.toRole({
-                adminRoleId: ADMIN_ROLE(),
-                roleType: RoleType.Contract,
-                maxMemberCount: 1,
-                name: RELEASE_REGISTRY_ROLE_NAME}));
+            AccessAdminLib.coreRoleInfo(RELEASE_REGISTRY_ROLE_NAME),
+            true); // revets on existing role
+
+        _createTarget(
+            address(this), 
+            RELEASE_ADMIN_TARGET_NAME,
+            IAccess.TargetType.Core, 
+            true); // check authority maches
 
         FunctionInfo[] memory functions;
         functions = new FunctionInfo[](2);
         functions[0] = AccessAdminLib.toFunction(ReleaseAdmin.authorizeService.selector, "authorizeService");
         functions[1] = AccessAdminLib.toFunction(ReleaseAdmin.setServiceLocked.selector, "setServiceLocked");
-        _authorizeTargetFunctions(address(this), RELEASE_REGISTRY_ROLE(), functions, true);
+        _authorizeTargetFunctions(address(this), RELEASE_REGISTRY_ROLE(), functions, false, true);
 
         _grantRoleToAccount(RELEASE_REGISTRY_ROLE(), releaseRegistry);
     }

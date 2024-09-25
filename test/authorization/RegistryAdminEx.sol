@@ -33,15 +33,16 @@ contract RegistryAdminEx is RegistryAdmin {
         accessManagedMock = new AccessManagedMock(address(authority()));
 
         // create target for access managed mock
-        _createUncheckedTarget(
+        _createTarget(
             address(accessManagedMock), 
             "AccessManagedMock", 
-            IAccess.TargetType.Component); // check authority
+            IAccess.TargetType.Component,
+            false); // don't check authority
 
         // grant permissions to public role for access managed mock
         FunctionInfo[] memory functions;
         functions = new FunctionInfo[](1);
         functions[0] = AccessAdminLib.toFunction(AccessManagedMock.increaseCounter1.selector, "increaseCounter1");
-        _authorizeTargetFunctions(address(accessManagedMock), PUBLIC_ROLE(), functions, true);
+        _authorizeTargetFunctions(address(accessManagedMock), PUBLIC_ROLE(), functions, true, false);
     }
 }

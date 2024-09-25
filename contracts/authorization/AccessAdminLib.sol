@@ -7,13 +7,15 @@ import {IAccess} from "./IAccess.sol";
 import {IAccessAdmin} from "./IAccessAdmin.sol";
 import {IAuthorization} from "./IAuthorization.sol";
 import {IComponent} from "../shared/IComponent.sol";
+import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IService} from "../shared/IService.sol";
 import {IServiceAuthorization} from "./IServiceAuthorization.sol";
 
+import {BlocknumberLib} from "../type/Blocknumber.sol";
 import {ContractLib} from "../shared/ContractLib.sol";
 import {ObjectType} from "../type/ObjectType.sol";
-import {RoleId, RoleIdLib} from "../type/RoleId.sol";
+import {RoleId, RoleIdLib, ADMIN_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {SelectorLib} from "../type/Selector.sol";
 import {Str, StrLib} from "../type/String.sol";
 import {TimestampLib} from "../type/Timestamp.sol";
@@ -40,6 +42,126 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
     uint64 public constant CUSTOM_ROLE_MIN      = 1000000;
 
 
+    function ADMIN_ROLE_NAME() public pure returns (string memory) { 
+        return "AdminRole"; 
+    }
+
+
+    function isAdminRoleName(string memory name) public pure returns (bool) { 
+        return StrLib.eq(name, ADMIN_ROLE_NAME()); 
+    }
+
+
+    function PUBLIC_ROLE_NAME() public pure returns (string memory) { 
+        return "PublicRole"; 
+    }
+
+
+    function getAdminRole() public pure returns (RoleId adminRoleId) { 
+        // see oz AccessManagerUpgradeable
+        return RoleId.wrap(type(uint64).min); 
+    }
+
+
+    function getPublicRole() public pure returns (RoleId publicRoleId) { 
+        // see oz AccessManagerUpgradeable
+        return RoleId.wrap(type(uint64).max); 
+    }
+
+
+    function isAdminOrPublicRole(string memory name) 
+        public
+        view
+        returns (bool)
+    {
+        return StrLib.eq(name, ADMIN_ROLE_NAME())
+            || StrLib.eq(name, PUBLIC_ROLE_NAME()); 
+    }
+
+
+    function isDynamicRoleId(RoleId roleId) 
+        public 
+        pure 
+        returns (bool)
+    {
+        return roleId.toInt() >= COMPONENT_ROLE_MIN;
+    }
+
+
+    function adminRoleInfo()
+        public 
+        view 
+        returns (IAccess.RoleInfo memory)
+    {
+        return roleInfo(
+            getAdminRole(), 
+            IAccess.TargetType.Core, 
+            1, 
+            ADMIN_ROLE_NAME());
+    }
+
+
+    function publicRoleInfo()
+        public 
+        view 
+        returns (IAccess.RoleInfo memory)
+    {
+        return roleInfo(
+            getAdminRole(), 
+            IAccess.TargetType.Custom, 
+            type(uint32).max, 
+            PUBLIC_ROLE_NAME());
+    }
+
+
+    function coreRoleInfo(string memory name)
+        public 
+        view 
+        returns (IAccess.RoleInfo memory)
+    {
+        return roleInfo(
+            getAdminRole(), 
+            IAccess.TargetType.Core, 
+            1, 
+            name);
+    }
+
+
+    function serviceRoleInfo(string memory serviceName)
+        public 
+        view 
+        returns (IAccess.RoleInfo memory)
+    {
+        return roleInfo(
+            getAdminRole(), 
+            IAccess.TargetType.Service, 
+            1, 
+            serviceName);
+    }
+
+
+    /// @dev Creates a role info object from the provided parameters
+    function roleInfo(
+        RoleId adminRoleId, 
+        IAccess.TargetType targetType, 
+        uint32 maxMemberCount, 
+        string memory roleName
+    )
+        public 
+        view 
+        returns (IAccess.RoleInfo memory info)
+    {
+        return IAccess.RoleInfo({
+            name: StrLib.toStr(roleName),
+            adminRoleId: adminRoleId,
+            targetType: targetType,
+            maxMemberCount: maxMemberCount,
+            createdAt: TimestampLib.current(),
+            pausedAt: TimestampLib.max(),
+            lastUpdateIn: BlocknumberLib.current()});
+    }
+
+
     function getSelectors(
         IAccess.FunctionInfo[] memory functions
     )
@@ -57,16 +179,42 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
     }
 
 
+    function checkInitParameters(
+        address authority, 
+        string memory adminName 
+    )
+        public
+        view
+    {
+        // only contract check (authority might not yet be initialized at this time)
+        if (!ContractLib.isContract(authority)) {
+            revert IAccessAdmin.ErrorAccessAdminAuthorityNotContract(authority);
+        }
+
+        // check name not empty
+        if (bytes(adminName).length == 0) {
+            revert IAccessAdmin.ErrorAccessAdminAccessManagerEmptyName();
+        }
+    }
+
+
     function checkRoleCreation(
         IAccessAdmin accessAdmin,
         RoleId roleId, 
-        IAccess.RoleInfo memory info
+        IAccess.RoleInfo memory info,
+        bool revertOnExistingRole
     )
         public 
         view
+        returns (bool isAdminOrPublicRole)
     {
-        // check role does not yet exist    // ACCESS_ADMIN_LIB role creation checks
-        if(accessAdmin.roleExists(roleId)) {
+        // check 
+        if (roleId == ADMIN_ROLE() || roleId == PUBLIC_ROLE()) {
+            return true;
+        }
+
+        // check role does not yet exist 
+        if(revertOnExistingRole && accessAdmin.roleExists(roleId)) {
             revert IAccessAdmin.ErrorAccessAdminRoleAlreadyCreated(
                 roleId, 
                 accessAdmin.getRoleInfo(roleId).name.toString());
@@ -83,15 +231,53 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
         }
 
         // check role name is not used for another role
-        RoleId roleIdForName = accessAdmin.getRoleForName(StrLib.toString(info.name));
-        if(roleIdForName.gtz()) {
+        (RoleId roleIdForName, bool exists) = accessAdmin.getRoleForName(StrLib.toString(info.name));
+        if(revertOnExistingRole && exists) {
             revert IAccessAdmin.ErrorAccessAdminRoleNameAlreadyExists(
                 roleId, 
                 info.name.toString(),
                 roleIdForName);
         }
+
+        return false;
     }
 
+
+    function checkRoleExists(
+        IAccessAdmin accessAdmin,
+        RoleId roleId, 
+        bool onlyActiveRole,
+        bool allowAdminAndPublicRoles
+    )
+        internal
+        view
+    {
+        // check role exists
+        if (!accessAdmin.roleExists(roleId)) {
+            revert IAccessAdmin.ErrorAccessAdminRoleUnknown(roleId);
+        }
+
+        // if onlyActiveRoles: check if role is disabled
+        if (onlyActiveRole && accessAdmin.getRoleInfo(roleId).pausedAt <= TimestampLib.current()) {
+            revert IAccessAdmin.ErrorAccessAdminRoleIsPaused(roleId);
+        }
+
+        // if not allowAdminAndPublicRoles, check if role is admin or public role
+        if (!allowAdminAndPublicRoles) {
+            checkNotAdminOrPublicRole(roleId);
+        }
+    }
+
+
+    function checkNotAdminOrPublicRole(RoleId roleId) public pure {
+        if (roleId == ADMIN_ROLE()) {
+            revert IAccessAdmin.ErrorAccessAdminInvalidUseOfAdminRole();
+        }
+
+        if (roleId == PUBLIC_ROLE()) {
+            revert IAccessAdmin.ErrorAccessAdminInvalidUseOfPublicRole();
+        }
+    }
 
     function checkTargetCreation(
         IAccessAdmin accessAdmin,
@@ -135,6 +321,73 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
             if (targetAuthority != accessAdmin.authority()) {
                 revert IAccessAdmin.ErrorAccessAdminTargetAuthorityMismatch(accessAdmin.authority(), targetAuthority);
             }
+        }
+    }
+
+
+    function checkComponentInitialization(
+        IAccessAdmin accessAdmin,
+        IAuthorization instanceAuthorization,
+        address componentAddress,
+        ObjectType expectedType
+    )
+        public
+        view
+        returns (IAuthorization componentAuthorization)
+    {
+        checkIsRegistered(address(accessAdmin.getRegistry()), componentAddress, expectedType);
+
+        VersionPart expecteRelease = accessAdmin.getRelease();
+        IInstanceLinkedComponent component = IInstanceLinkedComponent(componentAddress);
+        componentAuthorization = component.getAuthorization();
+
+        checkAuthorization(
+            address(instanceAuthorization), 
+            address(componentAuthorization), 
+            expectedType, 
+            expecteRelease,
+            false, // expectServiceAuthorization,
+            false); // checkAlreadyInitialized
+    }
+
+
+    function checkTargetAndRoleForFunctions(
+        IAccessAdmin accessAdmin,
+        address target,
+        RoleId roleId,
+        bool onlyComponentOrContractTargets
+    ) 
+        public
+        view
+    {
+        // check target exists
+        IAccess.TargetType targetType = accessAdmin.getTargetInfo(target).targetType;
+        if (targetType == IAccess.TargetType.Undefined) {
+            revert IAccessAdmin.ErrorAccessAdminTargetNotCreated(target);
+        }
+
+        // check target type
+        if (onlyComponentOrContractTargets) {
+            if (targetType != IAccess.TargetType.Component && targetType != IAccess.TargetType.Contract) {
+                revert IAccessAdmin.ErrorAccessAdminNotComponentOrCustomTarget(target);
+            }
+        }
+
+        // check role exist
+        checkRoleExists(accessAdmin, roleId, true, true);
+    } 
+
+
+    function checkTargetExists(
+        IAccessAdmin accessAdmin,
+        address target
+    )
+        public
+        view
+    {
+        // check not yet created
+        if (!accessAdmin.targetExists(target)) {
+            revert IAccessAdmin.ErrorAccessAdminTargetNotCreated(target);
         }
     }
 
@@ -211,6 +464,20 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
         if (!ContractLib.isRegistry(registry)) {
             revert IAccessAdmin.ErrorAccessAdminNotRegistry(registry);
         }
+    }
+
+
+    function getAuthorizedRole(
+        IAccessAdmin accessAdmin,
+        IAuthorization authorization, 
+        RoleId roleId
+    )
+        public
+        view 
+        returns (RoleId authorizedRoleId)
+    {
+        string memory roleName = authorization.getRoleInfo(roleId).name.toString();
+        (authorizedRoleId, ) = accessAdmin.getRoleForName(roleName);
     }
 
 
@@ -302,7 +569,9 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
             return RoleIdLib.toRoleId(COMPONENT_ROLE_MIN + index);
         }
 
-        if (targetType == IAccess.TargetType.Custom) { 
+        if (targetType == IAccess.TargetType.Custom
+            || targetType == IAccess.TargetType.Contract) 
+        { 
             return RoleIdLib.toRoleId(CUSTOM_ROLE_MIN + index);
         }
 
@@ -342,32 +611,44 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
     }
 
 
+    function toFunctionGrantingString(
+        IAccessAdmin accessAdmin,
+        Str functionName,
+        RoleId roleId
+    )
+        public
+        view
+        returns (string memory)
+    {
+        return string(
+            abi.encodePacked(
+                functionName.toString(),
+                "(): ",
+                getRoleName(accessAdmin, roleId)));
+    }
+
+
+    function getRoleName(
+        IAccessAdmin accessAdmin,
+        RoleId roleId
+    )
+        public
+        view 
+        returns (string memory)
+    {
+        if (accessAdmin.roleExists(roleId)) {
+            return accessAdmin.getRoleInfo(roleId).name.toString();
+        }
+
+        return "<unknown-role>";
+    }
+
+
     function toRoleName(string memory name) public pure returns (string memory) {
         return string(
             abi.encodePacked(
                 name,
                 ROLE_SUFFIX));
-    }
-
-
-    function toRole(
-        RoleId adminRoleId, 
-        IAccessAdmin.RoleType roleType, 
-        uint32 maxMemberCount, 
-        string memory name
-    )
-        public 
-        view 
-        returns (IAccess.RoleInfo memory)
-    { 
-        return IAccess.RoleInfo({
-            name: StrLib.toStr(name),
-            adminRoleId: adminRoleId,
-            roleType: roleType,
-            maxMemberCount: maxMemberCount,
-            createdAt: TimestampLib.current(),
-            pausedAt: TimestampLib.max()
-        });
     }
 
 
@@ -390,7 +671,8 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
         return IAccess.FunctionInfo({
             name: StrLib.toStr(name),
             selector: SelectorLib.toSelector(selector),
-            createdAt: TimestampLib.current()});
+            createdAt: TimestampLib.current(),
+            lastUpdateIn: BlocknumberLib.current()});
     }
 
 }

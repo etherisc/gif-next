@@ -21,7 +21,7 @@ contract BasicProductAuthorization
                PRODUCT(), 
                3,
                COMMIT_HASH,
-               true, 
+               TargetType.Component, 
                true)
      {}
 

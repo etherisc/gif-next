@@ -57,7 +57,7 @@ contract InstanceAuthzTargetsTest is InstanceAuthzBaseTest {
         assertFalse(instanceReader.isLocked(address(target)), "target locked");
         IAccess.TargetInfo memory targetInfo = instanceReader.getTargetInfo(address(target));
         assertEq(targetInfo.name.toString(), "MyTarget", "unexpected target name");
-        assertTrue(targetInfo.targetType == IAccess.TargetType.Custom, "target type not custom");
+        assertTrue(targetInfo.targetType == IAccess.TargetType.Contract, "target type not contract");
         assertEq(targetInfo.roleId.toInt(), expectedRoleId.toInt(), "unexpected target role id");
         assertEq(targetInfo.createdAt.toInt(), TimestampLib.current().toInt(), "unexpected target creation time");
 
@@ -69,7 +69,7 @@ contract InstanceAuthzTargetsTest is InstanceAuthzBaseTest {
 
         IAccess.RoleInfo memory roleInfo = instanceReader.getRoleInfo(targetInfo.roleId);
         assertEq(roleInfo.name.toString(), "MyTarget_Role", "unexpected role name");
-        assertTrue(roleInfo.roleType == IAccess.RoleType.Contract, "unexpected role type");
+        assertTrue(roleInfo.targetType == IAccess.TargetType.Contract, "unexpected role type");
         assertEq(roleInfo.maxMemberCount, 1, "unexpected max member count");
         assertEq(roleInfo.createdAt.toInt(), TimestampLib.current().toInt(), "unexpected role creation time");
         assertEq(roleInfo.pausedAt.toInt(), TimestampLib.max().toInt(), "unexpected role pausing time");

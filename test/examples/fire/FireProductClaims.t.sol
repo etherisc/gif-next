@@ -347,10 +347,10 @@ contract FireProductClaimsTest is FireTestBase {
         Amount bundleLockedBefore = instanceReader.getLockedAmount(bundleNftId);
         
         // WHEN - submit two claim
-        vm.warp(100);
+        vm.warp(block.timestamp + 100);
         (ClaimId claimId, PayoutId payoutId) = fireProduct.submitClaim(policyNftId, fireId);
         Timestamp claimSubmittedAt = TimestampLib.current();
-        vm.warp(100);
+        vm.warp(block.timestamp + 100);
         (ClaimId claimId2, PayoutId payoutId2) = fireProduct.submitClaim(policyNftId, fireId2);
         Timestamp claimSubmittedAt2 = TimestampLib.current();
         
@@ -444,10 +444,10 @@ contract FireProductClaimsTest is FireTestBase {
         Amount bundleLockedBefore = instanceReader.getLockedAmount(bundleNftId);
         
         // WHEN - submit two claims
-        vm.warp(100);
+        vm.warp(block.timestamp + 100);
         (ClaimId claimId, PayoutId payoutId) = fireProduct.submitClaim(policyNftId, 42);
         Timestamp claimSubmittedAt = TimestampLib.current();
-        vm.warp(100);
+        vm.warp(block.timestamp + 100);
         (ClaimId claimId2, PayoutId payoutId2) = fireProduct.submitClaim(policyNftId, 43);
         Timestamp claimSubmittedAt2 = TimestampLib.current();
 
@@ -657,7 +657,7 @@ contract FireProductClaimsTest is FireTestBase {
         uint256 fireId = 42;
         fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), timestamp);
 
-        vm.warp(100);
+        vm.warp(block.timestamp + 100);
         fireProduct.expire(policyNftId, TimestampLib.current());
         vm.stopPrank();
         
@@ -689,7 +689,7 @@ contract FireProductClaimsTest is FireTestBase {
         uint256 fireId = 42;
         fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(), timestamp);
 
-        vm.warp(100);
+        vm.warp(block.timestamp + 100);
         fireProduct.expire(policyNftId, TimestampLib.current());
         fireProduct.close(policyNftId);
         vm.stopPrank();
@@ -850,7 +850,8 @@ contract FireProductClaimsTest is FireTestBase {
         
         vm.startPrank(fireProductOwner);
         
-        vm.warp(ONE_YEAR().toInt() + 100);
+        uint256 newTime = block.timestamp + ONE_YEAR().toInt() + 100;
+        vm.warp(newTime);
         
         uint256 fireId = 42;
         fireProduct.reportFire(fireId, cityName, DAMAGE_SMALL(),  TimestampLib.current());
@@ -859,10 +860,13 @@ contract FireProductClaimsTest is FireTestBase {
         vm.startPrank(customer);
         
         // THEN 
+        Timestamp expiredAt = instanceReader.getPolicyInfo(policyNftId).expiredAt;
+        assertTrue(expiredAt < TimestampLib.current(), "policy expiry not in the past");
+
         vm.expectRevert(abi.encodeWithSelector(
             FireProduct.ErrorFireProductPolicyExpired.selector,
             policyNftId,
-            ONE_YEAR() + SecondsLib.toSeconds(1)));
+            expiredAt));
 
         // WHEN - submit claim for a fire that happened after policy expired
         fireProduct.submitClaim(policyNftId, fireId);

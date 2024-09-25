@@ -8,6 +8,7 @@ import {IAuthorization} from "./IAuthorization.sol";
 import {IRegistryLinked} from "../shared/IRegistryLinked.sol";
 import {IRelease} from "../registry/IRelease.sol";
 
+import {Blocknumber} from "../type/Blocknumber.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType} from "../type/ObjectType.sol";
 import {RoleId} from "../type/RoleId.sol";
@@ -23,12 +24,14 @@ interface IAccessAdmin is
 {
 
     // roles, targets and functions
-    event LogAccessAdminRoleCreated(string admin, RoleId roleId, RoleType roleType, RoleId roleAdminId, string name);
+    event LogAccessAdminRoleCreated(string admin, RoleId roleId, TargetType targetType, RoleId roleAdminId, string name);
     event LogAccessAdminTargetCreated(string admin, string name, bool managed, address target, RoleId roleId);
 
+    event LogAccessAdminRoleActivatedSet(string admin, RoleId roleId, bool active, Blocknumber lastUpdateIn);
     event LogAccessAdminRoleGranted(string admin, address account, string roleName);
     event LogAccessAdminRoleRevoked(string admin, address account, string roleName);
-    event LogAccessAdminFunctionGranted(string admin, address target, string func);
+    event LogAccessAdminTargetLockedSet(string admin, address target, bool locked, Blocknumber lastUpdateIn);
+    event LogAccessAdminFunctionGranted(string admin, address target, string func, Blocknumber lastUpdateIn);
 
     // only deployer modifier
     error ErrorAccessAdminNotDeployer();
@@ -40,8 +43,8 @@ interface IAccessAdmin is
     error ErrorAccessAdminNotRoleOwner(RoleId roleId, address account);
 
     // role management
-    error ErrorAccessAdminInvalidUserOfAdminRole();
-    error ErrorAccessAdminInvalidUserOfPublicRole();
+    error ErrorAccessAdminInvalidUseOfAdminRole();
+    error ErrorAccessAdminInvalidUseOfPublicRole();
     error ErrorAccessAdminRoleNotCustom(RoleId roleId);
 
     // initialization
@@ -96,6 +99,7 @@ interface IAccessAdmin is
     error ErrorAccessAdminTargetAlreadyLocked(address target, bool isLocked);
 
     // authorize target functions
+    error ErrorAccessAdminNotComponentOrCustomTarget(address target);
     error ErrorAccessAdminAuthorizeForAdminRoleInvalid(address target);
 
     // toFunction
@@ -109,18 +113,14 @@ interface IAccessAdmin is
 
     function getAuthorization() external view returns (IAuthorization authorization);
     function getLinkedNftId() external view returns (NftId linkedNftId);
-    function getLinkedOwner() external view returns (address linkedOwner);
 
     function isLocked() external view returns (bool locked);
 
     function roles() external view returns (uint256 numberOfRoles);
     function getRoleId(uint256 idx) external view returns (RoleId roleId);
-    function getAdminRole() external view returns (RoleId roleId);
-    function getPublicRole() external view returns (RoleId roleId);
 
     function roleExists(RoleId roleId) external view returns (bool exists); 
-    function roleExists(string memory roleName) external view returns (bool exists); 
-    function getRoleForName(string memory name) external view returns (RoleId roleId);
+    function getRoleForName(string memory name) external view returns (RoleId roleId, bool exists);
     function getRoleInfo(RoleId roleId) external view returns (RoleInfo memory roleInfo);
     function isRoleActive(RoleId roleId) external view returns (bool isActive);
     function isRoleCustom(RoleId roleId) external view returns (bool isCustom);
@@ -139,6 +139,4 @@ interface IAccessAdmin is
 
     function authorizedFunctions(address target) external view returns (uint256 numberOfFunctions);
     function getAuthorizedFunction(address target, uint256 idx) external view returns (FunctionInfo memory func, RoleId roleId);
-
-    function deployer() external view returns (address);
 }

@@ -1,19 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
+import {Blocknumber} from "../type/Blocknumber.sol";
 import {RoleId} from "../type/RoleId.sol";
 import {Selector} from "../type/Selector.sol";
 import {Str} from "../type/String.sol";
 import {Timestamp} from "../type/Timestamp.sol";
 
 interface IAccess {
-
-    enum RoleType {
-        Undefined, // no role must have this type
-        Core, // GIF core roles
-        Contract, // roles assigned to contracts, cannot be revoked
-        Custom // use case specific rules for components
-    }
 
     enum TargetType {
         Undefined, // no target must have this type
@@ -22,19 +16,22 @@ interface IAccess {
         Service, // service contracts
         Instance, // instance contracts
         Component, // instance contracts
-        Custom // use case specific rules for components
+        Contract, // normal contracts
+        Custom // use case specific rules for contracts or normal accounts
     }
 
     struct RoleInfo {
         // slot 0
-        RoleId adminRoleId; 
-        RoleType roleType; 
-        uint32 maxMemberCount; 
-        Timestamp createdAt; 
-        Timestamp pausedAt; 
+        RoleId adminRoleId;  // 64
+        TargetType targetType; // ?
+        uint32 maxMemberCount; // 32
+        Timestamp createdAt; // 40
+        Timestamp pausedAt; // 40
+        Blocknumber lastUpdateIn; // 40
         // slot 1
-        Str name;
+        Str name; // 256
     }
+
 
     // TODO recalc slot allocation
     struct TargetInfo {
@@ -42,6 +39,7 @@ interface IAccess {
         TargetType targetType;
         RoleId roleId;
         Timestamp createdAt;
+        Blocknumber lastUpdateIn;
     }
 
     struct FunctionInfo {
@@ -50,6 +48,7 @@ interface IAccess {
         // slot 1
         Selector selector; // function selector
         Timestamp createdAt;
+        Blocknumber lastUpdateIn;
     }
 
     struct RoleNameInfo {

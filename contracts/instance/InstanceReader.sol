@@ -110,12 +110,6 @@ contract InstanceReader {
 
     //--- component functions ------------------------------------------------------//
 
-    /// @dev Returns the number of registered components.
-    /// Components may be products, distributions, oracles or pools.
-    function components() public view returns (uint256 componentCount) {
-        return _instanceAdmin.components();
-    }
-
 
     /// @dev Returns the component info for the given component NFT ID.
     function getComponentInfo(NftId componentNftId) public view returns (IComponents.ComponentInfo memory info) {

@@ -53,15 +53,6 @@ function neBlocknumber(Blocknumber a, Blocknumber b) pure returns (bool) {
     return Blocknumber.unwrap(a) != Blocknumber.unwrap(b);
 }
 
-/// @dev Converts the uint256 to a Blocknumber.
-function toBlocknumber(uint256 blocknum) pure returns (Blocknumber) {
-    return Blocknumber.wrap(uint32(blocknum));
-}
-
-/// @dev Return the current block number
-function blockNumber() view returns (Blocknumber) {
-    return toBlocknumber(block.number);
-}
 
 library BlocknumberLib {
 
@@ -75,6 +66,10 @@ library BlocknumberLib {
 
     function current() public view returns (Blocknumber) {
         return Blocknumber.wrap(uint40(block.number));
+    }
+
+    function toBlocknumber(uint256 blocknum) public pure returns (Blocknumber) {
+        return Blocknumber.wrap(uint32(blocknum));
     }
 
     /// @dev return true iff blocknumber is 0

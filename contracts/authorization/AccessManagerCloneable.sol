@@ -62,24 +62,6 @@ contract AccessManagerCloneable is
         _checkAndSetRelease(release);
     }
 
-    // /// @dev Completes the setup of the access manager.
-    // /// Links the access manager to the registry and sets the release version.
-    // function completeSetup(
-    //     address registry, 
-    //     VersionPart release,
-    //     bool verifyRelease
-    // )
-    //     public
-    //     onlyAdminRole
-    //     reinitializer(uint64(release.toInt()))
-    // {
-    //     _checkAndSetRegistry(registry);
-
-    //     if (verifyRelease) {
-    //         _checkAndSetRelease(release);
-    //     }
-    // }
-
     /// @dev Returns true if the caller is authorized to call the target with the given selector and the manager lock is not set to locked.
     /// Feturn values as in OpenZeppelin AccessManager.
     /// For a locked manager the function reverts with ErrorAccessManagerTargetAdminLocked.

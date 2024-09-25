@@ -140,6 +140,7 @@ contract GifTest is GifDeployer {
     uint256 private _checkpointGasLeft = 1; // Start the slot warm.
 
     function setUp() public virtual {
+        vm.warp(10000);
         _setUp();
     }
 

@@ -76,7 +76,6 @@ contract RegistryAdmin is
         public
         virtual
         reinitializer(type(uint8).max)
-        onlyDeployer()
     {
         // checks
         AccessAdminLib.checkRegistry(registry);
@@ -101,11 +100,12 @@ contract RegistryAdmin is
         // link nft ownability to registry
         _linkToNftOwnable(_registry);
 
+        _createRoles(_authorization);
+
         // setup registry core targets
         _createCoreTargets(_authorization.getMainTargetName());
 
         // setup non-contract roles
-        _createRoles(_authorization);
         _grantRoleToAccount(GIF_ADMIN_ROLE(), gifAdmin);
         _grantRoleToAccount(GIF_MANAGER_ROLE(), gifManager);
 
@@ -138,38 +138,20 @@ contract RegistryAdmin is
 
     //--- private initialization functions -------------------------------------------//
 
-    function _createRoles(IAuthorization authorization)
-        internal
-    {
-        RoleId[] memory roles = authorization.getRoles();
-
-        for(uint256 i = 0; i < roles.length; i++) {
-            RoleId roleId = roles[i];
-            RoleInfo memory roleInfo = authorization.getRoleInfo(roleId);
-
-            // create role if not exists
-            if (!roleExists(roleInfo.name.toString())) {
-                _createRole(
-                    roleId,
-                    roleInfo);
-            }
-        }
-    }
-
 
     function _createCoreTargets(string memory registryTargetName)
         internal
     {
-        // registry
-        _createUncheckedTarget(_registry, registryTargetName, TargetType.Core);
-        _createUncheckedTarget(address(this), REGISTRY_ADMIN_TARGET_NAME, TargetType.Core);
-        _createUncheckedTarget(_releaseRegistry, RELEASE_REGISTRY_TARGET_NAME, TargetType.Core);
-        _createUncheckedTarget(_tokenRegistry, TOKEN_REGISTRY_TARGET_NAME, TargetType.Core);
+        // create unchecked registry targets
+        _createTarget(_registry, registryTargetName, TargetType.Core, false);
+        _createTarget(address(this), REGISTRY_ADMIN_TARGET_NAME, TargetType.Core, false);
+        _createTarget(_releaseRegistry, RELEASE_REGISTRY_TARGET_NAME, TargetType.Core, false);
+        _createTarget(_tokenRegistry, TOKEN_REGISTRY_TARGET_NAME, TargetType.Core, false);
 
-        // staking
-        _createUncheckedTarget(_staking, STAKING_TARGET_NAME, TargetType.Core);
-        _createUncheckedTarget(_stakingTargetHandler, STAKING_TARGET_HANDLER_NAME, TargetType.Core);
-        _createUncheckedTarget(_stakingStore, STAKING_STORE_TARGET_NAME, TargetType.Core);
+        // create unchecked staking targets
+        _createTarget(_staking, STAKING_TARGET_NAME, TargetType.Core, false);
+        _createTarget(_stakingTargetHandler, STAKING_TARGET_HANDLER_NAME, TargetType.Core, false);
+        _createTarget(_stakingStore, STAKING_STORE_TARGET_NAME, TargetType.Core, false);
     }
 
 

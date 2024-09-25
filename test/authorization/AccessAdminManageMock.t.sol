@@ -8,7 +8,7 @@ import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
-import {AccessAdmin, ADMIN_ROLE_NAME, PUBLIC_ROLE_NAME} from "../../contracts/authorization/AccessAdmin.sol";
+import {AccessAdmin} from "../../contracts/authorization/AccessAdmin.sol";
 import {AccessAdminLib} from "../../contracts/authorization/AccessAdminLib.sol";
 import {AccessAdminForTesting} from "./AccessAdmin.t.sol";
 import {AccessManagedMock} from "../mock/AccessManagedMock.sol";
@@ -309,8 +309,6 @@ contract AccessAdminManageMockTest is AccessAdminBaseTest {
         assertTrue(address(aa) != address(0), "access admin is 0");
         assertTrue(aa.authority() != address(0), "access admin authority is 0");
 
-        assertEq(aa.deployer(), expectedDeployer, "unexpected deployer");
-
         // check aa roles
         assertTrue(aa.isRoleMember(aa.getAdminRole(), address(aa)), "access admin missing admin role");
         assertFalse(aa.isRoleMember(aa.getManagerRole(), address(aa)), "access admin has manager role");
@@ -340,7 +338,7 @@ contract AccessAdminManageMockTest is AccessAdminBaseTest {
             aa,
             aa.getAdminRole(), 
             aa.getAdminRole(),
-            ADMIN_ROLE_NAME(),
+            AccessAdminLib.ADMIN_ROLE_NAME(),
             TimestampLib.max(), 
             TimestampLib.current());
 
@@ -349,7 +347,7 @@ contract AccessAdminManageMockTest is AccessAdminBaseTest {
             aa,
             aa.getPublicRole(), 
             aa.getAdminRole(),
-            PUBLIC_ROLE_NAME(),
+            AccessAdminLib.PUBLIC_ROLE_NAME(),
             TimestampLib.max(), 
             TimestampLib.current());
 

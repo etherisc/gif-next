@@ -4,7 +4,8 @@ pragma solidity ^0.8.20;
 import {IAccess} from "../authorization/IAccess.sol";
 import {IServiceAuthorization} from "./IServiceAuthorization.sol";
 
-import {ADMIN_ROLE_NAME, PUBLIC_ROLE_NAME} from "./AccessAdmin.sol";
+import {AccessAdminLib} from "./AccessAdminLib.sol";
+import {BlocknumberLib} from "../type/Blocknumber.sol";
 import {InitializableERC165} from "../shared/InitializableERC165.sol";
 import {ObjectType, ObjectTypeLib, ALL} from "../type/ObjectType.sol";
 import {RoleId, RoleIdLib, ADMIN_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
@@ -87,8 +88,8 @@ contract ServiceAuthorization is
           _commitHash = commitHash;
 
           // setup of roles defined in OpenZeppelin AccessManager
-          _addRole(ADMIN_ROLE(), _toRoleInfo(ADMIN_ROLE(), RoleType.Core, 1, ADMIN_ROLE_NAME()));
-          _addRole(PUBLIC_ROLE(), _toRoleInfo(ADMIN_ROLE(), RoleType.Core, 1, PUBLIC_ROLE_NAME()));
+          _addRole(ADMIN_ROLE(), AccessAdminLib.adminRoleInfo());
+          _addRole(PUBLIC_ROLE(), AccessAdminLib.publicRoleInfo());
 
           // defines service domains relevant for the authorization
           _setupDomains();
@@ -163,7 +164,7 @@ contract ServiceAuthorization is
 
      /// @inheritdoc IServiceAuthorization
      function roleExists(RoleId roleId) public view returns(bool exists) {
-          return _roleInfo[roleId].roleType != RoleType.Undefined;
+          return _roleInfo[roleId].targetType != TargetType.Undefined;
      }
 
      /// @inheritdoc IServiceAuthorization
@@ -238,7 +239,9 @@ contract ServiceAuthorization is
           if (roleId != RoleIdLib.zero()) {
                // add role if new
                if (!roleExists(roleId)) {
-                    _addContractRole(roleId, roleName);
+                    _addRole(
+                         roleId, 
+                         AccessAdminLib.serviceRoleInfo(roleName));
                }
 
                // link target to role
@@ -247,34 +250,10 @@ contract ServiceAuthorization is
      }
 
 
-     /// @dev Add a contract role for the provided role id and name.
-     function _addContractRole(RoleId roleId, string memory name) internal {
-          _addRole(
-               roleId,
-               _toRoleInfo(
-                    ADMIN_ROLE(),
-                    RoleType.Contract,
-                    1,
-                    name));
-     }
-
-
      /// @dev Use this method to to add an authorized role.
      function _addRole(RoleId roleId, RoleInfo memory info) internal {
           _roles.push(roleId);
           _roleInfo[roleId] = info;
-     }
-
-
-     /// @dev creates a role info object from the provided parameters
-     function _toRoleInfo(RoleId adminRoleId, RoleType roleType, uint32 maxMemberCount, string memory name) internal view returns (RoleInfo memory info) {
-          return RoleInfo({
-               name: StrLib.toStr(name),
-               adminRoleId: adminRoleId,
-               roleType: roleType,
-               maxMemberCount: maxMemberCount,
-               createdAt: TimestampLib.current(),
-               pausedAt: TimestampLib.max()});
      }
 
 
@@ -315,6 +294,7 @@ contract ServiceAuthorization is
                IAccess.FunctionInfo({
                     selector: SelectorLib.toSelector(selector),
                     name: StrLib.toStr(name),
-                    createdAt: TimestampLib.current()}));
+                    createdAt: TimestampLib.current(),
+                    lastUpdateIn: BlocknumberLib.current()}));
      }
 }

@@ -53,7 +53,6 @@ contract ProductClusterTest is GifClusterTest {
         _createProductSpecificObjects1and2();
 
         // THEN
-        assertEq(instanceReader.components(), 7, "unexpected components count (after setup)");
         assertEq(instanceReader.products(), 2, "unexpected products count (after setup)");
 
         assertTrue(applicationNftId1.gtz(), "applicationNftId1 not set");
@@ -72,7 +71,6 @@ contract ProductClusterTest is GifClusterTest {
     function test_productClusterSetup1and4() public {
         _setupProductClusters1and4();
 
-        assertEq(instanceReader.components(), 5, "unexpected components count (after setup)");
         assertEq(instanceReader.products(), 2, "unexpected products count (after setup)");
 
         _printAuthz(instance.getInstanceAdmin(), "instance authz for prod clusters 1 and 4");
@@ -82,7 +80,6 @@ contract ProductClusterTest is GifClusterTest {
     function test_productClusterSetup1to4() public {
         _setupProductClusters1to4();
 
-        assertEq(instanceReader.components(), 13, "unexpected components count (after setup)");
         assertEq(instanceReader.products(), 4, "unexpected products count (after setup)");
 
         _createProductSpecificObjects1and2();
