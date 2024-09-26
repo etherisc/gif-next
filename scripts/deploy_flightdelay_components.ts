@@ -1,4 +1,4 @@
-import { resolveAddress, Signer } from "ethers";
+import { AddressLike, resolveAddress, Signer } from "ethers";
 import { IInstance__factory, IInstanceService__factory, IRegistry__factory, TokenRegistry__factory, FlightProduct, FlightProduct__factory, FlightPool, FlightOracle } from "../typechain-types";
 import { getNamedAccounts } from "./libs/accounts";
 import { deployContract } from "./libs/deployment";
@@ -81,31 +81,36 @@ export async function deployFlightDelayComponentContracts(libraries: LibraryAddr
     logger.info(`===== deploying flight delay contracts`);
 
     logger.info(`----- FlightUSD -----`);
-    const { address: flightUsdAddress } = await deployContract(
-        "FlightUSD",
-        flightOwner);
+    let flightUsdAddress: AddressLike;
+    if (process.env.FLIGHT_TOKEN_ADDRESS) {
+        logger.info(`using existing Token at ${process.env.FLIGHT_TOKEN_ADDRESS}`);
+        flightUsdAddress = process.env.FLIGHT_TOKEN_ADDRESS;
+    } else {
+        const { address: deployedFlightUsdAddress } = await deployContract(
+            "FlightUSD",
+            flightOwner);
+        flightUsdAddress = deployedFlightUsdAddress;
+        logger.info(`registering FlightUSD on TokenRegistry`);    
+
+        const registry = IRegistry__factory.connect(await instance.getRegistry(), registryOwner);
+        const tokenRegistry = TokenRegistry__factory.connect(await registry.getTokenRegistryAddress(), registryOwner);
+        await executeTx(async () =>
+            await tokenRegistry.registerToken(flightUsdAddress, getTxOpts()),
+            "fd - registerToken",
+            [TokenRegistry__factory.createInterface()]
+        );
+        await executeTx(async () =>
+            await tokenRegistry.setActiveForVersion(
+                (await tokenRegistry.runner?.provider?.getNetwork())?.chainId || 1, 
+                flightUsdAddress, 
+                3, 
+                true,
+                getTxOpts()),
+            "fd - setActiveForVersion",
+            [TokenRegistry__factory.createInterface()]
+        ); 
+    }
     
-    logger.info(`registering FlightUSD on TokenRegistry`);    
-
-    const registry = IRegistry__factory.connect(await instance.getRegistry(), registryOwner);
-    const tokenRegistry = TokenRegistry__factory.connect(await registry.getTokenRegistryAddress(), registryOwner);
-    await executeTx(async () =>
-        await tokenRegistry.registerToken(flightUsdAddress, getTxOpts()),
-        "fd - registerToken",
-        [TokenRegistry__factory.createInterface()]
-    );
-
-    await executeTx(async () =>
-        await tokenRegistry.setActiveForVersion(
-            (await tokenRegistry.runner?.provider?.getNetwork())?.chainId || 1, 
-            flightUsdAddress, 
-            3, 
-            true,
-            getTxOpts()),
-        "fd - setActiveForVersion",
-        [TokenRegistry__factory.createInterface()]
-    );
-
     logger.info(`----- FlightLib -----`);
     const { address: flightLibAddress } = await deployContract(
         "FlightLib",
