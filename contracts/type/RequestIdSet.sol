@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {RequestId} from "../type/RequestId.sol";
 
 // based on https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/structs/EnumerableSet.sol
-library RequestIdSet {
+library LibRequestIdSet {
 
     struct Set {
         RequestId[] ids;

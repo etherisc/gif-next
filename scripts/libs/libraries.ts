@@ -39,6 +39,7 @@ export type LibraryAddresses = {
     policyServiceLibAddress: AddressLike;
     accessAdminLibAddress: AddressLike;
     chainIdLibAddress: AddressLike;
+    libRequestIdSetAddress: AddressLike;
 }
 
 export const LIBRARY_ADDRESSES: Map<string, AddressLike> = new Map<string, AddressLike>();
@@ -306,6 +307,12 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         });
     LIBRARY_ADDRESSES.set("RequestIdLib", requestIdLibAddress);
 
+    // LibRequestIdSet
+    const { address: libRequestIdSetAddress } = await deployContract(
+        "LibRequestIdSet",
+        owner);
+    LIBRARY_ADDRESSES.set("LibRequestIdSet", libRequestIdSetAddress);
+
     const { address: selectorLibAddress } = await deployContract(
         "SelectorLib",
         owner,
@@ -417,6 +424,7 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         policyServiceLibAddress,
         accessAdminLibAddress,
         chainIdLibAddress,
+        libRequestIdSetAddress
     };
     
 }

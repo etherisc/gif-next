@@ -7,7 +7,7 @@ import {FULFILLED} from "../../type/StateId.sol";
 import {NftId} from "../../type/NftId.sol";
 import {BasicOracle} from "../../oracle/BasicOracle.sol";
 import {RequestId} from "../../type/RequestId.sol";
-import {RequestIdSet} from "../../type/RequestIdSet.sol";
+import {LibRequestIdSet} from "../../type/RequestIdSet.sol";
 import {RiskId} from "../../type/RiskId.sol";
 import {Str} from "../../type/String.sol";
 import {Timestamp} from "../../type/Timestamp.sol";
@@ -35,7 +35,7 @@ contract FlightOracle is
 
     // TODO decide if this variable should be moved to instance store
     // if so it need to manage active requests by requestor nft id
-    RequestIdSet.Set internal _activeRequests;
+    LibRequestIdSet.Set internal _activeRequests;
 
 
     constructor(
@@ -106,7 +106,7 @@ contract FlightOracle is
 
         // remove from active requests when successful
         if (requestFulfilled) {
-            RequestIdSet.remove(_activeRequests, requestId);
+            LibRequestIdSet.remove(_activeRequests, requestId);
         }
     }
 
@@ -118,7 +118,7 @@ contract FlightOracle is
         view
         returns(uint256 numberOfRequests)
     {
-        return RequestIdSet.size(_activeRequests);
+        return LibRequestIdSet.size(_activeRequests);
     }
 
 
@@ -128,7 +128,7 @@ contract FlightOracle is
         view
         returns(RequestId requestId)
     {
-        return RequestIdSet.getElementAt(_activeRequests, idx);
+        return LibRequestIdSet.getElementAt(_activeRequests, idx);
     }
 
     //--- internal functions ------------------------------------------------//
@@ -147,7 +147,7 @@ contract FlightOracle is
         FlightStatusRequest memory request = abi.decode(requestData, (FlightStatusRequest));
 
         // TODO decide if the line below should be moved to GIF
-        RequestIdSet.add(_activeRequests, requestId);
+        LibRequestIdSet.add(_activeRequests, requestId);
         emit LogFlightOracleRequestReceived(requestId, requesterId);
     }
 
@@ -161,7 +161,7 @@ contract FlightOracle is
         virtual override
     {
         // TODO decide if the line below should be moved to GIF
-        RequestIdSet.remove(_activeRequests, requestId);
+        LibRequestIdSet.remove(_activeRequests, requestId);
         emit LogFlightOracleRequestCancelled(requestId);
     }
 }
