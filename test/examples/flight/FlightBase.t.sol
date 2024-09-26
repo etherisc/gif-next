@@ -114,8 +114,8 @@ contract FlightBaseTest is GifTest {
         flightOracle = new FlightOracle(
             address(registry),
             flightProductNftId,
-            oracleAuthz,
-            flightOwner
+            "FlightOracle",
+            oracleAuthz
         );
         vm.stopPrank();
 

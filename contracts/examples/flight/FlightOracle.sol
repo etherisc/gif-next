@@ -41,16 +41,17 @@ contract FlightOracle is
     constructor(
         address registry,
         NftId productNftId,
-        IAuthorization authorization,
-        address initialOwner
+        string memory componentName,
+        IAuthorization authorization
     ) 
     {
+        address initialOwner = msg.sender;
         initialize(
             registry,
             productNftId,
             authorization,
             initialOwner,
-            "FlightOracle"
+            componentName
         );
     }
 
