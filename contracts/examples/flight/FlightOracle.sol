@@ -18,8 +18,7 @@ contract FlightOracle is
 
     struct FlightStatusRequest {
         RiskId riskId;
-        Str carrierFlightNumber;
-        Str departureYearMonthDay;
+        Str flightData; // "LX 180 ZRH BKK 20241104"
         Timestamp departureTime; // is this needed or is flight number and date unique aready?
     }
 
@@ -86,7 +85,7 @@ contract FlightOracle is
     {
         // obtain riskId for request
         bytes memory requestData = _getInstanceReader().getRequestInfo(requestId).requestData;
-        (RiskId riskId,,,) = abi.decode(requestData, (RiskId, Str, Str, Timestamp));
+        (RiskId riskId,,) = abi.decode(requestData, (RiskId, Str, Timestamp));
         // assemble response data
         bytes memory responseData = abi.encode(
             FlightStatusResponse ({

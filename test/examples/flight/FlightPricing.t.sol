@@ -26,8 +26,7 @@ import {Timestamp, TimestampLib} from "../../../contracts/type/Timestamp.sol";
 contract FlightPricingTest is FlightBaseTest {
 
     // sample flight data
-    Str public carrierFlightNumber = StrLib.toStr("LX180");
-    Str public departureYearMonthDay = StrLib.toStr("2024-11-08");
+    Str public flightData = StrLib.toStr("LX 180 ZRH BKK 20241104");
     Timestamp public departureTime = TimestampLib.toTimestamp(1731085200);
     Timestamp public arrivalTime = TimestampLib.toTimestamp(1731166800);
 
@@ -85,9 +84,7 @@ contract FlightPricingTest is FlightBaseTest {
         RequestId rqId = RequestIdLib.toRequestId(1);
         RiskId rkId = FlightLib.getRiskId(
             flightProductNftId,
-            carrierFlightNumber,
-            departureTime,
-            arrivalTime);
+            flightData);
 
         // solhint-disable
         console.log("X 42", FlightLib.checkAndGetPayoutOption(rqId, rkId, "X", 42));

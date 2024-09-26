@@ -26,8 +26,7 @@ import {Timestamp, TimestampLib} from "../../../contracts/type/Timestamp.sol";
 contract FlightProductTest is FlightBaseTest {
 
     // sample flight data
-    Str public carrierFlightNumber = StrLib.toStr("LX180");
-    Str public departureYearMonthDay = StrLib.toStr("2024-11-08");
+    Str public flightData = StrLib.toStr("LX 180 ZRH BKK 20241108");
     Timestamp public departureTime = TimestampLib.toTimestamp(1731085200);
     Timestamp public arrivalTime = TimestampLib.toTimestamp(1731166800);
 
@@ -105,8 +104,7 @@ contract FlightProductTest is FlightBaseTest {
         // WHEN
         (NftId policyNftId, ) = flightProduct.createPolicy(
             customer,
-            carrierFlightNumber,
-            departureYearMonthDay,
+            flightData,
             departureTime,
             arrivalTime,
             premiumAmount,
@@ -165,8 +163,7 @@ contract FlightProductTest is FlightBaseTest {
         _printStatusRequest(statusRequest);
 
         assertEq(statusRequest.riskId.toInt(), riskId.toInt(), "unexpected risk id");
-        assertTrue(statusRequest.carrierFlightNumber == carrierFlightNumber, "unexpected carrier flight number");
-        assertTrue(statusRequest.departureYearMonthDay == departureYearMonthDay, "unexpected departure year month day");
+        assertTrue(statusRequest.flightData == flightData, "unexpected flight data");
         assertEq(statusRequest.departureTime.toInt(), departureTime.toInt(), "unexpected departure time");
     }
 
@@ -177,8 +174,7 @@ contract FlightProductTest is FlightBaseTest {
         Amount premiumAmount = AmountLib.toAmount(30 * 10 ** flightUSD.decimals());
         (NftId policyNftId, ) = flightProduct.createPolicy(
             customer,
-            carrierFlightNumber,
-            departureYearMonthDay,
+            flightData,
             departureTime,
             arrivalTime,
             premiumAmount,
@@ -192,7 +188,7 @@ contract FlightProductTest is FlightBaseTest {
 
         // create flight status data (90 min late)
         bytes1 status = "L";
-        int256 delay = 90; // TODO check why 40' delay seems to have 0 payout
+        int256 delay = 90; 
         uint8 maxPoliciesToProcess = 1;
 
         // print request before allback
@@ -205,7 +201,6 @@ contract FlightProductTest is FlightBaseTest {
         flightOracle.respondWithFlightStatus(requestId, status, delay);
 
         // THEN
-        // TODO continue here: callback does not seem to fill in respondedAt and respose data
         requestInfo = instanceReader.getRequestInfo(requestId);
         _printRequest(requestId, requestInfo);
 
@@ -214,5 +209,7 @@ contract FlightProductTest is FlightBaseTest {
         _printPolicy(
             policyNftId, 
             instanceReader.getPolicyInfo(policyNftId));
+        
+        // assertTrue(false, "oops");
     }
 }
