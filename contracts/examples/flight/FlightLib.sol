@@ -192,8 +192,7 @@ library FlightLib {
     function getFlightRisk(
         InstanceReader reader,
         NftId productNftId, 
-        Str carrierFlightNumber, 
-        Str departureYearMonthDay,
+        Str flightData,
         Timestamp departureTime, 
         Timestamp arrivalTime
     )
@@ -205,14 +204,13 @@ library FlightLib {
             FlightProduct.FlightRisk memory flightRisk
         )
     {
-        riskId = getRiskId(productNftId, carrierFlightNumber, departureTime, arrivalTime);
+        riskId = getRiskId(productNftId, flightData);
         (exists, flightRisk) = getFlightRisk(reader, productNftId, riskId);
 
+        // create new risk if not existing
         if (!exists) {
-            // create new risk
             flightRisk = FlightProduct.FlightRisk({
-                carrierFlightNumber: carrierFlightNumber,
-                departureYearMonthDay: departureYearMonthDay,
+                flightData: flightData,
                 departureTime: departureTime,
                 arrivalTime: arrivalTime,
                 sumOfSumInsuredAmounts: AmountLib.toAmount(0),
@@ -247,29 +245,25 @@ library FlightLib {
 
     function getRiskId(
         NftId productNftId,
-        Str carrierFlightNumber, 
-        Timestamp departureTime, 
-        Timestamp arrivalTime
+        Str flightData
     )
         public
         view 
         returns (RiskId riskId)
     {
-        bytes32 riskKey = getRiskKey(carrierFlightNumber, departureTime, arrivalTime);
+        bytes32 riskKey = getRiskKey(flightData);
         riskId = getRiskId(productNftId, riskKey);
     }
 
 
     function getRiskKey(
-        Str carrierFlightNumber, 
-        Timestamp departureTime, 
-        Timestamp arrivalTime
+        Str flightData
     )
         internal
         pure
         returns (bytes32 riskKey)
     {
-        return keccak256(abi.encode(carrierFlightNumber, departureTime, arrivalTime));
+        return keccak256(abi.encode(flightData));
     }
 
 

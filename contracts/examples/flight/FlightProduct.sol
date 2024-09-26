@@ -85,8 +85,7 @@ contract FlightProduct is
     // solhint-enable
 
     struct FlightRisk {
-        Str carrierFlightNumber;
-        Str departureYearMonthDay;
+        Str flightData; // example: "LX 180 ZRH BKK 20241104"
         Timestamp departureTime;
         Timestamp arrivalTime; 
         Amount sumOfSumInsuredAmounts;
@@ -127,8 +126,7 @@ contract FlightProduct is
 
     function createPolicy(
         address policyHolder,
-        Str carrierFlightNumber,
-        Str departureYearMonthDay,
+        Str flightData, 
         Timestamp departureTime,
         Timestamp arrivalTime,
         Amount premiumAmount,
@@ -160,8 +158,7 @@ contract FlightProduct is
 
         // more checks and risk handling
         RiskId riskId = _checkAndUpdateFlightRisk(
-            carrierFlightNumber, 
-            departureYearMonthDay, 
+            flightData, 
             departureTime, 
             arrivalTime, 
             sumInsuredAmount,
@@ -190,14 +187,13 @@ contract FlightProduct is
             policyNftId, 
             departureTime); // activate at scheduled departure time of flight
 
-        // send oracle request for flight status (interacts with flight oracle contrac)
+        // send oracle request for flight status (interacts with flight oracle contract)
         _sendRequest(
             _oracleNftId, 
             abi.encode(
                 FlightOracle.FlightStatusRequest(
                     riskId,
-                    carrierFlightNumber, 
-                    departureYearMonthDay,
+                    flightData,
                     departureTime)),
             // allow up to 30 days to process the claim
             arrivalTime.addSeconds(SecondsLib.fromDays(30)), 
@@ -303,8 +299,7 @@ contract FlightProduct is
     //--- internal functions ------------------------------------------------//
 
     function _checkAndUpdateFlightRisk(
-        Str carrierFlightNumber,
-        Str departureYearMonthDay,
+        Str flightData,
         Timestamp departureTime,
         Timestamp arrivalTime,
         Amount sumInsuredAmount,
@@ -319,14 +314,13 @@ contract FlightProduct is
         (riskId, exists, flightRisk) = FlightLib.getFlightRisk(
             _getInstanceReader(), 
             getNftId(), 
-            carrierFlightNumber, 
-            departureYearMonthDay, 
+            flightData, 
             departureTime, 
             arrivalTime);
 
         // create risk, if new
         if (!exists) {
-            bytes32 riskKey = FlightLib.getRiskKey(carrierFlightNumber, departureTime, arrivalTime);
+            bytes32 riskKey = FlightLib.getRiskKey(flightData);
             _createRisk(riskKey, abi.encode(flightRisk));
         }
 

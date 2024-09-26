@@ -155,8 +155,7 @@ contract FlightBaseTest is GifTest {
         // solhint-disable
         console.log("FlightStatusRequest (requestData)", statusRequest.riskId.toInt());
         console.log("- riskId", statusRequest.riskId.toInt());
-        console.log("- carrierFlightNumber", statusRequest.carrierFlightNumber.toString());
-        console.log("- departureYearMonthDay", statusRequest.departureYearMonthDay.toString());
+        console.log("- flightData", statusRequest.flightData.toString());
         console.log("- departureTime", statusRequest.departureTime.toInt());
         // solhint-enable
     }
@@ -165,8 +164,7 @@ contract FlightBaseTest is GifTest {
     function _printRisk(RiskId riskId, FlightProduct.FlightRisk memory flightRisk) internal {
         // solhint-disable
         console.log("riskId", riskId.toInt());
-        console.log("- carrierFlightNumber", flightRisk.carrierFlightNumber.toString());
-        console.log("- departureYearMonthDay", flightRisk.departureYearMonthDay.toString());
+        console.log("- flightData", flightRisk.flightData.toString());
         console.log("- departureTime", flightRisk.departureTime.toInt());
         console.log("- arrivalTime", flightRisk.arrivalTime.toInt());
         console.log("- delayMinutes", flightRisk.delayMinutes);
