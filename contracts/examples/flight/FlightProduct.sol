@@ -11,6 +11,7 @@ import {BasicProduct} from "../../product/BasicProduct.sol";
 import {ClaimId} from "../../type/ClaimId.sol";
 import {FeeLib} from "../../type/Fee.sol";
 import {FlightLib} from "./FlightLib.sol";
+import {FlightMessageVerifier} from "./FlightMessageVerifier.sol";
 import {FlightOracle} from "./FlightOracle.sol";
 import {InstanceReader} from "../../instance/InstanceReader.sol";
 import {NftId, NftIdLib} from "../../type/NftId.sol";
@@ -21,7 +22,6 @@ import {RequestId} from "../../type/RequestId.sol";
 import {Seconds, SecondsLib} from "../../type/Seconds.sol";
 import {Str} from "../../type/String.sol";
 import {Timestamp, TimestampLib} from "../../type/Timestamp.sol";
-// import {UFixed, UFixedLib} from "../../type/UFixed.sol";
 
 
 /// @dev FlightProduct implements the flight delay product.
@@ -41,6 +41,8 @@ contract FlightProduct is
     event LogErrorRiskInvalid(RequestId requestId, RiskId riskId);
     event LogErrorUnprocessableStatus(RequestId requestId, RiskId riskId, bytes1 status);
     event LogErrorUnexpectedStatus(RequestId requestId, RiskId riskId, bytes1 status, int256 delayMinutes);
+
+    error ErrorApplicationDataSignatureMismatch(address expectedSigner, address actualSigner);
 
     // solhint-disable
     // Minimum observations for valid prediction
@@ -84,6 +86,9 @@ contract FlightProduct is
     NftId internal _oracleNftId; // TODO refactor to getOracleNftId(0)
     // solhint-enable
 
+    FlightMessageVerifier internal _flightMessageVerifier;
+
+
     struct FlightRisk {
         Str flightData; // example: "LX 180 ZRH BKK 20241104"
         Timestamp departureTime;
@@ -100,7 +105,8 @@ contract FlightProduct is
         address registry,
         NftId instanceNftid,
         string memory componentName,
-        IAuthorization authorization
+        IAuthorization authorization,
+        FlightMessageVerifier messageVerifier
     )
     {
         address initialOwner = msg.sender;
@@ -111,6 +117,8 @@ contract FlightProduct is
             componentName,
             authorization,
             initialOwner);
+
+        _flightMessageVerifier = messageVerifier;
     }
 
     //--- external functions ------------------------------------------------//
@@ -130,52 +138,37 @@ contract FlightProduct is
         Timestamp departureTime,
         Timestamp arrivalTime,
         Amount premiumAmount,
-        uint256[6] memory statistics
+        uint256[6] memory statistics,
+        // signature fields
+        uint8 v, 
+        bytes32 r, 
+        bytes32 s
     )
         external
         virtual
         restricted()
         returns (
-            NftId policyNftId,
-            Amount[5] memory payoutAmounts
+            RiskId riskId,
+            NftId policyNftId
         )
     {
-        // check application parameters and calculate payouts
-        FlightLib.checkParameters(
+        // checks
+        FlightLib.checkApplicationDataAndSignature(
             this,
-            departureTime, 
-            arrivalTime, 
-            premiumAmount); 
-
-        (
-            uint256 weight, 
-            Amount[5] memory payoutAmounts,            
-            Amount sumInsuredAmount
-        ) = FlightLib.calculatePayoutAmounts(
-            this,
-            premiumAmount, 
-            statistics);
-
-        // more checks and risk handling
-        RiskId riskId = _checkAndUpdateFlightRisk(
-            flightData, 
-            departureTime, 
-            arrivalTime, 
-            sumInsuredAmount,
-            weight);
-
-        // effects
-        policyNftId = _createApplication(
-            policyHolder, 
-            riskId, 
-            sumInsuredAmount,
+            flightData,
+            departureTime,
+            arrivalTime,
             premiumAmount,
-            LIFETIME,
-            _defaultBundleNftId, 
-            ReferralLib.zero(), 
-            abi.encode(
-                premiumAmount,
-                payoutAmounts)); // application data
+            statistics,
+            v, r, s);
+
+        (riskId, policyNftId) = _prepareApplication(
+            policyHolder, 
+            flightData,
+            departureTime,
+            arrivalTime,
+            premiumAmount,
+            statistics);
 
         _createPolicy(
             policyNftId, 
@@ -198,6 +191,49 @@ contract FlightProduct is
             // allow up to 30 days to process the claim
             arrivalTime.addSeconds(SecondsLib.fromDays(30)), 
             "flightStatusCallback");
+    }
+
+
+    function _prepareApplication(
+        address policyHolder,
+        Str flightData, 
+        Timestamp departureTime,
+        Timestamp arrivalTime,
+        Amount premiumAmount,
+        uint256[6] memory statistics
+    )
+        internal
+        virtual
+        returns (
+            RiskId riskId,
+            NftId policyNftId
+        )
+    {
+        Amount[5] memory payoutAmounts;
+        Amount sumInsuredAmount;
+
+        (
+            riskId, 
+            payoutAmounts,
+            sumInsuredAmount
+        ) = _createRiskAndPayoutAmounts(
+            flightData,
+            departureTime,
+            arrivalTime,
+            premiumAmount,
+            statistics);
+
+        policyNftId = _createApplication(
+            policyHolder, 
+            riskId, 
+            sumInsuredAmount,
+            premiumAmount,
+            LIFETIME,
+            _defaultBundleNftId, 
+            ReferralLib.zero(), 
+            abi.encode(
+                premiumAmount,
+                payoutAmounts)); // application data
     }
 
 
@@ -287,6 +323,15 @@ contract FlightProduct is
     }
 
 
+    function getFlightMessageVerifier()
+        external
+        view
+        returns (FlightMessageVerifier)
+    {
+        return _flightMessageVerifier;
+    }
+
+
     function getOracleNftId()
         public
         view
@@ -297,6 +342,42 @@ contract FlightProduct is
 
 
     //--- internal functions ------------------------------------------------//
+
+
+    function _createRiskAndPayoutAmounts(
+        Str flightData, 
+        Timestamp departureTime,
+        Timestamp arrivalTime,
+        Amount premiumAmount,
+        uint256[6] memory statistics
+    )
+        internal
+        virtual
+        returns (
+            RiskId riskId,
+            Amount[5] memory payoutAmounts,
+            Amount sumInsuredAmount
+        )
+    {
+        uint256 weight;
+
+        (
+            weight, 
+            payoutAmounts,            
+            sumInsuredAmount
+        ) = FlightLib.calculatePayoutAmounts(
+            this,
+            premiumAmount, 
+            statistics);
+
+        riskId = _checkAndUpdateFlightRisk(
+            flightData,
+            departureTime,
+            arrivalTime,
+            sumInsuredAmount,
+            weight);
+    }
+
 
     function _checkAndUpdateFlightRisk(
         Str flightData,

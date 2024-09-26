@@ -7,6 +7,7 @@ import {IOracle} from "../../../contracts/oracle/IOracle.sol";
 import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
 
 import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
+import {FlightMessageVerifier} from "../../../contracts/examples/flight/FlightMessageVerifier.sol";
 import {FlightOracle} from "../../../contracts/examples/flight/FlightOracle.sol";
 import {FlightOracleAuthorization} from "../../../contracts/examples/flight/FlightOracleAuthorization.sol";
 import {FlightPool} from "../../../contracts/examples/flight/FlightPool.sol";
@@ -18,6 +19,8 @@ import {GifTest} from "../../base/GifTest.sol";
 import {NftId} from "../../../contracts/type/NftId.sol";
 import {RequestId} from "../../../contracts/type/RequestId.sol";
 import {RiskId} from "../../../contracts/type/RiskId.sol";
+import {Str, StrLib} from "../../../contracts/type/String.sol";
+import {Timestamp, TimestampLib} from "../../../contracts/type/Timestamp.sol";
 import {VersionPartLib} from "../../../contracts/type/Version.sol";
 
 
@@ -34,17 +37,24 @@ contract FlightBaseTest is GifTest {
     NftId public flightPoolNftId;
     NftId public flightProductNftId;
 
+    FlightMessageVerifier public flightMessageVerifier;
+    address public verifierOwner = makeAddr("verifierOwner");
+
+    address public dataSigner;
+    uint256 public dataSignerPrivateKey;
+
     function setUp() public virtual override {
         super.setUp();
         
         _deployFlightUSD();
-        _deployFlightProduct();
+        _deployFlightProductAndVerifier();
         _deployFlightOracle();
         _deployFlightPool();
 
         // fetches oracle nft id via instance
         flightProduct.setOracleNftId();
 
+        // do some initial funding
         _initialFundAccounts();
     }
 
@@ -66,14 +76,23 @@ contract FlightBaseTest is GifTest {
     }
 
 
-    function _deployFlightProduct() internal {
+    function _deployFlightProductAndVerifier() internal {
+        // setup signer infrastructure
+        (dataSigner, dataSignerPrivateKey) = makeAddrAndKey("dataSigner");
+
+        vm.startPrank(verifierOwner);
+        flightMessageVerifier = new FlightMessageVerifier();
+        flightMessageVerifier.setExpectedSigner(dataSigner);
+        vm.stopPrank();
+
         vm.startPrank(flightOwner);
         FlightProductAuthorization productAuthz = new FlightProductAuthorization("FlightProduct");
         flightProduct = new FlightProduct(
             address(registry),
             instanceNftId,
             "FlightProduct",
-            productAuthz
+            productAuthz,
+            flightMessageVerifier
         );
         vm.stopPrank();
 
@@ -126,6 +145,32 @@ contract FlightBaseTest is GifTest {
             "FlightOracle");
     }
 
+
+    function _getSignature(
+        uint256 signerPrivateKey,
+        Str flightData,
+        Timestamp departureTime,
+        Timestamp arrivalTime,
+        Amount premiumAmount,
+        uint256[6] memory statistics
+    )
+        internal 
+        view 
+        returns (
+            uint8 v, 
+            bytes32 r, 
+            bytes32 s
+        )
+    {
+        bytes32 ratingsHash = flightMessageVerifier.getRatingsHash(
+            flightData, 
+            departureTime, 
+            arrivalTime, 
+            premiumAmount, 
+            statistics);
+
+        (v, r, s) = vm.sign(signerPrivateKey, ratingsHash);
+    }
 
     function _createInitialBundle() internal returns (NftId bundleNftId) {
         vm.startPrank(flightOwner);

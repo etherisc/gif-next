@@ -101,14 +101,23 @@ contract FlightProductTest is FlightBaseTest {
         assertEq(instanceReader.activeRisks(flightProductNftId), 0, "unexpected number of active risks (before)");
         assertEq(flightOracle.activeRequests(), 0, "unexpected number of active requests (before)");
 
+        (uint8 v, bytes32 r, bytes32 s) = _getSignature(
+            dataSignerPrivateKey,
+            flightData, 
+            departureTime, 
+            arrivalTime, 
+            premiumAmount, 
+            statistics);
+
         // WHEN
-        (NftId policyNftId, ) = flightProduct.createPolicy(
+        (, NftId policyNftId) = flightProduct.createPolicy(
             customer,
             flightData,
             departureTime,
             arrivalTime,
             premiumAmount,
-            statistics);
+            statistics,
+            v, r, s);
 
         // THEN
         // check risks
@@ -172,15 +181,34 @@ contract FlightProductTest is FlightBaseTest {
 
         // GIVEN - create policy
         Amount premiumAmount = AmountLib.toAmount(30 * 10 ** flightUSD.decimals());
-        (NftId policyNftId, ) = flightProduct.createPolicy(
+
+        // bytes32 ratingsHash = flightMessageVerifier.getRatingsHash(
+        //     flightData, 
+        //     departureTime, 
+        //     arrivalTime, 
+        //     premiumAmount, 
+        //     statistics);
+        // (dataSignerPrivateKey, ratingsHash);
+
+        (uint8 v, bytes32 r, bytes32 s) = _getSignature(
+            dataSignerPrivateKey,
+            flightData, 
+            departureTime, 
+            arrivalTime, 
+            premiumAmount, 
+            statistics);
+
+        (RiskId riskId, NftId policyNftId) = flightProduct.createPolicy(
             customer,
             flightData,
             departureTime,
             arrivalTime,
             premiumAmount,
-            statistics);
+            statistics,
+            v, r, s);
 
-        RiskId riskId = instanceReader.getPolicyInfo(policyNftId).riskId;
+        // TODO cleanup
+        // RiskId riskId = instanceReader.getPolicyInfo(policyNftId).riskId;
 
         assertEq(flightOracle.activeRequests(), 1, "unexpected number of active requests (before status callback)");
         RequestId requestId = flightOracle.getActiveRequest(0);

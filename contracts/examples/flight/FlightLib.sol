@@ -5,6 +5,7 @@ import {IPolicy} from "../../instance/module/IPolicy.sol";
 import {IPolicyService} from "../../product/IPolicyService.sol";
 
 import {Amount, AmountLib} from "../../type/Amount.sol";
+import {FlightMessageVerifier} from "./FlightMessageVerifier.sol";
 import {FlightProduct} from "./FlightProduct.sol";
 import {InstanceReader} from "../../instance/InstanceReader.sol";
 import {NftId} from "../../type/NftId.sol";
@@ -14,20 +15,57 @@ import {StateId} from "../../type/StateId.sol";
 import {Str} from "../../type/String.sol";
 import {Timestamp, TimestampLib} from "../../type/Timestamp.sol";
 
+
 library FlightLib {
 
-    function checkParameters(
+    function checkApplicationDataAndSignature(
         FlightProduct flightProduct,
+        Str flightData, 
         Timestamp departureTime,
         Timestamp arrivalTime,
-        Amount premium
+        Amount premiumAmount,
+        uint256[6] memory statistics,
+        // signature fields
+        uint8 v, 
+        bytes32 r, 
+        bytes32 s
+    )
+        public
+        view
+    {
+        _checkApplicationData(flightProduct, premiumAmount, arrivalTime, departureTime);
+
+        (
+            address actualSigner,,
+            bool success
+        ) = flightProduct.getFlightMessageVerifier().verifyRatingsHash(
+            flightData,
+            departureTime,
+            arrivalTime,
+            premiumAmount,
+            statistics,
+            v, r, s);
+
+        if (!success) {
+            revert FlightProduct.ErrorApplicationDataSignatureMismatch(
+                flightProduct.getFlightMessageVerifier().getExpectedSigner(),
+                actualSigner);
+        }
+    }
+
+
+    function _checkApplicationData(
+        FlightProduct flightProduct,
+        Amount premiumAmount,
+        Timestamp arrivalTime,
+        Timestamp departureTime
     )
         internal
         view
     {
         // solhint-disable
-        require(premium >= flightProduct.MIN_PREMIUM(), "ERROR:FDD-001:INVALID_PREMIUM");
-        require(premium <= flightProduct.MAX_PREMIUM(), "ERROR:FDD-002:INVALID_PREMIUM");
+        require(premiumAmount >= flightProduct.MIN_PREMIUM(), "ERROR:FDD-001:INVALID_PREMIUM");
+        require(premiumAmount <= flightProduct.MAX_PREMIUM(), "ERROR:FDD-002:INVALID_PREMIUM");
         require(arrivalTime > departureTime, "ERROR:FDD-003:ARRIVAL_BEFORE_DEPARTURE_TIME");
 
         // TODO decide how to handle demo mode

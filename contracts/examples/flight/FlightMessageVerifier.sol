@@ -13,12 +13,6 @@ import {Timestamp} from "../../type/Timestamp.sol";
 contract FlightMessageVerifier is 
     Ownable
 {
-    // EIP-712 Depeg specifics
-    string public constant EIP712_DOMAIN_NAME = "EtheriscFlight";
-    string public constant EIP712_DOMAIN_VERSION = "1";
-
-    string public constant EIP712_POLICY_TYPE = "Policy(Str carrierFlightNumber,Str departureYearMonthDay,Timestamp departureTime,Timestamp arrivalTime,Amount premiumAmount,uint256[6] memory statistics)";
-    bytes32 private constant EIP712_POLICY_TYPE_HASH = keccak256(abi.encodePacked(EIP712_POLICY_TYPE));
 
     error ErrorFlightMessageVerifierSignerZero();
     error ErrorFlightMessageVerifierContractSignerNotSupported();
@@ -46,7 +40,7 @@ contract FlightMessageVerifier is
     /// carriers, airports: https://www.iata.org/en/publications/directories/code-search/
     /// flight numbers: https://en.wikipedia.org/wiki/Flight_number
     /// instead of separate strings, coding/decoding done anyway off-chain
-    function getEthSignedMessageHash(
+    function getRatingsHash(
         Str flightData,
         Timestamp departureTime,
         Timestamp arrivalTime,
@@ -67,22 +61,26 @@ contract FlightMessageVerifier is
     }
 
 
-    function verifySignerFromMessageHashAndSignature(
+    function verifyRatingsHash(
         Str flightData,
         Timestamp departureTime,
         Timestamp arrivalTime,
         Amount premiumAmount,
         uint256[6] memory statistics,
-        bytes calldata signature
+        // bytes memory signature,
+        uint8 v, 
+        bytes32 r, 
+        bytes32 s
     )
         public
         view
-        returns(
+        returns (
             address actualSigner,
+            ECDSA.RecoverError errorStatus,
             bool success
         )
     {
-        bytes32 messageHash = getEthSignedMessageHash(
+        bytes32 messageHash = getRatingsHash(
             flightData,
             departureTime,
             arrivalTime,
@@ -90,12 +88,13 @@ contract FlightMessageVerifier is
             statistics);
 
         (
-            address recovered, 
-            ECDSA.RecoverError err, 
-        ) = ECDSA.tryRecover(messageHash, signature);
+            actualSigner, 
+            errorStatus, 
+        ) = ECDSA.tryRecover(messageHash, v, r, s);
 
-        actualSigner = recovered;
-        success = (err == ECDSA.RecoverError.NoError && actualSigner == _expectedSigner);
+        success = (
+            errorStatus == ECDSA.RecoverError.NoError 
+            && actualSigner == _expectedSigner);
     }
 
 
