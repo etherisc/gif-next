@@ -7,6 +7,7 @@ import { ServiceAddresses } from "./libs/services";
 import { executeTx, getFieldFromLogs, getTxOpts } from "./libs/transaction";
 import { loadVerificationQueueState } from './libs/verification_queue';
 import { logger } from "./logger";
+import simpleGit from "simple-git";
 
 async function main() {
     loadVerificationQueueState();
@@ -15,7 +16,9 @@ async function main() {
 
     await deployFlightDelayComponentContracts(
         {
+            accessAdminLibAddress: process.env.ACCESSADMINLIB_ADDRESS!,
             amountLibAddress: process.env.AMOUNTLIB_ADDRESS!,
+            blockNumberLibAddress: process.env.BLOCKNUMBERLIB_ADDRESS!,
             contractLibAddress: process.env.CONTRACTLIB_ADDRESS!,
             feeLibAddress: process.env.FEELIB_ADDRESS!,
             libRequestIdSetAddress: process.env.LIBREQUESTIDSET_ADDRESS!,
@@ -44,7 +47,9 @@ async function main() {
 export async function deployFlightDelayComponentContracts(libraries: LibraryAddresses, services: ServiceAddresses, flightOwner: Signer, registryOwner: Signer) {
     logger.info("===== deploying flight delay insurance components on a new instance ...");
     
+    const accessAdminLibAddress = libraries.accessAdminLibAddress;
     const amountLibAddress = libraries.amountLibAddress;
+    const blocknumberLibAddress = libraries.blockNumberLibAddress;
     const contractLibAddress = libraries.contractLibAddress;
     const feeLibAddress = libraries.feeLibAddress;
     const libRequestIdSetAddress = libraries.libRequestIdSetAddress;
@@ -132,6 +137,8 @@ export async function deployFlightDelayComponentContracts(libraries: LibraryAddr
         [productName],
         {
             libraries: {
+                AccessAdminLib: accessAdminLibAddress,
+                BlocknumberLib: blocknumberLibAddress,
                 ObjectTypeLib: objectTypeLibAddress,
                 RoleIdLib: roleIdLibAddress,
                 SelectorLib: selectorLibAddress,
@@ -184,6 +191,8 @@ export async function deployFlightDelayComponentContracts(libraries: LibraryAddr
         [poolName],
         {
             libraries: {
+                AccessAdminLib: accessAdminLibAddress,
+                BlocknumberLib: blocknumberLibAddress,
                 ObjectTypeLib: objectTypeLibAddress,
                 RoleIdLib: roleIdLibAddress,
                 SelectorLib: selectorLibAddress,
@@ -227,12 +236,19 @@ export async function deployFlightDelayComponentContracts(libraries: LibraryAddr
 
     logger.info(`----- FlightOracle -----`);
     const oracleName = "FDOracle_" + deploymentId;
+    const commitHash = await simpleGit().revparse(["HEAD"]);
+    
     const { address: flightOracleAuthAddress } = await deployContract(
         "FlightOracleAuthorization",
         flightOwner,
-        [oracleName],
+        [
+            oracleName,
+            commitHash,
+        ],
         {
             libraries: {
+                AccessAdminLib: accessAdminLibAddress,
+                BlocknumberLib: blocknumberLibAddress,
                 ObjectTypeLib: objectTypeLibAddress,
                 RoleIdLib: roleIdLibAddress,
                 SelectorLib: selectorLibAddress,
