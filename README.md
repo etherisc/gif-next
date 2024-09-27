@@ -1,3 +1,9 @@
+![Build & Tests](https://github.com/github/docs/actions/workflows/build.yml/badge.svg)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+![NPM (tag)](https://img.shields.io/npm/v/@etherisc/gif-next)
+[![](https://dcbadge.limes.pink/api/server/INVITE)](https://discord.gg/ww2AZJ4WYN)
+
+
 # GIF-Next (Generic Insurance Framework, version 3)
 
 For technical reason, this repository is called `gif-next`, but it contains the code of the version 3 of the Generic Insurance Framework (GIF). 
