@@ -1,7 +1,7 @@
 ![Build & Tests](https://github.com/etherisc/gif-next/actions/workflows/build.yml/badge.svg)
 [![npm (tag)](https://img.shields.io/npm/v/@etherisc/gif-next/next)](https://www.npmjs.com/package/@etherisc/gif-next)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Static Badge](https://img.shields.io/badge/Discord-join-blue)](https://discord.gg/ww2AZJ4WYN)
+[![Static Badge](https://img.shields.io/badge/Discord-join-purple)](https://discord.gg/ww2AZJ4WYN)
 
 
 # GIF-Next (Generic Insurance Framework, version 3)
