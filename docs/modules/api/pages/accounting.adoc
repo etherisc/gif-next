@@ -1,0 +1,418 @@
+:github-icon: pass:[<svg class="icon"><use href="#github-icon"/></svg>]
+
+= Accounting
+
+Contains contracts related to accounting and financial operations.
+
+== Contracts
+
+:_initialize: pass:normal[xref:#AccountingService-_initialize-address-bytes-[`++_initialize++`]]
+:decreaseComponentFees: pass:normal[xref:#AccountingService-decreaseComponentFees-contract-InstanceStore-NftId-Amount-[`++decreaseComponentFees++`]]
+:increaseProductFees: pass:normal[xref:#AccountingService-increaseProductFees-contract-InstanceStore-NftId-Amount-[`++increaseProductFees++`]]
+:increaseProductFeesForPool: pass:normal[xref:#AccountingService-increaseProductFeesForPool-contract-InstanceStore-NftId-Amount-[`++increaseProductFeesForPool++`]]
+:decreaseProductFees: pass:normal[xref:#AccountingService-decreaseProductFees-contract-InstanceStore-NftId-Amount-[`++decreaseProductFees++`]]
+:increaseDistributionBalance: pass:normal[xref:#AccountingService-increaseDistributionBalance-contract-InstanceStore-NftId-Amount-Amount-[`++increaseDistributionBalance++`]]
+:decreaseDistributionBalance: pass:normal[xref:#AccountingService-decreaseDistributionBalance-contract-InstanceStore-NftId-Amount-Amount-[`++decreaseDistributionBalance++`]]
+:increaseDistributorBalance: pass:normal[xref:#AccountingService-increaseDistributorBalance-contract-InstanceStore-NftId-Amount-Amount-[`++increaseDistributorBalance++`]]
+:decreaseDistributorBalance: pass:normal[xref:#AccountingService-decreaseDistributorBalance-contract-InstanceStore-NftId-Amount-Amount-[`++decreaseDistributorBalance++`]]
+:increasePoolBalance: pass:normal[xref:#AccountingService-increasePoolBalance-contract-InstanceStore-NftId-Amount-Amount-[`++increasePoolBalance++`]]
+:decreasePoolBalance: pass:normal[xref:#AccountingService-decreasePoolBalance-contract-InstanceStore-NftId-Amount-Amount-[`++decreasePoolBalance++`]]
+:increaseBundleBalance: pass:normal[xref:#AccountingService-increaseBundleBalance-contract-InstanceStore-NftId-Amount-Amount-[`++increaseBundleBalance++`]]
+:decreaseBundleBalance: pass:normal[xref:#AccountingService-decreaseBundleBalance-contract-InstanceStore-NftId-Amount-Amount-[`++decreaseBundleBalance++`]]
+:increaseBundleBalanceForPool: pass:normal[xref:#AccountingService-increaseBundleBalanceForPool-contract-InstanceStore-NftId-Amount-Amount-[`++increaseBundleBalanceForPool++`]]
+:decreaseBundleBalanceForPool: pass:normal[xref:#AccountingService-decreaseBundleBalanceForPool-contract-InstanceStore-NftId-Amount-Amount-[`++decreaseBundleBalanceForPool++`]]
+:_changeTargetBalance: pass:normal[xref:#AccountingService-_changeTargetBalance-bool-contract-InstanceStore-NftId-Amount-Amount-[`++_changeTargetBalance++`]]
+:_logUpdateFee: pass:normal[xref:#AccountingService-_logUpdateFee-NftId-string-struct-Fee-struct-Fee-[`++_logUpdateFee++`]]
+:_getDomain: pass:normal[xref:#AccountingService-_getDomain--[`++_getDomain++`]]
+
+[.contract]
+[[AccountingService]]
+=== `++AccountingService++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/accounting/AccountingService.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/accounting/AccountingService.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++_initialize(owner, data)++`]
+* [`++decreaseComponentFees(instanceStore, componentNftId, feeAmount)++`]
+* [`++increaseProductFees(instanceStore, productNftId, feeAmount)++`]
+* [`++increaseProductFeesForPool(instanceStore, productNftId, feeAmount)++`]
+* [`++decreaseProductFees(instanceStore, productNftId, feeAmount)++`]
+* [`++increaseDistributionBalance(instanceStore, distributionNftId, amount, feeAmount)++`]
+* [`++decreaseDistributionBalance(instanceStore, distributionNftId, amount, feeAmount)++`]
+* [`++increaseDistributorBalance(instanceStore, distributorNftId, amount, feeAmount)++`]
+* [`++decreaseDistributorBalance(instanceStore, distributorNftId, amount, feeAmount)++`]
+* [`++increasePoolBalance(instanceStore, poolNftId, amount, feeAmount)++`]
+* [`++decreasePoolBalance(instanceStore, poolNftId, amount, feeAmount)++`]
+* [`++increaseBundleBalance(instanceStore, bundleNftId, amount, feeAmount)++`]
+* [`++decreaseBundleBalance(instanceStore, bundleNftId, amount, feeAmount)++`]
+* [`++increaseBundleBalanceForPool(instanceStore, bundleNftId, amount, feeAmount)++`]
+* [`++decreaseBundleBalanceForPool(instanceStore, bundleNftId, amount, feeAmount)++`]
+* [`++_changeTargetBalance(increase, instanceStore, targetNftId, amount, feeAmount)++`]
+* [`++_logUpdateFee(productNftId, name, feeBefore, feeAfter)++`]
+* [`++_getDomain()++`]
+
+[.contract-subindex-inherited]
+.IAccountingService
+
+[.contract-subindex-inherited]
+.Service
+* [`++__Service_init(authority, registry, initialOwner)++`]
+* [`++getDomain()++`]
+* [`++getVersion()++`]
+* [`++getRoleId()++`]
+* [`++_getServiceAddress(domain)++`]
+
+[.contract-subindex-inherited]
+.IService
+
+[.contract-subindex-inherited]
+.ReentrancyGuardUpgradeable
+* [`++__ReentrancyGuard_init()++`]
+* [`++__ReentrancyGuard_init_unchained()++`]
+* [`++_reentrancyGuardEntered()++`]
+
+[.contract-subindex-inherited]
+.Versionable
+* [`++initializeVersionable(activatedBy, data)++`]
+* [`++upgradeVersionable(data)++`]
+* [`++_upgrade(data)++`]
+
+[.contract-subindex-inherited]
+.IVersionable
+
+[.contract-subindex-inherited]
+.Registerable
+* [`++__Registerable_init(authority, registry, parentNftId, objectType, isInterceptor, initialOwner, data)++`]
+* [`++isActive()++`]
+* [`++getRelease()++`]
+* [`++getInitialInfo()++`]
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.IRelease
+
+[.contract-subindex-inherited]
+.NftOwnable
+* [`++_checkNftType(nftId, expectedObjectType)++`]
+* [`++__NftOwnable_init(registry, initialOwner)++`]
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+* [`++_linkToNftOwnable(nftOwnableAddress)++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+* [`++__RegistryLinked_init(registry)++`]
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+* [`++__ERC165_init()++`]
+* [`++_initializeERC165()++`]
+* [`++_registerInterface(interfaceId)++`]
+* [`++_registerInterfaceNotInitializing(interfaceId)++`]
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+* [`++__AccessManaged_init(initialAuthority)++`]
+* [`++__AccessManaged_init_unchained(initialAuthority)++`]
+* [`++authority()++`]
+* [`++setAuthority(newAuthority)++`]
+* [`++isConsumingScheduledOp()++`]
+* [`++_setAuthority(newAuthority)++`]
+* [`++_checkCanCall(caller, data)++`]
+
+[.contract-subindex-inherited]
+.IAccessManaged
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+* [`++__Context_init()++`]
+* [`++__Context_init_unchained()++`]
+* [`++_msgSender()++`]
+* [`++_msgData()++`]
+* [`++_contextSuffixLength()++`]
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.IAccountingService
+* [`++LogComponentServiceUpdateFee(nftId, feeName, previousFractionalFee, previousFixedFee, newFractionalFee, newFixedFee)++`]
+
+[.contract-subindex-inherited]
+.Service
+
+[.contract-subindex-inherited]
+.IService
+
+[.contract-subindex-inherited]
+.ReentrancyGuardUpgradeable
+
+[.contract-subindex-inherited]
+.Versionable
+
+[.contract-subindex-inherited]
+.IVersionable
+
+[.contract-subindex-inherited]
+.Registerable
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.IRelease
+
+[.contract-subindex-inherited]
+.NftOwnable
+
+[.contract-subindex-inherited]
+.INftOwnable
+* [`++LogNftOwnableNftLinkedToAddress(nftId, owner)++`]
+
+[.contract-subindex-inherited]
+.RegistryLinked
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[AccountingService-_initialize-address-bytes-]]
+==== `[.contract-item-name]#++_initialize++#++(address owner, bytes data)++` [.item-kind]#internal#
+
+[.contract-item]
+[[AccountingService-decreaseComponentFees-contract-InstanceStore-NftId-Amount-]]
+==== `[.contract-item-name]#++decreaseComponentFees++#++(contract InstanceStore instanceStore, NftId componentNftId, Amount feeAmount)++` [.item-kind]#external#
+
+[.contract-item]
+[[AccountingService-increaseProductFees-contract-InstanceStore-NftId-Amount-]]
+==== `[.contract-item-name]#++increaseProductFees++#++(contract InstanceStore instanceStore, NftId productNftId, Amount feeAmount)++` [.item-kind]#external#
+
+[.contract-item]
+[[AccountingService-increaseProductFeesForPool-contract-InstanceStore-NftId-Amount-]]
+==== `[.contract-item-name]#++increaseProductFeesForPool++#++(contract InstanceStore instanceStore, NftId productNftId, Amount feeAmount)++` [.item-kind]#external#
+
+[.contract-item]
+[[AccountingService-decreaseProductFees-contract-InstanceStore-NftId-Amount-]]
+==== `[.contract-item-name]#++decreaseProductFees++#++(contract InstanceStore instanceStore, NftId productNftId, Amount feeAmount)++` [.item-kind]#external#
+
+[.contract-item]
+[[AccountingService-increaseDistributionBalance-contract-InstanceStore-NftId-Amount-Amount-]]
+==== `[.contract-item-name]#++increaseDistributionBalance++#++(contract InstanceStore instanceStore, NftId distributionNftId, Amount amount, Amount feeAmount)++` [.item-kind]#external#
+
+[.contract-item]
+[[AccountingService-decreaseDistributionBalance-contract-InstanceStore-NftId-Amount-Amount-]]
+==== `[.contract-item-name]#++decreaseDistributionBalance++#++(contract InstanceStore instanceStore, NftId distributionNftId, Amount amount, Amount feeAmount)++` [.item-kind]#external#
+
+[.contract-item]
+[[AccountingService-increaseDistributorBalance-contract-InstanceStore-NftId-Amount-Amount-]]
+==== `[.contract-item-name]#++increaseDistributorBalance++#++(contract InstanceStore instanceStore, NftId distributorNftId, Amount amount, Amount feeAmount)++` [.item-kind]#external#
+
+[.contract-item]
+[[AccountingService-decreaseDistributorBalance-contract-InstanceStore-NftId-Amount-Amount-]]
+==== `[.contract-item-name]#++decreaseDistributorBalance++#++(contract InstanceStore instanceStore, NftId distributorNftId, Amount amount, Amount feeAmount)++` [.item-kind]#external#
+
+[.contract-item]
+[[AccountingService-increasePoolBalance-contract-InstanceStore-NftId-Amount-Amount-]]
+==== `[.contract-item-name]#++increasePoolBalance++#++(contract InstanceStore instanceStore, NftId poolNftId, Amount amount, Amount feeAmount)++` [.item-kind]#public#
+
+[.contract-item]
+[[AccountingService-decreasePoolBalance-contract-InstanceStore-NftId-Amount-Amount-]]
+==== `[.contract-item-name]#++decreasePoolBalance++#++(contract InstanceStore instanceStore, NftId poolNftId, Amount amount, Amount feeAmount)++` [.item-kind]#public#
+
+[.contract-item]
+[[AccountingService-increaseBundleBalance-contract-InstanceStore-NftId-Amount-Amount-]]
+==== `[.contract-item-name]#++increaseBundleBalance++#++(contract InstanceStore instanceStore, NftId bundleNftId, Amount amount, Amount feeAmount)++` [.item-kind]#external#
+
+[.contract-item]
+[[AccountingService-decreaseBundleBalance-contract-InstanceStore-NftId-Amount-Amount-]]
+==== `[.contract-item-name]#++decreaseBundleBalance++#++(contract InstanceStore instanceStore, NftId bundleNftId, Amount amount, Amount feeAmount)++` [.item-kind]#external#
+
+[.contract-item]
+[[AccountingService-increaseBundleBalanceForPool-contract-InstanceStore-NftId-Amount-Amount-]]
+==== `[.contract-item-name]#++increaseBundleBalanceForPool++#++(contract InstanceStore instanceStore, NftId bundleNftId, Amount amount, Amount feeAmount)++` [.item-kind]#external#
+
+[.contract-item]
+[[AccountingService-decreaseBundleBalanceForPool-contract-InstanceStore-NftId-Amount-Amount-]]
+==== `[.contract-item-name]#++decreaseBundleBalanceForPool++#++(contract InstanceStore instanceStore, NftId bundleNftId, Amount amount, Amount feeAmount)++` [.item-kind]#external#
+
+[.contract-item]
+[[AccountingService-_changeTargetBalance-bool-contract-InstanceStore-NftId-Amount-Amount-]]
+==== `[.contract-item-name]#++_changeTargetBalance++#++(bool increase, contract InstanceStore instanceStore, NftId targetNftId, Amount amount, Amount feeAmount)++` [.item-kind]#internal#
+
+[.contract-item]
+[[AccountingService-_logUpdateFee-NftId-string-struct-Fee-struct-Fee-]]
+==== `[.contract-item-name]#++_logUpdateFee++#++(NftId productNftId, string name, struct Fee feeBefore, struct Fee feeAfter)++` [.item-kind]#internal#
+
+[.contract-item]
+[[AccountingService-_getDomain--]]
+==== `[.contract-item-name]#++_getDomain++#++() → ObjectType++` [.item-kind]#internal#
+
+:constructor: pass:normal[xref:#AccountingServiceManager-constructor-address-address-bytes32-[`++constructor++`]]
+:getAccountingService: pass:normal[xref:#AccountingServiceManager-getAccountingService--[`++getAccountingService++`]]
+
+[.contract]
+[[AccountingServiceManager]]
+=== `++AccountingServiceManager++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/accounting/AccountingServiceManager.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/accounting/AccountingServiceManager.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++constructor(authority, registry, salt)++`]
+* [`++getAccountingService()++`]
+
+[.contract-subindex-inherited]
+.ProxyManager
+* [`++initialize(registry, implementation, data, salt)++`]
+* [`++deploy(registry, initialImplementation, initializationData)++`]
+* [`++deployDetermenistic(registry, initialImplementation, initializationData, salt)++`]
+* [`++upgrade(newImplementation)++`]
+* [`++upgrade(newImplementation, upgradeData)++`]
+* [`++linkToProxy()++`]
+* [`++getDeployData(proxyOwner, deployData)++`]
+* [`++getUpgradeData(upgradeData)++`]
+* [`++getProxy()++`]
+* [`++getVersion()++`]
+* [`++getVersionCount()++`]
+* [`++getVersion(idx)++`]
+* [`++getVersionInfo(_version)++`]
+
+[.contract-subindex-inherited]
+.NftOwnable
+* [`++_checkNftType(nftId, expectedObjectType)++`]
+* [`++__NftOwnable_init(registry, initialOwner)++`]
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+* [`++_linkToNftOwnable(nftOwnableAddress)++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+* [`++__RegistryLinked_init(registry)++`]
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+* [`++__ERC165_init()++`]
+* [`++_initializeERC165()++`]
+* [`++_registerInterface(interfaceId)++`]
+* [`++_registerInterfaceNotInitializing(interfaceId)++`]
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.ProxyManager
+* [`++LogProxyManagerVersionableDeployed(proxy, initialImplementation)++`]
+* [`++LogProxyManagerVersionableUpgraded(proxy, upgradedImplementation)++`]
+
+[.contract-subindex-inherited]
+.NftOwnable
+
+[.contract-subindex-inherited]
+.INftOwnable
+* [`++LogNftOwnableNftLinkedToAddress(nftId, owner)++`]
+
+[.contract-subindex-inherited]
+.RegistryLinked
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[AccountingServiceManager-constructor-address-address-bytes32-]]
+==== `[.contract-item-name]#++constructor++#++(address authority, address registry, bytes32 salt)++` [.item-kind]#public#
+
+initializes proxy manager with service implementation
+
+[.contract-item]
+[[AccountingServiceManager-getAccountingService--]]
+==== `[.contract-item-name]#++getAccountingService++#++() → contract AccountingService++` [.item-kind]#external#
+
