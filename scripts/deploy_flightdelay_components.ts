@@ -128,7 +128,7 @@ export async function deployFlightDelayComponentContracts(libraries: LibraryAddr
                 TimestampLib: timestampLibAddress,
             }
         });
-    
+        
     logger.info(`----- FlightProduct -----`);
     const deploymentId = Math.random().toString(16).substring(7);
     const productName = "FDProduct_" + deploymentId;
@@ -151,6 +151,15 @@ export async function deployFlightDelayComponentContracts(libraries: LibraryAddr
         },
         "contracts/examples/flight/FlightProductAuthorization.sol:FlightProductAuthorization");
 
+    const { address: flightMessageVerifierAddress } = await deployContract(
+        "FlightMessageVerifier",
+        flightOwner,
+        [],
+        {
+            libraries: {
+            }
+        });
+
     const { address: flightProductAddress, contract: flightProductBaseContract } = await deployContract(
         "FlightProduct",
         flightOwner,
@@ -159,6 +168,7 @@ export async function deployFlightDelayComponentContracts(libraries: LibraryAddr
             instanceNftId,
             productName,
             flightProductAuthAddress,
+            flightMessageVerifierAddress,
         ],
         {
             libraries: {
