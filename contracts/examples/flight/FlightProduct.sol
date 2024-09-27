@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {IAuthorization} from "../../authorization/IAuthorization.sol";
@@ -100,6 +101,27 @@ contract FlightProduct is
         int256 delayMinutes;
     }
 
+    struct ApplicationData {
+        Str flightData;
+        Timestamp departureTime;
+        Timestamp arrivalTime;
+        Amount premiumAmount;
+        uint256[6] statistics;
+        uint8 v;
+        bytes32 r; 
+        bytes32 s;
+    }
+
+    struct PermitData {
+        address owner;
+        address spender;
+        uint256 value;
+        uint256 deadline;
+        uint8 v;
+        bytes32 r;
+        bytes32 s;
+    }
+
 
     constructor(
         address registry,
@@ -132,6 +154,64 @@ contract FlightProduct is
     }
 
 
+    /// @dev Creates a policy using a permit for the policy holder.
+    /// The policy holder is defined as the owner parameter of the permit data.
+    /// NOTE: This function makes the assumption that the product token
+    /// supports permits. This assumption is not verfied.
+    function createPolicyWithPermit(
+        PermitData memory permit,
+        ApplicationData memory application
+    )
+        external
+        virtual
+        restricted()
+        returns (
+            RiskId riskId,
+            NftId policyNftId
+        )
+    {
+        // process permit data
+        processPermit(permit);
+
+        // create policy
+        address policyHolder = permit.owner;
+        (
+            riskId,
+            policyNftId
+        ) = createPolicy(
+            policyHolder,
+            application.flightData,
+            application.departureTime,
+            application.arrivalTime,
+            application.premiumAmount,
+            application.statistics,
+            application.v,
+            application.r,
+            application.s);
+    }
+
+
+    function processPermit(
+        PermitData memory permit
+    )
+        public
+        virtual
+        restricted()
+    {
+        address tokenAddress = address(getToken());
+
+        // process permit data
+        ERC20Permit(tokenAddress).permit(
+            permit.owner, 
+            permit.spender, 
+            permit.value, 
+            permit.deadline, 
+            permit.v, 
+            permit.r, 
+            permit.s); 
+    }
+
+
     function createPolicy(
         address policyHolder,
         Str flightData, 
@@ -144,7 +224,7 @@ contract FlightProduct is
         bytes32 r, 
         bytes32 s
     )
-        external
+        public
         virtual
         restricted()
         returns (
