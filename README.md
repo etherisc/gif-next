@@ -1,8 +1,6 @@
-# GIF-Next (Generic Insurance Framework, next version)
+# GIF-Next (Generic Insurance Framework, version 3)
 
-## Dependencies
-
-See `remappings.txt` for GIF-Next depencies
+For technical reason, this repository is called `gif-next`, but it contains the code of the version 3 of the Generic Insurance Framework (GIF). 
 
 ## Submodules checkout
 
