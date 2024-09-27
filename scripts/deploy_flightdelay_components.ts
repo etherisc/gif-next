@@ -125,6 +125,7 @@ export async function deployFlightDelayComponentContracts(libraries: LibraryAddr
             libraries: {
                 AmountLib: amountLibAddress,
                 RiskIdLib: riskIdLibAddress,
+                TimestampLib: timestampLibAddress,
             }
         });
     
