@@ -24,7 +24,9 @@ The project is setup with a devcontainer for Visual Studio Code. This is the rec
 It will provide a consistent development environment for all developers with all the required dependencies installed. 
 
 Hardhat is used for compiling the smart contracts and all deployment scripts are hardhat based. 
-Unit tests are written using the forge testing framework. See below for most important commands.
+Unit tests are written using the forge testing framework. See below for most important commands to run tests and deployments.
+
+If you are interested in creating your own products, have a look at our [example sandbox repository](https://github.com/etherisc/gif-next-sandbox) that contains a simple example of how to build new products on top of the GIF.
 
 ### Running all unit tests
 
