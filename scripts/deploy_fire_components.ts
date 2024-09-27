@@ -1,4 +1,5 @@
 import { resolveAddress, Signer } from "ethers";
+import { ethers } from "hardhat";
 import { FirePool, FireProduct, FireProduct__factory, AccessAdmin__factory, IInstance__factory, IInstanceService__factory, IRegistry__factory, TokenRegistry__factory } from "../typechain-types";
 import { getNamedAccounts } from "./libs/accounts";
 import { deployContract } from "./libs/deployment";
@@ -7,6 +8,7 @@ import { ServiceAddresses } from "./libs/services";
 import { executeTx, getFieldFromLogs, getTxOpts } from "./libs/transaction";
 import { loadVerificationQueueState } from './libs/verification_queue';
 import { logger } from "./logger";
+import { printBalances, printGasSpent, resetBalances, resetGasSpent, setBalanceAfter } from "./libs/gas_and_balance_tracker";
 
 async function main() {
     loadVerificationQueueState();
@@ -41,11 +43,14 @@ async function main() {
 
 
 export async function deployFireComponentContracts(libraries: LibraryAddresses, services: ServiceAddresses, fireOwner: Signer, registryOwner: Signer) {
+    resetBalances();
+    resetGasSpent();
+
     logger.info("===== deploying fire insurance components ...");
     
     const accessAdminLibAddress = libraries.accessAdminLibAddress;
     const amountLibAddress = libraries.amountLibAddress;
-    const blockNumberLibAddress = libraries.blockNumberLibAddress,;
+    const blockNumberLibAddress = libraries.blockNumberLibAddress;
     const contractLibAddress = libraries.contractLibAddress;
     const feeLibAddress = libraries.feeLibAddress;
     const nftIdLibAddress = libraries.nftIdLibAddress;
@@ -211,6 +216,11 @@ export async function deployFireComponentContracts(libraries: LibraryAddresses, 
     logger.info(`===== FireUSD deployed at ${fireUsdAddress}`);
     logger.info(`===== FireProduct deployed at ${fireProductAddress} and registered with NFT ID ${fireProductNftId}`);
     logger.info(`===== FirePool deployed at ${firePoolAddress} and registered with NFT ID ${firePoolNftId}`);
+
+    setBalanceAfter(await resolveAddress(registryOwner), await ethers.provider.getBalance(registryOwner));
+    setBalanceAfter(await resolveAddress(fireOwner), await ethers.provider.getBalance(fireOwner));
+    printBalances();
+    printGasSpent();
 }
 
 if (require.main === module) {

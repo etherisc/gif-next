@@ -4,6 +4,7 @@ import { logger } from "../logger";
 import { GAS_PRICE } from "./constants";
 import { deploymentState, isResumeableDeployment } from "./deployment_state";
 import { ErrorDecoder } from "ethers-decode-error";
+import { addGasSpent } from "./gas_and_balance_tracker";
 
 /**
  * Extract a field from the logs of a transaction. 
@@ -62,6 +63,7 @@ export async function executeTx(
                 throw new TransactionFailedException(null);
             }
             logger.debug(`tx mined: ${tx.hash} status: ${tx.status}`)
+            addGasSpent(rcpt.from, rcpt.gasUsed);
             if (tx.status !== 1) {
                 throw new TransactionFailedException(null);
             }
@@ -80,6 +82,7 @@ export async function executeTx(
         if (tx === null) {
             throw new TransactionFailedException(null);
         }
+        addGasSpent(tx.from, tx.gasUsed);
         if (tx?.status !== 1) {
             throw new TransactionFailedException(tx);
         }

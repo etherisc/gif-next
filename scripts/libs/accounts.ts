@@ -3,6 +3,7 @@ import { AddressLike, formatEther, resolveAddress } from "ethers";
 import { ethers } from "hardhat";
 import { ChainNft__factory } from "../../typechain-types";
 import { logger } from "../logger";
+import { resetBalances, setBalanceBefore } from "./gas_and_balance_tracker";
 
 export async function getNamedAccounts(): Promise<{ 
     protocolOwner: HardhatEthersSigner;
@@ -23,13 +24,17 @@ export async function getNamedAccounts(): Promise<{
     const instanceOwner = signers[10];
     await printBalance(
         ["protocolOwner", protocolOwner] ,
-        ["masterInstanceOwner", masterInstanceOwner] , 
-        ["productOwner", productOwner], 
-        ["poolOwner", poolOwner],
-        ["distributionOwner", distributionOwner],
-        ["instanceServiceOwner", instanceServiceOwner],
+        // ["masterInstanceOwner", masterInstanceOwner] , 
+        // ["productOwner", productOwner], 
+        // ["poolOwner", poolOwner],
+        // ["distributionOwner", distributionOwner],
+        // ["instanceServiceOwner", instanceServiceOwner],
         ["instanceOwner", instanceOwner],
     );
+    resetBalances();
+    setBalanceBefore(await resolveAddress(protocolOwner), await ethers.provider.getBalance(protocolOwner));
+    setBalanceBefore(await resolveAddress(instanceOwner), await ethers.provider.getBalance(instanceOwner));
+
     return { protocolOwner, masterInstanceOwner, productOwner, poolOwner, distributionOwner, instanceServiceOwner, instanceOwner }; 
 }
 

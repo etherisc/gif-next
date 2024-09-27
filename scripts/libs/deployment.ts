@@ -8,6 +8,7 @@ import { logger } from "../logger";
 import { GAS_PRICE } from "./constants";
 import { deploymentState, isResumeableDeployment } from "./deployment_state";
 import { prepareVerificationData } from "./verification";
+import { addGasSpent } from "./gas_and_balance_tracker";
 
 export type DeploymentResult = {
     address: AddressLike; 
@@ -131,6 +132,7 @@ async function executeAllDeploymentSteps(contractName: string, signer: Signer, c
         
         const deployedContractAddress = deployTxResponse.target;
         const deploymentReceipt = await ethers.provider.getTransactionReceipt(deployTxResponse.deploymentTransaction()?.hash || "0x");
+        addGasSpent(deploymentReceipt?.from || "0x", deploymentReceipt?.gasUsed || BigInt(0));
         deploymentState.setContractAddress(contractName, await resolveAddress(deployedContractAddress));
         logger.info(`${contractName} deployed to ${deployedContractAddress}`);
         

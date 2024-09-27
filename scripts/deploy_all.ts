@@ -9,7 +9,7 @@ async function main() {
     const { protocolOwner, masterInstanceOwner, instanceOwner, productOwner: fireOwner } = await getNamedAccounts();
     loadVerificationQueueState();
     
-    const {services, libraries } = await deployGifContracts(protocolOwner, masterInstanceOwner, instanceOwner);
+    const {services, libraries } = await deployGifContracts(protocolOwner, instanceOwner);
     await deployFireComponentContracts(libraries, services, fireOwner, protocolOwner);
 }
 

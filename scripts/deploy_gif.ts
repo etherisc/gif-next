@@ -11,17 +11,18 @@ import { RegistryAddresses, deployAndInitializeRegistry } from "./libs/registry"
 import { ServiceAddresses, deployAndRegisterServices } from "./libs/services";
 import { loadVerificationQueueState } from "./libs/verification_queue";
 import { logger } from "./logger";
+import { printBalances, printGasSpent, setBalanceAfter } from "./libs/gas_and_balance_tracker";
 
 
 async function main() {
-    const { protocolOwner, masterInstanceOwner, instanceOwner } = await getNamedAccounts();
+    const { protocolOwner, instanceOwner } = await getNamedAccounts();
     loadVerificationQueueState();
 
-    await deployGifContracts(protocolOwner, masterInstanceOwner, instanceOwner);
+    await deployGifContracts(protocolOwner, instanceOwner);
 }
 
 export async function deployGifContracts(
-    protocolOwner: HardhatEthersSigner, masterInstanceOwner: HardhatEthersSigner, instanceOwner: HardhatEthersSigner
+    protocolOwner: HardhatEthersSigner, instanceOwner: HardhatEthersSigner
 ): Promise<{ services: ServiceAddresses, libraries: LibraryAddresses, registry: RegistryAddresses }> {
     logger.info("===== deploying GIF contracts");
     
@@ -62,7 +63,7 @@ export async function deployGifContracts(
     printAddresses(libraries, registry, services, masterInstance, newInstance);
 
     await verifyOwnership(
-        protocolOwner, masterInstanceOwner,
+        protocolOwner, 
         //, productOwner, poolOwner, distributionOwner,
         libraries, registry, //services,
         masterInstance, 
@@ -73,15 +74,18 @@ export async function deployGifContracts(
     );
 
     // print final balance
-    await printBalance(
-        ["protocolOwner", protocolOwner],
-        ["masterInstanceOwner", masterInstanceOwner] , 
-        // ["instanceServiceOwner", instanceServiceOwner],
-        ["instanceOwner", instanceOwner],
-        // ["productOwner", productOwner], 
-        // ["distributionOwner", distributionOwner], 
-        // ["poolOwner", poolOwner]
-        );
+    // await printBalance(
+    //     ["protocolOwner", protocolOwner],
+    //     // ["instanceServiceOwner", instanceServiceOwner],
+    //     ["instanceOwner", instanceOwner],
+    //     // ["productOwner", productOwner], 
+    //     // ["distributionOwner", distributionOwner], 
+    //     // ["poolOwner", poolOwner]
+    //     );
+    setBalanceAfter(await resolveAddress(protocolOwner), await ethers.provider.getBalance(protocolOwner));
+    setBalanceAfter(await resolveAddress(instanceOwner), await ethers.provider.getBalance(instanceOwner));
+    printBalances();
+    printGasSpent();
     logger.info("===== GIF contracts deployed successfully");
 
     return { services, libraries, registry };
@@ -93,7 +97,7 @@ export async function deployGifContracts(
  * Check that the instance, instance NFT, pool NFT and product NFTs are owned by their respective owners.
  */
 async function verifyOwnership(
-    protocolOwner: AddressLike, masterInstanceOwner: AddressLike,
+    protocolOwner: AddressLike, 
     // productOwner: AddressLike, poolOwner: AddressLike, distributionOwner: AddressLike,
     libraries: LibraryAddresses, registry: RegistryAddresses, //services: ServiceAddresses,
     masterInstance: InstanceAddresses,
