@@ -4,19 +4,67 @@ For technical reason, this repository is called `gif-next`, but it contains the 
 
 ## Submodules checkout
 
+The project depends heavily on the use of submodules for dependencies, so it is important to checkout the submodules when cloning the repository. 
+
 For initial checkout call
 
 ```shell
 git submodule update --init --recursive
 ```
 
-This repository uses submodules. To checkout or update to the latest submodules, run the following command after updating to any revision (or checking out the repository)
+To update to the latest submodules, run the following command after updating to any revision (or checking out the repository)
 
 ```shell
 git submodule update --recursive
 ```
 
-## Hardhat 
+## Recommended IDE & Development Environment
+
+The project is setup with a devcontainer for Visual Studio Code. This is the recommended way for use with the project. 
+It will provide a consistent development environment for all developers with all the required dependencies installed. 
+
+Hardhat is used for compiling the smart contracts and all deployment scripts are hardhat based. 
+Unit tests are written using the forge testing framework. See below for most important commands.
+
+### Running all unit tests
+
+```bash
+forge test
+```
+
+### Staring a full protocol deployment 
+
+```bash
+hh run scripts/deploy_gif.ts
+```
+
+To include the fire example components instead run the following command
+
+```bash
+hh run scripts/deploy_all.ts
+```
+
+The command accepts regular hardhat parameters for network selection and other configuration. Also some environment variables are required for deployment.
+
+Code verification is done separately using the following command (which read data from the serialized deployment state of the deploymnent script that ran beforehand)
+
+```bash
+hh run scripts/verify_deployment.ts
+```
+
+This uses the same environment variables as the deployment script.
+
+#### Important environment variables
+
+- `NETWORK_URL` the rpc endpoint to use
+- `WALLET_MNEMONIC` the HD wallet mnemonic to use for deployment. Wallet #0 will be the protocol owner. 
+- `GAS_PRICE` the gas price to use for deployment
+- `RESUMEABLE_DEPLOYMENT` if this flag is set to `true`, the deployment will write all transactions to a state file so the deployment can be resumed after a failure (or after a manual stop). data is stored in the `deployment/<chainid>/` directory. 
+
+- `POLYGONSCAN_API_KEY` the api key for polygonscan
+
+
+## Hardhat commands
 
 ### NPM Commands
 
@@ -99,24 +147,6 @@ Ensure that the deployment runs on a chain where a compatible version of the GIF
 
 Like before, use the `--network` option to deploy on a different network.
 
-### Create a new instance
-
-Requires previous step to be completed. 
-
-```bash
-# set appropriate values vor env variables (see below)
-
-hh run --network <networkname> scripts/new_instance.ts
-```
-
-Currently an HD wallet is expected to be used for the deployment. The mnemonic of the wallet needs to be provided via the `WALLET_MNEMONIC` environment variable. 
-The instance owner will be the 11th address of the wallet.
-
-Environment variables:
-
-- `WEB3_INFURA_PROJECT_ID` set to infura project id (required for mumbai and mainnet)
-- `WALLET_MNEMONIC` the mnemonic of the wallet to use for deployment (required for mumbai and mainnet)
-- `REGISTRY_ADDRESS` the address of the registry that is already deployed and configured and has a valid master instance
 
 ### Console
 
@@ -129,9 +159,6 @@ await provider.getBalance(me)
 ```
 
 
-### Documentation
-
-https://hardhat.org/hardhat-runner/docs/guides/compile-contracts
 
 ### Scripts to find syntax bugs in code
 
@@ -185,7 +212,7 @@ forge coverage
 forge coverage --report lcov 
 ```
 
-### Aliases 
+### Aliases configured in the devcontainer setup
 
 
 | Alias | Command |
