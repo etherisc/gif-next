@@ -1,6 +1,6 @@
 {
   "name": "@etherisc/gif-next",
-  "version": "0.0.1",
+  "version": "3.0.0-c0923b6f-772",
   "description": "This is the repository for the next version of the Generic Insurance Framework (GIF) smart contracts. ",
   "main": "index.js",
   "scripts": {
