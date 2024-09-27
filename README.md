@@ -1,6 +1,6 @@
 ![Build & Tests](https://github.com/etherisc/gif-next/actions/workflows/build.yml/badge.svg)
+![npm (tag)](https://img.shields.io/npm/v/@etherisc/gif-next)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-![NPM (tag)](https://img.shields.io/npm/v/@etherisc/gif-next)
 [![](https://dcbadge.limes.pink/api/server/ww2AZJ4WYN)](https://discord.gg/ww2AZJ4WYN)
 
 
