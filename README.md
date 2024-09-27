@@ -26,8 +26,12 @@ It will provide a consistent development environment for all developers with all
 Hardhat is used for compiling the smart contracts and all deployment scripts are hardhat based. 
 Unit tests are written using the forge testing framework. See below for most important commands to run tests and deployments.
 
+### What to do next
+
 If you are interested in creating your own products, have a look at our [example sandbox repository](https://github.com/etherisc/gif-next-sandbox) that contains a simple example of how to build new products on top of the GIF.
 Or see our documentation on the setup of the [fire example components](https://docs.etherisc.com/gif-next/3.x/example-fire).
+
+Or dive into the gif framework code by running the tests and/or deploying the contracts.
 
 ### Running all unit tests
 
@@ -62,8 +66,9 @@ This uses the same environment variables as the deployment script.
 - `NETWORK_URL` the rpc endpoint to use
 - `WALLET_MNEMONIC` the HD wallet mnemonic to use for deployment. Wallet #0 will be the protocol owner. 
 - `GAS_PRICE` the gas price to use for deployment
+- `DIP_ADDRESS` the address of the already deployed DIP token. if not set, the script will deploy a new DIP token
 - `RESUMEABLE_DEPLOYMENT` if this flag is set to `true`, the deployment will write all transactions to a state file so the deployment can be resumed after a failure (or after a manual stop). data is stored in the `deployment/<chainid>/` directory. 
-
+- `ETHERSCAN_API_KEY` the api key for etherscan
 - `POLYGONSCAN_API_KEY` the api key for polygonscan
 
 
