@@ -27,6 +27,7 @@ Hardhat is used for compiling the smart contracts and all deployment scripts are
 Unit tests are written using the forge testing framework. See below for most important commands to run tests and deployments.
 
 If you are interested in creating your own products, have a look at our [example sandbox repository](https://github.com/etherisc/gif-next-sandbox) that contains a simple example of how to build new products on top of the GIF.
+Or see our documentation on the setup of the [fire example components](https://docs.etherisc.com/gif-next/3.x/example-fire).
 
 ### Running all unit tests
 
