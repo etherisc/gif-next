@@ -116,8 +116,8 @@ contract FlightProductTest is FlightBaseTest {
             departureTime,
             arrivalTime,
             premiumAmount,
-            statistics,
-            v, r, s);
+            statistics);
+            // v, r, s);
 
         // THEN
         // check risks
@@ -204,8 +204,8 @@ contract FlightProductTest is FlightBaseTest {
             departureTime,
             arrivalTime,
             premiumAmount,
-            statistics,
-            v, r, s);
+            statistics);
+            // v, r, s);
 
         // TODO cleanup
         // RiskId riskId = instanceReader.getPolicyInfo(policyNftId).riskId;

@@ -184,10 +184,10 @@ contract FlightProduct is
             application.departureTime,
             application.arrivalTime,
             application.premiumAmount,
-            application.statistics,
-            application.v,
-            application.r,
-            application.s);
+            application.statistics);
+            // application.v,
+            // application.r,
+            // application.s);
     }
 
 
@@ -218,11 +218,11 @@ contract FlightProduct is
         Timestamp departureTime,
         Timestamp arrivalTime,
         Amount premiumAmount,
-        uint256[6] memory statistics,
+        uint256[6] memory statistics
         // signature fields
-        uint8 v, 
-        bytes32 r, 
-        bytes32 s
+        // uint8 v, 
+        // bytes32 r, 
+        // bytes32 s
     )
         public
         virtual
@@ -233,14 +233,15 @@ contract FlightProduct is
         )
     {
         // checks
-        FlightLib.checkApplicationDataAndSignature(
-            this,
-            flightData,
-            departureTime,
-            arrivalTime,
-            premiumAmount,
-            statistics,
-            v, r, s);
+        // disabled for now - using rbac for security
+        // FlightLib.checkApplicationDataAndSignature(
+        //     this,
+        //     flightData,
+        //     departureTime,
+        //     arrivalTime,
+        //     premiumAmount,
+        //     statistics,
+        //     v, r, s);
 
         (riskId, policyNftId) = _prepareApplication(
             policyHolder, 
