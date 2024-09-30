@@ -300,6 +300,7 @@ export async function deployFlightDelayComponentContracts(libraries: LibraryAddr
 
     logger.info(`===== Instance created. address: ${instanceAddress}, NFT ID: ${instanceNftId}`);
     logger.info(`===== FlightUSD deployed at ${flightUsdAddress}`);
+    logger.info(`===== FlightLib deployed at ${flightLibAddress}`);
     logger.info(`===== FlightProduct deployed at ${flightProductAddress} and registered with NFT ID ${flightProductNftId}`);
     logger.info(`===== FlightPool deployed at ${flightPoolAddress} and registered with NFT ID ${flightPoolNftId}`);
     logger.info(`===== FlightOracle deployed at ${flightOracleAddress} and registered with NFT ID ${flightOracleNftId}`);
