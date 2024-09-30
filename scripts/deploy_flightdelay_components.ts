@@ -1,5 +1,5 @@
 import { AddressLike, resolveAddress, Signer } from "ethers";
-import { IInstance__factory, IInstanceService__factory, IRegistry__factory, TokenRegistry__factory, FlightProduct, FlightProduct__factory, FlightPool, FlightOracle } from "../typechain-types";
+import { IInstance__factory, IInstanceService__factory, IRegistry__factory, TokenRegistry__factory, FlightProduct, FlightProduct__factory, FlightPool, FlightOracle, IInstance } from "../typechain-types";
 import { getNamedAccounts } from "./libs/accounts";
 import { deployContract } from "./libs/deployment";
 import { LibraryAddresses } from "./libs/libraries";
@@ -68,20 +68,31 @@ export async function deployFlightDelayComponentContracts(libraries: LibraryAddr
         
     const instanceServiceAddress = services.instanceServiceAddress;
 
-    logger.debug(`instanceServiceAddress: ${instanceServiceAddress}`);
-    const instanceService = IInstanceService__factory.connect(await resolveAddress(instanceServiceAddress), flightOwner);
+    let instanceAddress: string;
+    let instanceNftId: string;
+    let instance: IInstance;
 
-    logger.info("===== create new instance");
-    const instanceCreateTx = await executeTx(async () => 
-        await instanceService.createInstance(getTxOpts()),
-        "fd - createInstance",
-        [IInstanceService__factory.createInterface()]
-    );
+    if (process.env.SKIP_INSTANCE_CREATION) {
+        logger.info(`===== using existing instance @ ${process.env.INSTANCE_ADDRESS}`);
+        instanceAddress = process.env.INSTANCE_ADDRESS!;
+        instance = IInstance__factory.connect(instanceAddress, flightOwner);
+        instanceNftId = (await instance.getNftId()).toString();
+    } else {
+        logger.debug(`instanceServiceAddress: ${instanceServiceAddress}`);
+        const instanceService = IInstanceService__factory.connect(await resolveAddress(instanceServiceAddress), flightOwner);
 
-    const instanceAddress = getFieldFromLogs(instanceCreateTx.logs, instanceService.interface, "LogInstanceServiceInstanceCreated", "instance") as string;
-    const instanceNftId = getFieldFromLogs(instanceCreateTx.logs, instanceService.interface, "LogInstanceServiceInstanceCreated", "instanceNftId") as string;
-    logger.debug(`Instance created at ${instanceAddress} with NFT ID ${instanceNftId}`);
-    const instance = IInstance__factory.connect(instanceAddress, flightOwner);
+        logger.info("===== create new instance");
+        const instanceCreateTx = await executeTx(async () => 
+            await instanceService.createInstance(getTxOpts()),
+            "fd - createInstance",
+            [IInstanceService__factory.createInterface()]
+        );
+
+        instanceAddress = getFieldFromLogs(instanceCreateTx.logs, instanceService.interface, "LogInstanceServiceInstanceCreated", "instance") as string;
+        instanceNftId = getFieldFromLogs(instanceCreateTx.logs, instanceService.interface, "LogInstanceServiceInstanceCreated", "instanceNftId") as string;
+        logger.info(`Instance created at ${instanceAddress} with NFT ID ${instanceNftId}`);
+        instance = IInstance__factory.connect(instanceAddress, flightOwner);
+    }
 
     logger.info(`===== deploying flight delay contracts`);
 
