@@ -72,7 +72,7 @@ export async function deployFlightDelayComponentContracts(libraries: LibraryAddr
     let instanceNftId: string;
     let instance: IInstance;
 
-    if (process.env.SKIP_INSTANCE_CREATION) {
+    if (process.env.INSTANCE_ADDRESS !== undefined && process.env.INSTANCE_ADDRESS !== '') {
         logger.info(`===== using existing instance @ ${process.env.INSTANCE_ADDRESS}`);
         instanceAddress = process.env.INSTANCE_ADDRESS!;
         instance = IInstance__factory.connect(instanceAddress, flightOwner);
@@ -98,7 +98,7 @@ export async function deployFlightDelayComponentContracts(libraries: LibraryAddr
 
     logger.info(`----- FlightUSD -----`);
     let flightUsdAddress: AddressLike;
-    if (process.env.FLIGHT_TOKEN_ADDRESS) {
+    if (process.env.FLIGHT_TOKEN_ADDRESS !== undefined && process.env.FLIGHT_TOKEN_ADDRESS !== '') {
         logger.info(`using existing Token at ${process.env.FLIGHT_TOKEN_ADDRESS}`);
         flightUsdAddress = process.env.FLIGHT_TOKEN_ADDRESS;
     } else {
@@ -204,6 +204,11 @@ export async function deployFlightDelayComponentContracts(libraries: LibraryAddr
         [IInstance__factory.createInterface()]
     );
     const flightProductNftId = await flightProduct.getNftId();
+    await executeTx(async () =>
+        await flightProduct.completeSetup(),
+        "fd - completeSetup",
+        [FlightProduct__factory.createInterface()]
+    );
 
     logger.info(`----- FlightPool -----`);
     const poolName = "FDPool_" + deploymentId;
