@@ -153,6 +153,24 @@ contract FlightProduct is
             getNftId()).oracleNftId[0];
     }
 
+    function calculatePayoutAmounts(
+        FlightProduct flightProduct,
+        Amount premium, 
+        uint256[6] memory statistics
+    ) 
+        external
+        view
+        returns (
+            uint256 weight, 
+            Amount[5] memory payoutAmounts,
+            Amount sumInsuredAmount // simply the max of payoutAmounts 
+        ) 
+    {
+        return FlightLib.calculatePayoutAmounts(
+            flightProduct,
+            premium,
+            statistics);
+    }
 
     /// @dev Creates a policy using a permit for the policy holder.
     /// The policy holder is defined as the owner parameter of the permit data.
