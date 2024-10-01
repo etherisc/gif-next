@@ -18,6 +18,8 @@ async function main() {
     await deployFireComponentContracts(
         {
             amountLibAddress: process.env.AMOUNTLIB_ADDRESS!,
+            accessAdminLibAddress: process.env.ACCESSADMINLIB_ADDRESS!,
+            blockNumberLibAddress: process.env.BLOCKNUMBERLIB_ADDRESS!,
             contractLibAddress: process.env.CONTRACTLIB_ADDRESS!,
             feeLibAddress: process.env.FEELIB_ADDRESS!,
             nftIdLibAddress: process.env.NFTIDLIB_ADDRESS!,
