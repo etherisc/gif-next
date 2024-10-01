@@ -8,6 +8,8 @@ import { executeTx, getFieldFromLogs, getTxOpts } from "./libs/transaction";
 import { loadVerificationQueueState } from './libs/verification_queue';
 import { logger } from "./logger";
 import simpleGit from "simple-git";
+import { printBalances, printGasSpent, resetBalances, resetGasSpent, setBalanceAfter } from "./libs/gas_and_balance_tracker";
+import { ethers } from "hardhat";
 
 async function main() {
     loadVerificationQueueState();
@@ -45,6 +47,9 @@ async function main() {
 
 
 export async function deployFlightDelayComponentContracts(libraries: LibraryAddresses, services: ServiceAddresses, flightOwner: Signer, registryOwner: Signer) {
+    resetBalances();
+    resetGasSpent();
+    
     logger.info("===== deploying flight delay insurance components on a new instance ...");
     
     const accessAdminLibAddress = libraries.accessAdminLibAddress;
@@ -313,6 +318,16 @@ export async function deployFlightDelayComponentContracts(libraries: LibraryAddr
     );
     const flightOracleNftId = await flightOracle.getNftId();
 
+    await executeTx(async () =>
+        await flightProduct.setOracleNftId(getTxOpts()),
+        "fd - setOracleNftId",
+        [FlightProduct__factory.createInterface()]
+    );
+
+    setBalanceAfter(await resolveAddress(registryOwner), await ethers.provider.getBalance(registryOwner));
+    setBalanceAfter(await resolveAddress(flightOwner), await ethers.provider.getBalance(flightOwner));
+    printBalances();
+    printGasSpent();
 
     logger.info(`===== Instance created. address: ${instanceAddress}, NFT ID: ${instanceNftId}`);
     logger.info(`===== FlightUSD deployed at ${flightUsdAddress}`);

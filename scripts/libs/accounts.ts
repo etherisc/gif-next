@@ -25,7 +25,7 @@ export async function getNamedAccounts(): Promise<{
     await printBalance(
         ["protocolOwner", protocolOwner] ,
         // ["masterInstanceOwner", masterInstanceOwner] , 
-        // ["productOwner", productOwner], 
+        ["productOwner", productOwner], 
         // ["poolOwner", poolOwner],
         // ["distributionOwner", distributionOwner],
         // ["instanceServiceOwner", instanceServiceOwner],
@@ -33,6 +33,7 @@ export async function getNamedAccounts(): Promise<{
     );
     resetBalances();
     setBalanceBefore(await resolveAddress(protocolOwner), await ethers.provider.getBalance(protocolOwner));
+    setBalanceBefore(await resolveAddress(productOwner), await ethers.provider.getBalance(productOwner));
     setBalanceBefore(await resolveAddress(instanceOwner), await ethers.provider.getBalance(instanceOwner));
 
     return { protocolOwner, masterInstanceOwner, productOwner, poolOwner, distributionOwner, instanceServiceOwner, instanceOwner }; 
