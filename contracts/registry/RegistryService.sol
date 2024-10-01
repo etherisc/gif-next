@@ -42,7 +42,7 @@ contract RegistryService is
     }
 
     // TODO register have no combos with STAKING; decide on parentNftId arg
-    function registerStaking(IRegisterable staking, address owner)
+    function registerStaking(IRegisterable staking, address expectedOwner)
         external
         virtual
         restricted()

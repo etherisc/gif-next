@@ -100,7 +100,7 @@ contract InstanceAdmin is
         for(uint256 i = 0; i < serviceDomains.length; i++) {
             ObjectType serviceDomain = serviceDomains[i];
             RoleId serviceRoleId = authorization.getServiceRole(serviceDomain);
-            address service = _registry.getServiceAddress(serviceDomain, getRelease());
+            address service = getRegistry().getServiceAddress(serviceDomain, getRelease());
 
             _grantRoleToAccount(
                 serviceRoleId,
