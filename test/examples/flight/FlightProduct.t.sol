@@ -50,7 +50,10 @@ contract FlightProductTest is FlightBaseTest {
 
         vm.prank(flightOwner);
         flightProduct.setDefaultBundle(bundleNftId);
+    }
 
+
+    function approveProductTokenHandler() public {
         // approve flight product to buy policies
         vm.startPrank(customer);
         flightUSD.approve(
@@ -62,7 +65,8 @@ contract FlightProductTest is FlightBaseTest {
 
     function test_flightProductSetup() public {
         // GIVEN - setp from flight base test
-
+        approveProductTokenHandler();
+        
         _printAuthz(instance.getInstanceAdmin(), "instance");
 
         // solhint-disable
@@ -91,6 +95,7 @@ contract FlightProductTest is FlightBaseTest {
 
     function test_flightProductCreatePolicyHappyCase() public {
         // GIVEN - setp from flight base test
+        approveProductTokenHandler();
 
         uint256 customerBalanceBefore = flightUSD.balanceOf(customer);
         uint256 poolBalanceBefore = flightUSD.balanceOf(flightPool.getWallet());
@@ -178,8 +183,9 @@ contract FlightProductTest is FlightBaseTest {
 
 
     function test_flightCreatePolicyAndProcessFlightStatus() public {
-
         // GIVEN - create policy
+        approveProductTokenHandler();
+
         Amount premiumAmount = AmountLib.toAmount(30 * 10 ** flightUSD.decimals());
 
         // bytes32 ratingsHash = flightMessageVerifier.getRatingsHash(
