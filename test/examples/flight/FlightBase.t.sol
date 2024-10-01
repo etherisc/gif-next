@@ -40,10 +40,14 @@ contract FlightBaseTest is GifTest {
     FlightMessageVerifier public flightMessageVerifier;
     address public verifierOwner = makeAddr("verifierOwner");
 
+    uint256 public customerPrivateKey = 0xB0B;
+
     address public dataSigner;
     uint256 public dataSignerPrivateKey;
 
     function setUp() public virtual override {
+        customer = vm.addr(customerPrivateKey);
+        
         super.setUp();
         
         _deployFlightUSD();
