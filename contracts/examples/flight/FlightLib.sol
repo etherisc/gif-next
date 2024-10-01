@@ -64,20 +64,25 @@ library FlightLib {
         view
     {
         // solhint-disable
-        require(premiumAmount >= flightProduct.MIN_PREMIUM(), "ERROR:FDD-001:INVALID_PREMIUM");
-        require(premiumAmount <= flightProduct.MAX_PREMIUM(), "ERROR:FDD-002:INVALID_PREMIUM");
-        require(arrivalTime > departureTime, "ERROR:FDD-003:ARRIVAL_BEFORE_DEPARTURE_TIME");
+        if (premiumAmount < flightProduct.MIN_PREMIUM()) {
+            revert FlightProduct.ErrorFlightProductPremiumAmountTooSmall(premiumAmount, flightProduct.MIN_PREMIUM());
+        }
+        if (premiumAmount > flightProduct.MAX_PREMIUM()) {
+            revert FlightProduct.ErrorFlightProductPremiumAmountTooLarge(premiumAmount, flightProduct.MAX_PREMIUM());
+        }
+        if (arrivalTime <= departureTime) {
+            revert FlightProduct.ErrorFlightProductArrivalBeforeDepartureTime(departureTime, arrivalTime);
+        }
 
-        // TODO decide how to handle demo mode
-        require(
-            arrivalTime <= departureTime.addSeconds(flightProduct.MAX_FLIGHT_DURATION()),
-            "ERROR:FDD-004:INVALID_ARRIVAL/DEPARTURE_TIME");
-        require(
-            TimestampLib.current() >= departureTime.subtractSeconds(flightProduct.MAX_TIME_BEFORE_DEPARTURE()),
-            "ERROR:FDD-005:INVALID_ARRIVAL/DEPARTURE_TIME");
-        require(
-            TimestampLib.current() <= departureTime.subtractSeconds(flightProduct.MIN_TIME_BEFORE_DEPARTURE()),
-            "ERROR:FDD-012:INVALID_ARRIVAL/DEPARTURE_TIME");
+        if (arrivalTime > departureTime.addSeconds(flightProduct.MAX_FLIGHT_DURATION())) {
+            revert FlightProduct.ErrorFlightProductArrivalAfterMaxFlightDuration(arrivalTime, departureTime, flightProduct.MAX_FLIGHT_DURATION());
+        }
+        if (departureTime < TimestampLib.current().addSeconds(flightProduct.MIN_TIME_BEFORE_DEPARTURE())) {
+            revert FlightProduct.ErrorFlightProductDepartureBeforeMinTimeBeforeDeparture(departureTime, TimestampLib.current(), flightProduct.MIN_TIME_BEFORE_DEPARTURE());
+        }
+        if (departureTime > TimestampLib.current().addSeconds(flightProduct.MAX_TIME_BEFORE_DEPARTURE())) {
+            revert FlightProduct.ErrorFlightProductDepartureAfterMaxTimeBeforeDeparture(departureTime, TimestampLib.current(), flightProduct.MAX_TIME_BEFORE_DEPARTURE());
+        }
         // solhint-enable
     }
 
@@ -161,7 +166,9 @@ library FlightLib {
         returns (uint256 weight)
     {
         // check we have enough observations
-        require(statistics[0] >= flightProduct.MIN_OBSERVATIONS(), "ERROR:FDD-011:LOW_OBSERVATIONS");
+        if (statistics[0] < flightProduct.MIN_OBSERVATIONS()) {
+            revert FlightProduct.ErrorFlightProductNotEnoughObservations(statistics[0], flightProduct.MIN_OBSERVATIONS());
+        }
 
         weight = 0;
         for (uint256 i = 1; i < 6; i++) {
@@ -192,8 +199,12 @@ library FlightLib {
             Amount sumInsuredAmount // simply the max of payoutAmounts 
         )
     {
-        require(premium >= flightProduct.MIN_PREMIUM(), "ERROR:FDD-009:INVALID_PREMIUM");
-        require(premium <= flightProduct.MAX_PREMIUM(), "ERROR:FDD-010:INVALID_PREMIUM");
+        if (premium < flightProduct.MIN_PREMIUM()) { 
+            revert FlightProduct.ErrorFlightProductPremiumAmountTooSmall(premium, flightProduct.MIN_PREMIUM()); 
+        }
+        if (premium > flightProduct.MAX_PREMIUM()) { 
+            revert FlightProduct.ErrorFlightProductPremiumAmountTooLarge(premium, flightProduct.MAX_PREMIUM()); 
+        }
 
         sumInsuredAmount = AmountLib.zero();
         weight = calculateWeight(flightProduct, statistics);

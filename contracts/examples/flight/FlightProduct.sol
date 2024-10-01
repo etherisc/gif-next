@@ -44,6 +44,14 @@ contract FlightProduct is
     event LogErrorUnexpectedStatus(RequestId requestId, RiskId riskId, bytes1 status, int256 delayMinutes);
 
     error ErrorApplicationDataSignatureMismatch(address expectedSigner, address actualSigner);
+    error ErrorFlightProductClusterRisk(Amount totalSumInsured, Amount maxTotalPayout);
+    error ErrorFlightProductPremiumAmountTooSmall(Amount premiumAmount, Amount minPremium);
+    error ErrorFlightProductPremiumAmountTooLarge(Amount premiumAmount, Amount maxPremium);
+    error ErrorFlightProductArrivalBeforeDepartureTime(Timestamp departureTime, Timestamp arrivalTime);
+    error ErrorFlightProductArrivalAfterMaxFlightDuration(Timestamp arrivalTime, Timestamp maxArrivalTime, Seconds maxDuration);
+    error ErrorFlightProductDepartureBeforeMinTimeBeforeDeparture(Timestamp departureTime, Timestamp now, Seconds minTimeBeforeDeparture);
+    error ErrorFlightProductDepartureAfterMaxTimeBeforeDeparture(Timestamp departureTime, Timestamp now, Seconds maxTimeBeforeDeparture);
+    error ErrorFlightProductNotEnoughObservations(uint256 observations, uint256 minObservations);
 
     // solhint-disable
     // Minimum observations for valid prediction
@@ -505,10 +513,9 @@ contract FlightProduct is
         }
 
         // check for cluster risk: additional sum insured amount must not exceed MAX_TOTAL_PAYOUT
-        require (
-            flightRisk.sumOfSumInsuredAmounts + sumInsuredAmount <= MAX_TOTAL_PAYOUT,
-            "ERROR:FDD-006:CLUSTER_RISK"
-        );
+        if (flightRisk.sumOfSumInsuredAmounts + sumInsuredAmount > MAX_TOTAL_PAYOUT) {
+            revert ErrorFlightProductClusterRisk(flightRisk.sumOfSumInsuredAmounts + sumInsuredAmount, MAX_TOTAL_PAYOUT);
+        }
 
         // update existing risk with additional sum insured amount
         flightRisk.sumOfSumInsuredAmounts = flightRisk.sumOfSumInsuredAmounts + sumInsuredAmount;
