@@ -31,8 +31,9 @@ contract FlightProductAuthorization
         // authorize public role (open access to any account, only allows to lock target)
         functions = _authorizeForTarget(getMainTargetName(), PUBLIC_ROLE());
         _authorize(functions, FlightProduct.createPolicy.selector, "createPolicy");
+        _authorize(functions, FlightProduct.createPolicyWithPermit.selector, "createPolicyWithPermit");
 
-        // only owner
+        // TODO: only owner
         _authorize(functions, FlightProduct.processFlightStatus.selector, "processFlightStatus");
         _authorize(functions, FlightProduct.completeSetup.selector, "completeSetup");
         _authorize(functions, FlightProduct.setDefaultBundle.selector, "setDefaultBundle");
