@@ -227,7 +227,6 @@ contract TestPoolRegistration is GifTest {
         returns(SimpleProduct)
     {
         return new SimpleProduct(
-            address(registry),
             instanceNftId, 
             "SimpleProduct",
             _getSimpleProductInfo(),
@@ -245,7 +244,6 @@ contract TestPoolRegistration is GifTest {
         returns(SimplePool)
     {
         return new SimplePool(
-            address(registry),
             productNftId,
             _getDefaultSimplePoolInfo(),
             new BasicPoolAuthorization(name),

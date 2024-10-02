@@ -476,6 +476,7 @@ contract TestFees is GifTest {
         // THEN - expect a log entry for the fee withdrawal
         vm.expectEmit();
         emit IPoolService.LogPoolServiceFeesWithdrawn(
+            poolNftId,
             bundleNftId,
             investor,
             address(token),
@@ -518,6 +519,7 @@ contract TestFees is GifTest {
         // THEN - expect a log entry for the fee withdrawal
         vm.expectEmit();
         emit IPoolService.LogPoolServiceFeesWithdrawn(
+            poolNftId,
             bundleNftId,
             investor,
             address(token),
@@ -574,6 +576,7 @@ contract TestFees is GifTest {
         // THEN - expect a log entry for the fee withdrawal
         vm.expectEmit();
         emit IPoolService.LogPoolServiceFeesWithdrawn(
+            poolNftId,
             bundleNftId,
             investor,
             address(token),

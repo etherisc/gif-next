@@ -13,7 +13,7 @@ import {ObjectType, ObjectTypeLib, RELEASE} from "../type/ObjectType.sol";
 import {GIF_INITIAL_RELEASE} from "../registry/Registry.sol";
 import {RoleId, ADMIN_ROLE, RELEASE_REGISTRY_ROLE} from "../type/RoleId.sol";
 import {Str} from "../type/String.sol";
-import {VersionPartLib, VersionPart} from "../type/Version.sol";
+import {VersionPart} from "../type/Version.sol";
 
 
 /// @dev The ReleaseAdmin contract implements the central authorization for the services of a specific release.
@@ -57,23 +57,14 @@ contract ReleaseAdmin is
 
 
     function completeSetup(
-        address registry,
         address authorization,
         address releaseRegistry
     )
         external
         //onlyDeployer()
     {
-        // checks
-        AccessAdminLib.checkRegistry(registry);
 
         // effects
-        //AccessManagerCloneable(
-        //    authority()).completeSetup(
-        //        registry);
-
-        __RegistryLinked_init(registry);
-
         IServiceAuthorization serviceAuthorization = IServiceAuthorization(authorization);
         AccessAdminLib.checkAuthorization(
             address(_authorization),
@@ -86,7 +77,7 @@ contract ReleaseAdmin is
         _serviceAuthorization = serviceAuthorization;
 
         // link nft ownability to registry
-        _linkToNftOwnable(registry);
+        _linkToNftOwnable(address(_getRegistry()));
 
         _createRoles(_serviceAuthorization);
 

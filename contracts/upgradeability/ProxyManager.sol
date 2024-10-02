@@ -45,7 +45,6 @@ contract ProxyManager is
 
     /// @dev convencience initializer
     function initialize(
-        address registry,
         address implementation,
         bytes memory data,
         bytes32 salt
@@ -56,10 +55,9 @@ contract ProxyManager is
     {
         address initialOwner = msg.sender;
 
-        __NftOwnable_init(registry, initialOwner);
+        __NftOwnable_init(initialOwner);
 
         upgradeable = deployDetermenistic(
-            registry,
             implementation, 
             data,
             salt);
@@ -67,7 +65,6 @@ contract ProxyManager is
 
     /// @dev deploy initial contract
     function deploy(
-        address registry, 
         address initialImplementation, 
         bytes memory initializationData
     )
@@ -97,7 +94,6 @@ contract ProxyManager is
     }
 
     function deployDetermenistic(
-        address registry, 
         address initialImplementation, 
         bytes memory initializationData, 
         bytes32 salt

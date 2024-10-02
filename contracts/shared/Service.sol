@@ -24,7 +24,6 @@ abstract contract Service is
 
     function __Service_init(
         address authority, // real authority for registry service adress(0) for other services
-        address registry, 
         address initialOwner
     )
         internal
@@ -35,8 +34,7 @@ abstract contract Service is
 
         __Registerable_init(
             authority,
-            registry, 
-            IRegistry(registry).getNftId(), 
+            _getRegistry().getNftId(), 
             SERVICE(), 
             false, // is interceptor
             initialOwner, 
@@ -63,6 +61,6 @@ abstract contract Service is
 
 
     function _getServiceAddress(ObjectType domain) internal view returns (address) {
-        return getRegistry().getServiceAddress(domain, getRelease());
+        return _getRegistry().getServiceAddress(domain, getRelease());
     }
 }

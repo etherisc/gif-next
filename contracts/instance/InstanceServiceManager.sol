@@ -12,14 +12,12 @@ contract InstanceServiceManager is ProxyManager {
     /// @dev initializes proxy manager with instance service implementation
     constructor(
         address authority, 
-        address registry,
         bytes32 salt
     ) 
     {
         InstanceService svc = new InstanceService{salt: salt}();
-        bytes memory data = abi.encode(authority, registry);
+        bytes memory data = abi.encode(authority);
         IUpgradeable upgradeable = initialize(
-            registry,
             address(svc), 
             data,
             salt);

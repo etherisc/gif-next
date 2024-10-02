@@ -14,13 +14,15 @@ import {
     TargetHandler,
     Staking__factory,
     TokenRegistry,
-    Dip__factory
+    Dip__factory,
+    ContractLib__factory
 } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract, deployProxyManagerContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
 import { executeTx, getTxOpts } from "./transaction";
 import { prepareVerificationData } from "./verification";
+import { exitOnError } from "winston";
 
 
 export type RegistryAddresses = {
@@ -68,12 +70,8 @@ export type RegistryAddresses = {
 
 }
 
-export async function deployAndInitializeRegistry(owner: Signer, libraries: LibraryAddresses): Promise<RegistryAddresses> {
-
-    logger.info("======== Starting deployment of registry ========");
-
-    
-    const COMMIT_HASH = "1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a";
+export async function deployDip(owner: Signer): Promise<Dip> {
+    logger.info("======== Starting deployment of Dip ========");
 
     const existingDipAddress = process.env.DIP_ADDRESS;
     let dipAddress: AddressLike;
@@ -98,8 +96,21 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     }
 
     const dip = dipBaseContract as Dip;
-    
+
+    logger.info(`Dip deployed at ${dipAddress}`);
+    logger.info("======== Finished deployment of Dip ========");
+
+    // const dipMainnetAddress = "0xc719d010b63e5bbf2c0551872cd5316ed26acd83";
+    return dip;
+}
+
+export async function deployAndInitializeRegistry(owner: Signer, dip: Dip, libraries: LibraryAddresses): Promise<RegistryAddresses> {
+
+    logger.info("======== Starting deployment of registry ========");
+
     logger.info("-------- Starting deployment RegistryAuthorization ----------------");
+
+    const COMMIT_HASH = "1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a";
 
     const { address: registryAuthorizationAddress, contract: registryAuthorizationBaseContract } = await deployContract(
         "RegistryAuthorization",
@@ -133,8 +144,8 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
                 AccessAdminLib: libraries.accessAdminLibAddress,
                 BlocknumberLib: libraries.blockNumberLibAddress,
                 ContractLib: libraries.contractLibAddress,
-                NftIdLib: libraries.nftIdLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
+                NftIdLib: libraries.nftIdLibAddress,
                 SelectorSetLib: libraries.selectorSetLibAddress,
                 StrLib: libraries.strLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
@@ -155,9 +166,18 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
             libraries: {
                 NftIdLib: libraries.nftIdLibAddress,
                 ObjectTypeLib: libraries.objectTypeLibAddress,
+                VersionLib: libraries.versionLibAddress,
                 VersionPartLib: libraries.versionPartLibAddress,
             }
         });
+
+    const ContractLib = ContractLib__factory.connect(libraries.contractLibAddress.toString(), owner);
+    const hardcodedRegistryAddress = await ContractLib.REGISTRY_ADDRESS() as AddressLike;
+    logger.debug(`Hardcoded registry address: ${hardcodedRegistryAddress}`);
+    logger.debug(`Deployed registry address: ${registryAddress}`);
+    if(registryAddress != hardcodedRegistryAddress) {
+        logger.error("Registry address does not match");
+    }
 
     const registry = registryBaseContract as Registry;
     const registryNftId = await registry.getNftIdForAddress(registryAddress);
@@ -170,7 +190,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     const { address: releaseRegistryAddress, contract: releaseRegistryBaseContract } = await deployContract(
         "ReleaseRegistry",
         owner,
-        [registryAddress], 
+        [], 
         {
             libraries: {
                 AccessAdminLib: libraries.accessAdminLibAddress,
@@ -183,7 +203,6 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
                 StateIdLib: libraries.stateIdLibAddress,
                 StrLib: libraries.strLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
-                VersionLib: libraries.versionLibAddress,
                 VersionPartLib: libraries.versionPartLibAddress,
             }
         });
@@ -192,13 +211,12 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
 
     logger.info("-------- Starting deployment TokenRegistry ----------------");
 
+    const dipAddress = await resolveAddress(dip) as AddressLike;
+
     const { address: tokenRegistryAddress, contract: tokenRegistryBaseContract } = await deployContract(
         "TokenRegistry",
         owner,
-        [
-            registryAddress,
-            dipAddress//dipMainnetAddress
-        ],
+        [dipAddress],//dipMainnetAddress
         {
             libraries: {
                 ChainIdLib: libraries.chainIdLibAddress,
@@ -213,7 +231,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     const { address: stakingReaderAddress, contract: stakingReaderBaseContract } = await deployContract(
         "StakingReader",
         owner,
-        [registryAddress],
+        [],
         {
             libraries: {
             }
@@ -226,10 +244,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     const { address: stakingStoreAddress, contract: stakingStoreBaseContract, } = await deployContract(
         "StakingStore",
         owner,
-        [
-            registryAddress,
-            stakingReaderAddress
-        ],
+        [stakingReaderAddress],
         {
             libraries: {
                 AmountLib: libraries.amountLibAddress, 
@@ -253,10 +268,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     const { address: targetHandlerAddress, contract: targetHandlerBaseContract, } = await deployContract(
         "TargetHandler",
         owner,
-        [
-            registryAddress,
-            stakingStoreAddress
-        ],
+        [stakingStoreAddress],
         {
             libraries: {
                 AmountLib: libraries.amountLibAddress, 
@@ -289,7 +301,6 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         "Staking",
         owner,
         [
-            registryAddress,
             targetHandlerAddress,
             stakingStoreAddress,
             tokenRegistryAddress,
@@ -314,7 +325,6 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
 
     const stakingManager = stakingManagerBaseContract as StakingManager;
     const staking = Staking__factory.connect(stakingAddress, owner);
-    const stakingNftId = await registry.getNftIdForAddress(stakingAddress);
 
     await executeTx(
         async () => await stakingReader.initialize(stakingAddress, stakingStoreAddress, getTxOpts()),
@@ -328,11 +338,11 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         [registry.interface]
     );
 
+    const stakingNftId = await registry.getNftIdForAddress(stakingAddress);
+
     await executeTx(
         async () => await registryAdmin.completeSetup(
-            registry, 
             registryAuthorization, 
-            3,
             owner, 
             owner, 
             getTxOpts()),

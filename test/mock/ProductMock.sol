@@ -17,7 +17,6 @@ import {Versionable} from "../../contracts/shared/Versionable.sol";
 
 contract ProductMockWithoutInstanceCheck is SimpleProduct {
     constructor(
-        address registry,
         NftId instanceNftId,
         string memory name,
         IComponents.ProductInfo memory productInfo,
@@ -26,7 +25,6 @@ contract ProductMockWithoutInstanceCheck is SimpleProduct {
         address initialOwner
     )
         SimpleProduct(
-            registry,
             instanceNftId,
             name,
             productInfo,
@@ -38,7 +36,6 @@ contract ProductMockWithoutInstanceCheck is SimpleProduct {
 
     // instance is not checked nor set
     function __InstanceLinkedComponent_init(
-        address registry,
         NftId parentNftId,
         string memory name,
         ObjectType componentType,
@@ -56,7 +53,6 @@ contract ProductMockWithoutInstanceCheck is SimpleProduct {
 
         __Component_init(
             address(accessManager),
-            registry, 
             parentNftId, 
             name, 
             componentType,
@@ -77,7 +73,6 @@ contract ProductMockWithoutInstanceCheck is SimpleProduct {
 contract ProductMockV4 is ProductMockWithoutInstanceCheck {
 
     constructor(
-        address registry,
         NftId instanceNftId,
         IComponents.ProductInfo memory productInfo,
         IComponents.FeeInfo memory feeInfo,
@@ -85,7 +80,6 @@ contract ProductMockV4 is ProductMockWithoutInstanceCheck {
         address initialOwner
     )
         ProductMockWithoutInstanceCheck(
-            registry,
             instanceNftId,
             "ProductWithoutInstanceCheckV4",
             productInfo,

@@ -237,7 +237,7 @@ contract StakingOwnerTest is GifTest {
         staking.setStakingRate(currentChainId, address(token), newTokenStakingRate);
 
         // WHEN + THEN attempt to set staking reader
-        StakingReader newStakingReader = new StakingReader(registry);
+        StakingReader newStakingReader = new StakingReader();
         vm.expectRevert(
             abi.encodeWithSelector(
                 INftOwnable.ErrorNftOwnableNotOwner.selector, outsider));

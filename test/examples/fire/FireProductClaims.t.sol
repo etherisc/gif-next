@@ -14,9 +14,12 @@ import {FireTestBase} from "./FireTestBase.t.sol";
 import {IClaimService} from "../../../contracts/product/IClaimService.sol";
 import {IComponent} from "../../../contracts/shared/IComponent.sol";
 import {INftOwnable} from "../../../contracts/shared/INftOwnable.sol";
+import {IRegisterable} from "../../../contracts/shared/IRegisterable.sol";
 import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
+import {IRegisterable} from "../../../contracts/shared/IRegisterable.sol";
 import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
 import {PayoutId} from "../../../contracts/type/PayoutId.sol";
+import {GIF_INITIAL_RELEASE} from "../../../contracts/registry/Registry.sol";
 import {Seconds, SecondsLib} from "../../../contracts/type/Seconds.sol";
 import {Timestamp, TimestampLib} from "../../../contracts/type/Timestamp.sol";
 import {UFixedLib} from "../../../contracts/type/UFixed.sol";
@@ -793,9 +796,10 @@ contract FireProductClaimsTest is FireTestBase {
         
         // THEN 
         vm.expectRevert(abi.encodeWithSelector(
-            INftOwnable.ErrorNftOwnableInvalidType.selector,
+            IRegisterable.ErrorRegisterableInvalidType.selector,
             firePoolNftId,
-            POLICY()));
+            POLICY(),
+            GIF_INITIAL_RELEASE()));
 
         // WHEN - submit claim for policy that is wrong type
         fireProduct.submitClaim(firePoolNftId, fireId);

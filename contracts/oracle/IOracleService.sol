@@ -18,12 +18,8 @@ interface IOracleService is IService {
     event LogOracleServiceRequestCancelled(RequestId requestId, NftId requesterNftId);
 
     // create request
-    error ErrorOracleServiceProductMismatch(ObjectType callerObjectType, NftId productNft, NftId oracleParentNftId);
     error ErrorOracleServiceExpiryInThePast(Timestamp blockTimestamp, Timestamp expiryAt);
     error ErrorOracleServiceCallbackMethodNameEmpty();
-
-    // respond
-    error ErrorOracleServiceNotResponsibleOracle(RequestId requestId, NftId expectedOracleNftId, NftId oracleNftId);
 
     // get request info
     error ErrorOracleServiceRequestStateNotActive(RequestId requestId, StateId state);

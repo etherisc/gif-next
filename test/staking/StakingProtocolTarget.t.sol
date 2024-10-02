@@ -13,6 +13,7 @@ import {Amount, AmountLib} from "../../contracts/type/Amount.sol";
 import {BlocknumberLib} from "../../contracts/type/Blocknumber.sol";
 import {GifTest} from "../base/GifTest.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
+import {GIF_ADMIN_ROLE, GIF_MANAGER_ROLE} from "../../contracts/type/RoleId.sol";
 import {STAKE} from "../../contracts/type/ObjectType.sol";
 import {Seconds, SecondsLib} from "../../contracts/type/Seconds.sol";
 import {StakingLib} from "../../contracts/staking/StakingLib.sol";
@@ -69,7 +70,8 @@ contract StakingProtocolTargetTest is GifTest {
         assertEq(dip.allowance(staking.getWallet(), address(staking.getTokenHandler())), type(uint256).max, "unexpected allowance for staking token handler");
 
         // solhint-disable
-        console.log("registry owner:", registryOwner);
+        console.log("gif admin", registryAdmin.getRoleMember(GIF_ADMIN_ROLE(), 0));
+        console.log("gif manager", registryAdmin.getRoleMember(GIF_MANAGER_ROLE(), 0));
         console.log("staking owner:", staking.getOwner());
         console.log("staking nft id:", staking.getNftId().toInt());
         console.log("staking address:", address(staking));

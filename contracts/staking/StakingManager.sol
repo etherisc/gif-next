@@ -15,7 +15,6 @@ contract StakingManager is
 
     /// @dev initializes proxy manager with service implementation 
     constructor(
-        address registry,
         address targetHandler,
         address stakingStore,
         address tokenRegistry,
@@ -27,13 +26,11 @@ contract StakingManager is
 
         _initialImplementation = address(stakingImplementation);
         _initializationData = abi.encode(
-            registry,
             targetHandler,
             stakingStore,
             tokenRegistry);
         
         IUpgradeable upgradeable = initialize(
-            registry,
             _initialImplementation,
             _initializationData,
             salt);

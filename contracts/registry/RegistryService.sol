@@ -33,11 +33,10 @@ contract RegistryService is
         onlyInitializing
     {
         (
-            address authority,
-            address registry
-        ) = abi.decode(data, (address, address));
+            address authority
+        ) = abi.decode(data, (address));
 
-        __Service_init(authority, registry, owner);
+        __Service_init(authority, owner);
         _registerInterface(type(IRegistryService).interfaceId);
     }
 
@@ -55,7 +54,7 @@ contract RegistryService is
         address owner;
         bytes memory data;
         (info, owner, data) = _getAndVerifyContractInfo(staking, NftIdLib.zero(), STAKING(), expectedOwner);
-        info.nftId = getRegistry().register(info, owner, data);
+        info.nftId = _getRegistry().register(info, owner, data);
     }
 
 
@@ -71,8 +70,8 @@ contract RegistryService is
 
         address owner;
         bytes memory data;
-        (info, owner, data) = _getAndVerifyContractInfo(instance, getRegistry().getNftId(), INSTANCE(), expectedOwner);
-        info.nftId = getRegistry().register(info, owner, data);
+        (info, owner, data) = _getAndVerifyContractInfo(instance, _getRegistry().getNftId(), INSTANCE(), expectedOwner);
+        info.nftId = _getRegistry().register(info, owner, data);
 
         instance.linkToRegisteredNftId(); // asume safe
     }
@@ -97,7 +96,7 @@ contract RegistryService is
         address owner;
         bytes memory data;
         (info, owner, data) = _getAndVerifyContractInfo(component, expectedParentNftId, expectedType, expectedOwner);
-        info.nftId = getRegistry().register(info, owner, data);
+        info.nftId = _getRegistry().register(info, owner, data);
     }
 
     function registerDistributor(IRegistry.ObjectInfo memory info, address owner, bytes memory data)
@@ -107,7 +106,7 @@ contract RegistryService is
         returns(NftId nftId) 
     {
         _verifyObjectInfo(info, owner, DISTRIBUTOR());
-        nftId = getRegistry().register(info, owner, data);
+        nftId = _getRegistry().register(info, owner, data);
     }
 
     function registerPolicy(IRegistry.ObjectInfo memory info, address owner, bytes memory data)
@@ -117,7 +116,7 @@ contract RegistryService is
         returns(NftId nftId) 
     {
         _verifyObjectInfo(info, owner, POLICY());
-        nftId = getRegistry().register(info, owner, data);
+        nftId = _getRegistry().register(info, owner, data);
     }
 
     function registerBundle(IRegistry.ObjectInfo memory info, address owner, bytes memory data)
@@ -127,7 +126,7 @@ contract RegistryService is
         returns(NftId nftId) 
     {
         _verifyObjectInfo(info, owner, BUNDLE());
-        nftId = getRegistry().register(info, owner, data);
+        nftId = _getRegistry().register(info, owner, data);
     }
 
     function registerStake(IRegistry.ObjectInfo memory info, address owner, bytes memory data)
@@ -137,7 +136,7 @@ contract RegistryService is
         returns(NftId nftId) 
     {
         _verifyObjectInfo(info, owner, STAKE());
-        nftId = getRegistry().register(info, owner, data);
+        nftId = _getRegistry().register(info, owner, data);
     }
 
     // Internal
@@ -214,7 +213,7 @@ contract RegistryService is
             revert ErrorRegistryServiceRegisterableOwnerZero(registerable);
         }
         
-        if(getRegistry().isRegistered(initialOwner)) { 
+        if(_getRegistry().isRegistered(initialOwner)) { 
             revert ErrorRegistryServiceRegisterableOwnerRegistered(registerable, initialOwner);
         }
     }
@@ -244,8 +243,8 @@ contract RegistryService is
             revert ErrorRegistryServiceInvalidInitialOwner(initialOwner);
         }
 
-        if(getRegistry().isRegistered(initialOwner)) {
-            ObjectType ownerType = getRegistry().getObjectInfo(initialOwner).objectType;
+        if(_getRegistry().isRegistered(initialOwner)) {
+            ObjectType ownerType = _getRegistry().getObjectInfo(initialOwner).objectType;
             if(ownerType == REGISTRY() || ownerType == STAKING() || ownerType == SERVICE() || ownerType == INSTANCE()) {
                 revert ErrorRegistryServiceObjectOwnerRegistered(info.objectType, initialOwner);
             }

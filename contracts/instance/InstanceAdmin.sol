@@ -13,8 +13,8 @@ import {ObjectType, INSTANCE} from "../type/ObjectType.sol";
 import {RoleId, ADMIN_ROLE} from "../type/RoleId.sol";
 import {GIF_INITIAL_RELEASE} from "../registry/Registry.sol";
 import {Str} from "../type/String.sol";
-import {VersionPartLib, VersionPart} from "../type/Version.sol";
 import {INSTANCE_TARGET_NAME, INSTANCE_ADMIN_TARGET_NAME, INSTANCE_STORE_TARGET_NAME, PRODUCT_STORE_TARGET_NAME, BUNDLE_SET_TARGET_NAME, RISK_SET_TARGET_NAME} from "./TargetNames.sol";
+import {VersionPart} from "../type/Version.sol";
 
 
 contract InstanceAdmin is
@@ -32,7 +32,7 @@ contract InstanceAdmin is
 
 
     modifier onlyInstanceService() {
-        if (msg.sender != getRegistry().getServiceAddress(INSTANCE(), getRelease())) {
+        if (msg.sender != _getRegistry().getServiceAddress(INSTANCE(), getRelease())) {
             revert ErrorInstanceAdminNotInstanceService(msg.sender);
         }
         _;
@@ -52,14 +52,13 @@ contract InstanceAdmin is
     /// Important: Initialization of instance admin is only complete after calling this function. 
     /// Important: The instance MUST be registered and all instance supporting contracts must be wired to this instance.
     function completeSetup(
-        address registry,
         address authorization,
         address instance
     )
         external
     {
         // checks
-        AccessAdminLib.checkIsRegistered(registry, instance, INSTANCE());
+        AccessAdminLib.checkIsRegistered(instance, INSTANCE(), getRelease());
 
         // effects
         AccessAdminLib.checkAuthorization(
@@ -69,8 +68,6 @@ contract InstanceAdmin is
             getRelease(), // expectedRelease
             false, // expectServiceAuthorization
             true); // checkAlreadyInitialized
-
-        __RegistryLinked_init(registry);
 
         _instance = IInstance(instance);
         _authorization = IAuthorization(authorization);
@@ -100,7 +97,7 @@ contract InstanceAdmin is
         for(uint256 i = 0; i < serviceDomains.length; i++) {
             ObjectType serviceDomain = serviceDomains[i];
             RoleId serviceRoleId = authorization.getServiceRole(serviceDomain);
-            address service = getRegistry().getServiceAddress(serviceDomain, getRelease());
+            address service = _getRegistry().getServiceAddress(serviceDomain, getRelease());
 
             _grantRoleToAccount(
                 serviceRoleId,
@@ -129,7 +126,8 @@ contract InstanceAdmin is
     /// Important: The component MUST be registered.
     function initializeComponentAuthorization(
         address componentAddress,
-        ObjectType expectedType
+        ObjectType expectedType,
+        VersionPart expectedRelease
     )
         external
         restricted()

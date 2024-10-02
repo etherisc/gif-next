@@ -9,7 +9,6 @@ contract RegistryServiceManager is
     ProxyManager
 {
     error ErrorRegistryAccessManagerAuthorityZero();
-    error ErrorRegistryAccessManagerRegistryZero();
 
     bytes32 constant public ACCESS_MANAGER_CREATION_CODE_HASH = 0x0;
 
@@ -18,22 +17,16 @@ contract RegistryServiceManager is
     /// @dev initializes proxy manager with registry service implementation and deploys registry
     constructor(
         address authority, // used by implementation 
-        address registry, // used by implementation 
         bytes32 salt
     ) 
     {
         if(authority == address(0)) {
             revert ErrorRegistryAccessManagerAuthorityZero();
         }
-
-        if(registry == address(0)) {
-            revert ErrorRegistryAccessManagerRegistryZero();
-        }
         
         RegistryService srv = new RegistryService{ salt: salt }();
-        bytes memory data = abi.encode(authority, registry);
+        bytes memory data = abi.encode(authority);
         IUpgradeable upgradeable = initialize(
-            registry,
             address(srv), 
             data,
             salt);

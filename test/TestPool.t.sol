@@ -37,7 +37,6 @@ contract TestPool is GifTest {
 
     function test_poolContractLocations() public {
         newPool = new SimplePool(
-            address(registry),
             productNftId,
             _getDefaultSimplePoolInfo(),
             new BasicPoolAuthorization("NewSimplePool"),

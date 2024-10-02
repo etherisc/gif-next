@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {IAccess} from "../authorization/IAccess.sol";
-import {IComponent} from "../shared/IInstanceLinkedComponent.sol";
+import {IComponent} from "../shared/IComponent.sol";
 
 import {Authorization} from "../authorization/Authorization.sol";
 import {BasicDistribution} from "./BasicDistribution.sol"; 

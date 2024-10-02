@@ -8,12 +8,12 @@ import {ObjectSet} from "../../contracts/instance/base/ObjectSet.sol";
 
 contract MockObjectSet is ObjectSet {
 
-    function initialize(address authority, address registry, address instanceAddress) 
+    function initialize(address authority, address instanceAddress) 
         external
         initializer()
     {
         _instanceAddress = instanceAddress;
-        __Cloneable_init(authority, registry);
+        __Cloneable_init(authority);
         
         emit LogObjectSetInitialized(instanceAddress);
     }

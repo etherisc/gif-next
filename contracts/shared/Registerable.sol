@@ -38,22 +38,22 @@ abstract contract Registerable is
         _;
     }
 
-    // TODO move to registerables verification library
     modifier onlyNftOfType(NftId nftId, ObjectType expectedObjectType) {
         _checkNftType(nftId, expectedObjectType);
         _;
     }
 
     // TODO move to registerables verification library
+    // TODO and check the owner here?
     function _checkNftType(NftId nftId, ObjectType expectedObjectType) internal view {
-        if(expectedObjectType.eqz() || !getRegistry().isObjectType(nftId, expectedObjectType, getRelease())) {
-            revert ErrorNftOwnableInvalidType(nftId, expectedObjectType);
+        VersionPart expectedRelease = getRelease();
+        if(expectedObjectType.eqz() || !_getRegistry().isObjectType(nftId, expectedObjectType, expectedRelease)) {
+            revert ErrorRegisterableInvalidType(nftId, expectedObjectType, expectedRelease);
         }
     }
 
     function __Registerable_init(
         address authority,
-        address registry,
         NftId parentNftId,
         ObjectType objectType,
         bool isInterceptor,
@@ -68,11 +68,10 @@ abstract contract Registerable is
             revert ErrorAuthorityInvalid(authority);
         }
 
-        // release must allign with authority -> not a release check of third contract...
         VersionPart release = AccessManagerCloneable(authority).getRelease();
 
         __AccessManaged_init(authority);
-        __NftOwnable_init(registry, initialOwner);
+        __NftOwnable_init(initialOwner);
         __Versionable_init(release);
 
         RegisterableStorage storage $ = _getRegisterableStorage();

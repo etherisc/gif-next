@@ -131,7 +131,6 @@ contract VerifyingPoolTest is GifTest {
         IComponents.FeeInfo memory feeInfo = _getSimpleFeeInfo();
 
         vProduct = new VerifyingProduct(
-            address(registry),
             instanceNftId,
             productInfo,
             feeInfo,
@@ -152,7 +151,6 @@ contract VerifyingPoolTest is GifTest {
         });
 
         vPool = new VerifyingPool(
-            address(registry),
             prdNftId,
             poolInfo,
             poolOwner

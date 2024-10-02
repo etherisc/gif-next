@@ -336,9 +336,9 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
         view
         returns (IAuthorization componentAuthorization)
     {
-        checkIsRegistered(address(accessAdmin.getRegistry()), componentAddress, expectedType);
-
         VersionPart expecteRelease = accessAdmin.getRelease();
+        checkIsRegistered(componentAddress, expectedType, expecteRelease);
+
         IAuthorizedComponent component = IAuthorizedComponent(componentAddress);
         componentAuthorization = component.getAuthorization();
 
@@ -436,22 +436,25 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
 
 
     function checkIsRegistered( 
-        address registry,
         address target,
-        ObjectType expectedType
+        ObjectType expectedType,
+        VersionPart expectedRelease
     )
         public
         view 
     {
-        checkRegistry(registry);
+        IRegistry.ObjectInfo memory info = ContractLib.getRegistry().getObjectInfo(target);
 
-        ObjectType tagetType = IRegistry(registry).getObjectInfo(target).objectType;
-        if (tagetType.eqz()) {
+        if (info.objectType.eqz()) {
             revert IAccessAdmin.ErrorAccessAdminNotRegistered(target);
         }
 
-        if (tagetType != expectedType) {
-            revert IAccessAdmin.ErrorAccessAdminTargetTypeMismatch(target, expectedType, tagetType);
+        if (info.objectType != expectedType) {
+            revert IAccessAdmin.ErrorAccessAdminTargetTypeMismatch(target, expectedType, info.objectType);
+        }
+
+        if (info.release != expectedRelease) {
+            revert IAccessAdmin.ErrorAccessAdminTargetReleaseMismatch(target, expectedRelease, info.release);
         }
     }
 

@@ -29,13 +29,11 @@ contract ExternallyManagedPool is
     address public bundleOwner;
 
     constructor(
-        address registry,
         NftId productNftId,
         IComponents.PoolInfo memory poolInfo,
         address initialOwner
     ) 
         SimplePool(
-            registry,
             productNftId,
             poolInfo,
             new BasicPoolAuthorization("ExternallyManagedPool"),

@@ -77,7 +77,6 @@ contract RegistryServiceHarnessTestBase is GifDeployer, FoundryRandom {
 
         registryServiceManagerWithHarness = new RegistryServiceManagerMockWithHarness{salt: releaseSalt}(
             releaseAdmin.authority(),
-            registryAddress,
             releaseSalt);
 
         registryServiceHarness = RegistryServiceHarness(address(registryServiceManagerWithHarness.getRegistryService()));

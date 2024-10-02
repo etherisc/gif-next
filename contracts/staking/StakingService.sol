@@ -113,7 +113,7 @@ contract StakingService is
 
         // update reward reserve book keeping
         StakingServiceStorage storage $ = _getStakingServiceStorage();
-        address instanceOwner = getRegistry().ownerOf(instanceNftId);
+        address instanceOwner = _getRegistry().ownerOf(instanceNftId);
         newBalance = $._staking.refillRewardReservesByService(instanceNftId, dipAmount, instanceOwner);
 
         emit LogStakingServiceRewardReservesIncreased(instanceNftId, rewardProvider, dipAmount, newBalance);
@@ -130,7 +130,7 @@ contract StakingService is
         _checkNftType(instanceNftId, INSTANCE());
         // update reward reserve book keeping
         StakingServiceStorage storage $ = _getStakingServiceStorage();
-        address instanceOwner = getRegistry().ownerOf(instanceNftId);
+        address instanceOwner = _getRegistry().ownerOf(instanceNftId);
         newBalance = $._staking.withdrawRewardReservesByService(instanceNftId, dipAmount, instanceOwner);
 
         emit LogStakingServiceRewardReservesDecreased(instanceNftId, instanceOwner, dipAmount, newBalance);
@@ -259,14 +259,14 @@ contract StakingService is
     {
         (
             address authority,
-            address registry,
             address staking
-        ) = abi.decode(data, (address, address, address));
+        ) = abi.decode(data, (address, address));
 
-        __Service_init(authority, registry, owner);
+        __Service_init(authority, owner);
 
         StakingServiceStorage storage $ = _getStakingServiceStorage();
         $._registryService = RegistryService(_getServiceAddress(REGISTRY()));
+        // TODO staking is registered in registry.initialize(), just check if address is registered staking
         $._staking = _registerStaking(staking);
         $._dip = $._staking.getToken();
         $._tokenHandler = $._staking.getTokenHandler();
@@ -283,7 +283,7 @@ contract StakingService is
     {
         // check if provided staking contract is already registred
         // staking contract may have been already registered by a previous major relase
-        IRegistry.ObjectInfo memory stakingInfo = getRegistry().getObjectInfo(stakingAddress);
+        IRegistry.ObjectInfo memory stakingInfo = _getRegistry().getObjectInfo(stakingAddress);
         if (stakingInfo.nftId.gtz()) {
             // registered object but wrong type
             if (stakingInfo.objectType != STAKING()) {

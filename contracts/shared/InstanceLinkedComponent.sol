@@ -99,7 +99,6 @@ abstract contract InstanceLinkedComponent is
 
 
     function __InstanceLinkedComponent_init(
-        address registry,
         NftId parentNftId,
         string memory name,
         ObjectType componentType,
@@ -111,14 +110,11 @@ abstract contract InstanceLinkedComponent is
         virtual
         onlyInitializing()
     {
-        // TODO calling registry and checking release before component is initialized
-        //      at least breaks order of checks -> e.g. if registry is not contract no meaningfull error will be given
-        IInstance instance = _checkAndGetInstance(registry, parentNftId, componentType);
+        IInstance instance = _checkAndGetInstance(parentNftId, componentType);
 
         // set component specific parameters
         __Component_init(
             instance.authority(),
-            registry, 
             parentNftId, 
             name, 
             componentType,
@@ -138,7 +134,6 @@ abstract contract InstanceLinkedComponent is
     }
 
     function _checkAndGetInstance(
-        address registryAddress,
         NftId parentNftId,
         ObjectType componentType
     )
@@ -147,7 +142,7 @@ abstract contract InstanceLinkedComponent is
         returns (IInstance instance)
     {
         NftId instanceNftId;
-        IRegistry registry = IRegistry(registryAddress);
+        IRegistry registry = _getRegistry();
 
         if(componentType == PRODUCT()) {
             instanceNftId = parentNftId;
@@ -178,7 +173,7 @@ abstract contract InstanceLinkedComponent is
 
 
     function _getComponentInfo() internal virtual override view returns (IComponents.ComponentInfo memory info) {
-        NftId componentNftId = getRegistry().getNftIdForAddress(address(this));
+        NftId componentNftId = _getRegistry().getNftIdForAddress(address(this));
 
         // if registered, attempt to return component info via instance reader
         if (componentNftId.gtz()) {
@@ -199,11 +194,5 @@ abstract contract InstanceLinkedComponent is
     /// @dev returns reader for linked instance
     function _getInstanceReader() internal view returns (InstanceReader reader) {
         return _getInstanceLinkedComponentStorage()._instance.getInstanceReader();
-    }
-
-    function _getInstanceLinkedComponentStorage() private pure returns (InstanceLinkedComponentStorage storage $) {
-        assembly {
-            $.slot := INSTANCE_LINKED_COMPONENT_LOCATION_V1
-        }
     }
 }

@@ -60,7 +60,6 @@ contract RegistryServiceTestBase is GifTest, FoundryRandom {
 
         registryServiceManager = new RegistryServiceManager{salt: releaseSalt}(
             releaseAdmin.authority(),
-            registryAddress,
             releaseSalt);
         registryService = registryServiceManager.getRegistryService();
         releaseRegistry.registerService(registryService);

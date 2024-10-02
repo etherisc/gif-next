@@ -33,7 +33,7 @@ abstract contract Component is
 
 
     modifier onlyChainNft() {
-        if(msg.sender != getRegistry().getChainNftAddress()) {
+        if(msg.sender != _getRegistry().getChainNftAddress()) {
             revert ErrorComponentNotChainNft(msg.sender);
         }
         _;
@@ -50,7 +50,6 @@ abstract contract Component is
     /// @dev requires component parent to be registered 
     function __Component_init(
         address authority,
-        address registry,
         NftId parentNftId,
         string memory name,
         ObjectType componentType,
@@ -68,7 +67,6 @@ abstract contract Component is
 
         __Registerable_init(
             authority,
-            registry, 
             parentNftId, 
             componentType, 
             isInterceptor, 
@@ -140,7 +138,7 @@ abstract contract Component is
 
 
     function isRegistered() public virtual view returns (bool) {
-        return getRegistry().getNftIdForAddress(address(this)).gtz();
+        return _getRegistry().getNftIdForAddress(address(this)).gtz();
     }
 
 
@@ -212,6 +210,6 @@ abstract contract Component is
     /// @dev returns the service address for the specified domain
     /// gets address via lookup from registry using the major version form the linked instance
     function _getServiceAddress(ObjectType domain) internal view returns (address) {
-        return getRegistry().getServiceAddress(domain, getRelease());
+        return _getRegistry().getServiceAddress(domain, getRelease());
     }
 }

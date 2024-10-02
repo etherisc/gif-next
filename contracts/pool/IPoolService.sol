@@ -18,15 +18,14 @@ interface IPoolService is IService {
     event LogPoolServiceWalletFunded(NftId poolNftId, address poolOwner, Amount amount);
     event LogPoolServiceWalletDefunded(NftId poolNftId, address poolOwner, Amount amount);
 
-    event LogPoolServiceBundleCreated(NftId instanceNftId, NftId poolNftId, NftId bundleNftId);
-    event LogPoolServiceBundleClosed(NftId instanceNftId, NftId poolNftId, NftId bundleNftId);
+    event LogPoolServiceBundleClosed(NftId poolNftId, NftId bundleNftId);
 
-    event LogPoolServiceBundleStaked(NftId instanceNftId, NftId poolNftId, NftId bundleNftId, Amount amount, Amount netAmount);
-    event LogPoolServiceBundleUnstaked(NftId instanceNftId, NftId poolNftId, NftId bundleNftId, Amount amount, Amount netAmount);
+    event LogPoolServiceBundleStaked(NftId poolNftId, NftId bundleNftId, Amount amount, Amount netAmount);
+    event LogPoolServiceBundleUnstaked(NftId poolNftId, NftId bundleNftId, Amount amount, Amount netAmount);
 
-    event LogPoolServiceFeesWithdrawn(NftId bundleNftId, address recipient, address tokenAddress, Amount amount);
+    event LogPoolServiceFeesWithdrawn(NftId poolNftId, NftId bundleNftId, address recipient, address tokenAddress, Amount amount);
 
-    event LogPoolServiceProcessFundedClaim(NftId policyNftId, ClaimId claimId, Amount availableAmount);
+    event LogPoolServiceProcessFundedClaim(NftId poolNftId, NftId policyNftId, ClaimId claimId, Amount availableAmount);
 
     event LogPoolServiceApplicationVerified(NftId poolNftId, NftId bundleNftId, NftId applicationNftId, Amount totalCollateralAmount);
     event LogPoolServiceCollateralLocked(NftId poolNftId, NftId bundleNftId, NftId applicationNftId, Amount totalCollateralAmount, Amount lockedCollateralAmount);

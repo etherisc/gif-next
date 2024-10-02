@@ -417,7 +417,6 @@ contract ExternallyManagedPoolTest is GifTest {
         IComponents.FeeInfo memory feeInfo = _getSimpleFeeInfo();
 
         emProduct = new ExternallyManagedProduct(
-            address(registry),
             instanceNftId,
             productInfo,
             feeInfo,
@@ -438,7 +437,6 @@ contract ExternallyManagedPoolTest is GifTest {
         });
 
         emPool = new ExternallyManagedPool(
-            address(registry),
             prdNftId,
             poolInfo,
             poolOwner

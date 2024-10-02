@@ -36,13 +36,11 @@ contract PoolWithReinsurance is
     UFixed public reinsuranceLevel;
 
     constructor(
-        address registry,
         NftId instanceNftId,
         IAuthorization authorization,
         address initialOwner
     ) 
         SimplePool(
-            registry,
             instanceNftId,
             IComponents.PoolInfo({
                 maxBalanceAmount: AmountLib.max(),
@@ -61,14 +59,14 @@ contract PoolWithReinsurance is
         reinsuranceLevel = UFixedLib.toUFixed(8, -1); // 80% of claims are reinsured
         resinsurancePolicyNftId = NftIdLib.zero();
 
-        _initialize(registry);
+        _initialize();
     }
 
-    function _initialize(address registry)
+    function _initialize()
         internal 
         initializer()
     {
-        __PolicyHolder_init(registry);
+        __PolicyHolder_init();
     }
 
     function createReinsurance(

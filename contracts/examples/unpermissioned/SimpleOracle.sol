@@ -31,14 +31,12 @@ contract SimpleOracle is
     event LogSimpleOracleSyncResponseSent(RequestId requestId, string responseText);
 
     constructor(
-        address registry,
         NftId productNftId,
         IAuthorization authorization,
         address initialOwner
     ) 
     {
         initialize(
-            registry,
             productNftId,
             authorization,
             initialOwner,
@@ -47,7 +45,6 @@ contract SimpleOracle is
     }
 
     function initialize(
-        address registry,
         NftId productNftId,
         IAuthorization authorization,
         address initialOwner,
@@ -58,7 +55,6 @@ contract SimpleOracle is
         initializer()
     {
         _initializeBasicOracle(
-            registry,
             productNftId,
             authorization,
             initialOwner,

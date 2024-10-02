@@ -6,6 +6,9 @@ import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessMana
 import {INftOwnable} from "./INftOwnable.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IVersionable} from "./IVersionable.sol";
+import {ObjectType} from "../type/ObjectType.sol";
+import {NftId} from "../type/NftId.sol";
+import {VersionPart} from "../type/Version.sol";
 
 /// @title IRegisterable
 /// @dev Marks contracts that are intended to be registered in the registry.
@@ -20,6 +23,9 @@ interface IRegisterable is
 
     // onlyActive()
     error ErrorRegisterableNotActive();
+
+    //_checkNftType()
+    error ErrorRegisterableInvalidType(NftId nftId, ObjectType expectedType, VersionPart expectedRelease);
 
     /// @dev Returns true iff this contract managed by its authority is active.
     /// Queries the IAccessManaged.authority().

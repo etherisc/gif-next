@@ -357,7 +357,6 @@ contract ProductWithReinsuranceTest is
 
         vm.startPrank(productOwner);
         productRe = new ProductWithReinsurance(
-            address(registry),
             instanceNftId,
             _getProductWithReinsuranceProductInfo(),
             _getSimpleFeeInfo(),
@@ -381,7 +380,6 @@ contract ProductWithReinsuranceTest is
 
         vm.startPrank(poolOwner);
         poolRe = new PoolWithReinsurance(
-            address(registry),
             productReNftId,
             new PoolWithReinsuranceAuthorization(),
             poolOwner

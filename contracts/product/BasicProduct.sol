@@ -24,7 +24,6 @@ abstract contract BasicProduct is
     }
 
     function _initializeBasicProduct(
-        address registry,
         NftId instanceNftId,
         string memory name,
         IComponents.ProductInfo memory productInfo,
@@ -37,7 +36,6 @@ abstract contract BasicProduct is
         onlyInitializing()
     {
         __Product_init(
-            registry, 
             instanceNftId, 
             name, 
             productInfo,

@@ -6,6 +6,7 @@ import {IStaking} from "./IStaking.sol";
 import {IStakingService} from "./IStakingService.sol";
 
 import {Amount} from "../type/Amount.sol";
+import {ContractLib} from "../shared/ContractLib.sol";
 import {NftId} from "../type/NftId.sol";
 import {ReleaseRegistry} from "../registry/ReleaseRegistry.sol";
 import {Seconds, SecondsLib} from "../type/Seconds.sol";
@@ -111,13 +112,14 @@ library StakingLib {
 
 
     function checkAndGetStakingService(
-        IRegistry registry,
         VersionPart release
     )
         public
         view
         returns (IStakingService stakingService)
     {
+        IRegistry registry = ContractLib.getRegistry();
+
         if (!ReleaseRegistry(registry.getReleaseRegistryAddress()).isActiveRelease(release)) {
             revert IStaking.ErrorStakingReleaseNotActive(release);
         }

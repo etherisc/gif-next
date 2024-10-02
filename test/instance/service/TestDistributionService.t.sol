@@ -23,7 +23,6 @@ contract TestDistributionService is GifTest {
     function test_distributionServiceRegisterHappyCase() public {
         vm.startPrank(distributionOwner);
         distribution = new SimpleDistribution(
-            address(registry),
             testProdNftId,
             new BasicDistributionAuthorization("SimpleDistribution"),
             distributionOwner

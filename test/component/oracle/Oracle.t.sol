@@ -7,6 +7,7 @@ import {GifTest} from "../../base/GifTest.sol";
 import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
 import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
 import {ClaimId} from "../../../contracts/type/ClaimId.sol";
+import {ContractLib} from "../../../contracts/shared/ContractLib.sol";
 import {SimpleOracle} from "../../../contracts/examples/unpermissioned/SimpleOracle.sol";
 import {IComponents} from "../../../contracts/instance/module/IComponents.sol";
 import {ILifecycle} from "../../../contracts/shared/ILifecycle.sol";
@@ -20,14 +21,15 @@ import {Timestamp, TimestampLib, zeroTimestamp} from "../../../contracts/type/Ti
 import {IPolicyService} from "../../../contracts/product/IPolicyService.sol";
 import {IRisk} from "../../../contracts/instance/module/IRisk.sol";
 import {PayoutId, PayoutIdLib} from "../../../contracts/type/PayoutId.sol";
-import {POLICY, ORACLE} from "../../../contracts/type/ObjectType.sol";
+import {PRODUCT, POLICY, ORACLE} from "../../../contracts/type/ObjectType.sol";
+import {GIF_INITIAL_RELEASE} from "../../../contracts/registry/Registry.sol";
 import {RiskId, RiskIdLib, eqRiskId} from "../../../contracts/type/RiskId.sol";
 import {ReferralLib} from "../../../contracts/type/Referral.sol";
 import {RequestId, RequestIdLib} from "../../../contracts/type/RequestId.sol";
 import {SUBMITTED, ACTIVE, CANCELLED, FAILED, FULFILLED} from "../../../contracts/type/StateId.sol";
 import {StateId} from "../../../contracts/type/StateId.sol";
 import {IOracleService} from "../../../contracts/oracle/IOracleService.sol";
-import {INftOwnable} from "../../../contracts/shared/INftOwnable.sol";
+import {ContractLib} from "../../../contracts/shared/ContractLib.sol";
 
 contract TestOracle is GifTest {
 
@@ -207,9 +209,10 @@ contract TestOracle is GifTest {
         RequestId expectedRequestId = RequestIdLib.toRequestId(1);
 
         vm.expectRevert(abi.encodeWithSelector(
-            INftOwnable.ErrorNftOwnableInvalidType.selector,
+            ContractLib.ErrorContractLibObjectTypeMismatch.selector,
             productNftId,
-            ORACLE()));
+            ORACLE(),
+            PRODUCT()));
         product.createOracleRequest(
             productNftId, 
             requestText,

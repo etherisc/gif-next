@@ -139,7 +139,7 @@ contract StakingSetupTest is GifTest {
 
     function test_stakingServiceSetStakingReader() public {
         // GIVEN
-        StakingReader newStakingReader = new StakingReader(registry);
+        StakingReader newStakingReader = new StakingReader();
         newStakingReader.initialize(address(staking), address(staking.getStakingStore()));
 
         vm.startPrank(stakingOwner);

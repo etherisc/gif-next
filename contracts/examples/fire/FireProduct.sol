@@ -65,7 +65,6 @@ contract FireProduct is
     mapping(uint256 fireId => mapping (NftId policyId => bool claimed)) private _claimed;
 
     constructor(
-        address registry,
         NftId instanceNftid,
         string memory componentName,
         IAuthorization authorization
@@ -74,7 +73,6 @@ contract FireProduct is
         address initialOwner = msg.sender;
 
         _initialize(
-            registry,
             instanceNftid,
             componentName,
             authorization,
@@ -82,7 +80,6 @@ contract FireProduct is
     }
 
     function _initialize(
-        address registry,
         NftId instanceNftId,
         string memory componentName,
         IAuthorization authorization,
@@ -92,7 +89,6 @@ contract FireProduct is
         initializer
     {
         _initializeBasicProduct(
-            registry,
             instanceNftId,
             componentName,
             IComponents.ProductInfo({

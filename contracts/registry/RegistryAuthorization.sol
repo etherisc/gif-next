@@ -101,7 +101,7 @@ contract RegistryAuthorization
                AccessAdminLib.roleInfo(
                     ADMIN_ROLE(),
                     TargetType.Custom, // custom is only type that allows role removal
-                    2, // TODO decide on max member count
+                    1, // TODO decide on max member count
                     GIF_ADMIN_ROLE_NAME));
 
           // gif manager role
@@ -110,7 +110,7 @@ contract RegistryAuthorization
                AccessAdminLib.roleInfo(
                     ADMIN_ROLE(),
                     TargetType.Custom, // custom is only type that allows role removal
-                    1, // TODO decide on max member count
+                    2, // TODO decide on max member count
                     GIF_MANAGER_ROLE_NAME));
 
      }

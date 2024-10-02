@@ -46,7 +46,7 @@ contract TestProductLifecycle
         riskId = product.createRisk("Risk_1", "");
         vm.stopPrank();
 
-        policyHolder = new MyPolicyHolder(address(registry));
+        policyHolder = new MyPolicyHolder();
         policyHolderAddress = address(policyHolder);
 
         // create application

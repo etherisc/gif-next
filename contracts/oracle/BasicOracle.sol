@@ -23,7 +23,6 @@ contract BasicOracle is
     }
 
     function _initializeBasicOracle(
-        address registry,
         NftId instanceNftId,
         IAuthorization authorization,
         address initialOwner,
@@ -35,7 +34,6 @@ contract BasicOracle is
     {
 
         __Oracle_init(
-            registry,
             instanceNftId,
             authorization,
             initialOwner,

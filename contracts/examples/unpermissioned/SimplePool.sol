@@ -17,7 +17,6 @@ contract SimplePool is
 {
     
     constructor(
-        address registry,
         NftId productNftId,
         IComponents.PoolInfo memory poolInfo,
         IAuthorization authorization,
@@ -25,7 +24,6 @@ contract SimplePool is
     ) 
     {
         initialize(
-            registry,
             productNftId,
             poolInfo,
             authorization,
@@ -35,7 +33,6 @@ contract SimplePool is
 
 
     function initialize(
-        address registry,
         NftId productNftId,
         IComponents.PoolInfo memory poolInfo,
         IAuthorization authorization,
@@ -46,7 +43,6 @@ contract SimplePool is
         initializer()
     {
         _initializeBasicPool(
-            registry,
             productNftId,
             "SimplePool",
             poolInfo,

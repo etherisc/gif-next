@@ -119,7 +119,6 @@ contract BasicDistribution is
     }
 
     function _initializeBasicDistribution(
-        address registry,
         NftId instanceNftId,
         IAuthorization authorization, 
         address initialOwner,
@@ -130,7 +129,6 @@ contract BasicDistribution is
         onlyInitializing()
     {
         __Distribution_init(
-            registry, 
             instanceNftId, 
             authorization,
             false,

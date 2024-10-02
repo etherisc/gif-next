@@ -18,7 +18,6 @@ abstract contract BasicPool is
 {
 
     function _initializeBasicPool(
-        address registry,
         NftId productNftId,
         string memory name,
         IComponents.PoolInfo memory poolInfo,
@@ -30,7 +29,6 @@ abstract contract BasicPool is
         onlyInitializing()
     {
         __Pool_init(
-            registry, 
             productNftId, 
             name, 
             poolInfo, 
@@ -45,8 +43,8 @@ abstract contract BasicPool is
         public
         virtual
         restricted()
-        onlyBundleOwner(bundleNftId)
-        onlyNftOfType(bundleNftId, BUNDLE())
+        onlyBundleOwner(bundleNftId) // TODO single modifier to check everything about given arbitrary nftId
+        onlyNftOfType(bundleNftId, BUNDLE()) // TODO service will check this
     {
         _stake(bundleNftId, amount);
     }

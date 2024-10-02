@@ -10,6 +10,7 @@ import {ITargetLimitHandler} from "./ITargetLimitHandler.sol";
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {Blocknumber, BlocknumberLib} from "../type/Blocknumber.sol";
 import {NftId} from "../type/NftId.sol";
+import {RegistryLinked} from "../shared/RegistryLinked.sol";
 import {StakingStore} from "./StakingStore.sol";
 import {UFixed, UFixedLib} from "../type/UFixed.sol";
 
@@ -17,12 +18,12 @@ import {UFixed, UFixedLib} from "../type/UFixed.sol";
 contract TargetHandler is
     Initializable,
     AccessManaged,
-    ITargetLimitHandler
+    ITargetLimitHandler,
+    RegistryLinked
 {
 
     event LogTargetHandlerUpdateTriggersSet(uint16 tvlUpdatesTrigger, UFixed minTvlRatioTrigger, Blocknumber lastUpdateIn);
 
-    IRegistry private _registry;
     StakingStore private _store;
 
     /// @dev Update trigger value: Number of TVL updates below which limit updates are suppressed
@@ -33,14 +34,12 @@ contract TargetHandler is
 
 
     constructor (
-        IRegistry registry,
         StakingStore stakingStore
     )
         AccessManaged(msg.sender)
     {
         // set final authority and registry
-        setAuthority(registry.getAuthority());
-        _registry = registry;
+        setAuthority(_getRegistry().getAuthority());
         _store = stakingStore;
 
         // set default trigger values

@@ -262,7 +262,6 @@ contract GifTest is GifDeployer {
                 riskSet: masterRiskSet,
                 instanceReader: masterInstanceReader
             }),
-            registry,
             gifManager,
             false);
 
@@ -273,7 +272,6 @@ contract GifTest is GifDeployer {
         // setup roles, targets and function grantings
         instanceAuthorizationV3 = new InstanceAuthorizationV3();
         masterInstanceAdmin.completeSetup(
-            address(registry),
             address(instanceAuthorizationV3),
             address(masterInstance));
 
@@ -444,7 +442,6 @@ contract GifTest is GifDeployer {
         // product owner deploys product
         vm.startPrank(productOwner);
         newProduct = new SimpleProduct(
-            address(registry),
             instanceNftId,
             "SimpleProduct",
             _getSimpleProductInfo(),
@@ -510,7 +507,6 @@ contract GifTest is GifDeployer {
 
         vm.startPrank(poolOwner);
         pool = new SimplePool(
-            address(registry),
             productNftId,
             _getDefaultSimplePoolInfo(),
             new SimplePoolAuthorization("SimplePool"),
@@ -538,7 +534,6 @@ contract GifTest is GifDeployer {
 
         vm.startPrank(distributionOwner);
         distribution = new SimpleDistribution(
-            address(registry),
             productNftId,
             new SimpleDistributionAuthorization("SimpleDistribution"),
             distributionOwner);
@@ -555,7 +550,6 @@ contract GifTest is GifDeployer {
 
         vm.startPrank(oracleOwner);
         oracle = new SimpleOracle(
-            address(registry),
             productNftId,
             new BasicOracleAuthorization("SimpleOracle", COMMIT_HASH),
             oracleOwner);

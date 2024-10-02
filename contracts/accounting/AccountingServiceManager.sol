@@ -12,14 +12,12 @@ contract AccountingServiceManager is ProxyManager {
     /// @dev initializes proxy manager with service implementation 
     constructor(
         address authority, 
-        address registry,
         bytes32 salt
     )
     {
         AccountingService svc = new AccountingService();
-        bytes memory data = abi.encode(authority, registry);
+        bytes memory data = abi.encode(authority);
         IUpgradeable upgradeable = initialize(
-            registry,
             address(svc), 
             data,
             salt);

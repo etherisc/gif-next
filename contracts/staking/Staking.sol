@@ -75,17 +75,18 @@ contract Staking is
         external
         virtual
     {
-        if (msg.sender != address(getRegistry())) {
+        IRegistry registry = _getRegistry();
+        if (msg.sender != address(registry)) {
             revert ErrorStakingNotRegistry(msg.sender);
         }
 
         StakingStorage storage $ = _getStakingStorage();
         address dipToken = _getStakingStorage()._tokenRegistry.getDipTokenAddress();
         $._tokenHandler = TokenHandlerDeployerLib.deployTokenHandler(
-            address(getRegistry()),
+            address(registry),
             address(this),
             dipToken, 
-            getRegistry().getAuthority());
+            registry.getAuthority());
     }
 
 
@@ -190,7 +191,7 @@ contract Staking is
         // effects
         StakingStorage storage $ = _getStakingStorage();
         address oldStakingService = address($._stakingService);
-        $._stakingService = StakingLib.checkAndGetStakingService(getRegistry(), release);
+        $._stakingService = StakingLib.checkAndGetStakingService(release);
 
         emit LogStakingStakingServiceSet(address($._stakingService), release, oldStakingService);
     }
@@ -277,9 +278,10 @@ contract Staking is
         returns (Amount newBalance)
     {
         address transferTo;
+        IRegistry registry = _getRegistry();
     
         // case 1: protocol target: staking owner is recipient
-        if (targetNftId == getRegistry().getProtocolNftId()) {
+        if (targetNftId == registry.getProtocolNftId()) {
             // verify that the caller is the staking owner
             transferTo = getOwner();
             if (msg.sender != transferTo) {
@@ -289,7 +291,7 @@ contract Staking is
         // case 2: same chain target: target owner is recipient
         } else if (ChainIdLib.isCurrentChain(targetNftId)) {
             // verify that the caller is the target owner
-            transferTo = getRegistry().ownerOf(targetNftId);
+            transferTo = registry.ownerOf(targetNftId);
             if (msg.sender != transferTo) {
                 revert ErrorStakingNotNftOwner(targetNftId);
             }
@@ -323,13 +325,15 @@ contract Staking is
         onlyTarget(targetNftId)
         returns (Amount newBalance)
     {
+        IRegistry registry = _getRegistry();
+
         // check that service does not withdraw from protocol target 
-        if (targetNftId == getRegistry().getProtocolNftId()) {
+        if (targetNftId == registry.getProtocolNftId()) {
             revert ErrorStakingTargetTypeNotSupported(targetNftId, PROTOCOL());
         }
 
         // default: on-chain target owner is recipient
-        address targetOwner = getRegistry().ownerOf(targetNftId);
+        address targetOwner = registry.ownerOf(targetNftId);
         return _withdrawRewardReserves(targetNftId, dipAmount, targetOwner);
     }
 
@@ -431,7 +435,9 @@ contract Staking is
         virtual
         restricted() // only pool service
     {
+        // !!! TODO amount can be 0
         StakingStorage storage $ = _getStakingStorage();
+        // why not StakingBalanceStore instead of StakingStore?
         $._store.increaseTotalValueLocked(targetNftId, token, amount);
     }
 
@@ -528,7 +534,7 @@ contract Staking is
 
         // collect staked DIP token via staking service
         if (stakeAmount.gtz()) {
-            address stakeOwner = getRegistry().ownerOf(stakeNftId);
+            address stakeOwner = _getRegistry().ownerOf(stakeNftId);
             $._stakingService.pullDipToken(stakeAmount, stakeOwner);
         }
     }
@@ -551,7 +557,7 @@ contract Staking is
 
         // transfer unstaked DIP token via staking service
         if (unstakedAmount.gtz()) {
-            address stakeOwner = getRegistry().ownerOf(stakeNftId);
+            address stakeOwner = _getRegistry().ownerOf(stakeNftId);
             $._stakingService.pushDipToken(unstakedAmount, stakeOwner);
         }
     }
@@ -582,7 +588,7 @@ contract Staking is
             AmountLib.max()); // unstake up to this amount
 
         // step 2: create new stake with full unstaked amount
-        address stakeOwner = getRegistry().ownerOf(stakeNftId);
+        address stakeOwner = _getRegistry().ownerOf(stakeNftId);
         newStakeNftId = $._stakingService.createStakeObject(newTargetNftId, stakeOwner);
         $._store.createStake(newStakeNftId, newTargetNftId, stakeOwner, newStakedAmount);
 
@@ -621,7 +627,7 @@ contract Staking is
         // collect staked DIP token by staking service
         if (claimedAmount.gtz()) {
             // interactions
-            address stakeOwner = getRegistry().ownerOf(stakeNftId);
+            address stakeOwner = _getRegistry().ownerOf(stakeNftId);
             $._stakingService.pushDipToken(claimedAmount, stakeOwner);
         }
     }
@@ -718,14 +724,13 @@ contract Staking is
         onlyInitializing()
     {
         (
-            address registryAddress,
             address targetHandlerAddress,
             address stakingStoreAddress,
             address tokenRegistryAddress
-        ) = abi.decode(data, (address, address, address, address));
+        ) = abi.decode(data, (address, address, address));
 
         // wiring to external contracts
-        IRegistry registry = IRegistry(registryAddress);
+        IRegistry registry = _getRegistry();
         StakingStorage storage $ = _getStakingStorage();
         $._protocolNftId = registry.getProtocolNftId();
         $._targetHandler = TargetHandler(targetHandlerAddress);
@@ -735,9 +740,9 @@ contract Staking is
         // staking service has to be set via setStakingService after deploying the first GIF release
 
         // initialize component
+        // TODO Will read 0 component service address from registry
         __Component_init(
             registry.getAuthority(),
-            registryAddress, 
             registry.getNftId(), // parent nft id
             CONTRACT_NAME,
             STAKING(), 
@@ -771,7 +776,7 @@ contract Staking is
         }
 
         if (checkOwner) {
-            address nftOwner = getRegistry().ownerOf(nftId);
+            address nftOwner = _getRegistry().ownerOf(nftId);
             if (msg.sender != nftOwner) {
                 revert ErrorStakingNotOwner(nftId, nftOwner, msg.sender);
             }

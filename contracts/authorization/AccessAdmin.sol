@@ -7,7 +7,6 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 import {IAccess} from "./IAccess.sol";
 import {IAccessAdmin} from "./IAccessAdmin.sol";
 import {IAuthorization} from "./IAuthorization.sol";
-import {IRegistry} from "../registry/IRegistry.sol";
 import {IServiceAuthorization} from "./IServiceAuthorization.sol";
 
 import {AccessAdminLib} from "./AccessAdminLib.sol";
@@ -301,11 +300,12 @@ contract AccessAdmin is
     //--- internal/private functions -------------------------------------------------//
 
     function _linkToNftOwnable(address registerable) internal {
-        if (!getRegistry().isRegistered(registerable)) {
+        NftId nftId = _getRegistry().getNftIdForAddress(registerable);
+        if (nftId.eqz()) {
             revert ErrorAccessAdminNotRegistered(registerable);
         }
 
-        _linkedNftId = getRegistry().getNftIdForAddress(registerable);
+        _linkedNftId = nftId;
     }
 
 

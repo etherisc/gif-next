@@ -34,7 +34,6 @@ contract SimpleProduct is
     IOracleService private _oracleService;
 
     constructor(
-        address registry,
         NftId instanceNftId,
         string memory name,
         IComponents.ProductInfo memory productInfo,
@@ -44,7 +43,6 @@ contract SimpleProduct is
     )
     {
         initialize(
-            registry,
             instanceNftId,
             name,
             productInfo,
@@ -55,7 +53,6 @@ contract SimpleProduct is
 
 
     function initialize(
-        address registry,
         NftId instanceNftid,
         string memory name,
         IComponents.ProductInfo memory productInfo,
@@ -68,7 +65,6 @@ contract SimpleProduct is
         initializer()
     {
         _initializeBasicProduct(
-            registry,
             instanceNftid,
             name,
             productInfo,

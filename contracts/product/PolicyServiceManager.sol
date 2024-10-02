@@ -12,14 +12,12 @@ contract PolicyServiceManager is ProxyManager {
     /// @dev initializes proxy manager with product service implementation 
     constructor(
         address authority, 
-        address registry,
         bytes32 salt
     ) 
     {
         PolicyService svc = new PolicyService{salt: salt}();
-        bytes memory data = abi.encode(authority, registry);
+        bytes memory data = abi.encode(authority);
         IUpgradeable upgradeable = initialize(
-            registry,
             address(svc), 
             data,
             salt);

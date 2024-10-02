@@ -12,14 +12,12 @@ contract PoolServiceManager is ProxyManager {
     /// @dev initializes proxy manager with pool service implementation 
     constructor(
         address authority, 
-        address registry,
         bytes32 salt
     ) 
     {
         PoolService poolSrv = new PoolService{salt: salt}();
-        bytes memory data = abi.encode(authority, registry);
+        bytes memory data = abi.encode(authority);
         IUpgradeable upgradeable = initialize(
-            registry,
             address(poolSrv), 
             data,
             salt);

@@ -17,6 +17,7 @@ import {Registry} from "../../contracts/registry/Registry.sol";
 import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
 import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
+import {GIF_ADMIN_ROLE, GIF_MANAGER_ROLE} from "../../contracts/type/RoleId.sol";
 import {Staking} from "../../contracts/staking/Staking.sol";
 import {StakingManager} from "../../contracts/staking/StakingManager.sol";
 import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
@@ -50,7 +51,8 @@ contract RegistryServiceManagerTest is RegistryServiceTestBase {
     function test_deployedRegistryAndRegistryService() public {
 
         // solhint-disable no-console
-        console.log("registry owner", address(registryOwner));
+        console.log("gif admin", registryAdmin.getRoleMember(GIF_ADMIN_ROLE(), 0));
+        console.log("gif manager", registryAdmin.getRoleMember(GIF_MANAGER_ROLE(), 0));
         console.log("registry service manager", address(registryServiceManager));
         console.log("registry service manager linked to nft", registryServiceManager.getNftId().toInt());
         console.log("registry service manager owner", registryServiceManager.getOwner());
@@ -110,7 +112,6 @@ contract RegistryServiceManagerTest is RegistryServiceTestBase {
 
         vm.prank(registryOwnerNew);
         registryServiceManager.initialize(
-            address(registry),
             mockImplementation,
             emptyInitializationData,
             bytes32(""));
@@ -130,7 +131,6 @@ contract RegistryServiceManagerTest is RegistryServiceTestBase {
 
         vm.prank(gifManager);
         registryServiceManager.initialize(
-            address(registry),
             mockImplementation,
             emptyInitializationData,
             bytes32(""));

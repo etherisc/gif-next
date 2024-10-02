@@ -12,14 +12,12 @@ contract DistributionServiceManager is ProxyManager {
     /// @dev initializes proxy manager with distribution service implementation and deploys instance
     constructor(
         address authority, 
-        address registry,
         bytes32 salt
     ) 
     {
         DistributionService svc = new DistributionService{salt: salt}();
-        bytes memory data = abi.encode(authority, registry);
+        bytes memory data = abi.encode(authority);
         IUpgradeable upgradeable = initialize(
-            registry,
             address(svc), 
             data,
             salt);

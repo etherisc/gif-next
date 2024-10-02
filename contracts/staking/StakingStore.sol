@@ -76,15 +76,13 @@ contract StakingStore is
 
 
     constructor(
-        address registry, 
         StakingReader reader
     )
         AccessManaged(msg.sender)
     {
-        __RegistryLinked_init(registry);
 
         // set final authority
-        setAuthority(getRegistry().getAuthority());
+        setAuthority(_getRegistry().getAuthority());
 
         // set internal variables
         _reader = reader;
@@ -497,7 +495,7 @@ contract StakingStore is
         emit IStaking.LogStakingRewardReservesRefilled(
             targetNftId,
             dipAmount,
-            getRegistry().ownerOf(targetNftId),
+            _getRegistry().ownerOf(targetNftId),
             newReserveBalance,
             lastUpdateIn);
     }
@@ -522,7 +520,7 @@ contract StakingStore is
         emit IStaking.LogStakingRewardReservesWithdrawn(
             targetNftId,
             dipAmount,
-            getRegistry().ownerOf(targetNftId),
+            _getRegistry().ownerOf(targetNftId),
             newReserveBalance,
             lastUpdateIn);
     }
@@ -931,7 +929,7 @@ contract StakingStore is
         // checks
         if (checkParameters) {
             TargetManagerLib.checkTargetParameters(
-                getRegistry(), 
+                _getRegistry(), 
                 _reader, 
                 targetNftId, 
                 objectType, 

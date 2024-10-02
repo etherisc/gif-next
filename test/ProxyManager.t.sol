@@ -21,7 +21,6 @@ contract ProxyManagerTest is GifTest {
 
         bytes memory initializationData = abi.encode(uint(42));
         IUpgradeable upgradeable = proxyManager.initialize(
-            address(registry),
             address(new ContractV01()), 
             initializationData,
             bytes32(""));
@@ -48,7 +47,6 @@ contract ProxyManagerTest is GifTest {
         bytes memory initializationData = abi.encode(uint(0));
         bytes memory upgradeData = abi.encode(uint(0));
         IUpgradeable upgradeable = proxyManager.initialize(
-            address(registry),
             address(new ContractV01()),
             initializationData,
             bytes32(""));
@@ -69,7 +67,6 @@ contract ProxyManagerTest is GifTest {
         vm.recordLogs();
         bytes memory initializationData = abi.encode(uint(0));
         proxyManager.initialize(
-            address(registry),
             address(new ContractV01()),
             initializationData,
             bytes32(""));

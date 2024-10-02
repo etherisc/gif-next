@@ -178,7 +178,6 @@ contract GifClusterTest is GifTest {
         IComponents.FeeInfo memory feeInfo = _getSimpleFeeInfo();
 
         return new SimpleProduct(
-            address(registry),
             instanceNftId, 
             name,
             productInfo,
@@ -196,7 +195,6 @@ contract GifClusterTest is GifTest {
         returns(SimpleDistribution)
     {
         return new SimpleDistribution(
-            address(registry),
             productNftId,
             new BasicDistributionAuthorization(name),
             owner);
@@ -211,7 +209,6 @@ contract GifClusterTest is GifTest {
         returns(SimpleOracle)
     {
         return new SimpleOracle(
-            address(registry),
             productNftId,
             new BasicOracleAuthorization(name, COMMIT_HASH),
             owner);
@@ -226,7 +223,6 @@ contract GifClusterTest is GifTest {
         returns(SimplePool)
     {
         return new SimplePool(
-            address(registry),
             productNftId,
             _getDefaultSimplePoolInfo(),
             new BasicPoolAuthorization(name),

@@ -10,10 +10,17 @@ import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {MockInterceptor} from "./MockInterceptor.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {ObjectType} from "../../contracts/type/ObjectType.sol";
+import {RegistryLinked} from "../../contracts/shared/RegistryLinked.sol";
 import {Versionable} from "../../contracts/shared/Versionable.sol";
 
 
-contract RegisterableMockWithAuthority is IRegisterable, InitializableERC165, Versionable, MockInterceptor, AccessManaged {
+contract RegisterableMockWithAuthority is 
+    IRegisterable, 
+    InitializableERC165, 
+    Versionable, 
+    MockInterceptor, 
+    AccessManaged,
+    RegistryLinked {
 
     error ErrorRegisterableMockIsNotInterceptor(address registerable);
 
@@ -86,7 +93,6 @@ contract RegisterableMockWithAuthority is IRegisterable, InitializableERC165, Ve
     function getOwner() external virtual view returns (address) {return _initialOwner; }
 
     // from INftOwnable
-    function getRegistry() external view returns (IRegistry) { revert("NotSupported"); }
     function getRegistryAddress() external view returns (address) { revert("NotSupported"); }
     function getNftId() external view returns (NftId) { revert("NotSupported"); }
 

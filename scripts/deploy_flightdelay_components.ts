@@ -181,7 +181,6 @@ export async function deployFlightDelayComponentContracts(libraries: LibraryAddr
         "FlightProduct",
         flightOwner,
         [
-            await instance.getRegistry(),
             instanceNftId,
             productName,
             flightProductAuthAddress,
@@ -198,6 +197,7 @@ export async function deployFlightDelayComponentContracts(libraries: LibraryAddr
                 SecondsLib: secondsLibAddress,
                 TimestampLib: timestampLibAddress,
                 VersionLib: versionLibAddress,
+                VersionPartLib: versionPartLibAddress,
             }
         });
     const flightProduct = flightProductBaseContract as FlightProduct;
@@ -239,7 +239,6 @@ export async function deployFlightDelayComponentContracts(libraries: LibraryAddr
         "FlightPool",
         flightOwner,
         [
-            await instance.getRegistry(),
             flightProductNftId,
             poolName,
             flightPoolAuthAddress,
@@ -254,6 +253,7 @@ export async function deployFlightDelayComponentContracts(libraries: LibraryAddr
                 SecondsLib: secondsLibAddress,
                 UFixedLib: ufixedLibAddress,
                 VersionLib: versionLibAddress,
+                VersionPartLib: versionPartLibAddress,
             }
         });
     const flightPool = flightPoolBaseContract as FlightPool;
@@ -295,7 +295,6 @@ export async function deployFlightDelayComponentContracts(libraries: LibraryAddr
         "FlightOracle",
         flightOwner,
         [
-            await instance.getRegistry(),
             flightProductNftId,
             oracleName,
             flightOracleAuthAddress,
@@ -306,6 +305,7 @@ export async function deployFlightDelayComponentContracts(libraries: LibraryAddr
                 NftIdLib: nftIdLibAddress,
                 LibRequestIdSet: libRequestIdSetAddress,
                 VersionLib: versionLibAddress,
+                VersionPartLib: versionPartLibAddress,
             }
         });
     const flightOracle = flightOracleBaseContract as FlightOracle;

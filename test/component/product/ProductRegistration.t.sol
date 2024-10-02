@@ -121,7 +121,6 @@ contract TestProductRegistration is GifTest {
     function test_productRegisterAttemptDifferentRelease() public {
         // GIVEN
         ProductMockV4 myProductV4 = new ProductMockV4(
-            address(registry),
             instanceNftId, 
             _getSimpleProductInfo(),
             _getSimpleFeeInfo(),
@@ -230,7 +229,6 @@ contract TestProductRegistration is GifTest {
         IComponents.FeeInfo memory feeInfo = _getSimpleFeeInfo();
 
         return new SimpleProduct(
-            address(registry),
             instanceNftId, 
             name,
             productInfo,
@@ -248,7 +246,6 @@ contract TestProductRegistration is GifTest {
         returns(SimplePool)
     {
         return new SimplePool(
-            address(registry),
             productNftId,
             _getDefaultSimplePoolInfo(),
             new BasicPoolAuthorization(name),

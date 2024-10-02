@@ -28,7 +28,7 @@ contract NftOwnable is
     }
 
     modifier onlyNftOwner(NftId nftId) {
-        if(!getRegistry().isOwnerOf(nftId, msg.sender)) {
+        if(!_getRegistry().isOwnerOf(nftId, msg.sender)) {
             revert ErrorNftOwnableNotOwner(msg.sender);
         }
         _;
@@ -37,7 +37,6 @@ contract NftOwnable is
     /// @dev Initialization for upgradable contracts.
     // used in __Registerable_init, ProxyManager.initialize
     function __NftOwnable_init(
-        address registry,
         address initialOwner
     )
         internal
@@ -45,7 +44,6 @@ contract NftOwnable is
         onlyInitializing()
     {
         __ERC165_init();
-        __RegistryLinked_init(registry);
 
         if(initialOwner == address(0)) {
             revert ErrorNftOwnableInitialOwnerZero();
@@ -75,7 +73,7 @@ contract NftOwnable is
         NftOwnableStorage storage $ = _getNftOwnableStorage();
 
         if ($._nftId.gtz()) {
-            return getRegistry().ownerOf($._nftId);
+            return _getRegistry().ownerOf($._nftId);
         }
 
         return $._initialOwner;
@@ -95,15 +93,17 @@ contract NftOwnable is
             revert ErrorNftOwnableAlreadyLinked($._nftId);
         }
 
-        if (!getRegistry().isRegistered(nftOwnableAddress)) {
+        NftId nftId = _getRegistry().getNftIdForAddress(nftOwnableAddress);
+
+        if (nftId.eqz()) {
             revert ErrorNftOwnableContractNotRegistered(nftOwnableAddress);
         }
 
-        $._nftId = getRegistry().getNftIdForAddress(nftOwnableAddress);
+        $._nftId = nftId;
 
-        emit LogNftOwnableNftLinkedToAddress($._nftId, getOwner());
+        emit LogNftOwnableNftLinkedToAddress(nftId, getOwner());
 
-        return $._nftId;
+        return nftId;
     }
 
 

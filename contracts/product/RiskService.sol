@@ -30,11 +30,10 @@ contract RiskService is
         onlyInitializing()
     {
         (
-            address authority,
-            address registry
-        ) = abi.decode(data, (address, address));
+            address authority
+        ) = abi.decode(data, (address));
 
-        __Service_init(authority, registry, owner);
+        __Service_init(authority, owner);
         _registerInterface(type(IRiskService).interfaceId);
     }
 
@@ -49,7 +48,7 @@ contract RiskService is
         returns (RiskId riskId)
     {
         // checks
-        (NftId productNftId, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
+        (NftId productNftId, IInstance instance) = ContractLib.getAndVerifyProduct(getRelease());
 
         // effects
         riskId = RiskIdLib.toRiskId(productNftId, id);
@@ -80,7 +79,7 @@ contract RiskService is
         restricted()
     {
         // checks
-        (NftId productNftId, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
+        (NftId productNftId, IInstance instance) = ContractLib.getAndVerifyProduct(getRelease());
 
         // effects
         InstanceReader instanceReader = instance.getInstanceReader();
@@ -107,7 +106,7 @@ contract RiskService is
         restricted()
     {
         // checks
-        (NftId productNftId, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
+        (NftId productNftId, IInstance instance) = ContractLib.getAndVerifyProduct(getRelease());
 
         if (!instance.getRiskSet().hasRisk(productNftId, riskId)) {
             revert ErrorRiskServiceUnknownRisk(productNftId, riskId);
@@ -135,7 +134,7 @@ contract RiskService is
         restricted()
     {
         // checks
-        (NftId productNftId, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
+        (NftId productNftId, IInstance instance) = ContractLib.getAndVerifyProduct(getRelease());
         (bool exists, bool active) = instance.getRiskSet().checkRisk(productNftId, riskId);
 
         if (!exists) {
@@ -151,37 +150,6 @@ contract RiskService is
 
         emit LogRiskServiceRiskClosed(productNftId, riskId);
     }
-
-    function _getAndVerifyActiveComponent(ObjectType expectedType) 
-        internal 
-        view 
-        returns (
-            NftId componentNftId,
-            IInstance instance
-        )
-    {
-        IRegistry.ObjectInfo memory info;
-        address instanceAddress;
-        bool isActive = true;
-
-        if (expectedType != COMPONENT()) {
-            (info, instanceAddress) = ContractLib.getAndVerifyComponent(
-                getRegistry(),
-                msg.sender, // caller
-                expectedType,
-                isActive); 
-        } else {
-            (info, instanceAddress) = ContractLib.getAndVerifyAnyComponent(
-                getRegistry(),
-                msg.sender,
-                isActive); 
-        }
-
-        // get component nft id and instance
-        componentNftId = info.nftId;
-        instance = IInstance(instanceAddress);
-    }
-
 
     function _getDomain() internal pure override returns(ObjectType) {
         return RISK();

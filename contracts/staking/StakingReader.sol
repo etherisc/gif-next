@@ -4,36 +4,32 @@ pragma solidity ^0.8.20;
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol"; 
 
 import {IRegistry} from "../registry/IRegistry.sol";
-import {IRegistryLinked} from "../shared/IRegistryLinked.sol";
+import {RegistryLinked} from "../shared/RegistryLinked.sol";
 import {IStaking} from "../staking/IStaking.sol";
 
-import {Amount, AmountLib} from "../type/Amount.sol";
-import {Blocknumber}  from "../type/Blocknumber.sol";
+import {Amount} from "../type/Amount.sol";
 import {ChainId}  from "../type/ChainId.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType} from "../type/ObjectType.sol";
+import {RegistryLinked} from "../shared/RegistryLinked.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {StakingStore} from "./StakingStore.sol";
-import {STAKE, TARGET} from "../type/ObjectType.sol";
-import {Timestamp} from "../type/Timestamp.sol";
 import {UFixed} from "../type/UFixed.sol";
 
 
 contract StakingReader is
-    IRegistryLinked,
-    Initializable
+    Initializable,
+    RegistryLinked
 {
 
     error ErrorStakingReaderUnauthorizedCaler();
 
     address private _initializeOwner;
-    IRegistry private _registry;
     IStaking private _staking;
     StakingStore private _store;
 
-    constructor(IRegistry registry) {
+    constructor() {
         _initializeOwner = msg.sender;
-        _registry = registry;
     }
 
     function initialize(
@@ -51,18 +47,14 @@ contract StakingReader is
         _store = StakingStore(stakingStoreAddress);
     }
 
-    // view and pure functions 
-
-    function getRegistry() external view returns (IRegistry registry) {
-        return _registry;
-    }
+    // view functions
 
     function getStaking() external view returns (IStaking staking) {
         return _staking;
     }
 
     function getProtocolNftId() external view returns (NftId protocolNftId) {
-        return _registry.getProtocolNftId();
+        return _getRegistry().getProtocolNftId();
     }
 
 
@@ -82,7 +74,7 @@ contract StakingReader is
 
 
     function getTargetNftId(NftId stakeNftId) public view returns (NftId targetNftId) {
-        return _registry.getParentNftId(stakeNftId);
+        return _getRegistry().getParentNftId(stakeNftId);
     }
 
 

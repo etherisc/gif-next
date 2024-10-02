@@ -13,7 +13,6 @@ import {ObjectType, REGISTRY} from "../type/ObjectType.sol";
 import {RoleId, RoleIdLib, GIF_MANAGER_ROLE, GIF_ADMIN_ROLE} from "../type/RoleId.sol";
 import {GIF_INITIAL_RELEASE} from "../registry/Registry.sol";
 import {Str} from "../type/String.sol";
-import {VersionPartLib} from "../type/Version.sol";
 
 /*
     1) GIF_MANAGER_ROLE
@@ -68,7 +67,6 @@ contract RegistryAdmin is
 
 
     function completeSetup(
-        address registry,
         address authorization,
         address gifAdmin, 
         address gifManager
@@ -86,19 +84,17 @@ contract RegistryAdmin is
             false); // checkAlreadyInitialized);
         
         // effects
-        __RegistryLinked_init(registry);
-
         _authorization = IAuthorization(authorization);
 
-        IRegistry registryContract = IRegistry(registry);
-        _releaseRegistry = registryContract.getReleaseRegistryAddress();
-        _tokenRegistry = registryContract.getTokenRegistryAddress();
-        _staking = registryContract.getStakingAddress();
+        IRegistry registry = _getRegistry();
+        _releaseRegistry = registry.getReleaseRegistryAddress();
+        _tokenRegistry = registry.getTokenRegistryAddress();
+        _staking = registry.getStakingAddress();
         _stakingTargetHandler = address(IStaking(_staking).getTargetHandler());
         _stakingStore = address(IStaking(_staking).getStakingStore());
 
         // link nft ownability to registry
-        _linkToNftOwnable(address(getRegistry()));
+        _linkToNftOwnable(address(_getRegistry()));
 
         _createRoles(_authorization);
 
@@ -143,7 +139,7 @@ contract RegistryAdmin is
         internal
     {
         // create unchecked registry targets
-        _createTarget(address(getRegistry()), registryTargetName, TargetType.Core, false);
+        _createTarget(address(_getRegistry()), registryTargetName, TargetType.Core, false);
         _createTarget(address(this), REGISTRY_ADMIN_TARGET_NAME, TargetType.Core, false);
         _createTarget(_releaseRegistry, RELEASE_REGISTRY_TARGET_NAME, TargetType.Core, false);
         _createTarget(_tokenRegistry, TOKEN_REGISTRY_TARGET_NAME, TargetType.Core, false);

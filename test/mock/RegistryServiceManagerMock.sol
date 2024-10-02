@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Registry} from "../../contracts/registry/Registry.sol";
 import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
 import {RegistryServiceHarness} from "../registryService/RegistryServiceHarness.sol";
 import {RegistryServiceMock} from "./RegistryServiceMock.sol";
@@ -9,8 +8,8 @@ import {RegistryServiceMock} from "./RegistryServiceMock.sol";
 
 contract RegistryServiceManagerMock is RegistryServiceManager
 {
-    constructor(address initialAuthority, address registry, bytes32 salt)
-        RegistryServiceManager(initialAuthority, registry, salt)
+    constructor(address initialAuthority, bytes32 salt)
+        RegistryServiceManager(initialAuthority, salt)
     {
         bytes memory emptyUpgradeData;
 
@@ -24,8 +23,8 @@ contract RegistryServiceManagerMock is RegistryServiceManager
 
 contract RegistryServiceManagerMockWithHarness is RegistryServiceManager
 {
-    constructor(address initialAuthority, address registry, bytes32 salt)
-        RegistryServiceManager(initialAuthority, registry, salt)
+    constructor(address initialAuthority, bytes32 salt)
+        RegistryServiceManager(initialAuthority, salt)
     {
         bytes memory emptyUpgradeData;
 

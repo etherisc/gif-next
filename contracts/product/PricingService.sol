@@ -39,11 +39,10 @@ contract PricingService is
         onlyInitializing()
     {
         (
-            address authority,
-            address registry
-        ) = abi.decode(data, (address, address));
+            address authority
+        ) = abi.decode(data, (address));
 
-        __Service_init(authority, registry, owner);
+        __Service_init(authority, owner);
 
         _distributionService = IDistributionService(_getServiceAddress(DISTRIBUTION()));
 
@@ -78,11 +77,11 @@ contract PricingService is
             // verify product
             (
                 IRegistry.ObjectInfo memory registryInfo, 
-                address instanceAddress
-            ) = ContractLib.getInfoAndInstance(getRegistry(), productNftId, false);
+                IInstance instance
+            ) = ContractLib.getInfoAndInstance(productNftId, getRelease(), false);
 
             // get instance reader from local instance variable
-            reader = IInstance(instanceAddress).getInstanceReader();
+            reader = instance.getInstanceReader();
 
             NftId riskProductNftId = reader.getRiskInfo(riskId).productNftId;
             if (productNftId != riskProductNftId) {

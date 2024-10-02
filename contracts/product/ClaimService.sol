@@ -42,14 +42,13 @@ contract ClaimService is
         onlyInitializing()
     {
         (
-            address authority,
-            address registry
-        ) = abi.decode(data, (address, address));
+            address authority
+        ) = abi.decode(data, (address));
 
-        __Service_init(authority, registry, owner);
+        __Service_init(authority, owner);
 
-        _policyService = IPolicyService(getRegistry().getServiceAddress(POLICY(), getVersion().toMajorPart()));
-        _poolService = IPoolService(getRegistry().getServiceAddress(POOL(), getVersion().toMajorPart()));
+        _policyService = IPolicyService(_getRegistry().getServiceAddress(POLICY(), getVersion().toMajorPart()));
+        _poolService = IPoolService(_getRegistry().getServiceAddress(POOL(), getVersion().toMajorPart()));
 
         _registerInterface(type(IClaimService).interfaceId);
     }
@@ -478,7 +477,7 @@ contract ClaimService is
         uint24 payoutNo = claimInfo.payoutsCount + 1;
         payoutId = PayoutIdLib.toPayoutId(claimId, payoutNo);
         if (beneficiary == address(0)) {
-            beneficiary = getRegistry().ownerOf(policyNftId);
+            beneficiary = _getRegistry().ownerOf(policyNftId);
         }
 
         instanceContracts.productStore.createPayout(
@@ -515,7 +514,7 @@ contract ClaimService is
             IPolicy.PolicyInfo memory policyInfo
         )
     {
-        (productNftId, instance) = _getAndVerifyActiveProduct();
+        (productNftId, instance) = ContractLib.getAndVerifyProduct(getRelease());
         instanceContracts.instanceReader = InstanceReader(instance.getInstanceReader());
         instanceContracts.instanceStore = InstanceStore(instance.getInstanceStore());
         instanceContracts.productStore = ProductStore(instance.getProductStore());
@@ -527,29 +526,6 @@ contract ClaimService is
             policyInfo.productNftId, 
             productNftId);
         }
-    }
-
-
-    function _getAndVerifyActiveProduct() 
-        internal 
-        view 
-        returns (
-            NftId productNftId,
-            IInstance instance
-        )
-    {
-        (
-            IRegistry.ObjectInfo memory info,
-            address instanceAddress
-        ) = ContractLib.getAndVerifyComponent(
-            getRegistry(),
-            msg.sender, // caller
-            PRODUCT(),
-            true); // isActive 
-
-        // get component nft id and instance
-        productNftId = info.nftId;
-        instance = IInstance(instanceAddress);
     }
 
     function _verifyClaim(
@@ -586,7 +562,7 @@ contract ClaimService is
     {
         NftId poolNftId = instanceReader.getProductInfo(productNftId).poolNftId;
         if (instanceReader.getPoolInfo(poolNftId).isProcessingConfirmedClaims) {
-            address poolAddress = getRegistry().getObjectAddress(poolNftId);
+            address poolAddress = _getRegistry().getObjectAddress(poolNftId);
             IPoolComponent(poolAddress).processConfirmedClaim(policyNftId, claimId, amount);
         }
     }
@@ -611,7 +587,7 @@ contract ClaimService is
         view 
         returns (IPolicyHolder policyHolder)
     {
-        address policyHolderAddress = getRegistry().ownerOf(policyNftId);
+        address policyHolderAddress = _getRegistry().ownerOf(policyNftId);
         policyHolder = IPolicyHolder(policyHolderAddress);
 
         if (!ContractLib.isPolicyHolder(policyHolderAddress)) {

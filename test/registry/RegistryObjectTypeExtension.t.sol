@@ -45,12 +45,12 @@ contract RegistryServiceUpgraded is RegistryService {
 
     /// @dev permissionless registry function for testing
     function register(IRegistry.ObjectInfo memory info, address initialOwner, bytes memory data) external virtual returns (NftId nftId) {
-        return getRegistry().register(info, initialOwner, data);
+        return _getRegistry().register(info, initialOwner, data);
     }
 
     /// @dev permissionless registry function for testing
     function registerWithCustomType(IRegistry.ObjectInfo memory info, address initialOwner, bytes memory data) external virtual returns (NftId nftId) {
-        return getRegistry().registerWithCustomType(info, initialOwner, data);
+        return _getRegistry().registerWithCustomType(info, initialOwner, data);
     }
 }
 
@@ -361,7 +361,7 @@ contract RegistryObjectTypeExtensionTest is GifTest {
 
 
     function _upgradeRegistryService() internal returns (RegistryServiceUpgraded regSvcUpd) {
-        vm.startPrank(registryOwner);
+        vm.startPrank(gifManager);
         registryServiceManager.upgrade(address(new RegistryServiceUpgraded()));
         vm.stopPrank();
 

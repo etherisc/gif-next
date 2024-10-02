@@ -52,11 +52,10 @@ contract ComponentService is
         onlyInitializing()
     {
         (
-            address authority,
-            address registry
-        ) = abi.decode(data, (address, address));
+            address authority
+        ) = abi.decode(data, (address));
 
-        __Service_init(authority, registry, owner);
+        __Service_init(authority, owner);
 
         _accountingService = IAccountingService(_getServiceAddress(ACCOUNTING()));
         _registryService = IRegistryService(_getServiceAddress(REGISTRY()));
@@ -75,7 +74,7 @@ contract ComponentService is
         returns (NftId componentNftId)
     {
         // check sender is registered product
-        IRegistry registry = getRegistry();
+        IRegistry registry = _getRegistry();
         if (!registry.isObjectType(msg.sender, PRODUCT(), getRelease())) {
             revert ErrorComponentServiceCallerNotProduct(msg.sender);
         }
@@ -179,7 +178,7 @@ contract ComponentService is
             withdrawnAmount);
         
         // transfer amount to component owner
-        address componentOwner = getRegistry().ownerOf(componentNftId);
+        address componentOwner = _getRegistry().ownerOf(componentNftId);
         TokenHandler tokenHandler = instanceReader.getTokenHandler(componentNftId);
         emit LogComponentServiceComponentFeesWithdrawn(
             componentNftId, 
@@ -206,7 +205,7 @@ contract ComponentService is
         returns (NftId productNftId)
     {
         // check sender is registered instance
-        IRegistry registry = getRegistry();
+        IRegistry registry = _getRegistry();
         if (!registry.isObjectType(msg.sender, INSTANCE(), getRelease())) {
             revert ErrorComponentServiceCallerNotInstance(msg.sender);
         }
@@ -461,6 +460,8 @@ contract ComponentService is
         returns (NftId componentNftId)
     {
         IInstanceLinkedComponent component = IInstanceLinkedComponent(componentAddress);
+        // TODO consider adding release arg to _registryService.registerComponent() and similar
+        // in order to be 100% sure that services have same release?
         IRegistry.ObjectInfo memory info = _registryService.registerComponent(
             component,
             parentNftId,
@@ -500,7 +501,7 @@ contract ComponentService is
         InstanceAdmin instanceAdmin = instance.getInstanceAdmin();
         
         // deploy and wire token handler
-        IRegistry registry = getRegistry();
+        IRegistry registry = _getRegistry();
         IComponents.ComponentInfo memory componentInfo = component.getInitialComponentInfo();
         componentInfo.tokenHandler = TokenHandlerDeployerLib.deployTokenHandler(
             address(registry),
@@ -517,7 +518,7 @@ contract ComponentService is
         component.linkToRegisteredNftId();
 
         // authorize
-        instanceAdmin.initializeComponentAuthorization(componentAddress, componentType);
+        instanceAdmin.initializeComponentAuthorization(componentAddress, componentType, getRelease());
 
         emit LogComponentServiceRegistered(
             instance.getNftId(),
@@ -534,9 +535,10 @@ contract ComponentService is
         view
     {
         if (! instance.isTokenRegistryDisabled()) {
+            // TODO call token registry directlly?
             // check if provided token is whitelisted and active
             if (!ContractLib.isActiveToken(
-                getRegistry().getTokenRegistryAddress(), 
+                _getRegistry().getTokenRegistryAddress(), 
                 ChainIdLib.current(), 
                 token, 
                 AccessManagerCloneable(authority()).getRelease())
@@ -573,7 +575,7 @@ contract ComponentService is
             IComponents.FeeInfo memory info
         )
     {
-        productNftId = getRegistry().getParentNftId(componentNftId);
+        productNftId = _getRegistry().getParentNftId(componentNftId);
         info = instanceReader.getFeeInfo(productNftId);
     }
 
@@ -590,25 +592,11 @@ contract ComponentService is
             IInstance instance
         )
     {
-        IRegistry.ObjectInfo memory info;
-        address instanceAddress;
-
-        if (expectedType != COMPONENT()) {
-            (info, instanceAddress) = ContractLib.getAndVerifyComponent(
-                getRegistry(),
-                msg.sender, // caller
-                expectedType,
-                isActive); 
-        } else {
-            (info, instanceAddress) = ContractLib.getAndVerifyAnyComponent(
-                getRegistry(),
-                msg.sender,
-                isActive); 
-        }
-
-        // get component nft id and instance
-        componentNftId = info.nftId;
-        instance = IInstance(instanceAddress);
+        (componentNftId, instance) = ContractLib.getAndVerifyComponent(
+            msg.sender, // caller
+            expectedType,
+            getRelease(),
+            isActive);
     }
 
 

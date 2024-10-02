@@ -6,8 +6,8 @@ import {console} from "forge-std/Test.sol";
 import {IApplicationService} from "../../../contracts/product/IApplicationService.sol";
 import {IDistributionService} from "../../../contracts/distribution/IDistributionService.sol";
 import {IPricingService} from "../../../contracts/product/IPricingService.sol";
-import {IPolicyService} from "../../../contracts/product/IPolicyService.sol";
 
+import {ContractLib} from "../../../contracts/shared/ContractLib.sol";
 import {FeeLib} from "../../../contracts/type/Fee.sol";
 import {GifClusterTest} from "../../base/GifClusterTest.sol";
 import {NftId} from "../../../contracts/type/NftId.sol";
@@ -18,7 +18,6 @@ import {FeeLib} from "../../../contracts/type/Fee.sol";
 import {UFixedLib} from "../../../contracts/type/UFixed.sol";
 import {SecondsLib} from "../../../contracts/type/Seconds.sol";
 import {Timestamp, TimestampLib} from "../../../contracts/type/Timestamp.sol";
-import {IPolicyService} from "../../../contracts/product/IPolicyService.sol";
 import {RiskId} from "../../../contracts/type/RiskId.sol";
 import {ReferralId} from "../../../contracts/type/Referral.sol";
 import {UFixedLib} from "../../../contracts/type/UFixed.sol";
@@ -144,10 +143,10 @@ contract ProductClusterTest is GifClusterTest {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                IPolicyService.ErrorPolicyServicePolicyProductMismatch.selector, 
-                applicationNftId2, 
-                myProductNftId1, // expected (caller)
-                myProductNftId2)); // actual (from application)
+                ContractLib.ErrorContractLibObjectParentMismatch.selector,
+                applicationNftId2,
+                myProductNftId1,
+                myProductNftId2));
 
         _createPolicy(myProduct1, applicationNftId2, activateAt);
     }

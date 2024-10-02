@@ -57,6 +57,7 @@ interface IAccessAdmin is
     error ErrorAccessAdminTargetNotCreated(address target);
     error ErrorAccessAdminTargetNotRegistered(address target);
     error ErrorAccessAdminTargetTypeMismatch(address target, ObjectType expectedType, ObjectType actualType);
+    error ErrorAccessAdminTargetReleaseMismatch(address target, VersionPart expectedRelease, VersionPart actualRelease);
 
     // check authorization
     error ErrorAccessAdminAlreadyInitialized(address authorization);

@@ -12,11 +12,11 @@ import {InstanceStore} from "../instance/InstanceStore.sol";
 
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {BundleSet} from "../instance/BundleSet.sol";
+import {ContractLib} from "../shared/ContractLib.sol";
 import {Fee} from "../type/Fee.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
 import {ObjectType, ACCOUNTING, COMPONENT, POOL, BUNDLE, POLICY, REGISTRY} from "../type/ObjectType.sol";
-import {PoolLib} from "./PoolLib.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {Service} from "../shared/Service.sol";
 import {StateId, ACTIVE, PAUSED, CLOSED, KEEP_STATE} from "../type/StateId.sol";
@@ -44,11 +44,10 @@ contract BundleService is
         onlyInitializing()
     {
         (
-            address authority,
-            address registry
-        ) = abi.decode(data, (address, address));
+            address authority
+        ) = abi.decode(data, (address));
 
-        __Service_init(authority, registry, owner);
+        __Service_init(authority, owner);
 
         _registryService = IRegistryService(_getServiceAddress(REGISTRY()));
         _accountingService = IAccountingService(_getServiceAddress(ACCOUNTING()));
@@ -66,9 +65,12 @@ contract BundleService is
         virtual
         restricted()
     {
-        _checkNftType(bundleNftId, BUNDLE());
+        (
+            NftId poolNftId, 
+            IInstance instance
+        ) = ContractLib.getAndVerifyPoolForBundle(
+            bundleNftId, getRelease());
 
-        (NftId poolNftId, IInstance instance) = PoolLib.getAndVerifyActivePool(getRegistry(), msg.sender);
         InstanceReader instanceReader = instance.getInstanceReader();
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
         if(bundleInfo.poolNftId.eqz()) {
@@ -97,7 +99,10 @@ contract BundleService is
         restricted()
         returns(NftId bundleNftId)
     {
-        (NftId poolNftId, IInstance instance) = PoolLib.getAndVerifyActivePool(getRegistry(), msg.sender);
+        (
+            NftId poolNftId, 
+            IInstance instance
+        ) = ContractLib.getAndVerifyPool(getRelease());
 
         // register bundle with registry
         bundleNftId = _registryService.registerBundle(
@@ -191,9 +196,8 @@ contract BundleService is
         restricted()
     {
         // checks
-        _checkNftType(bundleNftId, BUNDLE());
-
-        (, IInstance instance) = PoolLib.getAndVerifyActivePool(getRegistry(), msg.sender);
+        (, IInstance instance) = ContractLib.getAndVerifyPoolForBundle(
+            bundleNftId, getRelease());
 
         // effects
         // update set of active bundles
@@ -331,9 +335,12 @@ contract BundleService is
         returns (Timestamp extendedExpiredAt) 
     {
         // checks
-        _checkNftType(bundleNftId, BUNDLE());
+        (
+            NftId poolNftId, 
+            IInstance instance
+        ) = ContractLib.getAndVerifyPoolForBundle(
+            bundleNftId, getRelease());
 
-        (NftId poolNftId, IInstance instance) = PoolLib.getAndVerifyActivePool(getRegistry(), msg.sender);
         IBundle.BundleInfo memory bundleInfo = instance.getInstanceReader().getBundleInfo(bundleNftId);
         StateId bundleState = instance.getInstanceReader().getBundleState(bundleNftId);
 
@@ -378,7 +385,6 @@ contract BundleService is
 
         emit LogBundleServiceCollateralReleased(bundleNftId, policyNftId, collateralAmount);
     }
-
 
     function _getDomain() internal pure override returns(ObjectType) {
         return BUNDLE();

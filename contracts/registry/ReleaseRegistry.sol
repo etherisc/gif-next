@@ -7,7 +7,7 @@ import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManage
 import {IAccessAdmin} from "../authorization/IAccessAdmin.sol";
 import {IRegistry} from "./IRegistry.sol";
 import {IRelease} from "./IRelease.sol";
-import {IRegistryLinked} from "../shared/IRegistryLinked.sol";
+import {RegistryLinked} from "../shared/RegistryLinked.sol";
 import {IService} from "../shared/IService.sol";
 import {IServiceAuthorization} from "../authorization/IServiceAuthorization.sol";
 
@@ -33,15 +33,12 @@ import {VersionPart, VersionPartLib} from "../type/Version.sol";
 contract ReleaseRegistry is 
     AccessManaged,
     ReleaseLifecycle, 
-    IRegistryLinked
+    RegistryLinked
 {
     event LogReleaseCreation(IAccessAdmin admin, VersionPart release, bytes32 salt); 
     event LogReleaseActivation(VersionPart release);
     event LogReleaseDisabled(VersionPart release);
     event LogReleaseEnabled(VersionPart release);
-
-    // constructor
-    error ErrorReleaseRegistryNotRegistry(Registry registry);
 
     // _verifyServiceAuthorization
     error ErrorReleaseRegistryNotServiceAuth(address notAuth);
@@ -69,7 +66,6 @@ contract ReleaseRegistry is
     error ErrorReleaseRegistryServiceOwnerRegistered(IService service, address owner);
 
     RegistryAdmin public immutable _registryAdmin;
-    Registry public immutable _registry;
 
     mapping(VersionPart release => IRelease.ReleaseInfo info) internal _releaseInfo;
     VersionPart [] internal _release; // array of all created releases    
@@ -83,17 +79,14 @@ contract ReleaseRegistry is
     uint256 internal _servicesToRegister = 0;
 
     // TODO move master relase admin outside constructor (same construction as for registry admin)
-    constructor(Registry registry)
+    constructor()
         AccessManaged(msg.sender)
     {
-        if (!ContractLib.isRegistry(address(registry))) {
-            revert ErrorReleaseRegistryNotRegistry(registry);
-        }
+        IRegistry registry = _getRegistry();
 
         setAuthority(registry.getAuthority());
 
-        _registry = registry;
-        _registryAdmin = RegistryAdmin(_registry.getRegistryAdminAddress());
+        _registryAdmin = RegistryAdmin(registry.getRegistryAdminAddress());
         _masterReleaseAdmin = new ReleaseAdmin(
             _cloneNewAccessManager());
 
@@ -115,7 +108,7 @@ contract ReleaseRegistry is
         }
 
         release = VersionPartLib.toVersionPart(release.toInt() + 1);
-        _release.push(release);
+        _release.push(release); // TODO push only activated releases, _next keeps total release count
 
         _next = release;
         _releaseInfo[release].version = release;
@@ -216,7 +209,7 @@ contract ReleaseRegistry is
         releaseAdmin.setReleaseLocked(true); 
 
         // register service with registry
-        nftId = _registry.registerService(info, expectedOwner, serviceDomain, data);
+        nftId = _getRegistry().registerService(info, expectedOwner, serviceDomain, data);
         service.linkToRegisteredNftId();
     }
 
@@ -239,25 +232,27 @@ contract ReleaseRegistry is
         // grant special roles for registry/staking/pool services
         // this will enable access to core contracts functions
 
+        IRegistry registry = _getRegistry();
+
         // registry service MUST be registered for each release
-        address service = _registry.getServiceAddress(REGISTRY(), release);
+        address service = registry.getServiceAddress(REGISTRY(), release);
         if(service == address(0)) {
             revert ErrorReleaseRegistryRegistryServiceMissing(release);
         }
 
         _registryAdmin.grantServiceRoleForAllVersions(IService(service), REGISTRY());
 
-        service = _registry.getServiceAddress(STAKING(), release);
+        service = registry.getServiceAddress(STAKING(), release);
         if(service != address(0)) {
             _registryAdmin.grantServiceRoleForAllVersions(IService(service), STAKING());
         }
 
-        service = _registry.getServiceAddress(COMPONENT(), release);
+        service = registry.getServiceAddress(COMPONENT(), release);
         if(service != address(0)) {
             _registryAdmin.grantServiceRoleForAllVersions(IService(service), COMPONENT());
         }
 
-        service = _registry.getServiceAddress(POOL(), release);
+        service = registry.getServiceAddress(POOL(), release);
         if(service != address(0)) {
             _registryAdmin.grantServiceRoleForAllVersions(IService(service), POOL());
         }
@@ -350,12 +345,6 @@ contract ReleaseRegistry is
         return address(_registryAdmin);
     }
 
-    //--- IRegistryLinked ------------------------------------------------------//
-
-    function getRegistry() external view returns (IRegistry) {
-        return _registry;
-    }
-
     //--- private functions ----------------------------------------------------//
 
     function _setReleaseLocked(VersionPart release, bool locked)
@@ -387,7 +376,6 @@ contract ReleaseRegistry is
             release);
 
         clonedAdmin.completeSetup(
-            address(_registry), 
             address(serviceAuthorization),
             address(this)); // release registry (this contract)
 
@@ -519,7 +507,7 @@ contract ReleaseRegistry is
             revert ErrorReleaseRegistryServiceSelfRegistration(service);
         }
         
-        if(_registry.isRegistered(initialOwner)) { 
+        if(_getRegistry().isRegistered(initialOwner)) { 
             revert ErrorReleaseRegistryServiceOwnerRegistered(service, initialOwner);
         }
     }

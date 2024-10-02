@@ -24,13 +24,11 @@ contract PolicyHolder is
     // will need a release parameter to fetch the right service addresses for the modifiers
 
     function __PolicyHolder_init(
-        address registryAddress
     )
         internal
         virtual
         onlyInitializing()
     {
-        __RegistryLinked_init(registryAddress);
         _initializeERC165();
         _registerInterface(type(IPolicyHolder).interfaceId);
     }
