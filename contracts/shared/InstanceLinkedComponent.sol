@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {IAuthorization} from "../authorization/IAuthorization.sol";
+import {IAuthorizedComponent} from "../shared/IAuthorizedComponent.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {IComponentService} from "./IComponentService.sol";
 import {IInstance} from "../instance/IInstance.sol";
@@ -46,7 +47,7 @@ abstract contract InstanceLinkedComponent is
     }
 
 
-    /// @inheritdoc IInstanceLinkedComponent
+    /// @inheritdoc IAuthorizedComponent
     function getAuthorization() external view virtual returns (IAuthorization authorization) {
         return _getInstanceLinkedComponentStorage()._initialAuthorization;
     }
