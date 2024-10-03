@@ -260,14 +260,14 @@ contract FlightProduct is
     {
         // checks
         // disabled for now - using rbac for security
-        // FlightLib.checkApplicationDataAndSignature(
-        //     this,
-        //     flightData,
-        //     departureTime,
-        //     arrivalTime,
-        //     premiumAmount,
-        //     statistics,
-        //     v, r, s);
+        FlightLib.checkApplicationDataAndSignature(
+            this,
+            flightData,
+            departureTime,
+            arrivalTime,
+            premiumAmount,
+            statistics);
+            // v, r, s);
 
         (riskId, policyNftId) = _prepareApplication(
             policyHolder, 

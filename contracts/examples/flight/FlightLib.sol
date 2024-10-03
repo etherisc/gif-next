@@ -24,33 +24,33 @@ library FlightLib {
         Timestamp departureTime,
         Timestamp arrivalTime,
         Amount premiumAmount,
-        uint256[6] memory statistics,
+        uint256[6] memory statistics
         // signature fields
-        uint8 v, 
-        bytes32 r, 
-        bytes32 s
+        // uint8 v, 
+        // bytes32 r, 
+        // bytes32 s
     )
         public
         view
     {
         _checkApplicationData(flightProduct, premiumAmount, arrivalTime, departureTime);
 
-        (
-            address actualSigner,,
-            bool success
-        ) = flightProduct.getFlightMessageVerifier().verifyRatingsHash(
-            flightData,
-            departureTime,
-            arrivalTime,
-            premiumAmount,
-            statistics,
-            v, r, s);
+        // (
+        //     address actualSigner,,
+        //     bool success
+        // ) = flightProduct.getFlightMessageVerifier().verifyRatingsHash(
+        //     flightData,
+        //     departureTime,
+        //     arrivalTime,
+        //     premiumAmount,
+        //     statistics,
+        //     v, r, s);
 
-        if (!success) {
-            revert FlightProduct.ErrorApplicationDataSignatureMismatch(
-                flightProduct.getFlightMessageVerifier().getExpectedSigner(),
-                actualSigner);
-        }
+        // if (!success) {
+        //     revert FlightProduct.ErrorApplicationDataSignatureMismatch(
+        //         flightProduct.getFlightMessageVerifier().getExpectedSigner(),
+        //         actualSigner);
+        // }
     }
 
 
