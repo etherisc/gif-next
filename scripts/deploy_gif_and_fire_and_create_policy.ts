@@ -15,12 +15,12 @@ async function main() {
     loadVerificationQueueState();
     
     const {services, libraries } = await deployGifContracts(protocolOwner, instanceOwner);
-    const { instance, fireUsd, fireProduct, firePool } = await deployFireComponentContracts(libraries, services, fireOwner, protocolOwner);
+    const { fireUsd, fireProduct, firePool } = await deployFireComponentContracts(libraries, services, fireOwner, protocolOwner);
 
-    await createBundleAndPolicy(fireOwner, investor, customer, fireUsd, fireProduct, firePool);
+    await createFireBundleAndPolicy(fireOwner, investor, customer, fireUsd, fireProduct, firePool);
 }
 
-async function createBundleAndPolicy(fireOwner: Signer, investor: Signer, customer: Signer, fireUsd: FireUSD, fireProduct: FireProduct, firePool: FirePool): Promise<void> {
+export async function createFireBundleAndPolicy(fireOwner: Signer, investor: Signer, customer: Signer, fireUsd: FireUSD, fireProduct: FireProduct, firePool: FirePool): Promise<void> {
     const bundleAmount = 10000 * 10 ** 6;
     const sumInsured = 1000 * 10 ** 6;
     const cityName = "London";
