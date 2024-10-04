@@ -74,12 +74,21 @@ export async function createFireBundleAndPolicy(fireOwner: Signer, investor: Sig
 
     // 6. fireOwner underwrites policy
     await executeTx(async () =>
-        await fireProduct.createPolicy(policyNftId, Math.round((Date.now() / 1000) + 60 * 60)),
+        await fireProduct.createPolicy(policyNftId, Math.round((Date.now() / 1000))),
         "o - create policy");
+    logger.info("Policy underwritten");
 
-    // TODO: 7. report fire
+    // 7. report small fire
+    await executeTx(async () =>
+        await fireProduct.reportFire(42, cityName, 1, Math.round((Date.now() / 1000))),
+        "o - report fire");
+    logger.info("Fire reported");
 
-    // TODO: 8. customer claims
+    // 8. customer claims
+    await executeTx(async () =>
+        await fireProductC.submitClaim(policyNftId, 42),
+        "c - claim");
+    logger.info("Claim submitted");
 }
 
 if (require.main === module) {
