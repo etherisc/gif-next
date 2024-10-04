@@ -278,6 +278,12 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
 
     const targetHandler = targetHandlerBaseContract as TargetHandler;
 
+    await executeTx(async () =>
+        await stakingStore.initialize(targetHandlerAddress, getTxOpts()),
+        "stakingstore.initialize",
+        [stakingStore.interface]
+    );
+
     logger.info("-------- Starting deployment StakingManager ----------------");
 
     const { address: stakingManagerAddress, contract: stakingManagerBaseContract, proxyAddress: stakingAddress } = await deployProxyManagerContract(
