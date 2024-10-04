@@ -333,3 +333,4 @@ More at https://docs.soliditylang.org/en/latest/internals/layout_in_storage.html
 | bytes   | 32 bytes |
 | bytes8  | 8 byte  |
 | bool    | 1 byte  |
+

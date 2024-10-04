@@ -177,8 +177,8 @@ contract InstanceReader {
 
 
     /// @dev Returns th product NFT ID for the given index.
-    function getProductNftId(uint256 idx) public view returns (NftId productNftId) {
-        return _instance.getProductNftId(idx);
+    function getProduct(uint256 idx) public view returns (NftId productNftId) {
+        return _instance.getProduct(idx);
     }
 
 
@@ -219,6 +219,12 @@ contract InstanceReader {
     }
 
 
+    /// @dev Returns true if the specified risk exists for the given product NFT ID.
+    function isProductRisk(NftId productNftId, RiskId riskId) public view returns (bool exists) {
+        return _riskSet.hasRisk(productNftId, riskId);
+    }
+
+
     /// @dev Returns the risk info for the given risk ID.
     function getRiskInfo(RiskId riskId) public view returns (IRisk.RiskInfo memory info) {
         return _productStore.getRiskInfo(riskId);
@@ -240,8 +246,19 @@ contract InstanceReader {
 
 
     /// @dev Returns the linked policy NFT ID for the given risk ID and index.
-    function getPolicyNftIdForRisk(RiskId riskId, uint256 idx) public view returns (NftId linkedPolicyNftId) {
+    function getPolicyForRisk(RiskId riskId, uint256 idx) public view returns (NftId linkedPolicyNftId) {
         return _riskSet.getLinkedPolicyNftId(riskId, idx);
+    }
+
+    /// @dev Returns the number of linked policies for the given bundle NFT ID.
+    function policiesForBundle(NftId bundleNftId) public view returns (uint256 linkedPolicies) {
+        return _bundleSet.activePolicies(bundleNftId);
+    }
+
+
+    /// @dev Returns the linked policy NFT ID for the given risk ID and index.
+    function getPolicyForBundle(NftId bundleNftId, uint256 idx) public view returns (NftId linkedPolicyNftId) {
+        return _bundleSet.getActivePolicy(bundleNftId, idx);
     }
 
 
@@ -339,6 +356,11 @@ contract InstanceReader {
     /// @dev Returns the request info for the given oracle request ID.
     function getRequestInfo(RequestId requestId) public view returns (IOracle.RequestInfo memory requestInfo) {
         return _store.getRequestInfo(requestId);
+    }
+
+    /// @dev Returns the request info for the given oracle request ID.
+    function getRequestState(RequestId requestId) public view returns (StateId state) {
+        return getState(requestId.toKey32());
     }
 
     //--- pool functions -----------------------------------------------------------//

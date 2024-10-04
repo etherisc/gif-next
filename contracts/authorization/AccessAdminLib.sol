@@ -7,7 +7,7 @@ import {IAccess} from "./IAccess.sol";
 import {IAccessAdmin} from "./IAccessAdmin.sol";
 import {IAuthorization} from "./IAuthorization.sol";
 import {IComponent} from "../shared/IComponent.sol";
-import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
+import {IAuthorizedComponent} from "../shared/IAuthorizedComponent.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IService} from "../shared/IService.sol";
 import {IServiceAuthorization} from "./IServiceAuthorization.sol";
@@ -338,7 +338,7 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
         checkIsRegistered(address(accessAdmin.getRegistry()), componentAddress, expectedType);
 
         VersionPart expecteRelease = accessAdmin.getRelease();
-        IInstanceLinkedComponent component = IInstanceLinkedComponent(componentAddress);
+        IAuthorizedComponent component = IAuthorizedComponent(componentAddress);
         componentAuthorization = component.getAuthorization();
 
         checkAuthorization(

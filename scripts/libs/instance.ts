@@ -176,6 +176,7 @@ export async function deployAndRegisterMasterInstance(
                 PayoutIdLib: libraries.payoutIdLibAddress,
                 PolicyServiceLib: libraries.policyServiceLibAddress,
                 ReferralLib: libraries.referralLibAddress,
+                RequestIdLib: libraries.requestIdLibAddress,
                 RiskIdLib: libraries.riskIdLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
                 UFixedLib: libraries.uFixedLibAddress,

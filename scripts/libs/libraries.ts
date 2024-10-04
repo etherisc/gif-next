@@ -39,6 +39,7 @@ export type LibraryAddresses = {
     policyServiceLibAddress: AddressLike;
     accessAdminLibAddress: AddressLike;
     chainIdLibAddress: AddressLike;
+    libRequestIdSetAddress: AddressLike;
 }
 
 export const LIBRARY_ADDRESSES: Map<string, AddressLike> = new Map<string, AddressLike>();
@@ -99,12 +100,23 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         });
     LIBRARY_ADDRESSES.set("AmountLib", amountLibAddress);
 
+    const { address: strLibAddress } = await deployContract(
+        "StrLib",
+        owner,
+        undefined,
+        {
+            libraries: {
+            }
+        });
+    LIBRARY_ADDRESSES.set("StrLib", strLibAddress);
+
     const { address: objectTypeLibAddress } = await deployContract(
         "ObjectTypeLib",
         owner,
         undefined,
         {
             libraries: {
+                StrLib: strLibAddress,
                 VersionPartLib: versionPartLibAddress,
             }
         });
@@ -295,6 +307,12 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         });
     LIBRARY_ADDRESSES.set("RequestIdLib", requestIdLibAddress);
 
+    // LibRequestIdSet
+    const { address: libRequestIdSetAddress } = await deployContract(
+        "LibRequestIdSet",
+        owner);
+    LIBRARY_ADDRESSES.set("LibRequestIdSet", libRequestIdSetAddress);
+
     const { address: selectorLibAddress } = await deployContract(
         "SelectorLib",
         owner,
@@ -318,18 +336,6 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
             }
         });
     LIBRARY_ADDRESSES.set("SelectorSetLib", selectorSetLibAddress);
-
-    const { address: strLibAddress } = await deployContract(
-        "StrLib",
-        owner,
-        undefined,
-        {
-            libraries: {
-                // ObjectTypeLib: objectTypeLibAddress,
-                // RoleIdLib: roleIdLibAddress
-            }
-        });
-    LIBRARY_ADDRESSES.set("StrLib", strLibAddress);
 
     const { address: tokenHandlerDeployerLibAddress } = await deployContract(
         "TokenHandlerDeployerLib",
@@ -418,6 +424,7 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         policyServiceLibAddress,
         accessAdminLibAddress,
         chainIdLibAddress,
+        libRequestIdSetAddress
     };
     
 }

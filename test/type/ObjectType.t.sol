@@ -7,6 +7,7 @@ import {NftId} from "../../contracts/type/NftId.sol";
 import {ObjectType, ObjectTypeLib, PROTOCOL, REGISTRY, STAKING} from "../../contracts/type/ObjectType.sol";
 import {Key32} from "../../contracts/type/Key32.sol";
 import {PayoutId, PayoutIdLib} from "../../contracts/type/PayoutId.sol";
+import {StrLib} from "../../contracts/type/String.sol";
 
 contract ObjectTypeTest is Test {
 
@@ -35,14 +36,5 @@ contract ObjectTypeTest is Test {
     function test_ObjectTypeNames() public {
         assertEq(ObjectTypeLib.toName(REGISTRY()), "Registry", "unexpected type name");
         assertEq(ObjectTypeLib.toName(STAKING()), "Staking", "unexpected type name");
-    }
-
-    function test_ObjecTypeIntToString() public {
-        assertEq(ObjectTypeLib.toString(0), "0", "unexpected string for uint");
-        assertEq(ObjectTypeLib.toString(1), "1", "unexpected string for uint");
-        assertEq(ObjectTypeLib.toString(17), "17", "unexpected string for uint");
-        assertEq(ObjectTypeLib.toString(99), "99", "unexpected string for uint");
-        assertEq(ObjectTypeLib.toString(100), "100", "unexpected string for uint");
-        assertEq(ObjectTypeLib.toString(987654321), "987654321", "unexpected string for uint");
     }
 }

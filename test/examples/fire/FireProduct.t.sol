@@ -395,7 +395,7 @@ contract FireProductTest is FireTestBase {
         // WHEN 
         fireProduct.close(policyNftId);
     }
-    
+
     function _createInitialBundle() internal {
         vm.startPrank(investor);
         Fee memory bundleFee = FeeLib.percentageFee(2);

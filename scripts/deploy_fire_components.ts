@@ -1,6 +1,6 @@
 import { resolveAddress, Signer } from "ethers";
 import { ethers } from "hardhat";
-import { FirePool, FireProduct, FireProduct__factory, AccessAdmin__factory, IInstance__factory, IInstanceService__factory, IRegistry__factory, TokenRegistry__factory } from "../typechain-types";
+import { FirePool, FireProduct, FireProduct__factory, AccessAdmin__factory, IInstance__factory, IInstanceService__factory, IRegistry__factory, TokenRegistry__factory, FireUSD, IInstance } from "../typechain-types";
 import { getNamedAccounts } from "./libs/accounts";
 import { deployContract } from "./libs/deployment";
 import { LibraryAddresses } from "./libs/libraries";
@@ -12,12 +12,16 @@ import { printBalances, printGasSpent, resetBalances, resetGasSpent, setBalanceA
 
 async function main() {
     loadVerificationQueueState();
+    resetBalances();
+    resetGasSpent();
 
     const { protocolOwner, productOwner: fireOwner } = await getNamedAccounts();
 
     await deployFireComponentContracts(
         {
             amountLibAddress: process.env.AMOUNTLIB_ADDRESS!,
+            accessAdminLibAddress: process.env.ACCESSADMINLIB_ADDRESS!,
+            blockNumberLibAddress: process.env.BLOCKNUMBERLIB_ADDRESS!,
             contractLibAddress: process.env.CONTRACTLIB_ADDRESS!,
             feeLibAddress: process.env.FEELIB_ADDRESS!,
             nftIdLibAddress: process.env.NFTIDLIB_ADDRESS!,
@@ -39,13 +43,20 @@ async function main() {
         fireOwner,
         protocolOwner,
     );
+
+    setBalanceAfter(await resolveAddress(protocolOwner), await ethers.provider.getBalance(protocolOwner));
+    setBalanceAfter(await resolveAddress(fireOwner), await ethers.provider.getBalance(fireOwner));
+    printBalances();
+    printGasSpent();
 }
 
 
-export async function deployFireComponentContracts(libraries: LibraryAddresses, services: ServiceAddresses, fireOwner: Signer, registryOwner: Signer) {
-    resetBalances();
-    resetGasSpent();
-
+export async function deployFireComponentContracts(libraries: LibraryAddresses, services: ServiceAddresses, fireOwner: Signer, registryOwner: Signer): Promise<{
+    instance: IInstance,
+    fireUsd: FireUSD,
+    fireProduct: FireProduct,
+    firePool: FirePool,
+}> {
     logger.info("===== deploying fire insurance components ...");
     
     const accessAdminLibAddress = libraries.accessAdminLibAddress;
@@ -85,9 +96,10 @@ export async function deployFireComponentContracts(libraries: LibraryAddresses, 
 
     logger.info(`===== deploying Fire contracts`);
 
-    const { address: fireUsdAddress } = await deployContract(
+    const { address: fireUsdAddress, contract: fireUSDBase } = await deployContract(
         "FireUSD",
         fireOwner);
+    const fireUsd = fireUSDBase as FireUSD;
     
     const deploymentId = Math.random().toString(16).substring(7);
     const fireProductName = "FireProduct_" + deploymentId;
@@ -217,10 +229,12 @@ export async function deployFireComponentContracts(libraries: LibraryAddresses, 
     logger.info(`===== FireProduct deployed at ${fireProductAddress} and registered with NFT ID ${fireProductNftId}`);
     logger.info(`===== FirePool deployed at ${firePoolAddress} and registered with NFT ID ${firePoolNftId}`);
 
-    setBalanceAfter(await resolveAddress(registryOwner), await ethers.provider.getBalance(registryOwner));
-    setBalanceAfter(await resolveAddress(fireOwner), await ethers.provider.getBalance(fireOwner));
-    printBalances();
-    printGasSpent();
+    return {
+        instance,
+        fireUsd,
+        fireProduct,
+        firePool,
+    };
 }
 
 if (require.main === module) {

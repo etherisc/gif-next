@@ -41,26 +41,26 @@ interface IOracleService is IService {
         string calldata callbackMethodName
     ) external returns (RequestId requestId);
 
-    /// @dev respond to oracle request by oracle compnent.
-    /// the response data is amende in the request info stored with the instance.
-    /// the request state changes to FULFILLED (when calling the callback method of the requester is successful)
+    /// @dev Respond to oracle request by oracle compnent.
+    /// The response data is amended in the request info stored with the instance.
+    /// The request state changes to FULFILLED (when calling the callback method of the requester is successful)
     /// or to FAILED when calling the requester is not succesful.
-    /// the function returns true iff the state changes to FULFILLED.
-    /// permissioned: only the oracle component linked to the request id may call this method
+    /// The function returns true iff the state changes to FULFILLED.
+    /// Permissioned: only the receiving oracle component may call this method
     function respond(
         RequestId requestId,
         bytes calldata responseData
     ) external returns (bool success);
 
-    /// @dev re send a failed response to the requester.
-    /// only requests in state FAILED may be re sent.
-    /// the request state changes to FULFILLED when calling the callback method of the requester is successful.
-    /// permissioned: only the requester may resend a request
+    /// @dev Resend a failed response to the requester.
+    /// Only requests in state FAILED may be resent.
+    /// The request state changes to FULFILLED when calling the callback method of the requester is successful.
+    /// Permissioned: only the receiving oracle may resend a request
     function resend(RequestId requestId) external;
 
-    /// @dev notify the oracle component that the specified request has become invalid.
-    /// only requests in state ACTIVE may be cancelled.
-    /// permissioned: only the requester may cancel a request
+    /// @dev Notify the oracle component that the specified request has become invalid.
+    /// Only requests in state ACTIVE may be cancelled.
+    /// Permissioned: only the requester may cancel a request
     function cancel(RequestId requestId) external;
 
 }
