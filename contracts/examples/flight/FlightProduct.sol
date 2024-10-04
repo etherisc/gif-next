@@ -447,6 +447,9 @@ contract FlightProduct is
         return _oracleNftId;
     }
 
+    function decodeFlightRiskData(bytes memory data) external pure returns (FlightRisk memory) {
+        return abi.decode(data, (FlightRisk));
+    }
 
     //--- internal functions ------------------------------------------------//
 
