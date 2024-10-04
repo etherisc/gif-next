@@ -26,6 +26,7 @@ async function createBundleAndPolicy(fireOwner: Signer, investor: Signer, custom
     const cityName = "London";
 
     const fireUSDI = fireUsd.connect(investor);
+    const fireUSDC = fireUsd.connect(customer);
     const firePoolI = firePool.connect(investor);
     const fireProductC = fireProduct.connect(customer);
     
@@ -61,7 +62,7 @@ async function createBundleAndPolicy(fireOwner: Signer, investor: Signer, custom
     const fireProductTokenHandler = await fireProductC.getTokenHandler();
     await executeTx(async () =>
         // approve full sum insured for simplicity
-        await fireUSDI.approve(fireProductTokenHandler, sumInsured),
+        await fireUSDC.approve(fireProductTokenHandler, sumInsured),
         "c - approve fireProduct token handler");
 
     // 5. customer creates policy
