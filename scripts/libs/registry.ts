@@ -173,10 +173,8 @@ export async function deployAndInitializeRegistry(owner: Signer, dip: Dip, libra
 
     const ContractLib = ContractLib__factory.connect(libraries.contractLibAddress.toString(), owner);
     const hardcodedRegistryAddress = await ContractLib.REGISTRY_ADDRESS() as AddressLike;
-    logger.debug(`Hardcoded registry address: ${hardcodedRegistryAddress}`);
-    logger.debug(`Deployed registry address: ${registryAddress}`);
     if(registryAddress != hardcodedRegistryAddress) {
-        logger.error("Registry address does not match");
+        throw new Error(`Registry address does not match: ${registryAddress} != ${hardcodedRegistryAddress}`);
     }
 
     const registry = registryBaseContract as Registry;
