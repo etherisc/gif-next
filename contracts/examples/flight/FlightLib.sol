@@ -243,7 +243,9 @@ library FlightLib {
         NftId productNftId, 
         Str flightData,
         Timestamp departureTime, 
-        Timestamp arrivalTime
+        string memory departureTimeLocal,
+        Timestamp arrivalTime,
+        string memory arrivalTimeLocal
     )
         public
         view
@@ -261,7 +263,9 @@ library FlightLib {
             flightRisk = FlightProduct.FlightRisk({
                 flightData: flightData,
                 departureTime: departureTime,
+                departureTimeLocal: departureTimeLocal,
                 arrivalTime: arrivalTime,
+                arrivalTimeLocal: arrivalTimeLocal,
                 sumOfSumInsuredAmounts: AmountLib.toAmount(0),
                 status: bytes1(0),
                 delayMinutes: 0});

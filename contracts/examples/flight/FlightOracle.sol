@@ -131,6 +131,10 @@ contract FlightOracle is
         return LibRequestIdSet.getElementAt(_activeRequests, idx);
     }
 
+    function decodeFlightStatusRequestData(bytes memory data) external pure returns (FlightStatusRequest memory) {
+        return abi.decode(data, (FlightStatusRequest));
+    }
+
     //--- internal functions ------------------------------------------------//
 
     /// @dev use case specific handling of oracle requests
