@@ -124,7 +124,9 @@ contract FlightProductTest is FlightBaseTest {
             customer,
             flightData,
             departureTime,
+            "2024-11-08 Europe/Zurich",
             arrivalTime,
+            "2024-11-08 Europe/Bangkok",
             premiumAmount,
             statistics);
             // v, r, s);
@@ -208,6 +210,7 @@ contract FlightProductTest is FlightBaseTest {
         //     premiumAmount, 
         //     statistics);
 
+        // solhint-disable no-console
         console.log("ts", block.timestamp);
         SigUtils.Permit memory permit = SigUtils.Permit({
             owner: customer,
@@ -235,12 +238,11 @@ contract FlightProductTest is FlightBaseTest {
             FlightProduct.ApplicationData({
                 flightData: flightData,
                 departureTime: departureTime,
+                departureTimeLocal: "2024-11-08 Europe/Zurich",
                 arrivalTime: arrivalTime,
+                arrivalTimeLocal: "2024-11-08 Europe/Bangkok",
                 premiumAmount: premiumAmount,
-                statistics: statistics,
-                v: 0,
-                r: "",
-                s: ""
+                statistics: statistics
             })
         );
 
@@ -334,7 +336,9 @@ contract FlightProductTest is FlightBaseTest {
             customer,
             flightData,
             departureTime,
+            "2024-11-08 Europe/Zurich",
             arrivalTime,
+            "2024-11-08 Europe/Bangkok",
             premiumAmount,
             statistics);
             // v, r, s);

@@ -101,7 +101,11 @@ contract FlightProduct is
     struct FlightRisk {
         Str flightData; // example: "LX 180 ZRH BKK 20241104"
         Timestamp departureTime;
+        // this field contains static data required by the frontend and is not directly used by the product
+        string departureTimeLocal; // example "2024-10-14T10:10:00.000 Asia/Seoul"
         Timestamp arrivalTime; 
+        // this field contains static data required by the frontend and is not directly used by the product
+        string arrivalTimeLocal; // example "2024-10-14T10:10:00.000 Asia/Seoul"
         Amount sumOfSumInsuredAmounts;
         // uint256 premiumMultiplier; // what is this? UFixed?
         // uint256 weight; // what is this? UFixed?
@@ -112,12 +116,11 @@ contract FlightProduct is
     struct ApplicationData {
         Str flightData;
         Timestamp departureTime;
+        string departureTimeLocal;
         Timestamp arrivalTime;
+        string arrivalTimeLocal;
         Amount premiumAmount;
         uint256[6] statistics;
-        uint8 v;
-        bytes32 r; 
-        bytes32 s;
     }
 
     struct PermitData {
@@ -208,7 +211,9 @@ contract FlightProduct is
             policyHolder,
             application.flightData,
             application.departureTime,
+            application.departureTimeLocal,
             application.arrivalTime,
+            application.arrivalTimeLocal,
             application.premiumAmount,
             application.statistics);
             // application.v,
@@ -242,7 +247,9 @@ contract FlightProduct is
         address policyHolder,
         Str flightData, 
         Timestamp departureTime,
+        string memory departureTimeLocal,
         Timestamp arrivalTime,
+        string memory arrivalTimeLocal,
         Amount premiumAmount,
         uint256[6] memory statistics
         // signature fields
@@ -273,7 +280,9 @@ contract FlightProduct is
             policyHolder, 
             flightData,
             departureTime,
+            departureTimeLocal,
             arrivalTime,
+            arrivalTimeLocal,
             premiumAmount,
             statistics);
 
@@ -305,7 +314,9 @@ contract FlightProduct is
         address policyHolder,
         Str flightData, 
         Timestamp departureTime,
+        string memory departureTimeLocal,
         Timestamp arrivalTime,
+        string memory arrivalTimeLocal,
         Amount premiumAmount,
         uint256[6] memory statistics
     )
@@ -326,7 +337,9 @@ contract FlightProduct is
         ) = _createRiskAndPayoutAmounts(
             flightData,
             departureTime,
+            departureTimeLocal,
             arrivalTime,
+            arrivalTimeLocal,
             premiumAmount,
             statistics);
 
@@ -457,7 +470,9 @@ contract FlightProduct is
     function _createRiskAndPayoutAmounts(
         Str flightData, 
         Timestamp departureTime,
+        string memory departureTimeLocal,
         Timestamp arrivalTime,
+        string memory arrivalTimeLocal,
         Amount premiumAmount,
         uint256[6] memory statistics
     )
@@ -483,7 +498,9 @@ contract FlightProduct is
         riskId = _checkAndUpdateFlightRisk(
             flightData,
             departureTime,
+            departureTimeLocal,
             arrivalTime,
+            arrivalTimeLocal,
             sumInsuredAmount,
             weight);
     }
@@ -492,7 +509,9 @@ contract FlightProduct is
     function _checkAndUpdateFlightRisk(
         Str flightData,
         Timestamp departureTime,
+        string memory departureTimeLocal,
         Timestamp arrivalTime,
+        string memory arrivalTimeLocal,
         Amount sumInsuredAmount,
         uint256 weight
     )
@@ -507,7 +526,9 @@ contract FlightProduct is
             getNftId(), 
             flightData, 
             departureTime, 
-            arrivalTime);
+            departureTimeLocal,
+            arrivalTime,
+            arrivalTimeLocal);
 
         // create risk, if new
         if (!exists) {
