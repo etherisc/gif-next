@@ -800,7 +800,7 @@ contract TestProductClaim is GifTest {
             20000, // sum insured
             365 * 24 * 3600, // lifetime
             1000, // claim amount 1
-            100, // payout mount 1
+            100, // payout amount 1
             true); // process payout
 
         // add 2nd payout to 1st claim (filling up to full claim amount)
@@ -1201,7 +1201,7 @@ contract TestProductClaim is GifTest {
         vm.stopPrank();
 
         vm.startPrank(policyHolder);
-        address tokenHandlerAddress = address(instanceReader.getComponentInfo(productNftId).tokenHandler);
+        address tokenHandlerAddress = address(instanceReader.getTokenHandler(productNftId));
         token.approve(tokenHandlerAddress, premiumAmountInt);
         vm.stopPrank();
 

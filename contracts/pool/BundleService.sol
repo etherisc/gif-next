@@ -30,10 +30,15 @@ contract BundleService is
     
     string public constant NAME = "BundleService";
 
-    address private _registryAddress;
-    IRegistryService private _registryService;
-    IAccountingService private _accountingService;
-    IComponentService private _componentService;
+    // keccak256(abi.encode(uint256(keccak256("etherisc.gif.BundleService@3.0.0")) - 1)) & ~bytes32(uint256(0xff));
+    bytes32 public constant BUNDLE_SERVICE_STORAGE_LOCATION_V3_0 = 0x46b8ce3500c11673bb6f380e5e46ed88536ecfaa352cb594644cb469c5a14d00;
+
+    struct BundleServiceStorage {
+        address _registryAddress;
+        IRegistryService _registryService;
+        IAccountingService _accountingService;
+        IComponentService _componentService;
+    }
 
     function _initialize(
         address owner, 
@@ -50,9 +55,10 @@ contract BundleService is
 
         __Service_init(authority, registry, owner);
 
-        _registryService = IRegistryService(_getServiceAddress(REGISTRY()));
-        _accountingService = IAccountingService(_getServiceAddress(ACCOUNTING()));
-        _componentService = IComponentService(_getServiceAddress(COMPONENT()));
+        BundleServiceStorage storage $ = _getBundleServiceStorage();
+        $._registryService = IRegistryService(_getServiceAddress(REGISTRY()));
+        $._accountingService = IAccountingService(_getServiceAddress(ACCOUNTING()));
+        $._componentService = IComponentService(_getServiceAddress(COMPONENT()));
 
         _registerInterface(type(IBundleService).interfaceId);
     }
@@ -100,7 +106,8 @@ contract BundleService is
         (NftId poolNftId, IInstance instance) = PoolLib.getAndVerifyActivePool(getRegistry(), msg.sender);
 
         // register bundle with registry
-        bundleNftId = _registryService.registerBundle(
+        BundleServiceStorage storage $ = _getBundleServiceStorage();
+        bundleNftId = $._registryService.registerBundle(
             IRegistry.ObjectInfo(
                 NftIdLib.zero(), 
                 poolNftId,
@@ -241,7 +248,8 @@ contract BundleService is
             Amount balanceAmountWithFees = instanceReader.getBalanceAmount(bundleNftId);
             feeAmount = instanceReader.getFeeAmount(bundleNftId);
             unstakedAmount = balanceAmountWithFees - feeAmount;
-            _accountingService.decreaseBundleBalance(instanceStore, bundleNftId, unstakedAmount, feeAmount);
+            BundleServiceStorage storage $ = _getBundleServiceStorage();
+            $._accountingService.decreaseBundleBalance(instanceStore, bundleNftId, unstakedAmount, feeAmount);
         }
 
         emit LogBundleServiceBundleClosed(bundleNftId);
@@ -271,7 +279,8 @@ contract BundleService is
         }
 
         // effects
-        _accountingService.increaseBundleBalance(
+        BundleServiceStorage storage $ = _getBundleServiceStorage();
+        $._accountingService.increaseBundleBalance(
             instanceStore, 
             bundleNftId, 
             amount, 
@@ -314,7 +323,8 @@ contract BundleService is
         }
 
         // effects
-        _accountingService.decreaseBundleBalance(
+        BundleServiceStorage storage $ = _getBundleServiceStorage();
+        $._accountingService.decreaseBundleBalance(
             instanceStore, 
             bundleNftId, 
             unstakedAmount, 
@@ -379,6 +389,11 @@ contract BundleService is
         emit LogBundleServiceCollateralReleased(bundleNftId, policyNftId, collateralAmount);
     }
 
+    function _getBundleServiceStorage() private pure returns (BundleServiceStorage storage $) {
+        assembly {
+            $.slot := BUNDLE_SERVICE_STORAGE_LOCATION_V3_0
+        }
+    }
 
     function _getDomain() internal pure override returns(ObjectType) {
         return BUNDLE();

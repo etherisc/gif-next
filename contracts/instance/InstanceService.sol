@@ -36,21 +36,25 @@ contract InstanceService is
     IInstanceService
 {
 
-    // TODO update to real hash when instance is stable
     bytes32 public constant INSTANCE_CREATION_CODE_HASH = bytes32(0);
 
-    IRegistryService internal _registryService;
-    IStakingService internal _stakingService;
-    IComponentService internal _componentService;
+    // keccak256(abi.encode(uint256(keccak256("etherisc.gif.InstanceService@3.0.0")) - 1)) & ~bytes32(uint256(0xff));
+    bytes32 public constant INSTANCE_SERVICE_STORAGE_LOCATION_V3_0 = 0xd3b64f4b2eed579b20c89ed2b45eb50bb8adfc41b6a240bf0795686c0bce0500;
 
-    address internal _masterAccessManager;
-    address internal _masterInstanceAdmin;
-    address internal _masterInstance;
-    address internal _masterInstanceReader;
-    address internal _masterInstanceBundleSet;
-    address internal _masterInstanceRiskSet;
-    address internal _masterInstanceStore;
-    address internal _masterProductStore;
+    struct InstanceServiceStorage {
+        IRegistryService _registryService;
+        IStakingService _stakingService;
+        IComponentService _componentService;
+
+        address _masterAccessManager;
+        address _masterInstanceAdmin;
+        address _masterInstance;
+        address _masterInstanceReader;
+        address _masterInstanceBundleSet;
+        address _masterInstanceRiskSet;
+        address _masterInstanceStore;
+        address _masterProductStore;
+    }
 
 
     modifier onlyInstance() {
@@ -198,11 +202,12 @@ contract InstanceService is
         instance = _createInstance(instanceAdmin, instanceOwner, allowAnyToken);
 
         // register cloned instance with registry
-        instanceNftId = _registryService.registerInstance(
+        InstanceServiceStorage storage $ = _getInstanceServiceStorage();
+        instanceNftId = $._registryService.registerInstance(
             instance, instanceOwner).nftId;
 
         // MUST be set after instance is set up and registered
-        IAuthorization instanceAuthorization = InstanceAdmin(_masterInstanceAdmin).getInstanceAuthorization();
+        IAuthorization instanceAuthorization = InstanceAdmin($._masterInstanceAdmin).getInstanceAuthorization();
         instanceAdmin.completeSetup(
             address(getRegistry()),
             address(instanceAuthorization),
@@ -214,7 +219,7 @@ contract InstanceService is
         assert(instance.getRelease() == getRelease());
 
         // register cloned instance as staking target
-        _stakingService.createInstanceTarget(
+        $._stakingService.createInstanceTarget(
             instanceNftId,
             TargetManagerLib.getDefaultLockingPeriod(),
             TargetManagerLib.getDefaultRewardRate());
@@ -232,7 +237,8 @@ contract InstanceService is
         onlyInstance()
     {
         NftId instanceNftId = getRegistry().getNftIdForAddress(msg.sender);
-        _stakingService.setInstanceLockingPeriod(
+        InstanceServiceStorage storage $ = _getInstanceServiceStorage();
+        $._stakingService.setInstanceLockingPeriod(
             instanceNftId,
             stakeLockingPeriod);
     }
@@ -245,7 +251,8 @@ contract InstanceService is
         onlyInstance()
     {
         NftId instanceNftId = getRegistry().getNftIdForAddress(msg.sender);
-        _stakingService.setInstanceRewardRate(
+        InstanceServiceStorage storage $ = _getInstanceServiceStorage();
+        $._stakingService.setInstanceRewardRate(
             instanceNftId,
             rewardRate);
     }
@@ -257,7 +264,8 @@ contract InstanceService is
         onlyInstance()
     {
         NftId instanceNftId = getRegistry().getNftIdForAddress(msg.sender);
-        _stakingService.setInstanceMaxStakedAmount(
+        InstanceServiceStorage storage $ = _getInstanceServiceStorage();
+        $._stakingService.setInstanceMaxStakedAmount(
             instanceNftId,
             maxStakedAmount);
     }    
@@ -271,7 +279,8 @@ contract InstanceService is
         returns (Amount newBalance)
     {
         NftId instanceNftId = getRegistry().getNftIdForAddress(msg.sender);
-        newBalance = _stakingService.refillInstanceRewardReserves(
+        InstanceServiceStorage storage $ = _getInstanceServiceStorage();
+        newBalance = $._stakingService.refillInstanceRewardReserves(
             instanceNftId,
             rewardProvider,
             dipAmount);
@@ -286,7 +295,8 @@ contract InstanceService is
         returns (Amount newBalance)
     {
         NftId instanceNftId = getRegistry().getNftIdForAddress(msg.sender);
-        newBalance = _stakingService.withdrawInstanceRewardReserves(
+        InstanceServiceStorage storage $ = _getInstanceServiceStorage();
+        newBalance = $._stakingService.withdrawInstanceRewardReserves(
             instanceNftId,
             dipAmount);
     }
@@ -301,8 +311,9 @@ contract InstanceService is
         address instanceAddress = msg.sender;
         IInstance instance = IInstance(msg.sender);
         
+        InstanceServiceStorage storage $ = _getInstanceServiceStorage();
         InstanceReader upgradedInstanceReaderClone = InstanceReader(
-            Clones.clone(address(_masterInstanceReader)));
+            Clones.clone(address($._masterInstanceReader)));
 
         upgradedInstanceReaderClone.initializeWithInstance(instanceAddress);
         instance.setInstanceReader(upgradedInstanceReaderClone);
@@ -319,35 +330,31 @@ contract InstanceService is
         onlyOwner()
         returns(NftId masterInstanceNftId)
     {
-        if(_masterInstance != address(0)) { revert ErrorInstanceServiceMasterInstanceAlreadySet(); }
-        if(_masterInstanceAdmin != address(0)) { revert ErrorInstanceServiceMasterInstanceAdminAlreadySet(); }
-        if(_masterInstanceBundleSet != address(0)) { revert ErrorInstanceServiceMasterBundleSetAlreadySet(); }
-        if(_masterInstanceRiskSet != address(0)) { revert ErrorInstanceServiceMasterRiskSetAlreadySet(); }
+        InstanceServiceStorage storage $ = _getInstanceServiceStorage();
+
+        if($._masterInstance != address(0)) { revert ErrorInstanceServiceMasterInstanceAlreadySet(); }
+        if($._masterInstanceAdmin != address(0)) { revert ErrorInstanceServiceMasterInstanceAdminAlreadySet(); }
+        if($._masterInstanceBundleSet != address(0)) { revert ErrorInstanceServiceMasterBundleSetAlreadySet(); }
+        if($._masterInstanceRiskSet != address(0)) { revert ErrorInstanceServiceMasterRiskSetAlreadySet(); }
         if(instanceAddress == address(0)) { revert ErrorInstanceServiceInstanceAddressZero(); }
 
         {
             IInstance instance = IInstance(instanceAddress);
             address accessManagerAddress = instance.authority();
             InstanceAdmin instanceAdmin = instance.getInstanceAdmin();
-            address instanceAdminAddress = address(instanceAdmin);
             InstanceReader instanceReader = instance.getInstanceReader();
-            address instanceReaderAddress = address(instanceReader);
             BundleSet bundleSet = instance.getBundleSet();
-            address bundleSetAddress = address(bundleSet);
             RiskSet riskSet = instance.getRiskSet();
-            address riskSetAddress = address(riskSet);
             InstanceStore instanceStore = instance.getInstanceStore();
-            address instanceStoreAddress = address(instanceStore);
             ProductStore productStore = instance.getProductStore();
-            address productStoreAddress = address(productStore);
 
             if(accessManagerAddress == address(0)) { revert ErrorInstanceServiceAccessManagerZero(); }
-            if(instanceAdminAddress == address(0)) { revert ErrorInstanceServiceInstanceAdminZero(); }
-            if(instanceReaderAddress == address(0)) { revert ErrorInstanceServiceInstanceReaderZero(); }
-            if(bundleSetAddress == address(0)) { revert ErrorInstanceServiceBundleSetZero(); }
-            if(riskSetAddress == address(0)) { revert ErrorInstanceServiceRiskSetZero(); }
-            if(instanceStoreAddress == address(0)) { revert ErrorInstanceServiceInstanceStoreZero(); }
-            if(productStoreAddress == address(0)) { revert ErrorInstanceServiceProductStoreZero(); } // TODO: rename exception
+            if(address(instanceAdmin) == address(0)) { revert ErrorInstanceServiceInstanceAdminZero(); }
+            if(address(instanceReader) == address(0)) { revert ErrorInstanceServiceInstanceReaderZero(); }
+            if(address(bundleSet) == address(0)) { revert ErrorInstanceServiceBundleSetZero(); }
+            if(address(riskSet) == address(0)) { revert ErrorInstanceServiceRiskSetZero(); }
+            if(address(instanceStore) == address(0)) { revert ErrorInstanceServiceInstanceStoreZero(); }
+            if(address(productStore) == address(0)) { revert ErrorInstanceServiceProductStoreZero(); }
             
             if(instance.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceInstanceAuthorityMismatch(); }
             if(bundleSet.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceBundleSetAuthorityMismatch(); }
@@ -358,19 +365,19 @@ contract InstanceService is
             if(riskSet.getInstanceAddress() != address(instance)) { revert ErrorInstanceServiceRiskSetInstanceMismatch(); }
             if(instanceReader.getInstance() != instance) { revert ErrorInstanceServiceInstanceReaderInstanceMismatch2(); }
 
-            _masterAccessManager = accessManagerAddress;
-            _masterInstanceAdmin = instanceAdminAddress;
-            _masterInstance = instanceAddress;
-            _masterInstanceReader = instanceReaderAddress;
-            _masterInstanceBundleSet = bundleSetAddress;
-            _masterInstanceRiskSet = riskSetAddress;
-            _masterInstanceStore = instanceStoreAddress;
-            _masterProductStore = productStoreAddress;
+            $._masterAccessManager = accessManagerAddress;
+            $._masterInstanceAdmin = address(instanceAdmin);
+            $._masterInstance = instanceAddress;
+            $._masterInstanceReader = address(instanceReader);
+            $._masterInstanceBundleSet = address(bundleSet);
+            $._masterInstanceRiskSet = address(riskSet);
+            $._masterInstanceStore = address(instanceStore);
+            $._masterProductStore = address(productStore);
         }
         
         {
-            IInstance masterInstance = IInstance(_masterInstance);
-            IRegistry.ObjectInfo memory info = _registryService.registerInstance(masterInstance, getOwner());
+            IInstance masterInstance = IInstance($._masterInstance);
+            IRegistry.ObjectInfo memory info = $._registryService.registerInstance(masterInstance, getOwner());
             masterInstanceNftId = info.nftId;
         }
     }
@@ -381,22 +388,25 @@ contract InstanceService is
         virtual
         onlyOwner
     {
-        if(_masterInstanceReader == address(0)) { revert ErrorInstanceServiceMasterInstanceReaderNotSet(); }
+        InstanceServiceStorage storage $ = _getInstanceServiceStorage();
+
+        if($._masterInstanceReader == address(0)) { revert ErrorInstanceServiceMasterInstanceReaderNotSet(); }
         if(instanceReaderAddress == address(0)) { revert ErrorInstanceServiceInstanceReaderAddressZero(); }
-        if(instanceReaderAddress == _masterInstanceReader) { revert ErrorInstanceServiceInstanceReaderSameAsMasterInstanceReader(); }
+        if(instanceReaderAddress == $._masterInstanceReader) { revert ErrorInstanceServiceInstanceReaderSameAsMasterInstanceReader(); }
 
         InstanceReader instanceReader = InstanceReader(instanceReaderAddress);
-        if(instanceReader.getInstance() != IInstance(_masterInstance)) { revert ErrorInstanceServiceInstanceReaderInstanceMismatch(); }
+        if(instanceReader.getInstance() != IInstance($._masterInstance)) { revert ErrorInstanceServiceInstanceReaderInstanceMismatch(); }
 
-        _masterInstanceReader = instanceReaderAddress;
+        $._masterInstanceReader = instanceReaderAddress;
 
         emit LogInstanceServiceMasterInstanceReaderUpgraded(
-            getRegistry().getNftIdForAddress(_masterInstance),
+            getRegistry().getNftIdForAddress($._masterInstance),
             instanceReaderAddress);
     }
 
     function getMasterInstanceReader() external virtual view returns (address) {
-        return _masterInstanceReader;
+        InstanceServiceStorage storage $ = _getInstanceServiceStorage();
+        return $._masterInstanceReader;
     }
 
     //--- internal functions --------------------------------------------------------//
@@ -408,14 +418,16 @@ contract InstanceService is
         virtual
         returns (InstanceAdmin clonedAdmin)
     {
+        InstanceServiceStorage storage $ = _getInstanceServiceStorage();
+
         // clone instance specific access manager
         AccessManagerCloneable clonedAccessManager = AccessManagerCloneable(
             Clones.clone(
-                InstanceAdmin(_masterInstanceAdmin).authority()));
+                InstanceAdmin($._masterInstanceAdmin).authority()));
         
         // set up the instance admin
         clonedAdmin = InstanceAdmin(
-            Clones.clone(_masterInstanceAdmin));
+            Clones.clone($._masterInstanceAdmin));
 
         clonedAdmin.initialize(
             address(clonedAccessManager),
@@ -434,16 +446,17 @@ contract InstanceService is
         virtual
         returns (IInstance)
     {
+        InstanceServiceStorage storage $ = _getInstanceServiceStorage();
         // clone instance
-        Instance clonedInstance = Instance(Clones.clone(_masterInstance));
+        Instance clonedInstance = Instance(Clones.clone($._masterInstance));
         clonedInstance.initialize(
             IInstance.InstanceContracts({
                 instanceAdmin: instanceAdmin,
-                instanceStore: InstanceStore(Clones.clone(address(_masterInstanceStore))),
-                productStore: ProductStore(Clones.clone(address(_masterProductStore))),
-                bundleSet: BundleSet(Clones.clone(_masterInstanceBundleSet)),
-                riskSet: RiskSet(Clones.clone(_masterInstanceRiskSet)),
-                instanceReader: InstanceReader(Clones.clone(address(_masterInstanceReader)))
+                instanceStore: InstanceStore(Clones.clone(address($._masterInstanceStore))),
+                productStore: ProductStore(Clones.clone(address($._masterProductStore))),
+                bundleSet: BundleSet(Clones.clone($._masterInstanceBundleSet)),
+                riskSet: RiskSet(Clones.clone($._masterInstanceRiskSet)),
+                instanceReader: InstanceReader(Clones.clone(address($._masterInstanceReader)))
             }),
             getRegistry(),
             getRelease(),
@@ -470,9 +483,10 @@ contract InstanceService is
 
         __Service_init(authority, registry, owner);
 
-        _registryService = IRegistryService(_getServiceAddress(REGISTRY()));
-        _stakingService = IStakingService(_getServiceAddress(STAKING()));
-        _componentService = IComponentService(_getServiceAddress(COMPONENT()));
+        InstanceServiceStorage storage $ = _getInstanceServiceStorage();
+        $._registryService = IRegistryService(_getServiceAddress(REGISTRY()));
+        $._stakingService = IStakingService(_getServiceAddress(STAKING()));
+        $._componentService = IComponentService(_getServiceAddress(COMPONENT()));
 
         _registerInterface(type(IInstanceService).interfaceId);
     }
@@ -506,6 +520,11 @@ contract InstanceService is
         }
     }
 
+    function _getInstanceServiceStorage() private pure returns (InstanceServiceStorage storage $) {
+        assembly {
+            $.slot := INSTANCE_SERVICE_STORAGE_LOCATION_V3_0
+        }
+    }
 
     // From IService
     function _getDomain() internal pure override returns(ObjectType) {
