@@ -320,6 +320,8 @@ contract AccessAdmin is
             if (!exists) {
                 if (!AccessAdminLib.isDynamicRoleId(authzRoleId)) {
                     roleId = authzRoleId;
+                } else if (roleInfo.targetType == TargetType.Custom) {
+                    roleId = authzRoleId;
                 }
 
                 _createRole(

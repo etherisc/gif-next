@@ -97,95 +97,153 @@ contract FlightProductTest is FlightBaseTest {
         assertEq(flightProduct.getWallet(), address(flightProduct.getTokenHandler()), "unexpected product wallet address");
     }
 
+    // TODO cleanup only createPolicyWithPermit is now public/external
+    // function test_flightProductCreatePolicyHappyCase() public {
+    //     // GIVEN - setp from flight base test
+    //     approveProductTokenHandler();
 
-    function test_flightProductCreatePolicyHappyCase() public {
-        // GIVEN - setp from flight base test
-        approveProductTokenHandler();
+    //     uint256 customerBalanceBefore = flightUSD.balanceOf(customer);
+    //     uint256 poolBalanceBefore = flightUSD.balanceOf(flightPool.getWallet());
+    //     uint256 productBalanceBefore = flightUSD.balanceOf(flightProduct.getWallet());
+    //     Amount premiumAmount = AmountLib.toAmount(30 * 10 ** flightUSD.decimals());
 
-        uint256 customerBalanceBefore = flightUSD.balanceOf(customer);
-        uint256 poolBalanceBefore = flightUSD.balanceOf(flightPool.getWallet());
-        uint256 productBalanceBefore = flightUSD.balanceOf(flightProduct.getWallet());
-        Amount premiumAmount = AmountLib.toAmount(30 * 10 ** flightUSD.decimals());
+    //     assertEq(instanceReader.risks(flightProductNftId), 0, "unexpected number of risks (before)");
+    //     assertEq(instanceReader.activeRisks(flightProductNftId), 0, "unexpected number of active risks (before)");
+    //     assertEq(flightOracle.activeRequests(), 0, "unexpected number of active requests (before)");
 
-        assertEq(instanceReader.risks(flightProductNftId), 0, "unexpected number of risks (before)");
-        assertEq(instanceReader.activeRisks(flightProductNftId), 0, "unexpected number of active risks (before)");
-        assertEq(flightOracle.activeRequests(), 0, "unexpected number of active requests (before)");
+    //     (uint8 v, bytes32 r, bytes32 s) = _getSignature(
+    //         dataSignerPrivateKey,
+    //         flightData, 
+    //         departureTime, 
+    //         arrivalTime, 
+    //         premiumAmount, 
+    //         statistics);
 
-        (uint8 v, bytes32 r, bytes32 s) = _getSignature(
-            dataSignerPrivateKey,
-            flightData, 
-            departureTime, 
-            arrivalTime, 
-            premiumAmount, 
-            statistics);
+    //     // WHEN
+    //     vm.startPrank(statisticsProvider);
+    //     (, NftId policyNftId) = flightProduct.createPolicy(
+    //         customer,
+    //         flightData,
+    //         departureTime,
+    //         "2024-11-08 Europe/Zurich",
+    //         arrivalTime,
+    //         "2024-11-08 Europe/Bangkok",
+    //         premiumAmount,
+    //         statistics);
+    //     vm.stopPrank();
 
-        // WHEN
-        (, NftId policyNftId) = flightProduct.createPolicy(
-            customer,
-            flightData,
-            departureTime,
-            "2024-11-08 Europe/Zurich",
-            arrivalTime,
-            "2024-11-08 Europe/Bangkok",
-            premiumAmount,
-            statistics);
-            // v, r, s);
+    //     // THEN
+    //     // check risks
+    //     assertEq(instanceReader.risks(flightProductNftId), 1, "unexpected number of risks (after)");
+    //     assertEq(instanceReader.activeRisks(flightProductNftId), 1, "unexpected number of active risks (after)");
 
-        // THEN
-        // check risks
-        assertEq(instanceReader.risks(flightProductNftId), 1, "unexpected number of risks (after)");
-        assertEq(instanceReader.activeRisks(flightProductNftId), 1, "unexpected number of active risks (after)");
+    //     RiskId riskId = instanceReader.getRiskId(flightProductNftId, 0);
+    //     (bool exists, FlightProduct.FlightRisk memory flightRisk) = FlightLib.getFlightRisk(instanceReader, flightProductNftId, riskId);
+    //     _printRisk(riskId, flightRisk);
 
-        RiskId riskId = instanceReader.getRiskId(flightProductNftId, 0);
-        (bool exists, FlightProduct.FlightRisk memory flightRisk) = FlightLib.getFlightRisk(instanceReader, flightProductNftId, riskId);
-        _printRisk(riskId, flightRisk);
+    //     assertTrue(exists, "risk does not exist");
+    //     assertEq(instanceReader.policiesForRisk(riskId), 1, "unexpected number of policies for risk");
+    //     assertEq(instanceReader.getPolicyForRisk(riskId, 0).toInt(), policyNftId.toInt(), "unexpected 1st policy for risk");
 
-        assertTrue(exists, "risk does not exist");
-        assertEq(instanceReader.policiesForRisk(riskId), 1, "unexpected number of policies for risk");
-        assertEq(instanceReader.getPolicyForRisk(riskId, 0).toInt(), policyNftId.toInt(), "unexpected 1st policy for risk");
+    //     // check policy
+    //     assertTrue(policyNftId.gtz(), "policy nft id zero");
+    //     assertEq(registry.ownerOf(policyNftId), customer, "unexpected policy holder");
+    //     assertEq(instanceReader.getPolicyState(policyNftId).toInt(), COLLATERALIZED().toInt(), "unexpected policy state");
 
-        // check policy
-        assertTrue(policyNftId.gtz(), "policy nft id zero");
-        assertEq(registry.ownerOf(policyNftId), customer, "unexpected policy holder");
-        assertEq(instanceReader.getPolicyState(policyNftId).toInt(), COLLATERALIZED().toInt(), "unexpected policy state");
+    //     // check policy info
+    //     IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
+    //     _printPolicy(policyNftId, policyInfo);
 
-        // check policy info
-        IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
-        _printPolicy(policyNftId, policyInfo);
+    //     // check policy data
+    //     assertTrue(instanceReader.isProductRisk(flightProductNftId, policyInfo.riskId), "risk does not exist for product");
+    //     assertEq(policyInfo.productNftId.toInt(), flightProductNftId.toInt(), "unexpected product nft id");
+    //     assertEq(policyInfo.bundleNftId.toInt(), bundleNftId.toInt(), "unexpected bundle nft id");
+    //     assertEq(policyInfo.activatedAt.toInt(), departureTime.toInt(), "unexpected activate at timestamp");
+    //     assertEq(policyInfo.lifetime.toInt(), flightProduct.LIFETIME().toInt(), "unexpected lifetime");
+    //     assertTrue(policyInfo.sumInsuredAmount > premiumAmount, "sum insured <= premium amount");
 
-        // check policy data
-        assertTrue(instanceReader.isProductRisk(flightProductNftId, policyInfo.riskId), "risk does not exist for product");
-        assertEq(policyInfo.productNftId.toInt(), flightProductNftId.toInt(), "unexpected product nft id");
-        assertEq(policyInfo.bundleNftId.toInt(), bundleNftId.toInt(), "unexpected bundle nft id");
-        assertEq(policyInfo.activatedAt.toInt(), departureTime.toInt(), "unexpected activate at timestamp");
-        assertEq(policyInfo.lifetime.toInt(), flightProduct.LIFETIME().toInt(), "unexpected lifetime");
-        assertTrue(policyInfo.sumInsuredAmount > premiumAmount, "sum insured <= premium amount");
-
-        // check premium info
-        IPolicy.PremiumInfo memory premiumInfo = instanceReader.getPremiumInfo(policyNftId);
-        _printPremium(policyNftId, premiumInfo);
-        assertEq(instanceReader.getPremiumState(policyNftId).toInt(), PAID().toInt(), "unexpected premium state");
+    //     // check premium info
+    //     IPolicy.PremiumInfo memory premiumInfo = instanceReader.getPremiumInfo(policyNftId);
+    //     _printPremium(policyNftId, premiumInfo);
+    //     assertEq(instanceReader.getPremiumState(policyNftId).toInt(), PAID().toInt(), "unexpected premium state");
         
-        // check token balances
-        assertEq(flightUSD.balanceOf(flightProduct.getWallet()), productBalanceBefore, "unexpected product balance");
-        assertEq(flightUSD.balanceOf(flightPool.getWallet()), poolBalanceBefore + premiumAmount.toInt(), "unexpected pool balance");
-        assertEq(flightUSD.balanceOf(customer), customerBalanceBefore - premiumAmount.toInt(), "unexpected customer balance");
+    //     // check token balances
+    //     assertEq(flightUSD.balanceOf(flightProduct.getWallet()), productBalanceBefore, "unexpected product balance");
+    //     assertEq(flightUSD.balanceOf(flightPool.getWallet()), poolBalanceBefore + premiumAmount.toInt(), "unexpected pool balance");
+    //     assertEq(flightUSD.balanceOf(customer), customerBalanceBefore - premiumAmount.toInt(), "unexpected customer balance");
 
-        // check oracle request
-        assertEq(flightOracle.activeRequests(), 1, "unexpected number of active requests (after policy creation)");
+    //     // check oracle request
+    //     assertEq(flightOracle.activeRequests(), 1, "unexpected number of active requests (after policy creation)");
 
-        RequestId requestId = flightOracle.getActiveRequest(0);
-        assertTrue(requestId.gtz(), "request id zero");
+    //     RequestId requestId = flightOracle.getActiveRequest(0);
+    //     assertTrue(requestId.gtz(), "request id zero");
 
-        IOracle.RequestInfo memory requestInfo = instanceReader.getRequestInfo(requestId);
-        _printRequest(requestId, requestInfo);
+    //     IOracle.RequestInfo memory requestInfo = instanceReader.getRequestInfo(requestId);
+    //     _printRequest(requestId, requestInfo);
 
-        FlightOracle.FlightStatusRequest memory statusRequest = abi.decode(requestInfo.requestData, (FlightOracle.FlightStatusRequest));
-        _printStatusRequest(statusRequest);
+    //     FlightOracle.FlightStatusRequest memory statusRequest = abi.decode(requestInfo.requestData, (FlightOracle.FlightStatusRequest));
+    //     _printStatusRequest(statusRequest);
 
-        assertEq(statusRequest.riskId.toInt(), riskId.toInt(), "unexpected risk id");
-        assertTrue(statusRequest.flightData == flightData, "unexpected flight data");
-        assertEq(statusRequest.departureTime.toInt(), departureTime.toInt(), "unexpected departure time");
+    //     assertEq(statusRequest.riskId.toInt(), riskId.toInt(), "unexpected risk id");
+    //     assertTrue(statusRequest.flightData == flightData, "unexpected flight data");
+    //     assertEq(statusRequest.departureTime.toInt(), departureTime.toInt(), "unexpected departure time");
+    // }
+
+    function _createPermitWithSignature(
+        address policyHolder,
+        Amount premiumAmount,
+        uint256 policyHolderPrivateKey,
+        uint256 nonce
+    )
+        internal
+        view
+        returns (FlightProduct.PermitData memory permit)
+    {
+        SigUtils.Permit memory suPermit = SigUtils.Permit({
+            owner: policyHolder,
+            spender: address(flightProduct.getTokenHandler()),
+            value: premiumAmount.toInt(),
+            nonce: nonce,
+            deadline: TimestampLib.current().toInt() + 3600
+        });
+
+        bytes32 digest = sigUtils.getTypedDataHash(suPermit);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(policyHolderPrivateKey, digest);
+
+        permit.owner = policyHolder;
+        permit.spender = address(flightProduct.getTokenHandler());
+        permit.value = premiumAmount.toInt();
+        permit.deadline = TimestampLib.current().toInt() + 3600;
+        permit.v = v;
+        permit.r = r;
+        permit.s = s;
+    }
+
+
+    function _createPolicy(
+        Str flightData, // example: "LX 180 ZRH BKK 20241104"
+        Timestamp departureTime,
+        string memory departureTimeLocal, // example "2024-10-14T10:10:00.000 Europe/Zurich"
+        Timestamp arrivalTime,
+        string memory arrivalTimeLocal, // example "2024-10-14T10:10:00.000 Asia/Seoul"
+        uint256 [6] memory statistics,
+        FlightProduct.PermitData memory permit
+    )
+        internal
+        returns (NftId policyNftId)
+    {
+        (, policyNftId) = flightProduct.createPolicyWithPermit(
+            permit,
+            FlightProduct.ApplicationData({
+                flightData: flightData,
+                departureTime: departureTime,
+                departureTimeLocal: departureTimeLocal,
+                arrivalTime: arrivalTime,
+                arrivalTimeLocal: arrivalTimeLocal,
+                premiumAmount: AmountLib.toAmount(permit.value),
+                statistics: statistics
+            })
+        );
     }
 
     function test_flightProductCreatePolicyWithPermitHappyCase() public {
@@ -201,50 +259,61 @@ contract FlightProductTest is FlightBaseTest {
         assertEq(instanceReader.activeRisks(flightProductNftId), 0, "unexpected number of active risks (before)");
         assertEq(flightOracle.activeRequests(), 0, "unexpected number of active requests (before)");
 
-        // application data signature
-        // (uint8 v, bytes32 r, bytes32 s) = _getSignature(
-        //     dataSignerPrivateKey,
-        //     flightData, 
-        //     departureTime, 
-        //     arrivalTime, 
-        //     premiumAmount, 
-        //     statistics);
-
-        // solhint-disable no-console
+        // solhint-disable
         console.log("ts", block.timestamp);
-        SigUtils.Permit memory permit = SigUtils.Permit({
-            owner: customer,
-            spender: address(flightProduct.getTokenHandler()),
-            value: premiumAmount.toInt(),
-            nonce: 0,
-            deadline: TimestampLib.current().toInt() + 3600
-        });
+        // solhint-enable
 
-        vm.startPrank(customer);
-        bytes32 digest = sigUtils.getTypedDataHash(permit);
-        (uint8 permit_v, bytes32 permit_r, bytes32 permit_s) = vm.sign(customerPrivateKey, digest);
+        // TODO cleanup
+        // SigUtils.Permit memory permit = SigUtils.Permit({
+        //     owner: customer,
+        //     spender: address(flightProduct.getTokenHandler()),
+        //     value: premiumAmount.toInt(),
+        //     nonce: 0,
+        //     deadline: TimestampLib.current().toInt() + 3600
+        // });
+
+        // // vm.startPrank(customer);
+        // bytes32 digest = sigUtils.getTypedDataHash(permit);
+        // (uint8 permitV, bytes32 permitR, bytes32 permitS) = vm.sign(customerPrivateKey, digest);
+        // // vm.stopPrank();
+        (FlightProduct.PermitData memory permit) = _createPermitWithSignature(
+            customer, 
+            premiumAmount, 
+            customerPrivateKey, 
+            0); // nonce
 
         // WHEN
-        (, NftId policyNftId) = flightProduct.createPolicyWithPermit(
-            FlightProduct.PermitData({
-                owner: customer,
-                spender: address(flightProduct.getTokenHandler()),
-                value: premiumAmount.toInt(),
-                deadline: TimestampLib.current().toInt() + 3600,
-                v: permit_v,
-                r: permit_r,
-                s: permit_s
-            }),
-            FlightProduct.ApplicationData({
-                flightData: flightData,
-                departureTime: departureTime,
-                departureTimeLocal: "2024-11-08 Europe/Zurich",
-                arrivalTime: arrivalTime,
-                arrivalTimeLocal: "2024-11-08 Europe/Bangkok",
-                premiumAmount: premiumAmount,
-                statistics: statistics
-            })
-        );
+        vm.startPrank(statisticsProvider);
+        NftId policyNftId = _createPolicy(
+            flightData, 
+            departureTime, 
+            "2024-11-08 Europe/Zurich", 
+            arrivalTime, 
+            "2024-11-08 Asia/Bangkok", 
+            statistics,
+            permit);
+
+        // (, NftId policyNftId) = flightProduct.createPolicyWithPermit(
+        //     FlightProduct.PermitData({
+        //         owner: customer,
+        //         spender: address(flightProduct.getTokenHandler()),
+        //         value: premiumAmount.toInt(),
+        //         deadline: TimestampLib.current().toInt() + 3600,
+        //         v: permit_v,
+        //         r: permit_r,
+        //         s: permit_s
+        //     }),
+        //     FlightProduct.ApplicationData({
+        //         flightData: flightData,
+        //         departureTime: departureTime,
+        //         departureTimeLocal: "2024-11-08 Europe/Zurich",
+        //         arrivalTime: arrivalTime,
+        //         arrivalTimeLocal: "2024-11-08 Asia/Bangkok",
+        //         premiumAmount: premiumAmount,
+        //         statistics: statistics
+        //     })
+        // );
+        vm.stopPrank();
 
         // THEN
         {
@@ -316,35 +385,37 @@ contract FlightProductTest is FlightBaseTest {
 
         Amount premiumAmount = AmountLib.toAmount(30 * 10 ** flightUSD.decimals());
 
-        // bytes32 ratingsHash = flightMessageVerifier.getRatingsHash(
-        //     flightData, 
-        //     departureTime, 
-        //     arrivalTime, 
-        //     premiumAmount, 
-        //     statistics);
-        // (dataSignerPrivateKey, ratingsHash);
+        // TODO cleanup
+        // vm.startPrank(customer);
+        // bytes32 digest = sigUtils.getTypedDataHash(permit);
+        // (uint8 permitV, bytes32 permitR, bytes32 permitS) = vm.sign(customerPrivateKey, digest);
+        // vm.stopPrank();
+        (FlightProduct.PermitData memory permit) = _createPermitWithSignature(
+            customer, 
+            premiumAmount, 
+            customerPrivateKey, 
+            0); // nonce
 
-        (uint8 v, bytes32 r, bytes32 s) = _getSignature(
-            dataSignerPrivateKey,
+        // WHEN
+        vm.startPrank(statisticsProvider);
+        NftId policyNftId = _createPolicy(
             flightData, 
             departureTime, 
+            "2024-11-08 Europe/Zurich", 
             arrivalTime, 
-            premiumAmount, 
-            statistics);
-
-        (RiskId riskId, NftId policyNftId) = flightProduct.createPolicy(
-            customer,
-            flightData,
-            departureTime,
-            "2024-11-08 Europe/Zurich",
-            arrivalTime,
-            "2024-11-08 Europe/Bangkok",
-            premiumAmount,
-            statistics);
-            // v, r, s);
-
-        // TODO cleanup
-        // RiskId riskId = instanceReader.getPolicyInfo(policyNftId).riskId;
+            "2024-11-08 Asia/Bangkok", 
+            statistics,
+            permit);
+        // (RiskId riskId, NftId policyNftId) = flightProduct.createPolicy(
+        //     customer,
+        //     flightData,
+        //     departureTime,
+        //     "2024-11-08 Europe/Zurich",
+        //     arrivalTime,
+        //     "2024-11-08 Europe/Bangkok",
+        //     premiumAmount,
+        //     statistics);
+        vm.stopPrank();
 
         assertEq(flightOracle.activeRequests(), 1, "unexpected number of active requests (before status callback)");
         RequestId requestId = flightOracle.getActiveRequest(0);
@@ -362,7 +433,10 @@ contract FlightProductTest is FlightBaseTest {
         // WHEN
         // set cheking time 2h after scheduled arrival time
         vm.warp(arrivalTime.toInt() + 2 * 3600);
+
+        vm.startPrank(statusProvider);
         flightOracle.respondWithFlightStatus(requestId, status, delay);
+        vm.stopPrank();
 
         // THEN
         requestInfo = instanceReader.getRequestInfo(requestId);

@@ -130,6 +130,8 @@ contract InstanceAdmin is
         _createTarget(target, name, TargetType.Instance, true); 
     }
 
+// TODO cleanup
+event LogAccessAdminDebug(string message);
 
     /// @dev Initializes the authorization for the specified component.
     /// Important: The component MUST be registered.
@@ -144,9 +146,13 @@ contract InstanceAdmin is
             this, _authorization, componentAddress, expectedType);
 
         // effects
+emit LogAccessAdminDebug("a");
         _createRoles(authorization);
+emit LogAccessAdminDebug("b");
         _createTarget(componentAddress, authorization.getMainTargetName(), TargetType.Component, true);
+emit LogAccessAdminDebug("c");
         _createTargetAuthorizations(authorization);
+emit LogAccessAdminDebug("d");
     }
 
 

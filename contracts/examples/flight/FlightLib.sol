@@ -18,39 +18,17 @@ import {Timestamp, TimestampLib} from "../../type/Timestamp.sol";
 
 library FlightLib {
 
-    function checkApplicationDataAndSignature(
+    function checkApplicationData(
         FlightProduct flightProduct,
         Str flightData, 
         Timestamp departureTime,
         Timestamp arrivalTime,
-        Amount premiumAmount,
-        uint256[6] memory statistics
-        // signature fields
-        // uint8 v, 
-        // bytes32 r, 
-        // bytes32 s
+        Amount premiumAmount
     )
         public
         view
     {
         _checkApplicationData(flightProduct, premiumAmount, arrivalTime, departureTime);
-
-        // (
-        //     address actualSigner,,
-        //     bool success
-        // ) = flightProduct.getFlightMessageVerifier().verifyRatingsHash(
-        //     flightData,
-        //     departureTime,
-        //     arrivalTime,
-        //     premiumAmount,
-        //     statistics,
-        //     v, r, s);
-
-        // if (!success) {
-        //     revert FlightProduct.ErrorApplicationDataSignatureMismatch(
-        //         flightProduct.getFlightMessageVerifier().getExpectedSigner(),
-        //         actualSigner);
-        // }
     }
 
 
@@ -85,40 +63,6 @@ library FlightLib {
         }
         // solhint-enable
     }
-
-
-    // TODO fix or cleanup
-    // function checkApplication(
-    //     FlightProduct flightProduct,
-    //     Str carrierFlightNumber,
-    //     Timestamp departureTime,
-    //     Timestamp arrivalTime,
-    //     Amount premium
-    // )
-    //     external
-    //     view
-    //     returns (uint256 errors)
-    // {
-    //     // Validate input parameters
-    //     if (premium < flightProduct.MIN_PREMIUM()) { errors = errors | (uint256(1) << 0); }
-    //     if (premium > flightProduct.MAX_PREMIUM()) { errors = errors | (uint256(1) << 1); }
-    //     if (arrivalTime < departureTime) { errors = errors | (uint256(1) << 2); }
-    //     if (arrivalTime > departureTime.addSeconds(flightProduct.MAX_FLIGHT_DURATION())) { errors = errors | (uint256(1) << 3); }
-    //     if (departureTime < TimestampLib.current().addSeconds(flightProduct.MIN_TIME_BEFORE_DEPARTURE())) { errors = errors | (uint256(1) << 4); }
-    //     if (departureTime > TimestampLib.current().addSeconds(flightProduct.MAX_TIME_BEFORE_DEPARTURE())) { errors = errors | (uint256(1) << 5); }
-
-    //     (, bool exists, FlightProduct.FlightRisk memory flightRisk) = getFlightRisk(
-    //         flightProduct.getInstanceReader(), flightProduct.getNftId(), carrierFlightNumber, departureTime, arrivalTime);
-
-    //     if (exists) {
-    //         Amount sumInsured = AmountLib.toAmount(premium.toInt() * flightRisk.premiumMultiplier);
-    //         if (flightRisk.sumOfSumInsuredAmounts + sumInsured > flightProduct.MAX_TOTAL_PAYOUT()) {
-    //             errors = errors | (uint256(1) << 6);
-    //         }
-    //     }
-
-    //     return errors;
-    // }
 
 
     /// @dev calculates payout option based on flight status and delay minutes.
@@ -222,11 +166,36 @@ library FlightLib {
     }
 
 
+    function getPayoutOption(
+        InstanceReader reader,
+        NftId productNftId,
+        RiskId riskId
+    )
+        public
+        view
+        returns (
+            bool exists,
+            bool statusAvailable,
+            uint8 payoutOption
+        )
+    {
+        FlightProduct.FlightRisk memory flightRisk;
+        (exists, flightRisk) = getFlightRisk(
+            reader, 
+            productNftId, 
+            riskId);
+        
+        statusAvailable = flightRisk.statusUpdatedAt.gtz();
+        payoutOption = flightRisk.payoutOption;
+    }
+
+
     function getPayoutAmount(
         bytes memory applicationData, 
         uint8 payoutOption
     )
         public
+        pure
         returns (Amount payoutAmount)
     {
         // retrieve payout amounts from application data
@@ -268,7 +237,9 @@ library FlightLib {
                 arrivalTimeLocal: arrivalTimeLocal,
                 sumOfSumInsuredAmounts: AmountLib.toAmount(0),
                 status: bytes1(0),
-                delayMinutes: 0});
+                delayMinutes: 0,
+                payoutOption: uint8(0),
+                statusUpdatedAt: TimestampLib.zero()});
         }
     }
 

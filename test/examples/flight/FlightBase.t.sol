@@ -19,6 +19,7 @@ import {GifTest} from "../../base/GifTest.sol";
 import {NftId} from "../../../contracts/type/NftId.sol";
 import {RequestId} from "../../../contracts/type/RequestId.sol";
 import {RiskId} from "../../../contracts/type/RiskId.sol";
+import {RoleId} from "../../../contracts/type/RoleId.sol";
 import {Str, StrLib} from "../../../contracts/type/String.sol";
 import {Timestamp, TimestampLib} from "../../../contracts/type/Timestamp.sol";
 import {VersionPartLib} from "../../../contracts/type/Version.sol";
@@ -39,6 +40,8 @@ contract FlightBaseTest is GifTest {
 
     FlightMessageVerifier public flightMessageVerifier;
     address public verifierOwner = makeAddr("verifierOwner");
+    address public statisticsProvider = makeAddr("statisticsProvider");
+    address public statusProvider = makeAddr("statusProvider");
 
     uint256 public customerPrivateKey = 0xB0B;
 
@@ -95,16 +98,23 @@ contract FlightBaseTest is GifTest {
             address(registry),
             instanceNftId,
             "FlightProduct",
-            productAuthz,
-            flightMessageVerifier
+            productAuthz
         );
         vm.stopPrank();
 
         // instance owner registeres fire product with instance (and registry)
-        vm.prank(instanceOwner);
+        vm.startPrank(instanceOwner);
         flightProductNftId = instance.registerProduct(
             address(flightProduct), 
             address(flightUSD));
+
+        // grant statistics provider role to statistics provider
+        (RoleId statisticProviderRoleId, bool exists) = instanceReader.getRoleForName(
+            productAuthz.STATISTICS_PROVIDER_ROLE_NAME());
+
+        assertTrue(exists, "role STATISTICS_PROVIDER_ROLE_NAME missing");
+        instance.grantRole(statisticProviderRoleId, statisticsProvider);
+        vm.stopPrank();
 
         // complete setup
         vm.prank(flightOwner);
@@ -147,6 +157,14 @@ contract FlightBaseTest is GifTest {
             flightProduct, 
             address(flightOracle), 
             "FlightOracle");
+
+        // grant status provider role to status provider
+        (RoleId statusProviderRoleId, bool exists) = instanceReader.getRoleForName(
+            oracleAuthz.STATUS_PROVIDER_ROLE_NAME());
+
+        vm.startPrank(instanceOwner);
+        instance.grantRole(statusProviderRoleId, statusProvider);
+        vm.stopPrank();
     }
 
 

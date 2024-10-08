@@ -466,6 +466,12 @@ contract InstanceReader {
     }
 
 
+    /// @dev Returns the role ID for the given index.
+    function getRoleForName(string memory name) public view returns (RoleId roleId, bool exists) {
+        return _instanceAdmin.getRoleForName(name);
+    }
+
+
     /// @dev Returns the role ID for the instance owner role.
     /// This role may be used as a "root" admin role for other custom roles defined for this instance.
     function getInstanceOwnerRole() public pure returns (RoleId roleId) {

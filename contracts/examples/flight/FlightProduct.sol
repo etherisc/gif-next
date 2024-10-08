@@ -34,6 +34,7 @@ contract FlightProduct is
     event LogRequestFlightStatus(uint256 requestId, uint256 arrivalTime, bytes32 carrierFlightNumber, bytes32 departureYearMonthDay);
     event LogPayoutTransferred(bytes32 bpKey, uint256 claimId, uint256 payoutId, uint256 amount);
     event LogFlightStatusProcessed(RequestId requestId, RiskId riskId, bytes1 status, int256 delayMinutes, uint8 payoutOption);
+    event LogFlightPoliciesProcessed(RiskId riskId, uint8 payoutOption, uint256 policiesToProcess, uint256 policiesProcessed);
 
     // TODO convert error logs to custom errors
     event LogError(string error, uint256 index, uint256 stored, uint256 calculated);
@@ -85,17 +86,12 @@ contract FlightProduct is
     uint8[6] public WEIGHT_PATTERN = [0, 0, 0, 30, 50, 50];
     uint8 public constant MAX_WEIGHT = 50;
 
+    bool internal _testMode;
+
     // GIF V3 specifics
     NftId internal _defaultBundleNftId;
-
-    // TODO add product (base contract) functions
-    // - getOracleNftId(idx)
-    // - getDistributionNftId() 
-    // - getPoolNftId()
-    NftId internal _oracleNftId; // TODO refactor to getOracleNftId(0)
+    NftId internal _oracleNftId;
     // solhint-enable
-
-    FlightMessageVerifier internal _flightMessageVerifier;
 
 
     struct FlightRisk {
@@ -111,6 +107,8 @@ contract FlightProduct is
         // uint256 weight; // what is this? UFixed?
         bytes1 status; // 'L'ate, 'C'ancelled, 'D'iverted, ...
         int256 delayMinutes;
+        uint8 payoutOption;
+        Timestamp statusUpdatedAt;
     }
 
     struct ApplicationData {
@@ -122,6 +120,7 @@ contract FlightProduct is
         Amount premiumAmount;
         uint256[6] statistics;
     }
+
 
     struct PermitData {
         address owner;
@@ -138,8 +137,7 @@ contract FlightProduct is
         address registry,
         NftId instanceNftid,
         string memory componentName,
-        IAuthorization authorization,
-        FlightMessageVerifier messageVerifier
+        IAuthorization authorization
     )
     {
         address initialOwner = msg.sender;
@@ -150,8 +148,6 @@ contract FlightProduct is
             componentName,
             authorization,
             initialOwner);
-
-        _flightMessageVerifier = messageVerifier;
     }
 
     //--- external functions ------------------------------------------------//
@@ -200,14 +196,14 @@ contract FlightProduct is
         )
     {
         // process permit data
-        processPermit(permit);
+        _processPermit(permit);
 
         // create policy
         address policyHolder = permit.owner;
         (
             riskId,
             policyNftId
-        ) = createPolicy(
+        ) = _createPolicy(
             policyHolder,
             application.flightData,
             application.departureTime,
@@ -216,34 +212,10 @@ contract FlightProduct is
             application.arrivalTimeLocal,
             application.premiumAmount,
             application.statistics);
-            // application.v,
-            // application.r,
-            // application.s);
     }
 
 
-    function processPermit(
-        PermitData memory permit
-    )
-        public
-        virtual
-        restricted()
-    {
-        address tokenAddress = address(getToken());
-
-        // process permit data
-        ERC20Permit(tokenAddress).permit(
-            permit.owner, 
-            permit.spender, 
-            permit.value, 
-            permit.deadline, 
-            permit.v, 
-            permit.r, 
-            permit.s); 
-    }
-
-
-    function createPolicy(
+    function _createPolicy(
         address policyHolder,
         Str flightData, 
         Timestamp departureTime,
@@ -252,14 +224,9 @@ contract FlightProduct is
         string memory arrivalTimeLocal,
         Amount premiumAmount,
         uint256[6] memory statistics
-        // signature fields
-        // uint8 v, 
-        // bytes32 r, 
-        // bytes32 s
     )
-        public
+        internal
         virtual
-        restricted()
         returns (
             RiskId riskId,
             NftId policyNftId
@@ -267,14 +234,12 @@ contract FlightProduct is
     {
         // checks
         // disabled for now - using rbac for security
-        FlightLib.checkApplicationDataAndSignature(
+        FlightLib.checkApplicationData(
             this,
             flightData,
             departureTime,
             arrivalTime,
-            premiumAmount,
-            statistics);
-            // v, r, s);
+            premiumAmount);
 
         (riskId, policyNftId) = _prepareApplication(
             policyHolder, 
@@ -307,6 +272,139 @@ contract FlightProduct is
             // allow up to 30 days to process the claim
             arrivalTime.addSeconds(SecondsLib.fromDays(30)), 
             "flightStatusCallback");
+    }
+
+
+    /// @dev Callback for flight status oracle.
+    /// Function may only be alled by oracle service.
+    function flightStatusCallback(
+        RequestId requestId,
+        bytes memory responseData
+    )
+        external
+        virtual
+        restricted()
+    {
+        FlightOracle.FlightStatusResponse memory response = abi.decode(
+            responseData, (FlightOracle.FlightStatusResponse));
+
+        _processFlightStatus(
+            requestId, 
+            response.riskId, 
+            response.status, 
+            response.delayMinutes, 
+            MAX_POLICIES_TO_PROCESS);
+    }
+
+
+    /// @dev Manual fallback function for product owner.
+    function processFlightStatus(
+        RequestId requestId,
+        RiskId riskId, 
+        bytes1 status, 
+        int256 delayMinutes,
+        uint8 maxPoliciesToProcess
+    )
+        external
+        virtual
+        restricted()
+        onlyOwner()
+    {
+        _processFlightStatus(
+            requestId, 
+            riskId, 
+            status, 
+            delayMinutes, 
+            maxPoliciesToProcess);
+    }    
+
+
+    /// @dev Manual fallback function for product owner.
+    function processPayoutsAndClosePolicies(
+        RiskId riskId, 
+        uint8 maxPoliciesToProcess
+    )
+        external
+        virtual
+        restricted()
+        onlyOwner()
+    {
+        _processPayoutsAndClosePolicies(
+            riskId, 
+            maxPoliciesToProcess);
+    }
+
+
+    //--- owner functions ---------------------------------------------------//
+
+    /// @dev Call after product registration with the instance
+    /// when the product token/tokenhandler is available
+    function completeSetup()
+        external
+        virtual
+        restricted()
+        onlyOwner()
+    {
+        IERC20Metadata token = IERC20Metadata(getToken());
+        uint256 tokenMultiplier = 10 ** token.decimals();
+
+        MIN_PREMIUM = AmountLib.toAmount(15 * tokenMultiplier); 
+        MAX_PREMIUM = AmountLib.toAmount(200 * tokenMultiplier); 
+        MAX_PAYOUT = AmountLib.toAmount(500 * tokenMultiplier); 
+        MAX_TOTAL_PAYOUT = AmountLib.toAmount(3 * MAX_PAYOUT.toInt());
+    }
+
+
+    function setDefaultBundle(NftId bundleNftId) external restricted() onlyOwner() { _defaultBundleNftId = bundleNftId; }
+    function setTestMode(bool testMode) external restricted() onlyOwner() { _testMode = testMode; }
+
+    function approveTokenHandler(IERC20Metadata token, Amount amount) external restricted() onlyOwner() { _approveTokenHandler(token, amount); }
+    function setLocked(bool locked) external onlyOwner() { _setLocked(locked); }
+    function setWallet(address newWallet) external restricted() onlyOwner() { _setWallet(newWallet); }
+
+
+    //--- view functions ----------------------------------------------------//
+
+    function calculateNetPremium(
+        Amount, // sumInsuredAmount: not used in this product
+        RiskId, // riskId: not used in this product
+        Seconds, // lifetime: not used in this product, a flight is a one time risk
+        bytes memory applicationData // holds the premium amount the customer is willing to pay
+    )
+        external
+        virtual override
+        view 
+        returns (Amount netPremiumAmount)
+    {
+        (netPremiumAmount, ) = abi.decode(applicationData, (Amount, Amount[5]));
+    }
+
+
+    function getOracleNftId() public view returns (NftId oracleNftId) { return _oracleNftId; }
+    function isTestMode() public view returns (bool) { return _testMode; }
+    function decodeFlightRiskData(bytes memory data) public pure returns (FlightRisk memory) { return abi.decode(data, (FlightRisk)); }
+
+    //--- internal functions ------------------------------------------------//
+
+
+    function _processPermit(
+        PermitData memory permit
+    )
+        internal
+        virtual
+        restricted()
+    {
+        address tokenAddress = address(getToken());
+
+        // process permit data
+        ERC20Permit(tokenAddress).permit(
+            permit.owner, 
+            permit.spender, 
+            permit.value, 
+            permit.deadline, 
+            permit.v, 
+            permit.r, 
+            permit.s); 
     }
 
 
@@ -355,116 +453,6 @@ contract FlightProduct is
                 premiumAmount,
                 payoutAmounts)); // application data
     }
-
-
-    /// @dev Callback for flight status oracle.
-    /// Function may only be alled by oracle service.
-    function flightStatusCallback(
-        RequestId requestId,
-        bytes memory responseData
-    )
-        external
-        virtual
-        restricted()
-    {
-        FlightOracle.FlightStatusResponse memory response = abi.decode(
-            responseData, (FlightOracle.FlightStatusResponse));
-
-        _processFlightStatus(
-            requestId, 
-            response.riskId, 
-            response.status, 
-            response.delayMinutes, 
-            MAX_POLICIES_TO_PROCESS);
-    }
-
-
-    /// @dev Manual fallback function for product owner.
-    function processFlightStatus(
-        RequestId requestId,
-        RiskId riskId, 
-        bytes1 status, 
-        int256 delayMinutes,
-        uint8 maxPoliciesToProcess
-    )
-        external
-        virtual
-        restricted()
-        onlyOwner()
-    {
-        _processFlightStatus(
-            requestId, 
-            riskId, 
-            status, 
-            delayMinutes, 
-            maxPoliciesToProcess);
-    }    
-
-    //--- owner functions ---------------------------------------------------//
-
-    /// @dev Call after product registration with the instance, when the product token/tokenhandler is available
-    function completeSetup()
-        external
-        virtual
-        restricted()
-        onlyOwner()
-    {
-        IERC20Metadata token = IERC20Metadata(getToken());
-        uint256 tokenMultiplier = 10 ** token.decimals();
-
-        MIN_PREMIUM = AmountLib.toAmount(15 * tokenMultiplier); 
-        MAX_PREMIUM = AmountLib.toAmount(200 * tokenMultiplier); 
-        MAX_PAYOUT = AmountLib.toAmount(500 * tokenMultiplier); 
-        MAX_TOTAL_PAYOUT = AmountLib.toAmount(3 * MAX_PAYOUT.toInt());
-    }
-
-
-    function setDefaultBundle(NftId bundleNftId) external restricted() onlyOwner() { _defaultBundleNftId = bundleNftId; }
-    function approveTokenHandler(IERC20Metadata token, Amount amount) external restricted() onlyOwner() { _approveTokenHandler(token, amount); }
-    function setLocked(bool locked) external onlyOwner() { _setLocked(locked); }
-    function setWallet(address newWallet) external restricted() onlyOwner() { _setWallet(newWallet); }
-
-
-    //--- view functions ----------------------------------------------------//
-
-
-    function calculateNetPremium(
-        Amount, // sumInsuredAmount: not used in this product
-        RiskId, // riskId: not used in this product
-        Seconds, // lifetime: not used in this product, a flight is a one time risk
-        bytes memory applicationData // holds the premium amount the customer is willing to pay
-    )
-        external
-        virtual override
-        view 
-        returns (Amount netPremiumAmount)
-    {
-        (netPremiumAmount, ) = abi.decode(applicationData, (Amount, Amount[5]));
-    }
-
-
-    function getFlightMessageVerifier()
-        external
-        view
-        returns (FlightMessageVerifier)
-    {
-        return _flightMessageVerifier;
-    }
-
-
-    function getOracleNftId()
-        public
-        view
-        returns (NftId oracleNftId)
-    { 
-        return _oracleNftId;
-    }
-
-    function decodeFlightRiskData(bytes memory data) external pure returns (FlightRisk memory) {
-        return abi.decode(data, (FlightRisk));
-    }
-
-    //--- internal functions ------------------------------------------------//
 
 
     function _createRiskAndPayoutAmounts(
@@ -565,16 +553,25 @@ contract FlightProduct is
         ) = FlightLib.getFlightRisk(reader, getNftId(), riskId);
 
         if (!exists) {
+            // TODO decide to switch from log to error
             emit LogErrorRiskInvalid(requestId, riskId);
             return;
+        } else {
+            // update status, if not yet set
+            if (flightRisk.statusUpdatedAt.eqz()) {
+                flightRisk.status = status;
+                flightRisk.delayMinutes = delayMinutes;
+                flightRisk.payoutOption = FlightLib.checkAndGetPayoutOption(
+                    requestId, riskId, status, delayMinutes);
+                flightRisk.statusUpdatedAt = TimestampLib.current();
+
+                _updateRisk(riskId, abi.encode(flightRisk));
+            }
+            // TODO revert in else case?
         }
 
-        uint8 payoutOption = FlightLib.checkAndGetPayoutOption(
-            requestId, riskId, status, delayMinutes);
-
-        _processPayoutsAndClosePolicies(
+        (,, uint8 payoutOption) = _processPayoutsAndClosePolicies(
             riskId, 
-            payoutOption, 
             maxPoliciesToProcess);
 
         // logging
@@ -582,22 +579,32 @@ contract FlightProduct is
     }
 
 
-    // REMARK caller responsible to check that risk exists.
     function _processPayoutsAndClosePolicies(
         RiskId riskId, 
-        uint8 payoutOption,
         uint8 maxPoliciesToProcess
     )
         internal
         virtual
+        returns (
+            bool riskExists, 
+            bool statusAvailable,
+            uint8 payoutOption
+        )
     {
         // determine numbers of policies to process
         InstanceReader reader = _getInstanceReader();
+        (riskExists, statusAvailable, payoutOption) = FlightLib.getPayoutOption(reader, getNftId(), riskId);
+
+        // return with default values if risk does not exist or status is not yet available
+        if (!riskExists || !statusAvailable) {
+            return (riskExists, statusAvailable, payoutOption);
+        }
+
         uint256 policiesToProcess = reader.policiesForRisk(riskId);
-        policiesToProcess = policiesToProcess < maxPoliciesToProcess ? policiesToProcess : maxPoliciesToProcess;
+        uint256 policiesProcessed = policiesToProcess < maxPoliciesToProcess ? policiesToProcess : maxPoliciesToProcess;
 
         // go trough policies
-        for (uint256 i = 0; i < policiesToProcess; i++) {
+        for (uint256 i = 0; i < policiesProcessed; i++) {
             NftId policyNftId = reader.getPolicyForRisk(riskId, i);
 
             // create payout (if any)
@@ -616,6 +623,9 @@ contract FlightProduct is
             _expire(policyNftId, TimestampLib.current());
             _close(policyNftId);
         }
+
+        // logging
+        emit LogFlightPoliciesProcessed(riskId, payoutOption, policiesToProcess, policiesProcessed);
     }
 
 
