@@ -142,6 +142,7 @@ Environment variables:
 - `DIP_ADDRESS` the address of the already deployed DIP token. if not set, the script will deploy a new DIP token
 - `WEB3_INFURA_PROJECT_ID` set to infura project id (required for mumbai and mainnet)
 - `ETHERSCAN_API_KEY` `POLYGONSCAN_API_KEY` the api key for etherscan/polygonscan (required for mumbai and mainnet)
+- `SKIP_INSTANCE_CREATION`1 set to `true` to skip the creation of a test instance at the end of the deployment (default: `false`)
 
 ### Deploy full protocol with fire example components
 
