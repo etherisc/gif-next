@@ -8,7 +8,6 @@ import {IAuthorization} from "../../authorization/IAuthorization.sol";
 import {IComponents} from "../../instance/module/IComponents.sol";
 
 import {Amount, AmountLib} from "../../type/Amount.sol";
-import {BasicProduct} from "../../product/BasicProduct.sol";
 import {ClaimId} from "../../type/ClaimId.sol";
 import {FeeLib} from "../../type/Fee.sol";
 import {FlightLib} from "./FlightLib.sol";
@@ -17,6 +16,7 @@ import {FlightOracle} from "./FlightOracle.sol";
 import {InstanceReader} from "../../instance/InstanceReader.sol";
 import {NftId, NftIdLib} from "../../type/NftId.sol";
 import {PayoutId} from "../../type/PayoutId.sol";
+import {Product} from "../../product/Product.sol";
 import {ReferralLib} from "../../type/Referral.sol";
 import {RiskId, RiskIdLib} from "../../type/RiskId.sol";
 import {RequestId} from "../../type/RequestId.sol";
@@ -27,17 +27,17 @@ import {Timestamp, TimestampLib} from "../../type/Timestamp.sol";
 
 /// @dev FlightProduct implements the flight delay product.
 contract FlightProduct is
-    BasicProduct
+    Product
 {
 
     event LogRequestFlightRatings(uint256 requestId, bytes32 carrierFlightNumber, uint256 departureTime, uint256 arrivalTime, bytes32 riskId);
     event LogRequestFlightStatus(uint256 requestId, uint256 arrivalTime, bytes32 carrierFlightNumber, bytes32 departureYearMonthDay);
     event LogPayoutTransferred(bytes32 bpKey, uint256 claimId, uint256 payoutId, uint256 amount);
     event LogFlightStatusProcessed(RequestId requestId, RiskId riskId, bytes1 status, int256 delayMinutes, uint8 payoutOption);
-    event LogFlightPoliciesProcessed(RiskId riskId, uint8 payoutOption, uint256 policiesToProcess, uint256 policiesProcessed);
+    event LogFlightPoliciesProcessed(RiskId riskId, uint8 payoutOption, uint256 policiesProcessed, uint256 policiesRemaining);
 
     // TODO convert error logs to custom errors
-    event LogError(string error, uint256 index, uint256 stored, uint256 calculated);
+    // event LogError(string error, uint256 index, uint256 stored, uint256 calculated);
     event LogPolicyExpired(bytes32 bpKey);
 
     event LogErrorRiskInvalid(RequestId requestId, RiskId riskId);
@@ -625,7 +625,7 @@ contract FlightProduct is
         }
 
         // logging
-        emit LogFlightPoliciesProcessed(riskId, payoutOption, policiesToProcess, policiesProcessed);
+        emit LogFlightPoliciesProcessed(riskId, payoutOption, policiesProcessed, policiesToProcess - policiesProcessed);
     }
 
 
@@ -656,7 +656,7 @@ contract FlightProduct is
         internal
         initializer
     {
-        _initializeBasicProduct(
+        __Product_init(
             registry,
             instanceNftId,
             componentName,

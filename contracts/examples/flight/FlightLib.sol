@@ -41,6 +41,8 @@ library FlightLib {
         internal
         view
     {
+        bool testMode = flightProduct.isTestMode();
+
         // solhint-disable
         if (premiumAmount < flightProduct.MIN_PREMIUM()) {
             revert FlightProduct.ErrorFlightProductPremiumAmountTooSmall(premiumAmount, flightProduct.MIN_PREMIUM());
@@ -52,13 +54,14 @@ library FlightLib {
             revert FlightProduct.ErrorFlightProductArrivalBeforeDepartureTime(departureTime, arrivalTime);
         }
 
-        if (arrivalTime > departureTime.addSeconds(flightProduct.MAX_FLIGHT_DURATION())) {
+        // test mode allows the creation for policies that ore not time constrained
+        if (!testMode && arrivalTime > departureTime.addSeconds(flightProduct.MAX_FLIGHT_DURATION())) {
             revert FlightProduct.ErrorFlightProductArrivalAfterMaxFlightDuration(arrivalTime, departureTime, flightProduct.MAX_FLIGHT_DURATION());
         }
-        if (departureTime < TimestampLib.current().addSeconds(flightProduct.MIN_TIME_BEFORE_DEPARTURE())) {
+        if (!testMode && departureTime < TimestampLib.current().addSeconds(flightProduct.MIN_TIME_BEFORE_DEPARTURE())) {
             revert FlightProduct.ErrorFlightProductDepartureBeforeMinTimeBeforeDeparture(departureTime, TimestampLib.current(), flightProduct.MIN_TIME_BEFORE_DEPARTURE());
         }
-        if (departureTime > TimestampLib.current().addSeconds(flightProduct.MAX_TIME_BEFORE_DEPARTURE())) {
+        if (!testMode && departureTime > TimestampLib.current().addSeconds(flightProduct.MAX_TIME_BEFORE_DEPARTURE())) {
             revert FlightProduct.ErrorFlightProductDepartureAfterMaxTimeBeforeDeparture(departureTime, TimestampLib.current(), flightProduct.MAX_TIME_BEFORE_DEPARTURE());
         }
         // solhint-enable

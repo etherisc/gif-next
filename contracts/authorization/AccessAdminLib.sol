@@ -12,11 +12,12 @@ import {IRegistry} from "../registry/IRegistry.sol";
 import {IService} from "../shared/IService.sol";
 import {IServiceAuthorization} from "./IServiceAuthorization.sol";
 
+import {AccessManagerCloneable} from "./AccessManagerCloneable.sol";
 import {BlocknumberLib} from "../type/Blocknumber.sol";
 import {ContractLib} from "../shared/ContractLib.sol";
 import {ObjectType} from "../type/ObjectType.sol";
 import {RoleId, RoleIdLib, ADMIN_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
-import {SelectorLib} from "../type/Selector.sol";
+import {Selector, SelectorLib} from "../type/Selector.sol";
 import {Str, StrLib} from "../type/String.sol";
 import {TimestampLib} from "../type/Timestamp.sol";
 import {VersionPart, VersionPartLib} from "../type/Version.sol";
@@ -478,6 +479,22 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
     {
         string memory roleName = authorization.getRoleInfo(roleId).name.toString();
         (authorizedRoleId, ) = accessAdmin.getRoleForName(roleName);
+    }
+
+
+    function getFunctionRoleId(
+        AccessManagerCloneable authority,
+        address target,
+        Selector selector
+    )
+        public
+        view
+        returns (RoleId functionRoleId)
+    {
+        return RoleIdLib.toRoleId(
+            authority.getTargetFunctionRole(
+                target, 
+                selector.toBytes4()));
     }
 
 

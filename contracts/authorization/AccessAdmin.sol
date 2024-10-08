@@ -279,10 +279,11 @@ contract AccessAdmin is
     {
         Selector selector = SelectorSetLib.at(_targetFunctions[target], idx);
         func = _functionInfo[target][selector];
-        roleId = RoleIdLib.toRoleId(
-            _authority.getTargetFunctionRole(
-                target, 
-                selector.toBytes4()));
+        roleId = AccessAdminLib.getFunctionRoleId(_authority, target, selector);
+        // roleId = RoleIdLib.toRoleId(
+        //     _authority.getTargetFunctionRole(
+        //         target, 
+        //         selector.toBytes4()));
     }
 
 
@@ -318,9 +319,7 @@ contract AccessAdmin is
             (RoleId roleId, bool exists) = getRoleForName(roleInfo.name.toString());
 
             if (!exists) {
-                if (!AccessAdminLib.isDynamicRoleId(authzRoleId)) {
-                    roleId = authzRoleId;
-                } else if (roleInfo.targetType == TargetType.Custom) {
+                if (!AccessAdminLib.isDynamicRoleId(authzRoleId) || roleInfo.targetType == TargetType.Custom) {
                     roleId = authzRoleId;
                 }
 
@@ -660,22 +659,23 @@ contract AccessAdmin is
     }
 
 
-    function _checkAuthorization( 
-        address authorization,
-        ObjectType expectedDomain, 
-        VersionPart expectedRelease,
-        bool expectServiceAuthorization,
-        bool checkAlreadyInitialized
-    )
-        internal
-        view
-    {
-        AccessAdminLib.checkAuthorization(
-            address(_authorization), 
-            authorization, 
-            expectedDomain, 
-            expectedRelease, 
-            expectServiceAuthorization,
-            checkAlreadyInitialized);
-    }
+    // TODO cleanup
+    // function _checkAuthorization( 
+    //     address authorization,
+    //     ObjectType expectedDomain, 
+    //     VersionPart expectedRelease,
+    //     bool expectServiceAuthorization,
+    //     bool checkAlreadyInitialized
+    // )
+    //     internal
+    //     view
+    // {
+    //     AccessAdminLib.checkAuthorization(
+    //         _authorization, 
+    //         authorization, 
+    //         expectedDomain, 
+    //         expectedRelease, 
+    //         expectServiceAuthorization,
+    //         checkAlreadyInitialized);
+    // }
 }

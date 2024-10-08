@@ -85,7 +85,13 @@ contract RegistryAdmin is
                 registry, 
                 release); 
 
-        _checkAuthorization(authorization, REGISTRY(), release, false, true);
+        AccessAdminLib.checkAuthorization(
+            address(_authorization),
+            authorization, 
+            REGISTRY(), 
+            release, 
+            false, // expectServiceAuthorization
+            false); // checkAlreadyInitialized);
 
         _registry = registry;
         _authorization = IAuthorization(authorization);
