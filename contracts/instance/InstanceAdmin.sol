@@ -130,7 +130,6 @@ contract InstanceAdmin is
         _createTarget(target, name, TargetType.Instance, true); 
     }
 
-
     /// @dev Initializes the authorization for the specified component.
     /// Important: The component MUST be registered.
     function initializeComponentAuthorization(
