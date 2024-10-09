@@ -3,14 +3,15 @@ pragma solidity ^0.8.20;
 
 import {IAuthorization} from "../../authorization/IAuthorization.sol";
 
-import {FULFILLED} from "../../type/StateId.sol";
+import {ACTIVE, FULFILLED, FAILED} from "../../type/StateId.sol";
 import {NftId} from "../../type/NftId.sol";
 import {BasicOracle} from "../../oracle/BasicOracle.sol";
 import {RequestId} from "../../type/RequestId.sol";
 import {LibRequestIdSet} from "../../type/RequestIdSet.sol";
 import {RiskId} from "../../type/RiskId.sol";
+import {StateId} from "../../type/StateId.sol";
 import {Str} from "../../type/String.sol";
-import {Timestamp} from "../../type/Timestamp.sol";
+import {Timestamp, TimestampLib} from "../../type/Timestamp.sol";
 
 contract FlightOracle is
     BasicOracle
@@ -110,6 +111,7 @@ contract FlightOracle is
         }
     }
 
+
     //--- view functions ----------------------------------------------------//
 
     // TODO decide if the code below should be moved to GIF
@@ -130,6 +132,30 @@ contract FlightOracle is
     {
         return LibRequestIdSet.getElementAt(_activeRequests, idx);
     }
+
+
+    function getRequestState(RequestId requestId)
+        external
+        view
+        returns (
+            RiskId riskId,
+            string memory flightData,
+            StateId requestState,
+            bool readyForResponse,
+            bool waitingForResend
+        )
+    {
+        bytes memory requestData = _getInstanceReader().getRequestInfo(requestId).requestData;
+        Str fltData;
+        Timestamp departureTime;
+        (riskId, fltData, departureTime) = abi.decode(requestData, (RiskId, Str, Timestamp));
+
+        flightData = fltData.toString();
+        requestState = _getInstanceReader().getRequestState(requestId);
+        readyForResponse = requestState == ACTIVE() && TimestampLib.current() >= departureTime;
+        waitingForResend = requestState == FAILED();
+    }
+
 
     function decodeFlightStatusRequestData(bytes memory data) external pure returns (FlightStatusRequest memory) {
         return abi.decode(data, (FlightStatusRequest));

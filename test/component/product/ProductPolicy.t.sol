@@ -1693,27 +1693,30 @@ contract ProductPolicyTest is GifTest {
         assertTrue(instanceReader.getPolicyState(policyNftId) == COLLATERALIZED(), "policy state not COLLATERALIZED");
 
         uint256 expireAt = createdAt + 30;
-        Timestamp expireAtTs = TimestampLib.toTimestamp(expireAt);
-        
+        Timestamp expireAtOriginal = TimestampLib.toTimestamp(expireAt);
+        Timestamp expireAtNew = TimestampLib.toTimestamp(expireAt + 1);
+
         // THEN - expect revert
-        vm.expectRevert(abi.encodeWithSelector(
-            IPolicyService.ErrorPolicyServicePolicyExpirationTooLate.selector, 
-            policyNftId,
-            expireAtTs,
-            expireAtTs));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IPolicyService.ErrorPolicyServicePolicyExpirationTooLate.selector, 
+                policyNftId,
+                expireAtOriginal,
+                expireAtNew));
 
         // WHEN
-        product.expire(policyNftId, expireAtTs);
+        product.expire(policyNftId, expireAtNew);
 
         // THEN - expect revert
         uint256 expireAt2 = createdAt + 35;
-        Timestamp expireAtTs2 = TimestampLib.toTimestamp(expireAt);
+        Timestamp expireAtTs2 = TimestampLib.toTimestamp(expireAt2);
 
-        vm.expectRevert(abi.encodeWithSelector(
-            IPolicyService.ErrorPolicyServicePolicyExpirationTooLate.selector, 
-            policyNftId,
-            expireAtTs,
-            expireAtTs2));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IPolicyService.ErrorPolicyServicePolicyExpirationTooLate.selector, 
+                policyNftId,
+                expireAtOriginal,
+                expireAtTs2));
 
         // WHEN
         product.expire(policyNftId, expireAtTs2);

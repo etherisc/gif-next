@@ -57,9 +57,10 @@ contract FlightProductAuthorization
 
         // authorize public role (additional authz via onlyOwner)
         functions = _authorizeForTarget(getMainTargetName(), PUBLIC_ROLE());
-        _authorize(functions, FlightProduct.processFlightStatus.selector, "processFlightStatus");
+        _authorize(functions, FlightProduct.resendRequest.selector, "resendRequest");
         _authorize(functions, FlightProduct.processPayoutsAndClosePolicies.selector, "processPayoutsAndClosePolicies");
-        _authorize(functions, FlightProduct.completeSetup.selector, "completeSetup");
+        _authorize(functions, FlightProduct.setConstants.selector, "setConstants");
+        _authorize(functions, FlightProduct.setTestMode.selector, "setTestMode");
         _authorize(functions, FlightProduct.setDefaultBundle.selector, "setDefaultBundle");
         _authorize(functions, FlightProduct.approveTokenHandler.selector, "approveTokenHandler");
         _authorize(functions, FlightProduct.setLocked.selector, "setLocked");

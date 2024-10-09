@@ -22,6 +22,7 @@ contract BasicOracle is
         _respond(requestId, responseData);
     }
 
+
     function _initializeBasicOracle(
         address registry,
         NftId instanceNftId,

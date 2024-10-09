@@ -6,6 +6,7 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 
 import {IAuthorization} from "../../authorization/IAuthorization.sol";
 import {IComponents} from "../../instance/module/IComponents.sol";
+import {IPolicy} from "../../instance/module/IPolicy.sol";
 
 import {Amount, AmountLib} from "../../type/Amount.sol";
 import {ClaimId} from "../../type/ClaimId.sol";
@@ -30,68 +31,43 @@ contract FlightProduct is
     Product
 {
 
-    event LogRequestFlightRatings(uint256 requestId, bytes32 carrierFlightNumber, uint256 departureTime, uint256 arrivalTime, bytes32 riskId);
-    event LogRequestFlightStatus(uint256 requestId, uint256 arrivalTime, bytes32 carrierFlightNumber, bytes32 departureYearMonthDay);
-    event LogPayoutTransferred(bytes32 bpKey, uint256 claimId, uint256 payoutId, uint256 amount);
+    event LogFlightPolicyPurchased(NftId policyNftId, string flightData, Amount premiumAmount);
+    event LogFlightPolicyClosed(NftId policyNftId, Amount payoutAmount);
+
     event LogFlightStatusProcessed(RequestId requestId, RiskId riskId, bytes1 status, int256 delayMinutes, uint8 payoutOption);
     event LogFlightPoliciesProcessed(RiskId riskId, uint8 payoutOption, uint256 policiesProcessed, uint256 policiesRemaining);
 
-    // TODO convert error logs to custom errors
-    // event LogError(string error, uint256 index, uint256 stored, uint256 calculated);
-    event LogPolicyExpired(bytes32 bpKey);
-
-    event LogErrorRiskInvalid(RequestId requestId, RiskId riskId);
-    event LogErrorUnprocessableStatus(RequestId requestId, RiskId riskId, bytes1 status);
-    event LogErrorUnexpectedStatus(RequestId requestId, RiskId riskId, bytes1 status, int256 delayMinutes);
-
-    error ErrorApplicationDataSignatureMismatch(address expectedSigner, address actualSigner);
-    error ErrorFlightProductClusterRisk(Amount totalSumInsured, Amount maxTotalPayout);
-    error ErrorFlightProductPremiumAmountTooSmall(Amount premiumAmount, Amount minPremium);
-    error ErrorFlightProductPremiumAmountTooLarge(Amount premiumAmount, Amount maxPremium);
-    error ErrorFlightProductArrivalBeforeDepartureTime(Timestamp departureTime, Timestamp arrivalTime);
-    error ErrorFlightProductArrivalAfterMaxFlightDuration(Timestamp arrivalTime, Timestamp maxArrivalTime, Seconds maxDuration);
-    error ErrorFlightProductDepartureBeforeMinTimeBeforeDeparture(Timestamp departureTime, Timestamp now, Seconds minTimeBeforeDeparture);
-    error ErrorFlightProductDepartureAfterMaxTimeBeforeDeparture(Timestamp departureTime, Timestamp now, Seconds maxTimeBeforeDeparture);
-    error ErrorFlightProductNotEnoughObservations(uint256 observations, uint256 minObservations);
-
     // solhint-disable
-    // Minimum observations for valid prediction
-    uint256 public immutable MIN_OBSERVATIONS = 10;
-    // Minimum time before departure for applying
-    Seconds public MIN_TIME_BEFORE_DEPARTURE = SecondsLib.fromDays(14);
-    // Maximum time before departure for applying
-    Seconds public MAX_TIME_BEFORE_DEPARTURE = SecondsLib.fromDays(90);
-    // Maximum duration of flight
-    Seconds public MAX_FLIGHT_DURATION = SecondsLib.fromDays(2);
-    // Check for delay after .. minutes after scheduled arrival
-    Seconds public CHECK_OFFSET = SecondsLib.fromHours(1);
-    // Max time to process claims after departure
-    Seconds public LIFETIME = SecondsLib.fromDays(30);
-
-    // uint256 public constant MIN_PREMIUM = 15 * 10 ** 18; // production
-    // All amounts in cent = multiplier is 10 ** 16!
     Amount public MIN_PREMIUM;
     Amount public MAX_PREMIUM;
     Amount public MAX_PAYOUT;
-    Amount public MAX_TOTAL_PAYOUT; // Maximum risk per flight is 3x max payout.
+    Amount public MAX_TOTAL_PAYOUT; // Maximum risk per flight/risk
 
-    // Maximum cumulated weighted premium per risk
-    uint256 public MARGIN_PERCENT = 30;
-
-    // Maximum number of policies to process in one callback
-    uint8 public MAX_POLICIES_TO_PROCESS = 5;
+    // Minimum time before departure for applying
+    Seconds public MIN_TIME_BEFORE_DEPARTURE;
+    // Maximum time before departure for applying
+    Seconds public MAX_TIME_BEFORE_DEPARTURE;
+    // Maximum duration of flight
+    Seconds public MAX_FLIGHT_DURATION;
+    // Max time to process claims after departure
+    Seconds public LIFETIME;
 
     // ['observations','late15','late30','late45','cancelled','diverted']
     // no payouts for delays of 30' or less
-    uint8[6] public WEIGHT_PATTERN = [0, 0, 0, 30, 50, 50];
-    uint8 public constant MAX_WEIGHT = 50;
+    uint8[6] public WEIGHT_PATTERN;
+    // Minimum number of observations for valid prediction/premium calculation
+    uint256 public MIN_OBSERVATIONS;
+    // Maximum cumulated weighted premium per risk
+    uint256 public MARGIN_PERCENT;
+    // Maximum number of policies to process in one callback
+    uint8 public MAX_POLICIES_TO_PROCESS;
+    // solhint-enable
 
     bool internal _testMode;
 
     // GIF V3 specifics
     NftId internal _defaultBundleNftId;
     NftId internal _oracleNftId;
-    // solhint-enable
 
 
     struct FlightRisk {
@@ -103,13 +79,12 @@ contract FlightProduct is
         // this field contains static data required by the frontend and is not directly used by the product
         string arrivalTimeLocal; // example "2024-10-14T10:10:00.000 Asia/Seoul"
         Amount sumOfSumInsuredAmounts;
-        // uint256 premiumMultiplier; // what is this? UFixed?
-        // uint256 weight; // what is this? UFixed?
         bytes1 status; // 'L'ate, 'C'ancelled, 'D'iverted, ...
         int256 delayMinutes;
         uint8 payoutOption;
         Timestamp statusUpdatedAt;
     }
+
 
     struct ApplicationData {
         Str flightData;
@@ -135,7 +110,7 @@ contract FlightProduct is
 
     constructor(
         address registry,
-        NftId instanceNftid,
+        NftId instanceNftId,
         string memory componentName,
         IAuthorization authorization
     )
@@ -144,7 +119,7 @@ contract FlightProduct is
 
         _initialize(
             registry,
-            instanceNftid,
+            instanceNftId,
             componentName,
             authorization,
             initialOwner);
@@ -272,6 +247,8 @@ contract FlightProduct is
             // allow up to 30 days to process the claim
             arrivalTime.addSeconds(SecondsLib.fromDays(30)), 
             "flightStatusCallback");
+
+        emit LogFlightPolicyPurchased(policyNftId, flightData.toString(), premiumAmount);
     }
 
 
@@ -292,31 +269,17 @@ contract FlightProduct is
             requestId, 
             response.riskId, 
             response.status, 
-            response.delayMinutes, 
-            MAX_POLICIES_TO_PROCESS);
+            response.delayMinutes);
     }
 
 
-    /// @dev Manual fallback function for product owner.
-    function processFlightStatus(
-        RequestId requestId,
-        RiskId riskId, 
-        bytes1 status, 
-        int256 delayMinutes,
-        uint8 maxPoliciesToProcess
-    )
+    function resendRequest(RequestId requestId)
         external
         virtual
         restricted()
-        onlyOwner()
     {
-        _processFlightStatus(
-            requestId, 
-            riskId, 
-            status, 
-            delayMinutes, 
-            maxPoliciesToProcess);
-    }    
+        _resendRequest(requestId);
+    }
 
 
     /// @dev Manual fallback function for product owner.
@@ -339,21 +302,29 @@ contract FlightProduct is
 
     /// @dev Call after product registration with the instance
     /// when the product token/tokenhandler is available
-    function completeSetup()
+    function setConstants(
+        Amount minPremium,
+        Amount maxPremium,
+        Amount maxPayout,
+        Amount maxTotalPayout,
+        Seconds minTimeBeforeDeparture,
+        Seconds maxTimeBeforeDeparture,
+        uint8 maxPoliciesToProcess
+    )
         external
         virtual
         restricted()
         onlyOwner()
     {
-        IERC20Metadata token = IERC20Metadata(getToken());
-        uint256 tokenMultiplier = 10 ** token.decimals();
+        MIN_PREMIUM = minPremium; 
+        MAX_PREMIUM = maxPremium; 
+        MAX_PAYOUT = maxPayout; 
+        MAX_TOTAL_PAYOUT = maxTotalPayout;
 
-        MIN_PREMIUM = AmountLib.toAmount(15 * tokenMultiplier); 
-        MAX_PREMIUM = AmountLib.toAmount(200 * tokenMultiplier); 
-        MAX_PAYOUT = AmountLib.toAmount(500 * tokenMultiplier); 
-        MAX_TOTAL_PAYOUT = AmountLib.toAmount(3 * MAX_PAYOUT.toInt());
+        MIN_TIME_BEFORE_DEPARTURE = minTimeBeforeDeparture;
+        MAX_TIME_BEFORE_DEPARTURE = maxTimeBeforeDeparture;
+        MAX_POLICIES_TO_PROCESS = maxPoliciesToProcess;
     }
-
 
     function setDefaultBundle(NftId bundleNftId) external restricted() onlyOwner() { _defaultBundleNftId = bundleNftId; }
     function setTestMode(bool testMode) external restricted() onlyOwner() { _testMode = testMode; }
@@ -524,10 +495,10 @@ contract FlightProduct is
             _createRisk(riskKey, abi.encode(flightRisk));
         }
 
-        // check for cluster risk: additional sum insured amount must not exceed MAX_TOTAL_PAYOUT
-        if (flightRisk.sumOfSumInsuredAmounts + sumInsuredAmount > MAX_TOTAL_PAYOUT) {
-            revert ErrorFlightProductClusterRisk(flightRisk.sumOfSumInsuredAmounts + sumInsuredAmount, MAX_TOTAL_PAYOUT);
-        }
+        FlightLib.checkClusterRisk(
+            flightRisk.sumOfSumInsuredAmounts, 
+            sumInsuredAmount, 
+            MAX_TOTAL_PAYOUT);
 
         // update existing risk with additional sum insured amount
         flightRisk.sumOfSumInsuredAmounts = flightRisk.sumOfSumInsuredAmounts + sumInsuredAmount;
@@ -539,8 +510,7 @@ contract FlightProduct is
         RequestId requestId,
         RiskId riskId, 
         bytes1 status, 
-        int256 delayMinutes,
-        uint8 maxPoliciesToProcess
+        int256 delayMinutes
     )
         internal
         virtual
@@ -550,29 +520,22 @@ contract FlightProduct is
         (
             bool exists,
             FlightRisk memory flightRisk
-        ) = FlightLib.getFlightRisk(reader, getNftId(), riskId);
+        ) = FlightLib.getFlightRisk(reader, getNftId(), riskId, true);
 
-        if (!exists) {
-            // TODO decide to switch from log to error
-            emit LogErrorRiskInvalid(requestId, riskId);
-            return;
-        } else {
-            // update status, if not yet set
-            if (flightRisk.statusUpdatedAt.eqz()) {
-                flightRisk.status = status;
-                flightRisk.delayMinutes = delayMinutes;
-                flightRisk.payoutOption = FlightLib.checkAndGetPayoutOption(
-                    requestId, riskId, status, delayMinutes);
-                flightRisk.statusUpdatedAt = TimestampLib.current();
+        // update status, if not yet set
+        if (flightRisk.statusUpdatedAt.eqz()) {
+            flightRisk.statusUpdatedAt = TimestampLib.current();
+            flightRisk.status = status;
+            flightRisk.delayMinutes = delayMinutes;
+            flightRisk.payoutOption = FlightLib.checkAndGetPayoutOption(
+                requestId, riskId, status, delayMinutes);
 
-                _updateRisk(riskId, abi.encode(flightRisk));
-            }
-            // TODO revert in else case?
+            _updateRisk(riskId, abi.encode(flightRisk));
         }
 
         (,, uint8 payoutOption) = _processPayoutsAndClosePolicies(
             riskId, 
-            maxPoliciesToProcess);
+            MAX_POLICIES_TO_PROCESS);
 
         // logging
         emit LogFlightStatusProcessed(requestId, riskId, status, delayMinutes, payoutOption);
@@ -606,22 +569,20 @@ contract FlightProduct is
         // go trough policies
         for (uint256 i = 0; i < policiesProcessed; i++) {
             NftId policyNftId = reader.getPolicyForRisk(riskId, i);
+            Amount payoutAmount = FlightLib.getPayoutAmount(
+                reader.getPolicyInfo(policyNftId).applicationData, 
+                payoutOption);
 
-            // create payout (if any)
-            if (payoutOption < type(uint8).max) { 
-                bytes memory applicationData = reader.getPolicyInfo(
-                    policyNftId).applicationData;
-
-                _resolvePayout(
-                    policyNftId, 
-                    FlightLib.getPayoutAmount(
-                        applicationData, 
-                        payoutOption)); 
-            }
+            // create claim/payout (if applicable)
+            _resolvePayout(
+                policyNftId, 
+                payoutAmount); 
 
             // expire and close policy
             _expire(policyNftId, TimestampLib.current());
             _close(policyNftId);
+
+            emit LogFlightPolicyClosed(policyNftId, payoutAmount);
         }
 
         // logging
@@ -636,6 +597,11 @@ contract FlightProduct is
         internal
         virtual
     {
+        // no action if no payout
+        if (payoutAmount.eqz()) {
+            return;
+        }
+
         // create confirmed claim
         ClaimId claimId = _submitClaim(policyNftId, payoutAmount, "");
         _confirmClaim(policyNftId, claimId, payoutAmount, "");
@@ -681,5 +647,11 @@ contract FlightProduct is
             }),
             authorization,
             initialOwner);  // number of oracles
+
+        MAX_FLIGHT_DURATION = SecondsLib.fromDays(2);
+        LIFETIME = SecondsLib.fromDays(30);
+        WEIGHT_PATTERN = [0, 0, 0, 30, 50, 50];
+        MIN_OBSERVATIONS = 10;
+        MARGIN_PERCENT = 30;
     }
 }
