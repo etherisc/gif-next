@@ -1,0 +1,372 @@
+:github-icon: pass:[<svg class="icon"><use href="#github-icon"/></svg>]
+
+= Upgradeability
+
+Contains interfaces/contracts linked to contract upgradeability. 
+
+== Contracts
+
+:ErrorVersionableInitializeNotImplemented: pass:normal[xref:#IVersionable-ErrorVersionableInitializeNotImplemented--[`++ErrorVersionableInitializeNotImplemented++`]]
+:ErrorVersionableUpgradeNotImplemented: pass:normal[xref:#IVersionable-ErrorVersionableUpgradeNotImplemented--[`++ErrorVersionableUpgradeNotImplemented++`]]
+:initializeVersionable: pass:normal[xref:#IVersionable-initializeVersionable-address-bytes-[`++initializeVersionable++`]]
+:upgradeVersionable: pass:normal[xref:#IVersionable-upgradeVersionable-bytes-[`++upgradeVersionable++`]]
+:getVersion: pass:normal[xref:#IVersionable-getVersion--[`++getVersion++`]]
+
+[.contract]
+[[IVersionable]]
+=== `++IVersionable++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/upgradeability/IVersionable.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/upgradeability/IVersionable.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++initializeVersionable(activatedBy, activationData)++`]
+* [`++upgradeVersionable(upgradeData)++`]
+* [`++getVersion()++`]
+
+--
+
+[.contract-item]
+[[IVersionable-initializeVersionable-address-bytes-]]
+==== `[.contract-item-name]#++initializeVersionable++#++(address activatedBy, bytes activationData)++` [.item-kind]#external#
+
+IMPORTANT
+implementation MUST be guarded by initializer modifier
+new version MUST inherit from previous version
+
+[.contract-item]
+[[IVersionable-upgradeVersionable-bytes-]]
+==== `[.contract-item-name]#++upgradeVersionable++#++(bytes upgradeData)++` [.item-kind]#external#
+
+[.contract-item]
+[[IVersionable-getVersion--]]
+==== `[.contract-item-name]#++getVersion++#++() → Version++` [.item-kind]#external#
+
+returns version of this contract
+each new implementation MUST implement this function
+version number MUST increase
+
+:VersionInfo: pass:normal[xref:#ProxyManager-VersionInfo[`++VersionInfo++`]]
+:LogProxyManagerVersionableDeployed: pass:normal[xref:#ProxyManager-LogProxyManagerVersionableDeployed-address-address-[`++LogProxyManagerVersionableDeployed++`]]
+:LogProxyManagerVersionableUpgraded: pass:normal[xref:#ProxyManager-LogProxyManagerVersionableUpgraded-address-address-[`++LogProxyManagerVersionableUpgraded++`]]
+:ErrorProxyManagerAlreadyDeployed: pass:normal[xref:#ProxyManager-ErrorProxyManagerAlreadyDeployed--[`++ErrorProxyManagerAlreadyDeployed++`]]
+:ErrorProxyManagerNotYetDeployed: pass:normal[xref:#ProxyManager-ErrorProxyManagerNotYetDeployed--[`++ErrorProxyManagerNotYetDeployed++`]]
+:ErrorProxyManagerZeroVersion: pass:normal[xref:#ProxyManager-ErrorProxyManagerZeroVersion--[`++ErrorProxyManagerZeroVersion++`]]
+:ErrorProxyManagerNextVersionNotIncreasing: pass:normal[xref:#ProxyManager-ErrorProxyManagerNextVersionNotIncreasing-Version-[`++ErrorProxyManagerNextVersionNotIncreasing++`]]
+:_proxy: pass:normal[xref:#ProxyManager-_proxy-contract-UpgradableProxyWithAdmin[`++_proxy++`]]
+:_versionHistory: pass:normal[xref:#ProxyManager-_versionHistory-mapping-Version----struct-ProxyManager-VersionInfo-[`++_versionHistory++`]]
+:_versions: pass:normal[xref:#ProxyManager-_versions-Version--[`++_versions++`]]
+:initialize: pass:normal[xref:#ProxyManager-initialize-address-address-bytes-bytes32-[`++initialize++`]]
+:deploy: pass:normal[xref:#ProxyManager-deploy-address-address-bytes-[`++deploy++`]]
+:deployDetermenistic: pass:normal[xref:#ProxyManager-deployDetermenistic-address-address-bytes-bytes32-[`++deployDetermenistic++`]]
+:upgrade: pass:normal[xref:#ProxyManager-upgrade-address-[`++upgrade++`]]
+:upgrade: pass:normal[xref:#ProxyManager-upgrade-address-bytes-[`++upgrade++`]]
+:linkToProxy: pass:normal[xref:#ProxyManager-linkToProxy--[`++linkToProxy++`]]
+:getDeployData: pass:normal[xref:#ProxyManager-getDeployData-address-bytes-[`++getDeployData++`]]
+:getUpgradeData: pass:normal[xref:#ProxyManager-getUpgradeData-bytes-[`++getUpgradeData++`]]
+:getProxy: pass:normal[xref:#ProxyManager-getProxy--[`++getProxy++`]]
+:getVersion: pass:normal[xref:#ProxyManager-getVersion--[`++getVersion++`]]
+:getVersionCount: pass:normal[xref:#ProxyManager-getVersionCount--[`++getVersionCount++`]]
+:getVersion: pass:normal[xref:#ProxyManager-getVersion-uint256-[`++getVersion++`]]
+:getVersionInfo: pass:normal[xref:#ProxyManager-getVersionInfo-Version-[`++getVersionInfo++`]]
+
+[.contract]
+[[ProxyManager]]
+=== `++ProxyManager++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/upgradeability/ProxyManager.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/upgradeability/ProxyManager.sol";
+```
+
+manages proxy deployments for upgradable contracs of type IVersionable
+
+[.contract-index]
+.Functions
+--
+* [`++initialize(registry, implementation, data, salt)++`]
+* [`++deploy(registry, initialImplementation, initializationData)++`]
+* [`++deployDetermenistic(registry, initialImplementation, initializationData, salt)++`]
+* [`++upgrade(newImplementation)++`]
+* [`++upgrade(newImplementation, upgradeData)++`]
+* [`++linkToProxy()++`]
+* [`++getDeployData(proxyOwner, deployData)++`]
+* [`++getUpgradeData(upgradeData)++`]
+* [`++getProxy()++`]
+* [`++getVersion()++`]
+* [`++getVersionCount()++`]
+* [`++getVersion(idx)++`]
+* [`++getVersionInfo(_version)++`]
+
+[.contract-subindex-inherited]
+.NftOwnable
+* [`++_checkNftType(nftId, expectedObjectType)++`]
+* [`++__NftOwnable_init(registry, initialOwner)++`]
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+* [`++_linkToNftOwnable(nftOwnableAddress)++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+* [`++__RegistryLinked_init(registry)++`]
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+* [`++__ERC165_init()++`]
+* [`++_initializeERC165()++`]
+* [`++_registerInterface(interfaceId)++`]
+* [`++_registerInterfaceNotInitializing(interfaceId)++`]
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+* [`++LogProxyManagerVersionableDeployed(proxy, initialImplementation)++`]
+* [`++LogProxyManagerVersionableUpgraded(proxy, upgradedImplementation)++`]
+
+[.contract-subindex-inherited]
+.NftOwnable
+
+[.contract-subindex-inherited]
+.INftOwnable
+* [`++LogNftOwnableNftLinkedToAddress(nftId, owner)++`]
+
+[.contract-subindex-inherited]
+.RegistryLinked
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[ProxyManager-initialize-address-address-bytes-bytes32-]]
+==== `[.contract-item-name]#++initialize++#++(address registry, address implementation, bytes data, bytes32 salt) → contract IVersionable versionable++` [.item-kind]#public#
+
+convencience initializer
+
+[.contract-item]
+[[ProxyManager-deploy-address-address-bytes-]]
+==== `[.contract-item-name]#++deploy++#++(address registry, address initialImplementation, bytes initializationData) → contract IVersionable versionable++` [.item-kind]#public#
+
+deploy initial contract
+
+[.contract-item]
+[[ProxyManager-deployDetermenistic-address-address-bytes-bytes32-]]
+==== `[.contract-item-name]#++deployDetermenistic++#++(address registry, address initialImplementation, bytes initializationData, bytes32 salt) → contract IVersionable versionable++` [.item-kind]#public#
+
+[.contract-item]
+[[ProxyManager-upgrade-address-]]
+==== `[.contract-item-name]#++upgrade++#++(address newImplementation) → contract IVersionable versionable++` [.item-kind]#public#
+
+upgrade existing contract.
+convenience method using empty data
+
+[.contract-item]
+[[ProxyManager-upgrade-address-bytes-]]
+==== `[.contract-item-name]#++upgrade++#++(address newImplementation, bytes upgradeData) → contract IVersionable versionable++` [.item-kind]#public#
+
+upgrade existing contract
+
+[.contract-item]
+[[ProxyManager-linkToProxy--]]
+==== `[.contract-item-name]#++linkToProxy++#++() → NftId++` [.item-kind]#public#
+
+[.contract-item]
+[[ProxyManager-getDeployData-address-bytes-]]
+==== `[.contract-item-name]#++getDeployData++#++(address proxyOwner, bytes deployData) → bytes data++` [.item-kind]#public#
+
+[.contract-item]
+[[ProxyManager-getUpgradeData-bytes-]]
+==== `[.contract-item-name]#++getUpgradeData++#++(bytes upgradeData) → bytes data++` [.item-kind]#public#
+
+[.contract-item]
+[[ProxyManager-getProxy--]]
+==== `[.contract-item-name]#++getProxy++#++() → contract UpgradableProxyWithAdmin++` [.item-kind]#public#
+
+[.contract-item]
+[[ProxyManager-getVersion--]]
+==== `[.contract-item-name]#++getVersion++#++() → Version++` [.item-kind]#external#
+
+[.contract-item]
+[[ProxyManager-getVersionCount--]]
+==== `[.contract-item-name]#++getVersionCount++#++() → uint256++` [.item-kind]#external#
+
+[.contract-item]
+[[ProxyManager-getVersion-uint256-]]
+==== `[.contract-item-name]#++getVersion++#++(uint256 idx) → Version++` [.item-kind]#external#
+
+[.contract-item]
+[[ProxyManager-getVersionInfo-Version-]]
+==== `[.contract-item-name]#++getVersionInfo++#++(Version _version) → struct ProxyManager.VersionInfo++` [.item-kind]#external#
+
+[.contract-item]
+[[ProxyManager-LogProxyManagerVersionableDeployed-address-address-]]
+==== `[.contract-item-name]#++LogProxyManagerVersionableDeployed++#++(address indexed proxy, address initialImplementation)++` [.item-kind]#event#
+
+[.contract-item]
+[[ProxyManager-LogProxyManagerVersionableUpgraded-address-address-]]
+==== `[.contract-item-name]#++LogProxyManagerVersionableUpgraded++#++(address indexed proxy, address upgradedImplementation)++` [.item-kind]#event#
+
+:_initializationData: pass:normal[xref:#UpgradableProxyWithAdmin-_initializationData-bytes[`++_initializationData++`]]
+:constructor: pass:normal[xref:#UpgradableProxyWithAdmin-constructor-address-address-bytes-[`++constructor++`]]
+:getProxyAdmin: pass:normal[xref:#UpgradableProxyWithAdmin-getProxyAdmin--[`++getProxyAdmin++`]]
+:getInitializationData: pass:normal[xref:#UpgradableProxyWithAdmin-getInitializationData--[`++getInitializationData++`]]
+
+[.contract]
+[[UpgradableProxyWithAdmin]]
+=== `++UpgradableProxyWithAdmin++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/upgradeability/UpgradableProxyWithAdmin.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/upgradeability/UpgradableProxyWithAdmin.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++constructor(implementation, initialProxyAdminOwner, data)++`]
+* [`++getProxyAdmin()++`]
+* [`++getInitializationData()++`]
+
+[.contract-subindex-inherited]
+.TransparentUpgradeableProxy
+* [`++_proxyAdmin()++`]
+* [`++_fallback()++`]
+
+[.contract-subindex-inherited]
+.ERC1967Proxy
+* [`++_implementation()++`]
+
+[.contract-subindex-inherited]
+.Proxy
+* [`++_delegate(implementation)++`]
+* [`++fallback()++`]
+
+--
+
+[.contract-item]
+[[UpgradableProxyWithAdmin-constructor-address-address-bytes-]]
+==== `[.contract-item-name]#++constructor++#++(address implementation, address initialProxyAdminOwner, bytes data)++` [.item-kind]#public#
+
+[.contract-item]
+[[UpgradableProxyWithAdmin-getProxyAdmin--]]
+==== `[.contract-item-name]#++getProxyAdmin++#++() → contract ProxyAdmin++` [.item-kind]#external#
+
+[.contract-item]
+[[UpgradableProxyWithAdmin-getInitializationData--]]
+==== `[.contract-item-name]#++getInitializationData++#++() → bytes++` [.item-kind]#external#
+
+:constructor: pass:normal[xref:#Versionable-constructor--[`++constructor++`]]
+:initializeVersionable: pass:normal[xref:#Versionable-initializeVersionable-address-bytes-[`++initializeVersionable++`]]
+:upgradeVersionable: pass:normal[xref:#Versionable-upgradeVersionable-bytes-[`++upgradeVersionable++`]]
+:getVersion: pass:normal[xref:#Versionable-getVersion--[`++getVersion++`]]
+:_initialize: pass:normal[xref:#Versionable-_initialize-address-bytes-[`++_initialize++`]]
+:_upgrade: pass:normal[xref:#Versionable-_upgrade-bytes-[`++_upgrade++`]]
+
+[.contract]
+[[Versionable]]
+=== `++Versionable++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/upgradeability/Versionable.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/upgradeability/Versionable.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++constructor()++`]
+* [`++initializeVersionable(activatedBy, data)++`]
+* [`++upgradeVersionable(data)++`]
+* [`++getVersion()++`]
+* [`++_initialize(, )++`]
+* [`++_upgrade(data)++`]
+
+[.contract-subindex-inherited]
+.IVersionable
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.IVersionable
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[Versionable-constructor--]]
+==== `[.contract-item-name]#++constructor++#++()++` [.item-kind]#internal#
+
+[.contract-item]
+[[Versionable-initializeVersionable-address-bytes-]]
+==== `[.contract-item-name]#++initializeVersionable++#++(address activatedBy, bytes data)++` [.item-kind]#public#
+
+[.contract-item]
+[[Versionable-upgradeVersionable-bytes-]]
+==== `[.contract-item-name]#++upgradeVersionable++#++(bytes data)++` [.item-kind]#external#
+
+[.contract-item]
+[[Versionable-getVersion--]]
+==== `[.contract-item-name]#++getVersion++#++() → Version++` [.item-kind]#public#
+
+returns version of this contract
+each new implementation MUST implement this function
+version number MUST increase
+
+[.contract-item]
+[[Versionable-_initialize-address-bytes-]]
+==== `[.contract-item-name]#++_initialize++#++(address, bytes)++` [.item-kind]#internal#
+
+[.contract-item]
+[[Versionable-_upgrade-bytes-]]
+==== `[.contract-item-name]#++_upgrade++#++(bytes data)++` [.item-kind]#internal#
+
