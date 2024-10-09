@@ -34,6 +34,7 @@ import {RiskId} from "../type/RiskId.sol";
 import {RiskSet} from "./RiskSet.sol";
 import {RoleId, INSTANCE_OWNER_ROLE} from "../type/RoleId.sol";
 import {StateId} from "../type/StateId.sol";
+import {Str, StrLib} from "../type/String.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {UFixed, UFixedLib} from "../type/UFixed.sol";
 
@@ -601,13 +602,18 @@ contract InstanceReader {
     }
 
 
-    function toUFixed(uint256 value, int8 exp) public pure returns (UFixed) {
-        return UFixedLib.toUFixed(value, exp);
+    function toInt(UFixed value) public pure returns (uint256) {
+        return UFixedLib.toInt(value);
     }
 
 
-    function toInt(UFixed value) public pure returns (uint256) {
-        return UFixedLib.toInt(value);
+    function toString(Str str) public pure returns (string memory) {
+        return StrLib.toString(str);
+    }
+
+
+    function toUFixed(uint256 value, int8 exp) public pure returns (UFixed) {
+        return UFixedLib.toUFixed(value, exp);
     }
 
     //--- internal functions ----------------------------------------------------//

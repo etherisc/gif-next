@@ -178,6 +178,7 @@ export async function deployAndRegisterMasterInstance(
                 RequestIdLib: libraries.requestIdLibAddress,
                 RiskIdLib: libraries.riskIdLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
+                StrLib: libraries.strLibAddress,
                 UFixedLib: libraries.uFixedLibAddress,
             }
         }

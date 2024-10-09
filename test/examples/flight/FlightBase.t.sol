@@ -13,7 +13,6 @@ import {FlightOracleAuthorization} from "../../../contracts/examples/flight/Flig
 import {FlightPool} from "../../../contracts/examples/flight/FlightPool.sol";
 import {FlightPoolAuthorization} from "../../../contracts/examples/flight/FlightPoolAuthorization.sol";
 import {FlightProduct} from "../../../contracts/examples/flight/FlightProduct.sol";
-import {FlightProductManager} from "../../../contracts/examples/flight/FlightProductManager.sol";
 import {FlightProductAuthorization} from "../../../contracts/examples/flight/FlightProductAuthorization.sol";
 import {FlightUSD} from "../../../contracts/examples/flight/FlightUSD.sol";
 import {GifTest} from "../../base/GifTest.sol";
@@ -39,7 +38,6 @@ contract FlightBaseTest is GifTest {
     FlightOracle public flightOracle;
     FlightPool public flightPool;
 
-    FlightProductManager public flightProductManager;
     FlightProduct public flightProduct;
 
     NftId public flightOracleNftId;
@@ -185,20 +183,20 @@ contract FlightBaseTest is GifTest {
 
         vm.startPrank(flightOwner);
         FlightProductAuthorization productAuthz = new FlightProductAuthorization("FlightProduct");
-        // flightProduct = new FlightProduct(
-        //     address(registry),
-        //     instanceNftId,
-        //     "FlightProduct",
-        //     productAuthz
-        // );
-
-        flightProductManager = new FlightProductManager(
+        flightProduct = new FlightProduct(
             address(registry),
             instanceNftId,
             "FlightProduct",
-            productAuthz);
+            productAuthz
+        );
 
-        flightProduct = flightProductManager.getFlightProduct();
+        // flightProductManager = new FlightProductManager(
+        //     address(registry),
+        //     instanceNftId,
+        //     "FlightProduct",
+        //     productAuthz);
+
+        // flightProduct = flightProductManager.getFlightProduct();
 
         vm.stopPrank();
 

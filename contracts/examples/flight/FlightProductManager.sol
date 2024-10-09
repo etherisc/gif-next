@@ -22,20 +22,20 @@ contract FlightProductManager is ProxyManager {
         IAuthorization authorization
     ) 
     {
-        FlightProduct prd = new FlightProduct{salt: _salt}();
-        bytes memory data = abi.encode(
-            registry, 
-            instanceNftId, 
-            componentName, 
-            authorization);
+        // FlightProduct prd = new FlightProduct{salt: _salt}();
+        // bytes memory data = abi.encode(
+        //     registry, 
+        //     instanceNftId, 
+        //     componentName, 
+        //     authorization);
 
-        IVersionable versionable = initialize(
-            registry,
-            address(prd), 
-            data,
-            _salt);
+        // IVersionable versionable = initialize(
+        //     registry,
+        //     address(prd), 
+        //     data,
+        //     _salt);
 
-        _flightProduct = FlightProduct(address(versionable));
+        // _flightProduct = FlightProduct(address(versionable));
     }
 
     //--- view functions ----------------------------------------------------//

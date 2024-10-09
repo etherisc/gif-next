@@ -196,6 +196,7 @@ export async function deployFlightDelayComponentContracts(libraries: LibraryAddr
                 ObjectTypeLib: objectTypeLibAddress,
                 ReferralLib: referralLibAddress,
                 SecondsLib: secondsLibAddress,
+                StrLib: strLibAddress,
                 TimestampLib: timestampLibAddress,
                 VersionLib: versionLibAddress,
             }
@@ -209,9 +210,31 @@ export async function deployFlightDelayComponentContracts(libraries: LibraryAddr
         [IInstance__factory.createInterface()]
     );
     const flightProductNftId = await flightProduct.getNftId();
+
+    // // grant statistics provider role to statistics provider
+    // (RoleId statisticProviderRoleId, bool exists) = instanceReader.getRoleForName(
+    //     productAuthz.STATISTICS_PROVIDER_ROLE_NAME());
+
+    // instance.grantRole(statisticProviderRoleId, statisticsProvider);
+    // vm.stopPrank();
+
+    // old function
+    // await executeTx(async () =>
+    //     await flightProduct.completeSetup(),
+    //     "fd - completeSetup",
+    //     [FlightProduct__factory.createInterface()]
+    // );
     await executeTx(async () =>
-        await flightProduct.completeSetup(),
-        "fd - completeSetup",
+        await flightProduct.setConstants(
+            15 * 10 ** 6, // 15 USD min premium
+            15 * 10 ** 6, // 15 USD max premium
+            200 * 10 ** 6, // 15 USD max premium
+            600 * 10 ** 6, // 15 USD max premium
+            14 * 24 * 3600, // 14 days min time before departure
+            90 * 24 * 3600, // 90 days max time before departure
+            5, // max policies to process in one tx
+        ),
+        "fd - setConstants",
         [FlightProduct__factory.createInterface()]
     );
 
@@ -305,6 +328,8 @@ export async function deployFlightDelayComponentContracts(libraries: LibraryAddr
                 ContractLib: contractLibAddress,
                 NftIdLib: nftIdLibAddress,
                 LibRequestIdSet: libRequestIdSetAddress,
+                StrLib: strLibAddress,
+                TimestampLib: timestampLibAddress,
                 VersionLib: versionLibAddress,
             }
         });
