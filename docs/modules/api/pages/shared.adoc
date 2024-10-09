@@ -1,0 +1,1261 @@
+:github-icon: pass:[<svg class="icon"><use href="#github-icon"/></svg>]
+:xref-NftOwnable-onlyOwner--: xref:shared.adoc#NftOwnable-onlyOwner--
+:xref-NftOwnable-onlyNftOwner-NftId-: xref:shared.adoc#NftOwnable-onlyNftOwner-NftId-
+:xref-Registerable-onlyActive--: xref:shared.adoc#Registerable-onlyActive--
+:xref-Registerable-onlyNftOfType-NftId-ObjectType-: xref:shared.adoc#Registerable-onlyNftOfType-NftId-ObjectType-
+:xref-TokenHandler-onlyService--: xref:shared.adoc#TokenHandler-onlyService--
+= Shared
+
+Contains interfaces and contracts used across the project.
+
+== Contracts
+
+:LogNftOwnableNftLinkedToAddress: pass:normal[xref:#INftOwnable-LogNftOwnableNftLinkedToAddress-NftId-address-[`++LogNftOwnableNftLinkedToAddress++`]]
+:ErrorNftOwnableInitialOwnerZero: pass:normal[xref:#INftOwnable-ErrorNftOwnableInitialOwnerZero--[`++ErrorNftOwnableInitialOwnerZero++`]]
+:ErrorNftOwnableNotOwner: pass:normal[xref:#INftOwnable-ErrorNftOwnableNotOwner-address-[`++ErrorNftOwnableNotOwner++`]]
+:ErrorNftOwnableAlreadyLinked: pass:normal[xref:#INftOwnable-ErrorNftOwnableAlreadyLinked-NftId-[`++ErrorNftOwnableAlreadyLinked++`]]
+:ErrorNftOwnableContractNotRegistered: pass:normal[xref:#INftOwnable-ErrorNftOwnableContractNotRegistered-address-[`++ErrorNftOwnableContractNotRegistered++`]]
+:linkToRegisteredNftId: pass:normal[xref:#INftOwnable-linkToRegisteredNftId--[`++linkToRegisteredNftId++`]]
+:getNftId: pass:normal[xref:#INftOwnable-getNftId--[`++getNftId++`]]
+:getOwner: pass:normal[xref:#INftOwnable-getOwner--[`++getOwner++`]]
+
+[.contract]
+[[INftOwnable]]
+=== `++INftOwnable++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/shared/INftOwnable.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/shared/INftOwnable.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IERC165
+* [`++supportsInterface(interfaceId)++`]
+
+--
+
+[.contract-index]
+.Events
+--
+* [`++LogNftOwnableNftLinkedToAddress(nftId, owner)++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.IERC165
+
+--
+
+[.contract-item]
+[[INftOwnable-linkToRegisteredNftId--]]
+==== `[.contract-item-name]#++linkToRegisteredNftId++#++() → NftId++` [.item-kind]#external#
+
+[.contract-item]
+[[INftOwnable-getNftId--]]
+==== `[.contract-item-name]#++getNftId++#++() → NftId++` [.item-kind]#external#
+
+[.contract-item]
+[[INftOwnable-getOwner--]]
+==== `[.contract-item-name]#++getOwner++#++() → address++` [.item-kind]#external#
+
+[.contract-item]
+[[INftOwnable-LogNftOwnableNftLinkedToAddress-NftId-address-]]
+==== `[.contract-item-name]#++LogNftOwnableNftLinkedToAddress++#++(NftId nftId, address owner)++` [.item-kind]#event#
+
+:policyActivated: pass:normal[xref:#IPolicyHolder-policyActivated-NftId-Timestamp-[`++policyActivated++`]]
+:policyExpired: pass:normal[xref:#IPolicyHolder-policyExpired-NftId-Timestamp-[`++policyExpired++`]]
+:claimConfirmed: pass:normal[xref:#IPolicyHolder-claimConfirmed-NftId-ClaimId-Amount-[`++claimConfirmed++`]]
+:payoutExecuted: pass:normal[xref:#IPolicyHolder-payoutExecuted-NftId-PayoutId-Amount-address-[`++payoutExecuted++`]]
+
+[.contract]
+[[IPolicyHolder]]
+=== `++IPolicyHolder++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/shared/IPolicyHolder.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/shared/IPolicyHolder.sol";
+```
+
+Generic interface for contracts that need to hold policies and receive payouts.
+The framework notifies policy holder contracts for policy creation/expiry, claim confirmation and payout execution
+
+[.contract-index]
+.Functions
+--
+* [`++policyActivated(policyNftId, activatedAt)++`]
+* [`++policyExpired(policyNftId, expiredAt)++`]
+* [`++claimConfirmed(policyNftId, claimId, amount)++`]
+* [`++payoutExecuted(policyNftId, payoutId, amount, beneficiary)++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IERC721Receiver
+* [`++onERC721Received(operator, from, tokenId, data)++`]
+
+[.contract-subindex-inherited]
+.IERC165
+* [`++supportsInterface(interfaceId)++`]
+
+--
+
+[.contract-item]
+[[IPolicyHolder-policyActivated-NftId-Timestamp-]]
+==== `[.contract-item-name]#++policyActivated++#++(NftId policyNftId, Timestamp activatedAt)++` [.item-kind]#external#
+
+Callback function that will be called after successful policy activation.
+Active policies may open claims under the activated policy.
+
+[.contract-item]
+[[IPolicyHolder-policyExpired-NftId-Timestamp-]]
+==== `[.contract-item-name]#++policyExpired++#++(NftId policyNftId, Timestamp expiredAt)++` [.item-kind]#external#
+
+Callback function to indicate the specified policy has expired.
+expired policies no longer accept new claims.
+
+[.contract-item]
+[[IPolicyHolder-claimConfirmed-NftId-ClaimId-Amount-]]
+==== `[.contract-item-name]#++claimConfirmed++#++(NftId policyNftId, ClaimId claimId, Amount amount)++` [.item-kind]#external#
+
+Callback function to notify the confirmation of the specified claim.
+
+[.contract-item]
+[[IPolicyHolder-payoutExecuted-NftId-PayoutId-Amount-address-]]
+==== `[.contract-item-name]#++payoutExecuted++#++(NftId policyNftId, PayoutId payoutId, Amount amount, address beneficiary)++` [.item-kind]#external#
+
+Callback function to notify the successful payout.
+
+:ErrorAuthorityInvalid: pass:normal[xref:#IRegisterable-ErrorAuthorityInvalid-address-[`++ErrorAuthorityInvalid++`]]
+:ErrorRegisterableNotActive: pass:normal[xref:#IRegisterable-ErrorRegisterableNotActive--[`++ErrorRegisterableNotActive++`]]
+:ErrorRegisterableInvalidType: pass:normal[xref:#IRegisterable-ErrorRegisterableInvalidType-NftId-ObjectType-VersionPart-[`++ErrorRegisterableInvalidType++`]]
+:isActive: pass:normal[xref:#IRegisterable-isActive--[`++isActive++`]]
+:getInitialInfo: pass:normal[xref:#IRegisterable-getInitialInfo--[`++getInitialInfo++`]]
+:getInitialData: pass:normal[xref:#IRegisterable-getInitialData--[`++getInitialData++`]]
+
+[.contract]
+[[IRegisterable]]
+=== `++IRegisterable++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/shared/IRegisterable.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/shared/IRegisterable.sol";
+```
+
+Marks contracts that are intended to be registered in the registry.
+
+[.contract-index]
+.Functions
+--
+* [`++isActive()++`]
+* [`++getInitialInfo()++`]
+* [`++getInitialData()++`]
+
+[.contract-subindex-inherited]
+.IVersionable
+* [`++getVersion()++`]
+* [`++getRelease()++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IERC165
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++authority()++`]
+* [`++setAuthority()++`]
+* [`++isConsumingScheduledOp()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.IVersionable
+
+[.contract-subindex-inherited]
+.INftOwnable
+* [`++LogNftOwnableNftLinkedToAddress(nftId, owner)++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+--
+
+[.contract-item]
+[[IRegisterable-isActive--]]
+==== `[.contract-item-name]#++isActive++#++() → bool active++` [.item-kind]#external#
+
+Returns true iff this contract managed by its authority is active.
+Queries the IAccessManaged.authority().
+
+[.contract-item]
+[[IRegisterable-getInitialInfo--]]
+==== `[.contract-item-name]#++getInitialInfo++#++() → struct IRegistry.ObjectInfo info++` [.item-kind]#external#
+
+retuns the object info relevant for registering for this contract 
+IMPORTANT information returned by this function may only be used
+before the contract is registered in the registry.
+Once registered this information MUST only be accessed via the registry.
+
+[.contract-item]
+[[IRegisterable-getInitialData--]]
+==== `[.contract-item-name]#++getInitialData++#++() → bytes data++` [.item-kind]#external#
+
+:getRegistry: pass:normal[xref:#IRegistryLinked-getRegistry--[`++getRegistry++`]]
+
+[.contract]
+[[IRegistryLinked]]
+=== `++IRegistryLinked++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/shared/IRegistryLinked.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/shared/IRegistryLinked.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++getRegistry()++`]
+
+--
+
+[.contract-item]
+[[IRegistryLinked-getRegistry--]]
+==== `[.contract-item-name]#++getRegistry++#++() → contract IRegistry++` [.item-kind]#external#
+
+:getDomain: pass:normal[xref:#IService-getDomain--[`++getDomain++`]]
+:getRoleId: pass:normal[xref:#IService-getRoleId--[`++getRoleId++`]]
+
+[.contract]
+[[IService]]
+=== `++IService++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/shared/IService.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/shared/IService.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++getDomain()++`]
+* [`++getRoleId()++`]
+
+[.contract-subindex-inherited]
+.IUpgradeable
+* [`++initialize(activatedBy, activationData)++`]
+* [`++upgrade(upgradeData)++`]
+
+[.contract-subindex-inherited]
+.IRegisterable
+* [`++isActive()++`]
+* [`++getInitialInfo()++`]
+* [`++getInitialData()++`]
+
+[.contract-subindex-inherited]
+.IVersionable
+* [`++getVersion()++`]
+* [`++getRelease()++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IERC165
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++authority()++`]
+* [`++setAuthority()++`]
+* [`++isConsumingScheduledOp()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.IUpgradeable
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.IVersionable
+
+[.contract-subindex-inherited]
+.INftOwnable
+* [`++LogNftOwnableNftLinkedToAddress(nftId, owner)++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+--
+
+[.contract-item]
+[[IService-getDomain--]]
+==== `[.contract-item-name]#++getDomain++#++() → ObjectType serviceDomain++` [.item-kind]#external#
+
+returns the domain for this service.
+In any GIF release only one service for any given domain may be deployed.
+
+[.contract-item]
+[[IService-getRoleId--]]
+==== `[.contract-item-name]#++getRoleId++#++() → RoleId serviceRoleId++` [.item-kind]#external#
+
+returns the GIF release specific role id.
+These role ids are used to authorize service to service communication.
+
+:ErrorVersionableReleaseInvalid: pass:normal[xref:#IVersionable-ErrorVersionableReleaseInvalid-address-VersionPart-[`++ErrorVersionableReleaseInvalid++`]]
+:ErrorVersionableReleaseMismatch: pass:normal[xref:#IVersionable-ErrorVersionableReleaseMismatch-address-VersionPart-VersionPart-[`++ErrorVersionableReleaseMismatch++`]]
+:getVersion: pass:normal[xref:#IVersionable-getVersion--[`++getVersion++`]]
+:getRelease: pass:normal[xref:#IVersionable-getRelease--[`++getRelease++`]]
+
+[.contract]
+[[IVersionable]]
+=== `++IVersionable++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/shared/IVersionable.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/shared/IVersionable.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++getVersion()++`]
+* [`++getRelease()++`]
+
+--
+
+[.contract-item]
+[[IVersionable-getVersion--]]
+==== `[.contract-item-name]#++getVersion++#++() → Version++` [.item-kind]#external#
+
+returns version of this contract
+implementation MUST define version in this function
+version number MUST increase
+
+[.contract-item]
+[[IVersionable-getRelease--]]
+==== `[.contract-item-name]#++getRelease++#++() → VersionPart++` [.item-kind]#external#
+
+:NFT_OWNABLE_STORAGE_LOCATION_V1: pass:normal[xref:#NftOwnable-NFT_OWNABLE_STORAGE_LOCATION_V1-bytes32[`++NFT_OWNABLE_STORAGE_LOCATION_V1++`]]
+:NftOwnableStorage: pass:normal[xref:#NftOwnable-NftOwnableStorage[`++NftOwnableStorage++`]]
+:onlyOwner: pass:normal[xref:#NftOwnable-onlyOwner--[`++onlyOwner++`]]
+:onlyNftOwner: pass:normal[xref:#NftOwnable-onlyNftOwner-NftId-[`++onlyNftOwner++`]]
+:__NftOwnable_init: pass:normal[xref:#NftOwnable-__NftOwnable_init-address-[`++__NftOwnable_init++`]]
+:linkToRegisteredNftId: pass:normal[xref:#NftOwnable-linkToRegisteredNftId--[`++linkToRegisteredNftId++`]]
+:getNftId: pass:normal[xref:#NftOwnable-getNftId--[`++getNftId++`]]
+:getOwner: pass:normal[xref:#NftOwnable-getOwner--[`++getOwner++`]]
+:_linkToNftOwnable: pass:normal[xref:#NftOwnable-_linkToNftOwnable-address-[`++_linkToNftOwnable++`]]
+
+[.contract]
+[[NftOwnable]]
+=== `++NftOwnable++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/shared/NftOwnable.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/shared/NftOwnable.sol";
+```
+
+[.contract-index]
+.Modifiers
+--
+* {xref-NftOwnable-onlyOwner--}[`++onlyOwner()++`]
+* {xref-NftOwnable-onlyNftOwner-NftId-}[`++onlyNftOwner(nftId)++`]
+--
+
+[.contract-index]
+.Functions
+--
+* [`++__NftOwnable_init(initialOwner)++`]
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+* [`++_linkToNftOwnable(nftOwnableAddress)++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+* [`++getRegistry()++`]
+* [`++_getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+* [`++__ERC165_init()++`]
+* [`++_initializeERC165()++`]
+* [`++_registerInterface(interfaceId)++`]
+* [`++_registerInterfaceNotInitializing(interfaceId)++`]
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.INftOwnable
+* [`++LogNftOwnableNftLinkedToAddress(nftId, owner)++`]
+
+[.contract-subindex-inherited]
+.RegistryLinked
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[NftOwnable-onlyOwner--]]
+==== `[.contract-item-name]#++onlyOwner++#++()++` [.item-kind]#modifier#
+
+enforces msg.sender is owner of nft (or initial owner of nft ownable)
+
+[.contract-item]
+[[NftOwnable-onlyNftOwner-NftId-]]
+==== `[.contract-item-name]#++onlyNftOwner++#++(NftId nftId)++` [.item-kind]#modifier#
+
+[.contract-item]
+[[NftOwnable-__NftOwnable_init-address-]]
+==== `[.contract-item-name]#++__NftOwnable_init++#++(address initialOwner)++` [.item-kind]#internal#
+
+Initialization for upgradable contracts.
+
+[.contract-item]
+[[NftOwnable-linkToRegisteredNftId--]]
+==== `[.contract-item-name]#++linkToRegisteredNftId++#++() → NftId nftId++` [.item-kind]#public#
+
+links this contract to nft after registration
+
+[.contract-item]
+[[NftOwnable-getNftId--]]
+==== `[.contract-item-name]#++getNftId++#++() → NftId++` [.item-kind]#public#
+
+[.contract-item]
+[[NftOwnable-getOwner--]]
+==== `[.contract-item-name]#++getOwner++#++() → address++` [.item-kind]#public#
+
+[.contract-item]
+[[NftOwnable-_linkToNftOwnable-address-]]
+==== `[.contract-item-name]#++_linkToNftOwnable++#++(address nftOwnableAddress) → NftId++` [.item-kind]#internal#
+
+used in constructor of registry service manager
+
+:__PolicyHolder_init: pass:normal[xref:#PolicyHolder-__PolicyHolder_init--[`++__PolicyHolder_init++`]]
+:policyActivated: pass:normal[xref:#PolicyHolder-policyActivated-NftId-Timestamp-[`++policyActivated++`]]
+:policyExpired: pass:normal[xref:#PolicyHolder-policyExpired-NftId-Timestamp-[`++policyExpired++`]]
+:claimConfirmed: pass:normal[xref:#PolicyHolder-claimConfirmed-NftId-ClaimId-Amount-[`++claimConfirmed++`]]
+:payoutExecuted: pass:normal[xref:#PolicyHolder-payoutExecuted-NftId-PayoutId-Amount-address-[`++payoutExecuted++`]]
+:onERC721Received: pass:normal[xref:#PolicyHolder-onERC721Received-address-address-uint256-bytes-[`++onERC721Received++`]]
+
+[.contract]
+[[PolicyHolder]]
+=== `++PolicyHolder++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/shared/PolicyHolder.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/shared/PolicyHolder.sol";
+```
+
+template implementation for IPolicyHolder
+
+[.contract-index]
+.Functions
+--
+* [`++__PolicyHolder_init()++`]
+* [`++policyActivated(policyNftId, activatedAt)++`]
+* [`++policyExpired(policyNftId, expiredAt)++`]
+* [`++claimConfirmed(policyNftId, claimId, amount)++`]
+* [`++payoutExecuted(policyNftId, payoutId, amount, beneficiary)++`]
+* [`++onERC721Received(, , , )++`]
+
+[.contract-subindex-inherited]
+.IPolicyHolder
+
+[.contract-subindex-inherited]
+.RegistryLinked
+* [`++getRegistry()++`]
+* [`++_getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.IERC721Receiver
+
+[.contract-subindex-inherited]
+.InitializableERC165
+* [`++__ERC165_init()++`]
+* [`++_initializeERC165()++`]
+* [`++_registerInterface(interfaceId)++`]
+* [`++_registerInterfaceNotInitializing(interfaceId)++`]
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.IPolicyHolder
+
+[.contract-subindex-inherited]
+.RegistryLinked
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.IERC721Receiver
+
+[.contract-subindex-inherited]
+.InitializableERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[PolicyHolder-__PolicyHolder_init--]]
+==== `[.contract-item-name]#++__PolicyHolder_init++#++()++` [.item-kind]#internal#
+
+[.contract-item]
+[[PolicyHolder-policyActivated-NftId-Timestamp-]]
+==== `[.contract-item-name]#++policyActivated++#++(NftId policyNftId, Timestamp activatedAt)++` [.item-kind]#external#
+
+empty default implementation
+
+[.contract-item]
+[[PolicyHolder-policyExpired-NftId-Timestamp-]]
+==== `[.contract-item-name]#++policyExpired++#++(NftId policyNftId, Timestamp expiredAt)++` [.item-kind]#external#
+
+empty default implementation
+
+[.contract-item]
+[[PolicyHolder-claimConfirmed-NftId-ClaimId-Amount-]]
+==== `[.contract-item-name]#++claimConfirmed++#++(NftId policyNftId, ClaimId claimId, Amount amount)++` [.item-kind]#external#
+
+empty default implementation
+
+[.contract-item]
+[[PolicyHolder-payoutExecuted-NftId-PayoutId-Amount-address-]]
+==== `[.contract-item-name]#++payoutExecuted++#++(NftId policyNftId, PayoutId payoutId, Amount amount, address beneficiary)++` [.item-kind]#external#
+
+empty default implementation
+
+[.contract-item]
+[[PolicyHolder-onERC721Received-address-address-uint256-bytes-]]
+==== `[.contract-item-name]#++onERC721Received++#++(address, address, uint256, bytes) → bytes4++` [.item-kind]#external#
+
+:REGISTERABLE_LOCATION_V1: pass:normal[xref:#Registerable-REGISTERABLE_LOCATION_V1-bytes32[`++REGISTERABLE_LOCATION_V1++`]]
+:RegisterableStorage: pass:normal[xref:#Registerable-RegisterableStorage[`++RegisterableStorage++`]]
+:onlyActive: pass:normal[xref:#Registerable-onlyActive--[`++onlyActive++`]]
+:onlyNftOfType: pass:normal[xref:#Registerable-onlyNftOfType-NftId-ObjectType-[`++onlyNftOfType++`]]
+:_checkNftType: pass:normal[xref:#Registerable-_checkNftType-NftId-ObjectType-[`++_checkNftType++`]]
+:__Registerable_init: pass:normal[xref:#Registerable-__Registerable_init-address-NftId-ObjectType-bool-address-bytes-[`++__Registerable_init++`]]
+:isActive: pass:normal[xref:#Registerable-isActive--[`++isActive++`]]
+:getInitialInfo: pass:normal[xref:#Registerable-getInitialInfo--[`++getInitialInfo++`]]
+:getInitialData: pass:normal[xref:#Registerable-getInitialData--[`++getInitialData++`]]
+
+[.contract]
+[[Registerable]]
+=== `++Registerable++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/shared/Registerable.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/shared/Registerable.sol";
+```
+
+[.contract-index]
+.Modifiers
+--
+* {xref-Registerable-onlyActive--}[`++onlyActive()++`]
+* {xref-Registerable-onlyNftOfType-NftId-ObjectType-}[`++onlyNftOfType(nftId, expectedObjectType)++`]
+--
+
+[.contract-index]
+.Functions
+--
+* [`++_checkNftType(nftId, expectedObjectType)++`]
+* [`++__Registerable_init(authority, parentNftId, objectType, isInterceptor, initialOwner, data)++`]
+* [`++isActive()++`]
+* [`++getInitialInfo()++`]
+* [`++getInitialData()++`]
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.Versionable
+* [`++__Versionable_init(release)++`]
+* [`++getVersion()++`]
+* [`++getRelease()++`]
+* [`++_checkRelease(release)++`]
+
+[.contract-subindex-inherited]
+.IVersionable
+
+[.contract-subindex-inherited]
+.NftOwnable
+* [`++__NftOwnable_init(initialOwner)++`]
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+* [`++_linkToNftOwnable(nftOwnableAddress)++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+* [`++getRegistry()++`]
+* [`++_getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+* [`++__ERC165_init()++`]
+* [`++_initializeERC165()++`]
+* [`++_registerInterface(interfaceId)++`]
+* [`++_registerInterfaceNotInitializing(interfaceId)++`]
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+* [`++__AccessManaged_init(initialAuthority)++`]
+* [`++__AccessManaged_init_unchained(initialAuthority)++`]
+* [`++authority()++`]
+* [`++setAuthority(newAuthority)++`]
+* [`++isConsumingScheduledOp()++`]
+* [`++_setAuthority(newAuthority)++`]
+* [`++_checkCanCall(caller, data)++`]
+
+[.contract-subindex-inherited]
+.IAccessManaged
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+* [`++__Context_init()++`]
+* [`++__Context_init_unchained()++`]
+* [`++_msgSender()++`]
+* [`++_msgData()++`]
+* [`++_contextSuffixLength()++`]
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.Versionable
+
+[.contract-subindex-inherited]
+.IVersionable
+
+[.contract-subindex-inherited]
+.NftOwnable
+
+[.contract-subindex-inherited]
+.INftOwnable
+* [`++LogNftOwnableNftLinkedToAddress(nftId, owner)++`]
+
+[.contract-subindex-inherited]
+.RegistryLinked
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[Registerable-onlyActive--]]
+==== `[.contract-item-name]#++onlyActive++#++()++` [.item-kind]#modifier#
+
+[.contract-item]
+[[Registerable-onlyNftOfType-NftId-ObjectType-]]
+==== `[.contract-item-name]#++onlyNftOfType++#++(NftId nftId, ObjectType expectedObjectType)++` [.item-kind]#modifier#
+
+[.contract-item]
+[[Registerable-_checkNftType-NftId-ObjectType-]]
+==== `[.contract-item-name]#++_checkNftType++#++(NftId nftId, ObjectType expectedObjectType)++` [.item-kind]#internal#
+
+[.contract-item]
+[[Registerable-__Registerable_init-address-NftId-ObjectType-bool-address-bytes-]]
+==== `[.contract-item-name]#++__Registerable_init++#++(address authority, NftId parentNftId, ObjectType objectType, bool isInterceptor, address initialOwner, bytes data)++` [.item-kind]#internal#
+
+[.contract-item]
+[[Registerable-isActive--]]
+==== `[.contract-item-name]#++isActive++#++() → bool active++` [.item-kind]#public#
+
+Returns true iff this contract managed by its authority is active.
+Queries the IAccessManaged.authority().
+
+[.contract-item]
+[[Registerable-getInitialInfo--]]
+==== `[.contract-item-name]#++getInitialInfo++#++() → struct IRegistry.ObjectInfo info++` [.item-kind]#public#
+
+retuns the object info relevant for registering for this contract 
+IMPORTANT information returned by this function may only be used
+before the contract is registered in the registry.
+Once registered this information MUST only be accessed via the registry.
+
+[.contract-item]
+[[Registerable-getInitialData--]]
+==== `[.contract-item-name]#++getInitialData++#++() → bytes data++` [.item-kind]#public#
+
+:getRegistry: pass:normal[xref:#RegistryLinked-getRegistry--[`++getRegistry++`]]
+:_getRegistry: pass:normal[xref:#RegistryLinked-_getRegistry--[`++_getRegistry++`]]
+
+[.contract]
+[[RegistryLinked]]
+=== `++RegistryLinked++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/shared/RegistryLinked.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/shared/RegistryLinked.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++getRegistry()++`]
+* [`++_getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+--
+
+[.contract-item]
+[[RegistryLinked-getRegistry--]]
+==== `[.contract-item-name]#++getRegistry++#++() → contract IRegistry++` [.item-kind]#external#
+
+[.contract-item]
+[[RegistryLinked-_getRegistry--]]
+==== `[.contract-item-name]#++_getRegistry++#++() → contract IRegistry++` [.item-kind]#internal#
+
+:__Service_init: pass:normal[xref:#Service-__Service_init-address-address-[`++__Service_init++`]]
+:getDomain: pass:normal[xref:#Service-getDomain--[`++getDomain++`]]
+:getVersion: pass:normal[xref:#Service-getVersion--[`++getVersion++`]]
+:getRoleId: pass:normal[xref:#Service-getRoleId--[`++getRoleId++`]]
+:_getDomain: pass:normal[xref:#Service-_getDomain--[`++_getDomain++`]]
+:_getServiceAddress: pass:normal[xref:#Service-_getServiceAddress-ObjectType-[`++_getServiceAddress++`]]
+
+[.contract]
+[[Service]]
+=== `++Service++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/shared/Service.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/shared/Service.sol";
+```
+
+service base contract
+
+[.contract-index]
+.Functions
+--
+* [`++__Service_init(authority, initialOwner)++`]
+* [`++getDomain()++`]
+* [`++getVersion()++`]
+* [`++getRoleId()++`]
+* [`++_getDomain()++`]
+* [`++_getServiceAddress(domain)++`]
+
+[.contract-subindex-inherited]
+.IService
+
+[.contract-subindex-inherited]
+.ReentrancyGuardUpgradeable
+* [`++__ReentrancyGuard_init()++`]
+* [`++__ReentrancyGuard_init_unchained()++`]
+* [`++_reentrancyGuardEntered()++`]
+
+[.contract-subindex-inherited]
+.Upgradeable
+* [`++initialize(activatedBy, data)++`]
+* [`++upgrade(data)++`]
+* [`++_initialize(, )++`]
+* [`++_upgrade(data)++`]
+
+[.contract-subindex-inherited]
+.IUpgradeable
+
+[.contract-subindex-inherited]
+.Registerable
+* [`++_checkNftType(nftId, expectedObjectType)++`]
+* [`++__Registerable_init(authority, parentNftId, objectType, isInterceptor, initialOwner, data)++`]
+* [`++isActive()++`]
+* [`++getInitialInfo()++`]
+* [`++getInitialData()++`]
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.Versionable
+* [`++__Versionable_init(release)++`]
+* [`++getRelease()++`]
+* [`++_checkRelease(release)++`]
+
+[.contract-subindex-inherited]
+.IVersionable
+
+[.contract-subindex-inherited]
+.NftOwnable
+* [`++__NftOwnable_init(initialOwner)++`]
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+* [`++_linkToNftOwnable(nftOwnableAddress)++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+* [`++getRegistry()++`]
+* [`++_getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+* [`++__ERC165_init()++`]
+* [`++_initializeERC165()++`]
+* [`++_registerInterface(interfaceId)++`]
+* [`++_registerInterfaceNotInitializing(interfaceId)++`]
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+* [`++__AccessManaged_init(initialAuthority)++`]
+* [`++__AccessManaged_init_unchained(initialAuthority)++`]
+* [`++authority()++`]
+* [`++setAuthority(newAuthority)++`]
+* [`++isConsumingScheduledOp()++`]
+* [`++_setAuthority(newAuthority)++`]
+* [`++_checkCanCall(caller, data)++`]
+
+[.contract-subindex-inherited]
+.IAccessManaged
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+* [`++__Context_init()++`]
+* [`++__Context_init_unchained()++`]
+* [`++_msgSender()++`]
+* [`++_msgData()++`]
+* [`++_contextSuffixLength()++`]
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.IService
+
+[.contract-subindex-inherited]
+.ReentrancyGuardUpgradeable
+
+[.contract-subindex-inherited]
+.Upgradeable
+
+[.contract-subindex-inherited]
+.IUpgradeable
+
+[.contract-subindex-inherited]
+.Registerable
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.Versionable
+
+[.contract-subindex-inherited]
+.IVersionable
+
+[.contract-subindex-inherited]
+.NftOwnable
+
+[.contract-subindex-inherited]
+.INftOwnable
+* [`++LogNftOwnableNftLinkedToAddress(nftId, owner)++`]
+
+[.contract-subindex-inherited]
+.RegistryLinked
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[Service-__Service_init-address-address-]]
+==== `[.contract-item-name]#++__Service_init++#++(address authority, address initialOwner)++` [.item-kind]#internal#
+
+[.contract-item]
+[[Service-getDomain--]]
+==== `[.contract-item-name]#++getDomain++#++() → ObjectType serviceDomain++` [.item-kind]#external#
+
+returns the domain for this service.
+In any GIF release only one service for any given domain may be deployed.
+
+[.contract-item]
+[[Service-getVersion--]]
+==== `[.contract-item-name]#++getVersion++#++() → Version++` [.item-kind]#public#
+
+[.contract-item]
+[[Service-getRoleId--]]
+==== `[.contract-item-name]#++getRoleId++#++() → RoleId serviceRoleId++` [.item-kind]#external#
+
+returns the GIF release specific role id.
+These role ids are used to authorize service to service communication.
+
+[.contract-item]
+[[Service-_getDomain--]]
+==== `[.contract-item-name]#++_getDomain++#++() → ObjectType++` [.item-kind]#internal#
+
+[.contract-item]
+[[Service-_getServiceAddress-ObjectType-]]
+==== `[.contract-item-name]#++_getServiceAddress++#++(ObjectType domain) → address++` [.item-kind]#internal#
+
+:ErrorTokenHandlerNotService: pass:normal[xref:#TokenHandler-ErrorTokenHandlerNotService-address-[`++ErrorTokenHandlerNotService++`]]
+:onlyService: pass:normal[xref:#TokenHandler-onlyService--[`++onlyService++`]]
+:constructor: pass:normal[xref:#TokenHandler-constructor-address-address-address-address-[`++constructor++`]]
+:setWallet: pass:normal[xref:#TokenHandler-setWallet-address-[`++setWallet++`]]
+:approve: pass:normal[xref:#TokenHandler-approve-contract-IERC20Metadata-Amount-[`++approve++`]]
+:pullToken: pass:normal[xref:#TokenHandler-pullToken-address-Amount-[`++pullToken++`]]
+:pushToken: pass:normal[xref:#TokenHandler-pushToken-address-Amount-[`++pushToken++`]]
+:pushFeeToken: pass:normal[xref:#TokenHandler-pushFeeToken-address-Amount-[`++pushFeeToken++`]]
+
+[.contract]
+[[TokenHandler]]
+=== `++TokenHandler++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/shared/TokenHandler.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/shared/TokenHandler.sol";
+```
+
+Token specific transfer helper.
+Contract is derived from TokenHandlerBase and adds 
+authorization based on OpenZeppelin AccessManaged.
+
+[.contract-index]
+.Modifiers
+--
+* {xref-TokenHandler-onlyService--}[`++onlyService()++`]
+--
+
+[.contract-index]
+.Functions
+--
+* [`++constructor(registry, component, token, authority)++`]
+* [`++setWallet(newWallet)++`]
+* [`++approve(token, amount)++`]
+* [`++pullToken(from, amount)++`]
+* [`++pushToken(to, amount)++`]
+* [`++pushFeeToken(to, amount)++`]
+
+[.contract-subindex-inherited]
+.TokenHandlerBase
+* [`++checkBalanceAndAllowance(from, amount, checkAmount)++`]
+* [`++getWallet()++`]
+* [`++_approve(token, amount)++`]
+* [`++_setWallet(newWallet)++`]
+* [`++_pullToken(from, amount)++`]
+* [`++_pushToken(to, amount)++`]
+* [`++_transfer(from, to, amount, checkPreconditions)++`]
+* [`++_checkBalanceAndAllowance(from, amount, checkAmount)++`]
+
+[.contract-subindex-inherited]
+.AccessManaged
+* [`++authority()++`]
+* [`++setAuthority(newAuthority)++`]
+* [`++isConsumingScheduledOp()++`]
+* [`++_setAuthority(newAuthority)++`]
+* [`++_checkCanCall(caller, data)++`]
+
+[.contract-subindex-inherited]
+.IAccessManaged
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.TokenHandlerBase
+* [`++LogTokenHandlerWalletAddressChanged(componentNftId, oldWallet, newWallet)++`]
+* [`++LogTokenHandlerWalletTokensTransferred(componentNftId, oldWallet, newWallet, amount)++`]
+* [`++LogTokenHandlerTokenApproved(nftId, tokenHandler, token, amount, isMaxAmount)++`]
+* [`++LogTokenHandlerTokenTransfer(token, from, to, amount)++`]
+
+[.contract-subindex-inherited]
+.AccessManaged
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+--
+
+[.contract-item]
+[[TokenHandler-onlyService--]]
+==== `[.contract-item-name]#++onlyService++#++()++` [.item-kind]#modifier#
+
+[.contract-item]
+[[TokenHandler-constructor-address-address-address-address-]]
+==== `[.contract-item-name]#++constructor++#++(address registry, address component, address token, address authority)++` [.item-kind]#public#
+
+[.contract-item]
+[[TokenHandler-setWallet-address-]]
+==== `[.contract-item-name]#++setWallet++#++(address newWallet)++` [.item-kind]#external#
+
+Sets the wallet address for the component.
+Seeting the new wallet address to address(0) will set the wallet to the tokenHandler contract itself.
+If the current wallet has tokens, these will be transferred.
+If the new wallet address is externally owned, an approval from the 
+owner of the external wallet to the tokenhandler of the component that 
+covers the current component balance must exist.
+
+[.contract-item]
+[[TokenHandler-approve-contract-IERC20Metadata-Amount-]]
+==== `[.contract-item-name]#++approve++#++(contract IERC20Metadata token, Amount amount)++` [.item-kind]#external#
+
+Approves token handler to spend up to the specified amount of tokens.
+Sets spending limit to type(uint256).max for AmountLib.max().
+Reverts if component wallet is not component itself.
+Sets approvel using SareERC20.forceApprove internally.
+
+[.contract-item]
+[[TokenHandler-pullToken-address-Amount-]]
+==== `[.contract-item-name]#++pullToken++#++(address from, Amount amount)++` [.item-kind]#external#
+
+Collect tokens from outside of GIF and transfer them to the wallet.
+This method also checks balance and allowance and makes sure the amount is greater than zero.
+
+[.contract-item]
+[[TokenHandler-pushToken-address-Amount-]]
+==== `[.contract-item-name]#++pushToken++#++(address to, Amount amount)++` [.item-kind]#external#
+
+Distribute tokens from a wallet within the scope of gif to some address.
+
+[.contract-item]
+[[TokenHandler-pushFeeToken-address-Amount-]]
+==== `[.contract-item-name]#++pushFeeToken++#++(address to, Amount amount)++` [.item-kind]#external#
+
+Distribute fee tokens from a wallet within the scope of gif to some address.
+Separate push function for component service.
+
+:__Versionable_init: pass:normal[xref:#Versionable-__Versionable_init-VersionPart-[`++__Versionable_init++`]]
+:getVersion: pass:normal[xref:#Versionable-getVersion--[`++getVersion++`]]
+:getRelease: pass:normal[xref:#Versionable-getRelease--[`++getRelease++`]]
+:_checkRelease: pass:normal[xref:#Versionable-_checkRelease-VersionPart-[`++_checkRelease++`]]
+
+[.contract]
+[[Versionable]]
+=== `++Versionable++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/shared/Versionable.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/shared/Versionable.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++__Versionable_init(release)++`]
+* [`++getVersion()++`]
+* [`++getRelease()++`]
+* [`++_checkRelease(release)++`]
+
+[.contract-subindex-inherited]
+.IVersionable
+
+--
+
+[.contract-item]
+[[Versionable-__Versionable_init-VersionPart-]]
+==== `[.contract-item-name]#++__Versionable_init++#++(VersionPart release)++` [.item-kind]#internal#
+
+[.contract-item]
+[[Versionable-getVersion--]]
+==== `[.contract-item-name]#++getVersion++#++() → Version++` [.item-kind]#public#
+
+returns version of this contract
+implementation MUST define version in this function
+version number MUST increase
+
+[.contract-item]
+[[Versionable-getRelease--]]
+==== `[.contract-item-name]#++getRelease++#++() → VersionPart++` [.item-kind]#public#
+
+[.contract-item]
+[[Versionable-_checkRelease-VersionPart-]]
+==== `[.contract-item-name]#++_checkRelease++#++(VersionPart release)++` [.item-kind]#internal#
+
