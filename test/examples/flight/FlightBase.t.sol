@@ -20,6 +20,8 @@ import {NftId} from "../../../contracts/type/NftId.sol";
 import {RequestId} from "../../../contracts/type/RequestId.sol";
 import {RiskId} from "../../../contracts/type/RiskId.sol";
 import {RoleId} from "../../../contracts/type/RoleId.sol";
+import {Seconds, SecondsLib} from "../../../contracts/type/Seconds.sol";
+import {SigUtils} from "./SigUtils.sol";
 import {Str, StrLib} from "../../../contracts/type/String.sol";
 import {Timestamp, TimestampLib} from "../../../contracts/type/Timestamp.sol";
 import {VersionPartLib} from "../../../contracts/type/Version.sol";
@@ -27,11 +29,15 @@ import {VersionPartLib} from "../../../contracts/type/Version.sol";
 
 contract FlightBaseTest is GifTest {
 
+
+    SigUtils internal sigUtils;
+
     address public flightOwner = makeAddr("flightOwner");
 
     FlightUSD public flightUSD;
     FlightOracle public flightOracle;
     FlightPool public flightPool;
+
     FlightProduct public flightProduct;
 
     NftId public flightOracleNftId;
@@ -63,7 +69,90 @@ contract FlightBaseTest is GifTest {
 
         // do some initial funding
         _initialFundAccounts();
+
+        sigUtils = new SigUtils(flightUSD.DOMAIN_SEPARATOR());
     }
+
+
+    function _createPermitWithSignature(
+        address policyHolder,
+        Amount premiumAmount,
+        uint256 policyHolderPrivateKey,
+        uint256 nonce
+    )
+        internal
+        view
+        returns (FlightProduct.PermitData memory permit)
+    {
+        SigUtils.Permit memory suPermit = SigUtils.Permit({
+            owner: policyHolder,
+            spender: address(flightProduct.getTokenHandler()),
+            value: premiumAmount.toInt(),
+            nonce: nonce,
+            deadline: TimestampLib.current().toInt() + 3600
+        });
+
+        bytes32 digest = sigUtils.getTypedDataHash(suPermit);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(policyHolderPrivateKey, digest);
+
+        permit.owner = policyHolder;
+        permit.spender = address(flightProduct.getTokenHandler());
+        permit.value = premiumAmount.toInt();
+        permit.deadline = TimestampLib.current().toInt() + 3600;
+        permit.v = v;
+        permit.r = r;
+        permit.s = s;
+    }
+
+
+    function _createPolicySimple(
+        Str flightData, // example: "LX 180 ZRH BKK 20241104"
+        Timestamp departureTime,
+        Timestamp arrivalTime,
+        uint256 [6] memory statistics,
+        FlightProduct.PermitData memory permit
+    )
+        internal
+        returns (NftId policyNftId)
+    {
+        return _createPolicy(
+            flightData,
+            departureTime,
+            "departure date time local timezone",
+            arrivalTime,
+            "arrival date time local timezome",
+            statistics,
+            permit
+        );
+    }
+
+
+    function _createPolicy(
+        Str flightData, // example: "LX 180 ZRH BKK 20241104"
+        Timestamp departureTime,
+        string memory departureTimeLocal, // example "2024-10-14T10:10:00.000 Europe/Zurich"
+        Timestamp arrivalTime,
+        string memory arrivalTimeLocal, // example "2024-10-14T10:10:00.000 Asia/Seoul"
+        uint256 [6] memory statistics,
+        FlightProduct.PermitData memory permit
+    )
+        internal
+        returns (NftId policyNftId)
+    {
+        (, policyNftId) = flightProduct.createPolicyWithPermit(
+            permit,
+            FlightProduct.ApplicationData({
+                flightData: flightData,
+                departureTime: departureTime,
+                departureTimeLocal: departureTimeLocal,
+                arrivalTime: arrivalTime,
+                arrivalTimeLocal: arrivalTimeLocal,
+                premiumAmount: AmountLib.toAmount(permit.value),
+                statistics: statistics
+            })
+        );
+    }
+
 
     function _deployFlightUSD() internal {
         // deploy fire token
@@ -100,6 +189,15 @@ contract FlightBaseTest is GifTest {
             "FlightProduct",
             productAuthz
         );
+
+        // flightProductManager = new FlightProductManager(
+        //     address(registry),
+        //     instanceNftId,
+        //     "FlightProduct",
+        //     productAuthz);
+
+        // flightProduct = flightProductManager.getFlightProduct();
+
         vm.stopPrank();
 
         // instance owner registeres fire product with instance (and registry)
@@ -117,8 +215,17 @@ contract FlightBaseTest is GifTest {
         vm.stopPrank();
 
         // complete setup
-        vm.prank(flightOwner);
-        flightProduct.completeSetup();
+        vm.startPrank(flightOwner);
+        flightProduct.setConstants(
+            AmountLib.toAmount(15 * 10 ** flightUSD.decimals()), // 15 USD min premium
+            AmountLib.toAmount(15 * 10 ** flightUSD.decimals()), // 15 USD max premium
+            AmountLib.toAmount(200 * 10 ** flightUSD.decimals()), // 200 USD max payout
+            AmountLib.toAmount(600 * 10 ** flightUSD.decimals()), // 600 USD max total payout
+            SecondsLib.fromDays(14), // min time before departure
+            SecondsLib.fromDays(90), // max time before departure
+            5 // max policies to process
+        );
+        vm.stopPrank();
     }
 
 
@@ -193,6 +300,7 @@ contract FlightBaseTest is GifTest {
 
         (v, r, s) = vm.sign(signerPrivateKey, ratingsHash);
     }
+
 
     function _createInitialBundle() internal returns (NftId bundleNftId) {
         vm.startPrank(flightOwner);

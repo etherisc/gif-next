@@ -11,12 +11,26 @@ import {InstanceReader} from "../../instance/InstanceReader.sol";
 import {NftId} from "../../type/NftId.sol";
 import {RequestId} from "../../type/RequestId.sol";
 import {RiskId, RiskIdLib} from "../../type/RiskId.sol";
+import {Seconds} from "../../type/Seconds.sol";
 import {StateId} from "../../type/StateId.sol";
 import {Str} from "../../type/String.sol";
 import {Timestamp, TimestampLib} from "../../type/Timestamp.sol";
 
 
 library FlightLib {
+
+    event LogFlightProductErrorUnprocessableStatus(RequestId requestId, RiskId riskId, bytes1 status);
+    event LogFlightProductErrorUnexpectedStatus(RequestId requestId, RiskId riskId, bytes1 status, int256 delayMinutes);
+
+    error ErrorFlightProductRiskInvalid(RiskId riskId);
+    error ErrorFlightProductPremiumAmountTooSmall(Amount premiumAmount, Amount minPremium);
+    error ErrorFlightProductPremiumAmountTooLarge(Amount premiumAmount, Amount maxPremium);
+    error ErrorFlightProductArrivalBeforeDepartureTime(Timestamp departureTime, Timestamp arrivalTime);
+    error ErrorFlightProductArrivalAfterMaxFlightDuration(Timestamp arrivalTime, Timestamp maxArrivalTime, Seconds maxDuration);
+    error ErrorFlightProductDepartureBeforeMinTimeBeforeDeparture(Timestamp departureTime, Timestamp now, Seconds minTimeBeforeDeparture);
+    error ErrorFlightProductDepartureAfterMaxTimeBeforeDeparture(Timestamp departureTime, Timestamp now, Seconds maxTimeBeforeDeparture);
+    error ErrorFlightProductNotEnoughObservations(uint256 observations, uint256 minObservations);
+    error ErrorFlightProductClusterRisk(Amount totalSumInsured, Amount maxTotalPayout);
 
     function checkApplicationData(
         FlightProduct flightProduct,
@@ -45,32 +59,45 @@ library FlightLib {
 
         // solhint-disable
         if (premiumAmount < flightProduct.MIN_PREMIUM()) {
-            revert FlightProduct.ErrorFlightProductPremiumAmountTooSmall(premiumAmount, flightProduct.MIN_PREMIUM());
+            revert ErrorFlightProductPremiumAmountTooSmall(premiumAmount, flightProduct.MIN_PREMIUM());
         }
         if (premiumAmount > flightProduct.MAX_PREMIUM()) {
-            revert FlightProduct.ErrorFlightProductPremiumAmountTooLarge(premiumAmount, flightProduct.MAX_PREMIUM());
+            revert ErrorFlightProductPremiumAmountTooLarge(premiumAmount, flightProduct.MAX_PREMIUM());
         }
         if (arrivalTime <= departureTime) {
-            revert FlightProduct.ErrorFlightProductArrivalBeforeDepartureTime(departureTime, arrivalTime);
+            revert ErrorFlightProductArrivalBeforeDepartureTime(departureTime, arrivalTime);
+        }
+        if (arrivalTime > departureTime.addSeconds(flightProduct.MAX_FLIGHT_DURATION())) {
+            revert ErrorFlightProductArrivalAfterMaxFlightDuration(arrivalTime, departureTime, flightProduct.MAX_FLIGHT_DURATION());
         }
 
-        // test mode allows the creation for policies that ore not time constrained
-        if (!testMode && arrivalTime > departureTime.addSeconds(flightProduct.MAX_FLIGHT_DURATION())) {
-            revert FlightProduct.ErrorFlightProductArrivalAfterMaxFlightDuration(arrivalTime, departureTime, flightProduct.MAX_FLIGHT_DURATION());
-        }
+        // test mode allows the creation for policies that are outside restricted policy creation times
         if (!testMode && departureTime < TimestampLib.current().addSeconds(flightProduct.MIN_TIME_BEFORE_DEPARTURE())) {
-            revert FlightProduct.ErrorFlightProductDepartureBeforeMinTimeBeforeDeparture(departureTime, TimestampLib.current(), flightProduct.MIN_TIME_BEFORE_DEPARTURE());
+            revert ErrorFlightProductDepartureBeforeMinTimeBeforeDeparture(departureTime, TimestampLib.current(), flightProduct.MIN_TIME_BEFORE_DEPARTURE());
         }
         if (!testMode && departureTime > TimestampLib.current().addSeconds(flightProduct.MAX_TIME_BEFORE_DEPARTURE())) {
-            revert FlightProduct.ErrorFlightProductDepartureAfterMaxTimeBeforeDeparture(departureTime, TimestampLib.current(), flightProduct.MAX_TIME_BEFORE_DEPARTURE());
+            revert ErrorFlightProductDepartureAfterMaxTimeBeforeDeparture(departureTime, TimestampLib.current(), flightProduct.MAX_TIME_BEFORE_DEPARTURE());
         }
         // solhint-enable
     }
 
 
+    function checkClusterRisk(
+        Amount sumOfSumInsuredAmounts,
+        Amount sumInsuredAmount,
+        Amount maxTotalPayout
+    )
+        public
+        pure
+    {
+        if (sumOfSumInsuredAmounts + sumInsuredAmount > maxTotalPayout) {
+            revert ErrorFlightProductClusterRisk(sumOfSumInsuredAmounts + sumInsuredAmount, maxTotalPayout);
+        }
+    }
+
+
     /// @dev calculates payout option based on flight status and delay minutes.
     /// Is not a view function as it emits log evens in case of unexpected status.
-    // TODO decide if reverts instead of log events could work too (and convert the function into a view function)
     function checkAndGetPayoutOption(
         RequestId requestId,
         RiskId riskId, 
@@ -85,13 +112,13 @@ library FlightLib {
 
         // check status
         if (status != "L" && status != "A" && status != "C" && status != "D") {
-            emit FlightProduct.LogErrorUnprocessableStatus(requestId, riskId, status);
+            emit LogFlightProductErrorUnprocessableStatus(requestId, riskId, status);
             return payoutOption;
         }
 
         if (status == "A") {
             // todo: active, reschedule oracle call + 45 min
-            emit FlightProduct.LogErrorUnexpectedStatus(requestId, riskId, status, delayMinutes);
+            emit LogFlightProductErrorUnexpectedStatus(requestId, riskId, status, delayMinutes);
             return payoutOption;
         }
 
@@ -114,7 +141,7 @@ library FlightLib {
     {
         // check we have enough observations
         if (statistics[0] < flightProduct.MIN_OBSERVATIONS()) {
-            revert FlightProduct.ErrorFlightProductNotEnoughObservations(statistics[0], flightProduct.MIN_OBSERVATIONS());
+            revert ErrorFlightProductNotEnoughObservations(statistics[0], flightProduct.MIN_OBSERVATIONS());
         }
 
         weight = 0;
@@ -147,10 +174,10 @@ library FlightLib {
         )
     {
         if (premium < flightProduct.MIN_PREMIUM()) { 
-            revert FlightProduct.ErrorFlightProductPremiumAmountTooSmall(premium, flightProduct.MIN_PREMIUM()); 
+            revert ErrorFlightProductPremiumAmountTooSmall(premium, flightProduct.MIN_PREMIUM()); 
         }
         if (premium > flightProduct.MAX_PREMIUM()) { 
-            revert FlightProduct.ErrorFlightProductPremiumAmountTooLarge(premium, flightProduct.MAX_PREMIUM()); 
+            revert ErrorFlightProductPremiumAmountTooLarge(premium, flightProduct.MAX_PREMIUM()); 
         }
 
         sumInsuredAmount = AmountLib.zero();
@@ -186,7 +213,8 @@ library FlightLib {
         (exists, flightRisk) = getFlightRisk(
             reader, 
             productNftId, 
-            riskId);
+            riskId,
+            false);
         
         statusAvailable = flightRisk.statusUpdatedAt.gtz();
         payoutOption = flightRisk.payoutOption;
@@ -201,6 +229,10 @@ library FlightLib {
         pure
         returns (Amount payoutAmount)
     {
+        if (payoutOption == type(uint8).max) {
+            return AmountLib.zero();
+        }
+
         // retrieve payout amounts from application data
         (, Amount[5] memory payoutAmounts) = abi.decode(
             applicationData, (Amount, Amount[5]));
@@ -228,7 +260,7 @@ library FlightLib {
         )
     {
         riskId = getRiskId(productNftId, flightData);
-        (exists, flightRisk) = getFlightRisk(reader, productNftId, riskId);
+        (exists, flightRisk) = getFlightRisk(reader, productNftId, riskId, false);
 
         // create new risk if not existing
         if (!exists) {
@@ -250,7 +282,8 @@ library FlightLib {
     function getFlightRisk(
         InstanceReader reader,
         NftId productNftId,
-        RiskId riskId
+        RiskId riskId,
+        bool requireRiskExists
     )
         public
         view
@@ -261,6 +294,10 @@ library FlightLib {
     {
         // check if risk exists
         exists = reader.isProductRisk(productNftId, riskId);
+
+        if (!exists && requireRiskExists) {
+            revert ErrorFlightProductRiskInvalid(riskId);
+        }
 
         // get risk data if risk exists
         if (exists) {

@@ -116,7 +116,7 @@ contract FlightPricingTest is FlightBaseTest {
 
     function test_flightPricingCalculateSumInsuredHappyCase() public {
         // GIVEN 
-        Amount premiumAmount = AmountLib.toAmount(100 * 10 ** flightUSD.decimals());
+        Amount premiumAmount = AmountLib.toAmount(15 * 10 ** flightUSD.decimals());
 
         // WHEN
         (
