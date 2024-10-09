@@ -10,6 +10,7 @@ import {IPolicy} from "../../instance/module/IPolicy.sol";
 
 import {Amount, AmountLib} from "../../type/Amount.sol";
 import {ClaimId} from "../../type/ClaimId.sol";
+import {Component} from "../../shared/Component.sol";
 import {FeeLib} from "../../type/Fee.sol";
 import {FlightLib} from "./FlightLib.sol";
 import {FlightMessageVerifier} from "./FlightMessageVerifier.sol";
@@ -24,10 +25,13 @@ import {RequestId} from "../../type/RequestId.sol";
 import {Seconds, SecondsLib} from "../../type/Seconds.sol";
 import {Str} from "../../type/String.sol";
 import {Timestamp, TimestampLib} from "../../type/Timestamp.sol";
+import {Version, VersionLib} from "../../type/Version.sol";
+import {Versionable} from "../../upgradeability/Versionable.sol";
 
 
 /// @dev FlightProduct implements the flight delay product.
 contract FlightProduct is
+    Versionable,
     Product
 {
 
@@ -108,21 +112,25 @@ contract FlightProduct is
     }
 
 
-    constructor(
-        address registry,
-        NftId instanceNftId,
-        string memory componentName,
-        IAuthorization authorization
-    )
-    {
-        address initialOwner = msg.sender;
+    // constructor(
+    //     address registry,
+    //     NftId instanceNftId,
+    //     string memory componentName,
+    //     IAuthorization authorization
+    // )
+    // {
+    //     address initialOwner = msg.sender;
 
-        _initialize(
-            registry,
-            instanceNftId,
-            componentName,
-            authorization,
-            initialOwner);
+    //     _initialize(
+    //         registry,
+    //         instanceNftId,
+    //         componentName,
+    //         authorization,
+    //         initialOwner);
+    // }
+
+    function getVersion() public pure virtual override (Component, Versionable) returns(Version) {
+        return VersionLib.toVersion(1, 0, 0);
     }
 
     //--- external functions ------------------------------------------------//
@@ -612,16 +620,31 @@ contract FlightProduct is
     }
 
 
+    // function _initialize(
+    //     address registry,
+    //     NftId instanceNftId,
+    //     string memory componentName,
+    //     IAuthorization authorization,
+    //     address initialOwner
+    // )
+    //     internal
+    //     initializer
+
     function _initialize(
-        address registry,
-        NftId instanceNftId,
-        string memory componentName,
-        IAuthorization authorization,
-        address initialOwner
-    )
+        address initialOwner,
+        bytes memory data
+    ) 
         internal
-        initializer
+        onlyInitializing()
+        virtual override
     {
+        (
+            address registry,
+            NftId instanceNftId,
+            string memory componentName,
+            IAuthorization authorization
+        ) = abi.decode(data, (address, NftId, string, IAuthorization));
+
         __Product_init(
             registry,
             instanceNftId,
