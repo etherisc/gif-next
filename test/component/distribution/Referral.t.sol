@@ -79,7 +79,7 @@ contract ReferralTest is ReferralTestBase {
         assertEq(instanceReader.getFeeAmount(bundleNftId).toInt(), bundleFeeInitial.toInt(), "unexpected initial bundle balance");
 
         // GIVEN
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(customer, 1000);
         vm.stopPrank();
 
@@ -180,7 +180,7 @@ contract ReferralTest is ReferralTestBase {
         // _setupBundle(bundleAmount);
 
         // GIVEN - two policies to collateralize
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(customer, 1000);
         token.transfer(customer2, 1000);
         vm.stopPrank();
@@ -450,7 +450,7 @@ contract ReferralTest is ReferralTestBase {
 
     function _setupBundle(uint256 bundleAmount) internal {
 
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(investor, bundleAmount);
         vm.stopPrank();
 

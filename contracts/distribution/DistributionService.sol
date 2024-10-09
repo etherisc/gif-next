@@ -20,8 +20,6 @@ import {KEEP_STATE} from "../type/StateId.sol";
 import {ObjectType, ACCOUNTING, COMPONENT, DISTRIBUTION, INSTANCE, DISTRIBUTION, DISTRIBUTOR, REGISTRY} from "../type/ObjectType.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
-// TODO PoolLib feels wrong, should likely go in a component type independent lib
-import {PoolLib} from "../pool/PoolLib.sol";
 import {ReferralId, ReferralStatus, ReferralLib, REFERRAL_OK, REFERRAL_ERROR_UNKNOWN, REFERRAL_ERROR_EXPIRED, REFERRAL_ERROR_EXHAUSTED} from "../type/Referral.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {Service} from "../shared/Service.sol";
@@ -44,14 +42,13 @@ contract DistributionService is
     )
         internal
         virtual override
-        initializer()
+        onlyInitializing()
     {
         (
-            address authority,
-            address registry
-        ) = abi.decode(data, (address, address));
+            address authority
+        ) = abi.decode(data, (address));
 
-        __Service_init(authority, registry, owner);
+        __Service_init(authority, owner);
 
         _accountingService = IAccountingService(_getServiceAddress(ACCOUNTING()));
         _componentService = IComponentService(_getServiceAddress(COMPONENT()));
@@ -81,7 +78,7 @@ contract DistributionService is
         (NftId distributionNftId, IInstance instance) = _getAndVerifyActiveDistribution();
 
         {
-            NftId productNftId = getRegistry().getParentNftId(distributionNftId);
+            NftId productNftId = _getRegistry().getParentNftId(distributionNftId);
             IComponents.FeeInfo memory feeInfo = instance.getInstanceReader().getFeeInfo(productNftId);
 
             UFixed variableDistributionFees = feeInfo.distributionFee.fractionalFee;
@@ -134,11 +131,12 @@ contract DistributionService is
                 NftIdLib.zero(), 
                 distributionNftId,
                 DISTRIBUTOR(),
+                getRelease(),
                 true, // intercepting property for bundles is defined on pool
-                address(0),
-                distributor,
-                ""
-            ));
+                address(0)),
+            distributor,
+            ""
+        );
 
         IDistribution.DistributorInfo memory info = IDistribution.DistributorInfo({
             distributorType: distributorType,
@@ -197,9 +195,11 @@ contract DistributionService is
             revert ErrorDistributionServiceExpirationInvalid(expiryAt);
         }
 
-        NftId distributorDistributionNftId = getRegistry().getParentNftId(distributorNftId);
-        if (distributorDistributionNftId != distributionNftId) {
-            revert ErrorDistributionServiceDistributorDistributionMismatch(distributorNftId, distributorDistributionNftId, distributionNftId);
+        {
+            NftId distributorDistributionNftId = _getRegistry().getParentNftId(distributorNftId);
+            if (distributorDistributionNftId != distributionNftId) {
+                revert ErrorDistributionServiceDistributorDistributionMismatch(distributorNftId, distributorDistributionNftId, distributionNftId);
+            }
         }
 
         {
@@ -251,7 +251,7 @@ contract DistributionService is
         onlyNftOfType(distributionNftId, DISTRIBUTION())
     {
         if (referralIsValid(distributionNftId, referralId)) {
-            IInstance instance = IInstance(ContractLib.getInstanceForComponent(getRegistry(), distributionNftId));
+            IInstance instance = IInstance(ContractLib.getInstanceForComponent(distributionNftId));
 
             // update book keeping for referral info
             IDistribution.ReferralInfo memory referralInfo = instance.getInstanceReader().getReferralInfo(referralId);
@@ -272,7 +272,7 @@ contract DistributionService is
         restricted()
         onlyNftOfType(distributionNftId, DISTRIBUTION())
     {
-        IInstance instance = IInstance(ContractLib.getInstanceForComponent(getRegistry(), distributionNftId));
+        IInstance instance = IInstance(ContractLib.getInstanceForComponent(distributionNftId));
         InstanceReader reader = instance.getInstanceReader();
         InstanceStore store = instance.getInstanceStore();
 
@@ -340,7 +340,7 @@ contract DistributionService is
 
         // transfer amount to distributor
         {
-            address distributor = getRegistry().ownerOf(distributorNftId);
+            address distributor = _getRegistry().ownerOf(distributorNftId);
             emit LogDistributionServiceCommissionWithdrawn(distributorNftId, distributor, address(distributionInfo.tokenHandler.TOKEN()), withdrawnAmount);
             distributionInfo.tokenHandler.pushToken(distributor, withdrawnAmount);
         }
@@ -357,7 +357,7 @@ contract DistributionService is
             return false;
         }
 
-        IInstance instance = IInstance(ContractLib.getInstanceForComponent(getRegistry(), distributionNftId));
+        IInstance instance = IInstance(ContractLib.getInstanceForComponent(distributionNftId));
         IDistribution.ReferralInfo memory info = instance.getInstanceReader().getReferralInfo(referralId);
 
         if (info.distributorNftId.eqz()) {
@@ -438,7 +438,11 @@ contract DistributionService is
             IInstance instance
         )
     {
-        return PoolLib.getAndVerifyActiveComponent(getRegistry(), msg.sender, DISTRIBUTION());
+        (poolNftId, instance) = ContractLib.getAndVerifyComponent(
+            msg.sender, 
+            DISTRIBUTION(), 
+            getRelease(), 
+            true);
     }
 
 

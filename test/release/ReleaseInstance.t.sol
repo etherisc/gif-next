@@ -5,34 +5,12 @@ import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessMana
 import {Vm, console} from "../../lib/forge-std/src/Test.sol";
 
 import {GifTest} from "../base/GifTest.sol";
-import {AccessManagerCloneable} from "../../contracts/authorization/AccessManagerCloneable.sol";
-import {Amount, AmountLib} from "../../contracts/type/Amount.sol";
-import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
-import {ClaimId} from "../../contracts/type/ClaimId.sol";
-import {SimpleProduct} from "../../contracts/examples/unpermissioned/SimpleProduct.sol";
-import {SimplePool} from "../../contracts/examples/unpermissioned/SimplePool.sol";
-import {IComponents} from "../../contracts/instance/module/IComponents.sol";
+import {GIF_INITIAL_RELEASE} from "../../contracts/registry/Registry.sol";
 import {IInstance} from "../../contracts/instance/IInstance.sol";
-import {ILifecycle} from "../../contracts/shared/ILifecycle.sol";
-import {IPolicy} from "../../contracts/instance/module/IPolicy.sol";
-import {IBundle} from "../../contracts/instance/module/IBundle.sol";
-import {Fee, FeeLib} from "../../contracts/type/Fee.sol";
-import {UFixedLib} from "../../contracts/type/UFixed.sol";
-import {Seconds, SecondsLib} from "../../contracts/type/Seconds.sol";
-import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
-import {IPolicyService} from "../../contracts/product/IPolicyService.sol";
-import {IRisk} from "../../contracts/instance/module/IRisk.sol";
-import {PayoutId, PayoutIdLib} from "../../contracts/type/PayoutId.sol";
-import {POLICY} from "../../contracts/type/ObjectType.sol";
-import {RiskId, RiskIdLib, eqRiskId} from "../../contracts/type/RiskId.sol";
-import {ReferralId, ReferralLib} from "../../contracts/type/Referral.sol";
-import {APPLIED, SUBMITTED, ACTIVE, COLLATERALIZED, CONFIRMED, DECLINED, CLOSED, REVOKED} from "../../contracts/type/StateId.sol";
-import {StateId} from "../../contracts/type/StateId.sol";
-import {VersionPart, VersionPartLib} from "../../contracts/type/Version.sol";
+import {NftId} from "../../contracts/type/NftId.sol";
+
 
 contract ReleaseInstanceTest is GifTest {
-
-    VersionPart public RELEASE_3 = VersionPartLib.toVersionPart(3);
 
     function setUp() public override {
         super.setUp();
@@ -56,8 +34,8 @@ contract ReleaseInstanceTest is GifTest {
         assertTrue(newInstanceNftId.gtz(), "new instance nft zero");
 
         // WHEN release is locked
-        vm.startPrank(registryOwner);
-        releaseRegistry.setActive(RELEASE_3, false);
+        vm.startPrank(gifAdmin);
+        releaseRegistry.setActive(GIF_INITIAL_RELEASE(), false);
         vm.stopPrank();
 
         // THEN instance creation fails

@@ -31,8 +31,6 @@ import {ServiceAuthorizationV3} from "../../contracts/registry/ServiceAuthorizat
 import {Dip} from "../../contracts/mock/Dip.sol";
 import {ServiceMock} from "../mock/ServiceMock.sol";
 import {RegisterableMock} from "../mock/RegisterableMock.sol";
-
-import {RegistryTestBase} from "../registry/RegistryTestBase.sol";
 import {GifTest} from "../base/GifTest.sol";
 
 
@@ -62,7 +60,6 @@ contract RegistryServiceTestBase is GifTest, FoundryRandom {
 
         registryServiceManager = new RegistryServiceManager{salt: releaseSalt}(
             releaseAdmin.authority(),
-            registryAddress,
             releaseSalt);
         registryService = registryServiceManager.getRegistryService();
         releaseRegistry.registerService(registryService);
@@ -77,6 +74,7 @@ contract RegistryServiceTestBase is GifTest, FoundryRandom {
         IRegistry.ObjectInfo memory infoFromRegistryService, 
         bytes memory dataFromRegistryService) 
         internal
+        view
     {
         IRegistry.ObjectInfo memory infoFromRegistry = registry.getObjectInfo(registeredContract);
         IRegistry.ObjectInfo memory infoFromRegisterable = IRegisterable(registeredContract).getInitialInfo();

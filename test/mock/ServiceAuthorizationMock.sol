@@ -13,7 +13,7 @@ contract ServiceAuthorizationMockWithRegistryService
           ServiceAuthorization(
                "ReleaseAdmin",
                RELEASE(),
-               uint8(release.toInt()),
+               release,
                COMMIT_HASH)
      {}
 
@@ -37,7 +37,7 @@ contract ServiceAuthorizationMock is ServiceAuthorization
           ServiceAuthorization(
                "MockServiceAuthorization",
                SERVICE(),
-               uint8(release.toInt()),
+               release,
                COMMIT_HASH
           )
      {

@@ -38,14 +38,13 @@ contract ApplicationService is
     )
         internal
         virtual override
-        initializer()
+        onlyInitializing()
     {
         (
-            address authority,
-            address registry
-        ) = abi.decode(data, (address, address));
+            address authority
+        ) = abi.decode(data, (address));
 
-        __Service_init(authority, registry, owner);
+        __Service_init(authority, owner);
 
         _distributionService = IDistributionService(_getServiceAddress(DISTRIBUTION()));
         _pricingService = IPricingService(_getServiceAddress(PRICE()));
@@ -54,7 +53,9 @@ contract ApplicationService is
         _registerInterface(type(IApplicationService).interfaceId);
     }
 
-
+    // TODO product - bundle - risk - refferal - distribution
+    // checkBundle() is faster then checking with registry but first need to know poolNftId
+    // check pool, get its nftIdf and instance -> instacne.getBundleSet.checkBundle(bundsleNftId) ???? 
     function _checkLinkedApplicationParameters(
         InstanceReader instanceReader,
         NftId productNftId,
@@ -108,12 +109,11 @@ contract ApplicationService is
             NftIdLib.zero(),
             productNftId,
             POLICY(),
+            getRelease(),
             false, // intercepting property for policies is defined on product
-            address(0),
-            applicationOwner,
-            "");
+            address(0));
 
-        applicationNftId = _registryService.registerPolicy(objectInfo);
+        applicationNftId = _registryService.registerPolicy(objectInfo, applicationOwner, "");
     }
 
 
@@ -155,7 +155,7 @@ contract ApplicationService is
     {
         _checkNftType(bundleNftId, BUNDLE());
 
-        (NftId productNftId, IInstance instance) = _getAndVerifyActiveProduct();
+        (NftId productNftId, IInstance instance) = ContractLib.getAndVerifyProduct(getRelease());
 
         // check if provided references are valid and linked to calling product contract
         InstanceReader instanceReader = instance.getInstanceReader();
@@ -290,35 +290,14 @@ contract ApplicationService is
         restricted()
         nonReentrant()
     {
-        _checkNftType(applicationNftId, POLICY());
+        (, IInstance instance) = ContractLib.getAndVerifyProductForPolicy(
+            applicationNftId, getRelease());
 
-        (, IInstance instance) = _getAndVerifyActiveProduct();
         instance.getProductStore().updateApplicationState(applicationNftId, REVOKED());
         emit LogApplicationServiceApplicationRevoked(applicationNftId);
     }
 
     // internal functions
-
-    function _getAndVerifyActiveProduct()
-        internal
-        view
-        returns (
-            NftId productNftId,
-            IInstance instance
-        )
-    {
-        (
-            IRegistry.ObjectInfo memory info, 
-            address instanceAddress
-        ) = ContractLib.getAndVerifyComponent(
-            getRegistry(), 
-            msg.sender,
-            PRODUCT(),
-            true); // only active pools
-
-        productNftId = info.nftId;
-        instance = IInstance(instanceAddress);
-    }
 
 
     function _getDomain() internal pure override returns(ObjectType) {

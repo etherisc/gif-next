@@ -20,7 +20,6 @@ contract FlightPool is
     BasicPool
 {   
     constructor(
-        address registry,
         NftId productNftId,
         string memory componentName,
         IAuthorization authorization
@@ -28,7 +27,6 @@ contract FlightPool is
     {
         address initialOwner = msg.sender;
         _intialize(
-            registry,
             productNftId,
             componentName,
             IComponents.PoolInfo({
@@ -45,7 +43,6 @@ contract FlightPool is
     }
 
     function _intialize(
-        address registry,
         NftId productNftId,
         string memory componentName,
         IComponents.PoolInfo memory poolInfo,
@@ -56,7 +53,6 @@ contract FlightPool is
         initializer
     {
         _initializeBasicPool(
-            registry,
             productNftId,
             componentName,
             poolInfo,

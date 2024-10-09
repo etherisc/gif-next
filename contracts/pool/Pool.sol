@@ -35,7 +35,7 @@ abstract contract Pool is
 
 
     modifier onlyBundleOwner(NftId bundleNftId) {
-        if(msg.sender != getRegistry().ownerOf(bundleNftId)) {
+        if(msg.sender != _getRegistry().ownerOf(bundleNftId)) {
             revert ErrorPoolNotBundleOwner(bundleNftId, msg.sender);
         }
         _;
@@ -124,7 +124,6 @@ abstract contract Pool is
     // Internals
 
     function __Pool_init(
-        address registry,
         NftId productNftId,
         string memory name,
         IComponents.PoolInfo memory poolInfo,
@@ -136,7 +135,6 @@ abstract contract Pool is
         onlyInitializing()
     {
         __InstanceLinkedComponent_init(
-            registry, 
             productNftId,  
             name, 
             POOL(), 

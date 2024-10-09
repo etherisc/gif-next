@@ -9,11 +9,12 @@ import {ChainId, ChainIdLib} from "../../contracts/type/ChainId.sol";
 import {ChainNft} from "../../contracts/registry/ChainNft.sol";
 import {Dip} from "../../contracts/mock/Dip.sol";
 import {GifDeployer} from "./GifDeployer.sol";
-import {GIF_MANAGER_ROLE, GIF_ADMIN_ROLE} from "../../contracts/type/RoleId.sol";
+import {IAccess} from "../../contracts/authorization/IAccess.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {IServiceAuthorization} from "../../contracts/authorization/IServiceAuthorization.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
-import {Registry} from "../../contracts/registry/Registry.sol";
+import {ADMIN_ROLE, GIF_MANAGER_ROLE, GIF_ADMIN_ROLE} from "../../contracts/type/RoleId.sol";
+import {Registry, GIF_INITIAL_RELEASE} from "../../contracts/registry/Registry.sol";
 import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
 import {ReleaseAdmin} from "../../contracts/registry/ReleaseAdmin.sol";
 import {ReleaseRegistry} from "../../contracts/registry/ReleaseRegistry.sol";
@@ -39,9 +40,8 @@ contract GifDeployerTest is GifDeployer {
         gifV3 = VersionPartLib.toVersionPart(3);
         serviceAuthorization = new ServiceAuthorizationV3(COMMIT_HASH);
 
-        _deployCore(gifAdmin, gifManager);
+        _deployCore();
     }
-
 
     function test_gifDeployerSetup() public {
         _printCoreSetup();
@@ -124,29 +124,42 @@ contract GifDeployerTest is GifDeployer {
 
         // check linked contracts
         assertEq(address(releaseRegistry.getRegistry()), address(registry), "unexpected registry address");
-        assertEq(releaseRegistry.INITIAL_GIF_VERSION(), gifV3.toInt(), "unexpected initial gif version");
+        assertEq(GIF_INITIAL_RELEASE().toInt(), gifV3.toInt(), "unexpected initial gif version");
         assertEq(address(releaseRegistry.getRegistryAdmin()), address(registryAdmin), "unexpected registry address");
 
         // TODO amend once full gif setup is streamlined
     }
 
 
-    function test_gifDeployerCoreRegistryAccessManager() public {
-        assertTrue(address(registryAdmin) != address(0), "registry admin manager address zero");
-        assertTrue(registryAdmin.authority() != address(0), "registry admin manager authority address zero");
+    function test_gifDeployerCoreRegistryAdmin() public {
+        assertTrue(address(registryAdmin) != address(0), "registry admin address zero");
+        assertTrue(registryAdmin.authority() != address(0), "registry admin authority address zero");
 
         // check authority
-        assertEq(registryAdmin.authority(), registryAdmin.authority(), "unexpected release manager authority");
+        //assertEq(registryAdmin.authority(), registryAdmin.authority(), "unexpected release manager authority"); ???
 
-        // check initial roles assignments
-        assertTrue(registryAdmin.isRoleMember(GIF_ADMIN_ROLE(), gifAdmin), "registry owner not admin");
-        assertTrue(registryAdmin.isRoleMember(GIF_MANAGER_ROLE(), gifManager), "registry owner not manager");
+        // check roles
+        assertTrue(registryAdmin.isRoleMember(GIF_ADMIN_ROLE(), gifAdmin), "gif admin is not GIF_ADMIN_ROLE member");
+        assertEq(registryAdmin.roleMembers(GIF_ADMIN_ROLE()), 1, "GIF_ADMIN_ROLE have more than one member");
+
+        IAccess.RoleInfo memory gifAdminRoleInfo = registryAdmin.getRoleInfo(GIF_ADMIN_ROLE());
+        assertEq(gifAdminRoleInfo.adminRoleId.toInt(), ADMIN_ROLE().toInt(), "unexpected admin role id for GIF_ADMIN_ROLE");
+        assertTrue(gifAdminRoleInfo.targetType == IAccess.TargetType.Custom, "unexpected role type of GIF_ADMIN_ROLE");
+        assertEq(gifAdminRoleInfo.maxMemberCount, 1, "unexpected max member count for GIF_ADMIN_ROLE");
+
+        assertTrue(registryAdmin.isRoleMember(GIF_MANAGER_ROLE(), gifManager), "gif manager is not GIF_MANAGER_ROLE member");
+        assertEq(registryAdmin.roleMembers(GIF_MANAGER_ROLE()), 1, "GIF_MANAGER_ROLE have more than one member");
+
+        IAccess.RoleInfo memory gifManagerRoleInfo = registryAdmin.getRoleInfo(GIF_MANAGER_ROLE());
+        assertEq(gifManagerRoleInfo.adminRoleId.toInt(), ADMIN_ROLE().toInt(), "unexpected admin role id for GIF_MANAGER_ROLE");
+        assertTrue(gifManagerRoleInfo.targetType == IAccess.TargetType.Custom, "unexpected role type of GIF_MANAGER_ROLE");
+        assertEq(gifManagerRoleInfo.maxMemberCount, 2, "unexpected max member count for GIF_MANAGER_ROLE");
 
         // check sample admin access
         IAccessManager authority = IAccessManager(registryAdmin.authority());
         bool can;
         (can,) = authority.canCall(gifAdmin, address(registryAdmin), TokenRegistry.registerToken.selector);
-        assertFalse(can, "gif admin cannot call registerToken");
+        assertFalse(can, "gif admin can call registerToken");
 
         // check sample manager access
         (can,) = authority.canCall(gifManager, address(tokenRegistry), TokenRegistry.registerToken.selector);
@@ -154,7 +167,6 @@ contract GifDeployerTest is GifDeployer {
 
         // check linked contracts
         assertEq(address(releaseRegistry.getRegistry()), address(registry), "unexpected registry address");
-        assertEq(releaseRegistry.INITIAL_GIF_VERSION(), gifV3.toInt(), "unexpected initial gif version");
         assertEq(address(releaseRegistry.getRegistryAdmin()), address(registryAdmin), "unexpected registry address");
 
         // TODO amend once full gif setup is streamlined
@@ -179,7 +191,6 @@ contract GifDeployerTest is GifDeployer {
         assertEq(stakingNftId.toInt(), registry.getNftIdForAddress(address(staking)).toInt(), "unexpected staking nft id");
 
         // check ownership
-        assertEq(stakingOwner, registryOwner, "unexpected staking owner");
         assertEq(staking.getOwner(), stakingOwner, "unexpected staking owner (via staking)");
         assertEq(registry.ownerOf(address(staking)), stakingOwner, "unexpected staking owner (via registry)");
 
@@ -219,8 +230,6 @@ contract GifDeployerTest is GifDeployer {
     function _deployRelease() internal {
         deployRelease(
             releaseRegistry,
-            serviceAuthorization,
-            gifAdmin,
-            gifManager);
+            serviceAuthorization);
     }
 }

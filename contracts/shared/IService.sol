@@ -4,14 +4,14 @@ pragma solidity ^0.8.20;
 import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 
 import {IRegisterable} from "./IRegisterable.sol";
-import {IVersionable} from "../upgradeability/IVersionable.sol";
+import {IUpgradeable} from "../upgradeability/IUpgradeable.sol";
 import {ObjectType} from "../type/ObjectType.sol";
 import {RoleId} from "../type/RoleId.sol";
 
 interface IService is 
     IAccessManaged,
     IRegisterable,
-    IVersionable
+    IUpgradeable
 {
     /// @dev returns the domain for this service.
     /// In any GIF release only one service for any given domain may be deployed.

@@ -14,9 +14,7 @@ contract RegistryAdminEx is RegistryAdmin {
     AccessManagedMock public accessManagedMock;
 
     function completeSetup(
-        address registry,
         address authorization,
-        VersionPart release,
         address gifAdmin, 
         address gifManager
     )
@@ -24,9 +22,7 @@ contract RegistryAdminEx is RegistryAdmin {
         virtual override
     {
         super.completeSetup(
-            registry, 
             authorization,
-            release,
             gifAdmin, 
             gifManager);
 

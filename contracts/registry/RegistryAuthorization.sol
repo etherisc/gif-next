@@ -12,6 +12,7 @@ import {PUBLIC_ROLE} from "../type/RoleId.sol";
 import {ReleaseRegistry} from "./ReleaseRegistry.sol";
 import {RegistryAdmin} from "./RegistryAdmin.sol";
 import {RoleIdLib, ADMIN_ROLE, GIF_ADMIN_ROLE, GIF_MANAGER_ROLE} from "../type/RoleId.sol";
+import {GIF_INITIAL_RELEASE} from "../registry/Registry.sol";
 import {StakingStore} from "../staking/StakingStore.sol";
 import {TargetHandler} from "../staking/TargetHandler.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
@@ -49,7 +50,7 @@ contract RegistryAuthorization
           Authorization(
                REGISTRY_TARGET_NAME, 
                REGISTRY(), 
-               3, 
+               GIF_INITIAL_RELEASE(),
                commitHash, 
                TargetType.Core,
                false) // includeTokenHandler
@@ -100,7 +101,7 @@ contract RegistryAuthorization
                AccessAdminLib.roleInfo(
                     ADMIN_ROLE(),
                     TargetType.Custom, // custom is only type that allows role removal
-                    2, // TODO decide on max member count
+                    1, // TODO decide on max member count
                     GIF_ADMIN_ROLE_NAME));
 
           // gif manager role
@@ -109,7 +110,7 @@ contract RegistryAuthorization
                AccessAdminLib.roleInfo(
                     ADMIN_ROLE(),
                     TargetType.Custom, // custom is only type that allows role removal
-                    1, // TODO decide on max member count
+                    2, // TODO decide on max member count
                     GIF_MANAGER_ROLE_NAME));
 
      }

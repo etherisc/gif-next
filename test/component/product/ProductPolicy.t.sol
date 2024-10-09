@@ -108,7 +108,7 @@ contract ProductPolicyTest is GifTest {
 
     function test_productCollateralizeWithPayment() public {
         // GIVEN
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(customer, 1000);
         vm.stopPrank();
 
@@ -213,7 +213,7 @@ contract ProductPolicyTest is GifTest {
 
     function test_productWithReferralCollateralizeWithPayment() public {
         // GIVEN
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(customer, 1000);
         vm.stopPrank();
 
@@ -416,7 +416,7 @@ contract ProductPolicyTest is GifTest {
 
     function test_productWithReferralCollateralizeWithSplitPayment() public {
         // GIVEN
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(customer, 1000);
         vm.stopPrank();
 
@@ -521,7 +521,7 @@ contract ProductPolicyTest is GifTest {
 
     function test_productCollateralizeWithReferralExpired() public {
         // GIVEN
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(customer, 1000);
         vm.stopPrank();
 
@@ -808,7 +808,7 @@ contract ProductPolicyTest is GifTest {
 
     function test_adjustActivation() public {
         // GIVEN
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(customer, 1000);
         vm.stopPrank();
 
@@ -861,7 +861,7 @@ contract ProductPolicyTest is GifTest {
         vm.warp(100000);
 
         // GIVEN
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(customer, 1000);
         vm.stopPrank();
 
@@ -919,7 +919,7 @@ contract ProductPolicyTest is GifTest {
         vm.warp(100000);
 
         // GIVEN
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(customer, 1000);
         vm.stopPrank();
 
@@ -976,7 +976,7 @@ contract ProductPolicyTest is GifTest {
         vm.warp(100000);
 
         // GIVEN
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(customer, 1000);
         vm.stopPrank();
 
@@ -1028,7 +1028,7 @@ contract ProductPolicyTest is GifTest {
 
     function test_productPolicyCollectPremium() public {
         // GIVEN
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(customer, 1000);
         vm.stopPrank();
 
@@ -1135,7 +1135,7 @@ contract ProductPolicyTest is GifTest {
 
     function test_productPolicyCloseWithPremiumPayment() public {
         // GIVEN
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(customer, 1000);
         vm.stopPrank();
 
@@ -1230,7 +1230,7 @@ contract ProductPolicyTest is GifTest {
 
     function test_productPolicyCloseNoPremiumPayment() public {
         // GIVEN
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(customer, 1000);
         vm.stopPrank();
 
@@ -1290,7 +1290,7 @@ contract ProductPolicyTest is GifTest {
     /// @dev test that policy expiration works 
     function test_productPolicyExpireHappyCase() public {
         // GIVEN
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(customer, 1000);
         vm.stopPrank();
 
@@ -1350,7 +1350,7 @@ contract ProductPolicyTest is GifTest {
     /// @dev test that policy expiration works when current timestamp is provided
     function test_productPolicyExpire_currentTimestamp() public {
         // GIVEN
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(customer, 1000);
         vm.stopPrank();
 
@@ -1409,7 +1409,7 @@ contract ProductPolicyTest is GifTest {
     /// @dev test that policy expiration works when expireAt is set to 0
     function test_productPolicyExpire_earliestPossible() public {
         // GIVEN
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(customer, 1000);
         vm.stopPrank();
 
@@ -1465,7 +1465,7 @@ contract ProductPolicyTest is GifTest {
     /// @dev test that policy expiration reverts if policy is not active
     function test_productPolicyExpire_policyNotActive() public {
         // GIVEN
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(customer, 1000);
         vm.stopPrank();
 
@@ -1602,7 +1602,7 @@ contract ProductPolicyTest is GifTest {
 
     function test_productCollectPremium_alreadyPaid() public {
         // GIVEN
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(customer, 1000);
         vm.stopPrank();
 
@@ -1651,7 +1651,7 @@ contract ProductPolicyTest is GifTest {
     /// @dev test that policy expiration reverts if the expireAt timestamp is too late
     function test_productPolicyExpire_expireAtTooLate() public {
         // GIVEN
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(customer, 1000);
         vm.stopPrank();
 
@@ -1724,7 +1724,7 @@ contract ProductPolicyTest is GifTest {
         skip(10);
 
         // GIVEN
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(customer, 1000);
         vm.stopPrank();
 
@@ -1796,7 +1796,7 @@ contract ProductPolicyTest is GifTest {
             FeeLib.zero()); // performance fees
         vm.stopPrank();
 
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(investor, bundleCapital);
         vm.stopPrank();
 

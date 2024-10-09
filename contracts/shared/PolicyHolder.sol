@@ -23,14 +23,12 @@ contract PolicyHolder is
     // callbacks must only be allowed from the policy and claim services
     // will need a release parameter to fetch the right service addresses for the modifiers
 
-    function _initializePolicyHolder(
-        address registryAddress
+    function __PolicyHolder_init(
     )
         internal
         virtual
         onlyInitializing()
     {
-        __RegistryLinked_init(registryAddress);
         _initializeERC165();
         _registerInterface(type(IPolicyHolder).interfaceId);
     }
@@ -47,7 +45,7 @@ contract PolicyHolder is
     /// @dev empty default implementation
     function payoutExecuted(NftId policyNftId, PayoutId payoutId, Amount amount, address beneficiary) external virtual {}
 
-    //--- IERC165 functions ---------------// 
+    //--- IERC721 functions ---------------// 
     function onERC721Received(
         address, // operator
         address, // from

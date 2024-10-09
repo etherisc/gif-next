@@ -11,8 +11,8 @@ import {AccessAdminLib} from "../authorization/AccessAdminLib.sol";
 import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
 import {ObjectType, REGISTRY} from "../type/ObjectType.sol";
 import {RoleId, RoleIdLib, GIF_MANAGER_ROLE, GIF_ADMIN_ROLE} from "../type/RoleId.sol";
+import {GIF_INITIAL_RELEASE} from "../registry/Registry.sol";
 import {Str} from "../type/String.sol";
-import {VersionPart} from "../type/Version.sol";
 
 /*
     1) GIF_MANAGER_ROLE
@@ -52,7 +52,6 @@ contract RegistryAdmin is
     // completeSetup
     error ErrorRegistryAdminNotRegistry(address registry);
 
-    address internal _registry;
     address private _releaseRegistry;
     address private _tokenRegistry;
     address private _staking;
@@ -62,49 +61,40 @@ contract RegistryAdmin is
     constructor() {
         initialize(
             address(new AccessManagerCloneable()),
-            "RegistryAdmin");
+            "RegistryAdmin",
+            GIF_INITIAL_RELEASE());
     }
 
 
     function completeSetup(
-        address registry,
         address authorization,
-        VersionPart release,
         address gifAdmin, 
         address gifManager
     )
         public
         virtual
-        reinitializer(type(uint8).max)
     {
         // checks
-        AccessAdminLib.checkRegistry(registry);
-
-        AccessManagerCloneable(
-            authority()).completeSetup(
-                registry, 
-                release); 
-
         AccessAdminLib.checkAuthorization(
             address(_authorization),
             authorization, 
             REGISTRY(), 
-            release, 
+            getRelease(), 
             false, // expectServiceAuthorization
             false); // checkAlreadyInitialized);
-
-        _registry = registry;
+        
+        // effects
         _authorization = IAuthorization(authorization);
 
-        IRegistry registryContract = IRegistry(registry);
-        _releaseRegistry = registryContract.getReleaseRegistryAddress();
-        _tokenRegistry = registryContract.getTokenRegistryAddress();
-        _staking = registryContract.getStakingAddress();
+        IRegistry registry = _getRegistry();
+        _releaseRegistry = registry.getReleaseRegistryAddress();
+        _tokenRegistry = registry.getTokenRegistryAddress();
+        _staking = registry.getStakingAddress();
         _stakingTargetHandler = address(IStaking(_staking).getTargetHandler());
         _stakingStore = address(IStaking(_staking).getStakingStore());
 
         // link nft ownability to registry
-        _linkToNftOwnable(_registry);
+        _linkToNftOwnable(address(_getRegistry()));
 
         _createRoles(_authorization);
 
@@ -149,7 +139,7 @@ contract RegistryAdmin is
         internal
     {
         // create unchecked registry targets
-        _createTarget(_registry, registryTargetName, TargetType.Core, false);
+        _createTarget(address(_getRegistry()), registryTargetName, TargetType.Core, false);
         _createTarget(address(this), REGISTRY_ADMIN_TARGET_NAME, TargetType.Core, false);
         _createTarget(_releaseRegistry, RELEASE_REGISTRY_TARGET_NAME, TargetType.Core, false);
         _createTarget(_tokenRegistry, TOKEN_REGISTRY_TARGET_NAME, TargetType.Core, false);

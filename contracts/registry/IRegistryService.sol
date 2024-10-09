@@ -19,13 +19,12 @@ interface IRegistryService is
 {
      error ErrorRegistryServiceNotRegistryOwner();
 
-     error ErrorRegistryServiceNotService(address notService);
-     error ErrorRegistryServiceNotInstance(address notInstance);
-     error ErrorRegistryServiceNotProduct(address notProduct);
-     error ErrorRegistryServiceNotComponent(address notComponent);
-     error ErrorRegistryServiceNotProductLinkedComponent(address notProductLinkedComponent);
+     // _checkInterface()
+     error ErrorRegistryServiceNotContract(address notContract);
+     error ErrorRegistryServiceInterfaceNotSupported(address registerable, bytes4 interfaceId);
 
      error ErrorRegistryServiceRegisterableAddressInvalid(IRegisterable registerable, address found);
+     error ErrorRegistryServiceRegisterableParentInvalid(IRegisterable registerable, NftId expected, NftId found);
      error ErrorRegistryServiceRegisterableTypeInvalid(IRegisterable registerable, ObjectType expected, ObjectType found);
      error ErrorRegistryServiceRegisterableOwnerInvalid(IRegisterable registerable, address expected, address found);
      error ErrorRegistryServiceRegisterableOwnerZero(IRegisterable registerable);   
@@ -40,23 +39,20 @@ interface IRegistryService is
      error ErrorRegistryServiceInvalidInitialOwner(address initialOwner);
      error ErrorRegistryServiceInvalidAddress(address registerableAddress);
 
-     function registerStake(IRegistry.ObjectInfo memory info)
+     function registerStake(IRegistry.ObjectInfo memory info, address initialOwner, bytes memory data)
           external returns(NftId nftId); 
 
-     function registerInstance(IRegisterable instance, address owner)
+     function registerInstance(IRegisterable instance, address initialOwner)
           external returns(IRegistry.ObjectInfo memory info); 
 
-     function registerProduct(IComponent product, address owner)
+     function registerComponent(IRegisterable component, NftId parenNftId, ObjectType componentType, address initialOwner)
           external returns(IRegistry.ObjectInfo memory info);
 
-     function registerProductLinkedComponent(IComponent component, ObjectType objectType, address owner)
-          external returns(IRegistry.ObjectInfo memory info);
+     function registerDistributor(IRegistry.ObjectInfo memory info, address initialOwner, bytes memory data) external returns(NftId nftId);
 
-     function registerDistributor(IRegistry.ObjectInfo memory info) external returns(NftId nftId);
+     function registerPolicy(IRegistry.ObjectInfo memory info, address initialOwner, bytes memory data) external returns(NftId nftId);
 
-     function registerPolicy(IRegistry.ObjectInfo memory info) external returns(NftId nftId);
-
-     function registerBundle(IRegistry.ObjectInfo memory info) external returns(NftId nftId); 
+     function registerBundle(IRegistry.ObjectInfo memory info, address initialOwner, bytes memory data) external returns(NftId nftId); 
 
 }
 

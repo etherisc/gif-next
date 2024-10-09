@@ -5,6 +5,9 @@ type VersionPart is uint8;
 
 using {
     versionPartGt as >,
+    versionPartGte as >=,
+    versionPartLt as <,
+    versionPartLte as <=,
     versionPartEq as ==,
     versionPartNe as !=,
     VersionPartLib.eqz,
@@ -16,6 +19,9 @@ using {
     for VersionPart global;
 
 function versionPartGt(VersionPart a, VersionPart b) pure returns(bool isGreaterThan) { return VersionPart.unwrap(a) > VersionPart.unwrap(b); }
+function versionPartGte(VersionPart a, VersionPart b) pure returns(bool isGreaterThan) { return VersionPart.unwrap(a) >= VersionPart.unwrap(b); }
+function versionPartLt(VersionPart a, VersionPart b) pure returns(bool isLessThan) { return VersionPart.unwrap(a) < VersionPart.unwrap(b); }
+function versionPartLte(VersionPart a, VersionPart b) pure returns(bool isLessThan) { return VersionPart.unwrap(a) <= VersionPart.unwrap(b); }
 function versionPartEq(VersionPart a, VersionPart b) pure returns(bool isSame) { return VersionPart.unwrap(a) == VersionPart.unwrap(b); }
 function versionPartNe(VersionPart a, VersionPart b) pure returns(bool isSame) { return VersionPart.unwrap(a) != VersionPart.unwrap(b); }
 
@@ -27,8 +33,7 @@ library VersionPartLib {
     function releaseMax() public pure returns (VersionPart) { return toVersionPart(99); }
 
     function isValidRelease(VersionPart release) external pure returns(bool) { 
-        uint256 releaseInt = VersionPart.unwrap(release);
-        return 3 <= releaseInt && releaseInt <= 99; 
+        return releaseMin() <= release && release <= releaseMax(); 
     } 
 
     function toString(VersionPart a) external pure returns (string memory) {
@@ -66,8 +71,9 @@ library VersionPartLib {
 
     function eqz(VersionPart a) external pure returns(bool) { return VersionPart.unwrap(a) == 0; }
     function gtz(VersionPart a) external pure returns(bool) { return VersionPart.unwrap(a) > 0; }
-    function toInt(VersionPart a) external pure returns(uint256) { return VersionPart.unwrap(a); }
-    function toVersionPart(uint256 a) public pure returns(VersionPart) { return VersionPart.wrap(uint8(a)); }
+    function toInt(VersionPart a) external pure returns(uint8) { return VersionPart.unwrap(a); }
+    function toVersionPart(uint8 a) public pure returns(VersionPart) { return VersionPart.wrap(uint8(a)); }
+    function zero() external pure returns(VersionPart) { return VersionPart.wrap(0); }
 }
 
 type Version is uint24; // contains major,minor,patch version parts
@@ -87,7 +93,7 @@ function versionEq(Version a, Version b) pure returns(bool isSame) { return Vers
 
 library VersionLib {
 
-    function toInt(Version version) external pure returns(uint) { return Version.unwrap(version); }
+    function toInt(Version version) external pure returns(uint24) { return Version.unwrap(version); }
 
     function toUint64(Version version) external pure returns(uint64) { return Version.unwrap(version); }
 
@@ -124,26 +130,19 @@ library VersionLib {
         );
     }
 
-    // function toVersionPart(uint256 versionPart) public pure returns(VersionPart) { 
-    //     return VersionPart.wrap(uint8(versionPart)); 
-    // }
-
     function toVersion(
-        uint256 major,
-        uint256 minor,
-        uint256 patch
+        uint8 major,
+        uint8 minor,
+        uint8 patch
     )
         external
         pure
         returns(Version)
     {
-        require(
-            major < 256 && minor < 256 && patch < 256,
-            "ERROR:VRS-010:VERSION_PART_TOO_BIG");
 
         return Version.wrap(
             uint24(
-                (major << 16) + (minor << 8) + patch));
+                (uint24(major) << 16) + (uint24(minor) << 8) + patch));
     }
 
     // TODO check for overflow?

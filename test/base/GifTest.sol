@@ -148,38 +148,29 @@ contract GifTest is GifDeployer {
         internal
         virtual
     {
-        address gifAdmin = registryOwner;
-        address gifManager = registryOwner;
-
         currentChainId = ChainIdLib.current();
 
         // solhint-disable
         console.log("=== GifTest starting =======================================");
         console.log("=== deploying core =========================================");
         // solhint-enable
-        _deployCore(gifAdmin, gifManager);
+        _deployCore();
 
         // solhint-disable-next-line
         console.log("=== deploying release ======================================");
-        _deployAndRegisterServices(gifAdmin, gifManager);
+        _deployAndRegisterServices();
 
         // solhint-disable-next-line
         console.log("=== register token =========================================");
-        vm.startPrank(address(registryOwner)); 
         _deployRegisterAndActivateToken();
-        vm.stopPrank();
 
         // solhint-disable-next-line
         console.log("=== deploying master instance ==============================");
-        vm.startPrank(registryOwner);
         _deployMasterInstance();
-        vm.stopPrank();
 
         // solhint-disable-next-line
         console.log("=== create instance ========================================");
-        vm.startPrank(instanceOwner);
         _createInstance();
-        vm.stopPrank();
 
         // solhint-disable-next-line
         console.log("=== GifTest setup complete =================================");
@@ -230,30 +221,27 @@ contract GifTest is GifDeployer {
     }
 
 
-    function _deployAndRegisterServices(
-        address gifAdmin,
-        address gifManager
-    )
+    function _deployAndRegisterServices()
         internal 
     {
         IServiceAuthorization serviceAuthorization = new ServiceAuthorizationV3("85b428cbb5185aee615d101c2554b0a58fb64810");
 
         deployRelease(
             releaseRegistry, 
-            serviceAuthorization, 
-            gifAdmin, 
-            gifManager);
+            serviceAuthorization);
 
         VersionPart latestRelease = registry.getLatestRelease();
         assertEq(releaseRegistry.getState(latestRelease).toInt(), ACTIVE().toInt(), "unexpected state for releaseRegistry after activateNextRelease");
 
         // set staking service
-        vm.startPrank(stakingOwner);
+        vm.prank(stakingOwner);
         staking.setStakingService(latestRelease);
     }
 
     function _deployMasterInstance() internal 
     {
+        vm.startPrank(gifManager);
+
         // create instance supporting contracts
         masterAccessManager = new AccessManagerCloneable();
         masterInstanceAdmin = new InstanceAdmin(address(masterAccessManager));
@@ -274,9 +262,7 @@ contract GifTest is GifDeployer {
                 riskSet: masterRiskSet,
                 instanceReader: masterInstanceReader
             }),
-            registry,
-            VersionPartLib.toVersionPart(3),
-            registryOwner,
+            gifManager,
             false);
 
         // sets master instance address in instance service
@@ -286,9 +272,7 @@ contract GifTest is GifDeployer {
         // setup roles, targets and function grantings
         instanceAuthorizationV3 = new InstanceAuthorizationV3();
         masterInstanceAdmin.completeSetup(
-            address(registry),
             address(instanceAuthorizationV3),
-            VersionPartLib.toVersionPart(3),
             address(masterInstance));
 
         require(address(masterInstanceAdmin.getRegistry()) == address(registry), "unexpected master instance registry");
@@ -296,11 +280,14 @@ contract GifTest is GifDeployer {
 
         // MUST be set after instance is set up and registered
         // lock master instance nft
-        chainNft.transferFrom(registryOwner, NFT_LOCK_ADDRESS, masterInstanceNftId.toInt());
+        chainNft.transferFrom(gifManager, NFT_LOCK_ADDRESS, masterInstanceNftId.toInt());
+
+        vm.stopPrank();
 
         // solhint-disable
         console.log("master instance deployed at", address(masterInstance));
         console.log("master instance nft id", masterInstanceNftId.toInt());
+        console.log("master instance owner", masterInstance.getOwner());
         console.log("master oz access manager deployed at", address(masterInstance.authority()));
         console.log("master instance access manager deployed at", address(masterInstanceAdmin));
         console.log("master instance reader deployed at", address(masterInstanceReader));
@@ -312,6 +299,9 @@ contract GifTest is GifDeployer {
 
 
     function _createInstance() internal {
+
+        vm.startPrank(instanceOwner);
+
         ( 
             instance,
             instanceNftId
@@ -323,10 +313,13 @@ contract GifTest is GifDeployer {
         instanceBundleSet = instance.getBundleSet();
         instanceRiskSet = instance.getRiskSet();
         instanceStore = instance.getInstanceStore();
+
+        vm.stopPrank();
         
         // solhint-disable
         console.log("cloned instance deployed at", address(instance));
         console.log("cloned instance nft id", instanceNftId.toInt());
+        console.log("cloned instance owner", instance.getOwner());
         console.log("cloned oz access manager deployed at", instance.authority());
         console.log("cloned instance reader deployed at", address(instanceReader));
         console.log("cloned bundle set deployed at", address(instanceBundleSet));
@@ -336,6 +329,12 @@ contract GifTest is GifDeployer {
     }
 
     function _deployRegisterAndActivateToken() internal {
+
+        vm.prank(tokenIssuer);
+        token = new Usdc();
+
+        vm.startPrank(gifManager);
+
         VersionPart release = registry.getLatestRelease();
 
         // dip
@@ -343,11 +342,12 @@ contract GifTest is GifDeployer {
             currentChainId, address(dip), release, true);
 
         // usdc
-        token = new Usdc();
         // TODO continue here : tokenRegistry need to call staktint to add registered tokens there
         tokenRegistry.registerToken(address(token));
         tokenRegistry.setActiveForVersion(
             currentChainId, address(token), release, true);
+
+        vm.stopPrank();
 
         // solhint-disable
         console.log("token (usdc) deployed at", address(token));
@@ -405,7 +405,7 @@ contract GifTest is GifDeployer {
             FeeLib.zero());
         vm.stopPrank();
 
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(investor, DEFAULT_BUNDLE_CAPITALIZATION * 10**token.decimals());
         token.transfer(customer, DEFAULT_CUSTOMER_FUNDS * 10**token.decimals());
         vm.stopPrank();
@@ -442,7 +442,6 @@ contract GifTest is GifDeployer {
         // product owner deploys product
         vm.startPrank(productOwner);
         newProduct = new SimpleProduct(
-            address(registry),
             instanceNftId,
             "SimpleProduct",
             _getSimpleProductInfo(),
@@ -508,7 +507,6 @@ contract GifTest is GifDeployer {
 
         vm.startPrank(poolOwner);
         pool = new SimplePool(
-            address(registry),
             productNftId,
             _getDefaultSimplePoolInfo(),
             new SimplePoolAuthorization("SimplePool"),
@@ -536,7 +534,6 @@ contract GifTest is GifDeployer {
 
         vm.startPrank(distributionOwner);
         distribution = new SimpleDistribution(
-            address(registry),
             productNftId,
             new SimpleDistributionAuthorization("SimpleDistribution"),
             distributionOwner);
@@ -553,7 +550,6 @@ contract GifTest is GifDeployer {
 
         vm.startPrank(oracleOwner);
         oracle = new SimpleOracle(
-            address(registry),
             productNftId,
             new BasicOracleAuthorization("SimpleOracle", COMMIT_HASH),
             oracleOwner);

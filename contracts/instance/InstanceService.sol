@@ -175,7 +175,7 @@ contract InstanceService is
         IInstance(instanceAddress).getInstanceAdmin().setInstanceLocked(locked);
 
         emit LogInstanceServiceInstanceLocked(
-            getRegistry().getNftIdForAddress(instanceAddress),
+            _getRegistry().getNftIdForAddress(instanceAddress),
             locked);
     }
 
@@ -204,13 +204,11 @@ contract InstanceService is
         // MUST be set after instance is set up and registered
         IAuthorization instanceAuthorization = InstanceAdmin(_masterInstanceAdmin).getInstanceAuthorization();
         instanceAdmin.completeSetup(
-            address(getRegistry()),
             address(instanceAuthorization),
-            getRelease(),
             address(instance));
 
         // hard checks for newly cloned instance
-        assert(address(instance.getRegistry()) == address(getRegistry()));
+        //assert(address(instance._getRegistry()) == address(_getRegistry()));// consider deleting this
         assert(instance.getRelease() == getRelease());
 
         // register cloned instance as staking target
@@ -231,7 +229,7 @@ contract InstanceService is
         restricted()
         onlyInstance()
     {
-        NftId instanceNftId = getRegistry().getNftIdForAddress(msg.sender);
+        NftId instanceNftId = _getRegistry().getNftIdForAddress(msg.sender);
         _stakingService.setInstanceLockingPeriod(
             instanceNftId,
             stakeLockingPeriod);
@@ -244,7 +242,7 @@ contract InstanceService is
         restricted()
         onlyInstance()
     {
-        NftId instanceNftId = getRegistry().getNftIdForAddress(msg.sender);
+        NftId instanceNftId = _getRegistry().getNftIdForAddress(msg.sender);
         _stakingService.setInstanceRewardRate(
             instanceNftId,
             rewardRate);
@@ -256,7 +254,7 @@ contract InstanceService is
         restricted()
         onlyInstance()
     {
-        NftId instanceNftId = getRegistry().getNftIdForAddress(msg.sender);
+        NftId instanceNftId = _getRegistry().getNftIdForAddress(msg.sender);
         _stakingService.setInstanceMaxStakedAmount(
             instanceNftId,
             maxStakedAmount);
@@ -270,7 +268,7 @@ contract InstanceService is
         onlyInstance()
         returns (Amount newBalance)
     {
-        NftId instanceNftId = getRegistry().getNftIdForAddress(msg.sender);
+        NftId instanceNftId = _getRegistry().getNftIdForAddress(msg.sender);
         newBalance = _stakingService.refillInstanceRewardReserves(
             instanceNftId,
             rewardProvider,
@@ -285,7 +283,7 @@ contract InstanceService is
         onlyInstance()
         returns (Amount newBalance)
     {
-        NftId instanceNftId = getRegistry().getNftIdForAddress(msg.sender);
+        NftId instanceNftId = _getRegistry().getNftIdForAddress(msg.sender);
         newBalance = _stakingService.withdrawInstanceRewardReserves(
             instanceNftId,
             dipAmount);
@@ -308,7 +306,7 @@ contract InstanceService is
         instance.setInstanceReader(upgradedInstanceReaderClone);
 
         emit LogInstanceServiceInstanceReaderUpgraded(
-            getRegistry().getNftIdForAddress(instanceAddress),
+            _getRegistry().getNftIdForAddress(instanceAddress),
             address(upgradedInstanceReaderClone));
     }
 
@@ -349,6 +347,7 @@ contract InstanceService is
             if(instanceStoreAddress == address(0)) { revert ErrorInstanceServiceInstanceStoreZero(); }
             if(productStoreAddress == address(0)) { revert ErrorInstanceServiceProductStoreZero(); } // TODO: rename exception
             
+            // TODO check instance cluster release
             if(instance.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceInstanceAuthorityMismatch(); }
             if(bundleSet.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceBundleSetAuthorityMismatch(); }
             if(riskSet.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceRiskSetAuthorityMismatch(); }
@@ -391,7 +390,7 @@ contract InstanceService is
         _masterInstanceReader = instanceReaderAddress;
 
         emit LogInstanceServiceMasterInstanceReaderUpgraded(
-            getRegistry().getNftIdForAddress(_masterInstance),
+            _getRegistry().getNftIdForAddress(_masterInstance),
             instanceReaderAddress);
     }
 
@@ -419,7 +418,8 @@ contract InstanceService is
 
         clonedAdmin.initialize(
             address(clonedAccessManager),
-            "InstanceAdmin");
+            "InstanceAdmin",
+            getRelease());
     }
 
 
@@ -445,8 +445,6 @@ contract InstanceService is
                 riskSet: RiskSet(Clones.clone(_masterInstanceRiskSet)),
                 instanceReader: InstanceReader(Clones.clone(address(_masterInstanceReader)))
             }),
-            getRegistry(),
-            getRelease(),
             instanceOwner,
             allowAnyToken);
 
@@ -461,14 +459,13 @@ contract InstanceService is
     )
         internal
         virtual override
-        initializer()
+        onlyInitializing()
     {
         (
-            address authority,
-            address registry
-        ) = abi.decode(data, (address, address));
+            address authority
+        ) = abi.decode(data, (address));
 
-        __Service_init(authority, registry, owner);
+        __Service_init(authority, owner);
 
         _registryService = IRegistryService(_getServiceAddress(REGISTRY()));
         _stakingService = IStakingService(_getServiceAddress(STAKING()));
@@ -486,7 +483,8 @@ contract InstanceService is
         virtual
         view
     {
-        IRegistry registry = getRegistry();
+        // TODO use ContractLib to verify registration, type and release
+        IRegistry registry = _getRegistry();
 
         NftId instanceNftId = registry.getNftIdForAddress(instanceAddress);
         if (instanceNftId.eqz()) {

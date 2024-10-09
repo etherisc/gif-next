@@ -17,11 +17,14 @@ const config: HardhatUserConfig = {
         enabled: true,
         runs: 200
       }
-    }
+    },
   },
   docgen: require("./docs/config"),
   networks: {
     hardhat: {
+      accounts: {
+          mnemonic: process.env.WALLET_MNEMONIC || "candy maple cake sugar pudding cream honey rich smooth crumble sweet treat",
+      },
     },
     anvil: {
       chainId: 1337,

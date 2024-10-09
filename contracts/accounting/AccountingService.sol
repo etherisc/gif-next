@@ -26,14 +26,13 @@ contract AccountingService is
     )
         internal
         virtual override
-        initializer()
+        onlyInitializing()
     {
         (
-            address authority,
-            address registry
-        ) = abi.decode(data, (address, address));
+            address authority
+        ) = abi.decode(data, (address));
 
-        __Service_init(authority, registry, owner);
+        __Service_init(authority, owner);
         _registerInterface(type(IAccountingService).interfaceId);
     }
 
@@ -256,7 +255,7 @@ contract AccountingService is
         internal
         virtual
     {
-        emit LogComponentServiceUpdateFee(
+        emit LogAccountingServiceUpdateFee(
             productNftId, 
             name,
             feeBefore.fractionalFee,

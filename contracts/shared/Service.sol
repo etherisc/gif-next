@@ -5,25 +5,25 @@ import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/ut
 
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IService} from "./IService.sol";
-import {IVersionable} from "../upgradeability/IVersionable.sol";
+import {IVersionable} from "../shared/IVersionable.sol";
 import {ObjectType, SERVICE} from "../type/ObjectType.sol";
 import {Registerable} from "./Registerable.sol";
 import {RoleId, RoleIdLib} from "../type/RoleId.sol";
-import {Version, VersionLib} from "../type/Version.sol";
-import {Versionable} from "../upgradeability/Versionable.sol";
+import {Version, VersionLib, VersionPartLib} from "../type/Version.sol";
+import {Versionable} from "../shared/Versionable.sol";
+import {Upgradeable} from "../upgradeability/Upgradeable.sol";
 
 
 /// @dev service base contract
 abstract contract Service is 
-    Registerable,
-    Versionable,
+    Registerable, 
+    Upgradeable,
     ReentrancyGuardUpgradeable,
     IService
 {
 
     function __Service_init(
         address authority, // real authority for registry service adress(0) for other services
-        address registry, 
         address initialOwner
     )
         internal
@@ -34,8 +34,7 @@ abstract contract Service is
 
         __Registerable_init(
             authority,
-            registry, 
-            IRegistry(registry).getNftId(), 
+            _getRegistry().getNftId(), 
             SERVICE(), 
             false, // is interceptor
             initialOwner, 
@@ -62,6 +61,6 @@ abstract contract Service is
 
 
     function _getServiceAddress(ObjectType domain) internal view returns (address) {
-        return getRegistry().getServiceAddress(domain, getRelease());
+        return _getRegistry().getServiceAddress(domain, getRelease());
     }
 }

@@ -58,7 +58,7 @@ contract ReleaseProductTest is GifTest {
         policyNftId = _createPolicy(false);
 
         // transfer and approve funds
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(customer, CUSTOMER_FUNDS);
         vm.stopPrank();
         vm.startPrank(customer);
@@ -73,7 +73,7 @@ contract ReleaseProductTest is GifTest {
         assertTrue(riskId.gtz(), "new risk id zero");
 
         // WHEN release is locked
-        vm.startPrank(registryOwner);
+        vm.startPrank(gifAdmin);
         releaseRegistry.setActive(RELEASE_3, false);
         vm.stopPrank();
 
@@ -99,7 +99,7 @@ contract ReleaseProductTest is GifTest {
         assertTrue(applNftId.gtz(), "application nft id zero");
 
         // WHEN release is locked
-        vm.startPrank(registryOwner);
+        vm.startPrank(gifAdmin);
         releaseRegistry.setActive(RELEASE_3, false);
         vm.stopPrank();
 
@@ -127,7 +127,7 @@ contract ReleaseProductTest is GifTest {
         assertEq(instanceReader.getPolicyState(applNftId2).toInt(), APPLIED().toInt(), "2 not applied");
 
         // WHEN release is locked
-        vm.startPrank(registryOwner);
+        vm.startPrank(gifAdmin);
         releaseRegistry.setActive(RELEASE_3, false);
         vm.stopPrank();
 
@@ -164,7 +164,7 @@ contract ReleaseProductTest is GifTest {
         assertEq(instanceReader.getPolicyInfo(plcylNftId2).claimsCount, 0, "0 claims expected (2)");
 
         // WHEN release is locked
-        vm.startPrank(registryOwner);
+        vm.startPrank(gifAdmin);
         releaseRegistry.setActive(RELEASE_3, false);
         vm.stopPrank();
 

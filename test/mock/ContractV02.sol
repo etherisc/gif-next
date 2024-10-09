@@ -20,7 +20,7 @@ contract ContractV02 is ContractV01 {
         virtual override
         returns(Version)
     {
-        return VersionLib.toVersion(1, 0, 1);
+        return VersionLib.toVersion(3, 0, 1);
     }
 
     function getDataV02() external pure returns(bytes memory) {

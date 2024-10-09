@@ -20,7 +20,7 @@ contract InstanceReaderTest is GifTest {
 
     function test_instanceReaderUpgradeMasterInstanceReader() public {
         // GIVEN
-        vm.startPrank(registryOwner);
+        vm.startPrank(gifManager);
         InstanceReader newMasterInstanceReader = _createNewMasterInstanceReader();
         // address newMasterInstanceReaderAddress = address(newMasterInstanceReader);
         
@@ -46,13 +46,13 @@ contract InstanceReaderTest is GifTest {
                 IInstanceService.ErrorInstanceServiceInstanceReaderInstanceMismatch.selector));
 
         // WHEN
-        vm.startPrank(registryOwner);
+        vm.startPrank(gifManager);
         instanceService.upgradeMasterInstanceReader(address(newMasterInstanceReader));
     }
     
     function test_instanceReaderUpgradeMasterInstanceReader_same_reader() public {
         // GIVEN
-        vm.startPrank(registryOwner);
+        vm.startPrank(gifManager);
 
         // THEN
         vm.expectRevert(
@@ -65,7 +65,7 @@ contract InstanceReaderTest is GifTest {
 
     function test_instanceReaderUpgradeInstanceReaderAuthorized() public {
         // GIVEN
-        vm.startPrank(registryOwner);
+        vm.startPrank(gifManager);
         InstanceReader newMasterInstanceReader = _createNewMasterInstanceReader();
         instanceService.upgradeMasterInstanceReader(address(newMasterInstanceReader));
         vm.stopPrank();
@@ -89,7 +89,7 @@ contract InstanceReaderTest is GifTest {
 
     function test_instanceReaderUpgradeInstanceReaderNotAuthorized() public {
         // GIVEN
-        vm.startPrank(registryOwner);
+        vm.startPrank(gifManager);
         InstanceReader newMasterInstanceReader = _createNewMasterInstanceReader();
         instanceService.upgradeMasterInstanceReader(address(newMasterInstanceReader));
         vm.stopPrank();

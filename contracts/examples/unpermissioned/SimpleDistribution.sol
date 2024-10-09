@@ -17,14 +17,12 @@ contract SimpleDistribution is
 {
     
     constructor(
-        address registry,
         NftId productNftId,
         IAuthorization authorization,
         address initialOwner
     ) 
     {
         initialize(
-            registry,
             productNftId,
             authorization,
             initialOwner,
@@ -32,7 +30,6 @@ contract SimpleDistribution is
     }
 
     function initialize(
-        address registry,
         NftId productNftId,
         IAuthorization authorization,
         address initialOwner,
@@ -43,7 +40,6 @@ contract SimpleDistribution is
         initializer()
     {
         _initializeBasicDistribution(
-            registry,
             productNftId,
             authorization,
             initialOwner,

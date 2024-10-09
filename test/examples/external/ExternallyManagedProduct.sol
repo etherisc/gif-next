@@ -28,14 +28,12 @@ contract ExternallyManagedProduct is
     ReferralId public referralId;
 
     constructor(
-        address registry,
         NftId instanceNftId,
         IComponents.ProductInfo memory productInfo,
         IComponents.FeeInfo memory feeInfo,
         address initialOwner
     )
         SimpleProduct(
-            registry,
             instanceNftId,
             "VerifyingProduct", 
             productInfo,

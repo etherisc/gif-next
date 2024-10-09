@@ -1,5 +1,5 @@
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import { AddressLike, resolveAddress } from "ethers";
+import { AddressLike, resolveAddress, HDNodeWallet } from "ethers";
 import fs from "fs";
 import { ethers } from "hardhat";
 import { ChainNft__factory, IRegistry__factory } from "../typechain-types";
@@ -7,7 +7,7 @@ import { getNamedAccounts, printBalance, validateNftOwnerhip } from "./libs/acco
 import { SKIP_INSTANCE_CREATION, WRITE_ADDRESSES_TO_FILE } from "./libs/constants";
 import { InstanceAddresses, MASTER_INSTANCE_OWNER, cloneInstance, deployAndRegisterMasterInstance } from "./libs/instance";
 import { LibraryAddresses, deployLibraries } from "./libs/libraries";
-import { RegistryAddresses, deployAndInitializeRegistry } from "./libs/registry";
+import { RegistryAddresses, deployDip, deployAndInitializeRegistry } from "./libs/registry";
 import { ServiceAddresses, deployAndRegisterServices } from "./libs/services";
 import { loadVerificationQueueState } from "./libs/verification_queue";
 import { logger } from "./logger";
@@ -15,20 +15,21 @@ import { printBalances, printGasSpent, setBalanceAfter } from "./libs/gas_and_ba
 
 
 async function main() {
-    const { protocolOwner, instanceOwner } = await getNamedAccounts();
+    const { protocolOwner, masterInstanceOwner, instanceOwner, tokenIssuer, libraryDeployer } = await getNamedAccounts();
     loadVerificationQueueState();
 
-    await deployGifContracts(protocolOwner, instanceOwner);
+    await deployGifContracts(protocolOwner, instanceOwner, tokenIssuer, libraryDeployer);
 }
 
 export async function deployGifContracts(
-    protocolOwner: HardhatEthersSigner, instanceOwner: HardhatEthersSigner
+    protocolOwner: HDNodeWallet, instanceOwner: HardhatEthersSigner, tokenIssuer: HardhatEthersSigner, libraryDeployer: HardhatEthersSigner
 ): Promise<{ services: ServiceAddresses, libraries: LibraryAddresses, registry: RegistryAddresses }> {
     logger.info("===== deploying GIF contracts");
     
     // deploy protocol contracts
-    const libraries = await deployLibraries(protocolOwner);
-    const registry = await deployAndInitializeRegistry(protocolOwner, libraries);
+    const libraries = await deployLibraries(libraryDeployer);
+    const dip = await deployDip(tokenIssuer);
+    const registry = await deployAndInitializeRegistry(protocolOwner, dip, libraries);
     const services = await deployAndRegisterServices(protocolOwner, registry, libraries);
     
     // // deploy instance contracts
@@ -162,6 +163,7 @@ function printAddresses(
     }
 
     addresses += `# --------\n`;
+    addresses += `REGISTRY_AUTHORIZATION_ADDRESS=${registry.registryAuthorizationAddress}\n`;
     addresses += `REGISTRY_ADMIN_ADDRESS=${registry.registryAdminAddress}\n`;
     addresses += `RELEASE_REGISTRY_ADDRESS=${registry.releaseRegistryAddress}\n`;
     addresses += `REGISTRY_ADDRESS=${registry.registryAddress}\n`;

@@ -2,41 +2,48 @@
 pragma solidity ^0.8.20;
 
 import {ObjectType} from "../../contracts/type/ObjectType.sol";
+import {NftId} from "../../contracts/type/NftId.sol";
 import {Version, VersionLib} from "../../contracts/type/Version.sol";
-import {IVersionable} from "../../contracts/upgradeability/IVersionable.sol";
-import {Versionable} from "../../contracts/upgradeability/Versionable.sol";
+import {IUpgradeable} from "../../contracts/upgradeability/IUpgradeable.sol";
+import {Upgradeable} from "../../contracts/upgradeability/Upgradeable.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {Service} from "../../contracts/shared/Service.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
+import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 
 
 contract RegistryServiceHarness is RegistryService {
 
     function exposed_getAndVerifyContractInfo(
         IRegisterable registerable,
+        NftId expectedParent,
         ObjectType expectedType, 
         address expectedOwner)
         public
-        // view
+        view
         returns(
-            IRegistry.ObjectInfo memory info
+            IRegistry.ObjectInfo memory info,
+            address owner,
+            bytes memory data
         )
     {
-        info = _getAndVerifyContractInfo(
+        (info, owner, data) = _getAndVerifyContractInfo(
             registerable,
+            expectedParent,
             expectedType,
             expectedOwner);
     }
 
     function exposed_verifyObjectInfo(
         IRegistry.ObjectInfo memory info,
+        address owner,
         ObjectType objectType
     )
         public
         view
     {
-        _verifyObjectInfo(info, objectType);
+        _verifyObjectInfo(info, owner, objectType);
     }
 
     function getVersion()

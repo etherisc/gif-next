@@ -16,7 +16,6 @@ contract FirePool is
     BasicPool
 {   
     constructor(
-        address registry,
         NftId fireProductNftId,
         string memory componentName,
         IAuthorization authorization
@@ -24,7 +23,6 @@ contract FirePool is
     {
         address initialOwner = msg.sender;
         _intialize(
-            registry,
             fireProductNftId,
             componentName,
             IComponents.PoolInfo({
@@ -41,7 +39,6 @@ contract FirePool is
     }
 
     function _intialize(
-        address registry,
         NftId fireProductNftId,
         string memory componentName,
         IComponents.PoolInfo memory poolInfo,
@@ -52,7 +49,6 @@ contract FirePool is
         initializer
     {
         _initializeBasicPool(
-            registry,
             fireProductNftId,
             componentName,
             poolInfo,

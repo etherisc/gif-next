@@ -357,7 +357,6 @@ contract ProductWithReinsuranceTest is
 
         vm.startPrank(productOwner);
         productRe = new ProductWithReinsurance(
-            address(registry),
             instanceNftId,
             _getProductWithReinsuranceProductInfo(),
             _getSimpleFeeInfo(),
@@ -381,7 +380,6 @@ contract ProductWithReinsuranceTest is
 
         vm.startPrank(poolOwner);
         poolRe = new PoolWithReinsurance(
-            address(registry),
             productReNftId,
             new PoolWithReinsuranceAuthorization(),
             poolOwner
@@ -395,7 +393,7 @@ contract ProductWithReinsuranceTest is
         // solhint-disable-next-line
         console.log("--- fund investor and customer");
 
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(investor, DEFAULT_BUNDLE_CAPITALIZATION * 10**token.decimals());
         token.transfer(customer, DEFAULT_CUSTOMER_FUNDS * 10**token.decimals());
         vm.stopPrank();

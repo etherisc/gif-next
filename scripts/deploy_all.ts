@@ -13,10 +13,10 @@ import { logger } from "./logger";
  * - Deploys all contracts for flight delay
  */
 async function main() {
-    const { protocolOwner, masterInstanceOwner, instanceOwner, productOwner: fireOwner, investor, customer } = await getNamedAccounts();
+    const { protocolOwner, masterInstanceOwner, instanceOwner, productOwner: fireOwner, investor, customer, tokenIssuer, libraryDeployer } = await getNamedAccounts();
     loadVerificationQueueState();
     
-    const {services, libraries } = await deployGifContracts(protocolOwner, instanceOwner);
+    const {services, libraries } = await deployGifContracts(protocolOwner, instanceOwner, tokenIssuer, libraryDeployer);
 
     const { fireUsd, fireProduct, firePool } = await deployFireComponentContracts(libraries, services, fireOwner, protocolOwner);
     await createFireBundleAndPolicy(fireOwner, investor, customer, fireUsd, fireProduct, firePool);

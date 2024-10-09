@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import {console} from "../lib/forge-std/src/Test.sol";
 
-import {INftOwnable} from "../contracts/shared/INftOwnable.sol";
+import {IRegisterable} from "../contracts/shared/IRegisterable.sol";
 
 import {Amount, AmountLib} from "../contracts/type/Amount.sol";
 import {BasicPoolAuthorization} from "../contracts/pool/BasicPoolAuthorization.sol";
@@ -19,8 +19,10 @@ import {ObjectType, BUNDLE, PRODUCT} from "../contracts/type/ObjectType.sol";
 import {Pool} from "../contracts/pool/Pool.sol";
 import {IPoolService} from "../contracts/pool/IPoolService.sol";
 import {PUBLIC_ROLE} from "../contracts/type/RoleId.sol";
+import {GIF_INITIAL_RELEASE} from "../contracts/registry/Registry.sol";
 import {ReferralLib} from "../contracts/type/Referral.sol";
 import {RiskId, RiskIdLib} from "../contracts/type/RiskId.sol";
+import {GIF_INITIAL_RELEASE} from "../contracts/registry/Registry.sol";
 import {Seconds, SecondsLib} from "../contracts/type/Seconds.sol";
 import {SimplePool} from "../contracts/examples/unpermissioned/SimplePool.sol";
 import {StateId, ACTIVE, PAUSED, CLOSED} from "../contracts/type/StateId.sol";
@@ -70,7 +72,7 @@ contract TestBundle is GifTest {
 
         // THEN - expect log event
         vm.expectEmit();
-        emit IPoolService.LogPoolServiceBundleStaked(instanceNftId, poolNftId, bundleNftId, stakeAmt, stakeNetAmt);
+        emit IPoolService.LogPoolServiceBundleStaked(poolNftId, bundleNftId, stakeAmt, stakeNetAmt);
 
         // WHEN - pool is staked with another 1000 tokens
         pool.stake(bundleNftId, stakeAmt);
@@ -124,7 +126,7 @@ contract TestBundle is GifTest {
 
         // THEN - expect log event
         vm.expectEmit();
-        emit IPoolService.LogPoolServiceBundleStaked(instanceNftId, poolNftId, bundleNftId, stakeAmt, stakeNetAmt);
+        emit IPoolService.LogPoolServiceBundleStaked(poolNftId, bundleNftId, stakeAmt, stakeNetAmt);
 
         // WHEN - pool is staked with another 1000 tokens
         pool.stake(bundleNftId, stakeAmt);
@@ -345,9 +347,10 @@ contract TestBundle is GifTest {
 
         // THEN - revert
         vm.expectRevert(abi.encodeWithSelector(
-            INftOwnable.ErrorNftOwnableInvalidType.selector,
+            IRegisterable.ErrorRegisterableInvalidType.selector,
             productNftId,
-            BUNDLE()
+            BUNDLE(),
+            GIF_INITIAL_RELEASE()
         ));
 
         // WHEN - nft is not a bundle
@@ -389,7 +392,7 @@ contract TestBundle is GifTest {
 
         // THEN - expect log event
         vm.expectEmit();
-        emit IPoolService.LogPoolServiceBundleUnstaked(instanceNftId, poolNftId, bundleNftId, unstakeAmt, unstakeAmt);
+        emit IPoolService.LogPoolServiceBundleUnstaked(poolNftId, bundleNftId, unstakeAmt, unstakeAmt);
 
         // WHEN - 500 tokens are unstaked
         pool.unstake(bundleNftId, unstakeAmt);
@@ -441,7 +444,7 @@ contract TestBundle is GifTest {
         
         // THEN - expect log event
         vm.expectEmit();
-        emit IPoolService.LogPoolServiceBundleUnstaked(instanceNftId, poolNftId, bundleNftId, expectedUnstakeAmount, expectedUnstakeAmount);
+        emit IPoolService.LogPoolServiceBundleUnstaked(poolNftId, bundleNftId, expectedUnstakeAmount, expectedUnstakeAmount);
 
         // WHEN - max tokens are unstaked
         pool.unstake(bundleNftId, unstakeAmount);
@@ -588,9 +591,10 @@ contract TestBundle is GifTest {
         
         // THEN - expect revert
         vm.expectRevert(abi.encodeWithSelector(
-            INftOwnable.ErrorNftOwnableInvalidType.selector,
+            IRegisterable.ErrorRegisterableInvalidType.selector,
             productNftId,
-            BUNDLE()
+            BUNDLE(),
+            GIF_INITIAL_RELEASE()
         ));
 
         // WHEN - unstaking with an invalid nft type is attempted
@@ -1091,7 +1095,7 @@ contract TestBundle is GifTest {
     }
 
     function _fundInvestor(uint256 amount) internal {
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(investor, amount);
         vm.stopPrank();
     }

@@ -20,7 +20,8 @@ gas_reports = [
     "PricingService", 
     "ProductStore", 
     "RegistryService", 
-    "RiskSet"
+    "RiskSet",
+    "ContractLib"
 ]
 
 

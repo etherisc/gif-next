@@ -4,9 +4,9 @@ pragma solidity ^0.8.20;
 import {AccessManagerUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagerUpgradeable.sol";
 import {IAccessManager} from "@openzeppelin/contracts/access/manager/IAccessManager.sol";
 
+import {IAccessAdmin} from "./IAccessAdmin.sol";
 import {InitializableERC165} from "../shared/InitializableERC165.sol";
-import {RegistryLinked} from "../shared/RegistryLinked.sol";
-import {VersionPart} from "../type/Version.sol";
+import {VersionPartLib, VersionPart} from "../type/Version.sol";
 
 
 /// @dev An AccessManager based on OpenZeppelin that is cloneable and has a central lock property.
@@ -14,8 +14,7 @@ import {VersionPart} from "../type/Version.sol";
 /// Cloned by upon release preparation and instance cloning.
 contract AccessManagerCloneable is
     AccessManagerUpgradeable,
-    InitializableERC165,
-    RegistryLinked
+    InitializableERC165
 {
     error ErrorAccessManagerCallerNotAdmin(address caller);
     error ErrorAccessManagerRegistryAlreadySet(address registry);
@@ -24,7 +23,6 @@ contract AccessManagerCloneable is
     error ErrorAccessManagerTargetAdminLocked(address target);
     error ErrorAccessManagerCallerAdminLocked(address caller);
 
-    VersionPart private _release;
     bool private _isLocked;
 
 
@@ -36,34 +34,36 @@ contract AccessManagerCloneable is
         _;
     }
 
-
-    function initialize(address admin)
+    function initialize(address adminAddress, VersionPart release)
         public
-        initializer()
+
     {
+        if(_getInitializedVersion() != 0) {
+            revert InvalidInitialization();
+        }
+
+        AccessManagerCloneable_init(adminAddress, release);
+    }
+
+    function AccessManagerCloneable_init(
+        address admin,
+        VersionPart release
+    )
+        internal
+        reinitializer(release.toInt())
+    {
+        if (!release.isValidRelease()) {
+            revert ErrorAccessManagerInvalidRelease(release);
+        }
+
         __ERC165_init();
         __AccessManager_init(admin);
 
         _registerInterface(type(IAccessManager).interfaceId);
     }
 
-
-    /// @dev Completes the setup of the access manager.
-    /// Links the access manager to the registry and sets the release version.
-    function completeSetup(
-        address registry, 
-        VersionPart release
-    )
-        external
-        onlyAdminRole
-        reinitializer(uint64(release.toInt()))
-    {
-        _checkAndSetRegistry(registry);
-        _checkAndSetRelease(release);
-    }
-
     /// @dev Returns true if the caller is authorized to call the target with the given selector and the manager lock is not set to locked.
-    /// Feturn values as in OpenZeppelin AccessManager.
+    /// Return values as in OpenZeppelin AccessManager.
     /// For a locked manager the function reverts with ErrorAccessManagerTargetAdminLocked.
     function canCall(
         address caller,
@@ -101,9 +101,9 @@ contract AccessManagerCloneable is
     /// For the registry admin release 3 is returned.
     /// For the release admin and the instance admin the actual release version is returned.
     function getRelease() external view returns (VersionPart release) {
-        return _release;
+        return VersionPartLib.toVersionPart(
+            uint8(_getInitializedVersion()));
     }
-
 
     /// @dev Returns true iff all contracts of this access manager are locked.
     function isLocked()
@@ -112,29 +112,5 @@ contract AccessManagerCloneable is
         returns (bool)
     {
         return _isLocked;
-    }
-
-
-    function _checkAndSetRelease(VersionPart release)
-        internal
-    {
-        if (!release.isValidRelease()) {
-            revert ErrorAccessManagerInvalidRelease(release);
-        }
-
-        _release = release;
-    }
-
-
-    function _checkAndSetRegistry(address registry)
-        internal
-    {
-        // checks
-        if(address(getRegistry()) != address(0)) {
-            revert ErrorAccessManagerRegistryAlreadySet(address(getRegistry()) );
-        }
-
-        // effects
-        __RegistryLinked_init(registry);
     }
 }

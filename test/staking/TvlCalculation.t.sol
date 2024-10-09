@@ -480,7 +480,7 @@ contract TvlCalculation is GifTest {
     )
         internal
     {
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(customer, amount);
         vm.stopPrank();
 

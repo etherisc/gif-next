@@ -34,14 +34,14 @@ contract AccessAdminForTesting is AccessAdmin {
     RoleId internal _managerRoleId;
 
     // constructor as in registry admin
-    constructor() {
+    constructor(VersionPart release) {
         initialize(
             address(new AccessManagerCloneable()),
-            "TestAdmin");
+            "TestAdmin",
+            release);
     }
 
     function completeSetup(
-        address registry,
         VersionPart release
     )
         public
@@ -50,11 +50,6 @@ contract AccessAdminForTesting is AccessAdmin {
         // we assume that this function is called by the deployer
         // this can be enforced when the contract is created and the setup is completed in a single tx.
         address deployer = msg.sender;
-
-        // link access manager to registry and release
-        AccessManagerCloneable(authority()).completeSetup(
-            registry, 
-            release);
 
         // create targets for testing
         _createTarget(address(this), "AccessAdmin", IAccess.TargetType.Core, false);
@@ -275,17 +270,16 @@ contract AccessAdminBaseTest is Test {
         vm.startPrank(accessAdminDeployer);
 
         // create access admin for testing
-        accessAdmin = new AccessAdminForTesting();
+        release = VersionPartLib.toVersionPart(3);
+        accessAdmin = new AccessAdminForTesting(release);
 
         // create registry and release version
         registryAdmin = new RegistryAdmin();
         registry = new Registry(registryAdmin, globalRegistry);
-        release = VersionPartLib.toVersionPart(3);
 
         // complete setup (which links internal acccess manager to registry and release)
         // and grants manager role to deployer
         accessAdmin.completeSetup(
-            address(registry), 
             release);
 
         vm.stopPrank();

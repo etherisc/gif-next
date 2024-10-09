@@ -21,12 +21,12 @@ contract ObjectSet is
     address internal _instanceAddress;
 
     /// @dev This initializer needs to be called from the instance itself.
-    function initialize(address authority, address registry) 
+    function initialize(address authority) 
         external
         initializer()
     {
         _instanceAddress = msg.sender;
-        __Cloneable_init(authority, registry);
+        __Cloneable_init(authority);
         
         emit LogObjectSetInitialized(address(_instanceAddress));
     }

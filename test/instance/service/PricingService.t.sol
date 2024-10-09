@@ -370,7 +370,7 @@ contract PricingServiceTest is GifTest {
         vm.stopPrank();
 
         // -- create bundle on pool
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(investor, 10000);
         vm.stopPrank();
 

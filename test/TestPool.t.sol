@@ -37,7 +37,6 @@ contract TestPool is GifTest {
 
     function test_poolContractLocations() public {
         newPool = new SimplePool(
-            address(registry),
             productNftId,
             _getDefaultSimplePoolInfo(),
             new BasicPoolAuthorization("NewSimplePool"),
@@ -417,7 +416,7 @@ contract TestPool is GifTest {
     }
 
     function _fundInvestor(uint256 amount) internal {
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(investor, amount);
         vm.stopPrank();
 

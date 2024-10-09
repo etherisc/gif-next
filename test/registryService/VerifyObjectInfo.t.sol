@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {Vm, console} from "../../lib/forge-std/src/Test.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {ObjectType, ObjectTypeLib} from "../../contracts/type/ObjectType.sol";
+import {VersionPartLib} from "../../contracts/type/Version.sol";
 
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {IRegistryService} from "../../contracts/registry/IRegistryService.sol";
@@ -20,14 +21,14 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
             nftId: NftIdLib.toNftId(randomNumber(type(uint96).max)),
             parentNftId: NftIdLib.toNftId(randomNumber(type(uint96).max)), 
             objectType: objectType,
+            release: VersionPartLib.toVersionPart(uint8(randomNumber(type(uint8).max))),
             isInterceptor: toBool(randomNumber(1)), 
-            objectAddress: address(0), 
-            initialOwner: registerableOwner,
-            data: ""
+            objectAddress: address(0)
         });
 
         registryServiceHarness.exposed_verifyObjectInfo(
                 info,
+                registerableOwner,
                 objectType); // expectedType
     } 
 
@@ -44,10 +45,9 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
             nftId: NftIdLib.toNftId(randomNumber(type(uint96).max)),
             parentNftId: NftIdLib.toNftId(randomNumber(type(uint96).max)),
             objectType: objectType,
+            release: VersionPartLib.toVersionPart(uint8(randomNumber(type(uint8).max))),
             isInterceptor: toBool(randomNumber(1)), 
-            objectAddress: address(0), 
-            initialOwner: registerableOwner,
-            data: ""
+            objectAddress: address(0)
         });
 
         vm.expectRevert(abi.encodeWithSelector(
@@ -57,6 +57,7 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
 
         registryServiceHarness.exposed_verifyObjectInfo(
             info,
+            registerableOwner,
             expectedType);
     }
 
@@ -73,10 +74,9 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
             nftId: NftIdLib.toNftId(randomNumber(type(uint96).max)), 
             parentNftId: NftIdLib.toNftId(randomNumber(type(uint96).max)),
             objectType: objectType,
+            release: VersionPartLib.toVersionPart(uint8(randomNumber(type(uint8).max))),
             isInterceptor: toBool(randomNumber(1)),
-            objectAddress: address(0),
-            initialOwner: registerableOwner,
-            data: ""
+            objectAddress: address(0)
         });
 
         vm.expectRevert(abi.encodeWithSelector(
@@ -86,6 +86,7 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
 
         registryServiceHarness.exposed_verifyObjectInfo(
             info,
+            registerableOwner,
             expectedType);
     }
 
@@ -102,10 +103,9 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
             nftId: NftIdLib.toNftId(randomNumber(type(uint96).max)),
             parentNftId: NftIdLib.toNftId(randomNumber(type(uint96).max)),
             objectType: objectType,
+            release: VersionPartLib.toVersionPart(uint8(randomNumber(type(uint8).max))),
             isInterceptor: toBool(randomNumber(1)),
-            objectAddress: address(0),
-            initialOwner: registerableOwner,
-            data: ""
+            objectAddress: address(0)
         });
 
         vm.expectRevert(abi.encodeWithSelector(
@@ -115,6 +115,7 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
 
         registryServiceHarness.exposed_verifyObjectInfo(
             info,
+            registerableOwner,
             expectedType);
     }
 
@@ -156,10 +157,9 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
             nftId: NftIdLib.toNftId(randomNumber(type(uint96).max)),
             parentNftId: NftIdLib.toNftId(randomNumber(type(uint96).max)),
             objectType: objectType,
+            release: VersionPartLib.toVersionPart(uint8(randomNumber(type(uint8).max))),
             isInterceptor: toBool(randomNumber(1)),
-            objectAddress: address(0),
-            initialOwner: address(0),
-            data: ""
+            objectAddress: address(0)
         });
 
         vm.expectRevert(abi.encodeWithSelector(
@@ -168,6 +168,7 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
 
         registryServiceHarness.exposed_verifyObjectInfo(
             info,
+            address(0), // zero owner
             objectType); // expectedType
     }
 
@@ -179,10 +180,9 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
             nftId: NftIdLib.toNftId(randomNumber(type(uint96).max)),
             parentNftId: NftIdLib.toNftId(randomNumber(type(uint96).max)),
             objectType: objectType,
+            release: VersionPartLib.toVersionPart(uint8(randomNumber(type(uint8).max))),
             isInterceptor: toBool(randomNumber(1)),
-            objectAddress: address(0),
-            initialOwner: address(registry), // any registered address
-            data: ""
+            objectAddress: address(0)
         });
 
         vm.expectRevert(abi.encodeWithSelector(
@@ -192,6 +192,7 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
 
         registryServiceHarness.exposed_verifyObjectInfo(
             info,
+            address(registry), // any registered address
             objectType); // expectedType
     }
 }

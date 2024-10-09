@@ -63,7 +63,6 @@ contract StakingOwnerTest is GifTest {
         console.log("staking nft id (actual)", staking.getNftId().toInt());
 
         // check staking owner
-        assertEq(stakingOwner, registryOwner, "staking owner not registry owner");
         assertTrue(stakingOwner != outsider, "staking owner not outsider");
         assertEq(staking.getOwner(), stakingOwner, "unexpected staking owner");
 
@@ -238,7 +237,7 @@ contract StakingOwnerTest is GifTest {
         staking.setStakingRate(currentChainId, address(token), newTokenStakingRate);
 
         // WHEN + THEN attempt to set staking reader
-        StakingReader newStakingReader = new StakingReader(registry);
+        StakingReader newStakingReader = new StakingReader();
         vm.expectRevert(
             abi.encodeWithSelector(
                 INftOwnable.ErrorNftOwnableNotOwner.selector, outsider));

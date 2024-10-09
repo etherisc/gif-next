@@ -104,7 +104,6 @@ abstract contract Distribution is
 
 
     function __Distribution_init(
-        address registry,
         NftId productNftId,
         IAuthorization authorization, 
         bool isInterceptor,
@@ -116,7 +115,6 @@ abstract contract Distribution is
         onlyInitializing()
     {
         __InstanceLinkedComponent_init(
-            registry, 
             productNftId, 
             name, 
             DISTRIBUTION(), 

@@ -38,7 +38,6 @@ contract FlightOracle is
 
 
     constructor(
-        address registry,
         NftId productNftId,
         string memory componentName,
         IAuthorization authorization
@@ -46,7 +45,6 @@ contract FlightOracle is
     {
         address initialOwner = msg.sender;
         initialize(
-            registry,
             productNftId,
             authorization,
             initialOwner,
@@ -56,7 +54,6 @@ contract FlightOracle is
 
 
     function initialize(
-        address registry,
         NftId productNftId,
         IAuthorization authorization,
         address initialOwner,
@@ -67,7 +64,6 @@ contract FlightOracle is
         initializer()
     {
         _initializeBasicOracle(
-            registry,
             productNftId,
             authorization,
             initialOwner,

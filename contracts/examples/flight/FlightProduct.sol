@@ -134,7 +134,6 @@ contract FlightProduct is
 
 
     constructor(
-        address registry,
         NftId instanceNftid,
         string memory componentName,
         IAuthorization authorization
@@ -143,7 +142,6 @@ contract FlightProduct is
         address initialOwner = msg.sender;
 
         _initialize(
-            registry,
             instanceNftid,
             componentName,
             authorization,
@@ -647,7 +645,6 @@ contract FlightProduct is
 
 
     function _initialize(
-        address registry,
         NftId instanceNftId,
         string memory componentName,
         IAuthorization authorization,
@@ -657,7 +654,6 @@ contract FlightProduct is
         initializer
     {
         __Product_init(
-            registry,
             instanceNftId,
             componentName,
             IComponents.ProductInfo({

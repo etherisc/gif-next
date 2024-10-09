@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
@@ -15,12 +16,13 @@ import {IServiceAuthorization} from "../../contracts/authorization/IServiceAutho
 import {AmountLib} from "../../contracts/type/Amount.sol";
 import {ObjectType, ObjectTypeLib} from "../../contracts/type/ObjectType.sol";
 import {ChainNft} from "../../contracts/registry/ChainNft.sol";
+import {ContractLib} from "../../contracts/shared/ContractLib.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {ProxyManager} from "../../contracts/upgradeability/ProxyManager.sol";
 import {SCHEDULED, DEPLOYING} from "../../contracts/type/StateId.sol";
 import {VersionPart, VersionPartLib} from "../../contracts/type/Version.sol";
 import {RegistryAuthorization} from "../../contracts/registry/RegistryAuthorization.sol";
-import {RoleId} from "../../contracts/type/RoleId.sol";
+import {RoleId, GIF_ADMIN_ROLE, GIF_MANAGER_ROLE} from "../../contracts/type/RoleId.sol";
 import {StateIdLib} from "../../contracts/type/StateId.sol";
 import {TimestampLib} from "../../contracts/type/Timestamp.sol";
 
@@ -70,7 +72,6 @@ import {StakingServiceManager} from "../../contracts/staking/StakingServiceManag
 
 contract GifDeployer is Test {
 
-    uint8 public constant GIF_RELEASE = 3;
     string public constant COMMIT_HASH = "1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a";
 
     struct DeployedServiceInfo {
@@ -81,10 +82,10 @@ contract GifDeployer is Test {
 
     // global accounts
     address public globalRegistry = makeAddr("globalRegistry");
-    address public registryOwner = makeAddr("registryOwner");
-    address public stakingOwner = registryOwner;
-    address public gifAdmin = registryOwner;
-    address public gifManager = registryOwner;
+    address public stakingOwner = makeAddr("stakingOwner");
+    address public gifAdmin = makeAddr("gifAdmin");
+    address public gifManager;// must be different from gifAdmin
+    address public tokenIssuer = makeAddr("tokenIssuer");
 
     // deploy core
     IERC20Metadata public dip;
@@ -92,6 +93,7 @@ contract GifDeployer is Test {
     TokenRegistry public tokenRegistry;
     ReleaseRegistry public releaseRegistry;
     RegistryAdmin public registryAdmin;
+    RegistryAuthorization public registryAuthorization;
     StakingManager public stakingManager;
     Staking public staking;
 
@@ -161,12 +163,7 @@ contract GifDeployer is Test {
     mapping(ObjectType domain => DeployedServiceInfo info) public serviceForDomain;
 
 
-    function deployCore(
-        address globalRegistry,
-        address gifAdmin,
-        address gifManager,
-        address stakingOwner
-    )
+    function deployCore()
         public
         returns (
             IERC20Metadata dip,
@@ -178,11 +175,16 @@ contract GifDeployer is Test {
             Staking staking
         )
     {
-        // solhint-disable 
-        vm.startPrank(gifManager);
+        // derive gif manager address
+        string memory mnemonic = "candy maple cake sugar pudding cream honey rich smooth crumble sweet treat";//vm.envString("WALLET_MNEMONIC");
+        (gifManager, ) = deriveRememberKey(mnemonic, 0);
 
+        // solhint-disable
         console.log("1) deploy dip token");
+        vm.prank(tokenIssuer);
         dip = new Dip();
+
+        vm.startPrank(gifManager);
 
         console.log("2) deploy registry contracts");
         (
@@ -192,11 +194,17 @@ contract GifDeployer is Test {
             registryAdmin
         ) = _deployRegistry(dip);
 
+        vm.stopPrank();
+        vm.startPrank(stakingOwner);
+
         console.log("3) deploy staking contracts");
         (
             stakingManager,
             staking
-        ) = _deployStaking(registry, tokenRegistry);
+        ) = _deployStaking(tokenRegistry);
+
+        vm.stopPrank();
+        vm.startPrank(gifManager);
 
         console.log("4) complete setup for GIF core contracts");
 
@@ -211,9 +219,7 @@ contract GifDeployer is Test {
 
         console.log("   c) complete registry admin setup");
         registryAdmin.completeSetup(
-            address(registry),
-            address(new RegistryAuthorization(COMMIT_HASH)),
-            VersionPartLib.toVersionPart(GIF_RELEASE),
+            address(registryAuthorization),
             gifAdmin,
             gifManager);
 
@@ -222,7 +228,6 @@ contract GifDeployer is Test {
         vm.stopPrank();
         // solhint-disable enable
     }
-
 
     function _deployRegistry(IERC20Metadata dip)
         internal
@@ -233,23 +238,27 @@ contract GifDeployer is Test {
             RegistryAdmin registryAdmin
         )
     {
+        console.log("   a) deploy registry authorizaion");
+        registryAuthorization = new RegistryAuthorization(COMMIT_HASH);
 
-        console.log("   a) deploy registry admin");
+        console.log("   b) deploy registry admin");
         registryAdmin = new RegistryAdmin();
 
-        console.log("   b) deploy registry");
+        console.log("   c) deploy registry");
         registry = new Registry(registryAdmin, globalRegistry);
 
-        console.log("   c) deploy release registry");
-        releaseRegistry = new ReleaseRegistry(registry);
+        console.log("registry deployed to ", address(registry));
+        require(registry == ContractLib.getRegistry(), "deloyed registry address differs from hardcoded");
 
-        console.log("   d) deploy token registry");
-        tokenRegistry = new TokenRegistry(registry, dip);
+        console.log("   d) deploy release registry");
+        releaseRegistry = new ReleaseRegistry();
+
+        console.log("   e) deploy token registry");
+        tokenRegistry = new TokenRegistry(dip);
     }
 
 
     function _deployStaking(
-        Registry registry,
         TokenRegistry tokenRegistry
     )
         internal 
@@ -259,21 +268,18 @@ contract GifDeployer is Test {
         )
     {
         console.log("   a) deploy staking reader");
-        StakingReader stakingReader = new StakingReader(registry);
+        StakingReader stakingReader = new StakingReader();
 
         console.log("   b) deploy staking store");
         StakingStore stakingStore = new StakingStore(
-            registry,
             stakingReader);
 
         console.log("   c) deploy target handler");
         TargetHandler targetHandler = new TargetHandler(
-            registry,
             stakingStore);
 
         console.log("   d) deploy staking manager (including upgradeable staking)");
         stakingManager = new StakingManager(
-            address(registry),
             address(targetHandler),
             address(stakingStore),
             address(tokenRegistry),
@@ -295,23 +301,21 @@ contract GifDeployer is Test {
 
     function deployRelease(
         ReleaseRegistry releaseRegistry,
-        IServiceAuthorization serviceAuthorization,
-        address admin,
-        address manager
+        IServiceAuthorization serviceAuthorization
     )
         public
     {
-        vm.startPrank(admin);
+        vm.startPrank(gifAdmin);
         releaseRegistry.createNextRelease();
         vm.stopPrank();
 
-        vm.startPrank(manager);
+        vm.startPrank(gifManager);
         _deployReleaseServices(
             releaseRegistry,
             serviceAuthorization);
         vm.stopPrank();
 
-        vm.startPrank(admin);
+        vm.startPrank(gifAdmin);
         releaseRegistry.activateNextRelease();
         vm.stopPrank();
     }
@@ -397,59 +401,59 @@ contract GifDeployer is Test {
     {
         address registryAddress = address(releaseRegistry.getRegistry());
 
-        registryServiceManager = new RegistryServiceManager{salt: salt}(authority, registryAddress, salt);
+        registryServiceManager = new RegistryServiceManager{salt: salt}(authority, salt);
         registryService = registryServiceManager.getRegistryService();
         registryServiceNftId = _registerService(releaseRegistry, registryServiceManager, registryService);
 
-        stakingServiceManager = new StakingServiceManager{salt: salt}(authority, registryAddress, salt);
+        stakingServiceManager = new StakingServiceManager{salt: salt}(authority, salt);
         stakingService = stakingServiceManager.getStakingService();
         stakingServiceNftId = _registerService(releaseRegistry, stakingServiceManager, stakingService);
 
-        instanceServiceManager = new InstanceServiceManager{salt: salt}(authority, registryAddress, salt);
+        instanceServiceManager = new InstanceServiceManager{salt: salt}(authority, salt);
         instanceService = instanceServiceManager.getInstanceService();
         instanceServiceNftId = _registerService(releaseRegistry, instanceServiceManager, instanceService);
 
-        accountingServiceManager = new AccountingServiceManager{salt: salt}(authority, registryAddress, salt);
+        accountingServiceManager = new AccountingServiceManager{salt: salt}(authority, salt);
         accountingService = accountingServiceManager.getAccountingService();
         accountingServiceNftId = _registerService(releaseRegistry, accountingServiceManager, accountingService);
 
-        componentServiceManager = new ComponentServiceManager{salt: salt}(authority, registryAddress, salt);
+        componentServiceManager = new ComponentServiceManager{salt: salt}(authority, salt);
         componentService = componentServiceManager.getComponentService();
         componentServiceNftId = _registerService(releaseRegistry, componentServiceManager, componentService);
 
-        distributionServiceManager = new DistributionServiceManager{salt: salt}(authority, registryAddress, salt);
+        distributionServiceManager = new DistributionServiceManager{salt: salt}(authority, salt);
         distributionService = distributionServiceManager.getDistributionService();
         distributionServiceNftId = _registerService(releaseRegistry, distributionServiceManager, distributionService);
 
-        pricingServiceManager = new PricingServiceManager{salt: salt}(authority, registryAddress, salt);
+        pricingServiceManager = new PricingServiceManager{salt: salt}(authority, salt);
         pricingService = pricingServiceManager.getPricingService();
         pricingServiceNftId = _registerService(releaseRegistry, pricingServiceManager, pricingService);
 
-        bundleServiceManager = new BundleServiceManager{salt: salt}(authority, registryAddress, salt);
+        bundleServiceManager = new BundleServiceManager{salt: salt}(authority, salt);
         bundleService = bundleServiceManager.getBundleService();
         bundleServiceNftId = _registerService(releaseRegistry, bundleServiceManager, bundleService);
 
-        poolServiceManager = new PoolServiceManager{salt: salt}(authority, registryAddress, salt);
+        poolServiceManager = new PoolServiceManager{salt: salt}(authority, salt);
         poolService = poolServiceManager.getPoolService();
         poolServiceNftId = _registerService(releaseRegistry, poolServiceManager, poolService);
 
-        oracleServiceManager = new OracleServiceManager{salt: salt}(authority, registryAddress, salt);
+        oracleServiceManager = new OracleServiceManager{salt: salt}(authority, salt);
         oracleService = oracleServiceManager.getOracleService();
         oracleServiceNftId = _registerService(releaseRegistry, oracleServiceManager, oracleService);
 
-        riskServiceManager = new RiskServiceManager{salt: salt}(authority, registryAddress, salt);
+        riskServiceManager = new RiskServiceManager{salt: salt}(authority, salt);
         riskService = riskServiceManager.getRiskService(); 
         riskServiceNftId = _registerService(releaseRegistry, riskServiceManager, riskService);
 
-        policyServiceManager = new PolicyServiceManager{salt: salt}(authority, registryAddress, salt);
+        policyServiceManager = new PolicyServiceManager{salt: salt}(authority, salt);
         policyService = policyServiceManager.getPolicyService();
         policyServiceNftId = _registerService(releaseRegistry, policyServiceManager, policyService);
 
-        claimServiceManager = new ClaimServiceManager{salt: salt}(authority, registryAddress, salt);
+        claimServiceManager = new ClaimServiceManager{salt: salt}(authority, salt);
         claimService = claimServiceManager.getClaimService();
         claimServiceNftId = _registerService(releaseRegistry, claimServiceManager, claimService);
 
-        applicationServiceManager = new ApplicationServiceManager{salt: salt}(authority, registryAddress, salt);
+        applicationServiceManager = new ApplicationServiceManager{salt: salt}(authority, salt);
         applicationService = applicationServiceManager.getApplicationService();
         applicationServiceNftId = _registerService(releaseRegistry, applicationServiceManager, applicationService);
 
@@ -494,19 +498,15 @@ contract GifDeployer is Test {
         assertEq(a.nftId.toInt(), b.nftId.toInt(), "getObjectInfo(address).nftId returned unexpected value");
         assertEq(a.parentNftId.toInt(), b.parentNftId.toInt(), "getObjectInfo(address).parentNftId returned unexpected value");
         assertEq(a.objectType.toInt(), b.objectType.toInt(), "getObjectInfo(address).objectType returned unexpected value");
+        assertEq(a.release.toInt(), b.release.toInt(), "getObjectInfo(address).release returned unexpected value");
         assertEq(a.objectAddress, b.objectAddress, "getObjectInfo(address).objectAddress returned unexpected value");
-        assertEq(a.initialOwner, b.initialOwner, "getObjectInfo(address).initialOwner returned unexpected value");
-        assertEq(a.data.length, b.data.length, "getObjectInfo(address).data.length returned unexpected value");
-        assertEq(keccak256(a.data), keccak256(b.data), "getObjectInfo(address).data returned unexpected value");
 
         return (
             (a.nftId == b.nftId) &&
             (a.parentNftId == b.parentNftId) &&
             (a.objectType == b.objectType) &&
-            (a.objectAddress == b.objectAddress) &&
-            (a.initialOwner == b.initialOwner) &&
-            (a.data.length == b.data.length) &&
-            keccak256(a.data) == keccak256(b.data)
+            (a.release == b.release) &&
+            (a.objectAddress == b.objectAddress)
         );
     }
 
@@ -516,10 +516,9 @@ contract GifDeployer is Test {
                 NftIdLib.zero(),
                 NftIdLib.zero(),
                 ObjectTypeLib.zero(),
+                VersionPartLib.zero(),
                 false,
-                address(0),
-                address(0),
-                bytes("")
+                address(0)
             )
         );
     }
@@ -564,11 +563,15 @@ contract GifDeployer is Test {
         );
     }
 
+    function eqBytes(bytes memory a, bytes memory b) public pure returns (bool isSame) {
+            return (
+                a.length == b.length &&
+                keccak256(a) == keccak256(b)
+            );
+    }
 
-    function _deployCore(
-        address gifAdmin,
-        address gifManager
-    )
+
+    function _deployCore()
         internal
     {
         (
@@ -579,11 +582,7 @@ contract GifDeployer is Test {
             registryAdmin,
             stakingManager,
             staking
-        ) = deployCore(
-            globalRegistry,
-            gifAdmin,
-            gifManager,
-            stakingOwner);
+        ) = deployCore();
 
         // obtain some references
         registryAddress = address(registry);
@@ -597,13 +596,14 @@ contract GifDeployer is Test {
     function _printCoreSetup() internal view {
         // solhint-disable
         console.log("registry deployed at", address(registry));
-        console.log("registry owner", registryOwner);
-
         console.log("token registry deployed at", address(tokenRegistry));
         console.log("release manager deployed at", address(releaseRegistry));
 
-        console.log("registry access manager deployed:", address(registryAdmin));
-        console.log("registry access manager authority", registryAdmin.authority());
+        console.log("registry access admin deployed at", address(registryAdmin));
+        console.log("registry access manager", registryAdmin.authority());
+        console.log("registry authorization deployed at", address(registryAuthorization));
+        console.log("gif admin", registryAdmin.getRoleMember(GIF_ADMIN_ROLE(), 0));
+        console.log("gif manager", registryAdmin.getRoleMember(GIF_MANAGER_ROLE(), 0));
 
         console.log("staking manager deployed at", address(stakingManager));
 
@@ -700,5 +700,22 @@ contract GifDeployer is Test {
 
         console.log("");
         // solhint-enable
+    }
+
+    function _computeRegistryAddress(address deployer, address globalRegistry, bytes32 salt) internal pure returns (address) {
+        address accessAdmin = Create2.computeAddress(
+            salt, 
+            keccak256(abi.encodePacked(
+                type(RegistryAdmin).creationCode)), // bytecodeHash
+            deployer); 
+        
+        return Create2.computeAddress(
+            salt, 
+            keccak256(abi.encodePacked(
+                type(Registry).creationCode,
+                abi.encode(
+                    accessAdmin,
+                    globalRegistry))), // bytecodeHash 
+            deployer);
     }
 }

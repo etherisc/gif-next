@@ -2,15 +2,16 @@
 pragma solidity ^0.8.20;
 
 import {IAccess} from "../authorization/IAccess.sol";
-import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
+import {IComponent} from "../shared/IComponent.sol";
 
 import {Authorization} from "../authorization/Authorization.sol";
 import {BasicDistribution} from "./BasicDistribution.sol"; 
 import {Distribution} from "./Distribution.sol";
 import {COMPONENT, DISTRIBUTION} from "../type/ObjectType.sol";
 import {PUBLIC_ROLE} from "../type/RoleId.sol";
+import {GIF_INITIAL_RELEASE} from "../registry/Registry.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
-
+import {VersionPartLib} from "../type/Version.sol";
 
 contract BasicDistributionAuthorization
      is Authorization
@@ -20,7 +21,7 @@ contract BasicDistributionAuthorization
           Authorization(
                distributionName, 
                DISTRIBUTION(), 
-               3,
+               GIF_INITIAL_RELEASE(),
                COMMIT_HASH,
                TargetType.Component, 
                true)
@@ -60,7 +61,7 @@ contract BasicDistributionAuthorization
           _authorize(functions, BasicDistribution.changeDistributorType.selector, "changeDistributorType");
           _authorize(functions, BasicDistribution.createReferral.selector, "createReferral");
           
-          _authorize(functions, IInstanceLinkedComponent.withdrawFees.selector, "withdrawFees");
+          _authorize(functions, IComponent.withdrawFees.selector, "withdrawFees");
           _authorize(functions, Distribution.withdrawCommission.selector, "withdrawCommission");
      }
 }

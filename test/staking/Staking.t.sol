@@ -82,8 +82,8 @@ contract StakingTest is GifTest {
         assertEq(objectInfo.objectType.toInt(), STAKE().toInt(), "unexpected object type");
         assertFalse(objectInfo.isInterceptor, "stake as interceptor");
         assertEq(objectInfo.objectAddress, address(0), "stake object address non zero");
-        assertEq(objectInfo.initialOwner, staker, "unexpected initial stake owner");
-        assertEq(bytes(objectInfo.data).length, 0, "unexpected data size");
+        assertEq(registry.ownerOf(stakeNftId), staker, "unexpected initial stake owner");
+        assertEq(registry.getObjectData(stakeNftId).length, 0, "unexpected data size");
 
         NftId stakeTargetNftId;
         Seconds lockingPeriod;
@@ -139,8 +139,8 @@ contract StakingTest is GifTest {
         assertEq(objectInfo.objectType.toInt(), STAKE().toInt(), "unexpected object type");
         assertFalse(objectInfo.isInterceptor, "stake as interceptor");
         assertEq(objectInfo.objectAddress, address(0), "stake object address non zero");
-        assertEq(objectInfo.initialOwner, staker2, "unexpected initial stake owner");
-        assertEq(bytes(objectInfo.data).length, 0, "unexpected data size");
+        assertEq(registry.ownerOf(stakeNftId), staker2, "unexpected initial stake owner");
+        assertEq(registry.getObjectData(stakeNftId).length, 0, "unexpected data size");
 
         Seconds lockingPeriod = stakingReader.getTargetInfo(instanceNftId).lockingPeriod;
         assertEq(lockingPeriod.toInt(), TargetManagerLib.getDefaultLockingPeriod().toInt(), "unexpected locking period");
@@ -1085,7 +1085,7 @@ contract StakingTest is GifTest {
         dipAmount = AmountLib.toAmount(myStakeAmount * 10 ** dip.decimals());
 
         if (withFunding) {
-            vm.startPrank(registryOwner);
+            vm.startPrank(tokenIssuer);
             dip.transfer(myStaker, dipAmount.toInt());
             vm.stopPrank();
         }

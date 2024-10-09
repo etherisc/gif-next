@@ -4,8 +4,11 @@ pragma solidity ^0.8.20;
 import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 
 import {INftOwnable} from "./INftOwnable.sol";
-import {IRelease} from "../registry/IRelease.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
+import {IVersionable} from "./IVersionable.sol";
+import {ObjectType} from "../type/ObjectType.sol";
+import {NftId} from "../type/NftId.sol";
+import {VersionPart} from "../type/Version.sol";
 
 /// @title IRegisterable
 /// @dev Marks contracts that are intended to be registered in the registry.
@@ -13,13 +16,16 @@ import {IRegistry} from "../registry/IRegistry.sol";
 interface IRegisterable is
     IAccessManaged,
     INftOwnable,
-    IRelease
+    IVersionable
 {
     // __Registerable_init
     error ErrorAuthorityInvalid(address authority);
 
     // onlyActive()
     error ErrorRegisterableNotActive();
+
+    //_checkNftType()
+    error ErrorRegisterableInvalidType(NftId nftId, ObjectType expectedType, VersionPart expectedRelease);
 
     /// @dev Returns true iff this contract managed by its authority is active.
     /// Queries the IAccessManaged.authority().
@@ -32,5 +38,10 @@ interface IRegisterable is
     function getInitialInfo() 
         external 
         view
-        returns (IRegistry.ObjectInfo memory);
+        returns (IRegistry.ObjectInfo memory info);
+
+    function getInitialData() 
+        external 
+        view
+        returns (bytes memory data);
 }

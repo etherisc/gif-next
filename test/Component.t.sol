@@ -60,7 +60,7 @@ contract TestComponent is GifTest {
 
         address externallyOwnerWallet = makeAddr("externallyOwnerWallet");
 
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(distribution.getWallet(), INITIAL_BALANCE);
         vm.stopPrank();
 
@@ -146,7 +146,7 @@ contract TestComponent is GifTest {
         address externallyOwnedWallet = makeAddr("externallyOwnedWallet");
 
         // put some tokens in the distribution wallet
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(address(distribution.getTokenHandler()), INITIAL_BALANCE);
         vm.stopPrank();
 
@@ -173,7 +173,7 @@ contract TestComponent is GifTest {
         assertEq(distribution.getWallet(), externallyOwnedWallet, "wallet not externallyOwnedWallet");
         
         // put some tokens in the externally owned wallet
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(address(externallyOwnedWallet), INITIAL_BALANCE);
         vm.stopPrank();
 
@@ -205,7 +205,7 @@ contract TestComponent is GifTest {
         assertEq(distribution.getWallet(), externallyOwnedWallet, "wallet not externallyOwnedWallet");
         
         // put some tokens in the externally owned wallet
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(address(externallyOwnedWallet), INITIAL_BALANCE);
         vm.stopPrank();
 
@@ -232,7 +232,7 @@ contract TestComponent is GifTest {
         address externallyOwnedWallet2 = makeAddr("externallyOwnedWallet2");
 
         // put some tokens in the externally owned wallet
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(address(externallyOwnedWallet), INITIAL_BALANCE);
         vm.stopPrank();
 

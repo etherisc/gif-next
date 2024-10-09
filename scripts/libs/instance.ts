@@ -38,6 +38,8 @@ export async function deployAndRegisterMasterInstance(
 
     logger.info("======== Starting deployment of master instance ========");
 
+    logger.info("-------- Starting deployment of InstanceAuthorizationV3 --------");
+
     const { address: masterInstanceAuthorizationV3Address } = await deployContract(
         "InstanceAuthorizationV3",
         owner,
@@ -56,17 +58,20 @@ export async function deployAndRegisterMasterInstance(
         }
     );
 
+    logger.info("-------- Starting deployment of master AccessManagerCloneable --------");
+
     const { address: masterAccessManagerAddress, contract: masterAccessManagerBaseContract } = await deployContract(
         "AccessManagerCloneable",
         owner,
         undefined,
         { 
             libraries: {
-                ContractLib: libraries.contractLibAddress,
                 VersionPartLib: libraries.versionPartLibAddress,
             }
         }
     );
+
+    logger.info("-------- Starting deployment of master InstanceAdmin --------");
 
     const { address: masterInstanceAdminAddress, contract: masterInstanceAdminContract } = await deployContract(
         "InstanceAdmin",
@@ -79,8 +84,8 @@ export async function deployAndRegisterMasterInstance(
                 AccessAdminLib: libraries.accessAdminLibAddress,
                 BlocknumberLib: libraries.blockNumberLibAddress,
                 ContractLib: libraries.contractLibAddress,
-                NftIdLib: libraries.nftIdLibAddress, 
                 RoleIdLib: libraries.roleIdLibAddress,
+                NftIdLib: libraries.nftIdLibAddress,
                 SelectorSetLib: libraries.selectorSetLibAddress,
                 StrLib: libraries.strLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
@@ -89,6 +94,8 @@ export async function deployAndRegisterMasterInstance(
         }
     );
     const masterInstanceAdmin = masterInstanceAdminContract as InstanceAdmin;
+
+    logger.info("-------- Starting deployment of master InstanceStore --------");
 
     const { address: masterInstanceStoreAddress, contract: masterInstanceStoreContract } = await deployContract(
         "InstanceStore",
@@ -110,6 +117,8 @@ export async function deployAndRegisterMasterInstance(
     );
     const masterInstanceStore = masterInstanceStoreContract as InstanceStore;
 
+    logger.info("-------- Starting deployment of master ProductStore --------");
+
     const { address: masterProductStoreAddress, contract: masterProductStoreContract } = await deployContract(
         "ProductStore",
         owner,
@@ -129,6 +138,8 @@ export async function deployAndRegisterMasterInstance(
     );
     const masterProductStore = masterProductStoreContract as InstanceStore;
 
+    logger.info("-------- Starting deployment of master BundleSet --------");
+
     const {address: masterInstanceBundleSetAddress, contract: masterBundleSetContrat} = await deployContract(
         "BundleSet",
         owner,
@@ -144,6 +155,8 @@ export async function deployAndRegisterMasterInstance(
         }
     );
     const masterInstanceBundleSet = masterBundleSetContrat as BundleSet;
+
+    logger.info("-------- Starting deployment of master RiskSet --------");
 
     const {address: masterInstanceRiskSetAddress, contract: masterRiskSetContrat} = await deployContract(
         "RiskSet",
@@ -161,6 +174,8 @@ export async function deployAndRegisterMasterInstance(
         }
     );
     const masterInstanceRiskSet = masterRiskSetContrat as RiskSet;
+
+    logger.info("-------- Starting deployment of master InstanceReader --------");
 
     const { address: masterInstanceReaderAddress, contract: masterInstanceReaderContract } = await deployContract(
         "InstanceReader",
@@ -184,6 +199,8 @@ export async function deployAndRegisterMasterInstance(
     );
     const masterInstanceReader = masterInstanceReaderContract as InstanceReader;
 
+    logger.info("-------- Starting deployment of master Instance --------");
+
     const { address: masterInstanceAddress, contract: masterInstanceBaseContract } = await deployContract(
         "Instance",
         owner,
@@ -192,6 +209,8 @@ export async function deployAndRegisterMasterInstance(
             libraries: {
                 ContractLib: libraries.contractLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
+                VersionLib: libraries.versionLibAddress,
+                VersionPartLib: libraries.versionPartLibAddress,
             }
         }
     );
@@ -212,8 +231,6 @@ export async function deployAndRegisterMasterInstance(
                 riskSet: masterInstanceRiskSetAddress,
                 instanceReader: masterInstanceReaderAddress
             },
-            registry.registryAddress,
-            3, 
             resolveAddress(owner),
             false,
             getTxOpts()),
@@ -236,9 +253,7 @@ export async function deployAndRegisterMasterInstance(
     // wire instance admin to registry, instance and instance authorization
     await executeTx(
         () => masterInstanceAdmin.completeSetup(
-            registry.registryAddress,
             masterInstanceAuthorizationV3Address,
-            3,
             masterInstanceAddress, 
             getTxOpts()),
             "masterInstanceAdmin completeSetup",

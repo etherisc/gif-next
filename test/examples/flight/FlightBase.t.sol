@@ -72,7 +72,7 @@ contract FlightBaseTest is GifTest {
         vm.stopPrank();
 
         // whitelist fire token and make it active for release 3
-        vm.startPrank(registryOwner);
+        vm.startPrank(gifManager);
         tokenRegistry.registerToken(address(flightUSD));
         tokenRegistry.setActiveForVersion(
             currentChainId, 
@@ -95,7 +95,6 @@ contract FlightBaseTest is GifTest {
         vm.startPrank(flightOwner);
         FlightProductAuthorization productAuthz = new FlightProductAuthorization("FlightProduct");
         flightProduct = new FlightProduct(
-            address(registry),
             instanceNftId,
             "FlightProduct",
             productAuthz
@@ -126,7 +125,6 @@ contract FlightBaseTest is GifTest {
         vm.startPrank(flightOwner);
         FlightPoolAuthorization poolAuthz = new FlightPoolAuthorization("FlightPool");
         flightPool = new FlightPool(
-            address(registry),
             flightProductNftId,
             "FlightPool",
             poolAuthz
@@ -145,7 +143,6 @@ contract FlightBaseTest is GifTest {
         vm.startPrank(flightOwner);
         FlightOracleAuthorization oracleAuthz = new FlightOracleAuthorization("FlightOracle", COMMIT_HASH);
         flightOracle = new FlightOracle(
-            address(registry),
             flightProductNftId,
             "FlightOracle",
             oracleAuthz

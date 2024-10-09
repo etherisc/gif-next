@@ -24,7 +24,6 @@ contract ProductWithReinsurance is
     bool public isAutoPayout;
 
     constructor(
-        address registry,
         NftId instanceNftId,
         IComponents.ProductInfo memory productInfo,
         IComponents.FeeInfo memory feeInfo,
@@ -32,7 +31,6 @@ contract ProductWithReinsurance is
         address initialOwner
     )
         SimpleProduct(
-            registry,
             instanceNftId,
             "ProductWithReinsurance", 
             productInfo,

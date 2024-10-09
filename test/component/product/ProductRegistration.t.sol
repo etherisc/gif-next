@@ -9,9 +9,11 @@ import {SimpleProduct} from "../../../contracts/examples/unpermissioned/SimplePr
 import {SimplePool} from "../../../contracts/examples/unpermissioned/SimplePool.sol";
 import {IComponents} from "../../../contracts/instance/module/IComponents.sol";
 import {IComponentService} from "../../../contracts/shared/IComponentService.sol";
+import {IRegistry} from "../../../contracts/registry/IRegistry.sol";
+import {IRegistryService} from "../../../contracts/registry/IRegistryService.sol";
 import {INftOwnable} from "../../../contracts/shared/INftOwnable.sol";
 import {PRODUCT, POOL} from "../../../contracts/type/ObjectType.sol";
-import {SimpleProductV4} from "./SimpleProductV4.sol";
+import {ProductMockV4} from "../../mock/ProductMock.sol";
 import {Usdc} from "../../mock/Usdc.sol";
 
 
@@ -69,7 +71,7 @@ contract TestProductRegistration is GifTest {
         // WHEN + THEN
         vm.expectRevert(
             abi.encodeWithSelector(
-                IComponentService.ErrorComponentServiceComponentAlreadyRegistered.selector,
+                IRegistry.ErrorRegistryContractAlreadyRegistered.selector,
                 address(myProduct)));
 
         vm.startPrank(instanceOwner);
@@ -110,12 +112,15 @@ contract TestProductRegistration is GifTest {
         vm.stopPrank();
     }
 
-
-    // check that product registration fails for product with a different release than instance
+    // TODO flawors of different release
+    //       object |  parent  |  service
+    //         a          a         b
+    //         a          b         a
+    //         a          b         b
+    //         a          b         c       
     function test_productRegisterAttemptDifferentRelease() public {
         // GIVEN
-        SimpleProduct myProductV4 = new SimpleProductV4(
-            address(registry),
+        ProductMockV4 myProductV4 = new ProductMockV4(
             instanceNftId, 
             _getSimpleProductInfo(),
             _getSimpleFeeInfo(),
@@ -127,10 +132,10 @@ contract TestProductRegistration is GifTest {
         // WHEN + THEN
         vm.expectRevert(
             abi.encodeWithSelector(
-                IComponentService.ErrorComponentServiceComponentReleaseMismatch.selector,
-                address(myProductV4),
+                IRegistry.ErrorRegistryReleaseMismatch.selector,
+                myProductV4.getRelease(),
                 instance.getRelease(),
-                myProductV4.getRelease()));
+                registryService.getRelease()));
 
         vm.startPrank(instanceOwner);
         instance.registerProduct(address(myProductV4), address(token));
@@ -165,8 +170,10 @@ contract TestProductRegistration is GifTest {
         // WHEN + THEN
         vm.expectRevert(
             abi.encodeWithSelector(
-                IComponentService.ErrorComponentServiceNotProduct.selector,
-                address(myPool)));
+                IRegistryService.ErrorRegistryServiceRegisterableTypeInvalid.selector,
+                address(myPool),
+                PRODUCT(),
+                POOL()));
 
         vm.startPrank(instanceOwner);
         instance.registerProduct(address(myPool), address(token));
@@ -222,7 +229,6 @@ contract TestProductRegistration is GifTest {
         IComponents.FeeInfo memory feeInfo = _getSimpleFeeInfo();
 
         return new SimpleProduct(
-            address(registry),
             instanceNftId, 
             name,
             productInfo,
@@ -240,7 +246,6 @@ contract TestProductRegistration is GifTest {
         returns(SimplePool)
     {
         return new SimplePool(
-            address(registry),
             productNftId,
             _getDefaultSimplePoolInfo(),
             new BasicPoolAuthorization(name),

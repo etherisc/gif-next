@@ -7,18 +7,26 @@ import {FoundryRandom} from "foundry-random/FoundryRandom.sol";
 import {InitializableERC165} from "../../contracts/shared/InitializableERC165.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
-import {IRelease} from "../../contracts/registry/IRelease.sol";
 import {MockInterceptor} from "./MockInterceptor.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {ObjectType} from "../../contracts/type/ObjectType.sol";
-import {VersionPart, VersionPartLib} from "../../contracts/type/Version.sol";
+import {RegistryLinked} from "../../contracts/shared/RegistryLinked.sol";
+import {Versionable} from "../../contracts/shared/Versionable.sol";
 
 
-contract RegisterableMockWithAuthority is InitializableERC165, IRegisterable, MockInterceptor, AccessManaged {
+contract RegisterableMockWithAuthority is 
+    IRegisterable, 
+    InitializableERC165, 
+    Versionable, 
+    MockInterceptor, 
+    AccessManaged,
+    RegistryLinked {
 
     error ErrorRegisterableMockIsNotInterceptor(address registerable);
 
     IRegistry.ObjectInfo internal _info;
+    address internal _initialOwner;
+    bytes internal _data;
 
     constructor(
         address authority,
@@ -35,11 +43,12 @@ contract RegisterableMockWithAuthority is InitializableERC165, IRegisterable, Mo
             nftId,
             parentNftId,
             objectType,
+            getRelease(),
             isInterceptor,
-            address(this),
-            initialOwner,
-            data
+            address(this)
         );
+        _initialOwner = initialOwner;
+        _data = data;
 
         initializeMock();
     }
@@ -54,11 +63,6 @@ contract RegisterableMockWithAuthority is InitializableERC165, IRegisterable, Mo
 
     function isActive() external view returns (bool active) { return true; }
 
-    // from IRegisterable
-    function getRelease() public virtual override pure returns (VersionPart release) {
-        return VersionPartLib.toVersionPart(3);
-    }
-
     function getInitialInfo() 
         public 
         view 
@@ -66,6 +70,15 @@ contract RegisterableMockWithAuthority is InitializableERC165, IRegisterable, Mo
         returns (IRegistry.ObjectInfo memory) 
     {
         return _info;
+    }
+
+    function getInitialData() 
+        public 
+        view 
+        virtual 
+        returns (bytes memory) 
+    {
+        return _data;
     }
 
     function nftTransferFrom(address from, address to, uint256 tokenId, address operator) public override {
@@ -77,12 +90,12 @@ contract RegisterableMockWithAuthority is InitializableERC165, IRegisterable, Mo
 
     // from INftOwnable
     function linkToRegisteredNftId() external returns (NftId) { /*do nothing*/ }
+    function getOwner() external virtual view returns (address) {return _initialOwner; }
 
-    // from INftOwnable, DO NOT USE
-    function getRegistry() external view returns (IRegistry) { revert(); }
-    function getRegistryAddress() external view returns (address) { revert(); }
-    function getNftId() external view returns (NftId) { revert(); }
-    function getOwner() external view returns (address) { revert(); }
+    // from INftOwnable
+    function getRegistryAddress() external view returns (address) { revert("NotSupported"); }
+    function getNftId() external view returns (NftId) { revert("NotSupported"); }
+
 }
 
 

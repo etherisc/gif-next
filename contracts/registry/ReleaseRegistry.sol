@@ -5,10 +5,9 @@ import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManaged.sol";
 
 import {IAccessAdmin} from "../authorization/IAccessAdmin.sol";
-import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
 import {IRegistry} from "./IRegistry.sol";
 import {IRelease} from "./IRelease.sol";
-import {IRegistryLinked} from "../shared/IRegistryLinked.sol";
+import {RegistryLinked} from "../shared/RegistryLinked.sol";
 import {IService} from "../shared/IService.sol";
 import {IServiceAuthorization} from "../authorization/IServiceAuthorization.sol";
 
@@ -16,7 +15,7 @@ import {ContractLib} from "../shared/ContractLib.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType, ObjectTypeLib, COMPONENT, POOL, RELEASE, REGISTRY, SERVICE, STAKING} from "../type/ObjectType.sol";
 import {RegistryAdmin} from "./RegistryAdmin.sol";
-import {Registry} from "./Registry.sol";
+import {Registry, GIF_INITIAL_RELEASE} from "./Registry.sol";
 import {ReleaseAdmin} from "./ReleaseAdmin.sol";
 import {ReleaseLifecycle} from "./ReleaseLifecycle.sol";
 import {Seconds} from "../type/Seconds.sol";
@@ -34,17 +33,12 @@ import {VersionPart, VersionPartLib} from "../type/Version.sol";
 contract ReleaseRegistry is 
     AccessManaged,
     ReleaseLifecycle, 
-    IRegistryLinked
+    RegistryLinked
 {
-    uint256 public constant INITIAL_GIF_VERSION = 3;// first active release version  
-
     event LogReleaseCreation(IAccessAdmin admin, VersionPart release, bytes32 salt); 
     event LogReleaseActivation(VersionPart release);
     event LogReleaseDisabled(VersionPart release);
     event LogReleaseEnabled(VersionPart release);
-
-    // constructor
-    error ErrorReleaseRegistryNotRegistry(Registry registry);
 
     // _verifyServiceAuthorization
     error ErrorReleaseRegistryNotServiceAuth(address notAuth);
@@ -59,20 +53,19 @@ contract ReleaseRegistry is
 
     // _verifyService
     error ErrorReleaseRegistryNotService(address notService);
-    error ErrorReleaseRegistryServiceAuthorityMismatch(IService service, address serviceAuthority, address releaseAuthority);
-    error ErrorReleaseRegistryServiceVersionMismatch(IService service, VersionPart serviceVersion, VersionPart releaseVersion);
+    error ErrorReleaseRegistryServiceAuthorityMismatch(IService service, address expectedAuthority, address actualAuthority);
     error ErrorReleaseRegistryServiceDomainMismatch(IService service, ObjectType expectedDomain, ObjectType actualDomain);
 
-    // _verifyServiceInfo
+    // _getAndVerifyServiceInfo
     error ErrorReleaseRegistryServiceInfoAddressInvalid(IService service, address expected);
     error ErrorReleaseRegistryServiceInfoInterceptorInvalid(IService service, bool isInterceptor);
     error ErrorReleaseRegistryServiceInfoTypeInvalid(IService service, ObjectType expected, ObjectType found);
+    error ErrorReleaseRegistryServiceInfoReleaseMismatch(IService service, VersionPart expected, VersionPart actual);
     error ErrorReleaseRegistryServiceInfoOwnerInvalid(IService service, address expected, address found);
     error ErrorReleaseRegistryServiceSelfRegistration(IService service);
     error ErrorReleaseRegistryServiceOwnerRegistered(IService service, address owner);
 
     RegistryAdmin public immutable _registryAdmin;
-    Registry public immutable _registry;
 
     mapping(VersionPart release => IRelease.ReleaseInfo info) internal _releaseInfo;
     VersionPart [] internal _release; // array of all created releases    
@@ -86,21 +79,18 @@ contract ReleaseRegistry is
     uint256 internal _servicesToRegister = 0;
 
     // TODO move master relase admin outside constructor (same construction as for registry admin)
-    constructor(Registry registry)
+    constructor()
         AccessManaged(msg.sender)
     {
-        if (!ContractLib.isRegistry(address(registry))) {
-            revert ErrorReleaseRegistryNotRegistry(registry);
-        }
+        IRegistry registry = _getRegistry();
 
         setAuthority(registry.getAuthority());
 
-        _registry = registry;
-        _registryAdmin = RegistryAdmin(_registry.getRegistryAdminAddress());
+        _registryAdmin = RegistryAdmin(registry.getRegistryAdminAddress());
         _masterReleaseAdmin = new ReleaseAdmin(
             _cloneNewAccessManager());
 
-        _next = VersionPartLib.toVersionPart(INITIAL_GIF_VERSION - 1);
+        _next = VersionPartLib.toVersionPart(GIF_INITIAL_RELEASE().toInt() - 1);
     }
 
     /// @dev Initiates the creation of a new GIF release by the GIF admin.
@@ -118,7 +108,7 @@ contract ReleaseRegistry is
         }
 
         release = VersionPartLib.toVersionPart(release.toInt() + 1);
-        _release.push(release);
+        _release.push(release); // TODO push only activated releases, _next keeps total release count
 
         _next = release;
         _releaseInfo[release].version = release;
@@ -184,23 +174,20 @@ contract ReleaseRegistry is
         address releaseAuthority = ReleaseAdmin(_releaseInfo[releaseVersion].releaseAdmin).authority();
         IServiceAuthorization releaseAuthz = _releaseInfo[releaseVersion].auth;
         ObjectType expectedDomain = releaseAuthz.getServiceDomain(_registeredServices);
+        address expectedOwner = msg.sender;
 
         // service can work with release registry and release version
         (
             IRegistry.ObjectInfo memory info,
-            ObjectType serviceDomain,
-            VersionPart serviceVersion
-            //,string memory serviceName
+            bytes memory data,
+            ObjectType serviceDomain
         ) = _verifyService(
             service, 
+            expectedOwner,
             releaseAuthority, 
             releaseVersion, 
             expectedDomain
         );
-
-        //_releaseInfo[releaseVersion].addresses.push(address(service)); // TODO get this info from auth contract?
-        //_releaseInfo[releaseVersion].domains.push(serviceDomain);
-        //_releaseInfo[releaseVersion].names.push(serviceName); // TODO if needed read in _verifyService()
 
         _registeredServices++; // TODO use releaseInfo.someArray.length instead of _registeredServices
 
@@ -222,7 +209,7 @@ contract ReleaseRegistry is
         releaseAdmin.setReleaseLocked(true); 
 
         // register service with registry
-        nftId = _registry.registerService(info, serviceVersion, serviceDomain);
+        nftId = _getRegistry().registerService(info, expectedOwner, serviceDomain, data);
         service.linkToRegisteredNftId();
     }
 
@@ -245,25 +232,27 @@ contract ReleaseRegistry is
         // grant special roles for registry/staking/pool services
         // this will enable access to core contracts functions
 
+        IRegistry registry = _getRegistry();
+
         // registry service MUST be registered for each release
-        address service = _registry.getServiceAddress(REGISTRY(), release);
+        address service = registry.getServiceAddress(REGISTRY(), release);
         if(service == address(0)) {
             revert ErrorReleaseRegistryRegistryServiceMissing(release);
         }
 
         _registryAdmin.grantServiceRoleForAllVersions(IService(service), REGISTRY());
 
-        service = _registry.getServiceAddress(STAKING(), release);
+        service = registry.getServiceAddress(STAKING(), release);
         if(service != address(0)) {
             _registryAdmin.grantServiceRoleForAllVersions(IService(service), STAKING());
         }
 
-        service = _registry.getServiceAddress(COMPONENT(), release);
+        service = registry.getServiceAddress(COMPONENT(), release);
         if(service != address(0)) {
             _registryAdmin.grantServiceRoleForAllVersions(IService(service), COMPONENT());
         }
 
-        service = _registry.getServiceAddress(POOL(), release);
+        service = registry.getServiceAddress(POOL(), release);
         if(service != address(0)) {
             _registryAdmin.grantServiceRoleForAllVersions(IService(service), POOL());
         }
@@ -356,12 +345,6 @@ contract ReleaseRegistry is
         return address(_registryAdmin);
     }
 
-    //--- IRegistryLinked ------------------------------------------------------//
-
-    function getRegistry() external view returns (IRegistry) {
-        return _registry;
-    }
-
     //--- private functions ----------------------------------------------------//
 
     function _setReleaseLocked(VersionPart release, bool locked)
@@ -389,12 +372,11 @@ contract ReleaseRegistry is
 
         clonedAdmin.initialize(
             address(_cloneNewAccessManager()),
-            releaseAdminName);
+            releaseAdminName,
+            release);
 
         clonedAdmin.completeSetup(
-            address(_registry), 
             address(serviceAuthorization),
-            release,
             address(this)); // release registry (this contract)
 
         // lock release (remains locked until activation)
@@ -439,62 +421,65 @@ contract ReleaseRegistry is
 
     // TODO get service names 
     function _verifyService(
-        IService service, 
+        IService service,
+        address expectedOwner,
         address expectedAuthority, 
-        VersionPart expectedVersion,
+        VersionPart expectedRelease,
         ObjectType expectedDomain
     )
         internal
         view
         returns(
-            IRegistry.ObjectInfo memory serviceInfo,
-            ObjectType serviceDomain, 
-            VersionPart serviceVersion
+            IRegistry.ObjectInfo memory info,
+            bytes memory data,
+            ObjectType domain
         )
     {
         if(!service.supportsInterface(type(IService).interfaceId)) {
             revert ErrorReleaseRegistryNotService(address(service));
         }
 
-        address owner = msg.sender;
-        address serviceAuthority = service.authority();
-        serviceVersion = service.getVersion().toMajorPart();
-        serviceDomain = service.getDomain();// checked in registry
-        serviceInfo = service.getInitialInfo();
+        address authority = service.authority();
+        domain = service.getDomain();// checked in registry
 
-        _verifyServiceInfo(service, serviceInfo, owner);
+        (info,, data) = _getAndVerifyServiceInfo(
+            service,
+            expectedOwner,
+            expectedRelease);
 
-        if(serviceAuthority != expectedAuthority) {
+        if(authority != expectedAuthority) {
             revert ErrorReleaseRegistryServiceAuthorityMismatch(
                 service,
-                serviceAuthority,
-                expectedAuthority);
+                expectedAuthority,
+                authority);
         }
 
-        if(serviceVersion != expectedVersion) {
-            revert ErrorReleaseRegistryServiceVersionMismatch(
-                service,
-                serviceVersion,
-                expectedVersion);            
-        }
-
-        if(serviceDomain != expectedDomain) {
+        if(domain != expectedDomain) {
             revert ErrorReleaseRegistryServiceDomainMismatch(
                 service,
                 expectedDomain,
-                serviceDomain);
+                domain);
         }
     }
 
 
-    function _verifyServiceInfo(
+    function _getAndVerifyServiceInfo(
         IService service,
-        IRegistry.ObjectInfo memory info,
-        address expectedOwner // assume always valid, can not be 0
+        address expectedOwner, // assume always valid, can not be 0
+        VersionPart expectedRelease
     )
         internal
         view
+        returns (
+            IRegistry.ObjectInfo memory info,
+            address initialOwner,
+            bytes memory data
+        )
     {
+        info = service.getInitialInfo();
+        initialOwner = service.getOwner();
+        data = service.getInitialData();
+
         if(info.objectAddress != address(service)) {
             revert ErrorReleaseRegistryServiceInfoAddressInvalid(service, info.objectAddress);
         }
@@ -507,18 +492,23 @@ contract ReleaseRegistry is
             revert ErrorReleaseRegistryServiceInfoTypeInvalid(service, SERVICE(), info.objectType);
         }
 
-        address owner = info.initialOwner;
-
-        if(owner != expectedOwner) { // registerable owner protection
-            revert ErrorReleaseRegistryServiceInfoOwnerInvalid(service, expectedOwner, owner); 
+        if(info.release != expectedRelease) {
+            revert ErrorReleaseRegistryServiceInfoReleaseMismatch(
+                service,
+                expectedRelease,
+                info.release);            
         }
 
-        if(owner == address(service)) {
+        if(initialOwner != expectedOwner) { // registerable owner protection
+            revert ErrorReleaseRegistryServiceInfoOwnerInvalid(service, expectedOwner, initialOwner); 
+        }
+
+        if(initialOwner == address(service)) {
             revert ErrorReleaseRegistryServiceSelfRegistration(service);
         }
         
-        if(_registry.isRegistered(owner)) { 
-            revert ErrorReleaseRegistryServiceOwnerRegistered(service, owner);
+        if(_getRegistry().isRegistered(initialOwner)) { 
+            revert ErrorReleaseRegistryServiceOwnerRegistered(service, initialOwner);
         }
     }
 }

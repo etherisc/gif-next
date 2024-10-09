@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IVersionable} from "../upgradeability/IVersionable.sol";
+import {IUpgradeable} from "../upgradeability/IUpgradeable.sol";
 import {ProxyManager} from "../upgradeability/ProxyManager.sol";
 import {Staking} from "./Staking.sol";
 
@@ -15,7 +15,6 @@ contract StakingManager is
 
     /// @dev initializes proxy manager with service implementation 
     constructor(
-        address registry,
         address targetHandler,
         address stakingStore,
         address tokenRegistry,
@@ -27,18 +26,16 @@ contract StakingManager is
 
         _initialImplementation = address(stakingImplementation);
         _initializationData = abi.encode(
-            registry,
             targetHandler,
             stakingStore,
             tokenRegistry);
         
-        IVersionable versionable = initialize(
-            registry,
+        IUpgradeable upgradeable = initialize(
             _initialImplementation,
             _initializationData,
             salt);
 
-        _staking = Staking(address(versionable));
+        _staking = Staking(address(upgradeable));
     }
 
     //--- view functions ----------------------------------------------------//

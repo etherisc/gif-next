@@ -6,10 +6,7 @@ import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
 
 import {AccessManagerCloneable} from "../../contracts/authorization/AccessManagerCloneable.sol";
-import {AccessManagerCloneableTest} from "./AccessManagerCloneable.t.sol";
 import {AccessManagedMock} from "../mock/AccessManagedMock.sol";
-import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
-import {Registry} from "../../contracts/registry/Registry.sol";
 import {VersionPart, VersionPartLib} from "../../contracts/type/Version.sol";
 
 
@@ -22,20 +19,15 @@ contract AccessManagerCloneableExtendedTest is Test {
     address public admin = makeAddr("accessManagerAdmin");
     AccessManagerCloneable public accessManager;
 
-    RegistryAdmin registryAdmin;
-    Registry registry;
     AccessManagedMock accessManaged;
 
     function setUp() public {
+        VersionPart release = VersionPartLib.toVersionPart(3);
         accessManager = new AccessManagerCloneable();
-        accessManager.initialize(admin);
+        accessManager.initialize(admin, release);
 
-        registryAdmin = new RegistryAdmin();
-        registry = new Registry(registryAdmin, globalRegistry);
-
-        VersionPart version = VersionPartLib.toVersionPart(3);
-        vm.prank(admin);
-        accessManager.completeSetup(address(registry), version);
+        //vm.prank(admin);
+        //accessManager.completeSetup(address(registry));
 
         accessManaged = new AccessManagedMock(address(accessManager));
 

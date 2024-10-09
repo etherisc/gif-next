@@ -28,6 +28,7 @@ import {NftId} from "../type/NftId.sol";
 import {PayoutId, PayoutIdLib} from "../type/PayoutId.sol";
 import {PolicyServiceLib} from "../product/PolicyServiceLib.sol";
 import {ProductStore} from "./ProductStore.sol";
+import {RegistryLinked} from "../shared/RegistryLinked.sol";
 import {ReferralId, ReferralStatus, ReferralLib} from "../type/Referral.sol";
 import {RequestId} from "../type/RequestId.sol";
 import {RiskId} from "../type/RiskId.sol";
@@ -40,14 +41,19 @@ import {UFixed, UFixedLib} from "../type/UFixed.sol";
 
 /// @dev Central reader contract for a specific instance.
 /// Provides reading functions for all instance data and related component data.
-contract InstanceReader {
+contract InstanceReader is
+    RegistryLinked
+{
 
     error ErrorInstanceReaderAlreadyInitialized();
     error ErrorInstanceReaderInstanceAddressZero();
-
+    // TODO make state immutable:
+    // 1. instance receives reader through setInstanceReader()
+    // 2. this way instance initialization is not depends on reader
+    // 3. and reader is simple contract with constructor
+    // 4. no _initialized in storage, the rest is immutable
     bool private _initialized = false;
 
-    IRegistry internal _registry;
     IInstance internal _instance;
     InstanceAdmin internal _instanceAdmin;
 
@@ -78,27 +84,24 @@ contract InstanceReader {
         _initialized = true;
         _instance = IInstance(instanceAddress);
         _instanceAdmin = _instance.getInstanceAdmin();
-        _registry = _instance.getRegistry();
 
         _store = _instance.getInstanceStore();
         _productStore = _instance.getProductStore();
         _bundleSet = _instance.getBundleSet();
         _riskSet = _instance.getRiskSet();
-        _distributionService = IDistributionService(_registry.getServiceAddress(DISTRIBUTION(), _instance.getRelease()));
+
+        _distributionService = IDistributionService(
+            _getRegistry().getServiceAddress(DISTRIBUTION(), _instance.getRelease()));
     }
 
 
     //--- instance functions ---------------------------------------------------------//
 
-    /// @dev Returns the registry this instance is registered in.
-    function getRegistry() public view returns (IRegistry registry) {
-        return _registry;
-    }
 
 
     /// @dev Returns the instance NFT ID.
     function getInstanceNftId() public view returns (NftId instanceNftid) {
-        return _registry.getNftIdForAddress(address(_instance));
+        return _getRegistry().getNftIdForAddress(address(_instance));
     }
 
 
@@ -435,7 +438,7 @@ contract InstanceReader {
         return _store.getReferralInfo(referralId);
     }
 
-
+    // TODO reader dependce on service os wrong?
     function getDiscountPercentage(ReferralId referralId)
         public
         view
@@ -444,10 +447,7 @@ contract InstanceReader {
             ReferralStatus status
         )
     {
-        return IDistributionService(
-            _registry.getServiceAddress(
-                DISTRIBUTION(),
-                _instance.getRelease())).getDiscountPercentage(
+        return _distributionService.getDiscountPercentage(
                     this, // instance reader
                     referralId);
     }

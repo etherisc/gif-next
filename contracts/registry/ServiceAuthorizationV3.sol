@@ -21,6 +21,8 @@ import {IRegistryService} from "./IRegistryService.sol";
 import {IRiskService} from "../product/IRiskService.sol";
 
 import {ServiceAuthorization} from "../authorization/ServiceAuthorization.sol";
+import {VersionPartLib} from "../../contracts/type/Version.sol";
+import {GIF_INITIAL_RELEASE} from "../registry/Registry.sol";
 
 
 contract ServiceAuthorizationV3
@@ -31,7 +33,7 @@ contract ServiceAuthorizationV3
           ServiceAuthorization(
                "ReleaseAdmin",
                RELEASE(),
-               3,
+               GIF_INITIAL_RELEASE(),
                commitHash)
      {}
 
@@ -90,8 +92,7 @@ contract ServiceAuthorizationV3
           _authorize(functions, IRegistryService.registerBundle.selector, "registerBundle");
 
           functions = _authorizeForService(REGISTRY(), COMPONENT());
-          _authorize(functions, IRegistryService.registerProduct.selector, "registerProduct");
-          _authorize(functions, IRegistryService.registerProductLinkedComponent.selector, "registerProductLinkedComponent");
+          _authorize(functions, IRegistryService.registerComponent.selector, "registerComponent");
 
           functions = _authorizeForService(REGISTRY(), DISTRIBUTION());
           _authorize(functions, IRegistryService.registerDistributor.selector, "registerDistributor");

@@ -1,16 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
 
 import {Amount, AmountLib} from "../../contracts/type/Amount.sol";
-import {ComponentService} from "../../contracts/shared/ComponentService.sol";
-import {Dip} from "../../contracts/mock/Dip.sol";
 import {GifTest} from "../base/GifTest.sol";
-import {IVersionable} from "../../contracts/upgradeability/IVersionable.sol";
-import {Service} from "../../contracts/shared/Service.sol";
-import {TokenHandler, TokenHandlerBase} from "../../contracts/shared/TokenHandler.sol";
-import {Version, VersionLib} from "../../contracts/type/Version.sol";
+import {TokenHandlerBase} from "../../contracts/shared/TokenHandler.sol";
 
 contract TokenHandlerEx is TokenHandlerBase {
 
@@ -276,7 +270,7 @@ contract TokenHandlerTest is GifTest {
 
     function _fundAndApprove(TokenHandlerEx th, address sender, Amount amount, Amount approval) internal {
 
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         dip.transfer(sender, amount.toInt());
         vm.stopPrank();
 
@@ -288,13 +282,13 @@ contract TokenHandlerTest is GifTest {
     function _makeAddrWithFunds(string memory name, uint256 amount) internal returns (address addr) {
         addr = makeAddr(name);
 
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         dip.transfer(addr, amount);
         vm.stopPrank();
     }
 
     function _fundAddr(address addr, uint256 amount) internal {
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         dip.transfer(addr, amount);
         vm.stopPrank();
     }

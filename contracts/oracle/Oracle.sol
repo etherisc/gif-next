@@ -5,10 +5,11 @@ import {Amount} from "../type/Amount.sol";
 import {COMPONENT, PRODUCT, ORACLE} from "../type/ObjectType.sol";
 import {IAuthorization} from "../authorization/IAuthorization.sol";
 import {IComponentService} from "../shared/IComponentService.sol";
-import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
+import {IComponent} from "../shared/IComponent.sol";
 import {IOracleComponent} from "./IOracleComponent.sol";
 import {IOracleService} from "./IOracleService.sol";
 import {NftId} from "../type/NftId.sol";
+import {Component} from "../shared/Component.sol";
 import {InstanceLinkedComponent} from "../shared/InstanceLinkedComponent.sol";
 import {RequestId} from "../type/RequestId.sol";
 import {Timestamp} from "../type/Timestamp.sol";
@@ -66,7 +67,7 @@ abstract contract Oracle is
     function withdrawFees(Amount amount)
         external
         virtual
-        override(IInstanceLinkedComponent, InstanceLinkedComponent)
+        override(IComponent, Component)
         onlyOwner()
         restricted()
         returns (Amount)
@@ -76,7 +77,6 @@ abstract contract Oracle is
 
 
     function __Oracle_init(
-        address registry,
         NftId productNftId,
         IAuthorization authorization,
         address initialOwner,
@@ -87,7 +87,6 @@ abstract contract Oracle is
         onlyInitializing()
     {
         __InstanceLinkedComponent_init(
-            registry, 
             productNftId, 
             name, 
             ORACLE(), 

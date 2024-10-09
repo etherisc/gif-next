@@ -19,8 +19,8 @@ interface IRegistry is
     IERC165
 {
 
-    event LogRegistryObjectRegistered(NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, address objectAddress, address initialOwner);
-    event LogRegistryServiceRegistered(VersionPart majorVersion, ObjectType domain);
+    event LogRegistryObjectRegistered(NftId nftId, NftId parentNftId, ObjectType objectType, VersionPart objectVersion, bool isInterceptor, address objectAddress, address initialOwner);
+    event LogRegistryServiceRegistered(VersionPart release, ObjectType domain);
     event LogRegistryChainRegistryRegistered(NftId nftId, uint256 chainId, address chainRegistryAddress);
 
     // initialize
@@ -49,6 +49,7 @@ interface IRegistry is
     error ErrorRegistryCoreTypeRegistration();
 
     // _register()
+    error ErrorRegistryReleaseMismatch(VersionPart objectrelease, VersionPart parentRelease, VersionPart senderRelease);
     error ErrorRegistryGlobalRegistryAsParent(address objectAddress, ObjectType objectType);
     error ErrorRegistryTypeCombinationInvalid(address objectAddress, ObjectType objectType, ObjectType parentType);
     error ErrorRegistryContractAlreadyRegistered(address objectAddress);
@@ -58,13 +59,10 @@ interface IRegistry is
         NftId nftId;
         NftId parentNftId;
         ObjectType objectType;
+        VersionPart release;
         bool isInterceptor;
         // slot 1
         address objectAddress;
-        // slot 2
-        address initialOwner;
-        // slot 3
-        bytes data;
     }
 
     /// @dev Registers a registry contract for a specified chain.
@@ -72,28 +70,30 @@ interface IRegistry is
     function registerRegistry(
         NftId nftId, 
         uint256 chainId, 
-        address chainRegistryAddress
+        address chainRegistryAddress,
+        VersionPart release
     ) external;
 
     /// @dev Register a service with using the provided domain and version.
     /// The function returns a newly minted service NFT ID.
     /// May only be used to register services.
     function registerService(
-        ObjectInfo memory serviceInfo, 
-        VersionPart serviceVersion, 
-        ObjectType serviceDomain
+        ObjectInfo memory info,
+        address initialOwner,
+        ObjectType domain,
+        bytes memory data
     ) external returns(NftId nftId);
 
     /// @dev Register an object with a known core type.
     /// The function returns a newly minted object NFT ID.
     /// May not be used to register services.
-    function register(ObjectInfo memory info) external returns (NftId nftId);
+    function register(ObjectInfo memory info, address initialOwner, bytes memory data) external returns (NftId nftId);
 
     /// @dev Register an object with a custom type.
     /// The function returns a newly minted object NFT ID.
     /// This function is reserved for GIF releases > 3.
     /// May not be used to register known core types.
-    function registerWithCustomType(ObjectInfo memory info) external returns (NftId nftId);
+    function registerWithCustomType(ObjectInfo memory info, address initialOwner, bytes memory data) external returns (NftId nftId);
 
     function getInitialRelease() external view returns (VersionPart);
 
@@ -126,9 +126,15 @@ interface IRegistry is
 
     function getParentNftId(NftId nftId) external view returns (NftId parentNftId);
 
-    function isObjectType(NftId nftId, ObjectType expectedObjectType) external view returns (bool);
+    function getObjectData(NftId nftId) external view returns (bytes memory data);
 
-    function isObjectType(address contractAddress, ObjectType expectedObjectType) external view returns (bool);
+    function getObjectData(address objectAddress) external view returns (bytes memory data);
+
+    function isObjectType(NftId nftId, ObjectType expectedObjectType, VersionPart expectedRelease) external view returns (bool);
+
+    function isObjectType(address contractAddress, ObjectType expectedObjectType, VersionPart expectedRelease) external view returns (bool);
+
+    function getObjectRelease(NftId nftId) external view returns (VersionPart release);
 
     function getObjectAddress(NftId nftId) external view returns (address objectAddress);
 

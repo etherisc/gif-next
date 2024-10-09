@@ -18,6 +18,7 @@ import {PROTOCOL, INSTANCE} from "../type/ObjectType.sol";
 import {Seconds, SecondsLib} from "../type/Seconds.sol";
 import {StakingLib} from "./StakingLib.sol";
 import {StakingReader} from "./StakingReader.sol";
+import {RegistryLinked} from "../shared/RegistryLinked.sol";
 import {TargetManagerLib} from "./TargetManagerLib.sol";
 import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
 import {UFixed, UFixedLib} from "../type/UFixed.sol";
@@ -25,7 +26,8 @@ import {UFixed, UFixedLib} from "../type/UFixed.sol";
 
 contract StakingStore is 
     Initializable,
-    AccessManaged
+    AccessManaged,
+    RegistryLinked
 {
 
     // token
@@ -53,7 +55,6 @@ contract StakingStore is
     error ErrorStakingStoreTvlBalanceAlreadyInitialized(NftId nftId, address token);
     error ErrorStakingStoreTvlBalanceNotInitialized(NftId nftId, address token);
 
-    IRegistry private _registry;
     ITargetLimitHandler private _targetLimitHandler;
     StakingReader private _reader;
     NftIdSet private _targetNftIdSet;
@@ -75,16 +76,15 @@ contract StakingStore is
 
 
     constructor(
-        IRegistry registry, 
         StakingReader reader
     )
         AccessManaged(msg.sender)
     {
+
         // set final authority
-        setAuthority(registry.getAuthority());
+        setAuthority(_getRegistry().getAuthority());
 
         // set internal variables
-        _registry = registry;
         _reader = reader;
         _targetNftIdSet = new NftIdSet();
 
@@ -495,7 +495,7 @@ contract StakingStore is
         emit IStaking.LogStakingRewardReservesRefilled(
             targetNftId,
             dipAmount,
-            _registry.ownerOf(targetNftId),
+            _getRegistry().ownerOf(targetNftId),
             newReserveBalance,
             lastUpdateIn);
     }
@@ -520,7 +520,7 @@ contract StakingStore is
         emit IStaking.LogStakingRewardReservesWithdrawn(
             targetNftId,
             dipAmount,
-            _registry.ownerOf(targetNftId),
+            _getRegistry().ownerOf(targetNftId),
             newReserveBalance,
             lastUpdateIn);
     }
@@ -929,7 +929,7 @@ contract StakingStore is
         // checks
         if (checkParameters) {
             TargetManagerLib.checkTargetParameters(
-                _registry, 
+                _getRegistry(), 
                 _reader, 
                 targetNftId, 
                 objectType, 

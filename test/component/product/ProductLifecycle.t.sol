@@ -46,7 +46,7 @@ contract TestProductLifecycle
         riskId = product.createRisk("Risk_1", "");
         vm.stopPrank();
 
-        policyHolder = new MyPolicyHolder(address(registry));
+        policyHolder = new MyPolicyHolder();
         policyHolderAddress = address(policyHolder);
 
         // create application
@@ -419,7 +419,7 @@ contract TestProductLifecycle
     function _fundAccount(
         address policyHolderAddress
     ) internal {
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(policyHolderAddress, CUSTOMER_FUNDS);
         vm.stopPrank();
     }

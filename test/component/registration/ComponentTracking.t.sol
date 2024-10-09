@@ -214,7 +214,6 @@ contract ComponentTrackingTest is GifTest {
         vm.expectRevert(abi.encodeWithSelector(
             IComponent.ErrorComponentNameLengthZero.selector));
         new SimpleProduct(
-            address(registry),
             instanceNftId, 
             "",
             productInfo,
@@ -239,7 +238,6 @@ contract ComponentTrackingTest is GifTest {
         IComponents.FeeInfo memory feeInfo = _getSimpleFeeInfo();
 
         return new SimpleProduct(
-            address(registry),
             instanceNftId, 
             name,
             productInfo,
@@ -257,7 +255,6 @@ contract ComponentTrackingTest is GifTest {
         returns(SimpleDistribution)
     {
         return new SimpleDistribution(
-            address(registry),
             productNftId,
             new BasicDistributionAuthorization(name),
             owner);
@@ -272,7 +269,6 @@ contract ComponentTrackingTest is GifTest {
         returns(SimpleOracle)
     {
         return new SimpleOracle(
-            address(registry),
             productNftId,
             new BasicOracleAuthorization(name, COMMIT_HASH),
             owner);
@@ -287,7 +283,6 @@ contract ComponentTrackingTest is GifTest {
         returns(SimplePool)
     {
         return new SimplePool(
-            address(registry),
             productNftId,
             _getDefaultSimplePoolInfo(),
             new BasicPoolAuthorization(name),

@@ -33,7 +33,6 @@ abstract contract InstanceLinkedComponent is
 
     struct InstanceLinkedComponentStorage {
         IInstance _instance; // instance for this component
-        InstanceReader _instanceReader; // instance reader for this component
         IAuthorization _initialAuthorization;
         IComponentService _componentService;
         IOracleService _oracleService;
@@ -53,16 +52,7 @@ abstract contract InstanceLinkedComponent is
     }
 
 
-    /// @inheritdoc IInstanceLinkedComponent
-    function withdrawFees(Amount amount)
-        external
-        virtual
-        restricted()
-        onlyOwner()
-        returns (Amount withdrawnAmount)
-    {
-        return _withdrawFees(amount);
-    }
+    //function setInstanceReader(address readerAddress);
 
     //--- internal functions ------------------------------------------------//
 
@@ -82,6 +72,7 @@ abstract contract InstanceLinkedComponent is
             expiryAt,
             callbackMethod);
     }
+
 
 
     function _cancelRequest(RequestId requestId)
@@ -108,7 +99,6 @@ abstract contract InstanceLinkedComponent is
 
 
     function __InstanceLinkedComponent_init(
-        address registry,
         NftId parentNftId,
         string memory name,
         ObjectType componentType,
@@ -116,34 +106,25 @@ abstract contract InstanceLinkedComponent is
         bool isInterceptor,
         address initialOwner
     )
-        internal
+        internal 
         virtual
         onlyInitializing()
     {
-        // validate registry, nft ids and get parent nft id
-        NftId instanceNftId = _checkAndGetInstanceNftId(
-            registry, 
-            parentNftId, 
-            componentType);
-
-        // set and check linked instance
-        InstanceLinkedComponentStorage storage $ = _getInstanceLinkedComponentStorage();
-        $._instance = IInstance(
-            IRegistry(registry).getObjectAddress(instanceNftId));
+        IInstance instance = _checkAndGetInstance(parentNftId, componentType);
 
         // set component specific parameters
         __Component_init(
-            $._instance.authority(), // instance linked components need to point to instance admin
-            registry, 
+            instance.authority(),
             parentNftId, 
             name, 
-            componentType, 
+            componentType,
             isInterceptor, 
             initialOwner, 
             ""); // registry data
 
         // set instance linked specific parameters
-        $._instanceReader = $._instance.getInstanceReader();
+        InstanceLinkedComponentStorage storage $ = _getInstanceLinkedComponentStorage();
+        $._instance = instance;
         $._initialAuthorization = authorization;
         $._componentService = IComponentService(_getServiceAddress(COMPONENT())); 
         $._oracleService = IOracleService(_getServiceAddress(ORACLE()));
@@ -152,44 +133,35 @@ abstract contract InstanceLinkedComponent is
         _registerInterface(type(IInstanceLinkedComponent).interfaceId);
     }
 
-
-    function _checkAndGetInstanceNftId(
-        address registryAddress,
+    function _checkAndGetInstance(
         NftId parentNftId,
         ObjectType componentType
     )
-        internal
+        private
         view
-        returns (NftId instanceNftId)
+        returns (IInstance instance)
     {
-        // if product, then parent is already instance
-        if (componentType == PRODUCT()) {
-            _checkAndGetRegistry(registryAddress, parentNftId, INSTANCE());
-            return parentNftId;
+        NftId instanceNftId;
+        IRegistry registry = _getRegistry();
+
+        if(componentType == PRODUCT()) {
+            instanceNftId = parentNftId;
+        } else {
+            NftId productNftId = parentNftId;
+            instanceNftId = registry.getParentNftId(productNftId);
         }
 
-        // if not product parent is product, and parent of product is instance
-        IRegistry registry = _checkAndGetRegistry(registryAddress, parentNftId, PRODUCT());
-        return registry.getParentNftId(parentNftId);
-    }
+        IRegistry.ObjectInfo memory info = registry.getObjectInfo(instanceNftId);
 
-    /// @dev checks the and gets registry.
-    /// validates registry using a provided nft id and expected object type.
-    function _checkAndGetRegistry(
-        address registryAddress,
-        NftId objectNftId,
-        ObjectType requiredType
-    )
-        internal
-        view
-        returns (IRegistry registry)
-    {
-        registry = IRegistry(registryAddress);
-        IRegistry.ObjectInfo memory info = registry.getObjectInfo(objectNftId);
-
-        if (info.objectType != requiredType) {
-            revert ErrorInstanceLinkedComponentTypeMismatch(requiredType, info.objectType);
+        if (info.objectType != INSTANCE()) {
+            revert ErrorInstanceLinkedComponentInstanceInvalid();
         }
+
+        if(info.release != getRelease()) {
+            revert ErrorInstanceLinkedComponentInstanceMismatch(info.release, getRelease());
+        }
+
+        instance = IInstance(info.objectAddress); 
     }
 
 
@@ -201,7 +173,7 @@ abstract contract InstanceLinkedComponent is
 
 
     function _getComponentInfo() internal virtual override view returns (IComponents.ComponentInfo memory info) {
-        NftId componentNftId = getRegistry().getNftIdForAddress(address(this));
+        NftId componentNftId = _getRegistry().getNftIdForAddress(address(this));
 
         // if registered, attempt to return component info via instance reader
         if (componentNftId.gtz()) {
@@ -221,13 +193,6 @@ abstract contract InstanceLinkedComponent is
 
     /// @dev returns reader for linked instance
     function _getInstanceReader() internal view returns (InstanceReader reader) {
-        return _getInstanceLinkedComponentStorage()._instanceReader;
-    }
-
-    function _withdrawFees(Amount amount)
-        internal
-        returns (Amount withdrawnAmount)
-    {
-        return _getInstanceLinkedComponentStorage()._componentService.withdrawFees(amount);
+        return _getInstanceLinkedComponentStorage()._instance.getInstanceReader();
     }
 }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IVersionable} from "../upgradeability/IVersionable.sol";
+import {IUpgradeable} from "../upgradeability/IUpgradeable.sol";
 import {ProxyManager} from "../upgradeability/ProxyManager.sol";
 import {PoolService} from "./PoolService.sol";
 
@@ -12,19 +12,17 @@ contract PoolServiceManager is ProxyManager {
     /// @dev initializes proxy manager with pool service implementation 
     constructor(
         address authority, 
-        address registry,
         bytes32 salt
     ) 
     {
         PoolService poolSrv = new PoolService{salt: salt}();
-        bytes memory data = abi.encode(authority, registry);
-        IVersionable versionable = initialize(
-            registry,
+        bytes memory data = abi.encode(authority);
+        IUpgradeable upgradeable = initialize(
             address(poolSrv), 
             data,
             salt);
 
-        _poolService = PoolService(address(versionable));
+        _poolService = PoolService(address(upgradeable));
     }
 
     //--- view functions ----------------------------------------------------//

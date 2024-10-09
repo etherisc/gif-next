@@ -38,7 +38,7 @@ contract FireTestBase is GifTest {
         vm.stopPrank();
 
         // whitelist fire token and make it active for release 3
-        vm.startPrank(registryOwner);
+        vm.startPrank(gifManager);
         tokenRegistry.registerToken(address(fireUSD));
         tokenRegistry.setActiveForVersion(
             currentChainId, 
@@ -52,7 +52,6 @@ contract FireTestBase is GifTest {
         vm.startPrank(fireProductOwner);
         FireProductAuthorization productAuth = new FireProductAuthorization("FireProduct");
         fireProduct = new FireProduct(
-            address(registry),
             instanceNftId,
             "FireProduct",
             productAuth
@@ -69,7 +68,6 @@ contract FireTestBase is GifTest {
         vm.startPrank(firePoolOwner);
         FirePoolAuthorization poolAuth = new FirePoolAuthorization("FirePool");
         firePool = new FirePool(
-            address(registry),
             fireProductNftId,
             "FirePool",
             poolAuth

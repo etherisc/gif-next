@@ -32,7 +32,7 @@ contract MockObjectSetTest is GifTest {
         //authority = new MockAuthority();
 
         // initialize clone
-        objectSet.initialize(instance.getInstanceAdmin().authority(), address(instance.getRegistry()), address(instance));
+        objectSet.initialize(instance.getInstanceAdmin().authority(), address(instance));
     }
 
 
@@ -134,6 +134,6 @@ contract MockObjectSetTest is GifTest {
     // TODO: fix me
     function skip_test_MockObjectSetAttemptDoubleInitialization() public {
         vm.expectRevert(abi.encodeWithSelector(Initializable.InvalidInitialization.selector));
-        objectSet.initialize(instance.getInstanceAdmin().authority(), address(instance.getRegistry()), address(instance));
+        objectSet.initialize(instance.getInstanceAdmin().authority(), address(instance));
     }
 }

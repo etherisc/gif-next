@@ -134,7 +134,6 @@ abstract contract Product is
 
 
     function __Product_init(
-        address registry,
         NftId instanceNftId,
         string memory name,
         IComponents.ProductInfo memory productInfo,
@@ -147,7 +146,6 @@ abstract contract Product is
         onlyInitializing()
     {
         __InstanceLinkedComponent_init(
-            registry, 
             instanceNftId, 
             name, 
             PRODUCT(), 

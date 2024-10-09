@@ -30,7 +30,7 @@ contract ServiceAuthorization is
      string public constant ROLE_NAME_SUFFIX = "_Role";
 
      ObjectType public immutable DOMAIN;
-     uint256 internal immutable _release;
+     VersionPart internal immutable _release;
      string internal _commitHash;
 
      string internal _mainTargetName;
@@ -55,7 +55,7 @@ contract ServiceAuthorization is
      constructor(
           string memory mainTargetName, 
           ObjectType domain,
-          uint8 release,
+          VersionPart release,
           string memory commitHash
      )
      {
@@ -68,7 +68,7 @@ contract ServiceAuthorization is
                revert ErrorAuthorizationTargetDomainZero();
           }
 
-          if (release < VersionPartLib.releaseMin().toInt() || release >= VersionPartLib.releaseMax().toInt()) {
+          if (!VersionPartLib.isValidRelease(release)) {
                revert ErrorAuthorizationReleaseInvalid(release);
           }
 
@@ -103,7 +103,7 @@ contract ServiceAuthorization is
 
      /// @inheritdoc IServiceAuthorization
      function getRelease() public view returns(VersionPart release) {
-          return VersionPartLib.toVersionPart(_release);
+          return _release;
      }
 
      /// @inheritdoc IServiceAuthorization

@@ -146,7 +146,6 @@ export async function deployFireComponentContracts(libraries: LibraryAddresses, 
         "FireProduct",
         fireOwner,
         [
-            await instance.getRegistry(),
             instanceNftId,
             fireProductName,
             fireProductAuthAddress,
@@ -163,6 +162,7 @@ export async function deployFireComponentContracts(libraries: LibraryAddresses, 
                 TimestampLib: timestampLibAddress,
                 UFixedLib: ufixedLibAddress,
                 VersionLib: versionLibAddress,
+                VersionPartLib: versionPartLibAddress,
                 ObjectTypeLib: objectTypeLibAddress,
             }
         });
@@ -199,7 +199,6 @@ export async function deployFireComponentContracts(libraries: LibraryAddresses, 
         "FirePool",
         fireOwner,
         [
-            await instance.getRegistry(),
             fireProductNftId,
             firePoolName,
             firePoolAuthAddress,
@@ -211,6 +210,7 @@ export async function deployFireComponentContracts(libraries: LibraryAddresses, 
                 NftIdLib: nftIdLibAddress,
                 UFixedLib: ufixedLibAddress,
                 VersionLib: versionLibAddress,
+                VersionPartLib: versionPartLibAddress,
                 ObjectTypeLib: objectTypeLibAddress,
             }
         });

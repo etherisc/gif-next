@@ -5,7 +5,7 @@ import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManage
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {IRegistry} from "./IRegistry.sol";
-import {IRegistryLinked} from "../shared/IRegistryLinked.sol";
+import {RegistryLinked} from "../shared/RegistryLinked.sol";
 import {IStaking} from "../staking/IStaking.sol";
 
 import {ChainId, ChainIdLib} from "../type/ChainId.sol";
@@ -16,7 +16,7 @@ import {VersionPart} from "../type/Version.sol";
 /// Only whitelisted tokens can be used as default tokens for products, distribution and pools components.
 contract TokenRegistry is
     AccessManaged,
-    IRegistryLinked
+    RegistryLinked
 {
     event LogTokenRegistryTokenRegistered(ChainId chainId, address token, uint256 decimals, string symbol);
     event LogTokenRegistryTokenGlobalStateSet(ChainId chainId, address token, bool active);
@@ -47,7 +47,6 @@ contract TokenRegistry is
     mapping(ChainId chainId => mapping(address token => mapping(VersionPart release => bool isActive))) internal _active;
     TokenInfo [] internal _token;
 
-    IRegistry internal _registry;
     ChainId internal _chainId = ChainIdLib.current();
     IERC20Metadata internal _dipToken;
 
@@ -59,14 +58,13 @@ contract TokenRegistry is
         _;
     }
 
-    constructor(IRegistry registry, IERC20Metadata dipToken)
+    constructor(IERC20Metadata dipToken)
         AccessManaged(msg.sender)
     {
         // set authority
-        address authority = RegistryAdmin(registry.getRegistryAdminAddress()).authority();
+        address authority = RegistryAdmin(
+            _getRegistry().getRegistryAdminAddress()).authority();
         setAuthority(authority);
-        
-        _registry = registry;
 
         // TODO deal with chains without a dip token
         _dipToken = _verifyOnchainToken(address(dipToken));
@@ -180,7 +178,7 @@ contract TokenRegistry is
         // verify valid major version
         if(enforceVersionCheck) {
             uint256 version = release.toInt();
-            if (!getRegistry().isActiveRelease(release)) {
+            if (!_getRegistry().isActiveRelease(release)) {
                 revert ErrorTokenRegistryMajorVersionInvalid(release);
             }
         }
@@ -226,13 +224,6 @@ contract TokenRegistry is
 
     function getDipTokenAddress() external view returns (address) {
         return address(_dipToken);
-    }
-
-    //--- IRegistryLinked --------------------------------------------------//
-
-    /// @dev returns the dip token for this chain
-    function getRegistry() public view returns (IRegistry) {
-        return _registry;
     }
 
     //--- internal functions ------------------------------------------------//

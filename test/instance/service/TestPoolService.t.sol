@@ -26,7 +26,6 @@ contract TestPoolService is GifTest {
     function test_poolServiceRegisterHappyCase() public {
         vm.startPrank(outsider);
         testPool = new SimplePool(
-            address(registry),
             testProdNftId,
             _getDefaultSimplePoolInfo(),
             new BasicPoolAuthorization("SimplePool"),

@@ -71,7 +71,6 @@ contract StakingTargetTest is GifTest {
         NftId protocolNftId = registry.getProtocolNftId();
         Amount reservesInitialAmount = stakingReader.getTargetInfo(protocolNftId).reserveAmount;
         assertEq(reservesInitialAmount.toInt(), 0, "protocol reward reserves not 0");
-        uint256 stakingOwnerInitialDipBalance = dip.balanceOf(stakingOwner);
 
         address stakingWallet = staking.getWallet();
         uint256 refillAmountFullDips = 500;
@@ -81,6 +80,8 @@ contract StakingTargetTest is GifTest {
         assertEq(stakingReader.getReserveBalance(protocolNftId).toInt(), 0, "reward reserves balance not at refill amount (after staking owner funding)");
 
         // WHEN - refill reward reserves for protocol
+        _prepareAccount(stakingOwner, refillAmountFullDips);
+
         _refillRewardReserves(protocolNftId, refillAmount, stakingOwner);
 
         // THEN
@@ -89,7 +90,7 @@ contract StakingTargetTest is GifTest {
 
         // check dips have been transferred to staking wallet
         assertEq(dip.balanceOf(stakingWallet), refillAmount.toInt(), "staking wallet dip balance not at refill amount (after reward funding)");
-        assertEq(dip.balanceOf(stakingOwner), stakingOwnerInitialDipBalance - refillAmount.toInt(), "unexpected staking owner dip balance (after reward funding)");
+        assertEq(dip.balanceOf(stakingOwner), 0, "unexpected staking owner dip balance (after reward funding)");
     }
 
 
@@ -102,6 +103,8 @@ contract StakingTargetTest is GifTest {
         uint256 withdrwaAmountFullDips = 700;
         Amount initialAmount = AmountLib.toAmount(refillAmountFullDips * 10 ** dip.decimals());
         Amount withdrawAmount = AmountLib.toAmount(withdrwaAmountFullDips * 10 ** dip.decimals());
+
+        _prepareAccount(stakingOwner, refillAmountFullDips);
 
         _refillRewardReserves(protocolNftId, initialAmount, stakingOwner);
 
@@ -136,6 +139,8 @@ contract StakingTargetTest is GifTest {
         uint256 withdrwaAmountFullDips = 700;
         Amount initialAmount = AmountLib.toAmount(refillAmountFullDips * 10 ** dip.decimals());
         Amount withdrawAmount = AmountLib.toAmount(withdrwaAmountFullDips * 10 ** dip.decimals());
+
+        _prepareAccount(stakingOwner, refillAmountFullDips);
 
         _refillRewardReserves(protocolNftId, initialAmount, stakingOwner);
 
@@ -400,7 +405,7 @@ contract StakingTargetTest is GifTest {
         (
             TokenHandler tokenHandler,
             Amount refillAmount
-        ) = _addRewardReserves(instanceNftId, instanceOwner, refillAmountFullDips);
+        ) = _addRewardReserves(instanceOwner, refillAmountFullDips);
 
         // check reward reserve balance from book keeping
         assertEq(stakingReader.getReserveBalance(instanceNftId).toInt(), refillAmount.toInt(), "reward reserves balance not at refill amount (after reward funding)");
@@ -431,7 +436,7 @@ contract StakingTargetTest is GifTest {
 
         // GIVEN
         uint256 refillAmountFullDips = 500;
-        (, Amount refillAmount) = _addRewardReserves(instanceNftId, instanceOwner, refillAmountFullDips);
+        (, Amount refillAmount) = _addRewardReserves(instanceOwner, refillAmountFullDips);
 
         // WHEN / THEN (withdraw some reserves as outsider)
         Amount withdrawAmount = AmountLib.toAmount(refillAmount.toInt() / 2);
@@ -470,7 +475,6 @@ contract StakingTargetTest is GifTest {
 
 
     function _addRewardReserves(
-        NftId, 
         address account, 
         uint256 amount
     )
@@ -535,12 +539,12 @@ contract StakingTargetTest is GifTest {
         // return existing dip balance back to registry owner
         if (reset) {
             vm.startPrank(myStaker);
-            dip.transfer(registryOwner, dip.balanceOf(myStaker));
+            dip.transfer(tokenIssuer, dip.balanceOf(myStaker));
             vm.stopPrank();
         }
 
         if (withFunding) {
-            vm.startPrank(registryOwner);
+            vm.startPrank(tokenIssuer);
             dip.transfer(myStaker, dipAmount.toInt());
             vm.stopPrank();
         }

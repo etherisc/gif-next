@@ -297,7 +297,7 @@ contract ProductApplicationTest is GifTest {
             FeeLib.zero()); // performance fees
         vm.stopPrank();
 
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(investor, bundleCapital);
         vm.stopPrank();
 

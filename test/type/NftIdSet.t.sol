@@ -21,7 +21,7 @@ contract NftIdSetTest is GifTest {
         MockObjectSet master = new MockObjectSet();
 
         objectSet = MockObjectSet(Clones.clone(address(master)));
-        objectSet.initialize(instance.getInstanceAdmin().authority(), address(instance.getRegistry()), address(instance));
+        objectSet.initialize(instance.getInstanceAdmin().authority(), address(instance));
     }
 
     function test_addToSetHappyCase() public {

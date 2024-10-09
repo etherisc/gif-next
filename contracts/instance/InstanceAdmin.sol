@@ -11,9 +11,10 @@ import {AccessAdminLib} from "../authorization/AccessAdminLib.sol";
 import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
 import {ObjectType, INSTANCE} from "../type/ObjectType.sol";
 import {RoleId, ADMIN_ROLE} from "../type/RoleId.sol";
+import {GIF_INITIAL_RELEASE} from "../registry/Registry.sol";
 import {Str} from "../type/String.sol";
-import {VersionPart} from "../type/Version.sol";
 import {INSTANCE_TARGET_NAME, INSTANCE_ADMIN_TARGET_NAME, INSTANCE_STORE_TARGET_NAME, PRODUCT_STORE_TARGET_NAME, BUNDLE_SET_TARGET_NAME, RISK_SET_TARGET_NAME} from "./TargetNames.sol";
+import {VersionPart} from "../type/Version.sol";
 
 
 contract InstanceAdmin is
@@ -26,13 +27,12 @@ contract InstanceAdmin is
     error ErrorInstanceAdminNotComponentOrCustomTarget(address target);
 
     IInstance internal _instance;
-    IRegistry internal _registry;
 
     uint64 internal _customRoleIdNext;
 
 
     modifier onlyInstanceService() {
-        if (msg.sender != _registry.getServiceAddress(INSTANCE(), getRelease())) {
+        if (msg.sender != _getRegistry().getServiceAddress(INSTANCE(), getRelease())) {
             revert ErrorInstanceAdminNotInstanceService(msg.sender);
         }
         _;
@@ -43,7 +43,8 @@ contract InstanceAdmin is
     constructor(address accessManager) {
         initialize(
             accessManager,
-            "MasterInstanceAdmin");
+            "MasterInstanceAdmin",
+            GIF_INITIAL_RELEASE());
     }
 
 
@@ -51,32 +52,23 @@ contract InstanceAdmin is
     /// Important: Initialization of instance admin is only complete after calling this function. 
     /// Important: The instance MUST be registered and all instance supporting contracts must be wired to this instance.
     function completeSetup(
-        address registry,
         address authorization,
-        VersionPart release,
         address instance
     )
         external
-        reinitializer(uint64(release.toInt()))
     {
         // checks
-        AccessAdminLib.checkIsRegistered(registry, instance, INSTANCE());
+        AccessAdminLib.checkIsRegistered(instance, INSTANCE(), getRelease());
 
         // effects
-        AccessManagerCloneable(
-            authority()).completeSetup(
-                registry, 
-                release); 
-
         AccessAdminLib.checkAuthorization(
             address(_authorization), 
             authorization, 
             INSTANCE(), // expectedDomain
-            release, // expectedRelease
+            getRelease(), // expectedRelease
             false, // expectServiceAuthorization
             true); // checkAlreadyInitialized
 
-        _registry = IRegistry(registry);
         _instance = IInstance(instance);
         _authorization = IAuthorization(authorization);
         _customRoleIdNext = 0;
@@ -105,7 +97,7 @@ contract InstanceAdmin is
         for(uint256 i = 0; i < serviceDomains.length; i++) {
             ObjectType serviceDomain = serviceDomains[i];
             RoleId serviceRoleId = authorization.getServiceRole(serviceDomain);
-            address service = _registry.getServiceAddress(serviceDomain, getRelease());
+            address service = _getRegistry().getServiceAddress(serviceDomain, getRelease());
 
             _grantRoleToAccount(
                 serviceRoleId,
@@ -134,7 +126,8 @@ contract InstanceAdmin is
     /// Important: The component MUST be registered.
     function initializeComponentAuthorization(
         address componentAddress,
-        ObjectType expectedType
+        ObjectType expectedType,
+        VersionPart expectedRelease
     )
         external
         restricted()

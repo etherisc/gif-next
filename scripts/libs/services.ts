@@ -120,17 +120,17 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         owner,
         [
             authority, // address itself can be a salt like value
-            registry.registryAddress,
             release.salt
         ],
         { libraries: { 
-            BlocknumberLib: libraries.blockNumberLibAddress,
-            ContractLib: libraries.contractLibAddress,
-            NftIdLib: libraries.nftIdLibAddress, 
-            RoleIdLib: libraries.roleIdLibAddress,
-            TimestampLib: libraries.timestampLibAddress,
-            VersionLib: libraries.versionLibAddress,
-        }});
+                BlocknumberLib: libraries.blockNumberLibAddress,
+                ContractLib: libraries.contractLibAddress,
+                NftIdLib: libraries.nftIdLibAddress, 
+                RoleIdLib: libraries.roleIdLibAddress,
+                TimestampLib: libraries.timestampLibAddress,
+                VersionLib: libraries.versionLibAddress,
+                VersionPartLib: libraries.versionPartLibAddress,
+            }});
 
     const registryService = RegistryService__factory.connect(registryServiceAddress, owner);
 
@@ -153,7 +153,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         owner,
         [
             authority,
-            registry.registryAddress,
             release.salt
         ],
         { libraries: {
@@ -164,6 +163,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             RoleIdLib: libraries.roleIdLibAddress,
             TimestampLib: libraries.timestampLibAddress,
             VersionLib: libraries.versionLibAddress,
+            VersionPartLib: libraries.versionPartLibAddress,
         }});
 
     const stakingServiceManager = stakingServiceManagerBaseContract as StakingServiceManager;
@@ -179,7 +179,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         owner,
         [
             authority,
-            registry.registryAddress,
             release.salt
         ],
         { libraries: { 
@@ -206,7 +205,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         owner,
         [
             authority,
-            registry.registryAddress,
             release.salt
         ],
         { libraries: { 
@@ -218,6 +216,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             TimestampLib: libraries.timestampLibAddress,
             VersionLib: libraries.versionLibAddress,
             ObjectTypeLib: libraries.objectTypeLibAddress,
+            VersionPartLib: libraries.versionPartLibAddress,
         }});
     
     const accountingServiceManager = accountingServiceManagerBaseContract as AccountingServiceManager;
@@ -232,7 +231,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         owner,
         [
             authority,
-            registry.registryAddress,
             release.salt
         ],
         { libraries: { 
@@ -246,6 +244,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             TimestampLib: libraries.timestampLibAddress,
             TokenHandlerDeployerLib: libraries.tokenHandlerDeployerLibAddress,
             VersionLib: libraries.versionLibAddress,
+            VersionPartLib: libraries.versionPartLibAddress,
         }});
 
     const componentService = ComponentService__factory.connect(componentServiceAddress, owner);
@@ -265,7 +264,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         owner,
         [
             authority,
-            registry.registryAddress,
             release.salt
         ],
         { libraries: {
@@ -274,7 +272,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
                 ContractLib: libraries.contractLibAddress,
                 DistributorTypeLib: libraries.distributorTypeLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
-                PoolLib: libraries.poolLibAddress,
                 ReferralLib: libraries.referralLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
                 SecondsLib: libraries.secondsLibAddress,
@@ -282,6 +279,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
                 UFixedLib: libraries.uFixedLibAddress,
                 VersionLib: libraries.versionLibAddress, 
                 ObjectTypeLib: libraries.objectTypeLibAddress,
+                VersionPartLib: libraries.versionPartLibAddress,
             }});
     
     const distributionServiceManager = distributionServiceManagerBaseContract as DistributionServiceManager;
@@ -296,7 +294,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         owner,
         [
             authority,
-            registry.registryAddress,
             release.salt
         ],
         { libraries: {
@@ -308,6 +305,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             TimestampLib: libraries.timestampLibAddress,
             VersionLib: libraries.versionLibAddress, 
             ObjectTypeLib: libraries.objectTypeLibAddress,
+            VersionPartLib: libraries.versionPartLibAddress,
         }});
     
     const pricingServiceManager = pricingServiceManagerBaseContract as PricingServiceManager;
@@ -322,7 +320,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         owner,
         [
             authority,
-            registry.registryAddress,
             release.salt
         ],
         { libraries: {
@@ -330,12 +327,12 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
                 BlocknumberLib: libraries.blockNumberLibAddress,
                 ContractLib: libraries.contractLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
-                PoolLib: libraries.poolLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
                 SecondsLib: libraries.secondsLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
                 VersionLib: libraries.versionLibAddress, 
                 ObjectTypeLib: libraries.objectTypeLibAddress,
+                VersionPartLib: libraries.versionPartLibAddress,
             }});
 
     const bundleServiceManager = bundleServiceManagerBaseContract as BundleServiceManager;
@@ -350,7 +347,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         owner,
         [
             authority,
-            registry.registryAddress,
             release.salt
         ],
         { libraries: {
@@ -363,6 +359,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
                 TimestampLib: libraries.timestampLibAddress,
                 VersionLib: libraries.versionLibAddress, 
                 ObjectTypeLib: libraries.objectTypeLibAddress,
+                VersionPartLib: libraries.versionPartLibAddress,
             }});
     
     const poolServiceManager = poolServiceManagerBaseContract as PoolServiceManager;
@@ -377,7 +374,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         owner,
         [
             authority,
-            registry.registryAddress,
             release.salt
         ],
         { libraries: {
@@ -388,7 +384,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             RoleIdLib: libraries.roleIdLibAddress,
             TimestampLib: libraries.timestampLibAddress,
             VersionLib: libraries.versionLibAddress, 
-            ObjectTypeLib: libraries.objectTypeLibAddress,
+            VersionPartLib: libraries.versionPartLibAddress,
         }});
     
     const oracleServiceManager = oracleServiceManagerBaseContract as OracleServiceManager;
@@ -403,7 +399,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         owner,
         [
             authority,
-            registry.registryAddress,
             release.salt
         ],
         { libraries: {
@@ -414,6 +409,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             RoleIdLib: libraries.roleIdLibAddress,
             TimestampLib: libraries.timestampLibAddress,
             VersionLib: libraries.versionLibAddress, 
+            VersionPartLib: libraries.versionPartLibAddress, 
         }});
 
     const riskServiceManager = riskServiceManagerBaseContract as RiskServiceManager;
@@ -428,7 +424,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         owner,
         [
             authority,
-            registry.registryAddress,
             release.salt
         ],
         { libraries: {
@@ -441,6 +436,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             TimestampLib: libraries.timestampLibAddress,
             VersionLib: libraries.versionLibAddress, 
             ObjectTypeLib: libraries.objectTypeLibAddress,
+            VersionPartLib: libraries.versionPartLibAddress,
         }});
 
     const policyServiceManager = policyServiceManagerBaseContract as PolicyServiceManager;
@@ -455,7 +451,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         owner,
         [
             authority,
-            registry.registryAddress,
             release.salt
         ],
         { libraries: {
@@ -469,6 +464,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
                 TimestampLib: libraries.timestampLibAddress,
                 VersionLib: libraries.versionLibAddress, 
                 ObjectTypeLib: libraries.objectTypeLibAddress,
+                VersionPartLib: libraries.versionPartLibAddress,
             }});
 
     const claimServiceManager = claimServiceManagerBaseContract as ClaimServiceManager;
@@ -483,7 +479,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         owner,
         [
             authority,
-            registry.registryAddress,
             release.salt
         ],
         { libraries: {
@@ -496,6 +491,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             TimestampLib: libraries.timestampLibAddress,
             VersionLib: libraries.versionLibAddress, 
             ObjectTypeLib: libraries.objectTypeLibAddress,
+            VersionPartLib: libraries.versionPartLibAddress,
         }});
 
     const applicationServiceManager = applicationServiceManagerBaseContract as ApplicationServiceManager;

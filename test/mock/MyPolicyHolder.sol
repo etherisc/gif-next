@@ -27,12 +27,12 @@ contract MyPolicyHolder is PolicyHolder {
     SimpleProduct public product;
     bool public isReentrant = false;
 
-    constructor (address registryAddress){
-        _initialize(registryAddress);
+    constructor() {
+        _initialize();
     }
 
-    function _initialize(address registryAddress) internal initializer() {
-        _initializePolicyHolder(registryAddress);
+    function _initialize() internal initializer() {
+        __PolicyHolder_init();
     }
 
     // callback when policy is activated

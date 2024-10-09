@@ -7,7 +7,7 @@ import {Vm, console} from "../../lib/forge-std/src/Test.sol";
 
 import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
-import {ObjectType} from "../../contracts/type/ObjectType.sol";
+import {ObjectType, COMPONENT, DISTRIBUTION, ORACLE, POOL} from "../../contracts/type/ObjectType.sol";
 import {VersionPartLib, VersionPart} from "../../contracts/type/Version.sol";
 import {RoleId} from "../../contracts/type/RoleId.sol";
 
@@ -16,7 +16,7 @@ import {IAccessAdmin} from "../../contracts/authorization/IAccessAdmin.sol";
 import {Dip} from "../../contracts/mock/Dip.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
-import {Registry} from "../../contracts/registry/Registry.sol";
+import {Registry, GIF_INITIAL_RELEASE} from "../../contracts/registry/Registry.sol";
 import {IRegistryService} from "../../contracts/registry/IRegistryService.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
@@ -40,15 +40,8 @@ contract RegistryServiceHarnessTestBase is GifDeployer, FoundryRandom {
 
     function setUp() public virtual
     {
-        globalRegistry = makeAddr("globalRegistry");
-        registryOwner = makeAddr("registryOwner");
-
         // solhint-disable-next-line
         console.log("tx origin", tx.origin);
-
-        address gifAdmin = registryOwner;
-        address gifManager = registryOwner;
-        address stakingOwner = registryOwner;
 
         (
             , // dip,
@@ -58,56 +51,58 @@ contract RegistryServiceHarnessTestBase is GifDeployer, FoundryRandom {
             , // registryAdmin,
             , // stakingManager,
             // staking
-        ) = deployCore(
-            globalRegistry,
-            gifAdmin,
-            gifManager,
-            stakingOwner);
+        ) = deployCore();
 
         registryAddress = address(registry);
 
-        vm.startPrank(registryOwner);
         _deployRegistryServiceHarness();
-        vm.stopPrank();
     }
 
     function _deployRegistryServiceHarness() internal 
     {
         bytes32 salt = "0x2222";
 
+        vm.prank(gifAdmin);
         releaseRegistry.createNextRelease();
+
+        vm.startPrank(gifManager);
 
         (
             IAccessAdmin releaseAdmin,
             VersionPart releaseVersion,
             bytes32 releaseSalt
         ) = releaseRegistry.prepareNextRelease(
-            new ServiceAuthorizationMockWithRegistryService(VersionPartLib.toVersionPart(3)),
+            new ServiceAuthorizationMockWithRegistryService(GIF_INITIAL_RELEASE()),
             salt);
 
         registryServiceManagerWithHarness = new RegistryServiceManagerMockWithHarness{salt: releaseSalt}(
             releaseAdmin.authority(),
-            registryAddress,
             releaseSalt);
 
         registryServiceHarness = RegistryServiceHarness(address(registryServiceManagerWithHarness.getRegistryService()));
         releaseRegistry.registerService(registryServiceHarness);
         registryServiceManagerWithHarness.linkToProxy();
 
+        vm.stopPrank();
+
         // TODO check if this nees to be re-enabled
         // assertEq(serviceAddresses[0], address(registryServiceHarness), "error: registry service address mismatch");
 
+        vm.prank(gifAdmin);
         releaseRegistry.activateNextRelease();
 
     }
 
     function _assert_getAndVerifyContractInfo(
         IRegisterable registerable, 
+        NftId expectedParent,
         ObjectType expectedType, 
         address expectedOwner)
         internal
     {
         IRegistry.ObjectInfo memory info = registerable.getInitialInfo();
+        address initialOwner = registerable.getOwner();
+        bytes memory data = registerable.getInitialData();
         bool expectRevert = false;
 
         if(info.objectAddress != address(registerable)) {
@@ -116,56 +111,80 @@ contract RegistryServiceHarnessTestBase is GifDeployer, FoundryRandom {
                 address(registerable), 
                 info.objectAddress));
             expectRevert = true;
-        } else if(info.objectType != expectedType) {
+        } else if(expectedType != COMPONENT() && info.objectType != expectedType) {
+                vm.expectRevert(abi.encodeWithSelector(
+                    IRegistryService.ErrorRegistryServiceRegisterableTypeInvalid.selector,
+                    info.objectAddress,
+                    expectedType,
+                    info.objectType));
+                expectRevert = true;
+        } else if(expectedType == COMPONENT() && !(info.objectType == DISTRIBUTION() || info.objectType == ORACLE() || info.objectType == POOL())) {
             vm.expectRevert(abi.encodeWithSelector(
                 IRegistryService.ErrorRegistryServiceRegisterableTypeInvalid.selector,
                 info.objectAddress,
                 expectedType,
                 info.objectType));
             expectRevert = true;
-        } else if(info.initialOwner != expectedOwner) { 
-            vm.expectRevert(abi.encodeWithSelector(
-                IRegistryService.ErrorRegistryServiceRegisterableOwnerInvalid.selector,
-                info.objectAddress,
-                expectedOwner,
-                info.initialOwner));
-            expectRevert = true;
-        } else if(info.initialOwner == address(registerable)) {
+        } else if(expectedParent.gtz() && info.parentNftId != expectedParent) {
+                vm.expectRevert(abi.encodeWithSelector(
+                    IRegistryService.ErrorRegistryServiceRegisterableParentInvalid.selector,
+                    info.objectAddress,
+                    expectedParent,
+                    info.parentNftId));
+                expectRevert = true;
+        } else if(expectedOwner > address(0) && initialOwner != expectedOwner) { 
+                vm.expectRevert(abi.encodeWithSelector(
+                    IRegistryService.ErrorRegistryServiceRegisterableOwnerInvalid.selector,
+                    info.objectAddress,
+                    expectedOwner,
+                    initialOwner));
+                expectRevert = true;
+        } else if(initialOwner == address(registerable)) {
             vm.expectRevert(abi.encodeWithSelector(
                 IRegistryService.ErrorRegistryServiceRegisterableSelfRegistration.selector,
                 info.objectAddress));
             expectRevert = true;
-        } else if(info.initialOwner == address(0)) {
+        } else if(initialOwner == address(0)) {
             vm.expectRevert(abi.encodeWithSelector(IRegistryService.ErrorRegistryServiceRegisterableOwnerZero.selector,
             info.objectAddress));
             expectRevert = true;
-        }else if(registry.isRegistered(info.initialOwner)) { 
+        }else if(registry.isRegistered(initialOwner)) { 
             vm.expectRevert(abi.encodeWithSelector(IRegistryService.ErrorRegistryServiceRegisterableOwnerRegistered.selector,
             info.objectAddress,
-            info.initialOwner));
+            initialOwner));
             expectRevert = true;
         }
 
         if(expectRevert) {
             registryServiceHarness.exposed_getAndVerifyContractInfo(
                 registerable,
+                expectedParent,
                 expectedType,
                 expectedOwner);
         } else {
-            IRegistry.ObjectInfo memory infoFromRegistryService = registryServiceHarness.exposed_getAndVerifyContractInfo(
+            (
+                IRegistry.ObjectInfo memory infoFromRegistryService,
+                address ownerFromRegistryService,
+                bytes memory dataFromRegistryService
+            ) = registryServiceHarness.exposed_getAndVerifyContractInfo(
                 registerable,
+                expectedParent,
                 expectedType,
                 expectedOwner);  
 
-            IRegistry.ObjectInfo memory infoFromRegistry = registry.getObjectInfo(address(registerable));
+            assertTrue(eqObjectInfo(infoFromRegistryService, info), "Info returned by getAndVerifyContractInfo() is different from the one in registrable");
+            assertEq(ownerFromRegistryService, initialOwner, "Owner returned by getAndVerifyContractInfo() is different from the one in registerable");
+            assertTrue(eqBytes(dataFromRegistryService, data), "Data returned by getAndVerifyContractInfo() is different from the one in registrable");
 
-            eqObjectInfo(info, infoFromRegistryService);
-            eqObjectInfo(infoFromRegistry, infoFromRegistryService);
+            assertTrue(eqObjectInfo(infoFromRegistryService, registry.getObjectInfo(address(registerable))), "Info returned by getAndVerifyContractInfo() is different from the one in registry");
+            assertEq(ownerFromRegistryService, registry.ownerOf(address(registerable)), "Owner returned by getAndVerifyContractInfo() is different from the one in registry");
+            assertTrue(eqBytes(dataFromRegistryService, registry.getObjectData(address(registerable))), "Data returned by getAndVerifyContractInfo() is different from the one in registry");
         }
     }
 
     function _assert_verifyObjectInfo(
-        IRegistry.ObjectInfo memory info, 
+        IRegistry.ObjectInfo memory info,
+        address initialOwner, 
         ObjectType expectedType)
         internal
     {
@@ -178,19 +197,20 @@ contract RegistryServiceHarnessTestBase is GifDeployer, FoundryRandom {
                 IRegistryService.ErrorRegistryServiceObjectTypeInvalid.selector,
                 expectedType,
                 info.objectType));
-        } else if(info.initialOwner == address(0)) {
+        } else if(initialOwner == address(0)) {
             vm.expectRevert(abi.encodeWithSelector(
                 IRegistryService.ErrorRegistryServiceObjectOwnerZero.selector,
                 info.objectType));
-        } else if(registry.isRegistered(info.initialOwner)) { 
+        } else if(registry.isRegistered(initialOwner)) { 
             vm.expectRevert(abi.encodeWithSelector(
                 IRegistryService.ErrorRegistryServiceObjectOwnerRegistered.selector,
                 info.objectType, 
-                info.initialOwner));
+                initialOwner));
         }
 
         registryServiceHarness.exposed_verifyObjectInfo(
             info, 
+            initialOwner,
             expectedType);
     }
 }

@@ -1,6 +1,6 @@
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import { AddressLike, formatEther, resolveAddress } from "ethers";
-import { ethers } from "hardhat";
+import { AddressLike, formatEther, resolveAddress, HDNodeWallet } from "ethers";
+import { ethers, network } from "hardhat";
 import { ChainNft__factory } from "../../typechain-types";
 import { logger } from "../logger";
 import { resetBalances, setBalanceBefore } from "./gas_and_balance_tracker";
@@ -15,6 +15,8 @@ export async function getNamedAccounts(): Promise<{
     instanceOwner: HardhatEthersSigner;
     customer: HardhatEthersSigner;
     investor: HardhatEthersSigner;
+    tokenIssuer: HardhatEthersSigner;
+    libraryDeployer: HardhatEthersSigner;
 }> {
     const signers = await ethers.getSigners();
     const protocolOwner = signers[0];
@@ -25,7 +27,10 @@ export async function getNamedAccounts(): Promise<{
     const instanceServiceOwner = signers[5];
     const customer = signers[6];
     const investor = signers[7];
+    const tokenIssuer = signers[8];
+    const libraryDeployer = signers[9];
     const instanceOwner = signers[10];
+
     await printBalance(
         ["protocolOwner", protocolOwner] ,
         // ["masterInstanceOwner", masterInstanceOwner] , 
@@ -33,14 +38,14 @@ export async function getNamedAccounts(): Promise<{
         // ["poolOwner", poolOwner],
         // ["distributionOwner", distributionOwner],
         // ["instanceServiceOwner", instanceServiceOwner],
-        ["instanceOwner", instanceOwner],
+        ["instanceOwner", instanceOwner]
     );
     resetBalances();
     setBalanceBefore(await resolveAddress(protocolOwner), await ethers.provider.getBalance(protocolOwner));
     setBalanceBefore(await resolveAddress(productOwner), await ethers.provider.getBalance(productOwner));
     setBalanceBefore(await resolveAddress(instanceOwner), await ethers.provider.getBalance(instanceOwner));
 
-    return { protocolOwner, masterInstanceOwner, productOwner, poolOwner, distributionOwner, instanceServiceOwner, instanceOwner, customer, investor }; 
+    return { protocolOwner, masterInstanceOwner, productOwner, poolOwner, distributionOwner, instanceServiceOwner, instanceOwner, customer, investor, tokenIssuer, libraryDeployer };
 }
 
 export async function printBalance(...signers: [string,HardhatEthersSigner][]) {

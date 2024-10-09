@@ -12,8 +12,11 @@ import {SimplePool} from "../../../contracts/examples/unpermissioned/SimplePool.
 import {IAuthorization} from "../../../contracts/authorization/IAuthorization.sol";
 import {IComponents} from "../../../contracts/instance/module/IComponents.sol";
 import {IComponentService} from "../../../contracts/shared/IComponentService.sol";
+import {IInstanceLinkedComponent} from "../../../contracts/shared/IInstanceLinkedComponent.sol";
+import {IRegistry} from "../../../contracts/registry/IRegistry.sol";
+import {IRegistryService} from "../../../contracts/registry/IRegistryService.sol";
 import {Registerable} from "../../../contracts/shared/Registerable.sol";
-import {IRelease} from "../../../contracts/registry/IRelease.sol";
+import {ProductMockWithoutInstanceCheck} from "../../mock/ProductMock.sol";
 import {VersionPart, VersionPartLib} from "../../../contracts/type/Version.sol";
 import {ContractLib} from "../../../contracts/shared/ContractLib.sol";
 
@@ -72,7 +75,7 @@ contract TestPoolRegistration is GifTest {
         // WHEN + THEN
         vm.expectRevert(
             abi.encodeWithSelector(
-                IComponentService.ErrorComponentServiceComponentAlreadyRegistered.selector,
+                IRegistry.ErrorRegistryContractAlreadyRegistered.selector,
                 address(myPool)));
 
         vm.startPrank(myProductOwner);
@@ -140,7 +143,7 @@ contract TestPoolRegistration is GifTest {
     // check that pool registration fails for pool with a different release than product
     function test_poolRegisterAttemptDifferentRelease() public {
         // // GIVEN
-        // SimpleProduct myProductV4 = new SimpleProductV4(
+        // SimpleProduct myProductV4 = new ProductMockV4(
         //     address(registry),
         //     instanceNftId, 
         //     new BasicProductAuthorization("MyProductV4"),
@@ -173,8 +176,9 @@ contract TestPoolRegistration is GifTest {
         // WHEN + THEN
         vm.expectRevert(
             abi.encodeWithSelector(
-                IComponentService.ErrorComponentServiceNotComponent.selector,
-                address(token)));
+                IRegistryService.ErrorRegistryServiceInterfaceNotSupported.selector,
+                address(token),
+                type(IInstanceLinkedComponent).interfaceId));
 
         vm.startPrank(myProductOwner);
         NftId myNftId = myProduct1.registerComponent(address(token));
@@ -223,7 +227,6 @@ contract TestPoolRegistration is GifTest {
         returns(SimpleProduct)
     {
         return new SimpleProduct(
-            address(registry),
             instanceNftId, 
             "SimpleProduct",
             _getSimpleProductInfo(),
@@ -241,37 +244,9 @@ contract TestPoolRegistration is GifTest {
         returns(SimplePool)
     {
         return new SimplePool(
-            address(registry),
             productNftId,
             _getDefaultSimplePoolInfo(),
             new BasicPoolAuthorization(name),
             owner);
-    }
-}
-
-
-contract SimpleProductV4 is SimpleProduct {
-
-    constructor(
-        address registry,
-        NftId instanceNftId,
-        IComponents.ProductInfo memory productInfo,
-        IComponents.FeeInfo memory feeInfo,
-        IAuthorization authorization,
-        address initialOwner
-    )
-        SimpleProduct(
-            registry,
-            instanceNftId,
-            "SimpleProductV4",
-            productInfo,
-            feeInfo,
-            authorization,
-            initialOwner
-        )
-    { }
-
-    function getRelease() public override(IRelease, Registerable) pure returns (VersionPart release) {
-        return VersionPartLib.toVersionPart(4);
     }
 }

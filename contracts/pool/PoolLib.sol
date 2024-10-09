@@ -18,6 +18,7 @@ import {ObjectType, BUNDLE, POOL} from "../type/ObjectType.sol";
 import {PayoutId} from "../type/PayoutId.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {UFixed} from "../type/UFixed.sol";
+import {VersionPart} from "../type/Version.sol";
 
 library PoolLib {
 
@@ -76,7 +77,6 @@ library PoolLib {
 
 
     function calculateStakingAmounts(
-        IRegistry registry,
         InstanceReader instanceReader,
         NftId poolNftId,
         Amount stakingAmount
@@ -88,7 +88,7 @@ library PoolLib {
             Amount netStakingAmount
         )
     {
-        NftId productNftId = registry.getParentNftId(poolNftId);
+        NftId productNftId = ContractLib.getRegistry().getParentNftId(poolNftId);
         Fee memory stakingFee = instanceReader.getFeeInfo(productNftId).stakingFee;
         (
             feeAmount,
@@ -100,7 +100,6 @@ library PoolLib {
 
 
     function calculatePayoutAmounts(
-        IRegistry registry,
         InstanceReader instanceReader,
         NftId productNftId,
         NftId policyNftId,
@@ -121,7 +120,7 @@ library PoolLib {
             netPayoutAmount = payoutAmount;
 
             if (payoutBeneficiary == address(0)) {
-                beneficiary = registry.ownerOf(policyNftId);
+                beneficiary = ContractLib.getRegistry().ownerOf(policyNftId);
             } else { 
                 beneficiary = payoutBeneficiary;
             }
@@ -136,14 +135,13 @@ library PoolLib {
 
 
     function getPolicyHolder(
-        IRegistry registry, 
         NftId policyNftId
     )
         internal 
         view 
         returns (IPolicyHolder policyHolder)
     {
-        address policyHolderAddress = registry.ownerOf(policyNftId);
+        address policyHolderAddress = ContractLib.getRegistry().ownerOf(policyNftId);
         policyHolder = IPolicyHolder(policyHolderAddress);
 
         if (!ContractLib.isPolicyHolder(policyHolderAddress)) {
@@ -151,99 +149,7 @@ library PoolLib {
         }
     }
 
-
-    function checkAndGetPoolInfo(
-        IRegistry registry,
-        address sender,
-        NftId bundleNftId
-    )
-        public
-        view
-        returns (
-            InstanceReader instanceReader,
-            InstanceStore instanceStore,
-            NftId instanceNftId,
-            NftId poolNftId,
-            IComponents.PoolInfo memory poolInfo
-        )
-    {
-        checkNftType(registry, bundleNftId, BUNDLE());
-
-        IInstance instance;
-        (poolNftId, instance) = getAndVerifyActivePool(registry, sender);
-        instanceReader = instance.getInstanceReader();
-        instanceStore = instance.getInstanceStore();
-        instanceNftId = instance.getNftId();
-        poolInfo = instanceReader.getPoolInfo(poolNftId);
-
-        if (registry.getParentNftId(bundleNftId) != poolNftId) {
-            revert IPoolService.ErrorPoolServiceBundlePoolMismatch(bundleNftId, poolNftId);
-        }
-    }
-
-
-    function getAndVerifyActivePool(
-        IRegistry registry,
-        address sender
-    )
-        public
-        view
-        returns (
-            NftId poolNftId,
-            IInstance instance
-        )
-    {
-        (
-            IRegistry.ObjectInfo memory info, 
-            address instanceAddress
-        ) = ContractLib.getAndVerifyComponent(
-            registry, 
-            sender,
-            POOL(),
-            true); // only active pools
-
-        poolNftId = info.nftId;
-        instance = IInstance(instanceAddress);
-    }
-
-
-    function getAndVerifyActiveComponent(
-        IRegistry registry,
-        address sender,
-        ObjectType expectedComponentType
-    )
-        public
-        view
-        returns (
-            NftId componentNftId,
-            IInstance instance
-        )
-    {
-        (
-            IRegistry.ObjectInfo memory info, 
-            address instanceAddress
-        ) = ContractLib.getAndVerifyComponent(
-            registry, 
-            sender,
-            expectedComponentType,
-            true); // only active components
-
-        componentNftId = info.nftId;
-        instance = IInstance(instanceAddress);
-    }
-
-    function checkNftType(
-        IRegistry registry, 
-        NftId nftId, 
-        ObjectType expectedObjectType
-    ) internal view {
-        if(!registry.isObjectType(nftId, expectedObjectType)) {
-            revert INftOwnable.ErrorNftOwnableInvalidType(nftId, expectedObjectType);
-        }
-    }
-
     function transferTokenAndNotifyPolicyHolder(
-        IRegistry registry,
         InstanceReader instanceReader,
         TokenHandler poolTokenHandler,
         NftId productNftId,
@@ -265,7 +171,6 @@ library PoolLib {
             processingFeeAmount,
             beneficiary
         ) = calculatePayoutAmounts(
-            registry,
             instanceReader,
             productNftId, 
             policyNftId,
@@ -287,7 +192,6 @@ library PoolLib {
 
         // callback to policy holder if applicable
         policyHolderPayoutExecuted(
-            registry,
             policyNftId, 
             payoutId, 
             beneficiary, 
@@ -295,7 +199,6 @@ library PoolLib {
     }
 
     function policyHolderPayoutExecuted(
-        IRegistry registry,
         NftId policyNftId, 
         PayoutId payoutId,
         address beneficiary,
@@ -303,7 +206,7 @@ library PoolLib {
     )
         private
     {
-        IPolicyHolder policyHolder = getPolicyHolder(registry, policyNftId);
+        IPolicyHolder policyHolder = getPolicyHolder(policyNftId);
         if(address(policyHolder) != address(0)) {
             policyHolder.payoutExecuted(policyNftId, payoutId, payoutAmount, beneficiary);
         }

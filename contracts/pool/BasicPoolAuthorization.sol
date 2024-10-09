@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {IAccess} from "../authorization/IAccess.sol";
-import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
+import {IComponent} from "../shared/IComponent.sol";
 import {IPoolComponent} from "./IPoolComponent.sol";
 
 import {Authorization} from "../authorization/Authorization.sol";
@@ -10,8 +10,9 @@ import {BasicPool} from "./BasicPool.sol";
 import {COMPONENT, POOL} from "../type/ObjectType.sol";
 import {PUBLIC_ROLE} from "../../contracts/type/RoleId.sol";
 import {RoleId} from "../type/RoleId.sol";
+import {GIF_INITIAL_RELEASE} from "../registry/Registry.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
-
+import {VersionPartLib} from "../type/Version.sol";
 
 contract BasicPoolAuthorization
      is Authorization
@@ -21,7 +22,7 @@ contract BasicPoolAuthorization
           Authorization(
                poolName, 
                POOL(), 
-               3,
+               GIF_INITIAL_RELEASE(),
                COMMIT_HASH,
                TargetType.Component, 
                true)
@@ -70,7 +71,7 @@ contract BasicPoolAuthorization
           _authorize(functions, BasicPool.unstake.selector, "unstake");
           _authorize(functions, BasicPool.extend.selector, "extend");
 
-          _authorize(functions, IInstanceLinkedComponent.withdrawFees.selector, "withdrawFees");
+          _authorize(functions, IComponent.withdrawFees.selector, "withdrawFees");
           _authorize(functions, BasicPool.withdrawBundleFees.selector, "withdrawBundleFees");
 
           // authorize pool service

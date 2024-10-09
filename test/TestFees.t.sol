@@ -476,6 +476,7 @@ contract TestFees is GifTest {
         // THEN - expect a log entry for the fee withdrawal
         vm.expectEmit();
         emit IPoolService.LogPoolServiceFeesWithdrawn(
+            poolNftId,
             bundleNftId,
             investor,
             address(token),
@@ -518,6 +519,7 @@ contract TestFees is GifTest {
         // THEN - expect a log entry for the fee withdrawal
         vm.expectEmit();
         emit IPoolService.LogPoolServiceFeesWithdrawn(
+            poolNftId,
             bundleNftId,
             investor,
             address(token),
@@ -574,6 +576,7 @@ contract TestFees is GifTest {
         // THEN - expect a log entry for the fee withdrawal
         vm.expectEmit();
         emit IPoolService.LogPoolServiceFeesWithdrawn(
+            poolNftId,
             bundleNftId,
             investor,
             address(token),
@@ -674,7 +677,7 @@ contract TestFees is GifTest {
 
 
     function _setupWithActivePolicy(bool purchaseWithReferral) internal returns (NftId policyNftId) {
-        vm.startPrank(registryOwner);
+        vm.startPrank(tokenIssuer);
         token.transfer(customer, 1000);
         vm.stopPrank();
 

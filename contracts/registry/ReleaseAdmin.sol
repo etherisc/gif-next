@@ -10,6 +10,7 @@ import {AccessAdmin} from "../authorization/AccessAdmin.sol";
 import {AccessAdminLib} from "../authorization/AccessAdminLib.sol";
 import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
 import {ObjectType, ObjectTypeLib, RELEASE} from "../type/ObjectType.sol";
+import {GIF_INITIAL_RELEASE} from "../registry/Registry.sol";
 import {RoleId, ADMIN_ROLE, RELEASE_REGISTRY_ROLE} from "../type/RoleId.sol";
 import {Str} from "../type/String.sol";
 import {VersionPart} from "../type/Version.sol";
@@ -46,44 +47,37 @@ contract ReleaseAdmin is
     }
 
 
-    // @dev Only used for master release admin
+    /// @dev Only used for master release admin
     constructor(address accessManager) {
         initialize(
             accessManager,
-            "MasterReleaseAdmin");
+            "MasterReleaseAdmin",
+            GIF_INITIAL_RELEASE());
     }
 
 
     function completeSetup(
-        address registry,
         address authorization,
-        VersionPart release,
         address releaseRegistry
     )
         external
-        reinitializer(uint64(release.toInt()))
+        //onlyDeployer()
     {
-        // checks
-        AccessAdminLib.checkRegistry(registry);
 
-        AccessManagerCloneable(
-            authority()).completeSetup(
-                registry, 
-                release);
-
+        // effects
         IServiceAuthorization serviceAuthorization = IServiceAuthorization(authorization);
         AccessAdminLib.checkAuthorization(
             address(_authorization),
             address(serviceAuthorization), 
             RELEASE(), 
-            release, 
+            getRelease(), 
             true, // expectServiceAuthorization
             true); // checkAlreadyInitialized);
 
         _serviceAuthorization = serviceAuthorization;
 
         // link nft ownability to registry
-        _linkToNftOwnable(registry);
+        _linkToNftOwnable(address(_getRegistry()));
 
         _createRoles(_serviceAuthorization);
 
@@ -180,8 +174,7 @@ contract ReleaseAdmin is
     //--- private initialization functions -------------------------------------------//
 
     function _setupReleaseRegistry(address releaseRegistry)
-        private 
-        onlyInitializing()
+        private
     {
 
         _createRole(
