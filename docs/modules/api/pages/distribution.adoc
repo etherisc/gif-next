@@ -1,0 +1,1505 @@
+:github-icon: pass:[<svg class="icon"><use href="#github-icon"/></svg>]
+
+= Distribution
+ 
+Contains interfaces and contracts related to distribution. 
+
+== Contracts
+
+:LogDistributorUpdated: pass:normal[xref:#IDistributionComponent-LogDistributorUpdated-address-address-[`++LogDistributorUpdated++`]]
+:getDiscountPercentage: pass:normal[xref:#IDistributionComponent-getDiscountPercentage-string-[`++getDiscountPercentage++`]]
+:getReferralId: pass:normal[xref:#IDistributionComponent-getReferralId-string-[`++getReferralId++`]]
+:calculateRenewalFeeAmount: pass:normal[xref:#IDistributionComponent-calculateRenewalFeeAmount-ReferralId-uint256-[`++calculateRenewalFeeAmount++`]]
+:processRenewal: pass:normal[xref:#IDistributionComponent-processRenewal-ReferralId-uint256-[`++processRenewal++`]]
+:isVerifying: pass:normal[xref:#IDistributionComponent-isVerifying--[`++isVerifying++`]]
+:withdrawCommission: pass:normal[xref:#IDistributionComponent-withdrawCommission-NftId-Amount-[`++withdrawCommission++`]]
+
+[.contract]
+[[IDistributionComponent]]
+=== `++IDistributionComponent++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/distribution/IDistributionComponent.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/distribution/IDistributionComponent.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++getDiscountPercentage(referralCode)++`]
+* [`++getReferralId(referralCode)++`]
+* [`++calculateRenewalFeeAmount(referralId, netPremiumAmount)++`]
+* [`++processRenewal(referralId, feeAmount)++`]
+* [`++isVerifying()++`]
+* [`++withdrawCommission(distributorNftId, amount)++`]
+
+[.contract-subindex-inherited]
+.IInstanceLinkedComponent
+* [`++withdrawFees(amount)++`]
+* [`++getInstance()++`]
+
+[.contract-subindex-inherited]
+.IAuthorizedComponent
+* [`++getAuthorization()++`]
+
+[.contract-subindex-inherited]
+.IComponent
+* [`++getName()++`]
+* [`++getToken()++`]
+* [`++getTokenHandler()++`]
+* [`++getWallet()++`]
+* [`++isNftInterceptor()++`]
+* [`++isRegistered()++`]
+* [`++getComponentInfo()++`]
+* [`++getInitialComponentInfo()++`]
+
+[.contract-subindex-inherited]
+.ITransferInterceptor
+* [`++nftTransferFrom(from, to, tokenId, operator)++`]
+
+[.contract-subindex-inherited]
+.IRegisterable
+* [`++isActive()++`]
+* [`++getInitialInfo()++`]
+
+[.contract-subindex-inherited]
+.IRelease
+* [`++getRelease()++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IERC165
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++authority()++`]
+* [`++setAuthority()++`]
+* [`++isConsumingScheduledOp()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+* [`++LogDistributorUpdated(to, operator)++`]
+
+[.contract-subindex-inherited]
+.IInstanceLinkedComponent
+
+[.contract-subindex-inherited]
+.IAuthorizedComponent
+
+[.contract-subindex-inherited]
+.IComponent
+* [`++LogComponentWalletAddressChanged(oldWallet, newWallet)++`]
+* [`++LogComponentWalletTokensTransferred(from, to, amount)++`]
+* [`++LogComponentTokenHandlerApproved(tokenHandler, token, limit, isMaxAmount)++`]
+
+[.contract-subindex-inherited]
+.ITransferInterceptor
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.IRelease
+
+[.contract-subindex-inherited]
+.INftOwnable
+* [`++LogNftOwnableNftLinkedToAddress(nftId, owner)++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+--
+
+[.contract-item]
+[[IDistributionComponent-getDiscountPercentage-string-]]
+==== `[.contract-item-name]#++getDiscountPercentage++#++(string referralCode) → UFixed discountPercentage, ReferralStatus status++` [.item-kind]#external#
+
+[.contract-item]
+[[IDistributionComponent-getReferralId-string-]]
+==== `[.contract-item-name]#++getReferralId++#++(string referralCode) → ReferralId referralId++` [.item-kind]#external#
+
+[.contract-item]
+[[IDistributionComponent-calculateRenewalFeeAmount-ReferralId-uint256-]]
+==== `[.contract-item-name]#++calculateRenewalFeeAmount++#++(ReferralId referralId, uint256 netPremiumAmount) → uint256 feeAmount++` [.item-kind]#external#
+
+[.contract-item]
+[[IDistributionComponent-processRenewal-ReferralId-uint256-]]
+==== `[.contract-item-name]#++processRenewal++#++(ReferralId referralId, uint256 feeAmount)++` [.item-kind]#external#
+
+Callback function to process a renewal of a policy.
+The default implementation is empty.
+Overwrite this function to implement a use case specific behaviour.
+
+[.contract-item]
+[[IDistributionComponent-isVerifying--]]
+==== `[.contract-item-name]#++isVerifying++#++() → bool verifying++` [.item-kind]#external#
+
+Returns true to ensure component is called when transferring distributor Nft Ids.
+
+[.contract-item]
+[[IDistributionComponent-withdrawCommission-NftId-Amount-]]
+==== `[.contract-item-name]#++withdrawCommission++#++(NftId distributorNftId, Amount amount) → Amount withdrawnAmount++` [.item-kind]#external#
+
+Withdraw commission for the distributor
+
+[.contract-item]
+[[IDistributionComponent-LogDistributorUpdated-address-address-]]
+==== `[.contract-item-name]#++LogDistributorUpdated++#++(address to, address operator)++` [.item-kind]#event#
+
+:ErrorDistributionServiceCallerNotRegistered: pass:normal[xref:#IDistributionService-ErrorDistributionServiceCallerNotRegistered-address-[`++ErrorDistributionServiceCallerNotRegistered++`]]
+:ErrorDistributionServiceParentNftIdNotInstance: pass:normal[xref:#IDistributionService-ErrorDistributionServiceParentNftIdNotInstance-NftId-NftId-[`++ErrorDistributionServiceParentNftIdNotInstance++`]]
+:ErrorDistributionServiceCallerNotDistributor: pass:normal[xref:#IDistributionService-ErrorDistributionServiceCallerNotDistributor-address-[`++ErrorDistributionServiceCallerNotDistributor++`]]
+:ErrorDistributionServiceInvalidReferralId: pass:normal[xref:#IDistributionService-ErrorDistributionServiceInvalidReferralId-ReferralId-[`++ErrorDistributionServiceInvalidReferralId++`]]
+:ErrorDistributionServiceMaxReferralsExceeded: pass:normal[xref:#IDistributionService-ErrorDistributionServiceMaxReferralsExceeded-uint256-uint256-[`++ErrorDistributionServiceMaxReferralsExceeded++`]]
+:ErrorDistributionServiceDiscountTooLow: pass:normal[xref:#IDistributionService-ErrorDistributionServiceDiscountTooLow-UFixed-UFixed-[`++ErrorDistributionServiceDiscountTooLow++`]]
+:ErrorDistributionServiceDiscountTooHigh: pass:normal[xref:#IDistributionService-ErrorDistributionServiceDiscountTooHigh-UFixed-UFixed-[`++ErrorDistributionServiceDiscountTooHigh++`]]
+:ErrorDistributionServiceExpiryTooLong: pass:normal[xref:#IDistributionService-ErrorDistributionServiceExpiryTooLong-Seconds-Timestamp-[`++ErrorDistributionServiceExpiryTooLong++`]]
+:ErrorDistributionServiceInvalidReferral: pass:normal[xref:#IDistributionService-ErrorDistributionServiceInvalidReferral--[`++ErrorDistributionServiceInvalidReferral++`]]
+:ErrorDistributionServiceExpirationInvalid: pass:normal[xref:#IDistributionService-ErrorDistributionServiceExpirationInvalid-Timestamp-[`++ErrorDistributionServiceExpirationInvalid++`]]
+:ErrorDistributionServiceCommissionTooHigh: pass:normal[xref:#IDistributionService-ErrorDistributionServiceCommissionTooHigh-uint256-uint256-[`++ErrorDistributionServiceCommissionTooHigh++`]]
+:ErrorDistributionServiceMinFeeTooHigh: pass:normal[xref:#IDistributionService-ErrorDistributionServiceMinFeeTooHigh-uint256-uint256-[`++ErrorDistributionServiceMinFeeTooHigh++`]]
+:ErrorDistributionServiceDistributorTypeDistributionMismatch: pass:normal[xref:#IDistributionService-ErrorDistributionServiceDistributorTypeDistributionMismatch-DistributorType-NftId-NftId-[`++ErrorDistributionServiceDistributorTypeDistributionMismatch++`]]
+:ErrorDistributionServiceDistributorDistributionMismatch: pass:normal[xref:#IDistributionService-ErrorDistributionServiceDistributorDistributionMismatch-NftId-NftId-NftId-[`++ErrorDistributionServiceDistributorDistributionMismatch++`]]
+:ErrorDistributionServiceCommissionWithdrawAmountExceedsLimit: pass:normal[xref:#IDistributionService-ErrorDistributionServiceCommissionWithdrawAmountExceedsLimit-Amount-Amount-[`++ErrorDistributionServiceCommissionWithdrawAmountExceedsLimit++`]]
+:ErrorDistributionServiceVariableFeesTooHight: pass:normal[xref:#IDistributionService-ErrorDistributionServiceVariableFeesTooHight-uint256-uint256-[`++ErrorDistributionServiceVariableFeesTooHight++`]]
+:ErrorDistributionServiceMaxDiscountTooHigh: pass:normal[xref:#IDistributionService-ErrorDistributionServiceMaxDiscountTooHigh-uint256-uint256-[`++ErrorDistributionServiceMaxDiscountTooHigh++`]]
+:ErrorDistributionServiceReferralInvalid: pass:normal[xref:#IDistributionService-ErrorDistributionServiceReferralInvalid-NftId-ReferralId-[`++ErrorDistributionServiceReferralInvalid++`]]
+:ErrorDistributionServiceInvalidFeeTransferred: pass:normal[xref:#IDistributionService-ErrorDistributionServiceInvalidFeeTransferred-Amount-Amount-[`++ErrorDistributionServiceInvalidFeeTransferred++`]]
+:ErrorDistributionServiceReferralDistributionMismatch: pass:normal[xref:#IDistributionService-ErrorDistributionServiceReferralDistributionMismatch-ReferralId-NftId-NftId-[`++ErrorDistributionServiceReferralDistributionMismatch++`]]
+:LogDistributionServiceCommissionWithdrawn: pass:normal[xref:#IDistributionService-LogDistributionServiceCommissionWithdrawn-NftId-address-address-Amount-[`++LogDistributionServiceCommissionWithdrawn++`]]
+:LogDistributionServiceDistributorTypeCreated: pass:normal[xref:#IDistributionService-LogDistributionServiceDistributorTypeCreated-NftId-string-[`++LogDistributionServiceDistributorTypeCreated++`]]
+:LogDistributionServiceDistributorCreated: pass:normal[xref:#IDistributionService-LogDistributionServiceDistributorCreated-NftId-NftId-DistributorType-address-[`++LogDistributionServiceDistributorCreated++`]]
+:LogDistributionServiceDistributorTypeChanged: pass:normal[xref:#IDistributionService-LogDistributionServiceDistributorTypeChanged-NftId-DistributorType-DistributorType-[`++LogDistributionServiceDistributorTypeChanged++`]]
+:LogDistributionServiceReferralCreated: pass:normal[xref:#IDistributionService-LogDistributionServiceReferralCreated-NftId-NftId-ReferralId-string-[`++LogDistributionServiceReferralCreated++`]]
+:LogDistributionServiceReferralProcessed: pass:normal[xref:#IDistributionService-LogDistributionServiceReferralProcessed-NftId-NftId-ReferralId-uint32-[`++LogDistributionServiceReferralProcessed++`]]
+:LogDistributionServiceSaleProcessed: pass:normal[xref:#IDistributionService-LogDistributionServiceSaleProcessed-NftId-ReferralId-[`++LogDistributionServiceSaleProcessed++`]]
+:createDistributorType: pass:normal[xref:#IDistributionService-createDistributorType-string-UFixed-UFixed-UFixed-uint32-Seconds-bool-bool-bytes-[`++createDistributorType++`]]
+:createDistributor: pass:normal[xref:#IDistributionService-createDistributor-address-DistributorType-bytes-[`++createDistributor++`]]
+:changeDistributorType: pass:normal[xref:#IDistributionService-changeDistributorType-NftId-DistributorType-bytes-[`++changeDistributorType++`]]
+:createReferral: pass:normal[xref:#IDistributionService-createReferral-NftId-string-UFixed-uint32-Timestamp-bytes-[`++createReferral++`]]
+:processReferral: pass:normal[xref:#IDistributionService-processReferral-NftId-ReferralId-[`++processReferral++`]]
+:processSale: pass:normal[xref:#IDistributionService-processSale-NftId-ReferralId-struct-IPolicy-PremiumInfo-[`++processSale++`]]
+:referralIsValid: pass:normal[xref:#IDistributionService-referralIsValid-NftId-ReferralId-[`++referralIsValid++`]]
+:withdrawCommission: pass:normal[xref:#IDistributionService-withdrawCommission-NftId-Amount-[`++withdrawCommission++`]]
+:getDiscountPercentage: pass:normal[xref:#IDistributionService-getDiscountPercentage-contract-InstanceReader-ReferralId-[`++getDiscountPercentage++`]]
+
+[.contract]
+[[IDistributionService]]
+=== `++IDistributionService++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/distribution/IDistributionService.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/distribution/IDistributionService.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++createDistributorType(name, minDiscountPercentage, maxDiscountPercentage, commissionPercentage, maxReferralCount, maxReferralLifetime, allowSelfReferrals, allowRenewals, data)++`]
+* [`++createDistributor(distributor, distributorType, data)++`]
+* [`++changeDistributorType(distributorNftId, newDistributorType, data)++`]
+* [`++createReferral(distributorNftId, code, discountPercentage, maxReferrals, expiryAt, data)++`]
+* [`++processReferral(distributionNftId, referralId)++`]
+* [`++processSale(distributionNftId, referralId, premium)++`]
+* [`++referralIsValid(distributorNftId, referralId)++`]
+* [`++withdrawCommission(distributorNftId, amount)++`]
+* [`++getDiscountPercentage(instanceReader, referralId)++`]
+
+[.contract-subindex-inherited]
+.IService
+* [`++getDomain()++`]
+* [`++getRoleId()++`]
+
+[.contract-subindex-inherited]
+.IVersionable
+* [`++initializeVersionable(activatedBy, activationData)++`]
+* [`++upgradeVersionable(upgradeData)++`]
+* [`++getVersion()++`]
+
+[.contract-subindex-inherited]
+.IRegisterable
+* [`++isActive()++`]
+* [`++getInitialInfo()++`]
+
+[.contract-subindex-inherited]
+.IRelease
+* [`++getRelease()++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IERC165
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++authority()++`]
+* [`++setAuthority()++`]
+* [`++isConsumingScheduledOp()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+* [`++LogDistributionServiceCommissionWithdrawn(distributorNftId, recipient, tokenAddress, amount)++`]
+* [`++LogDistributionServiceDistributorTypeCreated(distributionNftId, name)++`]
+* [`++LogDistributionServiceDistributorCreated(distributionNftId, distributorNftId, distributorType, distributor)++`]
+* [`++LogDistributionServiceDistributorTypeChanged(distributorNftId, oldDistributorType, newDistributorType)++`]
+* [`++LogDistributionServiceReferralCreated(distributionNftId, distributorNftId, referralId, code)++`]
+* [`++LogDistributionServiceReferralProcessed(distributionNftId, distributorNftId, referralId, usedReferrals)++`]
+* [`++LogDistributionServiceSaleProcessed(distributionNftId, referralId)++`]
+
+[.contract-subindex-inherited]
+.IService
+
+[.contract-subindex-inherited]
+.IVersionable
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.IRelease
+
+[.contract-subindex-inherited]
+.INftOwnable
+* [`++LogNftOwnableNftLinkedToAddress(nftId, owner)++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+--
+
+[.contract-item]
+[[IDistributionService-createDistributorType-string-UFixed-UFixed-UFixed-uint32-Seconds-bool-bool-bytes-]]
+==== `[.contract-item-name]#++createDistributorType++#++(string name, UFixed minDiscountPercentage, UFixed maxDiscountPercentage, UFixed commissionPercentage, uint32 maxReferralCount, Seconds maxReferralLifetime, bool allowSelfReferrals, bool allowRenewals, bytes data) → DistributorType distributorType++` [.item-kind]#external#
+
+[.contract-item]
+[[IDistributionService-createDistributor-address-DistributorType-bytes-]]
+==== `[.contract-item-name]#++createDistributor++#++(address distributor, DistributorType distributorType, bytes data) → NftId distributorNftId++` [.item-kind]#external#
+
+[.contract-item]
+[[IDistributionService-changeDistributorType-NftId-DistributorType-bytes-]]
+==== `[.contract-item-name]#++changeDistributorType++#++(NftId distributorNftId, DistributorType newDistributorType, bytes data)++` [.item-kind]#external#
+
+[.contract-item]
+[[IDistributionService-createReferral-NftId-string-UFixed-uint32-Timestamp-bytes-]]
+==== `[.contract-item-name]#++createReferral++#++(NftId distributorNftId, string code, UFixed discountPercentage, uint32 maxReferrals, Timestamp expiryAt, bytes data) → ReferralId referralId++` [.item-kind]#external#
+
+[.contract-item]
+[[IDistributionService-processReferral-NftId-ReferralId-]]
+==== `[.contract-item-name]#++processReferral++#++(NftId distributionNftId, ReferralId referralId)++` [.item-kind]#external#
+
+callback from product service when a referral is used. 
+Calling this will increment the referral usage counter.
+
+[.contract-item]
+[[IDistributionService-processSale-NftId-ReferralId-struct-IPolicy-PremiumInfo-]]
+==== `[.contract-item-name]#++processSale++#++(NftId distributionNftId, ReferralId referralId, struct IPolicy.PremiumInfo premium)++` [.item-kind]#external#
+
+callback from product service when selling a policy for a specific referralId
+
+[.contract-item]
+[[IDistributionService-referralIsValid-NftId-ReferralId-]]
+==== `[.contract-item-name]#++referralIsValid++#++(NftId distributorNftId, ReferralId referralId) → bool isValid++` [.item-kind]#external#
+
+[.contract-item]
+[[IDistributionService-withdrawCommission-NftId-Amount-]]
+==== `[.contract-item-name]#++withdrawCommission++#++(NftId distributorNftId, Amount amount) → Amount withdrawnAmount++` [.item-kind]#external#
+
+Withdraw commission for the distributor
+
+[.contract-item]
+[[IDistributionService-getDiscountPercentage-contract-InstanceReader-ReferralId-]]
+==== `[.contract-item-name]#++getDiscountPercentage++#++(contract InstanceReader instanceReader, ReferralId referralId) → UFixed discountPercentage, ReferralStatus status++` [.item-kind]#external#
+
+Returns the discount percentage for the provided referral code.
+The function retuns both the percentage and the status of the referral code.
+
+[.contract-item]
+[[IDistributionService-LogDistributionServiceCommissionWithdrawn-NftId-address-address-Amount-]]
+==== `[.contract-item-name]#++LogDistributionServiceCommissionWithdrawn++#++(NftId distributorNftId, address recipient, address tokenAddress, Amount amount)++` [.item-kind]#event#
+
+[.contract-item]
+[[IDistributionService-LogDistributionServiceDistributorTypeCreated-NftId-string-]]
+==== `[.contract-item-name]#++LogDistributionServiceDistributorTypeCreated++#++(NftId distributionNftId, string name)++` [.item-kind]#event#
+
+[.contract-item]
+[[IDistributionService-LogDistributionServiceDistributorCreated-NftId-NftId-DistributorType-address-]]
+==== `[.contract-item-name]#++LogDistributionServiceDistributorCreated++#++(NftId distributionNftId, NftId distributorNftId, DistributorType distributorType, address distributor)++` [.item-kind]#event#
+
+[.contract-item]
+[[IDistributionService-LogDistributionServiceDistributorTypeChanged-NftId-DistributorType-DistributorType-]]
+==== `[.contract-item-name]#++LogDistributionServiceDistributorTypeChanged++#++(NftId distributorNftId, DistributorType oldDistributorType, DistributorType newDistributorType)++` [.item-kind]#event#
+
+[.contract-item]
+[[IDistributionService-LogDistributionServiceReferralCreated-NftId-NftId-ReferralId-string-]]
+==== `[.contract-item-name]#++LogDistributionServiceReferralCreated++#++(NftId distributionNftId, NftId distributorNftId, ReferralId referralId, string code)++` [.item-kind]#event#
+
+[.contract-item]
+[[IDistributionService-LogDistributionServiceReferralProcessed-NftId-NftId-ReferralId-uint32-]]
+==== `[.contract-item-name]#++LogDistributionServiceReferralProcessed++#++(NftId distributionNftId, NftId distributorNftId, ReferralId referralId, uint32 usedReferrals)++` [.item-kind]#event#
+
+[.contract-item]
+[[IDistributionService-LogDistributionServiceSaleProcessed-NftId-ReferralId-]]
+==== `[.contract-item-name]#++LogDistributionServiceSaleProcessed++#++(NftId distributionNftId, ReferralId referralId)++` [.item-kind]#event#
+
+:DISTRIBUTION_STORAGE_LOCATION_V1: pass:normal[xref:#Distribution-DISTRIBUTION_STORAGE_LOCATION_V1-bytes32[`++DISTRIBUTION_STORAGE_LOCATION_V1++`]]
+:DistributionStorage: pass:normal[xref:#Distribution-DistributionStorage[`++DistributionStorage++`]]
+:processRenewal: pass:normal[xref:#Distribution-processRenewal-ReferralId-uint256-[`++processRenewal++`]]
+:withdrawCommission: pass:normal[xref:#Distribution-withdrawCommission-NftId-Amount-[`++withdrawCommission++`]]
+:getDiscountPercentage: pass:normal[xref:#Distribution-getDiscountPercentage-string-[`++getDiscountPercentage++`]]
+:getReferralId: pass:normal[xref:#Distribution-getReferralId-string-[`++getReferralId++`]]
+:calculateRenewalFeeAmount: pass:normal[xref:#Distribution-calculateRenewalFeeAmount-ReferralId-uint256-[`++calculateRenewalFeeAmount++`]]
+:isVerifying: pass:normal[xref:#Distribution-isVerifying--[`++isVerifying++`]]
+:__Distribution_init: pass:normal[xref:#Distribution-__Distribution_init-address-NftId-contract-IAuthorization-bool-address-string-[`++__Distribution_init++`]]
+:_setFees: pass:normal[xref:#Distribution-_setFees-struct-Fee-struct-Fee-[`++_setFees++`]]
+:_createDistributorType: pass:normal[xref:#Distribution-_createDistributorType-string-UFixed-UFixed-UFixed-uint32-Seconds-bool-bool-bytes-[`++_createDistributorType++`]]
+:_createDistributor: pass:normal[xref:#Distribution-_createDistributor-address-DistributorType-bytes-[`++_createDistributor++`]]
+:_changeDistributorType: pass:normal[xref:#Distribution-_changeDistributorType-NftId-DistributorType-bytes-[`++_changeDistributorType++`]]
+:_createReferral: pass:normal[xref:#Distribution-_createReferral-NftId-string-UFixed-uint32-Timestamp-bytes-[`++_createReferral++`]]
+:_withdrawCommission: pass:normal[xref:#Distribution-_withdrawCommission-NftId-Amount-[`++_withdrawCommission++`]]
+
+[.contract]
+[[Distribution]]
+=== `++Distribution++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/distribution/Distribution.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/distribution/Distribution.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++processRenewal(referralId, feeAmount)++`]
+* [`++withdrawCommission(distributorNftId, amount)++`]
+* [`++getDiscountPercentage(referralCode)++`]
+* [`++getReferralId(referralCode)++`]
+* [`++calculateRenewalFeeAmount(, netPremiumAmount)++`]
+* [`++isVerifying()++`]
+* [`++__Distribution_init(registry, productNftId, authorization, isInterceptor, initialOwner, name)++`]
+* [`++_setFees(distributionFee, minDistributionOwnerFee)++`]
+* [`++_createDistributorType(name, minDiscountPercentage, maxDiscountPercentage, commissionPercentage, maxReferralCount, maxReferralLifetime, allowSelfReferrals, allowRenewals, data)++`]
+* [`++_createDistributor(distributor, distributorType, data)++`]
+* [`++_changeDistributorType(distributorNftId, distributorType, data)++`]
+* [`++_createReferral(distributorNftId, code, discountPercentage, maxReferrals, expiryAt, data)++`]
+* [`++_withdrawCommission(distributorNftId, amount)++`]
+
+[.contract-subindex-inherited]
+.IDistributionComponent
+
+[.contract-subindex-inherited]
+.InstanceLinkedComponent
+* [`++getInstance()++`]
+* [`++getAuthorization()++`]
+* [`++withdrawFees(amount)++`]
+* [`++_sendRequest(oracleNftId, requestData, expiryAt, callbackMethod)++`]
+* [`++_cancelRequest(requestId)++`]
+* [`++_resendRequest(requestId)++`]
+* [`++__InstanceLinkedComponent_init(registry, parentNftId, name, componentType, authorization, isInterceptor, initialOwner)++`]
+* [`++_checkAndGetInstanceNftId(registryAddress, parentNftId, componentType)++`]
+* [`++_checkAndGetRegistry(registryAddress, objectNftId, requiredType)++`]
+* [`++_setWallet(newWallet)++`]
+* [`++_getComponentInfo()++`]
+* [`++_getInstanceReader()++`]
+* [`++_withdrawFees(amount)++`]
+
+[.contract-subindex-inherited]
+.IInstanceLinkedComponent
+
+[.contract-subindex-inherited]
+.IAuthorizedComponent
+
+[.contract-subindex-inherited]
+.Component
+* [`++__Component_init(authority, registry, parentNftId, name, componentType, isInterceptor, initialOwner, registryData)++`]
+* [`++nftTransferFrom(from, to, tokenId, operator)++`]
+* [`++getWallet()++`]
+* [`++getTokenHandler()++`]
+* [`++getToken()++`]
+* [`++getName()++`]
+* [`++getVersion()++`]
+* [`++getComponentInfo()++`]
+* [`++getInitialComponentInfo()++`]
+* [`++isNftInterceptor()++`]
+* [`++isRegistered()++`]
+* [`++_approveTokenHandler(token, amount)++`]
+* [`++_nftTransferFrom(from, to, tokenId, operator)++`]
+* [`++_setLocked(locked)++`]
+* [`++_getServiceAddress(domain)++`]
+
+[.contract-subindex-inherited]
+.IComponent
+
+[.contract-subindex-inherited]
+.ITransferInterceptor
+
+[.contract-subindex-inherited]
+.Registerable
+* [`++__Registerable_init(authority, registry, parentNftId, objectType, isInterceptor, initialOwner, data)++`]
+* [`++isActive()++`]
+* [`++getRelease()++`]
+* [`++getInitialInfo()++`]
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.IRelease
+
+[.contract-subindex-inherited]
+.NftOwnable
+* [`++_checkNftType(nftId, expectedObjectType)++`]
+* [`++__NftOwnable_init(registry, initialOwner)++`]
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+* [`++_linkToNftOwnable(nftOwnableAddress)++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+* [`++__RegistryLinked_init(registry)++`]
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+* [`++__ERC165_init()++`]
+* [`++_initializeERC165()++`]
+* [`++_registerInterface(interfaceId)++`]
+* [`++_registerInterfaceNotInitializing(interfaceId)++`]
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+* [`++__AccessManaged_init(initialAuthority)++`]
+* [`++__AccessManaged_init_unchained(initialAuthority)++`]
+* [`++authority()++`]
+* [`++setAuthority(newAuthority)++`]
+* [`++isConsumingScheduledOp()++`]
+* [`++_setAuthority(newAuthority)++`]
+* [`++_checkCanCall(caller, data)++`]
+
+[.contract-subindex-inherited]
+.IAccessManaged
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+* [`++__Context_init()++`]
+* [`++__Context_init_unchained()++`]
+* [`++_msgSender()++`]
+* [`++_msgData()++`]
+* [`++_contextSuffixLength()++`]
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.IDistributionComponent
+* [`++LogDistributorUpdated(to, operator)++`]
+
+[.contract-subindex-inherited]
+.InstanceLinkedComponent
+
+[.contract-subindex-inherited]
+.IInstanceLinkedComponent
+
+[.contract-subindex-inherited]
+.IAuthorizedComponent
+
+[.contract-subindex-inherited]
+.Component
+
+[.contract-subindex-inherited]
+.IComponent
+* [`++LogComponentWalletAddressChanged(oldWallet, newWallet)++`]
+* [`++LogComponentWalletTokensTransferred(from, to, amount)++`]
+* [`++LogComponentTokenHandlerApproved(tokenHandler, token, limit, isMaxAmount)++`]
+
+[.contract-subindex-inherited]
+.ITransferInterceptor
+
+[.contract-subindex-inherited]
+.Registerable
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.IRelease
+
+[.contract-subindex-inherited]
+.NftOwnable
+
+[.contract-subindex-inherited]
+.INftOwnable
+* [`++LogNftOwnableNftLinkedToAddress(nftId, owner)++`]
+
+[.contract-subindex-inherited]
+.RegistryLinked
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[Distribution-processRenewal-ReferralId-uint256-]]
+==== `[.contract-item-name]#++processRenewal++#++(ReferralId referralId, uint256 feeAmount)++` [.item-kind]#external#
+
+Callback function to process a renewal of a policy.
+The default implementation is empty.
+Overwrite this function to implement a use case specific behaviour.
+
+[.contract-item]
+[[Distribution-withdrawCommission-NftId-Amount-]]
+==== `[.contract-item-name]#++withdrawCommission++#++(NftId distributorNftId, Amount amount) → Amount withdrawnAmount++` [.item-kind]#external#
+
+Withdraw commission for the distributor
+
+[.contract-item]
+[[Distribution-getDiscountPercentage-string-]]
+==== `[.contract-item-name]#++getDiscountPercentage++#++(string referralCode) → UFixed discountPercentage, ReferralStatus status++` [.item-kind]#external#
+
+[.contract-item]
+[[Distribution-getReferralId-string-]]
+==== `[.contract-item-name]#++getReferralId++#++(string referralCode) → ReferralId referralId++` [.item-kind]#public#
+
+[.contract-item]
+[[Distribution-calculateRenewalFeeAmount-ReferralId-uint256-]]
+==== `[.contract-item-name]#++calculateRenewalFeeAmount++#++(ReferralId, uint256 netPremiumAmount) → uint256 feeAmount++` [.item-kind]#external#
+
+[.contract-item]
+[[Distribution-isVerifying--]]
+==== `[.contract-item-name]#++isVerifying++#++() → bool verifying++` [.item-kind]#external#
+
+Returns true iff the component needs to be called when selling/renewing policis
+
+[.contract-item]
+[[Distribution-__Distribution_init-address-NftId-contract-IAuthorization-bool-address-string-]]
+==== `[.contract-item-name]#++__Distribution_init++#++(address registry, NftId productNftId, contract IAuthorization authorization, bool isInterceptor, address initialOwner, string name)++` [.item-kind]#internal#
+
+[.contract-item]
+[[Distribution-_setFees-struct-Fee-struct-Fee-]]
+==== `[.contract-item-name]#++_setFees++#++(struct Fee distributionFee, struct Fee minDistributionOwnerFee)++` [.item-kind]#internal#
+
+Sets the distribution fees to the provided values.
+
+[.contract-item]
+[[Distribution-_createDistributorType-string-UFixed-UFixed-UFixed-uint32-Seconds-bool-bool-bytes-]]
+==== `[.contract-item-name]#++_createDistributorType++#++(string name, UFixed minDiscountPercentage, UFixed maxDiscountPercentage, UFixed commissionPercentage, uint32 maxReferralCount, Seconds maxReferralLifetime, bool allowSelfReferrals, bool allowRenewals, bytes data) → DistributorType distributorType++` [.item-kind]#internal#
+
+Creates a new distributor type using the provided parameters.
+
+[.contract-item]
+[[Distribution-_createDistributor-address-DistributorType-bytes-]]
+==== `[.contract-item-name]#++_createDistributor++#++(address distributor, DistributorType distributorType, bytes data) → NftId distributorNftId++` [.item-kind]#internal#
+
+Turns the provided account into a new distributor of the specified type.
+
+[.contract-item]
+[[Distribution-_changeDistributorType-NftId-DistributorType-bytes-]]
+==== `[.contract-item-name]#++_changeDistributorType++#++(NftId distributorNftId, DistributorType distributorType, bytes data)++` [.item-kind]#internal#
+
+Uptates the distributor type for the specified distributor.
+
+[.contract-item]
+[[Distribution-_createReferral-NftId-string-UFixed-uint32-Timestamp-bytes-]]
+==== `[.contract-item-name]#++_createReferral++#++(NftId distributorNftId, string code, UFixed discountPercentage, uint32 maxReferrals, Timestamp expiryAt, bytes data) → ReferralId referralId++` [.item-kind]#internal#
+
+Create a new referral code for the provided distributor.
+
+[.contract-item]
+[[Distribution-_withdrawCommission-NftId-Amount-]]
+==== `[.contract-item-name]#++_withdrawCommission++#++(NftId distributorNftId, Amount amount) → Amount withdrawnAmount++` [.item-kind]#internal#
+
+:setFees: pass:normal[xref:#BasicDistribution-setFees-struct-Fee-struct-Fee-[`++setFees++`]]
+:createDistributorType: pass:normal[xref:#BasicDistribution-createDistributorType-string-UFixed-UFixed-UFixed-uint32-Seconds-bool-bool-bytes-[`++createDistributorType++`]]
+:createDistributor: pass:normal[xref:#BasicDistribution-createDistributor-address-DistributorType-bytes-[`++createDistributor++`]]
+:changeDistributorType: pass:normal[xref:#BasicDistribution-changeDistributorType-NftId-DistributorType-bytes-[`++changeDistributorType++`]]
+:createReferral: pass:normal[xref:#BasicDistribution-createReferral-NftId-string-UFixed-uint32-Timestamp-bytes-[`++createReferral++`]]
+:_initializeBasicDistribution: pass:normal[xref:#BasicDistribution-_initializeBasicDistribution-address-NftId-contract-IAuthorization-address-string-[`++_initializeBasicDistribution++`]]
+
+[.contract]
+[[BasicDistribution]]
+=== `++BasicDistribution++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/distribution/BasicDistribution.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/distribution/BasicDistribution.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++setFees(distributionFee, minDistributionOwnerFee)++`]
+* [`++createDistributorType(name, minDiscountPercentage, maxDiscountPercentage, commissionPercentage, maxReferralCount, maxReferralLifetime, allowSelfReferrals, allowRenewals, data)++`]
+* [`++createDistributor(distributor, distributorType, data)++`]
+* [`++changeDistributorType(distributorNftId, distributorType, data)++`]
+* [`++createReferral(distributorNftId, code, discountPercentage, maxReferrals, expiryAt, data)++`]
+* [`++_initializeBasicDistribution(registry, instanceNftId, authorization, initialOwner, name)++`]
+
+[.contract-subindex-inherited]
+.Distribution
+* [`++processRenewal(referralId, feeAmount)++`]
+* [`++withdrawCommission(distributorNftId, amount)++`]
+* [`++getDiscountPercentage(referralCode)++`]
+* [`++getReferralId(referralCode)++`]
+* [`++calculateRenewalFeeAmount(, netPremiumAmount)++`]
+* [`++isVerifying()++`]
+* [`++__Distribution_init(registry, productNftId, authorization, isInterceptor, initialOwner, name)++`]
+* [`++_setFees(distributionFee, minDistributionOwnerFee)++`]
+* [`++_createDistributorType(name, minDiscountPercentage, maxDiscountPercentage, commissionPercentage, maxReferralCount, maxReferralLifetime, allowSelfReferrals, allowRenewals, data)++`]
+* [`++_createDistributor(distributor, distributorType, data)++`]
+* [`++_changeDistributorType(distributorNftId, distributorType, data)++`]
+* [`++_createReferral(distributorNftId, code, discountPercentage, maxReferrals, expiryAt, data)++`]
+* [`++_withdrawCommission(distributorNftId, amount)++`]
+
+[.contract-subindex-inherited]
+.IDistributionComponent
+
+[.contract-subindex-inherited]
+.InstanceLinkedComponent
+* [`++getInstance()++`]
+* [`++getAuthorization()++`]
+* [`++withdrawFees(amount)++`]
+* [`++_sendRequest(oracleNftId, requestData, expiryAt, callbackMethod)++`]
+* [`++_cancelRequest(requestId)++`]
+* [`++_resendRequest(requestId)++`]
+* [`++__InstanceLinkedComponent_init(registry, parentNftId, name, componentType, authorization, isInterceptor, initialOwner)++`]
+* [`++_checkAndGetInstanceNftId(registryAddress, parentNftId, componentType)++`]
+* [`++_checkAndGetRegistry(registryAddress, objectNftId, requiredType)++`]
+* [`++_setWallet(newWallet)++`]
+* [`++_getComponentInfo()++`]
+* [`++_getInstanceReader()++`]
+* [`++_withdrawFees(amount)++`]
+
+[.contract-subindex-inherited]
+.IInstanceLinkedComponent
+
+[.contract-subindex-inherited]
+.IAuthorizedComponent
+
+[.contract-subindex-inherited]
+.Component
+* [`++__Component_init(authority, registry, parentNftId, name, componentType, isInterceptor, initialOwner, registryData)++`]
+* [`++nftTransferFrom(from, to, tokenId, operator)++`]
+* [`++getWallet()++`]
+* [`++getTokenHandler()++`]
+* [`++getToken()++`]
+* [`++getName()++`]
+* [`++getVersion()++`]
+* [`++getComponentInfo()++`]
+* [`++getInitialComponentInfo()++`]
+* [`++isNftInterceptor()++`]
+* [`++isRegistered()++`]
+* [`++_approveTokenHandler(token, amount)++`]
+* [`++_nftTransferFrom(from, to, tokenId, operator)++`]
+* [`++_setLocked(locked)++`]
+* [`++_getServiceAddress(domain)++`]
+
+[.contract-subindex-inherited]
+.IComponent
+
+[.contract-subindex-inherited]
+.ITransferInterceptor
+
+[.contract-subindex-inherited]
+.Registerable
+* [`++__Registerable_init(authority, registry, parentNftId, objectType, isInterceptor, initialOwner, data)++`]
+* [`++isActive()++`]
+* [`++getRelease()++`]
+* [`++getInitialInfo()++`]
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.IRelease
+
+[.contract-subindex-inherited]
+.NftOwnable
+* [`++_checkNftType(nftId, expectedObjectType)++`]
+* [`++__NftOwnable_init(registry, initialOwner)++`]
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+* [`++_linkToNftOwnable(nftOwnableAddress)++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+* [`++__RegistryLinked_init(registry)++`]
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+* [`++__ERC165_init()++`]
+* [`++_initializeERC165()++`]
+* [`++_registerInterface(interfaceId)++`]
+* [`++_registerInterfaceNotInitializing(interfaceId)++`]
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+* [`++__AccessManaged_init(initialAuthority)++`]
+* [`++__AccessManaged_init_unchained(initialAuthority)++`]
+* [`++authority()++`]
+* [`++setAuthority(newAuthority)++`]
+* [`++isConsumingScheduledOp()++`]
+* [`++_setAuthority(newAuthority)++`]
+* [`++_checkCanCall(caller, data)++`]
+
+[.contract-subindex-inherited]
+.IAccessManaged
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+* [`++__Context_init()++`]
+* [`++__Context_init_unchained()++`]
+* [`++_msgSender()++`]
+* [`++_msgData()++`]
+* [`++_contextSuffixLength()++`]
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.Distribution
+
+[.contract-subindex-inherited]
+.IDistributionComponent
+* [`++LogDistributorUpdated(to, operator)++`]
+
+[.contract-subindex-inherited]
+.InstanceLinkedComponent
+
+[.contract-subindex-inherited]
+.IInstanceLinkedComponent
+
+[.contract-subindex-inherited]
+.IAuthorizedComponent
+
+[.contract-subindex-inherited]
+.Component
+
+[.contract-subindex-inherited]
+.IComponent
+* [`++LogComponentWalletAddressChanged(oldWallet, newWallet)++`]
+* [`++LogComponentWalletTokensTransferred(from, to, amount)++`]
+* [`++LogComponentTokenHandlerApproved(tokenHandler, token, limit, isMaxAmount)++`]
+
+[.contract-subindex-inherited]
+.ITransferInterceptor
+
+[.contract-subindex-inherited]
+.Registerable
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.IRelease
+
+[.contract-subindex-inherited]
+.NftOwnable
+
+[.contract-subindex-inherited]
+.INftOwnable
+* [`++LogNftOwnableNftLinkedToAddress(nftId, owner)++`]
+
+[.contract-subindex-inherited]
+.RegistryLinked
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[BasicDistribution-setFees-struct-Fee-struct-Fee-]]
+==== `[.contract-item-name]#++setFees++#++(struct Fee distributionFee, struct Fee minDistributionOwnerFee)++` [.item-kind]#external#
+
+[.contract-item]
+[[BasicDistribution-createDistributorType-string-UFixed-UFixed-UFixed-uint32-Seconds-bool-bool-bytes-]]
+==== `[.contract-item-name]#++createDistributorType++#++(string name, UFixed minDiscountPercentage, UFixed maxDiscountPercentage, UFixed commissionPercentage, uint32 maxReferralCount, Seconds maxReferralLifetime, bool allowSelfReferrals, bool allowRenewals, bytes data) → DistributorType distributorType++` [.item-kind]#external#
+
+[.contract-item]
+[[BasicDistribution-createDistributor-address-DistributorType-bytes-]]
+==== `[.contract-item-name]#++createDistributor++#++(address distributor, DistributorType distributorType, bytes data) → NftId distributorNftId++` [.item-kind]#external#
+
+[.contract-item]
+[[BasicDistribution-changeDistributorType-NftId-DistributorType-bytes-]]
+==== `[.contract-item-name]#++changeDistributorType++#++(NftId distributorNftId, DistributorType distributorType, bytes data)++` [.item-kind]#external#
+
+[.contract-item]
+[[BasicDistribution-createReferral-NftId-string-UFixed-uint32-Timestamp-bytes-]]
+==== `[.contract-item-name]#++createReferral++#++(NftId distributorNftId, string code, UFixed discountPercentage, uint32 maxReferrals, Timestamp expiryAt, bytes data) → ReferralId referralId++` [.item-kind]#external#
+
+lets distributors create referral codes.
+referral codes need to be unique
+
+[.contract-item]
+[[BasicDistribution-_initializeBasicDistribution-address-NftId-contract-IAuthorization-address-string-]]
+==== `[.contract-item-name]#++_initializeBasicDistribution++#++(address registry, NftId instanceNftId, contract IAuthorization authorization, address initialOwner, string name)++` [.item-kind]#internal#
+
+:constructor: pass:normal[xref:#BasicDistributionAuthorization-constructor-string-[`++constructor++`]]
+:_setupServiceTargets: pass:normal[xref:#BasicDistributionAuthorization-_setupServiceTargets--[`++_setupServiceTargets++`]]
+:_setupTokenHandlerAuthorizations: pass:normal[xref:#BasicDistributionAuthorization-_setupTokenHandlerAuthorizations--[`++_setupTokenHandlerAuthorizations++`]]
+:_setupTargetAuthorizations: pass:normal[xref:#BasicDistributionAuthorization-_setupTargetAuthorizations--[`++_setupTargetAuthorizations++`]]
+
+[.contract]
+[[BasicDistributionAuthorization]]
+=== `++BasicDistributionAuthorization++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/distribution/BasicDistributionAuthorization.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/distribution/BasicDistributionAuthorization.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++constructor(distributionName)++`]
+* [`++_setupServiceTargets()++`]
+* [`++_setupTokenHandlerAuthorizations()++`]
+* [`++_setupTargetAuthorizations()++`]
+
+[.contract-subindex-inherited]
+.Authorization
+* [`++getTokenHandlerName()++`]
+* [`++getTokenHandlerTarget()++`]
+* [`++getTarget(targetName)++`]
+* [`++getTargets()++`]
+* [`++targetExists(target)++`]
+* [`++_setupTargets()++`]
+* [`++_setupRoles()++`]
+* [`++_addCustomRole(roleId, adminRoleId, maxMemberCount, name)++`]
+* [`++_addGifTarget(contractName)++`]
+* [`++_addInstanceTarget(contractName)++`]
+* [`++_addTarget(name)++`]
+* [`++_toTargetRoleId(targetDomain)++`]
+* [`++_toTargetRoleName(targetName)++`]
+
+[.contract-subindex-inherited]
+.IAuthorization
+
+[.contract-subindex-inherited]
+.ServiceAuthorization
+* [`++getDomain()++`]
+* [`++getRelease()++`]
+* [`++getCommitHash()++`]
+* [`++getMainTargetName()++`]
+* [`++getMainTarget()++`]
+* [`++getServiceDomains()++`]
+* [`++getServiceDomain(idx)++`]
+* [`++getServiceTarget(serviceDomain)++`]
+* [`++getServiceRole(serviceDomain)++`]
+* [`++getServiceAddress(serviceDomain)++`]
+* [`++getTargetRole(target)++`]
+* [`++roleExists(roleId)++`]
+* [`++getRoles()++`]
+* [`++getRoleInfo(roleId)++`]
+* [`++getRoleName(roleId)++`]
+* [`++getAuthorizedRoles(target)++`]
+* [`++getAuthorizedFunctions(target, roleId)++`]
+* [`++_setupDomains()++`]
+* [`++_setupDomainAuthorizations()++`]
+* [`++_authorizeServiceDomain(serviceDomain, serviceAddress)++`]
+* [`++_addTargetWithRole(targetName, roleId, roleName)++`]
+* [`++_addRole(roleId, info)++`]
+* [`++_authorizeForService(serviceDomain, authorizedDomain)++`]
+* [`++_authorizeForTarget(target, authorizedRoleId)++`]
+* [`++_authorize(functions, selector, name)++`]
+
+[.contract-subindex-inherited]
+.IServiceAuthorization
+
+[.contract-subindex-inherited]
+.IAccess
+
+[.contract-subindex-inherited]
+.InitializableERC165
+* [`++__ERC165_init()++`]
+* [`++_initializeERC165()++`]
+* [`++_registerInterface(interfaceId)++`]
+* [`++_registerInterfaceNotInitializing(interfaceId)++`]
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.Authorization
+
+[.contract-subindex-inherited]
+.IAuthorization
+
+[.contract-subindex-inherited]
+.ServiceAuthorization
+
+[.contract-subindex-inherited]
+.IServiceAuthorization
+
+[.contract-subindex-inherited]
+.IAccess
+
+[.contract-subindex-inherited]
+.InitializableERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[BasicDistributionAuthorization-constructor-string-]]
+==== `[.contract-item-name]#++constructor++#++(string distributionName)++` [.item-kind]#public#
+
+[.contract-item]
+[[BasicDistributionAuthorization-_setupServiceTargets--]]
+==== `[.contract-item-name]#++_setupServiceTargets++#++()++` [.item-kind]#internal#
+
+Sets up the relevant service targets for the component.
+Overwrite this function for use case specific authorizations.
+
+[.contract-item]
+[[BasicDistributionAuthorization-_setupTokenHandlerAuthorizations--]]
+==== `[.contract-item-name]#++_setupTokenHandlerAuthorizations++#++()++` [.item-kind]#internal#
+
+Sets up the relevant component's token handler authorizations.
+Overwrite this function for use case specific authorizations.
+
+[.contract-item]
+[[BasicDistributionAuthorization-_setupTargetAuthorizations--]]
+==== `[.contract-item-name]#++_setupTargetAuthorizations++#++()++` [.item-kind]#internal#
+
+Sets up the relevant target authorizations for the component.
+Overwrite this function for use case specific authorizations.
+
+:_initialize: pass:normal[xref:#DistributionService-_initialize-address-bytes-[`++_initialize++`]]
+:createDistributorType: pass:normal[xref:#DistributionService-createDistributorType-string-UFixed-UFixed-UFixed-uint32-Seconds-bool-bool-bytes-[`++createDistributorType++`]]
+:createDistributor: pass:normal[xref:#DistributionService-createDistributor-address-DistributorType-bytes-[`++createDistributor++`]]
+:changeDistributorType: pass:normal[xref:#DistributionService-changeDistributorType-NftId-DistributorType-bytes-[`++changeDistributorType++`]]
+:createReferral: pass:normal[xref:#DistributionService-createReferral-NftId-string-UFixed-uint32-Timestamp-bytes-[`++createReferral++`]]
+:processReferral: pass:normal[xref:#DistributionService-processReferral-NftId-ReferralId-[`++processReferral++`]]
+:processSale: pass:normal[xref:#DistributionService-processSale-NftId-ReferralId-struct-IPolicy-PremiumInfo-[`++processSale++`]]
+:withdrawCommission: pass:normal[xref:#DistributionService-withdrawCommission-NftId-Amount-[`++withdrawCommission++`]]
+:referralIsValid: pass:normal[xref:#DistributionService-referralIsValid-NftId-ReferralId-[`++referralIsValid++`]]
+:getDiscountPercentage: pass:normal[xref:#DistributionService-getDiscountPercentage-contract-InstanceReader-ReferralId-[`++getDiscountPercentage++`]]
+:_checkDistributionType: pass:normal[xref:#DistributionService-_checkDistributionType-contract-InstanceReader-DistributorType-NftId-[`++_checkDistributionType++`]]
+:_getAndVerifyActiveDistribution: pass:normal[xref:#DistributionService-_getAndVerifyActiveDistribution--[`++_getAndVerifyActiveDistribution++`]]
+:_getDomain: pass:normal[xref:#DistributionService-_getDomain--[`++_getDomain++`]]
+
+[.contract]
+[[DistributionService]]
+=== `++DistributionService++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/distribution/DistributionService.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/distribution/DistributionService.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++_initialize(owner, data)++`]
+* [`++createDistributorType(name, minDiscountPercentage, maxDiscountPercentage, commissionPercentage, maxReferralCount, maxReferralLifetime, allowSelfReferrals, allowRenewals, data)++`]
+* [`++createDistributor(distributor, distributorType, data)++`]
+* [`++changeDistributorType(distributorNftId, newDistributorType, data)++`]
+* [`++createReferral(distributorNftId, code, discountPercentage, maxReferrals, expiryAt, data)++`]
+* [`++processReferral(distributionNftId, referralId)++`]
+* [`++processSale(distributionNftId, referralId, premium)++`]
+* [`++withdrawCommission(distributorNftId, amount)++`]
+* [`++referralIsValid(distributionNftId, referralId)++`]
+* [`++getDiscountPercentage(instanceReader, referralId)++`]
+* [`++_checkDistributionType(instanceReader, distributorType, expectedDistributionNftId)++`]
+* [`++_getAndVerifyActiveDistribution()++`]
+* [`++_getDomain()++`]
+
+[.contract-subindex-inherited]
+.IDistributionService
+
+[.contract-subindex-inherited]
+.Service
+* [`++__Service_init(authority, registry, initialOwner)++`]
+* [`++getDomain()++`]
+* [`++getVersion()++`]
+* [`++getRoleId()++`]
+* [`++_getServiceAddress(domain)++`]
+
+[.contract-subindex-inherited]
+.IService
+
+[.contract-subindex-inherited]
+.ReentrancyGuardUpgradeable
+* [`++__ReentrancyGuard_init()++`]
+* [`++__ReentrancyGuard_init_unchained()++`]
+* [`++_reentrancyGuardEntered()++`]
+
+[.contract-subindex-inherited]
+.Versionable
+* [`++initializeVersionable(activatedBy, data)++`]
+* [`++upgradeVersionable(data)++`]
+* [`++_upgrade(data)++`]
+
+[.contract-subindex-inherited]
+.IVersionable
+
+[.contract-subindex-inherited]
+.Registerable
+* [`++__Registerable_init(authority, registry, parentNftId, objectType, isInterceptor, initialOwner, data)++`]
+* [`++isActive()++`]
+* [`++getRelease()++`]
+* [`++getInitialInfo()++`]
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.IRelease
+
+[.contract-subindex-inherited]
+.NftOwnable
+* [`++_checkNftType(nftId, expectedObjectType)++`]
+* [`++__NftOwnable_init(registry, initialOwner)++`]
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+* [`++_linkToNftOwnable(nftOwnableAddress)++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+* [`++__RegistryLinked_init(registry)++`]
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+* [`++__ERC165_init()++`]
+* [`++_initializeERC165()++`]
+* [`++_registerInterface(interfaceId)++`]
+* [`++_registerInterfaceNotInitializing(interfaceId)++`]
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+* [`++__AccessManaged_init(initialAuthority)++`]
+* [`++__AccessManaged_init_unchained(initialAuthority)++`]
+* [`++authority()++`]
+* [`++setAuthority(newAuthority)++`]
+* [`++isConsumingScheduledOp()++`]
+* [`++_setAuthority(newAuthority)++`]
+* [`++_checkCanCall(caller, data)++`]
+
+[.contract-subindex-inherited]
+.IAccessManaged
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+* [`++__Context_init()++`]
+* [`++__Context_init_unchained()++`]
+* [`++_msgSender()++`]
+* [`++_msgData()++`]
+* [`++_contextSuffixLength()++`]
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.IDistributionService
+* [`++LogDistributionServiceCommissionWithdrawn(distributorNftId, recipient, tokenAddress, amount)++`]
+* [`++LogDistributionServiceDistributorTypeCreated(distributionNftId, name)++`]
+* [`++LogDistributionServiceDistributorCreated(distributionNftId, distributorNftId, distributorType, distributor)++`]
+* [`++LogDistributionServiceDistributorTypeChanged(distributorNftId, oldDistributorType, newDistributorType)++`]
+* [`++LogDistributionServiceReferralCreated(distributionNftId, distributorNftId, referralId, code)++`]
+* [`++LogDistributionServiceReferralProcessed(distributionNftId, distributorNftId, referralId, usedReferrals)++`]
+* [`++LogDistributionServiceSaleProcessed(distributionNftId, referralId)++`]
+
+[.contract-subindex-inherited]
+.Service
+
+[.contract-subindex-inherited]
+.IService
+
+[.contract-subindex-inherited]
+.ReentrancyGuardUpgradeable
+
+[.contract-subindex-inherited]
+.Versionable
+
+[.contract-subindex-inherited]
+.IVersionable
+
+[.contract-subindex-inherited]
+.Registerable
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.IRelease
+
+[.contract-subindex-inherited]
+.NftOwnable
+
+[.contract-subindex-inherited]
+.INftOwnable
+* [`++LogNftOwnableNftLinkedToAddress(nftId, owner)++`]
+
+[.contract-subindex-inherited]
+.RegistryLinked
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[DistributionService-_initialize-address-bytes-]]
+==== `[.contract-item-name]#++_initialize++#++(address owner, bytes data)++` [.item-kind]#internal#
+
+[.contract-item]
+[[DistributionService-createDistributorType-string-UFixed-UFixed-UFixed-uint32-Seconds-bool-bool-bytes-]]
+==== `[.contract-item-name]#++createDistributorType++#++(string name, UFixed minDiscountPercentage, UFixed maxDiscountPercentage, UFixed commissionPercentage, uint32 maxReferralCount, Seconds maxReferralLifetime, bool allowSelfReferrals, bool allowRenewals, bytes data) → DistributorType distributorType++` [.item-kind]#external#
+
+[.contract-item]
+[[DistributionService-createDistributor-address-DistributorType-bytes-]]
+==== `[.contract-item-name]#++createDistributor++#++(address distributor, DistributorType distributorType, bytes data) → NftId distributorNftId++` [.item-kind]#external#
+
+[.contract-item]
+[[DistributionService-changeDistributorType-NftId-DistributorType-bytes-]]
+==== `[.contract-item-name]#++changeDistributorType++#++(NftId distributorNftId, DistributorType newDistributorType, bytes data)++` [.item-kind]#external#
+
+[.contract-item]
+[[DistributionService-createReferral-NftId-string-UFixed-uint32-Timestamp-bytes-]]
+==== `[.contract-item-name]#++createReferral++#++(NftId distributorNftId, string code, UFixed discountPercentage, uint32 maxReferrals, Timestamp expiryAt, bytes data) → ReferralId referralId++` [.item-kind]#external#
+
+[.contract-item]
+[[DistributionService-processReferral-NftId-ReferralId-]]
+==== `[.contract-item-name]#++processReferral++#++(NftId distributionNftId, ReferralId referralId)++` [.item-kind]#external#
+
+callback from product service when a referral is used. 
+Calling this will increment the referral usage counter.
+
+[.contract-item]
+[[DistributionService-processSale-NftId-ReferralId-struct-IPolicy-PremiumInfo-]]
+==== `[.contract-item-name]#++processSale++#++(NftId distributionNftId, ReferralId referralId, struct IPolicy.PremiumInfo premium)++` [.item-kind]#external#
+
+callback from product service when selling a policy for a specific referralId
+
+[.contract-item]
+[[DistributionService-withdrawCommission-NftId-Amount-]]
+==== `[.contract-item-name]#++withdrawCommission++#++(NftId distributorNftId, Amount amount) → Amount withdrawnAmount++` [.item-kind]#public#
+
+Withdraw commission for the distributor
+
+[.contract-item]
+[[DistributionService-referralIsValid-NftId-ReferralId-]]
+==== `[.contract-item-name]#++referralIsValid++#++(NftId distributionNftId, ReferralId referralId) → bool isValid++` [.item-kind]#public#
+
+[.contract-item]
+[[DistributionService-getDiscountPercentage-contract-InstanceReader-ReferralId-]]
+==== `[.contract-item-name]#++getDiscountPercentage++#++(contract InstanceReader instanceReader, ReferralId referralId) → UFixed discountPercentage, ReferralStatus status++` [.item-kind]#external#
+
+Returns the discount percentage for the provided referral code.
+The function retuns both the percentage and the status of the referral code.
+
+[.contract-item]
+[[DistributionService-_checkDistributionType-contract-InstanceReader-DistributorType-NftId-]]
+==== `[.contract-item-name]#++_checkDistributionType++#++(contract InstanceReader instanceReader, DistributorType distributorType, NftId expectedDistributionNftId)++` [.item-kind]#internal#
+
+[.contract-item]
+[[DistributionService-_getAndVerifyActiveDistribution--]]
+==== `[.contract-item-name]#++_getAndVerifyActiveDistribution++#++() → NftId poolNftId, contract IInstance instance++` [.item-kind]#internal#
+
+[.contract-item]
+[[DistributionService-_getDomain--]]
+==== `[.contract-item-name]#++_getDomain++#++() → ObjectType++` [.item-kind]#internal#
+
+:constructor: pass:normal[xref:#DistributionServiceManager-constructor-address-address-bytes32-[`++constructor++`]]
+:getDistributionService: pass:normal[xref:#DistributionServiceManager-getDistributionService--[`++getDistributionService++`]]
+
+[.contract]
+[[DistributionServiceManager]]
+=== `++DistributionServiceManager++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/distribution/DistributionServiceManager.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/distribution/DistributionServiceManager.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++constructor(authority, registry, salt)++`]
+* [`++getDistributionService()++`]
+
+[.contract-subindex-inherited]
+.ProxyManager
+* [`++initialize(registry, implementation, data, salt)++`]
+* [`++deploy(registry, initialImplementation, initializationData)++`]
+* [`++deployDetermenistic(registry, initialImplementation, initializationData, salt)++`]
+* [`++upgrade(newImplementation)++`]
+* [`++upgrade(newImplementation, upgradeData)++`]
+* [`++linkToProxy()++`]
+* [`++getDeployData(proxyOwner, deployData)++`]
+* [`++getUpgradeData(upgradeData)++`]
+* [`++getProxy()++`]
+* [`++getVersion()++`]
+* [`++getVersionCount()++`]
+* [`++getVersion(idx)++`]
+* [`++getVersionInfo(_version)++`]
+
+[.contract-subindex-inherited]
+.NftOwnable
+* [`++_checkNftType(nftId, expectedObjectType)++`]
+* [`++__NftOwnable_init(registry, initialOwner)++`]
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+* [`++_linkToNftOwnable(nftOwnableAddress)++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+* [`++__RegistryLinked_init(registry)++`]
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+* [`++__ERC165_init()++`]
+* [`++_initializeERC165()++`]
+* [`++_registerInterface(interfaceId)++`]
+* [`++_registerInterfaceNotInitializing(interfaceId)++`]
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.ProxyManager
+* [`++LogProxyManagerVersionableDeployed(proxy, initialImplementation)++`]
+* [`++LogProxyManagerVersionableUpgraded(proxy, upgradedImplementation)++`]
+
+[.contract-subindex-inherited]
+.NftOwnable
+
+[.contract-subindex-inherited]
+.INftOwnable
+* [`++LogNftOwnableNftLinkedToAddress(nftId, owner)++`]
+
+[.contract-subindex-inherited]
+.RegistryLinked
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[DistributionServiceManager-constructor-address-address-bytes32-]]
+==== `[.contract-item-name]#++constructor++#++(address authority, address registry, bytes32 salt)++` [.item-kind]#public#
+
+initializes proxy manager with distribution service implementation and deploys instance
+
+[.contract-item]
+[[DistributionServiceManager-getDistributionService--]]
+==== `[.contract-item-name]#++getDistributionService++#++() → contract DistributionService distributionService++` [.item-kind]#external#
+
