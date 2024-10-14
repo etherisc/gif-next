@@ -57,7 +57,7 @@ const config: HardhatUserConfig = {
       chainId: 8453,
       url: process.env.NETWORK_URL || "https://mainnet.base.org",
       accounts: {
-        mnemonic: process.env.WALLET_MNEMONIC, 
+        mnemonic: process.env.WALLET_MNEMONIC || "",
         count: 20,
       },
     },

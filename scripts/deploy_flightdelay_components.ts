@@ -27,6 +27,7 @@ async function main() {
             nftIdLibAddress: process.env.NFTIDLIB_ADDRESS!,
             objectTypeLibAddress: process.env.OBJECTTYPELIB_ADDRESS!,
             referralLibAddress: process.env.REFERRALLIB_ADDRESS!,
+            requestIdLibAddress: process.env.REQUESTIDLIB_ADDRESS!,
             riskIdLibAddress: process.env.RISKIDLIB_ADDRESS!,
             roleIdLibAddress: process.env.ROLEIDLIB_ADDRESS!,
             secondsLibAddress: process.env.SECONDSLIB_ADDRESS!,
@@ -61,6 +62,7 @@ export async function deployFlightDelayComponentContracts(libraries: LibraryAddr
     const nftIdLibAddress = libraries.nftIdLibAddress;
     const objectTypeLibAddress = libraries.objectTypeLibAddress;
     const referralLibAddress = libraries.referralLibAddress;
+    const requestIdLibAddress = libraries.requestIdLibAddress;
     const riskIdLibAddress = libraries.riskIdLibAddress;
     const roleIdLibAddress = libraries.roleIdLibAddress;
     const secondsLibAddress = libraries.secondsLibAddress;
@@ -167,16 +169,6 @@ export async function deployFlightDelayComponentContracts(libraries: LibraryAddr
         },
         "contracts/examples/flight/FlightProductAuthorization.sol:FlightProductAuthorization");
 
-    // TODO cleanup
-    // const { address: flightMessageVerifierAddress } = await deployContract(
-    //     "FlightMessageVerifier",
-    //     flightOwner,
-    //     [],
-    //     {
-    //         libraries: {
-    //         }
-    //     });
-
     const { address: flightProductAddress, contract: flightProductBaseContract } = await deployContract(
         "FlightProduct",
         flightOwner,
@@ -195,6 +187,7 @@ export async function deployFlightDelayComponentContracts(libraries: LibraryAddr
                 NftIdLib: nftIdLibAddress,
                 ObjectTypeLib: objectTypeLibAddress,
                 ReferralLib: referralLibAddress,
+                RequestIdLib: requestIdLibAddress,
                 SecondsLib: secondsLibAddress,
                 StrLib: strLibAddress,
                 TimestampLib: timestampLibAddress,
