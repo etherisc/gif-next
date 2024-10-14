@@ -51,6 +51,13 @@ forge test
 hh run scripts/deploy_gif.ts
 ```
 
+For a non-local deployment add the `--network` switch. 
+The available network names are defined in `hardhat.config.ts`.
+
+```bash
+hh run scripts/deploy_gif.ts --network polygonAmoy
+```
+
 To include the fire example components instead run the following command
 
 ```bash
@@ -76,7 +83,7 @@ This uses the same environment variables as the deployment script.
 - `RESUMEABLE_DEPLOYMENT` if this flag is set to `true`, the deployment will write all transactions to a state file so the deployment can be resumed after a failure (or after a manual stop). data is stored in the `deployment/<chainid>/` directory. 
 - `ETHERSCAN_API_KEY` the api key for etherscan
 - `POLYGONSCAN_API_KEY` the api key for polygonscan
-
+- `WRITE_ADDRESSES_TO_FILE` dumps all deployed addresses to file `deployment.env`
 
 ## Hardhat commands
 

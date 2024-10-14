@@ -33,6 +33,7 @@ contract FlightBaseTest is GifTest {
     SigUtils internal sigUtils;
 
     address public flightOwner = makeAddr("flightOwner");
+    uint8 MAX_POLICIES_IN_ONE_GO = 2;
 
     FlightUSD public flightUSD;
     FlightOracle public flightOracle;
@@ -106,7 +107,7 @@ contract FlightBaseTest is GifTest {
 
 
     function _createPolicySimple(
-        Str flightData, // example: "LX 180 ZRH BKK 20241104"
+        string memory flightData, // example: "LX 180 ZRH BKK 20241104"
         Timestamp departureTime,
         Timestamp arrivalTime,
         uint256 [6] memory statistics,
@@ -128,7 +129,7 @@ contract FlightBaseTest is GifTest {
 
 
     function _createPolicy(
-        Str flightData, // example: "LX 180 ZRH BKK 20241104"
+        string memory flightData, // example: "LX 180 ZRH BKK 20241104"
         Timestamp departureTime,
         string memory departureTimeLocal, // example "2024-10-14T10:10:00.000 Europe/Zurich"
         Timestamp arrivalTime,
@@ -223,7 +224,7 @@ contract FlightBaseTest is GifTest {
             AmountLib.toAmount(600 * 10 ** flightUSD.decimals()), // 600 USD max total payout
             SecondsLib.fromDays(14), // min time before departure
             SecondsLib.fromDays(90), // max time before departure
-            5 // max policies to process
+            MAX_POLICIES_IN_ONE_GO // max policies to process
         );
         vm.stopPrank();
     }
@@ -277,7 +278,7 @@ contract FlightBaseTest is GifTest {
 
     function _getSignature(
         uint256 signerPrivateKey,
-        Str flightData,
+        string memory flightData,
         Timestamp departureTime,
         Timestamp arrivalTime,
         Amount premiumAmount,
@@ -292,7 +293,7 @@ contract FlightBaseTest is GifTest {
         )
     {
         bytes32 ratingsHash = flightMessageVerifier.getRatingsHash(
-            flightData, 
+            StrLib.toStr(flightData), 
             departureTime, 
             arrivalTime, 
             premiumAmount, 

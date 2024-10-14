@@ -12,6 +12,9 @@ From `hh console --network <name>`
 ```js
 [protocolOwner,masterInstanceOwner,flightOwner] = await ethers.getSigners();
 
+// check balance
+ethers.formatEther(await ethers.provider.getBalance(flightOwner))
+
 flightUSD = await hre.ethers.getContractAt("FlightUSD", process.env.FLIGHT_TOKEN_ADDRESS, flightOwner);
 chainNft = await hre.ethers.getContractAt("ChainNft", process.env.CHAIN_NFT_ADDRESS, protocolOwner);
 
@@ -67,6 +70,7 @@ FlightProduct = await ethers.getContractFactory("FlightProduct", {
       ObjectTypeLib: process.env.OBJECTTYPELIB_ADDRESS,
       ReferralLib: process.env.REFERRALLIB_ADDRESS,
       SecondsLib: process.env.SECONDSLIB_ADDRESS,
+      StrLib: process.env.STRLIB_ADDRESS,
       TimestampLib: process.env.TIMESTAMPLIB_ADDRESS,
       VersionLib: process.env.VERSIONLIB_ADDRESS,
     },
@@ -74,12 +78,16 @@ FlightProduct = await ethers.getContractFactory("FlightProduct", {
 FlightProduct = FlightProduct.connect(flightOwner)
 flightProduct = await FlightProduct.attach(process.env.FLIGHT_PRODUCT_ADDRESS)
 
+// obtain bundle nft id from bundle creation tx logs
 await flightProduct.setDefaultBundle('...')
 
 // grant statistics data provider role to 
-await instance.grantRole(1000001, '...')
+applicationSigner = '...'
+await instance.grantRole(1000001, applicationSigner)
+
 // grant status provider role to 
-await instance.grantRole(1000002, '...')
+oracleSigner = '...'
+await instance.grantRole(1000002, oracleSigner)
 
 await flightProduct.setTestMode(true)
 

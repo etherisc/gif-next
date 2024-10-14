@@ -134,6 +134,15 @@ contract FlightOracle is
     }
 
 
+    function isActiveRequest(RequestId requestId)
+        external
+        view
+        returns(bool isActive)
+    {
+        return LibRequestIdSet.contains(_activeRequests, requestId);
+    }
+
+
     function getRequestState(RequestId requestId)
         external
         view

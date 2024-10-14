@@ -53,10 +53,19 @@ const config: HardhatUserConfig = {
         count: 20,
       },
     },
+    base: {
+      chainId: 8453,
+      url: process.env.NETWORK_URL || "https://mainnet.base.org",
+      accounts: {
+        mnemonic: process.env.WALLET_MNEMONIC, 
+        count: 20,
+      },
+    },
   },
   etherscan: {
     apiKey: {
       polygonAmoy: process.env.POLYGONSCAN_API_KEY || "",
+      base: process.env.BASESCAN_API_KEY || "",
     },
     customChains: [
       {
@@ -65,6 +74,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: "https://api-amoy.polygonscan.com/api",
           browserURL: "https://amoy.polygonscan.com"
+        },
+      },
+      {
+        network: "base",
+        chainId: 8453,
+        urls: {
+          apiURL: "https://api.basescan.org/api",
+          browserURL: "https://basescan.org/"
         },
       }
     ]

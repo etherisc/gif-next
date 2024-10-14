@@ -29,7 +29,7 @@ import {Timestamp, TimestampLib} from "../../../contracts/type/Timestamp.sol";
 contract FlightProductTest is FlightBaseTest {
 
     // sample flight data
-    Str public flightData = StrLib.toStr("LX 180 ZRH BKK 20241108");
+    string public flightData = "LX 180 ZRH BKK 20241108";
     Timestamp public departureTime = TimestampLib.toTimestamp(1731085200);
     Timestamp public arrivalTime = TimestampLib.toTimestamp(1731166800);
 
@@ -330,6 +330,8 @@ contract FlightProductTest is FlightBaseTest {
             (bool exists, FlightProduct.FlightRisk memory flightRisk) = FlightLib.getFlightRisk(instanceReader, flightProductNftId, riskId, false);
             _printRisk(riskId, flightRisk);
 
+            // assertTrue(false, "oops");
+
             assertTrue(exists, "risk does not exist");
             assertEq(instanceReader.policiesForRisk(riskId), 1, "unexpected number of policies for risk");
             assertEq(instanceReader.getPolicyForRisk(riskId, 0).toInt(), policyNftId.toInt(), "unexpected 1st policy for risk");
@@ -379,7 +381,7 @@ contract FlightProductTest is FlightBaseTest {
             _printStatusRequest(statusRequest);
 
             assertEq(statusRequest.riskId.toInt(), riskId.toInt(), "unexpected risk id");
-            assertTrue(statusRequest.flightData == flightData, "unexpected flight data");
+            assertTrue(statusRequest.flightData == StrLib.toStr(flightData), "unexpected flight data");
             assertEq(statusRequest.departureTime.toInt(), departureTime.toInt(), "unexpected departure time");
         }
     }
@@ -576,6 +578,135 @@ contract FlightProductTest is FlightBaseTest {
             policyNftId, 
             instanceReader.getPolicyInfo(policyNftId));
         
+        // assertTrue(false, "oops");
+    }
+
+
+    function test_flightCreateThreePoliciesWithSingleRiskAndProcessFlightStatusWithPayout() public {
+        // GIVEN - create policy
+        approveProductTokenHandler();
+
+        Amount premiumAmount = flightProduct.MAX_PREMIUM(); // AmountLib.toAmount(30 * 10 ** flightUSD.decimals());
+
+        // WHEN
+
+        // 1st policy
+        (FlightProduct.PermitData memory permit1) = _createPermitWithSignature(
+            customer, 
+            premiumAmount, 
+            customerPrivateKey, 
+            0); // nonce
+
+        vm.startPrank(statisticsProvider);
+        NftId policyNftId1 = _createPolicy(
+            flightData, 
+            departureTime, 
+            "2024-11-08 Europe/Zurich", 
+            arrivalTime, 
+            "2024-11-08 Asia/Bangkok", 
+            statistics,
+            permit1);
+        vm.stopPrank();
+
+        // 2nd policy
+        (FlightProduct.PermitData memory permit2) = _createPermitWithSignature(
+            customer, 
+            premiumAmount, 
+            customerPrivateKey, 
+            1); // nonce
+
+        vm.startPrank(statisticsProvider);
+        NftId policyNftId2 = _createPolicy(
+            flightData, 
+            departureTime, 
+            "2024-11-08 Europe/Zurich", 
+            arrivalTime, 
+            "2024-11-08 Asia/Bangkok", 
+            statistics,
+            permit2);
+        vm.stopPrank();
+
+        // 3rd policy
+        (FlightProduct.PermitData memory permit3) = _createPermitWithSignature(
+            customer, 
+            premiumAmount, 
+            customerPrivateKey, 
+            2); // nonce
+
+        vm.startPrank(statisticsProvider);
+        NftId policyNftId3 = _createPolicy(
+            flightData, 
+            departureTime, 
+            "2024-11-08 Europe/Zurich", 
+            arrivalTime, 
+            "2024-11-08 Asia/Bangkok", 
+            statistics,
+            permit3);
+        vm.stopPrank();
+
+        // THEN
+
+        RiskId riskId1 = instanceReader.getPolicyInfo(policyNftId1).riskId;
+        assertEq(instanceReader.activeRisks(flightProduct.getNftId()), 1, "unexpected number of active risks (before status callback)");
+        assertTrue(instanceReader.getActiveRiskId(flightProduct.getNftId(), 0) == riskId1, "unexpected active risk id");
+
+        assertEq(flightOracle.activeRequests(), 1, "unexpected number of active requests (before status callback)");
+        RequestId requestId1 = flightOracle.getActiveRequest(0);
+        assertTrue(requestId1.gtz(), "request id zero");
+
+        assertEq(instanceReader.policiesForRisk(riskId1), 3, "unexpected number of policies for risk");
+        assertEq(instanceReader.getPolicyForRisk(riskId1, 0).toInt(), policyNftId1.toInt(), "unexpected 1st policy for risk");
+        assertEq(instanceReader.getPolicyForRisk(riskId1, 1).toInt(), policyNftId2.toInt(), "unexpected 2nd policy for risk");
+        assertEq(instanceReader.getPolicyForRisk(riskId1, 2).toInt(), policyNftId3.toInt(), "unexpected 3rd policy for risk");
+
+        // create flight status data (90 min late)
+        bytes1 status = "L";
+        int256 delay = 90; 
+        uint8 maxPoliciesToProcess = 2;
+
+        // print request before allback
+        IOracle.RequestInfo memory requestInfo1 = instanceReader.getRequestInfo(requestId1);
+        _printRequest(requestId1, requestInfo1);
+
+        // WHEN
+        // set cheking time 2h after scheduled arrival time
+        vm.warp(arrivalTime.toInt() + 2 * 3600);
+
+        vm.startPrank(statusProvider);
+        flightOracle.respondWithFlightStatus(requestId1, status, delay);
+        vm.stopPrank();
+
+        // THEN
+
+        // check remaining policy for risk
+        assertEq(instanceReader.policiesForRisk(riskId1), 1, "unexpected remaining number of policies for risk");
+        assertEq(instanceReader.getPolicyForRisk(riskId1, 0).toInt(), policyNftId3.toInt(), "unexpected remaining policy for risk");
+
+        // assertTrue(false, "oops");
+
+        requestInfo1 = instanceReader.getRequestInfo(requestId1);
+        _printRequest(requestId1, requestInfo1);
+
+        assertEq(instanceReader.activeRisks(flightProduct.getNftId()), 1, "unexpected number of active risks (after status callback)");
+        assertTrue(instanceReader.getActiveRiskId(flightProduct.getNftId(), 0) == riskId1, "unexpected active risk id");
+
+        assertEq(flightOracle.activeRequests(), 0, "unexpected number of active requests (after status callback)");
+
+        _printPolicy(
+            policyNftId1, 
+            instanceReader.getPolicyInfo(policyNftId1));
+
+        // assertTrue(false, "oops");
+
+        // WHEN - process remaining policy (unpermissioned function)
+        vm.startPrank(flightOwner);
+        flightProduct.processPayoutsAndClosePolicies(riskId1, 2);
+        vm.stopPrank();
+
+        // THEN
+        assertEq(instanceReader.policiesForRisk(riskId1), 0, "unexpected number of policies for risk (after processing last policy)");
+        assertEq(flightOracle.activeRequests(), 0, "unexpected number of active requests (after processing last policy)");
+
         // assertTrue(false, "oops");
     }
 

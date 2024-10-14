@@ -23,7 +23,7 @@ import {ReferralLib} from "../../type/Referral.sol";
 import {RiskId, RiskIdLib} from "../../type/RiskId.sol";
 import {RequestId} from "../../type/RequestId.sol";
 import {Seconds, SecondsLib} from "../../type/Seconds.sol";
-import {Str} from "../../type/String.sol";
+import {Str, StrLib} from "../../type/String.sol";
 import {Timestamp, TimestampLib} from "../../type/Timestamp.sol";
 
 
@@ -66,6 +66,8 @@ contract FlightProduct is
 
     bool internal _testMode;
 
+    mapping(RiskId riskId => RequestId requestId) internal _requests;
+
     // GIF V3 specifics
     NftId internal _defaultBundleNftId;
     NftId internal _oracleNftId;
@@ -88,7 +90,7 @@ contract FlightProduct is
 
 
     struct ApplicationData {
-        Str flightData;
+        string flightData;
         Timestamp departureTime;
         string departureTimeLocal;
         Timestamp arrivalTime;
@@ -137,6 +139,7 @@ contract FlightProduct is
             getNftId()).oracleNftId[0];
     }
 
+
     function calculatePayoutAmounts(
         FlightProduct flightProduct,
         Amount premium, 
@@ -182,75 +185,13 @@ contract FlightProduct is
             policyNftId
         ) = _createPolicy(
             policyHolder,
-            application.flightData,
+            StrLib.toStr(application.flightData),
             application.departureTime,
             application.departureTimeLocal,
             application.arrivalTime,
             application.arrivalTimeLocal,
             application.premiumAmount,
             application.statistics);
-    }
-
-
-    function _createPolicy(
-        address policyHolder,
-        Str flightData, 
-        Timestamp departureTime,
-        string memory departureTimeLocal,
-        Timestamp arrivalTime,
-        string memory arrivalTimeLocal,
-        Amount premiumAmount,
-        uint256[6] memory statistics
-    )
-        internal
-        virtual
-        returns (
-            RiskId riskId,
-            NftId policyNftId
-        )
-    {
-        // checks
-        // disabled for now - using rbac for security
-        FlightLib.checkApplicationData(
-            this,
-            flightData,
-            departureTime,
-            arrivalTime,
-            premiumAmount);
-
-        (riskId, policyNftId) = _prepareApplication(
-            policyHolder, 
-            flightData,
-            departureTime,
-            departureTimeLocal,
-            arrivalTime,
-            arrivalTimeLocal,
-            premiumAmount,
-            statistics);
-
-        _createPolicy(
-            policyNftId, 
-            TimestampLib.zero(), // do not ativate yet 
-            premiumAmount); // max premium amount
-
-        // interactions (token transfer + callback to token holder, if contract)
-        _collectPremium(
-            policyNftId, 
-            departureTime); // activate at scheduled departure time of flight
-
-        // send oracle request for flight status (interacts with flight oracle contract)
-        _sendRequest(
-            _oracleNftId, 
-            abi.encode(
-                FlightOracle.FlightStatusRequest(
-                    riskId,
-                    flightData,
-                    departureTime)),
-            // allow up to 30 days to process the claim
-            arrivalTime.addSeconds(SecondsLib.fromDays(30)), 
-            "flightStatusCallback");
-
-        emit LogFlightPolicyPurchased(policyNftId, flightData.toString(), premiumAmount);
     }
 
 
@@ -355,6 +296,27 @@ contract FlightProduct is
 
     function getOracleNftId() public view returns (NftId oracleNftId) { return _oracleNftId; }
     function isTestMode() public view returns (bool) { return _testMode; }
+
+
+    function getFlightRisk(
+        RiskId riskId,
+        bool requireRiskExists
+    )
+        public
+        view
+        returns (
+            bool exists,
+            FlightRisk memory flightRisk
+        )
+    {
+        (exists, flightRisk) = FlightLib.getFlightRisk(
+            _getInstanceReader(), 
+            getNftId(), 
+            riskId, 
+            requireRiskExists);
+    }
+
+    function getRequestForRisk(RiskId riskId) public view returns (RequestId requestId) { return _requests[riskId]; }
     function decodeFlightRiskData(bytes memory data) public pure returns (FlightRisk memory) { return abi.decode(data, (FlightRisk)); }
 
     //--- internal functions ------------------------------------------------//
@@ -378,6 +340,70 @@ contract FlightProduct is
             permit.v, 
             permit.r, 
             permit.s); 
+    }
+
+
+    function _createPolicy(
+        address policyHolder,
+        Str flightData, 
+        Timestamp departureTime,
+        string memory departureTimeLocal,
+        Timestamp arrivalTime,
+        string memory arrivalTimeLocal,
+        Amount premiumAmount,
+        uint256[6] memory statistics
+    )
+        internal
+        virtual
+        returns (
+            RiskId riskId,
+            NftId policyNftId
+        )
+    {
+        // checks
+        // disabled for now - using rbac for security
+        FlightLib.checkApplicationData(
+            this,
+            flightData,
+            departureTime,
+            arrivalTime,
+            premiumAmount);
+
+        (riskId, policyNftId) = _prepareApplication(
+            policyHolder, 
+            flightData,
+            departureTime,
+            departureTimeLocal,
+            arrivalTime,
+            arrivalTimeLocal,
+            premiumAmount,
+            statistics);
+
+        _createPolicy(
+            policyNftId, 
+            TimestampLib.zero(), // do not ativate yet 
+            premiumAmount); // max premium amount
+
+        // interactions (token transfer + callback to token holder, if contract)
+        _collectPremium(
+            policyNftId, 
+            departureTime); // activate at scheduled departure time of flight
+
+        // send oracle request for for new risk to obtain flight status (interacts with flight oracle contract)
+        if (_requests[riskId].eqz()) {
+            _requests[riskId] = _sendRequest(
+                _oracleNftId, 
+                abi.encode(
+                    FlightOracle.FlightStatusRequest(
+                        riskId,
+                        flightData,
+                        departureTime)),
+                // allow up to 30 days to process the claim
+                arrivalTime.addSeconds(SecondsLib.fromDays(30)), 
+                "flightStatusCallback");
+        }
+
+        emit LogFlightPolicyPurchased(policyNftId, flightData.toString(), premiumAmount);
     }
 
 
@@ -518,11 +544,7 @@ contract FlightProduct is
         virtual
     {
         // check risk exists
-        InstanceReader reader = _getInstanceReader();
-        (
-            bool exists,
-            FlightRisk memory flightRisk
-        ) = FlightLib.getFlightRisk(reader, getNftId(), riskId, true);
+        (, FlightRisk memory flightRisk) = getFlightRisk(riskId, true);
 
         // update status, if not yet set
         if (flightRisk.statusUpdatedAt.eqz()) {
@@ -568,9 +590,15 @@ contract FlightProduct is
         uint256 policiesToProcess = reader.policiesForRisk(riskId);
         uint256 policiesProcessed = policiesToProcess < maxPoliciesToProcess ? policiesToProcess : maxPoliciesToProcess;
 
-        // go trough policies
+        // assemble array with policies to process
+        NftId [] memory policies = new NftId[](policiesProcessed);
         for (uint256 i = 0; i < policiesProcessed; i++) {
-            NftId policyNftId = reader.getPolicyForRisk(riskId, i);
+            policies[i] = reader.getPolicyForRisk(riskId, i);
+        }
+
+        // go through policies
+        for (uint256 i = 0; i < policiesProcessed; i++) {
+            NftId policyNftId = policies[i];
             Amount payoutAmount = FlightLib.getPayoutAmount(
                 reader.getPolicyInfo(policyNftId).applicationData, 
                 payoutOption);

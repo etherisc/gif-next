@@ -657,25 +657,4 @@ contract AccessAdmin is
             AccessAdminLib.toFunctionGrantingString(this, func.name, roleId),
             lastUpdateIn);
     }
-
-
-    // TODO cleanup
-    // function _checkAuthorization( 
-    //     address authorization,
-    //     ObjectType expectedDomain, 
-    //     VersionPart expectedRelease,
-    //     bool expectServiceAuthorization,
-    //     bool checkAlreadyInitialized
-    // )
-    //     internal
-    //     view
-    // {
-    //     AccessAdminLib.checkAuthorization(
-    //         _authorization, 
-    //         authorization, 
-    //         expectedDomain, 
-    //         expectedRelease, 
-    //         expectServiceAuthorization,
-    //         checkAlreadyInitialized);
-    // }
 }
