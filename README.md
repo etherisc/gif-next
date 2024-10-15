@@ -203,6 +203,14 @@ hh run scripts/find_missing_virtual_methods.ts.ts
 
 Checks all public/external methods in services and components for methods that are not marked as `virtual` but should be.
 
+### find upgradeable contracts storage locations
+
+```bash
+grep -o -h -E '([A-Z0-9_]+_LOCATION_V[0-9]+_[0-9]+\s*=\s*0x[A-Ha-h0-9]+)' -r contracts
+```
+
+Prints addresses for each storage struct of each release of each upgradeable contract
+
 ## Forge 
 
 ### Commands

@@ -19,8 +19,8 @@ abstract contract Component is
     Registerable,
     IComponent
 {
-    // keccak256(abi.encode(uint256(keccak256("gif-next.contracts.component.Component.sol")) - 1)) & ~bytes32(uint256(0xff));
-    bytes32 public constant COMPONENT_LOCATION_V1 = 0xffe8d4462baed26a47154f4b8f6db497d2f772496965791d25bd456e342b7f00;
+    // keccak256(abi.encode(uint256(keccak256("etherisc.gif.Component@3.0.0")) - 1)) & ~bytes32(uint256(0xff));
+    bytes32 public constant COMPONENT_STORAGE_LOCATION_V3_0 = 0xfc96c0569508c55c4a252d7e9dd1f9d0347413a3bb20065fd534643ada195b00;
 
     struct ComponentStorage {
         string _name; // unique (per instance) component name
@@ -40,7 +40,7 @@ abstract contract Component is
     function _getComponentStorage() private pure returns (ComponentStorage storage $) {
         // solhint-disable-next-line no-inline-assembly
         assembly {
-            $.slot := COMPONENT_LOCATION_V1
+            $.slot := COMPONENT_STORAGE_LOCATION_V3_0
         }
     }
 

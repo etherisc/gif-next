@@ -33,11 +33,18 @@ contract DistributionService is
     Service,
     IDistributionService
 {
-    IAccountingService private _accountingService;
-    IComponentService private _componentService;
-    IInstanceService private _instanceService;
-    IRegistryService private _registryService;
-    
+    // TODO make all storage slot constants private?
+    // keccak256(abi.encode(uint256(keccak256("etherisc.gif.DistributionService@3.0.0")) - 1)) & ~bytes32(uint256(0xff));
+    bytes32 public constant DISTRIBUTION_SERVICE_STORAGE_LOCATION_V3_0 = 0xabfd9ba715b54654d8f0ef9f71a2076277bb1487677f05f4685d1bba29453600;
+
+    struct DistributionServiceStorage {
+        IAccountingService _accountingService;
+        IComponentService _componentService;
+        IInstanceService _instanceService;
+        IRegistryService _registryService;
+    }
+
+
     function _initialize(
         address owner, 
         bytes memory data
@@ -53,10 +60,11 @@ contract DistributionService is
 
         __Service_init(authority, registry, owner);
 
-        _accountingService = IAccountingService(_getServiceAddress(ACCOUNTING()));
-        _componentService = IComponentService(_getServiceAddress(COMPONENT()));
-        _instanceService = IInstanceService(_getServiceAddress(INSTANCE()));
-        _registryService = IRegistryService(_getServiceAddress(REGISTRY()));
+        DistributionServiceStorage storage $ = _getDistributionServiceStorage();
+        $._accountingService = IAccountingService(_getServiceAddress(ACCOUNTING()));
+        $._componentService = IComponentService(_getServiceAddress(COMPONENT()));
+        $._instanceService = IInstanceService(_getServiceAddress(INSTANCE()));
+        $._registryService = IRegistryService(_getServiceAddress(REGISTRY()));
 
         _registerInterface(type(IDistributionService).interfaceId);
     }
@@ -129,7 +137,8 @@ contract DistributionService is
         (NftId distributionNftId, IInstance instance) = _getAndVerifyActiveDistribution();
         _checkDistributionType(instance.getInstanceReader(), distributorType, distributionNftId);
 
-        distributorNftId = _registryService.registerDistributor(
+        DistributionServiceStorage storage $ = _getDistributionServiceStorage();
+        distributorNftId = $._registryService.registerDistributor(
             IRegistry.ObjectInfo(
                 NftIdLib.zero(), 
                 distributionNftId,
@@ -279,17 +288,19 @@ contract DistributionService is
         // get distribution owner fee amount
         Amount distributionOwnerFee = premium.distributionOwnerFeeFixAmount + premium.distributionOwnerFeeVarAmount;
 
+        DistributionServiceStorage storage $ = _getDistributionServiceStorage();
+
         // update referral/distributor info if applicable
         if (referralIsValid(distributionNftId, referralId)) {
 
             // increase distribution balance by commission amount and distribution owner fee
             Amount commissionAmount = premium.commissionAmount;
-            _accountingService.increaseDistributionBalance(store, distributionNftId, commissionAmount, distributionOwnerFee);
+            $._accountingService.increaseDistributionBalance(store, distributionNftId, commissionAmount, distributionOwnerFee);
 
             // update book keeping for referral info
             IDistribution.ReferralInfo memory referralInfo = reader.getReferralInfo(referralId);
 
-            _accountingService.increaseDistributorBalance(store, referralInfo.distributorNftId, AmountLib.zero(), commissionAmount);
+            $._accountingService.increaseDistributorBalance(store, referralInfo.distributorNftId, AmountLib.zero(), commissionAmount);
 
             // update book keeping for distributor info
             IDistribution.DistributorInfo memory distributorInfo = reader.getDistributorInfo(referralInfo.distributorNftId);
@@ -297,7 +308,7 @@ contract DistributionService is
             store.updateDistributor(referralInfo.distributorNftId, distributorInfo, KEEP_STATE());
         } else {
             // increase distribution balance by distribution owner fee
-            _accountingService.increaseDistributionBalance(store, distributionNftId, AmountLib.zero(), distributionOwnerFee);
+            $._accountingService.increaseDistributionBalance(store, distributionNftId, AmountLib.zero(), distributionOwnerFee);
         }
 
         emit LogDistributionServiceSaleProcessed(distributionNftId, referralId);
@@ -331,11 +342,12 @@ contract DistributionService is
 
         // decrease fee counters by withdrawnAmount and update distributor info
         {
+            DistributionServiceStorage storage $ = _getDistributionServiceStorage();
             InstanceStore store = instance.getInstanceStore();
             // decrease fee counter for distribution balance
-            _accountingService.decreaseDistributionBalance(store, distributionNftId, withdrawnAmount, AmountLib.zero());
+            $._accountingService.decreaseDistributionBalance(store, distributionNftId, withdrawnAmount, AmountLib.zero());
             // decrease fee counter for distributor fee
-            _accountingService.decreaseDistributorBalance(store, distributorNftId, AmountLib.zero(), withdrawnAmount);
+            $._accountingService.decreaseDistributorBalance(store, distributorNftId, AmountLib.zero(), withdrawnAmount);
         }
 
         // transfer amount to distributor
@@ -441,6 +453,11 @@ contract DistributionService is
         return PoolLib.getAndVerifyActiveComponent(getRegistry(), msg.sender, DISTRIBUTION());
     }
 
+    function _getDistributionServiceStorage() private pure returns (DistributionServiceStorage storage $) {
+        assembly {
+            $.slot := DISTRIBUTION_SERVICE_STORAGE_LOCATION_V3_0
+        }
+    }
 
     function _getDomain() internal pure override returns(ObjectType) {
         return DISTRIBUTION();

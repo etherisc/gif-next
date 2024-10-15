@@ -39,9 +39,14 @@ contract ComponentService is
     bool private constant INCREASE = true;
     bool private constant DECREASE = false;
 
-    IAccountingService private _accountingService;
-    IRegistryService private _registryService;
-    IStaking private _staking;
+    // keccak256(abi.encode(uint256(keccak256("etherisc.gif.ComponentService@3.0.0")) - 1)) & ~bytes32(uint256(0xff));
+    bytes32 public constant COMPONENT_SERVICE_STORAGE_LOCATION_V3_0 = 0xc5533ae48eb96dccabcb7c228b271a453799a15cdbe5e61ead04b4ec1b7d9c00;
+
+    struct ComponentServiceStorage {
+        IAccountingService _accountingService;
+        IRegistryService _registryService;
+        IStaking _staking;
+    }
 
     function _initialize(
         address owner, 
@@ -58,9 +63,10 @@ contract ComponentService is
 
         __Service_init(authority, registry, owner);
 
-        _accountingService = IAccountingService(_getServiceAddress(ACCOUNTING()));
-        _registryService = IRegistryService(_getServiceAddress(REGISTRY()));
-        _staking = IStakingService(_getServiceAddress(STAKING())).getStaking();
+        ComponentServiceStorage storage $ = _getComponentServiceStorage();
+        $._accountingService = IAccountingService(_getServiceAddress(ACCOUNTING()));
+        $._registryService = IRegistryService(_getServiceAddress(REGISTRY()));
+        $._staking = IStakingService(_getServiceAddress(STAKING())).getStaking();
 
         _registerInterface(type(IComponentService).interfaceId);
     }
@@ -178,7 +184,8 @@ contract ComponentService is
 
         // effects
         // decrease fee counters by withdrawnAmount
-        _accountingService.decreaseComponentFees(
+        ComponentServiceStorage storage $ = _getComponentServiceStorage();
+        $._accountingService.decreaseComponentFees(
             instance.getInstanceStore(), 
             componentNftId, 
             withdrawnAmount);
@@ -231,7 +238,8 @@ contract ComponentService is
             token);
 
         // add product specific token for product to staking
-        _staking.addTargetToken(
+        ComponentServiceStorage storage $ = _getComponentServiceStorage();
+        $._staking.addTargetToken(
             instanceNftId, 
             token);
     }
@@ -495,12 +503,12 @@ contract ComponentService is
             componentAddress,
             parentNftId);
 
-        InstanceStore instanceStore = instance.getInstanceStore();
         ObjectType componentType = objectInfo.objectType;
+        ComponentServiceStorage storage $ = _getComponentServiceStorage();
 
         if(componentType == PRODUCT()) {
             // register product with registry
-            componentNftId = _registryService.registerProduct(
+            componentNftId = $._registryService.registerProduct(
                 component, 
                 objectInfo.initialOwner).nftId;
 
@@ -508,7 +516,7 @@ contract ComponentService is
             _createProduct(instance.getProductStore(), componentNftId, componentAddress);
         } else {
             // register non product component with registry
-            componentNftId = _registryService.registerProductLinkedComponent(
+            componentNftId = $._registryService.registerProductLinkedComponent(
                 component, 
                 objectInfo.objectType, 
                 objectInfo.initialOwner).nftId;
@@ -519,7 +527,7 @@ contract ComponentService is
             NftId productNftId = parentNftId;
             IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
             if(componentType == POOL()) {
-                _createPool(instanceStore, instance.getProductStore(), productNftId, componentNftId, componentAddress, productInfo);
+                _createPool(instance.getInstanceStore(), instance.getProductStore(), productNftId, componentNftId, componentAddress, productInfo);
             } else if(componentType == DISTRIBUTION()) {
                 _createDistribution(instance.getProductStore(), productNftId, componentNftId, productInfo);
             } else if(componentType == ORACLE()) {
@@ -545,7 +553,7 @@ contract ComponentService is
             instanceAdmin.authority());
         
         // register component with instance
-        instanceStore.createComponent(
+        instance.getInstanceStore().createComponent(
             componentNftId, 
             componentInfo);
 
@@ -559,7 +567,7 @@ contract ComponentService is
             instance.getNftId(),
             componentNftId, 
             componentType, 
-            address(component), 
+            componentAddress, 
             token, 
             objectInfo.initialOwner);
     }
@@ -684,6 +692,12 @@ contract ComponentService is
         instance = IInstance(instanceAddress);
     }
 
+    function _getComponentServiceStorage() private pure returns (ComponentServiceStorage storage $) {
+        // solhint-disable-next-line no-inline-assembly
+        assembly {
+            $.slot := COMPONENT_SERVICE_STORAGE_LOCATION_V3_0
+        }
+    }
 
     function _getDomain() internal pure virtual override returns(ObjectType) {
         return COMPONENT();

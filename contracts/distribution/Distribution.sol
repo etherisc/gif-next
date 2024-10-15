@@ -22,8 +22,8 @@ abstract contract Distribution is
     InstanceLinkedComponent,
     IDistributionComponent
 {
-    // keccak256(abi.encode(uint256(keccak256("etherisc.storage.Distribution")) - 1)) & ~bytes32(uint256(0xff));
-    bytes32 public constant DISTRIBUTION_STORAGE_LOCATION_V1 = 0xaab7c5ea03d290056d6c060e0833d3ebcbe647f7694616a2ec52738a64b2f900;
+    // keccak256(abi.encode(uint256(keccak256("etherisc.gif.Distribution@3.0.0")) - 1)) & ~bytes32(uint256(0xff));
+    bytes32 public constant DISTRIBUTION_STORAGE_LOCATION_V3_0 = 0xf05be9ae88f1a13816beae3bf4177e164907f5d055d6c38ea0a1fabc08c6c500;
 
     struct DistributionStorage {
         IComponentService _componentService;
@@ -239,7 +239,7 @@ abstract contract Distribution is
 
     function _getDistributionStorage() private pure returns (DistributionStorage storage $) {
         assembly {
-            $.slot := DISTRIBUTION_STORAGE_LOCATION_V1
+            $.slot := DISTRIBUTION_STORAGE_LOCATION_V3_0
         }
     }
 }

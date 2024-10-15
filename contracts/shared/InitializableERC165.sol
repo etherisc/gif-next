@@ -8,7 +8,12 @@ contract InitializableERC165 is
     Initializable,
     IERC165
 {
-    mapping(bytes4 => bool) private _isSupported;
+    // keccak256(abi.encode(uint256(keccak256("etherisc.gif.InitializableERC165@3.0.0")) - 1)) & ~bytes32(uint256(0xff));
+    bytes32 public constant INITIALIZABLE_ERC165_STORAGE_LOCATION_V3_0 = 0x2c5de3b4947d23a15785cdf804e1e581a3c5f54c0357f66e3f442def0f390100;
+
+    struct InitializableERC165Storage {
+        mapping(bytes4 => bool) _isSupported;
+    }
 
     // @dev initializes with support for ERC165
     function __ERC165_init() internal onlyInitializing() {
@@ -16,7 +21,8 @@ contract InitializableERC165 is
     }
 
     function _initializeERC165() internal {
-        _isSupported[type(IERC165).interfaceId] = true;
+        InitializableERC165Storage storage $ = _getInitializableERC165Storage();
+        $._isSupported[type(IERC165).interfaceId] = true;
     }
 
     // @dev register support for provided interfaceId
@@ -26,10 +32,18 @@ contract InitializableERC165 is
     }
 
     function _registerInterfaceNotInitializing(bytes4 interfaceId) internal{
-        _isSupported[interfaceId] = true;
+        InitializableERC165Storage storage $ = _getInitializableERC165Storage();
+        $._isSupported[interfaceId] = true;
     }
 
     function supportsInterface(bytes4 interfaceId) external view override returns (bool) {
-        return _isSupported[interfaceId];
+        InitializableERC165Storage storage $ = _getInitializableERC165Storage();
+        return $._isSupported[interfaceId];
+    }
+
+    function _getInitializableERC165Storage() private pure returns (InitializableERC165Storage storage $) {
+        assembly {
+            $.slot := INITIALIZABLE_ERC165_STORAGE_LOCATION_V3_0
+        }
     }
 }

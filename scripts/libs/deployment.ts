@@ -98,7 +98,7 @@ export async function deployProxyManagerContract(
         [
             serviceImplAddress,
             deployment.address,
-            await proxy.getInitializationData(),
+            await proxyManager.getDeployData(),
         ], 
         undefined);
 

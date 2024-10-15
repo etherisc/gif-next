@@ -30,8 +30,8 @@ abstract contract Product is
     InstanceLinkedComponent, 
     IProductComponent
 {
-    // keccak256(abi.encode(uint256(keccak256("etherisc.storage.Product")) - 1)) & ~bytes32(uint256(0xff));
-    bytes32 public constant PRODUCT_STORAGE_LOCATION_V1 = 0x0bb7aafdb8e380f81267337bc5b5dfdf76e6d3a380ecadb51ec665246d9d6800;
+    // keccak256(abi.encode(uint256(keccak256("etherisc.gif.Product@3.0.0")) - 1)) & ~bytes32(uint256(0xff));
+    bytes32 public constant PRODUCT_STORAGE_LOCATION_V3_0 = 0x3261127dd9d5619cc84045fb5cff6ef7871eb2df664d756420362d0f872a4600;
 
     struct ProductStorage {
         IComponents.ProductInfo _productInfo;
@@ -485,7 +485,7 @@ abstract contract Product is
 
     function _getProductStorage() internal virtual pure returns (ProductStorage storage $) {
         assembly {
-            $.slot := PRODUCT_STORAGE_LOCATION_V1
+            $.slot := PRODUCT_STORAGE_LOCATION_V3_0
         }
     }
 }
