@@ -35,7 +35,7 @@ contract FlightPool is
                 maxBalanceAmount: AmountLib.max(),
                 isInterceptingBundleTransfers: false,
                 isProcessingConfirmedClaims: false,
-                isExternallyManaged: false,
+                isExternallyManaged: true,
                 isVerifyingApplications: false,
                 collateralizationLevel: UFixedLib.one(),
                 retentionLevel: UFixedLib.one()

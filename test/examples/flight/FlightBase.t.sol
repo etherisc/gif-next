@@ -50,6 +50,8 @@ contract FlightBaseTest is GifTest {
     address public statisticsProvider = makeAddr("statisticsProvider");
     address public statusProvider = makeAddr("statusProvider");
 
+    address public flightPoolWallet = makeAddr("flightPoolWallet");
+
     uint256 public customerPrivateKey = 0xB0B;
 
     address public dataSigner;
@@ -246,6 +248,11 @@ contract FlightBaseTest is GifTest {
             flightProduct, 
             address(flightPool), 
             "flightPool");
+
+        // set external wallet
+        vm.startPrank(flightOwner);
+        flightPool.setWallet(flightPoolWallet);
+        vm.stopPrank();
     }
 
 
@@ -300,6 +307,23 @@ contract FlightBaseTest is GifTest {
             statistics);
 
         (v, r, s) = vm.sign(signerPrivateKey, ratingsHash);
+    }
+
+
+    function _transferTokenToPoolWallet(uint256 amount, bool setMatchingAllowance) internal {
+        vm.startPrank(flightOwner);
+        flightUSD.transfer(
+            flightPool.getWallet(),
+            amount);
+        vm.stopPrank();
+
+        vm.startPrank(flightPoolWallet);
+        if (setMatchingAllowance) {
+            flightUSD.approve(
+                address(flightPool.getTokenHandler()), 
+                amount);
+        }
+        vm.stopPrank();
     }
 
 
