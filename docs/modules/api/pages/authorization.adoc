@@ -1,0 +1,1708 @@
+:github-icon: pass:[<svg class="icon"><use href="#github-icon"/></svg>]
+:xref-AccessManagerCloneable-onlyAdminRole--: xref:authorization.adoc#AccessManagerCloneable-onlyAdminRole--
+= Authorization
+ 
+Contains interfaces and contracts related to authorization. 
+
+== Contracts
+
+:TargetType: pass:normal[xref:#IAccess-TargetType[`++TargetType++`]]
+:RoleInfo: pass:normal[xref:#IAccess-RoleInfo[`++RoleInfo++`]]
+:TargetInfo: pass:normal[xref:#IAccess-TargetInfo[`++TargetInfo++`]]
+:FunctionInfo: pass:normal[xref:#IAccess-FunctionInfo[`++FunctionInfo++`]]
+:RoleNameInfo: pass:normal[xref:#IAccess-RoleNameInfo[`++RoleNameInfo++`]]
+:TargeNameInfo: pass:normal[xref:#IAccess-TargeNameInfo[`++TargeNameInfo++`]]
+
+[.contract]
+[[IAccess]]
+=== `++IAccess++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/authorization/IAccess.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/authorization/IAccess.sol";
+```
+
+:getTokenHandlerName: pass:normal[xref:#IAuthorization-getTokenHandlerName--[`++getTokenHandlerName++`]]
+:getTokenHandlerTarget: pass:normal[xref:#IAuthorization-getTokenHandlerTarget--[`++getTokenHandlerTarget++`]]
+:getTargets: pass:normal[xref:#IAuthorization-getTargets--[`++getTargets++`]]
+:targetExists: pass:normal[xref:#IAuthorization-targetExists-Str-[`++targetExists++`]]
+
+[.contract]
+[[IAuthorization]]
+=== `++IAuthorization++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/authorization/IAuthorization.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/authorization/IAuthorization.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++getTokenHandlerName()++`]
+* [`++getTokenHandlerTarget()++`]
+* [`++getTargets()++`]
+* [`++targetExists(target)++`]
+
+[.contract-subindex-inherited]
+.IServiceAuthorization
+* [`++getDomain()++`]
+* [`++getRelease()++`]
+* [`++getCommitHash()++`]
+* [`++getMainTargetName()++`]
+* [`++getMainTarget()++`]
+* [`++getServiceDomains()++`]
+* [`++getServiceDomain(idx)++`]
+* [`++getServiceTarget(serviceDomain)++`]
+* [`++getServiceRole(serviceDomain)++`]
+* [`++getServiceAddress(serviceDomain)++`]
+* [`++getTargetRole(target)++`]
+* [`++roleExists(roleId)++`]
+* [`++getRoles()++`]
+* [`++getRoleInfo(roleId)++`]
+* [`++getRoleName(roleId)++`]
+* [`++getAuthorizedRoles(target)++`]
+* [`++getAuthorizedFunctions(target, roleId)++`]
+
+[.contract-subindex-inherited]
+.IAccess
+
+[.contract-subindex-inherited]
+.IERC165
+* [`++supportsInterface(interfaceId)++`]
+
+--
+
+[.contract-item]
+[[IAuthorization-getTokenHandlerName--]]
+==== `[.contract-item-name]#++getTokenHandlerName++#++() → string name++` [.item-kind]#external#
+
+Returns the token hander name.
+Only components have a token handler.
+
+[.contract-item]
+[[IAuthorization-getTokenHandlerTarget--]]
+==== `[.contract-item-name]#++getTokenHandlerTarget++#++() → Str target++` [.item-kind]#external#
+
+Returns the token hander target.
+Only components have a token handler.
+
+[.contract-item]
+[[IAuthorization-getTargets--]]
+==== `[.contract-item-name]#++getTargets++#++() → Str[] targets++` [.item-kind]#external#
+
+Returns the complete list of targets.
+
+[.contract-item]
+[[IAuthorization-targetExists-Str-]]
+==== `[.contract-item-name]#++targetExists++#++(Str target) → bool exists++` [.item-kind]#external#
+
+Returns true iff the specified target exists.
+
+:ErrorAuthorizationMainTargetNameEmpty: pass:normal[xref:#IServiceAuthorization-ErrorAuthorizationMainTargetNameEmpty--[`++ErrorAuthorizationMainTargetNameEmpty++`]]
+:ErrorAuthorizationTargetDomainZero: pass:normal[xref:#IServiceAuthorization-ErrorAuthorizationTargetDomainZero--[`++ErrorAuthorizationTargetDomainZero++`]]
+:ErrorAuthorizationReleaseInvalid: pass:normal[xref:#IServiceAuthorization-ErrorAuthorizationReleaseInvalid-uint8-[`++ErrorAuthorizationReleaseInvalid++`]]
+:ErrorAuthorizationCommitHashInvalid: pass:normal[xref:#IServiceAuthorization-ErrorAuthorizationCommitHashInvalid-string-[`++ErrorAuthorizationCommitHashInvalid++`]]
+:getDomain: pass:normal[xref:#IServiceAuthorization-getDomain--[`++getDomain++`]]
+:getRelease: pass:normal[xref:#IServiceAuthorization-getRelease--[`++getRelease++`]]
+:getCommitHash: pass:normal[xref:#IServiceAuthorization-getCommitHash--[`++getCommitHash++`]]
+:getMainTargetName: pass:normal[xref:#IServiceAuthorization-getMainTargetName--[`++getMainTargetName++`]]
+:getMainTarget: pass:normal[xref:#IServiceAuthorization-getMainTarget--[`++getMainTarget++`]]
+:getServiceDomains: pass:normal[xref:#IServiceAuthorization-getServiceDomains--[`++getServiceDomains++`]]
+:getServiceDomain: pass:normal[xref:#IServiceAuthorization-getServiceDomain-uint256-[`++getServiceDomain++`]]
+:getServiceTarget: pass:normal[xref:#IServiceAuthorization-getServiceTarget-ObjectType-[`++getServiceTarget++`]]
+:getServiceRole: pass:normal[xref:#IServiceAuthorization-getServiceRole-ObjectType-[`++getServiceRole++`]]
+:getServiceAddress: pass:normal[xref:#IServiceAuthorization-getServiceAddress-ObjectType-[`++getServiceAddress++`]]
+:getTargetRole: pass:normal[xref:#IServiceAuthorization-getTargetRole-Str-[`++getTargetRole++`]]
+:roleExists: pass:normal[xref:#IServiceAuthorization-roleExists-RoleId-[`++roleExists++`]]
+:getRoles: pass:normal[xref:#IServiceAuthorization-getRoles--[`++getRoles++`]]
+:getRoleInfo: pass:normal[xref:#IServiceAuthorization-getRoleInfo-RoleId-[`++getRoleInfo++`]]
+:getRoleName: pass:normal[xref:#IServiceAuthorization-getRoleName-RoleId-[`++getRoleName++`]]
+:getAuthorizedRoles: pass:normal[xref:#IServiceAuthorization-getAuthorizedRoles-Str-[`++getAuthorizedRoles++`]]
+:getAuthorizedFunctions: pass:normal[xref:#IServiceAuthorization-getAuthorizedFunctions-Str-RoleId-[`++getAuthorizedFunctions++`]]
+
+[.contract]
+[[IServiceAuthorization]]
+=== `++IServiceAuthorization++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/authorization/IServiceAuthorization.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/authorization/IServiceAuthorization.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++getDomain()++`]
+* [`++getRelease()++`]
+* [`++getCommitHash()++`]
+* [`++getMainTargetName()++`]
+* [`++getMainTarget()++`]
+* [`++getServiceDomains()++`]
+* [`++getServiceDomain(idx)++`]
+* [`++getServiceTarget(serviceDomain)++`]
+* [`++getServiceRole(serviceDomain)++`]
+* [`++getServiceAddress(serviceDomain)++`]
+* [`++getTargetRole(target)++`]
+* [`++roleExists(roleId)++`]
+* [`++getRoles()++`]
+* [`++getRoleInfo(roleId)++`]
+* [`++getRoleName(roleId)++`]
+* [`++getAuthorizedRoles(target)++`]
+* [`++getAuthorizedFunctions(target, roleId)++`]
+
+[.contract-subindex-inherited]
+.IAccess
+
+[.contract-subindex-inherited]
+.IERC165
+* [`++supportsInterface(interfaceId)++`]
+
+--
+
+[.contract-item]
+[[IServiceAuthorization-getDomain--]]
+==== `[.contract-item-name]#++getDomain++#++() → ObjectType targetDomain++` [.item-kind]#external#
+
+Returns the main domain of the authorization.
+
+[.contract-item]
+[[IServiceAuthorization-getRelease--]]
+==== `[.contract-item-name]#++getRelease++#++() → VersionPart release++` [.item-kind]#external#
+
+Returns the release (VersionPart) for which the authorizations are defined by this contract.
+Matches with the release returned by the linked service authorization.
+
+[.contract-item]
+[[IServiceAuthorization-getCommitHash--]]
+==== `[.contract-item-name]#++getCommitHash++#++() → string commitHash++` [.item-kind]#external#
+
+Returns the commit hash for the related GIF release.
+
+[.contract-item]
+[[IServiceAuthorization-getMainTargetName--]]
+==== `[.contract-item-name]#++getMainTargetName++#++() → string name++` [.item-kind]#external#
+
+Returns the main target id name as string.
+This name is used to derive the target id and a corresponding target role name
+Overwrite this function to change the basic pool target name.
+
+[.contract-item]
+[[IServiceAuthorization-getMainTarget--]]
+==== `[.contract-item-name]#++getMainTarget++#++() → Str target++` [.item-kind]#external#
+
+Returns the main target.
+
+[.contract-item]
+[[IServiceAuthorization-getServiceDomains--]]
+==== `[.contract-item-name]#++getServiceDomains++#++() → ObjectType[] serviceDomains++` [.item-kind]#external#
+
+Returns the full list of service domains for this release.
+Services need to be registered for the release in revers order of this list.
+
+[.contract-item]
+[[IServiceAuthorization-getServiceDomain-uint256-]]
+==== `[.contract-item-name]#++getServiceDomain++#++(uint256 idx) → ObjectType serviceDomain++` [.item-kind]#external#
+
+Returns the service domain for the provided index.
+
+[.contract-item]
+[[IServiceAuthorization-getServiceTarget-ObjectType-]]
+==== `[.contract-item-name]#++getServiceTarget++#++(ObjectType serviceDomain) → Str serviceTarget++` [.item-kind]#external#
+
+Returns the service target for the specified domain.
+
+[.contract-item]
+[[IServiceAuthorization-getServiceRole-ObjectType-]]
+==== `[.contract-item-name]#++getServiceRole++#++(ObjectType serviceDomain) → RoleId serviceRoleId++` [.item-kind]#external#
+
+Returns the service target for the specified domain.
+
+[.contract-item]
+[[IServiceAuthorization-getServiceAddress-ObjectType-]]
+==== `[.contract-item-name]#++getServiceAddress++#++(ObjectType serviceDomain) → address service++` [.item-kind]#external#
+
+Returns the expected service address for the provided domain.
+
+[.contract-item]
+[[IServiceAuthorization-getTargetRole-Str-]]
+==== `[.contract-item-name]#++getTargetRole++#++(Str target) → RoleId roleId++` [.item-kind]#external#
+
+Returns the role id associated with the target.
+If no role is associated with the target the zero role id is returned.
+
+[.contract-item]
+[[IServiceAuthorization-roleExists-RoleId-]]
+==== `[.contract-item-name]#++roleExists++#++(RoleId roleId) → bool exists++` [.item-kind]#external#
+
+Returns true iff the role exists.
+
+[.contract-item]
+[[IServiceAuthorization-getRoles--]]
+==== `[.contract-item-name]#++getRoles++#++() → RoleId[] roles++` [.item-kind]#external#
+
+Returns the list of involved roles.
+
+[.contract-item]
+[[IServiceAuthorization-getRoleInfo-RoleId-]]
+==== `[.contract-item-name]#++getRoleInfo++#++(RoleId roleId) → struct IAccess.RoleInfo roleInfo++` [.item-kind]#external#
+
+Returns the role info for the provided role id.
+
+[.contract-item]
+[[IServiceAuthorization-getRoleName-RoleId-]]
+==== `[.contract-item-name]#++getRoleName++#++(RoleId roleId) → string roleName++` [.item-kind]#external#
+
+Returns the name for the provided role id.
+
+[.contract-item]
+[[IServiceAuthorization-getAuthorizedRoles-Str-]]
+==== `[.contract-item-name]#++getAuthorizedRoles++#++(Str target) → RoleId[] roleIds++` [.item-kind]#external#
+
+For the given target the list of authorized role ids is returned
+
+[.contract-item]
+[[IServiceAuthorization-getAuthorizedFunctions-Str-RoleId-]]
+==== `[.contract-item-name]#++getAuthorizedFunctions++#++(Str target, RoleId roleId) → struct IAccess.FunctionInfo[] authorizatedFunctions++` [.item-kind]#external#
+
+For the given target and role id the list of authorized functions is returned
+
+:LogAccessAdminRoleCreated: pass:normal[xref:#IAccessAdmin-LogAccessAdminRoleCreated-string-RoleId-enum-IAccess-TargetType-RoleId-string-[`++LogAccessAdminRoleCreated++`]]
+:LogAccessAdminTargetCreated: pass:normal[xref:#IAccessAdmin-LogAccessAdminTargetCreated-string-string-bool-address-RoleId-[`++LogAccessAdminTargetCreated++`]]
+:LogAccessAdminRoleActivatedSet: pass:normal[xref:#IAccessAdmin-LogAccessAdminRoleActivatedSet-string-RoleId-bool-Blocknumber-[`++LogAccessAdminRoleActivatedSet++`]]
+:LogAccessAdminRoleGranted: pass:normal[xref:#IAccessAdmin-LogAccessAdminRoleGranted-string-address-string-[`++LogAccessAdminRoleGranted++`]]
+:LogAccessAdminRoleRevoked: pass:normal[xref:#IAccessAdmin-LogAccessAdminRoleRevoked-string-address-string-[`++LogAccessAdminRoleRevoked++`]]
+:LogAccessAdminTargetLockedSet: pass:normal[xref:#IAccessAdmin-LogAccessAdminTargetLockedSet-string-address-bool-Blocknumber-[`++LogAccessAdminTargetLockedSet++`]]
+:LogAccessAdminFunctionGranted: pass:normal[xref:#IAccessAdmin-LogAccessAdminFunctionGranted-string-address-string-Blocknumber-[`++LogAccessAdminFunctionGranted++`]]
+:ErrorAccessAdminNotDeployer: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminNotDeployer--[`++ErrorAccessAdminNotDeployer++`]]
+:ErrorAccessAdminNotAdminOfRole: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminNotAdminOfRole-RoleId-address-[`++ErrorAccessAdminNotAdminOfRole++`]]
+:ErrorAccessAdminNotRoleOwner: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminNotRoleOwner-RoleId-address-[`++ErrorAccessAdminNotRoleOwner++`]]
+:ErrorAccessAdminInvalidUseOfAdminRole: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminInvalidUseOfAdminRole--[`++ErrorAccessAdminInvalidUseOfAdminRole++`]]
+:ErrorAccessAdminInvalidUseOfPublicRole: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminInvalidUseOfPublicRole--[`++ErrorAccessAdminInvalidUseOfPublicRole++`]]
+:ErrorAccessAdminRoleNotCustom: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminRoleNotCustom-RoleId-[`++ErrorAccessAdminRoleNotCustom++`]]
+:ErrorAccessAdminNotRegistry: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminNotRegistry-address-[`++ErrorAccessAdminNotRegistry++`]]
+:ErrorAccessAdminAuthorityNotContract: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminAuthorityNotContract-address-[`++ErrorAccessAdminAuthorityNotContract++`]]
+:ErrorAccessAdminAccessManagerNotAccessManager: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminAccessManagerNotAccessManager-address-[`++ErrorAccessAdminAccessManagerNotAccessManager++`]]
+:ErrorAccessAdminAccessManagerEmptyName: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminAccessManagerEmptyName--[`++ErrorAccessAdminAccessManagerEmptyName++`]]
+:ErrorAccessAdminInvalidTargetType: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminInvalidTargetType-address-enum-IAccess-TargetType-[`++ErrorAccessAdminInvalidTargetType++`]]
+:ErrorAccessAdminInvalidServiceType: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminInvalidServiceType-address-enum-IAccess-TargetType-[`++ErrorAccessAdminInvalidServiceType++`]]
+:ErrorAccessAdminTargetNotCreated: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminTargetNotCreated-address-[`++ErrorAccessAdminTargetNotCreated++`]]
+:ErrorAccessAdminTargetNotRegistered: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminTargetNotRegistered-address-[`++ErrorAccessAdminTargetNotRegistered++`]]
+:ErrorAccessAdminTargetTypeMismatch: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminTargetTypeMismatch-address-ObjectType-ObjectType-[`++ErrorAccessAdminTargetTypeMismatch++`]]
+:ErrorAccessAdminAlreadyInitialized: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminAlreadyInitialized-address-[`++ErrorAccessAdminAlreadyInitialized++`]]
+:ErrorAccessAdminNotAuthorization: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminNotAuthorization-address-[`++ErrorAccessAdminNotAuthorization++`]]
+:ErrorAccessAdminNotServiceAuthorization: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminNotServiceAuthorization-address-[`++ErrorAccessAdminNotServiceAuthorization++`]]
+:ErrorAccessAdminDomainMismatch: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminDomainMismatch-address-ObjectType-ObjectType-[`++ErrorAccessAdminDomainMismatch++`]]
+:ErrorAccessAdminReleaseMismatch: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminReleaseMismatch-address-VersionPart-VersionPart-[`++ErrorAccessAdminReleaseMismatch++`]]
+:ErrorAccessAdminNotRegistered: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminNotRegistered-address-[`++ErrorAccessAdminNotRegistered++`]]
+:ErrorAccessAdminAdminRoleMissing: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminAdminRoleMissing--[`++ErrorAccessAdminAdminRoleMissing++`]]
+:ErrorAccessAdminRoleAlreadyCreated: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminRoleAlreadyCreated-RoleId-string-[`++ErrorAccessAdminRoleAlreadyCreated++`]]
+:ErrorAccessAdminRoleAdminNotExisting: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminRoleAdminNotExisting-RoleId-[`++ErrorAccessAdminRoleAdminNotExisting++`]]
+:ErrorAccessAdminRoleNameEmpty: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminRoleNameEmpty-RoleId-[`++ErrorAccessAdminRoleNameEmpty++`]]
+:ErrorAccessAdminRoleNameAlreadyExists: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminRoleNameAlreadyExists-RoleId-string-RoleId-[`++ErrorAccessAdminRoleNameAlreadyExists++`]]
+:ErrorAccessAdminRoleUnknown: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminRoleUnknown-RoleId-[`++ErrorAccessAdminRoleUnknown++`]]
+:ErrorAccessAdminRoleIsLocked: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminRoleIsLocked-RoleId-[`++ErrorAccessAdminRoleIsLocked++`]]
+:ErrorAccessAdminRoleIsPaused: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminRoleIsPaused-RoleId-[`++ErrorAccessAdminRoleIsPaused++`]]
+:ErrorAccessAdminRoleMembersLimitReached: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminRoleMembersLimitReached-RoleId-uint256-[`++ErrorAccessAdminRoleMembersLimitReached++`]]
+:ErrorAccessAdminRoleMemberNotContract: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminRoleMemberNotContract-RoleId-address-[`++ErrorAccessAdminRoleMemberNotContract++`]]
+:ErrorAccessAdminRoleMemberRemovalDisabled: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminRoleMemberRemovalDisabled-RoleId-address-[`++ErrorAccessAdminRoleMemberRemovalDisabled++`]]
+:ErrorAccessAdminTargetAlreadyCreated: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminTargetAlreadyCreated-address-string-[`++ErrorAccessAdminTargetAlreadyCreated++`]]
+:ErrorAccessAdminTargetNameEmpty: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminTargetNameEmpty-address-[`++ErrorAccessAdminTargetNameEmpty++`]]
+:ErrorAccessAdminTargetNameAlreadyExists: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminTargetNameAlreadyExists-address-string-address-[`++ErrorAccessAdminTargetNameAlreadyExists++`]]
+:ErrorAccessAdminTargetNotAccessManaged: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminTargetNotAccessManaged-address-[`++ErrorAccessAdminTargetNotAccessManaged++`]]
+:ErrorAccessAdminTargetAuthorityMismatch: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminTargetAuthorityMismatch-address-address-[`++ErrorAccessAdminTargetAuthorityMismatch++`]]
+:ErrorAccessAdminTagetNotLockable: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminTagetNotLockable--[`++ErrorAccessAdminTagetNotLockable++`]]
+:ErrorAccessAdminTargetAlreadyLocked: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminTargetAlreadyLocked-address-bool-[`++ErrorAccessAdminTargetAlreadyLocked++`]]
+:ErrorAccessAdminNotComponentOrCustomTarget: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminNotComponentOrCustomTarget-address-[`++ErrorAccessAdminNotComponentOrCustomTarget++`]]
+:ErrorAccessAdminAuthorizeForAdminRoleInvalid: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminAuthorizeForAdminRoleInvalid-address-[`++ErrorAccessAdminAuthorizeForAdminRoleInvalid++`]]
+:ErrorAccessAdminSelectorZero: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminSelectorZero--[`++ErrorAccessAdminSelectorZero++`]]
+:ErrorAccessAdminFunctionNameEmpty: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminFunctionNameEmpty--[`++ErrorAccessAdminFunctionNameEmpty++`]]
+:ErrorAccessAdminTargetUnknown: pass:normal[xref:#IAccessAdmin-ErrorAccessAdminTargetUnknown-address-[`++ErrorAccessAdminTargetUnknown++`]]
+:getAuthorization: pass:normal[xref:#IAccessAdmin-getAuthorization--[`++getAuthorization++`]]
+:getLinkedNftId: pass:normal[xref:#IAccessAdmin-getLinkedNftId--[`++getLinkedNftId++`]]
+:isLocked: pass:normal[xref:#IAccessAdmin-isLocked--[`++isLocked++`]]
+:roles: pass:normal[xref:#IAccessAdmin-roles--[`++roles++`]]
+:getRoleId: pass:normal[xref:#IAccessAdmin-getRoleId-uint256-[`++getRoleId++`]]
+:roleExists: pass:normal[xref:#IAccessAdmin-roleExists-RoleId-[`++roleExists++`]]
+:getRoleForName: pass:normal[xref:#IAccessAdmin-getRoleForName-string-[`++getRoleForName++`]]
+:getRoleInfo: pass:normal[xref:#IAccessAdmin-getRoleInfo-RoleId-[`++getRoleInfo++`]]
+:isRoleActive: pass:normal[xref:#IAccessAdmin-isRoleActive-RoleId-[`++isRoleActive++`]]
+:isRoleCustom: pass:normal[xref:#IAccessAdmin-isRoleCustom-RoleId-[`++isRoleCustom++`]]
+:isRoleMember: pass:normal[xref:#IAccessAdmin-isRoleMember-RoleId-address-[`++isRoleMember++`]]
+:isRoleAdmin: pass:normal[xref:#IAccessAdmin-isRoleAdmin-RoleId-address-[`++isRoleAdmin++`]]
+:roleMembers: pass:normal[xref:#IAccessAdmin-roleMembers-RoleId-[`++roleMembers++`]]
+:getRoleMember: pass:normal[xref:#IAccessAdmin-getRoleMember-RoleId-uint256-[`++getRoleMember++`]]
+:targetExists: pass:normal[xref:#IAccessAdmin-targetExists-address-[`++targetExists++`]]
+:getTargetForName: pass:normal[xref:#IAccessAdmin-getTargetForName-Str-[`++getTargetForName++`]]
+:targets: pass:normal[xref:#IAccessAdmin-targets--[`++targets++`]]
+:getTargetAddress: pass:normal[xref:#IAccessAdmin-getTargetAddress-uint256-[`++getTargetAddress++`]]
+:getTargetInfo: pass:normal[xref:#IAccessAdmin-getTargetInfo-address-[`++getTargetInfo++`]]
+:isTargetLocked: pass:normal[xref:#IAccessAdmin-isTargetLocked-address-[`++isTargetLocked++`]]
+:authorizedFunctions: pass:normal[xref:#IAccessAdmin-authorizedFunctions-address-[`++authorizedFunctions++`]]
+:getAuthorizedFunction: pass:normal[xref:#IAccessAdmin-getAuthorizedFunction-address-uint256-[`++getAuthorizedFunction++`]]
+
+[.contract]
+[[IAccessAdmin]]
+=== `++IAccessAdmin++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/authorization/IAccessAdmin.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/authorization/IAccessAdmin.sol";
+```
+
+Base interface for registry admin, release admin, and instance admin
+
+[.contract-index]
+.Functions
+--
+* [`++getAuthorization()++`]
+* [`++getLinkedNftId()++`]
+* [`++isLocked()++`]
+* [`++roles()++`]
+* [`++getRoleId(idx)++`]
+* [`++roleExists(roleId)++`]
+* [`++getRoleForName(name)++`]
+* [`++getRoleInfo(roleId)++`]
+* [`++isRoleActive(roleId)++`]
+* [`++isRoleCustom(roleId)++`]
+* [`++isRoleMember(roleId, account)++`]
+* [`++isRoleAdmin(roleId, account)++`]
+* [`++roleMembers(roleId)++`]
+* [`++getRoleMember(roleId, idx)++`]
+* [`++targetExists(target)++`]
+* [`++getTargetForName(name)++`]
+* [`++targets()++`]
+* [`++getTargetAddress(idx)++`]
+* [`++getTargetInfo(target)++`]
+* [`++isTargetLocked(target)++`]
+* [`++authorizedFunctions(target)++`]
+* [`++getAuthorizedFunction(target, idx)++`]
+
+[.contract-subindex-inherited]
+.IRelease
+* [`++getRelease()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IAccess
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++authority()++`]
+* [`++setAuthority()++`]
+* [`++isConsumingScheduledOp()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+* [`++LogAccessAdminRoleCreated(admin, roleId, targetType, roleAdminId, name)++`]
+* [`++LogAccessAdminTargetCreated(admin, name, managed, target, roleId)++`]
+* [`++LogAccessAdminRoleActivatedSet(admin, roleId, active, lastUpdateIn)++`]
+* [`++LogAccessAdminRoleGranted(admin, account, roleName)++`]
+* [`++LogAccessAdminRoleRevoked(admin, account, roleName)++`]
+* [`++LogAccessAdminTargetLockedSet(admin, target, locked, lastUpdateIn)++`]
+* [`++LogAccessAdminFunctionGranted(admin, target, func, lastUpdateIn)++`]
+
+[.contract-subindex-inherited]
+.IRelease
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.IAccess
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+--
+
+[.contract-item]
+[[IAccessAdmin-getAuthorization--]]
+==== `[.contract-item-name]#++getAuthorization++#++() → contract IAuthorization authorization++` [.item-kind]#external#
+
+[.contract-item]
+[[IAccessAdmin-getLinkedNftId--]]
+==== `[.contract-item-name]#++getLinkedNftId++#++() → NftId linkedNftId++` [.item-kind]#external#
+
+[.contract-item]
+[[IAccessAdmin-isLocked--]]
+==== `[.contract-item-name]#++isLocked++#++() → bool locked++` [.item-kind]#external#
+
+[.contract-item]
+[[IAccessAdmin-roles--]]
+==== `[.contract-item-name]#++roles++#++() → uint256 numberOfRoles++` [.item-kind]#external#
+
+[.contract-item]
+[[IAccessAdmin-getRoleId-uint256-]]
+==== `[.contract-item-name]#++getRoleId++#++(uint256 idx) → RoleId roleId++` [.item-kind]#external#
+
+[.contract-item]
+[[IAccessAdmin-roleExists-RoleId-]]
+==== `[.contract-item-name]#++roleExists++#++(RoleId roleId) → bool exists++` [.item-kind]#external#
+
+[.contract-item]
+[[IAccessAdmin-getRoleForName-string-]]
+==== `[.contract-item-name]#++getRoleForName++#++(string name) → RoleId roleId, bool exists++` [.item-kind]#external#
+
+[.contract-item]
+[[IAccessAdmin-getRoleInfo-RoleId-]]
+==== `[.contract-item-name]#++getRoleInfo++#++(RoleId roleId) → struct IAccess.RoleInfo roleInfo++` [.item-kind]#external#
+
+[.contract-item]
+[[IAccessAdmin-isRoleActive-RoleId-]]
+==== `[.contract-item-name]#++isRoleActive++#++(RoleId roleId) → bool isActive++` [.item-kind]#external#
+
+[.contract-item]
+[[IAccessAdmin-isRoleCustom-RoleId-]]
+==== `[.contract-item-name]#++isRoleCustom++#++(RoleId roleId) → bool isCustom++` [.item-kind]#external#
+
+[.contract-item]
+[[IAccessAdmin-isRoleMember-RoleId-address-]]
+==== `[.contract-item-name]#++isRoleMember++#++(RoleId roleId, address account) → bool++` [.item-kind]#external#
+
+[.contract-item]
+[[IAccessAdmin-isRoleAdmin-RoleId-address-]]
+==== `[.contract-item-name]#++isRoleAdmin++#++(RoleId roleId, address account) → bool++` [.item-kind]#external#
+
+[.contract-item]
+[[IAccessAdmin-roleMembers-RoleId-]]
+==== `[.contract-item-name]#++roleMembers++#++(RoleId roleId) → uint256 numberOfMembers++` [.item-kind]#external#
+
+[.contract-item]
+[[IAccessAdmin-getRoleMember-RoleId-uint256-]]
+==== `[.contract-item-name]#++getRoleMember++#++(RoleId roleId, uint256 idx) → address account++` [.item-kind]#external#
+
+[.contract-item]
+[[IAccessAdmin-targetExists-address-]]
+==== `[.contract-item-name]#++targetExists++#++(address target) → bool exists++` [.item-kind]#external#
+
+[.contract-item]
+[[IAccessAdmin-getTargetForName-Str-]]
+==== `[.contract-item-name]#++getTargetForName++#++(Str name) → address target++` [.item-kind]#external#
+
+[.contract-item]
+[[IAccessAdmin-targets--]]
+==== `[.contract-item-name]#++targets++#++() → uint256 numberOfTargets++` [.item-kind]#external#
+
+[.contract-item]
+[[IAccessAdmin-getTargetAddress-uint256-]]
+==== `[.contract-item-name]#++getTargetAddress++#++(uint256 idx) → address target++` [.item-kind]#external#
+
+[.contract-item]
+[[IAccessAdmin-getTargetInfo-address-]]
+==== `[.contract-item-name]#++getTargetInfo++#++(address target) → struct IAccess.TargetInfo targetInfo++` [.item-kind]#external#
+
+[.contract-item]
+[[IAccessAdmin-isTargetLocked-address-]]
+==== `[.contract-item-name]#++isTargetLocked++#++(address target) → bool locked++` [.item-kind]#external#
+
+[.contract-item]
+[[IAccessAdmin-authorizedFunctions-address-]]
+==== `[.contract-item-name]#++authorizedFunctions++#++(address target) → uint256 numberOfFunctions++` [.item-kind]#external#
+
+[.contract-item]
+[[IAccessAdmin-getAuthorizedFunction-address-uint256-]]
+==== `[.contract-item-name]#++getAuthorizedFunction++#++(address target, uint256 idx) → struct IAccess.FunctionInfo func, RoleId roleId++` [.item-kind]#external#
+
+[.contract-item]
+[[IAccessAdmin-LogAccessAdminRoleCreated-string-RoleId-enum-IAccess-TargetType-RoleId-string-]]
+==== `[.contract-item-name]#++LogAccessAdminRoleCreated++#++(string admin, RoleId roleId, enum IAccess.TargetType targetType, RoleId roleAdminId, string name)++` [.item-kind]#event#
+
+[.contract-item]
+[[IAccessAdmin-LogAccessAdminTargetCreated-string-string-bool-address-RoleId-]]
+==== `[.contract-item-name]#++LogAccessAdminTargetCreated++#++(string admin, string name, bool managed, address target, RoleId roleId)++` [.item-kind]#event#
+
+[.contract-item]
+[[IAccessAdmin-LogAccessAdminRoleActivatedSet-string-RoleId-bool-Blocknumber-]]
+==== `[.contract-item-name]#++LogAccessAdminRoleActivatedSet++#++(string admin, RoleId roleId, bool active, Blocknumber lastUpdateIn)++` [.item-kind]#event#
+
+[.contract-item]
+[[IAccessAdmin-LogAccessAdminRoleGranted-string-address-string-]]
+==== `[.contract-item-name]#++LogAccessAdminRoleGranted++#++(string admin, address account, string roleName)++` [.item-kind]#event#
+
+[.contract-item]
+[[IAccessAdmin-LogAccessAdminRoleRevoked-string-address-string-]]
+==== `[.contract-item-name]#++LogAccessAdminRoleRevoked++#++(string admin, address account, string roleName)++` [.item-kind]#event#
+
+[.contract-item]
+[[IAccessAdmin-LogAccessAdminTargetLockedSet-string-address-bool-Blocknumber-]]
+==== `[.contract-item-name]#++LogAccessAdminTargetLockedSet++#++(string admin, address target, bool locked, Blocknumber lastUpdateIn)++` [.item-kind]#event#
+
+[.contract-item]
+[[IAccessAdmin-LogAccessAdminFunctionGranted-string-address-string-Blocknumber-]]
+==== `[.contract-item-name]#++LogAccessAdminFunctionGranted++#++(string admin, address target, string func, Blocknumber lastUpdateIn)++` [.item-kind]#event#
+
+:_adminName: pass:normal[xref:#AccessAdmin-_adminName-string[`++_adminName++`]]
+:_authority: pass:normal[xref:#AccessAdmin-_authority-contract-AccessManagerCloneable[`++_authority++`]]
+:_authorization: pass:normal[xref:#AccessAdmin-_authorization-contract-IAuthorization[`++_authorization++`]]
+:_linkedNftId: pass:normal[xref:#AccessAdmin-_linkedNftId-NftId[`++_linkedNftId++`]]
+:_roleInfo: pass:normal[xref:#AccessAdmin-_roleInfo-mapping-RoleId----struct-IAccess-RoleInfo-[`++_roleInfo++`]]
+:_roleForName: pass:normal[xref:#AccessAdmin-_roleForName-mapping-Str----struct-IAccess-RoleNameInfo-[`++_roleForName++`]]
+:_roleIds: pass:normal[xref:#AccessAdmin-_roleIds-RoleId--[`++_roleIds++`]]
+:_nextRoleId: pass:normal[xref:#AccessAdmin-_nextRoleId-mapping-enum-IAccess-TargetType----uint64-[`++_nextRoleId++`]]
+:_roleMembers: pass:normal[xref:#AccessAdmin-_roleMembers-mapping-RoleId----struct-EnumerableSet-AddressSet-[`++_roleMembers++`]]
+:_targetInfo: pass:normal[xref:#AccessAdmin-_targetInfo-mapping-address----struct-IAccess-TargetInfo-[`++_targetInfo++`]]
+:_targetForName: pass:normal[xref:#AccessAdmin-_targetForName-mapping-Str----address-[`++_targetForName++`]]
+:_targets: pass:normal[xref:#AccessAdmin-_targets-address--[`++_targets++`]]
+:_targetFunctions: pass:normal[xref:#AccessAdmin-_targetFunctions-mapping-address----struct-SelectorSetLib-Set-[`++_targetFunctions++`]]
+:_functionInfo: pass:normal[xref:#AccessAdmin-_functionInfo-mapping-address----mapping-Selector----struct-IAccess-FunctionInfo--[`++_functionInfo++`]]
+:initialize: pass:normal[xref:#AccessAdmin-initialize-address-string-[`++initialize++`]]
+:__AccessAdmin_init: pass:normal[xref:#AccessAdmin-__AccessAdmin_init-address-string-[`++__AccessAdmin_init++`]]
+:getRelease: pass:normal[xref:#AccessAdmin-getRelease--[`++getRelease++`]]
+:getRegistry: pass:normal[xref:#AccessAdmin-getRegistry--[`++getRegistry++`]]
+:getLinkedNftId: pass:normal[xref:#AccessAdmin-getLinkedNftId--[`++getLinkedNftId++`]]
+:getAuthorization: pass:normal[xref:#AccessAdmin-getAuthorization--[`++getAuthorization++`]]
+:isLocked: pass:normal[xref:#AccessAdmin-isLocked--[`++isLocked++`]]
+:roles: pass:normal[xref:#AccessAdmin-roles--[`++roles++`]]
+:getRoleId: pass:normal[xref:#AccessAdmin-getRoleId-uint256-[`++getRoleId++`]]
+:getAdminRole: pass:normal[xref:#AccessAdmin-getAdminRole--[`++getAdminRole++`]]
+:getPublicRole: pass:normal[xref:#AccessAdmin-getPublicRole--[`++getPublicRole++`]]
+:roleExists: pass:normal[xref:#AccessAdmin-roleExists-RoleId-[`++roleExists++`]]
+:getRoleForName: pass:normal[xref:#AccessAdmin-getRoleForName-string-[`++getRoleForName++`]]
+:getRoleInfo: pass:normal[xref:#AccessAdmin-getRoleInfo-RoleId-[`++getRoleInfo++`]]
+:isRoleActive: pass:normal[xref:#AccessAdmin-isRoleActive-RoleId-[`++isRoleActive++`]]
+:isRoleCustom: pass:normal[xref:#AccessAdmin-isRoleCustom-RoleId-[`++isRoleCustom++`]]
+:roleMembers: pass:normal[xref:#AccessAdmin-roleMembers-RoleId-[`++roleMembers++`]]
+:getRoleMember: pass:normal[xref:#AccessAdmin-getRoleMember-RoleId-uint256-[`++getRoleMember++`]]
+:isRoleMember: pass:normal[xref:#AccessAdmin-isRoleMember-RoleId-address-[`++isRoleMember++`]]
+:isRoleAdmin: pass:normal[xref:#AccessAdmin-isRoleAdmin-RoleId-address-[`++isRoleAdmin++`]]
+:targetExists: pass:normal[xref:#AccessAdmin-targetExists-address-[`++targetExists++`]]
+:targets: pass:normal[xref:#AccessAdmin-targets--[`++targets++`]]
+:getTargetAddress: pass:normal[xref:#AccessAdmin-getTargetAddress-uint256-[`++getTargetAddress++`]]
+:getTargetInfo: pass:normal[xref:#AccessAdmin-getTargetInfo-address-[`++getTargetInfo++`]]
+:getTargetForName: pass:normal[xref:#AccessAdmin-getTargetForName-Str-[`++getTargetForName++`]]
+:isTargetLocked: pass:normal[xref:#AccessAdmin-isTargetLocked-address-[`++isTargetLocked++`]]
+:authorizedFunctions: pass:normal[xref:#AccessAdmin-authorizedFunctions-address-[`++authorizedFunctions++`]]
+:getAuthorizedFunction: pass:normal[xref:#AccessAdmin-getAuthorizedFunction-address-uint256-[`++getAuthorizedFunction++`]]
+:getFunctionInfo: pass:normal[xref:#AccessAdmin-getFunctionInfo-address-Selector-[`++getFunctionInfo++`]]
+:_linkToNftOwnable: pass:normal[xref:#AccessAdmin-_linkToNftOwnable-address-[`++_linkToNftOwnable++`]]
+:_createRoles: pass:normal[xref:#AccessAdmin-_createRoles-contract-IServiceAuthorization-[`++_createRoles++`]]
+:_createRole: pass:normal[xref:#AccessAdmin-_createRole-RoleId-struct-IAccess-RoleInfo-bool-[`++_createRole++`]]
+:_setRoleActive: pass:normal[xref:#AccessAdmin-_setRoleActive-RoleId-bool-[`++_setRoleActive++`]]
+:_grantRoleToAccount: pass:normal[xref:#AccessAdmin-_grantRoleToAccount-RoleId-address-[`++_grantRoleToAccount++`]]
+:_revokeRoleFromAccount: pass:normal[xref:#AccessAdmin-_revokeRoleFromAccount-RoleId-address-[`++_revokeRoleFromAccount++`]]
+:_getOrCreateTargetRoleIdAndName: pass:normal[xref:#AccessAdmin-_getOrCreateTargetRoleIdAndName-address-string-enum-IAccess-TargetType-[`++_getOrCreateTargetRoleIdAndName++`]]
+:_createTarget: pass:normal[xref:#AccessAdmin-_createTarget-address-string-enum-IAccess-TargetType-bool-[`++_createTarget++`]]
+:_createTargetUnchecked: pass:normal[xref:#AccessAdmin-_createTargetUnchecked-address-string-enum-IAccess-TargetType-bool-[`++_createTargetUnchecked++`]]
+:_setTargetLocked: pass:normal[xref:#AccessAdmin-_setTargetLocked-address-bool-[`++_setTargetLocked++`]]
+:_authorizeFunctions: pass:normal[xref:#AccessAdmin-_authorizeFunctions-contract-IAuthorization-Str-RoleId-[`++_authorizeFunctions++`]]
+:_authorizeTargetFunctions: pass:normal[xref:#AccessAdmin-_authorizeTargetFunctions-address-RoleId-struct-IAccess-FunctionInfo---bool-bool-[`++_authorizeTargetFunctions++`]]
+:_updateFunctionAccess: pass:normal[xref:#AccessAdmin-_updateFunctionAccess-address-RoleId-struct-IAccess-FunctionInfo-bool-[`++_updateFunctionAccess++`]]
+
+[.contract]
+[[AccessAdmin]]
+=== `++AccessAdmin++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/authorization/AccessAdmin.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/authorization/AccessAdmin.sol";
+```
+
+A generic access amin contract that implements role based access control based on OpenZeppelin's AccessManager contract.
+The contract provides read functions to query all available roles, targets and access rights.
+This contract works for both a constructor based deployment or a deployment based on cloning and initialization.
+
+[.contract-index]
+.Functions
+--
+* [`++initialize(authority, adminName)++`]
+* [`++__AccessAdmin_init(authority, adminName)++`]
+* [`++getRelease()++`]
+* [`++getRegistry()++`]
+* [`++getLinkedNftId()++`]
+* [`++getAuthorization()++`]
+* [`++isLocked()++`]
+* [`++roles()++`]
+* [`++getRoleId(idx)++`]
+* [`++getAdminRole()++`]
+* [`++getPublicRole()++`]
+* [`++roleExists(roleId)++`]
+* [`++getRoleForName(name)++`]
+* [`++getRoleInfo(roleId)++`]
+* [`++isRoleActive(roleId)++`]
+* [`++isRoleCustom(roleId)++`]
+* [`++roleMembers(roleId)++`]
+* [`++getRoleMember(roleId, idx)++`]
+* [`++isRoleMember(roleId, account)++`]
+* [`++isRoleAdmin(roleId, account)++`]
+* [`++targetExists(target)++`]
+* [`++targets()++`]
+* [`++getTargetAddress(idx)++`]
+* [`++getTargetInfo(target)++`]
+* [`++getTargetForName(name)++`]
+* [`++isTargetLocked(target)++`]
+* [`++authorizedFunctions(target)++`]
+* [`++getAuthorizedFunction(target, idx)++`]
+* [`++getFunctionInfo(target, selector)++`]
+* [`++_linkToNftOwnable(registerable)++`]
+* [`++_createRoles(authorization)++`]
+* [`++_createRole(roleId, info, revertOnExistingRole)++`]
+* [`++_setRoleActive(roleId, active)++`]
+* [`++_grantRoleToAccount(roleId, account)++`]
+* [`++_revokeRoleFromAccount(roleId, account)++`]
+* [`++_getOrCreateTargetRoleIdAndName(target, targetName, targetType)++`]
+* [`++_createTarget(target, targetName, targetType, checkAuthority)++`]
+* [`++_createTargetUnchecked(target, targetName, targetType, managed)++`]
+* [`++_setTargetLocked(target, locked)++`]
+* [`++_authorizeFunctions(authorization, target, roleId)++`]
+* [`++_authorizeTargetFunctions(target, roleId, functions, onlyComponentOrContractTargets, addFunctions)++`]
+* [`++_updateFunctionAccess(target, roleId, func, addFunction)++`]
+
+[.contract-subindex-inherited]
+.IAccessAdmin
+
+[.contract-subindex-inherited]
+.IRelease
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.IAccess
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+* [`++__AccessManaged_init(initialAuthority)++`]
+* [`++__AccessManaged_init_unchained(initialAuthority)++`]
+* [`++authority()++`]
+* [`++setAuthority(newAuthority)++`]
+* [`++isConsumingScheduledOp()++`]
+* [`++_setAuthority(newAuthority)++`]
+* [`++_checkCanCall(caller, data)++`]
+
+[.contract-subindex-inherited]
+.IAccessManaged
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+* [`++__Context_init()++`]
+* [`++__Context_init_unchained()++`]
+* [`++_msgSender()++`]
+* [`++_msgData()++`]
+* [`++_contextSuffixLength()++`]
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.IAccessAdmin
+* [`++LogAccessAdminRoleCreated(admin, roleId, targetType, roleAdminId, name)++`]
+* [`++LogAccessAdminTargetCreated(admin, name, managed, target, roleId)++`]
+* [`++LogAccessAdminRoleActivatedSet(admin, roleId, active, lastUpdateIn)++`]
+* [`++LogAccessAdminRoleGranted(admin, account, roleName)++`]
+* [`++LogAccessAdminRoleRevoked(admin, account, roleName)++`]
+* [`++LogAccessAdminTargetLockedSet(admin, target, locked, lastUpdateIn)++`]
+* [`++LogAccessAdminFunctionGranted(admin, target, func, lastUpdateIn)++`]
+
+[.contract-subindex-inherited]
+.IRelease
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.IAccess
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[AccessAdmin-initialize-address-string-]]
+==== `[.contract-item-name]#++initialize++#++(address authority, string adminName)++` [.item-kind]#public#
+
+Initializes this admin with the provided accessManager (and authorization specification).
+Internally initializes access manager with this admin and creates basic role setup.
+
+[.contract-item]
+[[AccessAdmin-__AccessAdmin_init-address-string-]]
+==== `[.contract-item-name]#++__AccessAdmin_init++#++(address authority, string adminName)++` [.item-kind]#internal#
+
+Initializes this admin with the provided accessManager and name.
+IMPORTANT
+- cloning of an access admin and initialization MUST be done in the same tx.
+- this function as well as any completeSetup functions MUST be called in the same tx.
+
+[.contract-item]
+[[AccessAdmin-getRelease--]]
+==== `[.contract-item-name]#++getRelease++#++() → VersionPart release++` [.item-kind]#public#
+
+Registers a registry contract for a specified chain.
+Only one chain registry may be registered per chain
+
+[.contract-item]
+[[AccessAdmin-getRegistry--]]
+==== `[.contract-item-name]#++getRegistry++#++() → contract IRegistry registry++` [.item-kind]#public#
+
+[.contract-item]
+[[AccessAdmin-getLinkedNftId--]]
+==== `[.contract-item-name]#++getLinkedNftId++#++() → NftId linkedNftId++` [.item-kind]#external#
+
+[.contract-item]
+[[AccessAdmin-getAuthorization--]]
+==== `[.contract-item-name]#++getAuthorization++#++() → contract IAuthorization authorization++` [.item-kind]#public#
+
+[.contract-item]
+[[AccessAdmin-isLocked--]]
+==== `[.contract-item-name]#++isLocked++#++() → bool locked++` [.item-kind]#public#
+
+[.contract-item]
+[[AccessAdmin-roles--]]
+==== `[.contract-item-name]#++roles++#++() → uint256 numberOfRoles++` [.item-kind]#external#
+
+[.contract-item]
+[[AccessAdmin-getRoleId-uint256-]]
+==== `[.contract-item-name]#++getRoleId++#++(uint256 idx) → RoleId roleId++` [.item-kind]#external#
+
+[.contract-item]
+[[AccessAdmin-getAdminRole--]]
+==== `[.contract-item-name]#++getAdminRole++#++() → RoleId roleId++` [.item-kind]#public#
+
+[.contract-item]
+[[AccessAdmin-getPublicRole--]]
+==== `[.contract-item-name]#++getPublicRole++#++() → RoleId roleId++` [.item-kind]#public#
+
+[.contract-item]
+[[AccessAdmin-roleExists-RoleId-]]
+==== `[.contract-item-name]#++roleExists++#++(RoleId roleId) → bool exists++` [.item-kind]#public#
+
+[.contract-item]
+[[AccessAdmin-getRoleForName-string-]]
+==== `[.contract-item-name]#++getRoleForName++#++(string name) → RoleId roleId, bool exists++` [.item-kind]#public#
+
+[.contract-item]
+[[AccessAdmin-getRoleInfo-RoleId-]]
+==== `[.contract-item-name]#++getRoleInfo++#++(RoleId roleId) → struct IAccess.RoleInfo++` [.item-kind]#public#
+
+[.contract-item]
+[[AccessAdmin-isRoleActive-RoleId-]]
+==== `[.contract-item-name]#++isRoleActive++#++(RoleId roleId) → bool isActive++` [.item-kind]#external#
+
+[.contract-item]
+[[AccessAdmin-isRoleCustom-RoleId-]]
+==== `[.contract-item-name]#++isRoleCustom++#++(RoleId roleId) → bool isActive++` [.item-kind]#external#
+
+[.contract-item]
+[[AccessAdmin-roleMembers-RoleId-]]
+==== `[.contract-item-name]#++roleMembers++#++(RoleId roleId) → uint256 numberOfMembers++` [.item-kind]#external#
+
+[.contract-item]
+[[AccessAdmin-getRoleMember-RoleId-uint256-]]
+==== `[.contract-item-name]#++getRoleMember++#++(RoleId roleId, uint256 idx) → address account++` [.item-kind]#external#
+
+[.contract-item]
+[[AccessAdmin-isRoleMember-RoleId-address-]]
+==== `[.contract-item-name]#++isRoleMember++#++(RoleId roleId, address account) → bool++` [.item-kind]#public#
+
+[.contract-item]
+[[AccessAdmin-isRoleAdmin-RoleId-address-]]
+==== `[.contract-item-name]#++isRoleAdmin++#++(RoleId roleId, address account) → bool++` [.item-kind]#public#
+
+[.contract-item]
+[[AccessAdmin-targetExists-address-]]
+==== `[.contract-item-name]#++targetExists++#++(address target) → bool exists++` [.item-kind]#public#
+
+[.contract-item]
+[[AccessAdmin-targets--]]
+==== `[.contract-item-name]#++targets++#++() → uint256 numberOfTargets++` [.item-kind]#external#
+
+[.contract-item]
+[[AccessAdmin-getTargetAddress-uint256-]]
+==== `[.contract-item-name]#++getTargetAddress++#++(uint256 idx) → address target++` [.item-kind]#external#
+
+[.contract-item]
+[[AccessAdmin-getTargetInfo-address-]]
+==== `[.contract-item-name]#++getTargetInfo++#++(address target) → struct IAccess.TargetInfo targetInfo++` [.item-kind]#public#
+
+[.contract-item]
+[[AccessAdmin-getTargetForName-Str-]]
+==== `[.contract-item-name]#++getTargetForName++#++(Str name) → address target++` [.item-kind]#public#
+
+[.contract-item]
+[[AccessAdmin-isTargetLocked-address-]]
+==== `[.contract-item-name]#++isTargetLocked++#++(address target) → bool locked++` [.item-kind]#public#
+
+[.contract-item]
+[[AccessAdmin-authorizedFunctions-address-]]
+==== `[.contract-item-name]#++authorizedFunctions++#++(address target) → uint256 numberOfFunctions++` [.item-kind]#external#
+
+[.contract-item]
+[[AccessAdmin-getAuthorizedFunction-address-uint256-]]
+==== `[.contract-item-name]#++getAuthorizedFunction++#++(address target, uint256 idx) → struct IAccess.FunctionInfo func, RoleId roleId++` [.item-kind]#external#
+
+[.contract-item]
+[[AccessAdmin-getFunctionInfo-address-Selector-]]
+==== `[.contract-item-name]#++getFunctionInfo++#++(address target, Selector selector) → struct IAccess.FunctionInfo functionInfo++` [.item-kind]#external#
+
+[.contract-item]
+[[AccessAdmin-_linkToNftOwnable-address-]]
+==== `[.contract-item-name]#++_linkToNftOwnable++#++(address registerable)++` [.item-kind]#internal#
+
+[.contract-item]
+[[AccessAdmin-_createRoles-contract-IServiceAuthorization-]]
+==== `[.contract-item-name]#++_createRoles++#++(contract IServiceAuthorization authorization)++` [.item-kind]#internal#
+
+[.contract-item]
+[[AccessAdmin-_createRole-RoleId-struct-IAccess-RoleInfo-bool-]]
+==== `[.contract-item-name]#++_createRole++#++(RoleId roleId, struct IAccess.RoleInfo info, bool revertOnExistingRole)++` [.item-kind]#internal#
+
+Creates a role based on the provided parameters.
+Checks that the provided role and role id and role name not already used.
+
+[.contract-item]
+[[AccessAdmin-_setRoleActive-RoleId-bool-]]
+==== `[.contract-item-name]#++_setRoleActive++#++(RoleId roleId, bool active)++` [.item-kind]#internal#
+
+Activates or deactivates role.
+The role activ property is indirectly controlled over the pausedAt timestamp.
+
+[.contract-item]
+[[AccessAdmin-_grantRoleToAccount-RoleId-address-]]
+==== `[.contract-item-name]#++_grantRoleToAccount++#++(RoleId roleId, address account)++` [.item-kind]#internal#
+
+grant the specified role to the provided account
+
+[.contract-item]
+[[AccessAdmin-_revokeRoleFromAccount-RoleId-address-]]
+==== `[.contract-item-name]#++_revokeRoleFromAccount++#++(RoleId roleId, address account)++` [.item-kind]#internal#
+
+revoke the specified role from the provided account
+
+[.contract-item]
+[[AccessAdmin-_getOrCreateTargetRoleIdAndName-address-string-enum-IAccess-TargetType-]]
+==== `[.contract-item-name]#++_getOrCreateTargetRoleIdAndName++#++(address target, string targetName, enum IAccess.TargetType targetType) → RoleId roleId, string roleName, bool exists++` [.item-kind]#internal#
+
+[.contract-item]
+[[AccessAdmin-_createTarget-address-string-enum-IAccess-TargetType-bool-]]
+==== `[.contract-item-name]#++_createTarget++#++(address target, string targetName, enum IAccess.TargetType targetType, bool checkAuthority) → RoleId contractRoleId++` [.item-kind]#internal#
+
+[.contract-item]
+[[AccessAdmin-_createTargetUnchecked-address-string-enum-IAccess-TargetType-bool-]]
+==== `[.contract-item-name]#++_createTargetUnchecked++#++(address target, string targetName, enum IAccess.TargetType targetType, bool managed) → RoleId targetRoleId++` [.item-kind]#internal#
+
+Creates a new target and a corresponding contract role.
+The function assigns the role to the target and logs the creation.
+
+[.contract-item]
+[[AccessAdmin-_setTargetLocked-address-bool-]]
+==== `[.contract-item-name]#++_setTargetLocked++#++(address target, bool locked)++` [.item-kind]#internal#
+
+[.contract-item]
+[[AccessAdmin-_authorizeFunctions-contract-IAuthorization-Str-RoleId-]]
+==== `[.contract-item-name]#++_authorizeFunctions++#++(contract IAuthorization authorization, Str target, RoleId roleId)++` [.item-kind]#internal#
+
+Authorize the functions of the target for the specified role.
+
+[.contract-item]
+[[AccessAdmin-_authorizeTargetFunctions-address-RoleId-struct-IAccess-FunctionInfo---bool-bool-]]
+==== `[.contract-item-name]#++_authorizeTargetFunctions++#++(address target, RoleId roleId, struct IAccess.FunctionInfo[] functions, bool onlyComponentOrContractTargets, bool addFunctions)++` [.item-kind]#internal#
+
+Authorize the functions of the target for the specified role.
+Flag addFunctions determines if functions are added or removed.
+
+[.contract-item]
+[[AccessAdmin-_updateFunctionAccess-address-RoleId-struct-IAccess-FunctionInfo-bool-]]
+==== `[.contract-item-name]#++_updateFunctionAccess++#++(address target, RoleId roleId, struct IAccess.FunctionInfo func, bool addFunction)++` [.item-kind]#internal#
+
+:ErrorAccessManagerCallerNotAdmin: pass:normal[xref:#AccessManagerCloneable-ErrorAccessManagerCallerNotAdmin-address-[`++ErrorAccessManagerCallerNotAdmin++`]]
+:ErrorAccessManagerRegistryAlreadySet: pass:normal[xref:#AccessManagerCloneable-ErrorAccessManagerRegistryAlreadySet-address-[`++ErrorAccessManagerRegistryAlreadySet++`]]
+:ErrorAccessManagerInvalidRelease: pass:normal[xref:#AccessManagerCloneable-ErrorAccessManagerInvalidRelease-VersionPart-[`++ErrorAccessManagerInvalidRelease++`]]
+:ErrorAccessManagerTargetAdminLocked: pass:normal[xref:#AccessManagerCloneable-ErrorAccessManagerTargetAdminLocked-address-[`++ErrorAccessManagerTargetAdminLocked++`]]
+:ErrorAccessManagerCallerAdminLocked: pass:normal[xref:#AccessManagerCloneable-ErrorAccessManagerCallerAdminLocked-address-[`++ErrorAccessManagerCallerAdminLocked++`]]
+:onlyAdminRole: pass:normal[xref:#AccessManagerCloneable-onlyAdminRole--[`++onlyAdminRole++`]]
+:initialize: pass:normal[xref:#AccessManagerCloneable-initialize-address-[`++initialize++`]]
+:completeSetup: pass:normal[xref:#AccessManagerCloneable-completeSetup-address-VersionPart-[`++completeSetup++`]]
+:canCall: pass:normal[xref:#AccessManagerCloneable-canCall-address-address-bytes4-[`++canCall++`]]
+:setLocked: pass:normal[xref:#AccessManagerCloneable-setLocked-bool-[`++setLocked++`]]
+:getRelease: pass:normal[xref:#AccessManagerCloneable-getRelease--[`++getRelease++`]]
+:isLocked: pass:normal[xref:#AccessManagerCloneable-isLocked--[`++isLocked++`]]
+:_checkAndSetRelease: pass:normal[xref:#AccessManagerCloneable-_checkAndSetRelease-VersionPart-[`++_checkAndSetRelease++`]]
+:_checkAndSetRegistry: pass:normal[xref:#AccessManagerCloneable-_checkAndSetRegistry-address-[`++_checkAndSetRegistry++`]]
+
+[.contract]
+[[AccessManagerCloneable]]
+=== `++AccessManagerCloneable++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/authorization/AccessManagerCloneable.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/authorization/AccessManagerCloneable.sol";
+```
+
+An AccessManager based on OpenZeppelin that is cloneable and has a central lock property.
+The lock property allows to lock all services of a release in a central place.
+Cloned by upon release preparation and instance cloning.
+
+[.contract-index]
+.Modifiers
+--
+* {xref-AccessManagerCloneable-onlyAdminRole--}[`++onlyAdminRole()++`]
+--
+
+[.contract-index]
+.Functions
+--
+* [`++initialize(admin)++`]
+* [`++completeSetup(registry, release)++`]
+* [`++canCall(caller, target, selector)++`]
+* [`++setLocked(locked)++`]
+* [`++getRelease()++`]
+* [`++isLocked()++`]
+* [`++_checkAndSetRelease(release)++`]
+* [`++_checkAndSetRegistry(registry)++`]
+
+[.contract-subindex-inherited]
+.RegistryLinked
+* [`++__RegistryLinked_init(registry)++`]
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+* [`++__ERC165_init()++`]
+* [`++_initializeERC165()++`]
+* [`++_registerInterface(interfaceId)++`]
+* [`++_registerInterfaceNotInitializing(interfaceId)++`]
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.AccessManagerUpgradeable
+* [`++__AccessManager_init(initialAdmin)++`]
+* [`++__AccessManager_init_unchained(initialAdmin)++`]
+* [`++expiration()++`]
+* [`++minSetback()++`]
+* [`++isTargetClosed(target)++`]
+* [`++getTargetFunctionRole(target, selector)++`]
+* [`++getTargetAdminDelay(target)++`]
+* [`++getRoleAdmin(roleId)++`]
+* [`++getRoleGuardian(roleId)++`]
+* [`++getRoleGrantDelay(roleId)++`]
+* [`++getAccess(roleId, account)++`]
+* [`++hasRole(roleId, account)++`]
+* [`++labelRole(roleId, label)++`]
+* [`++grantRole(roleId, account, executionDelay)++`]
+* [`++revokeRole(roleId, account)++`]
+* [`++renounceRole(roleId, callerConfirmation)++`]
+* [`++setRoleAdmin(roleId, admin)++`]
+* [`++setRoleGuardian(roleId, guardian)++`]
+* [`++setGrantDelay(roleId, newDelay)++`]
+* [`++_grantRole(roleId, account, grantDelay, executionDelay)++`]
+* [`++_revokeRole(roleId, account)++`]
+* [`++_setRoleAdmin(roleId, admin)++`]
+* [`++_setRoleGuardian(roleId, guardian)++`]
+* [`++_setGrantDelay(roleId, newDelay)++`]
+* [`++setTargetFunctionRole(target, selectors, roleId)++`]
+* [`++_setTargetFunctionRole(target, selector, roleId)++`]
+* [`++setTargetAdminDelay(target, newDelay)++`]
+* [`++_setTargetAdminDelay(target, newDelay)++`]
+* [`++setTargetClosed(target, closed)++`]
+* [`++_setTargetClosed(target, closed)++`]
+* [`++getSchedule(id)++`]
+* [`++getNonce(id)++`]
+* [`++schedule(target, data, when)++`]
+* [`++execute(target, data)++`]
+* [`++cancel(caller, target, data)++`]
+* [`++consumeScheduledOp(caller, data)++`]
+* [`++_consumeScheduledOp(operationId)++`]
+* [`++hashOperation(caller, target, data)++`]
+* [`++updateAuthority(target, newAuthority)++`]
+
+[.contract-subindex-inherited]
+.IAccessManager
+
+[.contract-subindex-inherited]
+.MulticallUpgradeable
+* [`++__Multicall_init()++`]
+* [`++__Multicall_init_unchained()++`]
+* [`++multicall(data)++`]
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+* [`++__Context_init()++`]
+* [`++__Context_init_unchained()++`]
+* [`++_msgSender()++`]
+* [`++_msgData()++`]
+* [`++_contextSuffixLength()++`]
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.RegistryLinked
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.AccessManagerUpgradeable
+
+[.contract-subindex-inherited]
+.IAccessManager
+* [`++OperationScheduled(operationId, nonce, schedule, caller, target, data)++`]
+* [`++OperationExecuted(operationId, nonce)++`]
+* [`++OperationCanceled(operationId, nonce)++`]
+* [`++RoleLabel(roleId, label)++`]
+* [`++RoleGranted(roleId, account, delay, since, newMember)++`]
+* [`++RoleRevoked(roleId, account)++`]
+* [`++RoleAdminChanged(roleId, admin)++`]
+* [`++RoleGuardianChanged(roleId, guardian)++`]
+* [`++RoleGrantDelayChanged(roleId, delay, since)++`]
+* [`++TargetClosed(target, closed)++`]
+* [`++TargetFunctionRoleUpdated(target, selector, roleId)++`]
+* [`++TargetAdminDelayUpdated(target, delay, since)++`]
+
+[.contract-subindex-inherited]
+.MulticallUpgradeable
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[AccessManagerCloneable-onlyAdminRole--]]
+==== `[.contract-item-name]#++onlyAdminRole++#++()++` [.item-kind]#modifier#
+
+[.contract-item]
+[[AccessManagerCloneable-initialize-address-]]
+==== `[.contract-item-name]#++initialize++#++(address admin)++` [.item-kind]#public#
+
+[.contract-item]
+[[AccessManagerCloneable-completeSetup-address-VersionPart-]]
+==== `[.contract-item-name]#++completeSetup++#++(address registry, VersionPart release)++` [.item-kind]#external#
+
+Completes the setup of the access manager.
+Links the access manager to the registry and sets the release version.
+
+[.contract-item]
+[[AccessManagerCloneable-canCall-address-address-bytes4-]]
+==== `[.contract-item-name]#++canCall++#++(address caller, address target, bytes4 selector) → bool immediate, uint32 delay++` [.item-kind]#public#
+
+Returns true if the caller is authorized to call the target with the given selector and the manager lock is not set to locked.
+Feturn values as in OpenZeppelin AccessManager.
+For a locked manager the function reverts with ErrorAccessManagerTargetAdminLocked.
+
+[.contract-item]
+[[AccessManagerCloneable-setLocked-bool-]]
+==== `[.contract-item-name]#++setLocked++#++(bool locked)++` [.item-kind]#external#
+
+Locks/unlocks all services of this access manager.
+Only the corresponding access admin can lock/unlock the services.
+
+[.contract-item]
+[[AccessManagerCloneable-getRelease--]]
+==== `[.contract-item-name]#++getRelease++#++() → VersionPart release++` [.item-kind]#external#
+
+Returns the release version of this access manager.
+For the registry admin release 3 is returned.
+For the release admin and the instance admin the actual release version is returned.
+
+[.contract-item]
+[[AccessManagerCloneable-isLocked--]]
+==== `[.contract-item-name]#++isLocked++#++() → bool++` [.item-kind]#public#
+
+Returns true iff all contracts of this access manager are locked.
+
+[.contract-item]
+[[AccessManagerCloneable-_checkAndSetRelease-VersionPart-]]
+==== `[.contract-item-name]#++_checkAndSetRelease++#++(VersionPart release)++` [.item-kind]#internal#
+
+[.contract-item]
+[[AccessManagerCloneable-_checkAndSetRegistry-address-]]
+==== `[.contract-item-name]#++_checkAndSetRegistry++#++(address registry)++` [.item-kind]#internal#
+
+:COMPONENT_ROLE_MIN: pass:normal[xref:#Authorization-COMPONENT_ROLE_MIN-uint64[`++COMPONENT_ROLE_MIN++`]]
+:INSTANCE_ROLE_MIN: pass:normal[xref:#Authorization-INSTANCE_ROLE_MIN-uint64[`++INSTANCE_ROLE_MIN++`]]
+:_nextGifContractRoleId: pass:normal[xref:#Authorization-_nextGifContractRoleId-uint64[`++_nextGifContractRoleId++`]]
+:_nextInstanceContractRoleId: pass:normal[xref:#Authorization-_nextInstanceContractRoleId-uint64[`++_nextInstanceContractRoleId++`]]
+:_tokenHandlerName: pass:normal[xref:#Authorization-_tokenHandlerName-string[`++_tokenHandlerName++`]]
+:_tokenHandlerTarget: pass:normal[xref:#Authorization-_tokenHandlerTarget-Str[`++_tokenHandlerTarget++`]]
+:constructor: pass:normal[xref:#Authorization-constructor-string-ObjectType-uint8-string-enum-IAccess-TargetType-bool-[`++constructor++`]]
+:getTokenHandlerName: pass:normal[xref:#Authorization-getTokenHandlerName--[`++getTokenHandlerName++`]]
+:getTokenHandlerTarget: pass:normal[xref:#Authorization-getTokenHandlerTarget--[`++getTokenHandlerTarget++`]]
+:getTarget: pass:normal[xref:#Authorization-getTarget-string-[`++getTarget++`]]
+:getTargets: pass:normal[xref:#Authorization-getTargets--[`++getTargets++`]]
+:targetExists: pass:normal[xref:#Authorization-targetExists-Str-[`++targetExists++`]]
+:_setupServiceTargets: pass:normal[xref:#Authorization-_setupServiceTargets--[`++_setupServiceTargets++`]]
+:_setupTargets: pass:normal[xref:#Authorization-_setupTargets--[`++_setupTargets++`]]
+:_setupRoles: pass:normal[xref:#Authorization-_setupRoles--[`++_setupRoles++`]]
+:_setupTokenHandlerAuthorizations: pass:normal[xref:#Authorization-_setupTokenHandlerAuthorizations--[`++_setupTokenHandlerAuthorizations++`]]
+:_setupTargetAuthorizations: pass:normal[xref:#Authorization-_setupTargetAuthorizations--[`++_setupTargetAuthorizations++`]]
+:_addCustomRole: pass:normal[xref:#Authorization-_addCustomRole-RoleId-RoleId-uint32-string-[`++_addCustomRole++`]]
+:_addGifTarget: pass:normal[xref:#Authorization-_addGifTarget-string-[`++_addGifTarget++`]]
+:_addInstanceTarget: pass:normal[xref:#Authorization-_addInstanceTarget-string-[`++_addInstanceTarget++`]]
+:_addTarget: pass:normal[xref:#Authorization-_addTarget-string-[`++_addTarget++`]]
+:_toTargetRoleId: pass:normal[xref:#Authorization-_toTargetRoleId-ObjectType-[`++_toTargetRoleId++`]]
+:_toTargetRoleName: pass:normal[xref:#Authorization-_toTargetRoleName-string-[`++_toTargetRoleName++`]]
+
+[.contract]
+[[Authorization]]
+=== `++Authorization++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/authorization/Authorization.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/authorization/Authorization.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++constructor(mainTargetName, domain, release, commitHash, targetType, includeTokenHandler)++`]
+* [`++getTokenHandlerName()++`]
+* [`++getTokenHandlerTarget()++`]
+* [`++getTarget(targetName)++`]
+* [`++getTargets()++`]
+* [`++targetExists(target)++`]
+* [`++_setupServiceTargets()++`]
+* [`++_setupTargets()++`]
+* [`++_setupRoles()++`]
+* [`++_setupTokenHandlerAuthorizations()++`]
+* [`++_setupTargetAuthorizations()++`]
+* [`++_addCustomRole(roleId, adminRoleId, maxMemberCount, name)++`]
+* [`++_addGifTarget(contractName)++`]
+* [`++_addInstanceTarget(contractName)++`]
+* [`++_addTarget(name)++`]
+* [`++_toTargetRoleId(targetDomain)++`]
+* [`++_toTargetRoleName(targetName)++`]
+
+[.contract-subindex-inherited]
+.IAuthorization
+
+[.contract-subindex-inherited]
+.ServiceAuthorization
+* [`++getDomain()++`]
+* [`++getRelease()++`]
+* [`++getCommitHash()++`]
+* [`++getMainTargetName()++`]
+* [`++getMainTarget()++`]
+* [`++getServiceDomains()++`]
+* [`++getServiceDomain(idx)++`]
+* [`++getServiceTarget(serviceDomain)++`]
+* [`++getServiceRole(serviceDomain)++`]
+* [`++getServiceAddress(serviceDomain)++`]
+* [`++getTargetRole(target)++`]
+* [`++roleExists(roleId)++`]
+* [`++getRoles()++`]
+* [`++getRoleInfo(roleId)++`]
+* [`++getRoleName(roleId)++`]
+* [`++getAuthorizedRoles(target)++`]
+* [`++getAuthorizedFunctions(target, roleId)++`]
+* [`++_setupDomains()++`]
+* [`++_setupDomainAuthorizations()++`]
+* [`++_authorizeServiceDomain(serviceDomain, serviceAddress)++`]
+* [`++_addTargetWithRole(targetName, roleId, roleName)++`]
+* [`++_addRole(roleId, info)++`]
+* [`++_authorizeForService(serviceDomain, authorizedDomain)++`]
+* [`++_authorizeForTarget(target, authorizedRoleId)++`]
+* [`++_authorize(functions, selector, name)++`]
+
+[.contract-subindex-inherited]
+.IServiceAuthorization
+
+[.contract-subindex-inherited]
+.IAccess
+
+[.contract-subindex-inherited]
+.InitializableERC165
+* [`++__ERC165_init()++`]
+* [`++_initializeERC165()++`]
+* [`++_registerInterface(interfaceId)++`]
+* [`++_registerInterfaceNotInitializing(interfaceId)++`]
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.IAuthorization
+
+[.contract-subindex-inherited]
+.ServiceAuthorization
+
+[.contract-subindex-inherited]
+.IServiceAuthorization
+
+[.contract-subindex-inherited]
+.IAccess
+
+[.contract-subindex-inherited]
+.InitializableERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[Authorization-constructor-string-ObjectType-uint8-string-enum-IAccess-TargetType-bool-]]
+==== `[.contract-item-name]#++constructor++#++(string mainTargetName, ObjectType domain, uint8 release, string commitHash, enum IAccess.TargetType targetType, bool includeTokenHandler)++` [.item-kind]#public#
+
+[.contract-item]
+[[Authorization-getTokenHandlerName--]]
+==== `[.contract-item-name]#++getTokenHandlerName++#++() → string++` [.item-kind]#public#
+
+Returns the token hander name.
+Only components have a token handler.
+
+[.contract-item]
+[[Authorization-getTokenHandlerTarget--]]
+==== `[.contract-item-name]#++getTokenHandlerTarget++#++() → Str++` [.item-kind]#public#
+
+Returns the token hander target.
+Only components have a token handler.
+
+[.contract-item]
+[[Authorization-getTarget-string-]]
+==== `[.contract-item-name]#++getTarget++#++(string targetName) → Str target++` [.item-kind]#public#
+
+[.contract-item]
+[[Authorization-getTargets--]]
+==== `[.contract-item-name]#++getTargets++#++() → Str[] targets++` [.item-kind]#external#
+
+Returns the complete list of targets.
+
+[.contract-item]
+[[Authorization-targetExists-Str-]]
+==== `[.contract-item-name]#++targetExists++#++(Str target) → bool exists++` [.item-kind]#external#
+
+Returns true iff the specified target exists.
+
+[.contract-item]
+[[Authorization-_setupServiceTargets--]]
+==== `[.contract-item-name]#++_setupServiceTargets++#++()++` [.item-kind]#internal#
+
+Sets up the relevant service targets for the component.
+Overwrite this function for use case specific authorizations.
+
+[.contract-item]
+[[Authorization-_setupTargets--]]
+==== `[.contract-item-name]#++_setupTargets++#++()++` [.item-kind]#internal#
+
+Sets up the relevant (non-service) targets for the component.
+Overwrite this function for use case specific authorizations.
+
+[.contract-item]
+[[Authorization-_setupRoles--]]
+==== `[.contract-item-name]#++_setupRoles++#++()++` [.item-kind]#internal#
+
+Sets up the relevant roles for the component.
+Overwrite this function for use case specific authorizations.
+
+[.contract-item]
+[[Authorization-_setupTokenHandlerAuthorizations--]]
+==== `[.contract-item-name]#++_setupTokenHandlerAuthorizations++#++()++` [.item-kind]#internal#
+
+Sets up the relevant component's token handler authorizations.
+Overwrite this function for use case specific authorizations.
+
+[.contract-item]
+[[Authorization-_setupTargetAuthorizations--]]
+==== `[.contract-item-name]#++_setupTargetAuthorizations++#++()++` [.item-kind]#internal#
+
+Sets up the relevant target authorizations for the component.
+Overwrite this function for use case specific authorizations.
+
+[.contract-item]
+[[Authorization-_addCustomRole-RoleId-RoleId-uint32-string-]]
+==== `[.contract-item-name]#++_addCustomRole++#++(RoleId roleId, RoleId adminRoleId, uint32 maxMemberCount, string name)++` [.item-kind]#internal#
+
+Add a contract role for the provided role id and name.
+
+[.contract-item]
+[[Authorization-_addGifTarget-string-]]
+==== `[.contract-item-name]#++_addGifTarget++#++(string contractName)++` [.item-kind]#internal#
+
+Add a gif target with its corresponding contract role
+
+[.contract-item]
+[[Authorization-_addInstanceTarget-string-]]
+==== `[.contract-item-name]#++_addInstanceTarget++#++(string contractName)++` [.item-kind]#internal#
+
+Add an instance target with its corresponding contract role
+
+[.contract-item]
+[[Authorization-_addTarget-string-]]
+==== `[.contract-item-name]#++_addTarget++#++(string name)++` [.item-kind]#internal#
+
+Use this method to to add an authorized target.
+
+[.contract-item]
+[[Authorization-_toTargetRoleId-ObjectType-]]
+==== `[.contract-item-name]#++_toTargetRoleId++#++(ObjectType targetDomain) → RoleId targetRoleId++` [.item-kind]#internal#
+
+Role id for targets registry, staking and instance
+
+[.contract-item]
+[[Authorization-_toTargetRoleName-string-]]
+==== `[.contract-item-name]#++_toTargetRoleName++#++(string targetName) → string++` [.item-kind]#internal#
+
+Returns the role name for the specified target name
+
+:COMMIT_HASH: pass:normal[xref:#ServiceAuthorization-COMMIT_HASH-string[`++COMMIT_HASH++`]]
+:COMMIT_HASH_LENGTH: pass:normal[xref:#ServiceAuthorization-COMMIT_HASH_LENGTH-uint256[`++COMMIT_HASH_LENGTH++`]]
+:GIF_INITIAL_VERSION: pass:normal[xref:#ServiceAuthorization-GIF_INITIAL_VERSION-uint256[`++GIF_INITIAL_VERSION++`]]
+:SERVICE_NAME_SUFFIX: pass:normal[xref:#ServiceAuthorization-SERVICE_NAME_SUFFIX-string[`++SERVICE_NAME_SUFFIX++`]]
+:ROLE_NAME_SUFFIX: pass:normal[xref:#ServiceAuthorization-ROLE_NAME_SUFFIX-string[`++ROLE_NAME_SUFFIX++`]]
+:DOMAIN: pass:normal[xref:#ServiceAuthorization-DOMAIN-ObjectType[`++DOMAIN++`]]
+:_release: pass:normal[xref:#ServiceAuthorization-_release-uint256[`++_release++`]]
+:_commitHash: pass:normal[xref:#ServiceAuthorization-_commitHash-string[`++_commitHash++`]]
+:_mainTargetName: pass:normal[xref:#ServiceAuthorization-_mainTargetName-string[`++_mainTargetName++`]]
+:_mainTarget: pass:normal[xref:#ServiceAuthorization-_mainTarget-Str[`++_mainTarget++`]]
+:_serviceDomains: pass:normal[xref:#ServiceAuthorization-_serviceDomains-ObjectType--[`++_serviceDomains++`]]
+:_serviceAddress: pass:normal[xref:#ServiceAuthorization-_serviceAddress-mapping-ObjectType----address-[`++_serviceAddress++`]]
+:_roles: pass:normal[xref:#ServiceAuthorization-_roles-RoleId--[`++_roles++`]]
+:_roleInfo: pass:normal[xref:#ServiceAuthorization-_roleInfo-mapping-RoleId----struct-IAccess-RoleInfo-[`++_roleInfo++`]]
+:_targets: pass:normal[xref:#ServiceAuthorization-_targets-Str--[`++_targets++`]]
+:_targetExists: pass:normal[xref:#ServiceAuthorization-_targetExists-mapping-Str----bool-[`++_targetExists++`]]
+:_targetRole: pass:normal[xref:#ServiceAuthorization-_targetRole-mapping-Str----RoleId-[`++_targetRole++`]]
+:_authorizedRoles: pass:normal[xref:#ServiceAuthorization-_authorizedRoles-mapping-Str----RoleId---[`++_authorizedRoles++`]]
+:_authorizedFunctions: pass:normal[xref:#ServiceAuthorization-_authorizedFunctions-mapping-Str----mapping-RoleId----struct-IAccess-FunctionInfo----[`++_authorizedFunctions++`]]
+:constructor: pass:normal[xref:#ServiceAuthorization-constructor-string-ObjectType-uint8-string-[`++constructor++`]]
+:getDomain: pass:normal[xref:#ServiceAuthorization-getDomain--[`++getDomain++`]]
+:getRelease: pass:normal[xref:#ServiceAuthorization-getRelease--[`++getRelease++`]]
+:getCommitHash: pass:normal[xref:#ServiceAuthorization-getCommitHash--[`++getCommitHash++`]]
+:getMainTargetName: pass:normal[xref:#ServiceAuthorization-getMainTargetName--[`++getMainTargetName++`]]
+:getMainTarget: pass:normal[xref:#ServiceAuthorization-getMainTarget--[`++getMainTarget++`]]
+:getServiceDomains: pass:normal[xref:#ServiceAuthorization-getServiceDomains--[`++getServiceDomains++`]]
+:getServiceDomain: pass:normal[xref:#ServiceAuthorization-getServiceDomain-uint256-[`++getServiceDomain++`]]
+:getServiceTarget: pass:normal[xref:#ServiceAuthorization-getServiceTarget-ObjectType-[`++getServiceTarget++`]]
+:getServiceRole: pass:normal[xref:#ServiceAuthorization-getServiceRole-ObjectType-[`++getServiceRole++`]]
+:getServiceAddress: pass:normal[xref:#ServiceAuthorization-getServiceAddress-ObjectType-[`++getServiceAddress++`]]
+:getTargetRole: pass:normal[xref:#ServiceAuthorization-getTargetRole-Str-[`++getTargetRole++`]]
+:roleExists: pass:normal[xref:#ServiceAuthorization-roleExists-RoleId-[`++roleExists++`]]
+:getRoles: pass:normal[xref:#ServiceAuthorization-getRoles--[`++getRoles++`]]
+:getRoleInfo: pass:normal[xref:#ServiceAuthorization-getRoleInfo-RoleId-[`++getRoleInfo++`]]
+:getRoleName: pass:normal[xref:#ServiceAuthorization-getRoleName-RoleId-[`++getRoleName++`]]
+:getAuthorizedRoles: pass:normal[xref:#ServiceAuthorization-getAuthorizedRoles-Str-[`++getAuthorizedRoles++`]]
+:getAuthorizedFunctions: pass:normal[xref:#ServiceAuthorization-getAuthorizedFunctions-Str-RoleId-[`++getAuthorizedFunctions++`]]
+:_setupDomains: pass:normal[xref:#ServiceAuthorization-_setupDomains--[`++_setupDomains++`]]
+:_setupDomainAuthorizations: pass:normal[xref:#ServiceAuthorization-_setupDomainAuthorizations--[`++_setupDomainAuthorizations++`]]
+:_authorizeServiceDomain: pass:normal[xref:#ServiceAuthorization-_authorizeServiceDomain-ObjectType-address-[`++_authorizeServiceDomain++`]]
+:_addTargetWithRole: pass:normal[xref:#ServiceAuthorization-_addTargetWithRole-string-RoleId-string-[`++_addTargetWithRole++`]]
+:_addRole: pass:normal[xref:#ServiceAuthorization-_addRole-RoleId-struct-IAccess-RoleInfo-[`++_addRole++`]]
+:_authorizeForService: pass:normal[xref:#ServiceAuthorization-_authorizeForService-ObjectType-ObjectType-[`++_authorizeForService++`]]
+:_authorizeForTarget: pass:normal[xref:#ServiceAuthorization-_authorizeForTarget-string-RoleId-[`++_authorizeForTarget++`]]
+:_authorize: pass:normal[xref:#ServiceAuthorization-_authorize-struct-IAccess-FunctionInfo---bytes4-string-[`++_authorize++`]]
+
+[.contract]
+[[ServiceAuthorization]]
+=== `++ServiceAuthorization++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/authorization/ServiceAuthorization.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/authorization/ServiceAuthorization.sol";
+```
+
+Base contract for release specific service authorization contracts and for Authorization contracts.
+
+[.contract-index]
+.Functions
+--
+* [`++constructor(mainTargetName, domain, release, commitHash)++`]
+* [`++getDomain()++`]
+* [`++getRelease()++`]
+* [`++getCommitHash()++`]
+* [`++getMainTargetName()++`]
+* [`++getMainTarget()++`]
+* [`++getServiceDomains()++`]
+* [`++getServiceDomain(idx)++`]
+* [`++getServiceTarget(serviceDomain)++`]
+* [`++getServiceRole(serviceDomain)++`]
+* [`++getServiceAddress(serviceDomain)++`]
+* [`++getTargetRole(target)++`]
+* [`++roleExists(roleId)++`]
+* [`++getRoles()++`]
+* [`++getRoleInfo(roleId)++`]
+* [`++getRoleName(roleId)++`]
+* [`++getAuthorizedRoles(target)++`]
+* [`++getAuthorizedFunctions(target, roleId)++`]
+* [`++_setupDomains()++`]
+* [`++_setupDomainAuthorizations()++`]
+* [`++_authorizeServiceDomain(serviceDomain, serviceAddress)++`]
+* [`++_addTargetWithRole(targetName, roleId, roleName)++`]
+* [`++_addRole(roleId, info)++`]
+* [`++_authorizeForService(serviceDomain, authorizedDomain)++`]
+* [`++_authorizeForTarget(target, authorizedRoleId)++`]
+* [`++_authorize(functions, selector, name)++`]
+
+[.contract-subindex-inherited]
+.IServiceAuthorization
+
+[.contract-subindex-inherited]
+.IAccess
+
+[.contract-subindex-inherited]
+.InitializableERC165
+* [`++__ERC165_init()++`]
+* [`++_initializeERC165()++`]
+* [`++_registerInterface(interfaceId)++`]
+* [`++_registerInterfaceNotInitializing(interfaceId)++`]
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.IServiceAuthorization
+
+[.contract-subindex-inherited]
+.IAccess
+
+[.contract-subindex-inherited]
+.InitializableERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[ServiceAuthorization-constructor-string-ObjectType-uint8-string-]]
+==== `[.contract-item-name]#++constructor++#++(string mainTargetName, ObjectType domain, uint8 release, string commitHash)++` [.item-kind]#public#
+
+[.contract-item]
+[[ServiceAuthorization-getDomain--]]
+==== `[.contract-item-name]#++getDomain++#++() → ObjectType targetDomain++` [.item-kind]#public#
+
+Returns the main domain of the authorization.
+
+[.contract-item]
+[[ServiceAuthorization-getRelease--]]
+==== `[.contract-item-name]#++getRelease++#++() → VersionPart release++` [.item-kind]#public#
+
+Returns the release (VersionPart) for which the authorizations are defined by this contract.
+Matches with the release returned by the linked service authorization.
+
+[.contract-item]
+[[ServiceAuthorization-getCommitHash--]]
+==== `[.contract-item-name]#++getCommitHash++#++() → string commitHash++` [.item-kind]#external#
+
+Returns the commit hash for the related GIF release.
+
+[.contract-item]
+[[ServiceAuthorization-getMainTargetName--]]
+==== `[.contract-item-name]#++getMainTargetName++#++() → string name++` [.item-kind]#public#
+
+Returns the main target id name as string.
+This name is used to derive the target id and a corresponding target role name
+Overwrite this function to change the basic pool target name.
+
+[.contract-item]
+[[ServiceAuthorization-getMainTarget--]]
+==== `[.contract-item-name]#++getMainTarget++#++() → Str target++` [.item-kind]#external#
+
+Returns the main target.
+
+[.contract-item]
+[[ServiceAuthorization-getServiceDomains--]]
+==== `[.contract-item-name]#++getServiceDomains++#++() → ObjectType[] serviceDomains++` [.item-kind]#external#
+
+Returns the full list of service domains for this release.
+Services need to be registered for the release in revers order of this list.
+
+[.contract-item]
+[[ServiceAuthorization-getServiceDomain-uint256-]]
+==== `[.contract-item-name]#++getServiceDomain++#++(uint256 idx) → ObjectType serviceDomain++` [.item-kind]#external#
+
+Returns the service domain for the provided index.
+
+[.contract-item]
+[[ServiceAuthorization-getServiceTarget-ObjectType-]]
+==== `[.contract-item-name]#++getServiceTarget++#++(ObjectType serviceDomain) → Str target++` [.item-kind]#public#
+
+Returns the service target for the specified domain.
+
+[.contract-item]
+[[ServiceAuthorization-getServiceRole-ObjectType-]]
+==== `[.contract-item-name]#++getServiceRole++#++(ObjectType serviceDomain) → RoleId serviceRoleId++` [.item-kind]#public#
+
+Returns the service target for the specified domain.
+
+[.contract-item]
+[[ServiceAuthorization-getServiceAddress-ObjectType-]]
+==== `[.contract-item-name]#++getServiceAddress++#++(ObjectType serviceDomain) → address service++` [.item-kind]#external#
+
+Returns the expected service address for the provided domain.
+
+[.contract-item]
+[[ServiceAuthorization-getTargetRole-Str-]]
+==== `[.contract-item-name]#++getTargetRole++#++(Str target) → RoleId roleId++` [.item-kind]#public#
+
+Returns the role id associated with the target.
+If no role is associated with the target the zero role id is returned.
+
+[.contract-item]
+[[ServiceAuthorization-roleExists-RoleId-]]
+==== `[.contract-item-name]#++roleExists++#++(RoleId roleId) → bool exists++` [.item-kind]#public#
+
+Returns true iff the role exists.
+
+[.contract-item]
+[[ServiceAuthorization-getRoles--]]
+==== `[.contract-item-name]#++getRoles++#++() → RoleId[] roles++` [.item-kind]#external#
+
+Returns the list of involved roles.
+
+[.contract-item]
+[[ServiceAuthorization-getRoleInfo-RoleId-]]
+==== `[.contract-item-name]#++getRoleInfo++#++(RoleId roleId) → struct IAccess.RoleInfo info++` [.item-kind]#external#
+
+Returns the role info for the provided role id.
+
+[.contract-item]
+[[ServiceAuthorization-getRoleName-RoleId-]]
+==== `[.contract-item-name]#++getRoleName++#++(RoleId roleId) → string roleName++` [.item-kind]#external#
+
+Returns the name for the provided role id.
+
+[.contract-item]
+[[ServiceAuthorization-getAuthorizedRoles-Str-]]
+==== `[.contract-item-name]#++getAuthorizedRoles++#++(Str target) → RoleId[] roleIds++` [.item-kind]#external#
+
+For the given target the list of authorized role ids is returned
+
+[.contract-item]
+[[ServiceAuthorization-getAuthorizedFunctions-Str-RoleId-]]
+==== `[.contract-item-name]#++getAuthorizedFunctions++#++(Str target, RoleId roleId) → struct IAccess.FunctionInfo[] authorizatedFunctions++` [.item-kind]#external#
+
+For the given target and role id the list of authorized functions is returned
+
+[.contract-item]
+[[ServiceAuthorization-_setupDomains--]]
+==== `[.contract-item-name]#++_setupDomains++#++()++` [.item-kind]#internal#
+
+Defines service domains relevant for the authorization.
+When used for ReleaseAdmin the list defines the services to be registered for the release.
+IMPORTANT: Both the list of the service domains as well as the ordering of the domains is important.
+Trying to register services not in this list or register services in a different order will result in an error.
+
+[.contract-item]
+[[ServiceAuthorization-_setupDomainAuthorizations--]]
+==== `[.contract-item-name]#++_setupDomainAuthorizations++#++()++` [.item-kind]#internal#
+
+Overwrite this function for a specific realease.
+
+[.contract-item]
+[[ServiceAuthorization-_authorizeServiceDomain-ObjectType-address-]]
+==== `[.contract-item-name]#++_authorizeServiceDomain++#++(ObjectType serviceDomain, address serviceAddress)++` [.item-kind]#internal#
+
+Use this method to to add an authorized domain.
+The services will need to be registered in the order they are added using this function.
+
+[.contract-item]
+[[ServiceAuthorization-_addTargetWithRole-string-RoleId-string-]]
+==== `[.contract-item-name]#++_addTargetWithRole++#++(string targetName, RoleId roleId, string roleName)++` [.item-kind]#internal#
+
+Use this method to to add an authorized target together with its target role.
+
+[.contract-item]
+[[ServiceAuthorization-_addRole-RoleId-struct-IAccess-RoleInfo-]]
+==== `[.contract-item-name]#++_addRole++#++(RoleId roleId, struct IAccess.RoleInfo info)++` [.item-kind]#internal#
+
+Use this method to to add an authorized role.
+
+[.contract-item]
+[[ServiceAuthorization-_authorizeForService-ObjectType-ObjectType-]]
+==== `[.contract-item-name]#++_authorizeForService++#++(ObjectType serviceDomain, ObjectType authorizedDomain) → struct IAccess.FunctionInfo[] authorizatedFunctions++` [.item-kind]#internal#
+
+Use this method to authorize the specified domain to access the service domain.
+
+[.contract-item]
+[[ServiceAuthorization-_authorizeForTarget-string-RoleId-]]
+==== `[.contract-item-name]#++_authorizeForTarget++#++(string target, RoleId authorizedRoleId) → struct IAccess.FunctionInfo[] authorizatedFunctions++` [.item-kind]#internal#
+
+Use this method to authorize the specified role to access the target.
+
+[.contract-item]
+[[ServiceAuthorization-_authorize-struct-IAccess-FunctionInfo---bytes4-string-]]
+==== `[.contract-item-name]#++_authorize++#++(struct IAccess.FunctionInfo[] functions, bytes4 selector, string name)++` [.item-kind]#internal#
+
+Use this method to authorize a specific function authorization
+

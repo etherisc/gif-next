@@ -1,0 +1,7 @@
+:github-icon: pass:[<svg class="icon"><use href="#github-icon"/></svg>]
+= Base
+ 
+Contains the instance base contracts. 
+
+== Contracts
+
