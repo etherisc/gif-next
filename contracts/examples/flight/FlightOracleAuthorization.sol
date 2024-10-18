@@ -8,7 +8,7 @@ import {IAccess} from "../../../contracts/authorization/IAccess.sol";
 import {AccessAdminLib} from "../../authorization/AccessAdminLib.sol";
 import {BasicOracleAuthorization} from "../../oracle/BasicOracleAuthorization.sol";
 import {FlightOracle} from "./FlightOracle.sol";
-import {RoleId, ADMIN_ROLE} from "../../../contracts/type/RoleId.sol";
+import {RoleId, ADMIN_ROLE, PUBLIC_ROLE} from "../../../contracts/type/RoleId.sol";
 
 contract FlightOracleAuthorization
     is BasicOracleAuthorization
@@ -48,6 +48,10 @@ contract FlightOracleAuthorization
 
         functions = _authorizeForTarget(getMainTargetName(), STATUS_PROVIDER_ROLE);
         _authorize(functions, FlightOracle.respondWithFlightStatus.selector, "respondWithFlightStatus");
+
+        // authorize public role (additional authz via onlyOwner)
+        functions = _authorizeForTarget(getMainTargetName(), PUBLIC_ROLE());
+        _authorize(functions, FlightOracle.updateRequestState.selector, "updateRequestState");
     }
 }
 

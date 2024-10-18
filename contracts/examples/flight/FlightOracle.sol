@@ -101,16 +101,18 @@ contract FlightOracle is
         _respond(requestId, responseData);
 
         // TODO decide if the code below should be moved to GIF
-        // check callback result
-        bool requestFulfilled = _getInstanceReader().getRequestState(
-            requestId) == FULFILLED();
-
-        // remove from active requests when successful
-        if (requestFulfilled) {
-            LibRequestIdSet.remove(_activeRequests, requestId);
-        }
+        _updateRequestState(requestId);
     }
 
+
+    function updateRequestState(
+        RequestId requestId
+    )
+        external
+        restricted()
+    {
+        _updateRequestState(requestId);
+    }
 
     //--- view functions ----------------------------------------------------//
 
@@ -171,6 +173,24 @@ contract FlightOracle is
     }
 
     //--- internal functions ------------------------------------------------//
+
+
+    // TODO decide if the code below should be moved to GIF
+    // check callback result
+    function _updateRequestState(
+        RequestId requestId
+    )
+        internal
+    {
+        bool requestFulfilled = _getInstanceReader().getRequestState(
+            requestId) == FULFILLED();
+
+        // remove from active requests when successful
+        if (requestFulfilled && LibRequestIdSet.contains(_activeRequests, requestId)) {
+            LibRequestIdSet.remove(_activeRequests, requestId);
+        } 
+    }
+
 
     /// @dev use case specific handling of oracle requests
     /// for now only log is emitted to verify that request has been received by oracle component 

@@ -404,6 +404,9 @@ contract FlightProductTest is FlightBaseTest {
         console.log("ts", block.timestamp);
         // solhint-enable
 
+        // add payout token (externally managed pool does not intitially need to be filled with tokens)
+        _transferTokenToPoolWallet(1000 *  10 ** flightUSD.decimals(), true);
+
         (FlightProduct.PermitData memory permit) = _createPermitWithSignature(
             customer, 
             premiumAmount, 
@@ -523,9 +526,12 @@ contract FlightProductTest is FlightBaseTest {
     }
 
 
-    function test_flightCreatePolicyAndProcessFlightStatusWithPayout() public {
+    function test_flightCreatePolicyAndProcessFlightStatusWithPayoutHappyCase() public {
         // GIVEN - create policy
         approveProductTokenHandler();
+
+        // add payout token (externally managed pool does not intitially need to be filled with tokens)
+        _transferTokenToPoolWallet(1000 *  10 ** flightUSD.decimals(), true);
 
         Amount premiumAmount = flightProduct.MAX_PREMIUM(); // AmountLib.toAmount(30 * 10 ** flightUSD.decimals());
 
@@ -568,6 +574,8 @@ contract FlightProductTest is FlightBaseTest {
         flightOracle.respondWithFlightStatus(requestId, status, delay);
         vm.stopPrank();
 
+        assertEq(instanceReader.getRequestState(requestId).toInt(), FULFILLED().toInt(), "request state not FULFILLED after callback");
+
         // THEN
         requestInfo = instanceReader.getRequestInfo(requestId);
         _printRequest(requestId, requestInfo);
@@ -587,6 +595,9 @@ contract FlightProductTest is FlightBaseTest {
         approveProductTokenHandler();
 
         Amount premiumAmount = flightProduct.MAX_PREMIUM(); // AmountLib.toAmount(30 * 10 ** flightUSD.decimals());
+
+        // add payout token (externally managed pool does not intitially need to be filled with tokens)
+        _transferTokenToPoolWallet(5000 *  10 ** flightUSD.decimals(), true);
 
         // WHEN
 
@@ -707,6 +718,97 @@ contract FlightProductTest is FlightBaseTest {
         assertEq(instanceReader.policiesForRisk(riskId1), 0, "unexpected number of policies for risk (after processing last policy)");
         assertEq(flightOracle.activeRequests(), 0, "unexpected number of active requests (after processing last policy)");
 
+        // assertTrue(false, "oops");
+    }
+
+
+    function test_flightCreatePolicyAndProcessFlightStatusWithInsufficientWalletBalance() public {
+        // GIVEN - create policy
+        approveProductTokenHandler();
+
+        Amount premiumAmount = flightProduct.MAX_PREMIUM(); // AmountLib.toAmount(30 * 10 ** flightUSD.decimals());
+
+        (FlightProduct.PermitData memory permit) = _createPermitWithSignature(
+            customer, 
+            premiumAmount, 
+            customerPrivateKey, 
+            0); // nonce
+
+        // WHEN
+        vm.startPrank(statisticsProvider);
+        NftId policyNftId = _createPolicy(
+            flightData, 
+            departureTime, 
+            "2024-11-08 Europe/Zurich", 
+            arrivalTime, 
+            "2024-11-08 Asia/Bangkok", 
+            statistics,
+            permit);
+        vm.stopPrank();
+
+        assertEq(flightOracle.activeRequests(), 1, "unexpected number of active requests (before status callback)");
+        RequestId requestId = flightOracle.getActiveRequest(0);
+        assertTrue(requestId.gtz(), "request id zero");
+
+        // create flight status data (90 min late)
+        bytes1 status = "L";
+        int256 delay = 90; 
+        uint8 maxPoliciesToProcess = 1;
+
+        // print request before allback
+        IOracle.RequestInfo memory requestInfo = instanceReader.getRequestInfo(requestId);
+        _printRequest(requestId, requestInfo);
+
+        // WHEN
+        // set cheking time 2h after scheduled arrival time
+        vm.warp(arrivalTime.toInt() + 2 * 3600);
+
+        vm.startPrank(statusProvider);
+        flightOracle.respondWithFlightStatus(requestId, status, delay);
+        vm.stopPrank();
+
+        // THEN
+        assertEq(flightOracle.activeRequests(), 1, "unexpected number of active requests after status callback");
+        assertEq(instanceReader.getRequestState(requestId).toInt(), FAILED().toInt(), "request state not FAILED after callback");
+
+        IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
+        assertEq(policyInfo.claimsCount, 0, "unexpected number of claims (after status callback with insufficient wallet balance)");
+        assertEq(policyInfo.closedAt.toInt(), 0, "unexpected closed at (after status callback with insufficient wallet balance)");
+
+        // WHEN - add funding and resend request
+        _transferTokenToPoolWallet(5000 *  10 ** flightUSD.decimals(), true);
+
+        vm.startPrank(statusProvider);
+        flightProduct.resendRequest(requestId);
+        vm.stopPrank();
+
+        // check intermediate state
+        assertEq(flightOracle.activeRequests(), 1, "unexpected number of active requests before updateRequestState");
+
+        // update request state -> will remove request from active requests if state is fulfilled
+        flightOracle.updateRequestState(requestId);
+
+        // THEN
+        assertEq(flightOracle.activeRequests(), 0, "unexpected number of active requests after resend request");
+        assertEq(instanceReader.getRequestState(requestId).toInt(), FULFILLED().toInt(), "request state not FAILED resend request");
+
+        policyInfo = instanceReader.getPolicyInfo(policyNftId);
+        assertEq(policyInfo.claimsCount, 1, "unexpected number of claims (after resending request with sufficient wallet balance)");
+        assertEq(policyInfo.closedAt.toInt(), TimestampLib.current().toInt(), "unexpected closed at (after resending request with sufficient wallet balance)");
+
+        console.log("--- state after pool funding and resending request ---");
+        console.log("policy closed at", policyInfo.closedAt.toInt());
+
+        // WHEN - check that function may be called more than once without reverts
+        flightOracle.updateRequestState(requestId);
+
+        requestInfo = instanceReader.getRequestInfo(requestId);
+        _printRequest(requestId, requestInfo);
+
+        _printPolicy(
+            policyNftId, 
+            instanceReader.getPolicyInfo(policyNftId));
+        
         // assertTrue(false, "oops");
     }
 
