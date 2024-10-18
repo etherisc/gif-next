@@ -1,9 +1,62 @@
- # Deployment
+# Deployment
 
- ```
- hh run scripts/deploy_flightdelay_components.ts --network polygonAmoy
+## Initial Repository Setup
+
+Clone gif-next into a separate local repository for deployment/verification.
+If such a repository already exists, make sure to update it to the desired branch/commit.
+
+See the main `README.md` for instructions to only deploy GIF or a full deploy including both GIF and the fire and flight example products.
+
+## Initial Deployment of the FlightDelay Product
+
+Ensure that the necessary wallets are properly funded.
+Variable `WALLET_MNEMONIC` in `.env` is used to create the necessary signers.
+the protocol owner is defined as signer[0], and the flight owner (product owner) as signer[2].
+These two wallets need enough POL/ETH/... to execute the deployment transactions. 
+
+Check that the environment variables in the `.env` match with the intended chain and your expecations.
+
+```bash
+hh run scripts/deploy_flightdelay_components.ts --network <networkname>
+```
+
+Copy the flight specific addresses of the deployment script output to the .env file.
+Add/update the flight specific environment variables 
+`FLIGHT_TOKEN_ADDRESS`, `INSTANCE_ADDRESS`, `FLIGHTLIB_ADDRESS`, `FLIGHT_PRODUCT_ADDRESS` and `FLIGHT_POOL_ADDRESS` accordingly.
+
+Verify the deployment using the command below.
+
+```bash
+hh run scripts/verify_deployment.ts --network <networkname>
+```
+
+## Re-Deployment of the FlightDelay Product
+
+Check that the environment variables in the `.env` match with the intended chain and your expecations.
+
+Ensure that the necessary wallets are properly funded.
+Variable `WALLET_MNEMONIC` in `.env` is used to create the necessary signers.
+the protocol owner is defined as signer[0], and the flight owner (product owner) as signer[2].
+These two wallets need enough POL/ETH/... to execute the deployment transactions. 
+
+Comment out all variables that refer to components that need to be re-deployed.
+For example, keep the previous values for `FLIGHT_TOKEN_ADDRESS` and `INSTANCE_ADDRESS` for a partial deployment that reuses the existing instance and flight token.
+
+In directory `deployments/<chainId>`: except for `libraries_<chainId>.json` delete all other `*.json` files.
+
+ ```bash
+ hh run scripts/deploy_flightdelay_components.ts --network <networkname>
  ```
 
+Copy the flight specific addresses of the deployment script output to the .env file.
+Update the flight specific environment variables 
+`FLIGHT_TOKEN_ADDRESS`, `INSTANCE_ADDRESS`, `FLIGHTLIB_ADDRESS`, `FLIGHT_PRODUCT_ADDRESS` and `FLIGHT_POOL_ADDRESS` accordingly.
+
+Verify the deployment using the command below.
+
+```bash
+hh run scripts/verify_deployment.ts --network <networkname>
+```
 
 # Setup
 
