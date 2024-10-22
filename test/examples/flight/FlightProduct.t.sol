@@ -13,6 +13,7 @@ import {BUNDLE} from "../../../contracts/type/ObjectType.sol";
 import {COLLATERALIZED, PAID} from "../../../contracts/type/StateId.sol";
 import {FlightBaseTest} from "./FlightBase.t.sol";
 import {FlightLib} from "../../../contracts/examples/flight/FlightLib.sol";
+import {FlightNft} from "../../../contracts/examples/flight/FlightNft.sol";
 import {FlightProduct} from "../../../contracts/examples/flight/FlightProduct.sol";
 import {FlightOracle} from "../../../contracts/examples/flight/FlightOracle.sol";
 import {IBundle} from "../../../contracts/instance/module/IBundle.sol";
@@ -282,6 +283,45 @@ contract FlightProductTest is FlightBaseTest {
         int256 delayMinutes = 16;
         vm.startPrank(statusProvider);
         flightOracle.respondWithFlightStatus(requestId, status, delayMinutes);
+    }
+
+
+    function test_flightNftHappyCase() public {
+        // GIVEN - setp from flight base test
+
+        // deploy flight nft
+        FlightNft flightNft = new FlightNft(
+            address(flightProduct),
+            "FDPLCY",
+            "Flight Delay Policy",
+            "https://flightdelay.integration.etherisc.com/api/nft/");
+
+        // create policy
+        approveProductTokenHandler();
+        Amount premiumAmount = flightProduct.MAX_PREMIUM(); // AmountLib.toAmount(30 * 10 ** flightUSD.decimals());
+
+        (FlightProduct.PermitData memory permit) = _createPermitWithSignature(
+            customer, 
+            premiumAmount, 
+            customerPrivateKey, 
+            0); // nonce
+
+        // WHEN
+        vm.startPrank(statisticsProvider);
+        NftId policyNftId = _createPolicy(
+            flightData, 
+            departureTime, 
+            "2024-11-08 Europe/Zurich", 
+            arrivalTime, 
+            "2024-11-08 Asia/Bangkok", 
+            statistics,
+            permit);
+        vm.stopPrank();
+
+        // solhint-disable
+        console.log("token uri", flightNft.tokenURI(policyNftId.toInt()));
+        console.log("token meatadata", flightNft.getMetadataJson(policyNftId.toInt()));
+        // solhint-enable
     }
 
 
