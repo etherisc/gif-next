@@ -1,0 +1,2270 @@
+:github-icon: pass:[<svg class="icon"><use href="#github-icon"/></svg>]
+:xref-ChainNft-onlyRegistry--: xref:registry.adoc#ChainNft-onlyRegistry--
+:xref-Registry-onlyDeployer--: xref:registry.adoc#Registry-onlyDeployer--
+:xref-TokenRegistry-onlyRegisteredToken-ChainId-address-: xref:registry.adoc#TokenRegistry-onlyRegisteredToken-ChainId-address-
+= Registry
+ 
+Contains interfaces and contracts related to the registry. 
+
+== Contracts
+
+:LogRegistryObjectRegistered: pass:normal[xref:#IRegistry-LogRegistryObjectRegistered-NftId-NftId-ObjectType-bool-address-address-[`++LogRegistryObjectRegistered++`]]
+:LogRegistryServiceRegistered: pass:normal[xref:#IRegistry-LogRegistryServiceRegistered-VersionPart-ObjectType-[`++LogRegistryServiceRegistered++`]]
+:LogRegistryChainRegistryRegistered: pass:normal[xref:#IRegistry-LogRegistryChainRegistryRegistered-NftId-uint256-address-[`++LogRegistryChainRegistryRegistered++`]]
+:ErrorRegistryCallerNotDeployer: pass:normal[xref:#IRegistry-ErrorRegistryCallerNotDeployer--[`++ErrorRegistryCallerNotDeployer++`]]
+:ErrorRegistryObjectTypeNotSupported: pass:normal[xref:#IRegistry-ErrorRegistryObjectTypeNotSupported-ObjectType-[`++ErrorRegistryObjectTypeNotSupported++`]]
+:ErrorRegistryNotOnMainnet: pass:normal[xref:#IRegistry-ErrorRegistryNotOnMainnet-uint256-[`++ErrorRegistryNotOnMainnet++`]]
+:ErrorRegistryChainRegistryChainIdZero: pass:normal[xref:#IRegistry-ErrorRegistryChainRegistryChainIdZero-NftId-[`++ErrorRegistryChainRegistryChainIdZero++`]]
+:ErrorRegistryChainRegistryAddressZero: pass:normal[xref:#IRegistry-ErrorRegistryChainRegistryAddressZero-NftId-uint256-[`++ErrorRegistryChainRegistryAddressZero++`]]
+:ErrorRegistryChainRegistryNftIdInvalid: pass:normal[xref:#IRegistry-ErrorRegistryChainRegistryNftIdInvalid-NftId-uint256-[`++ErrorRegistryChainRegistryNftIdInvalid++`]]
+:ErrorRegistryChainRegistryAlreadyRegistered: pass:normal[xref:#IRegistry-ErrorRegistryChainRegistryAlreadyRegistered-NftId-uint256-[`++ErrorRegistryChainRegistryAlreadyRegistered++`]]
+:ErrorRegistryServiceAddressZero: pass:normal[xref:#IRegistry-ErrorRegistryServiceAddressZero--[`++ErrorRegistryServiceAddressZero++`]]
+:ErrorRegistryServiceVersionZero: pass:normal[xref:#IRegistry-ErrorRegistryServiceVersionZero-address-[`++ErrorRegistryServiceVersionZero++`]]
+:ErrorRegistryServiceDomainZero: pass:normal[xref:#IRegistry-ErrorRegistryServiceDomainZero-address-VersionPart-[`++ErrorRegistryServiceDomainZero++`]]
+:ErrorRegistryNotService: pass:normal[xref:#IRegistry-ErrorRegistryNotService-address-ObjectType-[`++ErrorRegistryNotService++`]]
+:ErrorRegistryServiceParentNotRegistry: pass:normal[xref:#IRegistry-ErrorRegistryServiceParentNotRegistry-address-VersionPart-NftId-[`++ErrorRegistryServiceParentNotRegistry++`]]
+:ErrorRegistryServiceDomainAlreadyRegistered: pass:normal[xref:#IRegistry-ErrorRegistryServiceDomainAlreadyRegistered-address-VersionPart-ObjectType-[`++ErrorRegistryServiceDomainAlreadyRegistered++`]]
+:ErrorRegistryCoreTypeRegistration: pass:normal[xref:#IRegistry-ErrorRegistryCoreTypeRegistration--[`++ErrorRegistryCoreTypeRegistration++`]]
+:ErrorRegistryGlobalRegistryAsParent: pass:normal[xref:#IRegistry-ErrorRegistryGlobalRegistryAsParent-address-ObjectType-[`++ErrorRegistryGlobalRegistryAsParent++`]]
+:ErrorRegistryTypeCombinationInvalid: pass:normal[xref:#IRegistry-ErrorRegistryTypeCombinationInvalid-address-ObjectType-ObjectType-[`++ErrorRegistryTypeCombinationInvalid++`]]
+:ErrorRegistryContractAlreadyRegistered: pass:normal[xref:#IRegistry-ErrorRegistryContractAlreadyRegistered-address-[`++ErrorRegistryContractAlreadyRegistered++`]]
+:ObjectInfo: pass:normal[xref:#IRegistry-ObjectInfo[`++ObjectInfo++`]]
+:registerRegistry: pass:normal[xref:#IRegistry-registerRegistry-NftId-uint256-address-[`++registerRegistry++`]]
+:registerService: pass:normal[xref:#IRegistry-registerService-struct-IRegistry-ObjectInfo-VersionPart-ObjectType-[`++registerService++`]]
+:register: pass:normal[xref:#IRegistry-register-struct-IRegistry-ObjectInfo-[`++register++`]]
+:registerWithCustomType: pass:normal[xref:#IRegistry-registerWithCustomType-struct-IRegistry-ObjectInfo-[`++registerWithCustomType++`]]
+:getInitialRelease: pass:normal[xref:#IRegistry-getInitialRelease--[`++getInitialRelease++`]]
+:getNextRelease: pass:normal[xref:#IRegistry-getNextRelease--[`++getNextRelease++`]]
+:getLatestRelease: pass:normal[xref:#IRegistry-getLatestRelease--[`++getLatestRelease++`]]
+:getReleaseInfo: pass:normal[xref:#IRegistry-getReleaseInfo-VersionPart-[`++getReleaseInfo++`]]
+:chainIds: pass:normal[xref:#IRegistry-chainIds--[`++chainIds++`]]
+:getChainId: pass:normal[xref:#IRegistry-getChainId-uint256-[`++getChainId++`]]
+:getRegistryNftId: pass:normal[xref:#IRegistry-getRegistryNftId-uint256-[`++getRegistryNftId++`]]
+:getObjectCount: pass:normal[xref:#IRegistry-getObjectCount--[`++getObjectCount++`]]
+:getNftIdForAddress: pass:normal[xref:#IRegistry-getNftIdForAddress-address-[`++getNftIdForAddress++`]]
+:ownerOf: pass:normal[xref:#IRegistry-ownerOf-NftId-[`++ownerOf++`]]
+:isOwnerOf: pass:normal[xref:#IRegistry-isOwnerOf-NftId-address-[`++isOwnerOf++`]]
+:ownerOf: pass:normal[xref:#IRegistry-ownerOf-address-[`++ownerOf++`]]
+:getObjectInfo: pass:normal[xref:#IRegistry-getObjectInfo-NftId-[`++getObjectInfo++`]]
+:getParentNftId: pass:normal[xref:#IRegistry-getParentNftId-NftId-[`++getParentNftId++`]]
+:isObjectType: pass:normal[xref:#IRegistry-isObjectType-NftId-ObjectType-[`++isObjectType++`]]
+:isObjectType: pass:normal[xref:#IRegistry-isObjectType-address-ObjectType-[`++isObjectType++`]]
+:getObjectAddress: pass:normal[xref:#IRegistry-getObjectAddress-NftId-[`++getObjectAddress++`]]
+:getObjectInfo: pass:normal[xref:#IRegistry-getObjectInfo-address-[`++getObjectInfo++`]]
+:isRegistered: pass:normal[xref:#IRegistry-isRegistered-NftId-[`++isRegistered++`]]
+:isRegistered: pass:normal[xref:#IRegistry-isRegistered-address-[`++isRegistered++`]]
+:isRegisteredService: pass:normal[xref:#IRegistry-isRegisteredService-address-[`++isRegisteredService++`]]
+:isRegisteredComponent: pass:normal[xref:#IRegistry-isRegisteredComponent-address-[`++isRegisteredComponent++`]]
+:isActiveRelease: pass:normal[xref:#IRegistry-isActiveRelease-VersionPart-[`++isActiveRelease++`]]
+:getServiceAddress: pass:normal[xref:#IRegistry-getServiceAddress-ObjectType-VersionPart-[`++getServiceAddress++`]]
+:getProtocolNftId: pass:normal[xref:#IRegistry-getProtocolNftId--[`++getProtocolNftId++`]]
+:getNftId: pass:normal[xref:#IRegistry-getNftId--[`++getNftId++`]]
+:getOwner: pass:normal[xref:#IRegistry-getOwner--[`++getOwner++`]]
+:getChainNftAddress: pass:normal[xref:#IRegistry-getChainNftAddress--[`++getChainNftAddress++`]]
+:getReleaseRegistryAddress: pass:normal[xref:#IRegistry-getReleaseRegistryAddress--[`++getReleaseRegistryAddress++`]]
+:getStakingAddress: pass:normal[xref:#IRegistry-getStakingAddress--[`++getStakingAddress++`]]
+:getTokenRegistryAddress: pass:normal[xref:#IRegistry-getTokenRegistryAddress--[`++getTokenRegistryAddress++`]]
+:getRegistryAdminAddress: pass:normal[xref:#IRegistry-getRegistryAdminAddress--[`++getRegistryAdminAddress++`]]
+:getAuthority: pass:normal[xref:#IRegistry-getAuthority--[`++getAuthority++`]]
+
+[.contract]
+[[IRegistry]]
+=== `++IRegistry++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/registry/IRegistry.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/registry/IRegistry.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++registerRegistry(nftId, chainId, chainRegistryAddress)++`]
+* [`++registerService(serviceInfo, serviceVersion, serviceDomain)++`]
+* [`++register(info)++`]
+* [`++registerWithCustomType(info)++`]
+* [`++getInitialRelease()++`]
+* [`++getNextRelease()++`]
+* [`++getLatestRelease()++`]
+* [`++getReleaseInfo(release)++`]
+* [`++chainIds()++`]
+* [`++getChainId(idx)++`]
+* [`++getRegistryNftId(chainId)++`]
+* [`++getObjectCount()++`]
+* [`++getNftIdForAddress(objectAddress)++`]
+* [`++ownerOf(nftId)++`]
+* [`++isOwnerOf(nftId, expectedOwner)++`]
+* [`++ownerOf(contractAddress)++`]
+* [`++getObjectInfo(nftId)++`]
+* [`++getParentNftId(nftId)++`]
+* [`++isObjectType(nftId, expectedObjectType)++`]
+* [`++isObjectType(contractAddress, expectedObjectType)++`]
+* [`++getObjectAddress(nftId)++`]
+* [`++getObjectInfo(object)++`]
+* [`++isRegistered(nftId)++`]
+* [`++isRegistered(contractAddress)++`]
+* [`++isRegisteredService(contractAddress)++`]
+* [`++isRegisteredComponent(object)++`]
+* [`++isActiveRelease(version)++`]
+* [`++getServiceAddress(serviceDomain, releaseVersion)++`]
+* [`++getProtocolNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+* [`++getChainNftAddress()++`]
+* [`++getReleaseRegistryAddress()++`]
+* [`++getStakingAddress()++`]
+* [`++getTokenRegistryAddress()++`]
+* [`++getRegistryAdminAddress()++`]
+* [`++getAuthority()++`]
+
+[.contract-subindex-inherited]
+.IERC165
+* [`++supportsInterface(interfaceId)++`]
+
+--
+
+[.contract-index]
+.Events
+--
+* [`++LogRegistryObjectRegistered(nftId, parentNftId, objectType, isInterceptor, objectAddress, initialOwner)++`]
+* [`++LogRegistryServiceRegistered(majorVersion, domain)++`]
+* [`++LogRegistryChainRegistryRegistered(nftId, chainId, chainRegistryAddress)++`]
+
+[.contract-subindex-inherited]
+.IERC165
+
+--
+
+[.contract-item]
+[[IRegistry-registerRegistry-NftId-uint256-address-]]
+==== `[.contract-item-name]#++registerRegistry++#++(NftId nftId, uint256 chainId, address chainRegistryAddress)++` [.item-kind]#external#
+
+Registers a registry contract for a specified chain.
+Only one chain registry may be registered per chain
+
+[.contract-item]
+[[IRegistry-registerService-struct-IRegistry-ObjectInfo-VersionPart-ObjectType-]]
+==== `[.contract-item-name]#++registerService++#++(struct IRegistry.ObjectInfo serviceInfo, VersionPart serviceVersion, ObjectType serviceDomain) → NftId nftId++` [.item-kind]#external#
+
+Register a service with using the provided domain and version.
+The function returns a newly minted service NFT ID.
+May only be used to register services.
+
+[.contract-item]
+[[IRegistry-register-struct-IRegistry-ObjectInfo-]]
+==== `[.contract-item-name]#++register++#++(struct IRegistry.ObjectInfo info) → NftId nftId++` [.item-kind]#external#
+
+Register an object with a known core type.
+The function returns a newly minted object NFT ID.
+May not be used to register services.
+
+[.contract-item]
+[[IRegistry-registerWithCustomType-struct-IRegistry-ObjectInfo-]]
+==== `[.contract-item-name]#++registerWithCustomType++#++(struct IRegistry.ObjectInfo info) → NftId nftId++` [.item-kind]#external#
+
+Register an object with a custom type.
+The function returns a newly minted object NFT ID.
+This function is reserved for GIF releases > 3.
+May not be used to register known core types.
+
+[.contract-item]
+[[IRegistry-getInitialRelease--]]
+==== `[.contract-item-name]#++getInitialRelease++#++() → VersionPart++` [.item-kind]#external#
+
+[.contract-item]
+[[IRegistry-getNextRelease--]]
+==== `[.contract-item-name]#++getNextRelease++#++() → VersionPart++` [.item-kind]#external#
+
+[.contract-item]
+[[IRegistry-getLatestRelease--]]
+==== `[.contract-item-name]#++getLatestRelease++#++() → VersionPart++` [.item-kind]#external#
+
+[.contract-item]
+[[IRegistry-getReleaseInfo-VersionPart-]]
+==== `[.contract-item-name]#++getReleaseInfo++#++(VersionPart release) → struct IRelease.ReleaseInfo++` [.item-kind]#external#
+
+[.contract-item]
+[[IRegistry-chainIds--]]
+==== `[.contract-item-name]#++chainIds++#++() → uint256++` [.item-kind]#external#
+
+Returns the number of supported chains.
+
+[.contract-item]
+[[IRegistry-getChainId-uint256-]]
+==== `[.contract-item-name]#++getChainId++#++(uint256 idx) → uint256++` [.item-kind]#external#
+
+Returns the chain id at the specified index.
+
+[.contract-item]
+[[IRegistry-getRegistryNftId-uint256-]]
+==== `[.contract-item-name]#++getRegistryNftId++#++(uint256 chainId) → NftId nftId++` [.item-kind]#external#
+
+Returns the NFT ID of the registry for the specified chain.
+
+[.contract-item]
+[[IRegistry-getObjectCount--]]
+==== `[.contract-item-name]#++getObjectCount++#++() → uint256++` [.item-kind]#external#
+
+[.contract-item]
+[[IRegistry-getNftIdForAddress-address-]]
+==== `[.contract-item-name]#++getNftIdForAddress++#++(address objectAddress) → NftId nftId++` [.item-kind]#external#
+
+[.contract-item]
+[[IRegistry-ownerOf-NftId-]]
+==== `[.contract-item-name]#++ownerOf++#++(NftId nftId) → address++` [.item-kind]#external#
+
+[.contract-item]
+[[IRegistry-isOwnerOf-NftId-address-]]
+==== `[.contract-item-name]#++isOwnerOf++#++(NftId nftId, address expectedOwner) → bool++` [.item-kind]#external#
+
+[.contract-item]
+[[IRegistry-ownerOf-address-]]
+==== `[.contract-item-name]#++ownerOf++#++(address contractAddress) → address++` [.item-kind]#external#
+
+[.contract-item]
+[[IRegistry-getObjectInfo-NftId-]]
+==== `[.contract-item-name]#++getObjectInfo++#++(NftId nftId) → struct IRegistry.ObjectInfo info++` [.item-kind]#external#
+
+[.contract-item]
+[[IRegistry-getParentNftId-NftId-]]
+==== `[.contract-item-name]#++getParentNftId++#++(NftId nftId) → NftId parentNftId++` [.item-kind]#external#
+
+[.contract-item]
+[[IRegistry-isObjectType-NftId-ObjectType-]]
+==== `[.contract-item-name]#++isObjectType++#++(NftId nftId, ObjectType expectedObjectType) → bool++` [.item-kind]#external#
+
+[.contract-item]
+[[IRegistry-isObjectType-address-ObjectType-]]
+==== `[.contract-item-name]#++isObjectType++#++(address contractAddress, ObjectType expectedObjectType) → bool++` [.item-kind]#external#
+
+[.contract-item]
+[[IRegistry-getObjectAddress-NftId-]]
+==== `[.contract-item-name]#++getObjectAddress++#++(NftId nftId) → address objectAddress++` [.item-kind]#external#
+
+[.contract-item]
+[[IRegistry-getObjectInfo-address-]]
+==== `[.contract-item-name]#++getObjectInfo++#++(address object) → struct IRegistry.ObjectInfo info++` [.item-kind]#external#
+
+Returns the object info for the specified object address.
+
+[.contract-item]
+[[IRegistry-isRegistered-NftId-]]
+==== `[.contract-item-name]#++isRegistered++#++(NftId nftId) → bool++` [.item-kind]#external#
+
+[.contract-item]
+[[IRegistry-isRegistered-address-]]
+==== `[.contract-item-name]#++isRegistered++#++(address contractAddress) → bool++` [.item-kind]#external#
+
+[.contract-item]
+[[IRegistry-isRegisteredService-address-]]
+==== `[.contract-item-name]#++isRegisteredService++#++(address contractAddress) → bool++` [.item-kind]#external#
+
+[.contract-item]
+[[IRegistry-isRegisteredComponent-address-]]
+==== `[.contract-item-name]#++isRegisteredComponent++#++(address object) → bool++` [.item-kind]#external#
+
+[.contract-item]
+[[IRegistry-isActiveRelease-VersionPart-]]
+==== `[.contract-item-name]#++isActiveRelease++#++(VersionPart version) → bool++` [.item-kind]#external#
+
+[.contract-item]
+[[IRegistry-getServiceAddress-ObjectType-VersionPart-]]
+==== `[.contract-item-name]#++getServiceAddress++#++(ObjectType serviceDomain, VersionPart releaseVersion) → address serviceAddress++` [.item-kind]#external#
+
+[.contract-item]
+[[IRegistry-getProtocolNftId--]]
+==== `[.contract-item-name]#++getProtocolNftId++#++() → NftId protocolNftId++` [.item-kind]#external#
+
+[.contract-item]
+[[IRegistry-getNftId--]]
+==== `[.contract-item-name]#++getNftId++#++() → NftId nftId++` [.item-kind]#external#
+
+[.contract-item]
+[[IRegistry-getOwner--]]
+==== `[.contract-item-name]#++getOwner++#++() → address++` [.item-kind]#external#
+
+[.contract-item]
+[[IRegistry-getChainNftAddress--]]
+==== `[.contract-item-name]#++getChainNftAddress++#++() → address++` [.item-kind]#external#
+
+[.contract-item]
+[[IRegistry-getReleaseRegistryAddress--]]
+==== `[.contract-item-name]#++getReleaseRegistryAddress++#++() → address++` [.item-kind]#external#
+
+[.contract-item]
+[[IRegistry-getStakingAddress--]]
+==== `[.contract-item-name]#++getStakingAddress++#++() → address++` [.item-kind]#external#
+
+[.contract-item]
+[[IRegistry-getTokenRegistryAddress--]]
+==== `[.contract-item-name]#++getTokenRegistryAddress++#++() → address++` [.item-kind]#external#
+
+[.contract-item]
+[[IRegistry-getRegistryAdminAddress--]]
+==== `[.contract-item-name]#++getRegistryAdminAddress++#++() → address++` [.item-kind]#external#
+
+[.contract-item]
+[[IRegistry-getAuthority--]]
+==== `[.contract-item-name]#++getAuthority++#++() → address++` [.item-kind]#external#
+
+[.contract-item]
+[[IRegistry-LogRegistryObjectRegistered-NftId-NftId-ObjectType-bool-address-address-]]
+==== `[.contract-item-name]#++LogRegistryObjectRegistered++#++(NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, address objectAddress, address initialOwner)++` [.item-kind]#event#
+
+[.contract-item]
+[[IRegistry-LogRegistryServiceRegistered-VersionPart-ObjectType-]]
+==== `[.contract-item-name]#++LogRegistryServiceRegistered++#++(VersionPart majorVersion, ObjectType domain)++` [.item-kind]#event#
+
+[.contract-item]
+[[IRegistry-LogRegistryChainRegistryRegistered-NftId-uint256-address-]]
+==== `[.contract-item-name]#++LogRegistryChainRegistryRegistered++#++(NftId nftId, uint256 chainId, address chainRegistryAddress)++` [.item-kind]#event#
+
+:ErrorRegistryServiceNotRegistryOwner: pass:normal[xref:#IRegistryService-ErrorRegistryServiceNotRegistryOwner--[`++ErrorRegistryServiceNotRegistryOwner++`]]
+:ErrorRegistryServiceNotService: pass:normal[xref:#IRegistryService-ErrorRegistryServiceNotService-address-[`++ErrorRegistryServiceNotService++`]]
+:ErrorRegistryServiceNotInstance: pass:normal[xref:#IRegistryService-ErrorRegistryServiceNotInstance-address-[`++ErrorRegistryServiceNotInstance++`]]
+:ErrorRegistryServiceNotProduct: pass:normal[xref:#IRegistryService-ErrorRegistryServiceNotProduct-address-[`++ErrorRegistryServiceNotProduct++`]]
+:ErrorRegistryServiceNotComponent: pass:normal[xref:#IRegistryService-ErrorRegistryServiceNotComponent-address-[`++ErrorRegistryServiceNotComponent++`]]
+:ErrorRegistryServiceNotProductLinkedComponent: pass:normal[xref:#IRegistryService-ErrorRegistryServiceNotProductLinkedComponent-address-[`++ErrorRegistryServiceNotProductLinkedComponent++`]]
+:ErrorRegistryServiceRegisterableAddressInvalid: pass:normal[xref:#IRegistryService-ErrorRegistryServiceRegisterableAddressInvalid-contract-IRegisterable-address-[`++ErrorRegistryServiceRegisterableAddressInvalid++`]]
+:ErrorRegistryServiceRegisterableTypeInvalid: pass:normal[xref:#IRegistryService-ErrorRegistryServiceRegisterableTypeInvalid-contract-IRegisterable-ObjectType-ObjectType-[`++ErrorRegistryServiceRegisterableTypeInvalid++`]]
+:ErrorRegistryServiceRegisterableOwnerInvalid: pass:normal[xref:#IRegistryService-ErrorRegistryServiceRegisterableOwnerInvalid-contract-IRegisterable-address-address-[`++ErrorRegistryServiceRegisterableOwnerInvalid++`]]
+:ErrorRegistryServiceRegisterableOwnerZero: pass:normal[xref:#IRegistryService-ErrorRegistryServiceRegisterableOwnerZero-contract-IRegisterable-[`++ErrorRegistryServiceRegisterableOwnerZero++`]]
+:ErrorRegistryServiceRegisterableOwnerRegistered: pass:normal[xref:#IRegistryService-ErrorRegistryServiceRegisterableOwnerRegistered-contract-IRegisterable-address-[`++ErrorRegistryServiceRegisterableOwnerRegistered++`]]
+:ErrorRegistryServiceRegisterableSelfRegistration: pass:normal[xref:#IRegistryService-ErrorRegistryServiceRegisterableSelfRegistration-contract-IRegisterable-[`++ErrorRegistryServiceRegisterableSelfRegistration++`]]
+:ErrorRegistryServiceObjectAddressNotZero: pass:normal[xref:#IRegistryService-ErrorRegistryServiceObjectAddressNotZero-ObjectType-[`++ErrorRegistryServiceObjectAddressNotZero++`]]
+:ErrorRegistryServiceObjectTypeInvalid: pass:normal[xref:#IRegistryService-ErrorRegistryServiceObjectTypeInvalid-ObjectType-ObjectType-[`++ErrorRegistryServiceObjectTypeInvalid++`]]
+:ErrorRegistryServiceObjectOwnerRegistered: pass:normal[xref:#IRegistryService-ErrorRegistryServiceObjectOwnerRegistered-ObjectType-address-[`++ErrorRegistryServiceObjectOwnerRegistered++`]]
+:ErrorRegistryServiceObjectOwnerZero: pass:normal[xref:#IRegistryService-ErrorRegistryServiceObjectOwnerZero-ObjectType-[`++ErrorRegistryServiceObjectOwnerZero++`]]
+:ErrorRegistryServiceInvalidInitialOwner: pass:normal[xref:#IRegistryService-ErrorRegistryServiceInvalidInitialOwner-address-[`++ErrorRegistryServiceInvalidInitialOwner++`]]
+:ErrorRegistryServiceInvalidAddress: pass:normal[xref:#IRegistryService-ErrorRegistryServiceInvalidAddress-address-[`++ErrorRegistryServiceInvalidAddress++`]]
+:registerStake: pass:normal[xref:#IRegistryService-registerStake-struct-IRegistry-ObjectInfo-[`++registerStake++`]]
+:registerInstance: pass:normal[xref:#IRegistryService-registerInstance-contract-IRegisterable-address-[`++registerInstance++`]]
+:registerProduct: pass:normal[xref:#IRegistryService-registerProduct-contract-IComponent-address-[`++registerProduct++`]]
+:registerProductLinkedComponent: pass:normal[xref:#IRegistryService-registerProductLinkedComponent-contract-IComponent-ObjectType-address-[`++registerProductLinkedComponent++`]]
+:registerDistributor: pass:normal[xref:#IRegistryService-registerDistributor-struct-IRegistry-ObjectInfo-[`++registerDistributor++`]]
+:registerPolicy: pass:normal[xref:#IRegistryService-registerPolicy-struct-IRegistry-ObjectInfo-[`++registerPolicy++`]]
+:registerBundle: pass:normal[xref:#IRegistryService-registerBundle-struct-IRegistry-ObjectInfo-[`++registerBundle++`]]
+
+[.contract]
+[[IRegistryService]]
+=== `++IRegistryService++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/registry/IRegistryService.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/registry/IRegistryService.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++registerStake(info)++`]
+* [`++registerInstance(instance, owner)++`]
+* [`++registerProduct(product, owner)++`]
+* [`++registerProductLinkedComponent(component, objectType, owner)++`]
+* [`++registerDistributor(info)++`]
+* [`++registerPolicy(info)++`]
+* [`++registerBundle(info)++`]
+
+[.contract-subindex-inherited]
+.IService
+* [`++getDomain()++`]
+* [`++getRoleId()++`]
+
+[.contract-subindex-inherited]
+.IVersionable
+* [`++initializeVersionable(activatedBy, activationData)++`]
+* [`++upgradeVersionable(upgradeData)++`]
+* [`++getVersion()++`]
+
+[.contract-subindex-inherited]
+.IRegisterable
+* [`++isActive()++`]
+* [`++getInitialInfo()++`]
+
+[.contract-subindex-inherited]
+.IRelease
+* [`++getRelease()++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IERC165
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++authority()++`]
+* [`++setAuthority()++`]
+* [`++isConsumingScheduledOp()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.IService
+
+[.contract-subindex-inherited]
+.IVersionable
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.IRelease
+
+[.contract-subindex-inherited]
+.INftOwnable
+* [`++LogNftOwnableNftLinkedToAddress(nftId, owner)++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+--
+
+[.contract-item]
+[[IRegistryService-registerStake-struct-IRegistry-ObjectInfo-]]
+==== `[.contract-item-name]#++registerStake++#++(struct IRegistry.ObjectInfo info) → NftId nftId++` [.item-kind]#external#
+
+[.contract-item]
+[[IRegistryService-registerInstance-contract-IRegisterable-address-]]
+==== `[.contract-item-name]#++registerInstance++#++(contract IRegisterable instance, address owner) → struct IRegistry.ObjectInfo info++` [.item-kind]#external#
+
+[.contract-item]
+[[IRegistryService-registerProduct-contract-IComponent-address-]]
+==== `[.contract-item-name]#++registerProduct++#++(contract IComponent product, address owner) → struct IRegistry.ObjectInfo info++` [.item-kind]#external#
+
+[.contract-item]
+[[IRegistryService-registerProductLinkedComponent-contract-IComponent-ObjectType-address-]]
+==== `[.contract-item-name]#++registerProductLinkedComponent++#++(contract IComponent component, ObjectType objectType, address owner) → struct IRegistry.ObjectInfo info++` [.item-kind]#external#
+
+[.contract-item]
+[[IRegistryService-registerDistributor-struct-IRegistry-ObjectInfo-]]
+==== `[.contract-item-name]#++registerDistributor++#++(struct IRegistry.ObjectInfo info) → NftId nftId++` [.item-kind]#external#
+
+[.contract-item]
+[[IRegistryService-registerPolicy-struct-IRegistry-ObjectInfo-]]
+==== `[.contract-item-name]#++registerPolicy++#++(struct IRegistry.ObjectInfo info) → NftId nftId++` [.item-kind]#external#
+
+[.contract-item]
+[[IRegistryService-registerBundle-struct-IRegistry-ObjectInfo-]]
+==== `[.contract-item-name]#++registerBundle++#++(struct IRegistry.ObjectInfo info) → NftId nftId++` [.item-kind]#external#
+
+:nftTransferFrom: pass:normal[xref:#ITransferInterceptor-nftTransferFrom-address-address-uint256-address-[`++nftTransferFrom++`]]
+
+[.contract]
+[[ITransferInterceptor]]
+=== `++ITransferInterceptor++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/registry/ITransferInterceptor.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/registry/ITransferInterceptor.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++nftTransferFrom(from, to, tokenId, operator)++`]
+
+--
+
+[.contract-item]
+[[ITransferInterceptor-nftTransferFrom-address-address-uint256-address-]]
+==== `[.contract-item-name]#++nftTransferFrom++#++(address from, address to, uint256 tokenId, address operator)++` [.item-kind]#external#
+
+:LogTokenInterceptorAddress: pass:normal[xref:#ChainNft-LogTokenInterceptorAddress-uint256-address-[`++LogTokenInterceptorAddress++`]]
+:NAME: pass:normal[xref:#ChainNft-NAME-string[`++NAME++`]]
+:SYMBOL: pass:normal[xref:#ChainNft-SYMBOL-string[`++SYMBOL++`]]
+:PROTOCOL_NFT_ID: pass:normal[xref:#ChainNft-PROTOCOL_NFT_ID-uint256[`++PROTOCOL_NFT_ID++`]]
+:GLOBAL_REGISTRY_ID: pass:normal[xref:#ChainNft-GLOBAL_REGISTRY_ID-uint256[`++GLOBAL_REGISTRY_ID++`]]
+:ErrorChainNftCallerNotRegistry: pass:normal[xref:#ChainNft-ErrorChainNftCallerNotRegistry-address-[`++ErrorChainNftCallerNotRegistry++`]]
+:ErrorChainNftRegistryAddressZero: pass:normal[xref:#ChainNft-ErrorChainNftRegistryAddressZero--[`++ErrorChainNftRegistryAddressZero++`]]
+:ErrorChainNftUriEmpty: pass:normal[xref:#ChainNft-ErrorChainNftUriEmpty--[`++ErrorChainNftUriEmpty++`]]
+:ErrorChainNftUriAlreadySet: pass:normal[xref:#ChainNft-ErrorChainNftUriAlreadySet--[`++ErrorChainNftUriAlreadySet++`]]
+:_chainIdDigits: pass:normal[xref:#ChainNft-_chainIdDigits-uint256[`++_chainIdDigits++`]]
+:_chainIdMultiplier: pass:normal[xref:#ChainNft-_chainIdMultiplier-uint256[`++_chainIdMultiplier++`]]
+:_idNext: pass:normal[xref:#ChainNft-_idNext-uint256[`++_idNext++`]]
+:_totalMinted: pass:normal[xref:#ChainNft-_totalMinted-uint256[`++_totalMinted++`]]
+:onlyRegistry: pass:normal[xref:#ChainNft-onlyRegistry--[`++onlyRegistry++`]]
+:constructor: pass:normal[xref:#ChainNft-constructor-address-[`++constructor++`]]
+:mint: pass:normal[xref:#ChainNft-mint-address-uint256-[`++mint++`]]
+:mint: pass:normal[xref:#ChainNft-mint-address-address-string-[`++mint++`]]
+:transferFrom: pass:normal[xref:#ChainNft-transferFrom-address-address-uint256-[`++transferFrom++`]]
+:burn: pass:normal[xref:#ChainNft-burn-uint256-[`++burn++`]]
+:setURI: pass:normal[xref:#ChainNft-setURI-uint256-string-[`++setURI++`]]
+:exists: pass:normal[xref:#ChainNft-exists-uint256-[`++exists++`]]
+:tokenURI: pass:normal[xref:#ChainNft-tokenURI-uint256-[`++tokenURI++`]]
+:getInterceptor: pass:normal[xref:#ChainNft-getInterceptor-uint256-[`++getInterceptor++`]]
+:getRegistryAddress: pass:normal[xref:#ChainNft-getRegistryAddress--[`++getRegistryAddress++`]]
+:totalMinted: pass:normal[xref:#ChainNft-totalMinted--[`++totalMinted++`]]
+:calculateTokenId: pass:normal[xref:#ChainNft-calculateTokenId-uint256-uint256-[`++calculateTokenId++`]]
+:calculateTokenId: pass:normal[xref:#ChainNft-calculateTokenId-uint256-[`++calculateTokenId++`]]
+:getNextTokenId: pass:normal[xref:#ChainNft-getNextTokenId--[`++getNextTokenId++`]]
+
+[.contract]
+[[ChainNft]]
+=== `++ChainNft++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/registry/ChainNft.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/registry/ChainNft.sol";
+```
+
+[.contract-index]
+.Modifiers
+--
+* {xref-ChainNft-onlyRegistry--}[`++onlyRegistry()++`]
+--
+
+[.contract-index]
+.Functions
+--
+* [`++constructor(registry)++`]
+* [`++mint(to, tokenId)++`]
+* [`++mint(to, interceptor, uri)++`]
+* [`++transferFrom(from, to, tokenId)++`]
+* [`++burn(tokenId)++`]
+* [`++setURI(tokenId, uri)++`]
+* [`++exists(tokenId)++`]
+* [`++tokenURI(tokenId)++`]
+* [`++getInterceptor(tokenId)++`]
+* [`++getRegistryAddress()++`]
+* [`++totalMinted()++`]
+* [`++calculateTokenId(idIndex, chainId)++`]
+* [`++calculateTokenId(idIndex)++`]
+* [`++getNextTokenId()++`]
+
+[.contract-subindex-inherited]
+.ERC721Enumerable
+* [`++supportsInterface(interfaceId)++`]
+* [`++tokenOfOwnerByIndex(owner, index)++`]
+* [`++totalSupply()++`]
+* [`++tokenByIndex(index)++`]
+* [`++_update(to, tokenId, auth)++`]
+* [`++_increaseBalance(account, amount)++`]
+
+[.contract-subindex-inherited]
+.IERC721Enumerable
+
+[.contract-subindex-inherited]
+.ERC721
+* [`++balanceOf(owner)++`]
+* [`++ownerOf(tokenId)++`]
+* [`++name()++`]
+* [`++symbol()++`]
+* [`++_baseURI()++`]
+* [`++approve(to, tokenId)++`]
+* [`++getApproved(tokenId)++`]
+* [`++setApprovalForAll(operator, approved)++`]
+* [`++isApprovedForAll(owner, operator)++`]
+* [`++safeTransferFrom(from, to, tokenId)++`]
+* [`++safeTransferFrom(from, to, tokenId, data)++`]
+* [`++_ownerOf(tokenId)++`]
+* [`++_getApproved(tokenId)++`]
+* [`++_isAuthorized(owner, spender, tokenId)++`]
+* [`++_checkAuthorized(owner, spender, tokenId)++`]
+* [`++_mint(to, tokenId)++`]
+* [`++_safeMint(to, tokenId)++`]
+* [`++_safeMint(to, tokenId, data)++`]
+* [`++_burn(tokenId)++`]
+* [`++_transfer(from, to, tokenId)++`]
+* [`++_safeTransfer(from, to, tokenId)++`]
+* [`++_safeTransfer(from, to, tokenId, data)++`]
+* [`++_approve(to, tokenId, auth)++`]
+* [`++_approve(to, tokenId, auth, emitEvent)++`]
+* [`++_setApprovalForAll(owner, operator, approved)++`]
+* [`++_requireOwned(tokenId)++`]
+
+[.contract-subindex-inherited]
+.IERC721Errors
+
+[.contract-subindex-inherited]
+.IERC721Metadata
+
+[.contract-subindex-inherited]
+.IERC721
+
+[.contract-subindex-inherited]
+.ERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+--
+
+[.contract-index]
+.Events
+--
+* [`++LogTokenInterceptorAddress(tokenId, interceptor)++`]
+
+[.contract-subindex-inherited]
+.ERC721Enumerable
+
+[.contract-subindex-inherited]
+.IERC721Enumerable
+
+[.contract-subindex-inherited]
+.ERC721
+
+[.contract-subindex-inherited]
+.IERC721Errors
+
+[.contract-subindex-inherited]
+.IERC721Metadata
+
+[.contract-subindex-inherited]
+.IERC721
+* [`++Transfer(from, to, tokenId)++`]
+* [`++Approval(owner, approved, tokenId)++`]
+* [`++ApprovalForAll(owner, operator, approved)++`]
+
+[.contract-subindex-inherited]
+.ERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+--
+
+[.contract-item]
+[[ChainNft-onlyRegistry--]]
+==== `[.contract-item-name]#++onlyRegistry++#++()++` [.item-kind]#modifier#
+
+[.contract-item]
+[[ChainNft-constructor-address-]]
+==== `[.contract-item-name]#++constructor++#++(address registry)++` [.item-kind]#public#
+
+[.contract-item]
+[[ChainNft-mint-address-uint256-]]
+==== `[.contract-item-name]#++mint++#++(address to, uint256 tokenId)++` [.item-kind]#external#
+
+mints a token for a specified token id
+not part of the IRegistry interface only needed for
+initial registry setup (protocol and global registry objects)
+
+[.contract-item]
+[[ChainNft-mint-address-address-string-]]
+==== `[.contract-item-name]#++mint++#++(address to, address interceptor, string uri) → uint256 tokenId++` [.item-kind]#public#
+
+mints the next token to register new objects
+non-zero transferInterceptors are recorded and called during nft token transfers.
+the contract receiving such a notification may decides to revert or record the transfer
+
+[.contract-item]
+[[ChainNft-transferFrom-address-address-uint256-]]
+==== `[.contract-item-name]#++transferFrom++#++(address from, address to, uint256 tokenId)++` [.item-kind]#public#
+
+Amend the open zeppelin transferFrom function by an interceptor call if such an interceptor is defined for the nft token id.
+This allows distribution, product and pool components to be notified when distributors, policies and bundles are transferred.
+
+[.contract-item]
+[[ChainNft-burn-uint256-]]
+==== `[.contract-item-name]#++burn++#++(uint256 tokenId)++` [.item-kind]#external#
+
+[.contract-item]
+[[ChainNft-setURI-uint256-string-]]
+==== `[.contract-item-name]#++setURI++#++(uint256 tokenId, string uri)++` [.item-kind]#external#
+
+[.contract-item]
+[[ChainNft-exists-uint256-]]
+==== `[.contract-item-name]#++exists++#++(uint256 tokenId) → bool++` [.item-kind]#external#
+
+[.contract-item]
+[[ChainNft-tokenURI-uint256-]]
+==== `[.contract-item-name]#++tokenURI++#++(uint256 tokenId) → string++` [.item-kind]#public#
+
+See {IERC721Metadata-tokenURI}.
+
+[.contract-item]
+[[ChainNft-getInterceptor-uint256-]]
+==== `[.contract-item-name]#++getInterceptor++#++(uint256 tokenId) → address++` [.item-kind]#external#
+
+[.contract-item]
+[[ChainNft-getRegistryAddress--]]
+==== `[.contract-item-name]#++getRegistryAddress++#++() → address++` [.item-kind]#external#
+
+[.contract-item]
+[[ChainNft-totalMinted--]]
+==== `[.contract-item-name]#++totalMinted++#++() → uint256++` [.item-kind]#external#
+
+[.contract-item]
+[[ChainNft-calculateTokenId-uint256-uint256-]]
+==== `[.contract-item-name]#++calculateTokenId++#++(uint256 idIndex, uint256 chainId) → uint256 id++` [.item-kind]#public#
+
+token id calculation based on an index value that is supposed
+to increase with every minted token
+
+requirement: each chain registry produces token ids that
+are guaranteed to not collide with any token id genereated
+on a different chain
+
+format concat(counter,chainid,2 digits for len-of-chain-id)
+restriction chainid up to 99 digits
+decode: from right to left:
+- 2 right most digits encode length of chainid
+- move number of digits to left as determined above (-> chainid)
+- the reminder to the left is the counter
+
+special cases
+1101 -> decentralized insurance protocol
+2102 -> global registry
+2xxxxx -> chain registry, where xxxxx = <chain-part> 
+
+examples
+1101
+^^ ^
+|| +- 1-digit chain id
+|+-- chain id = 1 (mainnet)
++-- 1st token id on mainnet
+(1 * 10 ** 1 + 1) * 100 + 1
+42987654321010
+^ ^          ^
+| |          +- 10-digit chain id
+| +-- chain id = 9876543210 (hypothetical chainid)
++-- 42nd token id on this chain
+(42 * 10 ** 10 + 9876543210) * 100 + 10
+(index * 10 ** digits + chainid) * 100 + digits (1 < digits < 100)
+
+[.contract-item]
+[[ChainNft-calculateTokenId-uint256-]]
+==== `[.contract-item-name]#++calculateTokenId++#++(uint256 idIndex) → uint256++` [.item-kind]#public#
+
+[.contract-item]
+[[ChainNft-getNextTokenId--]]
+==== `[.contract-item-name]#++getNextTokenId++#++() → uint256++` [.item-kind]#external#
+
+[.contract-item]
+[[ChainNft-LogTokenInterceptorAddress-uint256-address-]]
+==== `[.contract-item-name]#++LogTokenInterceptorAddress++#++(uint256 tokenId, address interceptor)++` [.item-kind]#event#
+
+:PROTOCOL_NFT_ID: pass:normal[xref:#Registry-PROTOCOL_NFT_ID-NftId[`++PROTOCOL_NFT_ID++`]]
+:GLOBAL_REGISTRY_NFT_ID: pass:normal[xref:#Registry-GLOBAL_REGISTRY_NFT_ID-NftId[`++GLOBAL_REGISTRY_NFT_ID++`]]
+:GLOBAL_REGISTRY_ADDRESS: pass:normal[xref:#Registry-GLOBAL_REGISTRY_ADDRESS-address[`++GLOBAL_REGISTRY_ADDRESS++`]]
+:REGISTRY_NFT_ID: pass:normal[xref:#Registry-REGISTRY_NFT_ID-NftId[`++REGISTRY_NFT_ID++`]]
+:DEPLOYER: pass:normal[xref:#Registry-DEPLOYER-address[`++DEPLOYER++`]]
+:ADMIN: pass:normal[xref:#Registry-ADMIN-contract-RegistryAdmin[`++ADMIN++`]]
+:CHAIN_NFT: pass:normal[xref:#Registry-CHAIN_NFT-contract-ChainNft[`++CHAIN_NFT++`]]
+:NFT_LOCK_ADDRESS: pass:normal[xref:#Registry-NFT_LOCK_ADDRESS-address[`++NFT_LOCK_ADDRESS++`]]
+:REGISTRY_TOKEN_SEQUENCE_ID: pass:normal[xref:#Registry-REGISTRY_TOKEN_SEQUENCE_ID-uint256[`++REGISTRY_TOKEN_SEQUENCE_ID++`]]
+:STAKING_TOKEN_SEQUENCE_ID: pass:normal[xref:#Registry-STAKING_TOKEN_SEQUENCE_ID-uint256[`++STAKING_TOKEN_SEQUENCE_ID++`]]
+:EMPTY_URI: pass:normal[xref:#Registry-EMPTY_URI-string[`++EMPTY_URI++`]]
+:onlyDeployer: pass:normal[xref:#Registry-onlyDeployer--[`++onlyDeployer++`]]
+:constructor: pass:normal[xref:#Registry-constructor-contract-RegistryAdmin-address-[`++constructor++`]]
+:initialize: pass:normal[xref:#Registry-initialize-address-address-address-[`++initialize++`]]
+:registerRegistry: pass:normal[xref:#Registry-registerRegistry-NftId-uint256-address-[`++registerRegistry++`]]
+:registerService: pass:normal[xref:#Registry-registerService-struct-IRegistry-ObjectInfo-VersionPart-ObjectType-[`++registerService++`]]
+:register: pass:normal[xref:#Registry-register-struct-IRegistry-ObjectInfo-[`++register++`]]
+:registerWithCustomType: pass:normal[xref:#Registry-registerWithCustomType-struct-IRegistry-ObjectInfo-[`++registerWithCustomType++`]]
+:getInitialRelease: pass:normal[xref:#Registry-getInitialRelease--[`++getInitialRelease++`]]
+:getNextRelease: pass:normal[xref:#Registry-getNextRelease--[`++getNextRelease++`]]
+:getLatestRelease: pass:normal[xref:#Registry-getLatestRelease--[`++getLatestRelease++`]]
+:getReleaseInfo: pass:normal[xref:#Registry-getReleaseInfo-VersionPart-[`++getReleaseInfo++`]]
+:chainIds: pass:normal[xref:#Registry-chainIds--[`++chainIds++`]]
+:getChainId: pass:normal[xref:#Registry-getChainId-uint256-[`++getChainId++`]]
+:getRegistryNftId: pass:normal[xref:#Registry-getRegistryNftId-uint256-[`++getRegistryNftId++`]]
+:getObjectCount: pass:normal[xref:#Registry-getObjectCount--[`++getObjectCount++`]]
+:getNftId: pass:normal[xref:#Registry-getNftId--[`++getNftId++`]]
+:getProtocolNftId: pass:normal[xref:#Registry-getProtocolNftId--[`++getProtocolNftId++`]]
+:getNftIdForAddress: pass:normal[xref:#Registry-getNftIdForAddress-address-[`++getNftIdForAddress++`]]
+:ownerOf: pass:normal[xref:#Registry-ownerOf-NftId-[`++ownerOf++`]]
+:isOwnerOf: pass:normal[xref:#Registry-isOwnerOf-NftId-address-[`++isOwnerOf++`]]
+:ownerOf: pass:normal[xref:#Registry-ownerOf-address-[`++ownerOf++`]]
+:getObjectInfo: pass:normal[xref:#Registry-getObjectInfo-NftId-[`++getObjectInfo++`]]
+:getParentNftId: pass:normal[xref:#Registry-getParentNftId-NftId-[`++getParentNftId++`]]
+:isObjectType: pass:normal[xref:#Registry-isObjectType-address-ObjectType-[`++isObjectType++`]]
+:isObjectType: pass:normal[xref:#Registry-isObjectType-NftId-ObjectType-[`++isObjectType++`]]
+:getObjectAddress: pass:normal[xref:#Registry-getObjectAddress-NftId-[`++getObjectAddress++`]]
+:getObjectInfo: pass:normal[xref:#Registry-getObjectInfo-address-[`++getObjectInfo++`]]
+:isRegistered: pass:normal[xref:#Registry-isRegistered-NftId-[`++isRegistered++`]]
+:isRegistered: pass:normal[xref:#Registry-isRegistered-address-[`++isRegistered++`]]
+:isRegisteredService: pass:normal[xref:#Registry-isRegisteredService-address-[`++isRegisteredService++`]]
+:isRegisteredComponent: pass:normal[xref:#Registry-isRegisteredComponent-address-[`++isRegisteredComponent++`]]
+:isActiveRelease: pass:normal[xref:#Registry-isActiveRelease-VersionPart-[`++isActiveRelease++`]]
+:getStakingAddress: pass:normal[xref:#Registry-getStakingAddress--[`++getStakingAddress++`]]
+:getTokenRegistryAddress: pass:normal[xref:#Registry-getTokenRegistryAddress--[`++getTokenRegistryAddress++`]]
+:getServiceAddress: pass:normal[xref:#Registry-getServiceAddress-ObjectType-VersionPart-[`++getServiceAddress++`]]
+:getReleaseRegistryAddress: pass:normal[xref:#Registry-getReleaseRegistryAddress--[`++getReleaseRegistryAddress++`]]
+:getChainNftAddress: pass:normal[xref:#Registry-getChainNftAddress--[`++getChainNftAddress++`]]
+:getRegistryAdminAddress: pass:normal[xref:#Registry-getRegistryAdminAddress--[`++getRegistryAdminAddress++`]]
+:getAuthority: pass:normal[xref:#Registry-getAuthority--[`++getAuthority++`]]
+:getOwner: pass:normal[xref:#Registry-getOwner--[`++getOwner++`]]
+:supportsInterface: pass:normal[xref:#Registry-supportsInterface-bytes4-[`++supportsInterface++`]]
+:_register: pass:normal[xref:#Registry-_register-struct-IRegistry-ObjectInfo-[`++_register++`]]
+:_getInterceptor: pass:normal[xref:#Registry-_getInterceptor-bool-ObjectType-address-bool-address-[`++_getInterceptor++`]]
+:_registerRegistry: pass:normal[xref:#Registry-_registerRegistry--[`++_registerRegistry++`]]
+:_registerForNft: pass:normal[xref:#Registry-_registerForNft-struct-IRegistry-ObjectInfo-bool-[`++_registerForNft++`]]
+:_setAddressForNftId: pass:normal[xref:#Registry-_setAddressForNftId-NftId-address-[`++_setAddressForNftId++`]]
+:_getGlobalRegistryAddress: pass:normal[xref:#Registry-_getGlobalRegistryAddress-address-[`++_getGlobalRegistryAddress++`]]
+
+[.contract]
+[[Registry]]
+=== `++Registry++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/registry/Registry.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/registry/Registry.sol";
+```
+
+Chain Registry contract implementing IRegistry.
+IRegistry for method details.
+
+[.contract-index]
+.Modifiers
+--
+* {xref-Registry-onlyDeployer--}[`++onlyDeployer()++`]
+--
+
+[.contract-index]
+.Functions
+--
+* [`++constructor(admin, globalRegistry)++`]
+* [`++initialize(releaseRegistry, tokenRegistry, staking)++`]
+* [`++registerRegistry(nftId, chainId, registryAddress)++`]
+* [`++registerService(info, version, domain)++`]
+* [`++register(info)++`]
+* [`++registerWithCustomType(info)++`]
+* [`++getInitialRelease()++`]
+* [`++getNextRelease()++`]
+* [`++getLatestRelease()++`]
+* [`++getReleaseInfo(release)++`]
+* [`++chainIds()++`]
+* [`++getChainId(idx)++`]
+* [`++getRegistryNftId(chainId)++`]
+* [`++getObjectCount()++`]
+* [`++getNftId()++`]
+* [`++getProtocolNftId()++`]
+* [`++getNftIdForAddress(object)++`]
+* [`++ownerOf(nftId)++`]
+* [`++isOwnerOf(nftId, expectedOwner)++`]
+* [`++ownerOf(contractAddress)++`]
+* [`++getObjectInfo(nftId)++`]
+* [`++getParentNftId(nftId)++`]
+* [`++isObjectType(contractAddress, expectedObjectType)++`]
+* [`++isObjectType(nftId, expectedObjectType)++`]
+* [`++getObjectAddress(nftId)++`]
+* [`++getObjectInfo(object)++`]
+* [`++isRegistered(nftId)++`]
+* [`++isRegistered(object)++`]
+* [`++isRegisteredService(object)++`]
+* [`++isRegisteredComponent(object)++`]
+* [`++isActiveRelease(version)++`]
+* [`++getStakingAddress()++`]
+* [`++getTokenRegistryAddress()++`]
+* [`++getServiceAddress(serviceDomain, releaseVersion)++`]
+* [`++getReleaseRegistryAddress()++`]
+* [`++getChainNftAddress()++`]
+* [`++getRegistryAdminAddress()++`]
+* [`++getAuthority()++`]
+* [`++getOwner()++`]
+* [`++supportsInterface(interfaceId)++`]
+* [`++_register(info)++`]
+* [`++_getInterceptor(isInterceptor, objectType, objectAddress, parentIsInterceptor, parentObjectAddress)++`]
+* [`++_registerRegistry()++`]
+* [`++_registerForNft(info, updateAddressLookup)++`]
+* [`++_setAddressForNftId(nftId, objectAddress)++`]
+* [`++_getGlobalRegistryAddress(globalRegistry)++`]
+
+[.contract-subindex-inherited]
+.IRegistry
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.AccessManaged
+* [`++authority()++`]
+* [`++setAuthority(newAuthority)++`]
+* [`++isConsumingScheduledOp()++`]
+* [`++_setAuthority(newAuthority)++`]
+* [`++_checkCanCall(caller, data)++`]
+
+[.contract-subindex-inherited]
+.IAccessManaged
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.IRegistry
+* [`++LogRegistryObjectRegistered(nftId, parentNftId, objectType, isInterceptor, objectAddress, initialOwner)++`]
+* [`++LogRegistryServiceRegistered(majorVersion, domain)++`]
+* [`++LogRegistryChainRegistryRegistered(nftId, chainId, chainRegistryAddress)++`]
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.AccessManaged
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[Registry-onlyDeployer--]]
+==== `[.contract-item-name]#++onlyDeployer++#++()++` [.item-kind]#modifier#
+
+[.contract-item]
+[[Registry-constructor-contract-RegistryAdmin-address-]]
+==== `[.contract-item-name]#++constructor++#++(contract RegistryAdmin admin, address globalRegistry)++` [.item-kind]#public#
+
+Creates the registry contract and populates it with the protocol and registry objects.
+Internally deploys the ChainNft contract.
+
+[.contract-item]
+[[Registry-initialize-address-address-address-]]
+==== `[.contract-item-name]#++initialize++#++(address releaseRegistry, address tokenRegistry, address staking)++` [.item-kind]#external#
+
+Wires release registry, token registry and staking contract to this registry.
+MUST be called by release registry.
+
+[.contract-item]
+[[Registry-registerRegistry-NftId-uint256-address-]]
+==== `[.contract-item-name]#++registerRegistry++#++(NftId nftId, uint256 chainId, address registryAddress)++` [.item-kind]#external#
+
+Registers a registry contract for a specified chain.
+Only one chain registry may be registered per chain
+
+[.contract-item]
+[[Registry-registerService-struct-IRegistry-ObjectInfo-VersionPart-ObjectType-]]
+==== `[.contract-item-name]#++registerService++#++(struct IRegistry.ObjectInfo info, VersionPart version, ObjectType domain) → NftId nftId++` [.item-kind]#external#
+
+Register a service with using the provided domain and version.
+The function returns a newly minted service NFT ID.
+May only be used to register services.
+
+[.contract-item]
+[[Registry-register-struct-IRegistry-ObjectInfo-]]
+==== `[.contract-item-name]#++register++#++(struct IRegistry.ObjectInfo info) → NftId nftId++` [.item-kind]#external#
+
+Register an object with a known core type.
+The function returns a newly minted object NFT ID.
+May not be used to register services.
+
+[.contract-item]
+[[Registry-registerWithCustomType-struct-IRegistry-ObjectInfo-]]
+==== `[.contract-item-name]#++registerWithCustomType++#++(struct IRegistry.ObjectInfo info) → NftId nftId++` [.item-kind]#external#
+
+Register an object with a custom type.
+The function returns a newly minted object NFT ID.
+This function is reserved for GIF releases > 3.
+May not be used to register known core types.
+
+[.contract-item]
+[[Registry-getInitialRelease--]]
+==== `[.contract-item-name]#++getInitialRelease++#++() → VersionPart++` [.item-kind]#external#
+
+earliest GIF major version
+
+[.contract-item]
+[[Registry-getNextRelease--]]
+==== `[.contract-item-name]#++getNextRelease++#++() → VersionPart++` [.item-kind]#external#
+
+next GIF release version to be released
+
+[.contract-item]
+[[Registry-getLatestRelease--]]
+==== `[.contract-item-name]#++getLatestRelease++#++() → VersionPart++` [.item-kind]#external#
+
+latest active GIF release version
+
+[.contract-item]
+[[Registry-getReleaseInfo-VersionPart-]]
+==== `[.contract-item-name]#++getReleaseInfo++#++(VersionPart release) → struct IRelease.ReleaseInfo++` [.item-kind]#external#
+
+[.contract-item]
+[[Registry-chainIds--]]
+==== `[.contract-item-name]#++chainIds++#++() → uint256++` [.item-kind]#public#
+
+Returns the number of supported chains.
+
+[.contract-item]
+[[Registry-getChainId-uint256-]]
+==== `[.contract-item-name]#++getChainId++#++(uint256 idx) → uint256++` [.item-kind]#public#
+
+Returns the chain id at the specified index.
+
+[.contract-item]
+[[Registry-getRegistryNftId-uint256-]]
+==== `[.contract-item-name]#++getRegistryNftId++#++(uint256 chainId) → NftId nftId++` [.item-kind]#public#
+
+Returns the NFT ID of the registry for the specified chain.
+
+[.contract-item]
+[[Registry-getObjectCount--]]
+==== `[.contract-item-name]#++getObjectCount++#++() → uint256++` [.item-kind]#external#
+
+[.contract-item]
+[[Registry-getNftId--]]
+==== `[.contract-item-name]#++getNftId++#++() → NftId nftId++` [.item-kind]#external#
+
+[.contract-item]
+[[Registry-getProtocolNftId--]]
+==== `[.contract-item-name]#++getProtocolNftId++#++() → NftId nftId++` [.item-kind]#external#
+
+[.contract-item]
+[[Registry-getNftIdForAddress-address-]]
+==== `[.contract-item-name]#++getNftIdForAddress++#++(address object) → NftId id++` [.item-kind]#external#
+
+[.contract-item]
+[[Registry-ownerOf-NftId-]]
+==== `[.contract-item-name]#++ownerOf++#++(NftId nftId) → address++` [.item-kind]#public#
+
+[.contract-item]
+[[Registry-isOwnerOf-NftId-address-]]
+==== `[.contract-item-name]#++isOwnerOf++#++(NftId nftId, address expectedOwner) → bool++` [.item-kind]#public#
+
+[.contract-item]
+[[Registry-ownerOf-address-]]
+==== `[.contract-item-name]#++ownerOf++#++(address contractAddress) → address++` [.item-kind]#public#
+
+[.contract-item]
+[[Registry-getObjectInfo-NftId-]]
+==== `[.contract-item-name]#++getObjectInfo++#++(NftId nftId) → struct IRegistry.ObjectInfo++` [.item-kind]#external#
+
+[.contract-item]
+[[Registry-getParentNftId-NftId-]]
+==== `[.contract-item-name]#++getParentNftId++#++(NftId nftId) → NftId parentNftId++` [.item-kind]#external#
+
+[.contract-item]
+[[Registry-isObjectType-address-ObjectType-]]
+==== `[.contract-item-name]#++isObjectType++#++(address contractAddress, ObjectType expectedObjectType) → bool++` [.item-kind]#external#
+
+[.contract-item]
+[[Registry-isObjectType-NftId-ObjectType-]]
+==== `[.contract-item-name]#++isObjectType++#++(NftId nftId, ObjectType expectedObjectType) → bool++` [.item-kind]#public#
+
+[.contract-item]
+[[Registry-getObjectAddress-NftId-]]
+==== `[.contract-item-name]#++getObjectAddress++#++(NftId nftId) → address++` [.item-kind]#external#
+
+[.contract-item]
+[[Registry-getObjectInfo-address-]]
+==== `[.contract-item-name]#++getObjectInfo++#++(address object) → struct IRegistry.ObjectInfo++` [.item-kind]#external#
+
+Returns the object info for the specified object address.
+
+[.contract-item]
+[[Registry-isRegistered-NftId-]]
+==== `[.contract-item-name]#++isRegistered++#++(NftId nftId) → bool++` [.item-kind]#public#
+
+[.contract-item]
+[[Registry-isRegistered-address-]]
+==== `[.contract-item-name]#++isRegistered++#++(address object) → bool++` [.item-kind]#external#
+
+[.contract-item]
+[[Registry-isRegisteredService-address-]]
+==== `[.contract-item-name]#++isRegisteredService++#++(address object) → bool++` [.item-kind]#external#
+
+[.contract-item]
+[[Registry-isRegisteredComponent-address-]]
+==== `[.contract-item-name]#++isRegisteredComponent++#++(address object) → bool++` [.item-kind]#external#
+
+[.contract-item]
+[[Registry-isActiveRelease-VersionPart-]]
+==== `[.contract-item-name]#++isActiveRelease++#++(VersionPart version) → bool++` [.item-kind]#external#
+
+[.contract-item]
+[[Registry-getStakingAddress--]]
+==== `[.contract-item-name]#++getStakingAddress++#++() → address staking++` [.item-kind]#external#
+
+[.contract-item]
+[[Registry-getTokenRegistryAddress--]]
+==== `[.contract-item-name]#++getTokenRegistryAddress++#++() → address tokenRegistry++` [.item-kind]#external#
+
+[.contract-item]
+[[Registry-getServiceAddress-ObjectType-VersionPart-]]
+==== `[.contract-item-name]#++getServiceAddress++#++(ObjectType serviceDomain, VersionPart releaseVersion) → address service++` [.item-kind]#external#
+
+[.contract-item]
+[[Registry-getReleaseRegistryAddress--]]
+==== `[.contract-item-name]#++getReleaseRegistryAddress++#++() → address++` [.item-kind]#external#
+
+[.contract-item]
+[[Registry-getChainNftAddress--]]
+==== `[.contract-item-name]#++getChainNftAddress++#++() → address++` [.item-kind]#external#
+
+[.contract-item]
+[[Registry-getRegistryAdminAddress--]]
+==== `[.contract-item-name]#++getRegistryAdminAddress++#++() → address++` [.item-kind]#external#
+
+[.contract-item]
+[[Registry-getAuthority--]]
+==== `[.contract-item-name]#++getAuthority++#++() → address++` [.item-kind]#external#
+
+[.contract-item]
+[[Registry-getOwner--]]
+==== `[.contract-item-name]#++getOwner++#++() → address owner++` [.item-kind]#public#
+
+[.contract-item]
+[[Registry-supportsInterface-bytes4-]]
+==== `[.contract-item-name]#++supportsInterface++#++(bytes4 interfaceId) → bool++` [.item-kind]#external#
+
+Returns true if this contract implements the interface defined by
+`interfaceId`. See the corresponding
+https://eips.ethereum.org/EIPS/eip-165#how-interfaces-are-identified[EIP section]
+to learn more about how these ids are created.
+
+This function call must use less than 30 000 gas.
+
+[.contract-item]
+[[Registry-_register-struct-IRegistry-ObjectInfo-]]
+==== `[.contract-item-name]#++_register++#++(struct IRegistry.ObjectInfo info) → NftId nftId++` [.item-kind]#internal#
+
+registry protects only against tampering existing records, registering with invalid types pairs and 0 parent address
+
+[.contract-item]
+[[Registry-_getInterceptor-bool-ObjectType-address-bool-address-]]
+==== `[.contract-item-name]#++_getInterceptor++#++(bool isInterceptor, ObjectType objectType, address objectAddress, bool parentIsInterceptor, address parentObjectAddress) → address interceptor++` [.item-kind]#internal#
+
+obtain interceptor address for this nft if applicable, address(0) otherwise
+special case: STAKES (parent may be any type) -> no intercept call
+default case:
+
+[.contract-item]
+[[Registry-_registerRegistry--]]
+==== `[.contract-item-name]#++_registerRegistry++#++() → NftId registryNftId++` [.item-kind]#internal#
+
+register this registry
+
+[.contract-item]
+[[Registry-_registerForNft-struct-IRegistry-ObjectInfo-bool-]]
+==== `[.contract-item-name]#++_registerForNft++#++(struct IRegistry.ObjectInfo info, bool updateAddressLookup)++` [.item-kind]#internal#
+
+Register the provided object info for the specified NFT ID.
+
+[.contract-item]
+[[Registry-_setAddressForNftId-NftId-address-]]
+==== `[.contract-item-name]#++_setAddressForNftId++#++(NftId nftId, address objectAddress)++` [.item-kind]#internal#
+
+[.contract-item]
+[[Registry-_getGlobalRegistryAddress-address-]]
+==== `[.contract-item-name]#++_getGlobalRegistryAddress++#++(address globalRegistry) → address++` [.item-kind]#internal#
+
+:GIF_ADMIN_ROLE_NAME: pass:normal[xref:#RegistryAdmin-GIF_ADMIN_ROLE_NAME-string[`++GIF_ADMIN_ROLE_NAME++`]]
+:GIF_MANAGER_ROLE_NAME: pass:normal[xref:#RegistryAdmin-GIF_MANAGER_ROLE_NAME-string[`++GIF_MANAGER_ROLE_NAME++`]]
+:REGISTRY_ADMIN_TARGET_NAME: pass:normal[xref:#RegistryAdmin-REGISTRY_ADMIN_TARGET_NAME-string[`++REGISTRY_ADMIN_TARGET_NAME++`]]
+:REGISTRY_TARGET_NAME: pass:normal[xref:#RegistryAdmin-REGISTRY_TARGET_NAME-string[`++REGISTRY_TARGET_NAME++`]]
+:RELEASE_REGISTRY_TARGET_NAME: pass:normal[xref:#RegistryAdmin-RELEASE_REGISTRY_TARGET_NAME-string[`++RELEASE_REGISTRY_TARGET_NAME++`]]
+:STAKING_TARGET_NAME: pass:normal[xref:#RegistryAdmin-STAKING_TARGET_NAME-string[`++STAKING_TARGET_NAME++`]]
+:STAKING_TARGET_HANDLER_NAME: pass:normal[xref:#RegistryAdmin-STAKING_TARGET_HANDLER_NAME-string[`++STAKING_TARGET_HANDLER_NAME++`]]
+:STAKING_STORE_TARGET_NAME: pass:normal[xref:#RegistryAdmin-STAKING_STORE_TARGET_NAME-string[`++STAKING_STORE_TARGET_NAME++`]]
+:STAKING_TH_TARGET_NAME: pass:normal[xref:#RegistryAdmin-STAKING_TH_TARGET_NAME-string[`++STAKING_TH_TARGET_NAME++`]]
+:TOKEN_REGISTRY_TARGET_NAME: pass:normal[xref:#RegistryAdmin-TOKEN_REGISTRY_TARGET_NAME-string[`++TOKEN_REGISTRY_TARGET_NAME++`]]
+:TOKEN_HANDLER_TARGET_NAME: pass:normal[xref:#RegistryAdmin-TOKEN_HANDLER_TARGET_NAME-string[`++TOKEN_HANDLER_TARGET_NAME++`]]
+:ErrorRegistryAdminNotRegistry: pass:normal[xref:#RegistryAdmin-ErrorRegistryAdminNotRegistry-address-[`++ErrorRegistryAdminNotRegistry++`]]
+:_registry: pass:normal[xref:#RegistryAdmin-_registry-address[`++_registry++`]]
+:constructor: pass:normal[xref:#RegistryAdmin-constructor--[`++constructor++`]]
+:completeSetup: pass:normal[xref:#RegistryAdmin-completeSetup-address-address-VersionPart-address-address-[`++completeSetup++`]]
+:grantServiceRoleForAllVersions: pass:normal[xref:#RegistryAdmin-grantServiceRoleForAllVersions-contract-IService-ObjectType-[`++grantServiceRoleForAllVersions++`]]
+:getGifAdminRole: pass:normal[xref:#RegistryAdmin-getGifAdminRole--[`++getGifAdminRole++`]]
+:getGifManagerRole: pass:normal[xref:#RegistryAdmin-getGifManagerRole--[`++getGifManagerRole++`]]
+:_createCoreTargets: pass:normal[xref:#RegistryAdmin-_createCoreTargets-string-[`++_createCoreTargets++`]]
+:_createTargetAuthorizations: pass:normal[xref:#RegistryAdmin-_createTargetAuthorizations-contract-IAuthorization-[`++_createTargetAuthorizations++`]]
+
+[.contract]
+[[RegistryAdmin]]
+=== `++RegistryAdmin++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/registry/RegistryAdmin.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/registry/RegistryAdmin.sol";
+```
+
+The RegistryAdmin contract implements the central authorization for the GIF core contracts.
+These are the release independent registry and staking contracts and their respective helper contracts.
+The RegistryAdmin also manages the access from service contracts to the GIF core contracts
+
+[.contract-index]
+.Functions
+--
+* [`++constructor()++`]
+* [`++completeSetup(registry, authorization, release, gifAdmin, gifManager)++`]
+* [`++grantServiceRoleForAllVersions(service, domain)++`]
+* [`++getGifAdminRole()++`]
+* [`++getGifManagerRole()++`]
+* [`++_createCoreTargets(registryTargetName)++`]
+* [`++_createTargetAuthorizations(authorization)++`]
+
+[.contract-subindex-inherited]
+.AccessAdmin
+* [`++initialize(authority, adminName)++`]
+* [`++__AccessAdmin_init(authority, adminName)++`]
+* [`++getRelease()++`]
+* [`++getRegistry()++`]
+* [`++getLinkedNftId()++`]
+* [`++getAuthorization()++`]
+* [`++isLocked()++`]
+* [`++roles()++`]
+* [`++getRoleId(idx)++`]
+* [`++getAdminRole()++`]
+* [`++getPublicRole()++`]
+* [`++roleExists(roleId)++`]
+* [`++getRoleForName(name)++`]
+* [`++getRoleInfo(roleId)++`]
+* [`++isRoleActive(roleId)++`]
+* [`++isRoleCustom(roleId)++`]
+* [`++roleMembers(roleId)++`]
+* [`++getRoleMember(roleId, idx)++`]
+* [`++isRoleMember(roleId, account)++`]
+* [`++isRoleAdmin(roleId, account)++`]
+* [`++targetExists(target)++`]
+* [`++targets()++`]
+* [`++getTargetAddress(idx)++`]
+* [`++getTargetInfo(target)++`]
+* [`++getTargetForName(name)++`]
+* [`++isTargetLocked(target)++`]
+* [`++authorizedFunctions(target)++`]
+* [`++getAuthorizedFunction(target, idx)++`]
+* [`++getFunctionInfo(target, selector)++`]
+* [`++_linkToNftOwnable(registerable)++`]
+* [`++_createRoles(authorization)++`]
+* [`++_createRole(roleId, info, revertOnExistingRole)++`]
+* [`++_setRoleActive(roleId, active)++`]
+* [`++_grantRoleToAccount(roleId, account)++`]
+* [`++_revokeRoleFromAccount(roleId, account)++`]
+* [`++_getOrCreateTargetRoleIdAndName(target, targetName, targetType)++`]
+* [`++_createTarget(target, targetName, targetType, checkAuthority)++`]
+* [`++_createTargetUnchecked(target, targetName, targetType, managed)++`]
+* [`++_setTargetLocked(target, locked)++`]
+* [`++_authorizeFunctions(authorization, target, roleId)++`]
+* [`++_authorizeTargetFunctions(target, roleId, functions, onlyComponentOrContractTargets, addFunctions)++`]
+* [`++_updateFunctionAccess(target, roleId, func, addFunction)++`]
+
+[.contract-subindex-inherited]
+.IAccessAdmin
+
+[.contract-subindex-inherited]
+.IRelease
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.IAccess
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+* [`++__AccessManaged_init(initialAuthority)++`]
+* [`++__AccessManaged_init_unchained(initialAuthority)++`]
+* [`++authority()++`]
+* [`++setAuthority(newAuthority)++`]
+* [`++isConsumingScheduledOp()++`]
+* [`++_setAuthority(newAuthority)++`]
+* [`++_checkCanCall(caller, data)++`]
+
+[.contract-subindex-inherited]
+.IAccessManaged
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+* [`++__Context_init()++`]
+* [`++__Context_init_unchained()++`]
+* [`++_msgSender()++`]
+* [`++_msgData()++`]
+* [`++_contextSuffixLength()++`]
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.AccessAdmin
+
+[.contract-subindex-inherited]
+.IAccessAdmin
+* [`++LogAccessAdminRoleCreated(admin, roleId, targetType, roleAdminId, name)++`]
+* [`++LogAccessAdminTargetCreated(admin, name, managed, target, roleId)++`]
+* [`++LogAccessAdminRoleActivatedSet(admin, roleId, active, lastUpdateIn)++`]
+* [`++LogAccessAdminRoleGranted(admin, account, roleName)++`]
+* [`++LogAccessAdminRoleRevoked(admin, account, roleName)++`]
+* [`++LogAccessAdminTargetLockedSet(admin, target, locked, lastUpdateIn)++`]
+* [`++LogAccessAdminFunctionGranted(admin, target, func, lastUpdateIn)++`]
+
+[.contract-subindex-inherited]
+.IRelease
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.IAccess
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[RegistryAdmin-constructor--]]
+==== `[.contract-item-name]#++constructor++#++()++` [.item-kind]#public#
+
+[.contract-item]
+[[RegistryAdmin-completeSetup-address-address-VersionPart-address-address-]]
+==== `[.contract-item-name]#++completeSetup++#++(address registry, address authorization, VersionPart release, address gifAdmin, address gifManager)++` [.item-kind]#public#
+
+[.contract-item]
+[[RegistryAdmin-grantServiceRoleForAllVersions-contract-IService-ObjectType-]]
+==== `[.contract-item-name]#++grantServiceRoleForAllVersions++#++(contract IService service, ObjectType domain)++` [.item-kind]#external#
+
+[.contract-item]
+[[RegistryAdmin-getGifAdminRole--]]
+==== `[.contract-item-name]#++getGifAdminRole++#++() → RoleId++` [.item-kind]#external#
+
+[.contract-item]
+[[RegistryAdmin-getGifManagerRole--]]
+==== `[.contract-item-name]#++getGifManagerRole++#++() → RoleId++` [.item-kind]#external#
+
+[.contract-item]
+[[RegistryAdmin-_createCoreTargets-string-]]
+==== `[.contract-item-name]#++_createCoreTargets++#++(string registryTargetName)++` [.item-kind]#internal#
+
+[.contract-item]
+[[RegistryAdmin-_createTargetAuthorizations-contract-IAuthorization-]]
+==== `[.contract-item-name]#++_createTargetAuthorizations++#++(contract IAuthorization authorization)++` [.item-kind]#internal#
+
+:INITIAL_GIF_VERSION: pass:normal[xref:#ReleaseRegistry-INITIAL_GIF_VERSION-uint256[`++INITIAL_GIF_VERSION++`]]
+:LogReleaseCreation: pass:normal[xref:#ReleaseRegistry-LogReleaseCreation-contract-IAccessAdmin-VersionPart-bytes32-[`++LogReleaseCreation++`]]
+:LogReleaseActivation: pass:normal[xref:#ReleaseRegistry-LogReleaseActivation-VersionPart-[`++LogReleaseActivation++`]]
+:LogReleaseDisabled: pass:normal[xref:#ReleaseRegistry-LogReleaseDisabled-VersionPart-[`++LogReleaseDisabled++`]]
+:LogReleaseEnabled: pass:normal[xref:#ReleaseRegistry-LogReleaseEnabled-VersionPart-[`++LogReleaseEnabled++`]]
+:ErrorReleaseRegistryNotRegistry: pass:normal[xref:#ReleaseRegistry-ErrorReleaseRegistryNotRegistry-contract-Registry-[`++ErrorReleaseRegistryNotRegistry++`]]
+:ErrorReleaseRegistryNotServiceAuth: pass:normal[xref:#ReleaseRegistry-ErrorReleaseRegistryNotServiceAuth-address-[`++ErrorReleaseRegistryNotServiceAuth++`]]
+:ErrorReleaseRegistryServiceAuthVersionMismatch: pass:normal[xref:#ReleaseRegistry-ErrorReleaseRegistryServiceAuthVersionMismatch-contract-IServiceAuthorization-VersionPart-VersionPart-[`++ErrorReleaseRegistryServiceAuthVersionMismatch++`]]
+:ErrorReleaseRegistryServiceAuthDomainsZero: pass:normal[xref:#ReleaseRegistry-ErrorReleaseRegistryServiceAuthDomainsZero-contract-IServiceAuthorization-VersionPart-[`++ErrorReleaseRegistryServiceAuthDomainsZero++`]]
+:ErrorReleaseRegistryServiceAddressMismatch: pass:normal[xref:#ReleaseRegistry-ErrorReleaseRegistryServiceAddressMismatch-address-address-[`++ErrorReleaseRegistryServiceAddressMismatch++`]]
+:ErrorReleaseRegistryRegistryServiceMissing: pass:normal[xref:#ReleaseRegistry-ErrorReleaseRegistryRegistryServiceMissing-VersionPart-[`++ErrorReleaseRegistryRegistryServiceMissing++`]]
+:ErrorReleaseRegistryNotService: pass:normal[xref:#ReleaseRegistry-ErrorReleaseRegistryNotService-address-[`++ErrorReleaseRegistryNotService++`]]
+:ErrorReleaseRegistryServiceAuthorityMismatch: pass:normal[xref:#ReleaseRegistry-ErrorReleaseRegistryServiceAuthorityMismatch-contract-IService-address-address-[`++ErrorReleaseRegistryServiceAuthorityMismatch++`]]
+:ErrorReleaseRegistryServiceVersionMismatch: pass:normal[xref:#ReleaseRegistry-ErrorReleaseRegistryServiceVersionMismatch-contract-IService-VersionPart-VersionPart-[`++ErrorReleaseRegistryServiceVersionMismatch++`]]
+:ErrorReleaseRegistryServiceDomainMismatch: pass:normal[xref:#ReleaseRegistry-ErrorReleaseRegistryServiceDomainMismatch-contract-IService-ObjectType-ObjectType-[`++ErrorReleaseRegistryServiceDomainMismatch++`]]
+:ErrorReleaseRegistryServiceInfoAddressInvalid: pass:normal[xref:#ReleaseRegistry-ErrorReleaseRegistryServiceInfoAddressInvalid-contract-IService-address-[`++ErrorReleaseRegistryServiceInfoAddressInvalid++`]]
+:ErrorReleaseRegistryServiceInfoInterceptorInvalid: pass:normal[xref:#ReleaseRegistry-ErrorReleaseRegistryServiceInfoInterceptorInvalid-contract-IService-bool-[`++ErrorReleaseRegistryServiceInfoInterceptorInvalid++`]]
+:ErrorReleaseRegistryServiceInfoTypeInvalid: pass:normal[xref:#ReleaseRegistry-ErrorReleaseRegistryServiceInfoTypeInvalid-contract-IService-ObjectType-ObjectType-[`++ErrorReleaseRegistryServiceInfoTypeInvalid++`]]
+:ErrorReleaseRegistryServiceInfoOwnerInvalid: pass:normal[xref:#ReleaseRegistry-ErrorReleaseRegistryServiceInfoOwnerInvalid-contract-IService-address-address-[`++ErrorReleaseRegistryServiceInfoOwnerInvalid++`]]
+:ErrorReleaseRegistryServiceSelfRegistration: pass:normal[xref:#ReleaseRegistry-ErrorReleaseRegistryServiceSelfRegistration-contract-IService-[`++ErrorReleaseRegistryServiceSelfRegistration++`]]
+:ErrorReleaseRegistryServiceOwnerRegistered: pass:normal[xref:#ReleaseRegistry-ErrorReleaseRegistryServiceOwnerRegistered-contract-IService-address-[`++ErrorReleaseRegistryServiceOwnerRegistered++`]]
+:_registryAdmin: pass:normal[xref:#ReleaseRegistry-_registryAdmin-contract-RegistryAdmin[`++_registryAdmin++`]]
+:_registry: pass:normal[xref:#ReleaseRegistry-_registry-contract-Registry[`++_registry++`]]
+:_releaseInfo: pass:normal[xref:#ReleaseRegistry-_releaseInfo-mapping-VersionPart----struct-IRelease-ReleaseInfo-[`++_releaseInfo++`]]
+:_release: pass:normal[xref:#ReleaseRegistry-_release-VersionPart--[`++_release++`]]
+:_masterReleaseAdmin: pass:normal[xref:#ReleaseRegistry-_masterReleaseAdmin-contract-ReleaseAdmin[`++_masterReleaseAdmin++`]]
+:_latest: pass:normal[xref:#ReleaseRegistry-_latest-VersionPart[`++_latest++`]]
+:_next: pass:normal[xref:#ReleaseRegistry-_next-VersionPart[`++_next++`]]
+:_registeredServices: pass:normal[xref:#ReleaseRegistry-_registeredServices-uint256[`++_registeredServices++`]]
+:_servicesToRegister: pass:normal[xref:#ReleaseRegistry-_servicesToRegister-uint256[`++_servicesToRegister++`]]
+:constructor: pass:normal[xref:#ReleaseRegistry-constructor-contract-Registry-[`++constructor++`]]
+:createNextRelease: pass:normal[xref:#ReleaseRegistry-createNextRelease--[`++createNextRelease++`]]
+:prepareNextRelease: pass:normal[xref:#ReleaseRegistry-prepareNextRelease-contract-IServiceAuthorization-bytes32-[`++prepareNextRelease++`]]
+:registerService: pass:normal[xref:#ReleaseRegistry-registerService-contract-IService-[`++registerService++`]]
+:activateNextRelease: pass:normal[xref:#ReleaseRegistry-activateNextRelease--[`++activateNextRelease++`]]
+:setActive: pass:normal[xref:#ReleaseRegistry-setActive-VersionPart-bool-[`++setActive++`]]
+:predictDeterministicAddress: pass:normal[xref:#ReleaseRegistry-predictDeterministicAddress-address-bytes32-address-[`++predictDeterministicAddress++`]]
+:isActiveRelease: pass:normal[xref:#ReleaseRegistry-isActiveRelease-VersionPart-[`++isActiveRelease++`]]
+:getReleaseInfo: pass:normal[xref:#ReleaseRegistry-getReleaseInfo-VersionPart-[`++getReleaseInfo++`]]
+:releases: pass:normal[xref:#ReleaseRegistry-releases--[`++releases++`]]
+:getVersion: pass:normal[xref:#ReleaseRegistry-getVersion-uint256-[`++getVersion++`]]
+:getNextVersion: pass:normal[xref:#ReleaseRegistry-getNextVersion--[`++getNextVersion++`]]
+:getLatestVersion: pass:normal[xref:#ReleaseRegistry-getLatestVersion--[`++getLatestVersion++`]]
+:getState: pass:normal[xref:#ReleaseRegistry-getState-VersionPart-[`++getState++`]]
+:getRemainingServicesToRegister: pass:normal[xref:#ReleaseRegistry-getRemainingServicesToRegister--[`++getRemainingServicesToRegister++`]]
+:getServiceAuthorization: pass:normal[xref:#ReleaseRegistry-getServiceAuthorization-VersionPart-[`++getServiceAuthorization++`]]
+:getRegistryAdmin: pass:normal[xref:#ReleaseRegistry-getRegistryAdmin--[`++getRegistryAdmin++`]]
+:getRegistry: pass:normal[xref:#ReleaseRegistry-getRegistry--[`++getRegistry++`]]
+:_verifyService: pass:normal[xref:#ReleaseRegistry-_verifyService-contract-IService-address-VersionPart-ObjectType-[`++_verifyService++`]]
+:_verifyServiceInfo: pass:normal[xref:#ReleaseRegistry-_verifyServiceInfo-contract-IService-struct-IRegistry-ObjectInfo-address-[`++_verifyServiceInfo++`]]
+
+[.contract]
+[[ReleaseRegistry]]
+=== `++ReleaseRegistry++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/registry/ReleaseRegistry.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/registry/ReleaseRegistry.sol";
+```
+
+The ReleaseRegistry manages the lifecycle of major GIF releases and their services.
+The creation of a new GIF release is a multi-step process:
+1. The creation of a new GIF release is initiated by the GIF admin.
+2. A GIF manager then prepares the release by setting up the service authorization contract.
+3. The GIF manager deploys and registers all related service contracts with the release registry.
+4. The GIF admin verifies and activates the release.
+3. The GIF admin may pause and resume a release.
+
+[.contract-index]
+.Functions
+--
+* [`++constructor(registry)++`]
+* [`++createNextRelease()++`]
+* [`++prepareNextRelease(serviceAuthorization, salt)++`]
+* [`++registerService(service)++`]
+* [`++activateNextRelease()++`]
+* [`++setActive(release, active)++`]
+* [`++predictDeterministicAddress(implementation, salt, deployer)++`]
+* [`++isActiveRelease(release)++`]
+* [`++getReleaseInfo(release)++`]
+* [`++releases()++`]
+* [`++getVersion(idx)++`]
+* [`++getNextVersion()++`]
+* [`++getLatestVersion()++`]
+* [`++getState(release)++`]
+* [`++getRemainingServicesToRegister()++`]
+* [`++getServiceAuthorization(release)++`]
+* [`++getRegistryAdmin()++`]
+* [`++getRegistry()++`]
+* [`++_verifyService(service, expectedAuthority, expectedVersion, expectedDomain)++`]
+* [`++_verifyServiceInfo(service, info, expectedOwner)++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.ReleaseLifecycle
+* [`++_setupLifecycle()++`]
+
+[.contract-subindex-inherited]
+.Lifecycle
+* [`++setInitialState(ttype, state)++`]
+* [`++setStateTransition(ttype, oldState, newState)++`]
+* [`++hasLifecycle(objectType)++`]
+* [`++getInitialState(objectType)++`]
+* [`++checkTransition(stateId, objectType, expectedFromId, toId)++`]
+* [`++isValidTransition(objectType, fromId, toId)++`]
+
+[.contract-subindex-inherited]
+.ILifecycle
+
+[.contract-subindex-inherited]
+.AccessManaged
+* [`++authority()++`]
+* [`++setAuthority(newAuthority)++`]
+* [`++isConsumingScheduledOp()++`]
+* [`++_setAuthority(newAuthority)++`]
+* [`++_checkCanCall(caller, data)++`]
+
+[.contract-subindex-inherited]
+.IAccessManaged
+
+--
+
+[.contract-index]
+.Events
+--
+* [`++LogReleaseCreation(admin, release, salt)++`]
+* [`++LogReleaseActivation(release)++`]
+* [`++LogReleaseDisabled(release)++`]
+* [`++LogReleaseEnabled(release)++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.ReleaseLifecycle
+
+[.contract-subindex-inherited]
+.Lifecycle
+
+[.contract-subindex-inherited]
+.ILifecycle
+
+[.contract-subindex-inherited]
+.AccessManaged
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+--
+
+[.contract-item]
+[[ReleaseRegistry-constructor-contract-Registry-]]
+==== `[.contract-item-name]#++constructor++#++(contract Registry registry)++` [.item-kind]#public#
+
+[.contract-item]
+[[ReleaseRegistry-createNextRelease--]]
+==== `[.contract-item-name]#++createNextRelease++#++() → VersionPart++` [.item-kind]#external#
+
+Initiates the creation of a new GIF release by the GIF admin.
+Sets previous release into SKIPPED state if it was created but not activated.
+Sets the new release into state SCHEDULED.
+
+[.contract-item]
+[[ReleaseRegistry-prepareNextRelease-contract-IServiceAuthorization-bytes32-]]
+==== `[.contract-item-name]#++prepareNextRelease++#++(contract IServiceAuthorization serviceAuthorization, bytes32 salt) → contract ReleaseAdmin releaseAdmin, VersionPart releaseVersion, bytes32 releaseSalt++` [.item-kind]#external#
+
+[.contract-item]
+[[ReleaseRegistry-registerService-contract-IService-]]
+==== `[.contract-item-name]#++registerService++#++(contract IService service) → NftId nftId++` [.item-kind]#external#
+
+[.contract-item]
+[[ReleaseRegistry-activateNextRelease--]]
+==== `[.contract-item-name]#++activateNextRelease++#++()++` [.item-kind]#external#
+
+[.contract-item]
+[[ReleaseRegistry-setActive-VersionPart-bool-]]
+==== `[.contract-item-name]#++setActive++#++(VersionPart release, bool active)++` [.item-kind]#public#
+
+stop/resume operations with restricted functions
+
+[.contract-item]
+[[ReleaseRegistry-predictDeterministicAddress-address-bytes32-address-]]
+==== `[.contract-item-name]#++predictDeterministicAddress++#++(address implementation, bytes32 salt, address deployer) → address predicted++` [.item-kind]#external#
+
+[.contract-item]
+[[ReleaseRegistry-isActiveRelease-VersionPart-]]
+==== `[.contract-item-name]#++isActiveRelease++#++(VersionPart release) → bool++` [.item-kind]#public#
+
+[.contract-item]
+[[ReleaseRegistry-getReleaseInfo-VersionPart-]]
+==== `[.contract-item-name]#++getReleaseInfo++#++(VersionPart release) → struct IRelease.ReleaseInfo++` [.item-kind]#external#
+
+[.contract-item]
+[[ReleaseRegistry-releases--]]
+==== `[.contract-item-name]#++releases++#++() → uint256++` [.item-kind]#external#
+
+Returns the number of created releases.
+Releases might be in another state than ACTIVE.
+
+[.contract-item]
+[[ReleaseRegistry-getVersion-uint256-]]
+==== `[.contract-item-name]#++getVersion++#++(uint256 idx) → VersionPart release++` [.item-kind]#external#
+
+Returns the n-th release version.
+Valid values for idx [0 .. releases() - 1]
+
+[.contract-item]
+[[ReleaseRegistry-getNextVersion--]]
+==== `[.contract-item-name]#++getNextVersion++#++() → VersionPart++` [.item-kind]#public#
+
+[.contract-item]
+[[ReleaseRegistry-getLatestVersion--]]
+==== `[.contract-item-name]#++getLatestVersion++#++() → VersionPart++` [.item-kind]#external#
+
+Returns the latest activated relase version.
+There is no guarantee that the release is not currently paused.
+
+[.contract-item]
+[[ReleaseRegistry-getState-VersionPart-]]
+==== `[.contract-item-name]#++getState++#++(VersionPart release) → StateId stateId++` [.item-kind]#external#
+
+[.contract-item]
+[[ReleaseRegistry-getRemainingServicesToRegister--]]
+==== `[.contract-item-name]#++getRemainingServicesToRegister++#++() → uint256 services++` [.item-kind]#external#
+
+[.contract-item]
+[[ReleaseRegistry-getServiceAuthorization-VersionPart-]]
+==== `[.contract-item-name]#++getServiceAuthorization++#++(VersionPart release) → contract IServiceAuthorization serviceAuthorization++` [.item-kind]#external#
+
+[.contract-item]
+[[ReleaseRegistry-getRegistryAdmin--]]
+==== `[.contract-item-name]#++getRegistryAdmin++#++() → address++` [.item-kind]#external#
+
+[.contract-item]
+[[ReleaseRegistry-getRegistry--]]
+==== `[.contract-item-name]#++getRegistry++#++() → contract IRegistry++` [.item-kind]#external#
+
+[.contract-item]
+[[ReleaseRegistry-_verifyService-contract-IService-address-VersionPart-ObjectType-]]
+==== `[.contract-item-name]#++_verifyService++#++(contract IService service, address expectedAuthority, VersionPart expectedVersion, ObjectType expectedDomain) → struct IRegistry.ObjectInfo serviceInfo, ObjectType serviceDomain, VersionPart serviceVersion++` [.item-kind]#internal#
+
+[.contract-item]
+[[ReleaseRegistry-_verifyServiceInfo-contract-IService-struct-IRegistry-ObjectInfo-address-]]
+==== `[.contract-item-name]#++_verifyServiceInfo++#++(contract IService service, struct IRegistry.ObjectInfo info, address expectedOwner)++` [.item-kind]#internal#
+
+[.contract-item]
+[[ReleaseRegistry-LogReleaseCreation-contract-IAccessAdmin-VersionPart-bytes32-]]
+==== `[.contract-item-name]#++LogReleaseCreation++#++(contract IAccessAdmin admin, VersionPart release, bytes32 salt)++` [.item-kind]#event#
+
+[.contract-item]
+[[ReleaseRegistry-LogReleaseActivation-VersionPart-]]
+==== `[.contract-item-name]#++LogReleaseActivation++#++(VersionPart release)++` [.item-kind]#event#
+
+[.contract-item]
+[[ReleaseRegistry-LogReleaseDisabled-VersionPart-]]
+==== `[.contract-item-name]#++LogReleaseDisabled++#++(VersionPart release)++` [.item-kind]#event#
+
+[.contract-item]
+[[ReleaseRegistry-LogReleaseEnabled-VersionPart-]]
+==== `[.contract-item-name]#++LogReleaseEnabled++#++(VersionPart release)++` [.item-kind]#event#
+
+:LogTokenRegistryTokenRegistered: pass:normal[xref:#TokenRegistry-LogTokenRegistryTokenRegistered-ChainId-address-uint256-string-[`++LogTokenRegistryTokenRegistered++`]]
+:LogTokenRegistryTokenGlobalStateSet: pass:normal[xref:#TokenRegistry-LogTokenRegistryTokenGlobalStateSet-ChainId-address-bool-[`++LogTokenRegistryTokenGlobalStateSet++`]]
+:LogTokenRegistryTokenStateSet: pass:normal[xref:#TokenRegistry-LogTokenRegistryTokenStateSet-ChainId-address-VersionPart-bool-[`++LogTokenRegistryTokenStateSet++`]]
+:ErrorTokenRegistryChainIdZero: pass:normal[xref:#TokenRegistry-ErrorTokenRegistryChainIdZero--[`++ErrorTokenRegistryChainIdZero++`]]
+:ErrorTokenRegistryTokenAddressZero: pass:normal[xref:#TokenRegistry-ErrorTokenRegistryTokenAddressZero--[`++ErrorTokenRegistryTokenAddressZero++`]]
+:ErrorTokenRegistryNotRemoteToken: pass:normal[xref:#TokenRegistry-ErrorTokenRegistryNotRemoteToken-ChainId-address-[`++ErrorTokenRegistryNotRemoteToken++`]]
+:ErrorTokenRegistryTokenAlreadyRegistered: pass:normal[xref:#TokenRegistry-ErrorTokenRegistryTokenAlreadyRegistered-ChainId-address-[`++ErrorTokenRegistryTokenAlreadyRegistered++`]]
+:ErrorTokenRegistryTokenNotContract: pass:normal[xref:#TokenRegistry-ErrorTokenRegistryTokenNotContract-ChainId-address-[`++ErrorTokenRegistryTokenNotContract++`]]
+:ErrorTokenRegistryTokenNotErc20: pass:normal[xref:#TokenRegistry-ErrorTokenRegistryTokenNotErc20-ChainId-address-[`++ErrorTokenRegistryTokenNotErc20++`]]
+:ErrorTokenRegistryTokenNotRegistered: pass:normal[xref:#TokenRegistry-ErrorTokenRegistryTokenNotRegistered-ChainId-address-[`++ErrorTokenRegistryTokenNotRegistered++`]]
+:ErrorTokenRegistryMajorVersionInvalid: pass:normal[xref:#TokenRegistry-ErrorTokenRegistryMajorVersionInvalid-VersionPart-[`++ErrorTokenRegistryMajorVersionInvalid++`]]
+:TokenInfo: pass:normal[xref:#TokenRegistry-TokenInfo[`++TokenInfo++`]]
+:_tokenInfo: pass:normal[xref:#TokenRegistry-_tokenInfo-mapping-ChainId----mapping-address----struct-TokenRegistry-TokenInfo--[`++_tokenInfo++`]]
+:_active: pass:normal[xref:#TokenRegistry-_active-mapping-ChainId----mapping-address----mapping-VersionPart----bool---[`++_active++`]]
+:_token: pass:normal[xref:#TokenRegistry-_token-struct-TokenRegistry-TokenInfo--[`++_token++`]]
+:_registry: pass:normal[xref:#TokenRegistry-_registry-contract-IRegistry[`++_registry++`]]
+:_chainId: pass:normal[xref:#TokenRegistry-_chainId-ChainId[`++_chainId++`]]
+:_dipToken: pass:normal[xref:#TokenRegistry-_dipToken-contract-IERC20Metadata[`++_dipToken++`]]
+:onlyRegisteredToken: pass:normal[xref:#TokenRegistry-onlyRegisteredToken-ChainId-address-[`++onlyRegisteredToken++`]]
+:constructor: pass:normal[xref:#TokenRegistry-constructor-contract-IRegistry-contract-IERC20Metadata-[`++constructor++`]]
+:registerToken: pass:normal[xref:#TokenRegistry-registerToken-address-[`++registerToken++`]]
+:registerRemoteToken: pass:normal[xref:#TokenRegistry-registerRemoteToken-ChainId-address-uint8-string-[`++registerRemoteToken++`]]
+:setActive: pass:normal[xref:#TokenRegistry-setActive-ChainId-address-bool-[`++setActive++`]]
+:setActiveForVersion: pass:normal[xref:#TokenRegistry-setActiveForVersion-ChainId-address-VersionPart-bool-[`++setActiveForVersion++`]]
+:setActiveWithVersionCheck: pass:normal[xref:#TokenRegistry-setActiveWithVersionCheck-ChainId-address-VersionPart-bool-bool-[`++setActiveWithVersionCheck++`]]
+:_setActiveWithVersionCheck: pass:normal[xref:#TokenRegistry-_setActiveWithVersionCheck-ChainId-address-VersionPart-bool-bool-[`++_setActiveWithVersionCheck++`]]
+:getDipToken: pass:normal[xref:#TokenRegistry-getDipToken--[`++getDipToken++`]]
+:tokens: pass:normal[xref:#TokenRegistry-tokens--[`++tokens++`]]
+:getTokenInfo: pass:normal[xref:#TokenRegistry-getTokenInfo-uint256-[`++getTokenInfo++`]]
+:getTokenInfo: pass:normal[xref:#TokenRegistry-getTokenInfo-ChainId-address-[`++getTokenInfo++`]]
+:isRegistered: pass:normal[xref:#TokenRegistry-isRegistered-ChainId-address-[`++isRegistered++`]]
+:isActive: pass:normal[xref:#TokenRegistry-isActive-ChainId-address-VersionPart-[`++isActive++`]]
+:getDipTokenAddress: pass:normal[xref:#TokenRegistry-getDipTokenAddress--[`++getDipTokenAddress++`]]
+:getRegistry: pass:normal[xref:#TokenRegistry-getRegistry--[`++getRegistry++`]]
+:_verifyOnchainToken: pass:normal[xref:#TokenRegistry-_verifyOnchainToken-address-[`++_verifyOnchainToken++`]]
+:_implementsErc20Functions: pass:normal[xref:#TokenRegistry-_implementsErc20Functions-contract-IERC20Metadata-[`++_implementsErc20Functions++`]]
+:_registerToken: pass:normal[xref:#TokenRegistry-_registerToken-ChainId-address-uint8-string-[`++_registerToken++`]]
+
+[.contract]
+[[TokenRegistry]]
+=== `++TokenRegistry++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/registry/TokenRegistry.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/registry/TokenRegistry.sol";
+```
+
+The TokenRegistry contract is used to whitelist/manage ERC-20 of tokens per major release.
+Only whitelisted tokens can be used as default tokens for products, distribution and pools components.
+
+[.contract-index]
+.Modifiers
+--
+* {xref-TokenRegistry-onlyRegisteredToken-ChainId-address-}[`++onlyRegisteredToken(chainId, token)++`]
+--
+
+[.contract-index]
+.Functions
+--
+* [`++constructor(registry, dipToken)++`]
+* [`++registerToken(tokenAddress)++`]
+* [`++registerRemoteToken(chainId, token, decimals, symbol)++`]
+* [`++setActive(chainId, token, active)++`]
+* [`++setActiveForVersion(chainId, token, release, active)++`]
+* [`++setActiveWithVersionCheck(chainId, token, release, active, enforceVersionCheck)++`]
+* [`++_setActiveWithVersionCheck(chainId, token, release, active, enforceVersionCheck)++`]
+* [`++getDipToken()++`]
+* [`++tokens()++`]
+* [`++getTokenInfo(idx)++`]
+* [`++getTokenInfo(chainId, token)++`]
+* [`++isRegistered(chainId, token)++`]
+* [`++isActive(chainId, token, release)++`]
+* [`++getDipTokenAddress()++`]
+* [`++getRegistry()++`]
+* [`++_verifyOnchainToken(tokenAddress)++`]
+* [`++_implementsErc20Functions(token)++`]
+* [`++_registerToken(chainId, token, decimals, symbol)++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.AccessManaged
+* [`++authority()++`]
+* [`++setAuthority(newAuthority)++`]
+* [`++isConsumingScheduledOp()++`]
+* [`++_setAuthority(newAuthority)++`]
+* [`++_checkCanCall(caller, data)++`]
+
+[.contract-subindex-inherited]
+.IAccessManaged
+
+--
+
+[.contract-index]
+.Events
+--
+* [`++LogTokenRegistryTokenRegistered(chainId, token, decimals, symbol)++`]
+* [`++LogTokenRegistryTokenGlobalStateSet(chainId, token, active)++`]
+* [`++LogTokenRegistryTokenStateSet(chainId, token, release, active)++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.AccessManaged
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+--
+
+[.contract-item]
+[[TokenRegistry-onlyRegisteredToken-ChainId-address-]]
+==== `[.contract-item-name]#++onlyRegisteredToken++#++(ChainId chainId, address token)++` [.item-kind]#modifier#
+
+enforces msg.sender is owner of nft (or initial owner of nft ownable)
+
+[.contract-item]
+[[TokenRegistry-constructor-contract-IRegistry-contract-IERC20Metadata-]]
+==== `[.contract-item-name]#++constructor++#++(contract IRegistry registry, contract IERC20Metadata dipToken)++` [.item-kind]#public#
+
+[.contract-item]
+[[TokenRegistry-registerToken-address-]]
+==== `[.contract-item-name]#++registerToken++#++(address tokenAddress)++` [.item-kind]#external#
+
+register an onchain token.
+this function verifies that the provided token address is a contract that implements
+the non optional erc20 view functions.
+
+[.contract-item]
+[[TokenRegistry-registerRemoteToken-ChainId-address-uint8-string-]]
+==== `[.contract-item-name]#++registerRemoteToken++#++(ChainId chainId, address token, uint8 decimals, string symbol)++` [.item-kind]#external#
+
+register the remote token with the provided attributes.
+this function may not be used for tokens when chainId == block.chainid.
+
+[.contract-item]
+[[TokenRegistry-setActive-ChainId-address-bool-]]
+==== `[.contract-item-name]#++setActive++#++(ChainId chainId, address token, bool active)++` [.item-kind]#external#
+
+set active flag on token itself.
+when setting a token to active=false isActive will return false
+regardless of release specific active value.
+
+[.contract-item]
+[[TokenRegistry-setActiveForVersion-ChainId-address-VersionPart-bool-]]
+==== `[.contract-item-name]#++setActiveForVersion++#++(ChainId chainId, address token, VersionPart release, bool active)++` [.item-kind]#external#
+
+sets active state for specified token and release (major version).
+internally calls setActiveWithVersionCheck() with enforcing version check.
+token state is informative, registry have no clue about used tokens
+component owner is responsible for token selection and operations
+service MUST deny registration of component with inactive token.
+
+[.contract-item]
+[[TokenRegistry-setActiveWithVersionCheck-ChainId-address-VersionPart-bool-bool-]]
+==== `[.contract-item-name]#++setActiveWithVersionCheck++#++(ChainId chainId, address token, VersionPart release, bool active, bool enforceVersionCheck)++` [.item-kind]#external#
+
+as setActiveForVersion() with the option to skip the version check.
+enforcing the version check checks if the provided major version with the release manager. 
+the function reverts if the provided release is unknown to the release manager.
+
+[.contract-item]
+[[TokenRegistry-_setActiveWithVersionCheck-ChainId-address-VersionPart-bool-bool-]]
+==== `[.contract-item-name]#++_setActiveWithVersionCheck++#++(ChainId chainId, address token, VersionPart release, bool active, bool enforceVersionCheck)++` [.item-kind]#internal#
+
+[.contract-item]
+[[TokenRegistry-getDipToken--]]
+==== `[.contract-item-name]#++getDipToken++#++() → contract IERC20Metadata dipToken++` [.item-kind]#external#
+
+returns the dip token for this chain
+
+[.contract-item]
+[[TokenRegistry-tokens--]]
+==== `[.contract-item-name]#++tokens++#++() → uint256++` [.item-kind]#external#
+
+returns the number of registered tokens
+
+[.contract-item]
+[[TokenRegistry-getTokenInfo-uint256-]]
+==== `[.contract-item-name]#++getTokenInfo++#++(uint256 idx) → struct TokenRegistry.TokenInfo tokenInfo++` [.item-kind]#external#
+
+returns the token info for the specified index position [0 .. tokens() - 1].
+
+[.contract-item]
+[[TokenRegistry-getTokenInfo-ChainId-address-]]
+==== `[.contract-item-name]#++getTokenInfo++#++(ChainId chainId, address token) → struct TokenRegistry.TokenInfo tokenInfo++` [.item-kind]#external#
+
+returns the token info for the specified token coordinates.
+
+[.contract-item]
+[[TokenRegistry-isRegistered-ChainId-address-]]
+==== `[.contract-item-name]#++isRegistered++#++(ChainId chainId, address token) → bool++` [.item-kind]#public#
+
+returns true iff the specified token has been registered for this TokenRegistry contract.
+
+[.contract-item]
+[[TokenRegistry-isActive-ChainId-address-VersionPart-]]
+==== `[.contract-item-name]#++isActive++#++(ChainId chainId, address token, VersionPart release) → bool++` [.item-kind]#external#
+
+returns true iff both the token is active for the specfied release and the global token state is active
+
+[.contract-item]
+[[TokenRegistry-getDipTokenAddress--]]
+==== `[.contract-item-name]#++getDipTokenAddress++#++() → address++` [.item-kind]#external#
+
+[.contract-item]
+[[TokenRegistry-getRegistry--]]
+==== `[.contract-item-name]#++getRegistry++#++() → contract IRegistry++` [.item-kind]#public#
+
+returns the dip token for this chain
+
+[.contract-item]
+[[TokenRegistry-_verifyOnchainToken-address-]]
+==== `[.contract-item-name]#++_verifyOnchainToken++#++(address tokenAddress) → contract IERC20Metadata token++` [.item-kind]#internal#
+
+checks if provided token address refers to a smart contract that implements 
+erc20 functionality (via its non-optional functions)
+
+[.contract-item]
+[[TokenRegistry-_implementsErc20Functions-contract-IERC20Metadata-]]
+==== `[.contract-item-name]#++_implementsErc20Functions++#++(contract IERC20Metadata token) → bool implementsErc20Functions++` [.item-kind]#internal#
+
+checks availability of non-optional view functions
+https://eips.ethereum.org/EIPS/eip-20#methods
+
+[.contract-item]
+[[TokenRegistry-_registerToken-ChainId-address-uint8-string-]]
+==== `[.contract-item-name]#++_registerToken++#++(ChainId chainId, address token, uint8 decimals, string symbol)++` [.item-kind]#internal#
+
+some sanity checks to prevent unintended registration:
+- token not yet registered
+- chainId not zero
+- token address not zero
+
+[.contract-item]
+[[TokenRegistry-LogTokenRegistryTokenRegistered-ChainId-address-uint256-string-]]
+==== `[.contract-item-name]#++LogTokenRegistryTokenRegistered++#++(ChainId chainId, address token, uint256 decimals, string symbol)++` [.item-kind]#event#
+
+[.contract-item]
+[[TokenRegistry-LogTokenRegistryTokenGlobalStateSet-ChainId-address-bool-]]
+==== `[.contract-item-name]#++LogTokenRegistryTokenGlobalStateSet++#++(ChainId chainId, address token, bool active)++` [.item-kind]#event#
+
+[.contract-item]
+[[TokenRegistry-LogTokenRegistryTokenStateSet-ChainId-address-VersionPart-bool-]]
+==== `[.contract-item-name]#++LogTokenRegistryTokenStateSet++#++(ChainId chainId, address token, VersionPart release, bool active)++` [.item-kind]#event#
+
+:REGISTRY_CREATION_CODE_HASH: pass:normal[xref:#RegistryService-REGISTRY_CREATION_CODE_HASH-bytes32[`++REGISTRY_CREATION_CODE_HASH++`]]
+:_initialize: pass:normal[xref:#RegistryService-_initialize-address-bytes-[`++_initialize++`]]
+:registerStaking: pass:normal[xref:#RegistryService-registerStaking-contract-IRegisterable-address-[`++registerStaking++`]]
+:registerInstance: pass:normal[xref:#RegistryService-registerInstance-contract-IRegisterable-address-[`++registerInstance++`]]
+:registerProduct: pass:normal[xref:#RegistryService-registerProduct-contract-IComponent-address-[`++registerProduct++`]]
+:registerProductLinkedComponent: pass:normal[xref:#RegistryService-registerProductLinkedComponent-contract-IComponent-ObjectType-address-[`++registerProductLinkedComponent++`]]
+:registerDistributor: pass:normal[xref:#RegistryService-registerDistributor-struct-IRegistry-ObjectInfo-[`++registerDistributor++`]]
+:registerPolicy: pass:normal[xref:#RegistryService-registerPolicy-struct-IRegistry-ObjectInfo-[`++registerPolicy++`]]
+:registerBundle: pass:normal[xref:#RegistryService-registerBundle-struct-IRegistry-ObjectInfo-[`++registerBundle++`]]
+:registerStake: pass:normal[xref:#RegistryService-registerStake-struct-IRegistry-ObjectInfo-[`++registerStake++`]]
+:_getAndVerifyContractInfo: pass:normal[xref:#RegistryService-_getAndVerifyContractInfo-contract-IRegisterable-ObjectType-address-[`++_getAndVerifyContractInfo++`]]
+:_verifyObjectInfo: pass:normal[xref:#RegistryService-_verifyObjectInfo-struct-IRegistry-ObjectInfo-ObjectType-[`++_verifyObjectInfo++`]]
+:_getDomain: pass:normal[xref:#RegistryService-_getDomain--[`++_getDomain++`]]
+
+[.contract]
+[[RegistryService]]
+=== `++RegistryService++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/registry/RegistryService.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/registry/RegistryService.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++_initialize(owner, data)++`]
+* [`++registerStaking(staking, owner)++`]
+* [`++registerInstance(instance, owner)++`]
+* [`++registerProduct(product, initialOwner)++`]
+* [`++registerProductLinkedComponent(component, objectType, initialOwner)++`]
+* [`++registerDistributor(info)++`]
+* [`++registerPolicy(info)++`]
+* [`++registerBundle(info)++`]
+* [`++registerStake(info)++`]
+* [`++_getAndVerifyContractInfo(registerable, expectedType, expectedOwner)++`]
+* [`++_verifyObjectInfo(info, expectedType)++`]
+* [`++_getDomain()++`]
+
+[.contract-subindex-inherited]
+.IRegistryService
+
+[.contract-subindex-inherited]
+.Service
+* [`++__Service_init(authority, registry, initialOwner)++`]
+* [`++getDomain()++`]
+* [`++getVersion()++`]
+* [`++getRoleId()++`]
+* [`++_getServiceAddress(domain)++`]
+
+[.contract-subindex-inherited]
+.IService
+
+[.contract-subindex-inherited]
+.ReentrancyGuardUpgradeable
+* [`++__ReentrancyGuard_init()++`]
+* [`++__ReentrancyGuard_init_unchained()++`]
+* [`++_reentrancyGuardEntered()++`]
+
+[.contract-subindex-inherited]
+.Versionable
+* [`++initializeVersionable(activatedBy, data)++`]
+* [`++upgradeVersionable(data)++`]
+* [`++_upgrade(data)++`]
+
+[.contract-subindex-inherited]
+.IVersionable
+
+[.contract-subindex-inherited]
+.Registerable
+* [`++__Registerable_init(authority, registry, parentNftId, objectType, isInterceptor, initialOwner, data)++`]
+* [`++isActive()++`]
+* [`++getRelease()++`]
+* [`++getInitialInfo()++`]
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.IRelease
+
+[.contract-subindex-inherited]
+.NftOwnable
+* [`++_checkNftType(nftId, expectedObjectType)++`]
+* [`++__NftOwnable_init(registry, initialOwner)++`]
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+* [`++_linkToNftOwnable(nftOwnableAddress)++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+* [`++__RegistryLinked_init(registry)++`]
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+* [`++__ERC165_init()++`]
+* [`++_initializeERC165()++`]
+* [`++_registerInterface(interfaceId)++`]
+* [`++_registerInterfaceNotInitializing(interfaceId)++`]
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+* [`++__AccessManaged_init(initialAuthority)++`]
+* [`++__AccessManaged_init_unchained(initialAuthority)++`]
+* [`++authority()++`]
+* [`++setAuthority(newAuthority)++`]
+* [`++isConsumingScheduledOp()++`]
+* [`++_setAuthority(newAuthority)++`]
+* [`++_checkCanCall(caller, data)++`]
+
+[.contract-subindex-inherited]
+.IAccessManaged
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+* [`++__Context_init()++`]
+* [`++__Context_init_unchained()++`]
+* [`++_msgSender()++`]
+* [`++_msgData()++`]
+* [`++_contextSuffixLength()++`]
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.IRegistryService
+
+[.contract-subindex-inherited]
+.Service
+
+[.contract-subindex-inherited]
+.IService
+
+[.contract-subindex-inherited]
+.ReentrancyGuardUpgradeable
+
+[.contract-subindex-inherited]
+.Versionable
+
+[.contract-subindex-inherited]
+.IVersionable
+
+[.contract-subindex-inherited]
+.Registerable
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.IRelease
+
+[.contract-subindex-inherited]
+.NftOwnable
+
+[.contract-subindex-inherited]
+.INftOwnable
+* [`++LogNftOwnableNftLinkedToAddress(nftId, owner)++`]
+
+[.contract-subindex-inherited]
+.RegistryLinked
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[RegistryService-_initialize-address-bytes-]]
+==== `[.contract-item-name]#++_initialize++#++(address owner, bytes data)++` [.item-kind]#internal#
+
+top level initializer
+
+[.contract-item]
+[[RegistryService-registerStaking-contract-IRegisterable-address-]]
+==== `[.contract-item-name]#++registerStaking++#++(contract IRegisterable staking, address owner) → struct IRegistry.ObjectInfo info++` [.item-kind]#external#
+
+[.contract-item]
+[[RegistryService-registerInstance-contract-IRegisterable-address-]]
+==== `[.contract-item-name]#++registerInstance++#++(contract IRegisterable instance, address owner) → struct IRegistry.ObjectInfo info++` [.item-kind]#external#
+
+[.contract-item]
+[[RegistryService-registerProduct-contract-IComponent-address-]]
+==== `[.contract-item-name]#++registerProduct++#++(contract IComponent product, address initialOwner) → struct IRegistry.ObjectInfo info++` [.item-kind]#external#
+
+[.contract-item]
+[[RegistryService-registerProductLinkedComponent-contract-IComponent-ObjectType-address-]]
+==== `[.contract-item-name]#++registerProductLinkedComponent++#++(contract IComponent component, ObjectType objectType, address initialOwner) → struct IRegistry.ObjectInfo info++` [.item-kind]#external#
+
+[.contract-item]
+[[RegistryService-registerDistributor-struct-IRegistry-ObjectInfo-]]
+==== `[.contract-item-name]#++registerDistributor++#++(struct IRegistry.ObjectInfo info) → NftId nftId++` [.item-kind]#external#
+
+[.contract-item]
+[[RegistryService-registerPolicy-struct-IRegistry-ObjectInfo-]]
+==== `[.contract-item-name]#++registerPolicy++#++(struct IRegistry.ObjectInfo info) → NftId nftId++` [.item-kind]#external#
+
+[.contract-item]
+[[RegistryService-registerBundle-struct-IRegistry-ObjectInfo-]]
+==== `[.contract-item-name]#++registerBundle++#++(struct IRegistry.ObjectInfo info) → NftId nftId++` [.item-kind]#external#
+
+[.contract-item]
+[[RegistryService-registerStake-struct-IRegistry-ObjectInfo-]]
+==== `[.contract-item-name]#++registerStake++#++(struct IRegistry.ObjectInfo info) → NftId nftId++` [.item-kind]#external#
+
+[.contract-item]
+[[RegistryService-_getAndVerifyContractInfo-contract-IRegisterable-ObjectType-address-]]
+==== `[.contract-item-name]#++_getAndVerifyContractInfo++#++(contract IRegisterable registerable, ObjectType expectedType, address expectedOwner) → struct IRegistry.ObjectInfo info++` [.item-kind]#internal#
+
+[.contract-item]
+[[RegistryService-_verifyObjectInfo-struct-IRegistry-ObjectInfo-ObjectType-]]
+==== `[.contract-item-name]#++_verifyObjectInfo++#++(struct IRegistry.ObjectInfo info, ObjectType expectedType)++` [.item-kind]#internal#
+
+[.contract-item]
+[[RegistryService-_getDomain--]]
+==== `[.contract-item-name]#++_getDomain++#++() → ObjectType serviceDomain++` [.item-kind]#internal#
+
+:ErrorRegistryAccessManagerAuthorityZero: pass:normal[xref:#RegistryServiceManager-ErrorRegistryAccessManagerAuthorityZero--[`++ErrorRegistryAccessManagerAuthorityZero++`]]
+:ErrorRegistryAccessManagerRegistryZero: pass:normal[xref:#RegistryServiceManager-ErrorRegistryAccessManagerRegistryZero--[`++ErrorRegistryAccessManagerRegistryZero++`]]
+:ACCESS_MANAGER_CREATION_CODE_HASH: pass:normal[xref:#RegistryServiceManager-ACCESS_MANAGER_CREATION_CODE_HASH-bytes32[`++ACCESS_MANAGER_CREATION_CODE_HASH++`]]
+:constructor: pass:normal[xref:#RegistryServiceManager-constructor-address-address-bytes32-[`++constructor++`]]
+:getRegistryService: pass:normal[xref:#RegistryServiceManager-getRegistryService--[`++getRegistryService++`]]
+
+[.contract]
+[[RegistryServiceManager]]
+=== `++RegistryServiceManager++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/registry/RegistryServiceManager.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/registry/RegistryServiceManager.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++constructor(authority, registry, salt)++`]
+* [`++getRegistryService()++`]
+
+[.contract-subindex-inherited]
+.ProxyManager
+* [`++initialize(registry, implementation, data, salt)++`]
+* [`++deploy(registry, initialImplementation, initializationData)++`]
+* [`++deployDetermenistic(registry, initialImplementation, initializationData, salt)++`]
+* [`++upgrade(newImplementation)++`]
+* [`++upgrade(newImplementation, upgradeData)++`]
+* [`++linkToProxy()++`]
+* [`++getDeployData(proxyOwner, deployData)++`]
+* [`++getUpgradeData(upgradeData)++`]
+* [`++getProxy()++`]
+* [`++getVersion()++`]
+* [`++getVersionCount()++`]
+* [`++getVersion(idx)++`]
+* [`++getVersionInfo(_version)++`]
+
+[.contract-subindex-inherited]
+.NftOwnable
+* [`++_checkNftType(nftId, expectedObjectType)++`]
+* [`++__NftOwnable_init(registry, initialOwner)++`]
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+* [`++_linkToNftOwnable(nftOwnableAddress)++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+* [`++__RegistryLinked_init(registry)++`]
+* [`++getRegistry()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+* [`++__ERC165_init()++`]
+* [`++_initializeERC165()++`]
+* [`++_registerInterface(interfaceId)++`]
+* [`++_registerInterfaceNotInitializing(interfaceId)++`]
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.ProxyManager
+* [`++LogProxyManagerVersionableDeployed(proxy, initialImplementation)++`]
+* [`++LogProxyManagerVersionableUpgraded(proxy, upgradedImplementation)++`]
+
+[.contract-subindex-inherited]
+.NftOwnable
+
+[.contract-subindex-inherited]
+.INftOwnable
+* [`++LogNftOwnableNftLinkedToAddress(nftId, owner)++`]
+
+[.contract-subindex-inherited]
+.RegistryLinked
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.InitializableERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[RegistryServiceManager-constructor-address-address-bytes32-]]
+==== `[.contract-item-name]#++constructor++#++(address authority, address registry, bytes32 salt)++` [.item-kind]#public#
+
+initializes proxy manager with registry service implementation and deploys registry
+
+[.contract-item]
+[[RegistryServiceManager-getRegistryService--]]
+==== `[.contract-item-name]#++getRegistryService++#++() → contract RegistryService registryService++` [.item-kind]#external#
+
