@@ -5,8 +5,10 @@ import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {IERC721Metadata} from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
+import {IPolicy} from "../../instance/module/IPolicy.sol";
 import {IRegistry} from "../../registry/IRegistry.sol";
 
+import {Amount} from "../../type/Amount.sol";
 import {ChainNft} from "../../registry/ChainNft.sol";
 import {FlightProduct} from "./FlightProduct.sol";
 import {InstanceReader} from "../../instance/InstanceReader.sol";
@@ -24,11 +26,26 @@ contract FlightNft is
     Ownable
 {
 
-    ChainNft private _chainNft;
-    FlightProduct private _flightProduct;
-    InstanceReader private _reader;
-    IRegistry private _registry;
+    error ErrorFlightNftNotMinter();
+    error ErrorFlightNftAlreadyMinted(uint256 tokenId);
+    error ErrorFlightNftNotAvailable(uint256 tokenId);
+    error ErrorFlightNftNotFlightPolicy(uint256 tokenId);
+
+    ChainNft public immutable chainNft;
+    FlightProduct public immutable flightProduct;
+    InstanceReader public immutable instanceReader;
+    IRegistry public registry;
+
+    address public minter;
     string private _baseUri;
+
+
+    modifier onlyMinter() {
+        if(msg.sender != minter) {
+            revert ErrorFlightNftNotMinter();
+        }
+        _;
+    }
 
 
     constructor(
@@ -40,10 +57,12 @@ contract FlightNft is
         ERC721(nftName, nftSymbol)
         Ownable(msg.sender)
     {
-        _flightProduct = FlightProduct(flightProductAddress);
-        _registry = _flightProduct.getRegistry();
-        _chainNft = ChainNft(_registry.getChainNftAddress());
-        _reader = _flightProduct.getInstance().getInstanceReader();
+        flightProduct = FlightProduct(flightProductAddress);
+        registry = flightProduct.getRegistry();
+        chainNft = ChainNft(registry.getChainNftAddress());
+        instanceReader = flightProduct.getInstance().getInstanceReader();
+
+        minter = msg.sender;
         _baseUri = baseUri;
     }
 
@@ -57,6 +76,43 @@ contract FlightNft is
         onlyOwner()
     {
         _baseUri = baseUri;
+    }
+
+
+    /**
+     * Set the minter address.
+     */
+    function setMinter(address minterAddress)
+        public 
+        onlyOwner()
+    {
+        minter = minterAddress;
+    }
+
+
+    /**
+     * Mints a metadata NFT for the specified chainNft NFT.
+     * Only the minter can mint such NFTs.
+     */
+    function mint(uint256 tokenId)
+        external
+        onlyMinter()
+    {
+        // verify nft does not yet exist
+        if (_ownerOf(tokenId) != address(0)) {
+            revert ErrorFlightNftAlreadyMinted(tokenId);
+        }
+
+        // verify nft on chainNft exists
+        // also checks if nft exists (ERC721NonexistentToken)
+        address nftOwner = chainNft.ownerOf(tokenId);
+
+        // verify nft is flight delay policy
+        if (registry.getParentNftId(NftIdLib.toNftId(tokenId)) != registry.getNftIdForAddress(address(flightProduct))) {
+            revert ErrorFlightNftNotFlightPolicy(tokenId);
+        }   
+
+        _mint(nftOwner, tokenId);
     }
 
 
@@ -86,76 +142,27 @@ contract FlightNft is
     function transferFrom(address from, address to, uint256 tokenId) public override { _revert(); }
 
     function balanceOf(address owner) public override view returns (uint256 balance) {
-        return _chainNft.balanceOf(owner);
+        return chainNft.balanceOf(owner);
     }
 
     function getApproved(uint256 tokenId) public override view returns (address operator) {
-        return _chainNft.getApproved(tokenId);
+        return chainNft.getApproved(tokenId);
     }
 
     function isApprovedForAll(address owner, address operator) public override view returns (bool) {
-        return _chainNft.isApprovedForAll(owner, operator);
+        return chainNft.isApprovedForAll(owner, operator);
     }
 
     function ownerOf(uint256 tokenId) public override view returns (address owner) {
-        return _chainNft.ownerOf(tokenId);
+        return chainNft.ownerOf(tokenId);
     }
 
     function supportsInterface(bytes4 interfaceId) public override view returns (bool) {
-        return _chainNft.supportsInterface(interfaceId);
+        return chainNft.supportsInterface(interfaceId);
     }
 
 
-    // /**
-    //  * @dev See {IERC721Metadata-name}.
-    //  */    
-    // function name() public override view returns (string memory) {
-    //     return _nftName;
-    // }
-
-
-    // /**
-    //  * @dev See {IERC721Metadata-name}.
-    //  */    
-    // function symbol() public override view returns (string memory) {
-    //     return _nftSymbol;
-    // }
-
-
-    /**
-     * @dev Return the NFT metadata in JSON format.
-     * examples:
-     * - https://basescan.org/address/0x4ed83635e2309a7c067d0f98efca47b920bf79b1#readContract
-     *   {"name":"No-Punk #7580","image":"https://gateway.irys.xyz/InMDGHEx3L1YyRz6boihZGDHw4CKCRlLBlKnW6D83i4/7580.png","attributes":[{"trait_type":"Hair","value":"Cap"},{"trait_type":"Mouth","value":"Purple Lipstick"},{"trait_type":"Type","value":"Female"}]}
-     * - ,
-     *   {"name":"My NFT","description": "A unique digital asset", "image": "https://example.com/nft/1.png" }
-     */    
-    function getMetadataJson(uint256 tokenId) external view returns (string memory) {
-        (
-            , // risk id
-            string memory flightData,
-            string memory departureTimeLocal,
-            string memory arrivalTimeLocal,
-            , // status
-            // delay minutes
-        ) = getRiskData(NftIdLib.toNftId(tokenId));
-
-        return string(
-            abi.encodePacked(
-                "{\"name\":\"Flight Delay Policy #",
-                toString(tokenId),
-                "\",\"description\":\"Flight: ",
-                flightData,
-                ", Scheduled Departure: ",
-                departureTimeLocal,
-                ", Scheduled Arrival: ",
-                arrivalTimeLocal,
-                "\"}"
-                ));
-    }
-
-
-    function getRiskData(NftId policyNftId)
+    function getPolicyData(NftId policyNftId)
         public
         view
         returns (
@@ -163,37 +170,33 @@ contract FlightNft is
             string memory flightData,
             string memory departureTimeLocal,
             string memory arrivalTimeLocal,
+            Amount premiumAmount, 
+            Amount[5] memory payoutAmounts,
             bytes1 status,
             int256 delayMinutes
         )
     {
-        riskId = _reader.getPolicyInfo(policyNftId).riskId;
-        bytes memory data = _reader.getRiskInfo(riskId).data;
+        IPolicy.PolicyInfo memory info = instanceReader.getPolicyInfo(policyNftId);
+
+        // get financial data
+        premiumAmount = info.premiumAmount;
+
+        if (info.applicationData.length > 0) {
+            (, payoutAmounts) = abi.decode(info.applicationData, (Amount, Amount[5]));
+        }
+
+        // get risk data
+        riskId = info.riskId;
+        bytes memory data = instanceReader.getRiskInfo(riskId).data;
 
         if (data.length > 0) {
-            FlightProduct.FlightRisk memory flightRisk = _flightProduct.decodeFlightRiskData(data);
+            FlightProduct.FlightRisk memory flightRisk = flightProduct.decodeFlightRiskData(data);
             flightData = flightRisk.flightData.toString();
             departureTimeLocal = flightRisk.departureTimeLocal;
             arrivalTimeLocal = flightRisk.arrivalTimeLocal;
             status = flightRisk.status;
             delayMinutes = flightRisk.delayMinutes;
         }
-    }
-
-
-    /**
-     * returns the flight product address.
-     */
-    function getChainNft() external view returns (address) {
-        return address(_chainNft);
-    }
-
-
-    /**
-     * returns the flight product address.
-     */
-    function getFlightProduct() external view returns (address) {
-        return address(_flightProduct);
     }
 
 

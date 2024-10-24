@@ -290,11 +290,14 @@ contract FlightProductTest is FlightBaseTest {
         // GIVEN - setp from flight base test
 
         // deploy flight nft
+        vm.startPrank(flightOwner);
         FlightNft flightNft = new FlightNft(
             address(flightProduct),
             "FDPLCY",
             "Flight Delay Policy",
-            "https://flightdelay.integration.etherisc.com/api/nft/");
+            flightOwner,
+            "https://flightdelay.etherisc.app/api/nft/");
+        vm.stopPrank();
 
         // create policy
         approveProductTokenHandler();
@@ -318,10 +321,59 @@ contract FlightProductTest is FlightBaseTest {
             permit);
         vm.stopPrank();
 
+        (
+            RiskId ri,
+            string memory fd,
+            string memory dtl,
+            string memory atl,
+            Amount pa, 
+            Amount[5] memory pas,
+            bytes1 s,
+            int256 d
+        ) = flightNft.getPolicyData(policyNftId);
+
         // solhint-disable
         console.log("token uri", flightNft.tokenURI(policyNftId.toInt()));
-        console.log("token meatadata", flightNft.getMetadataJson(policyNftId.toInt()));
+        console.log("flightData", fd);
+        console.log("departure time local", dtl);
+        console.log("arrival time local", atl);
+        console.log("premium amount", pa.toInt());
+        console.log("payout amounts", pas[2].toInt(), pas[3].toInt(), pas[4].toInt());
         // solhint-enable
+
+        assertEq(pa.toInt(), 15000000, "unexpected premium amount");
+        assertEq(pas[2].toInt(), 49450549, "unexpected payout amount (late >= 45')");
+        assertEq(pas[3].toInt(), 82417582, "unexpected cancelled amount");
+        assertEq(pas[4].toInt(), 82417582, "unexpected diverted amount");
+
+        uint256 tokenId = policyNftId.toInt();
+
+        vm.expectRevert(); // ErrorFlightNftNotMinter
+        flightNft.mint(tokenId);
+
+        vm.expectRevert(); // ERC721NonexistentToken(100)
+        vm.startPrank(flightOwner);
+        flightNft.mint(100);
+        vm.stopPrank();
+
+        uint256 productTokenId = flightProduct.getNftId().toInt();
+        vm.expectRevert(); // ErrorFlightNftNotFlightPolicy(203133705)
+        vm.startPrank(flightOwner);
+        flightNft.mint(productTokenId);
+        vm.stopPrank();
+
+        // happy path
+        uint256 policyTokenId = policyNftId.toInt();
+        vm.startPrank(flightOwner);
+        flightNft.mint(policyTokenId);
+        vm.stopPrank();
+
+        vm.expectRevert(); // ErrorFlightNftAlreadyMinted(243133705)
+        vm.startPrank(flightOwner);
+        flightNft.mint(policyTokenId);
+        vm.stopPrank();
+
+        assertEq(flightNft.ownerOf(policyNftId.toInt()), customer, "unexpected policy owner");
     }
 
 
