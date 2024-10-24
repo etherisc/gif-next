@@ -31,10 +31,15 @@ contract PoolService is
     Service, 
     IPoolService 
 {
-    IAccountingService private _accountingService;
-    IBundleService internal _bundleService;
-    IComponentService internal _componentService;
-    IStaking private _staking;
+    // keccak256(abi.encode(uint256(keccak256("etherisc.gif.PoolService@3.0.0")) - 1)) & ~bytes32(uint256(0xff));
+    bytes32 public constant POOL_SERVICE_STORAGE_LOCATION_V3_0 = 0x99b25f02200e1434f4531a215abb8fd8c59ad15f6abb6b06ffa8223eb7162700;
+
+    struct PoolServiceStorage {
+        IAccountingService _accountingService;
+        IBundleService _bundleService;
+        IComponentService _componentService;
+        IStaking _staking;
+    }
 
     function _initialize(
         address owner, 
@@ -51,10 +56,11 @@ contract PoolService is
 
         __Service_init(authority, registry, owner);
 
-        _accountingService = IAccountingService(_getServiceAddress(ACCOUNTING()));
-        _bundleService = IBundleService(_getServiceAddress(BUNDLE()));
-        _componentService = IComponentService(_getServiceAddress(COMPONENT()));
-        _staking = IStaking(getRegistry().getStakingAddress());
+        PoolServiceStorage storage $ = _getPoolServiceStorage();
+        $._accountingService = IAccountingService(_getServiceAddress(ACCOUNTING()));
+        $._bundleService = IBundleService(_getServiceAddress(BUNDLE()));
+        $._componentService = IComponentService(_getServiceAddress(COMPONENT()));
+        $._staking = IStaking(getRegistry().getStakingAddress());
 
         _registerInterface(type(IPoolService).interfaceId);
     }
@@ -90,9 +96,10 @@ contract PoolService is
         // TODO get performance fee for pool (#477)
 
         // releasing collateral in bundle
-        (Amount unstakedAmount, Amount feeAmount) = _bundleService.close(instance, bundleNftId);
+        PoolServiceStorage storage $ = _getPoolServiceStorage();
+        (Amount unstakedAmount, Amount feeAmount) = $._bundleService.close(instance, bundleNftId);
 
-        _accountingService.decreasePoolBalance(
+        $._accountingService.decreasePoolBalance(
             instance.getInstanceStore(), 
             poolNftId, 
             unstakedAmount +  feeAmount, 
@@ -124,13 +131,13 @@ contract PoolService is
         (NftId poolNftId, IInstance instance) = _getAndVerifyActivePool();
         InstanceReader instanceReader = instance.getInstanceReader();
         NftId productNftId = getRegistry().getParentNftId(poolNftId);
+        NftId policyProductNftId = getRegistry().getParentNftId(policyNftId);
 
         // check policy matches with calling pool
-        IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
-        if(policyInfo.productNftId != productNftId) {
+        if(policyProductNftId != productNftId) {
             revert ErrorPoolServicePolicyPoolMismatch(
                 policyNftId, 
-                policyInfo.productNftId, 
+                policyProductNftId, 
                 productNftId);
         }
 
@@ -205,13 +212,14 @@ contract PoolService is
             amount);
 
         // do all the book keeping
-        _accountingService.increasePoolBalance(
+        PoolServiceStorage storage $ = _getPoolServiceStorage();
+        $._accountingService.increasePoolBalance(
             instanceStore, 
             poolNftId, 
             netAmount, 
             feeAmount);
 
-        _bundleService.stake(instanceReader, instanceStore, bundleNftId, netAmount);
+        $._bundleService.stake(instanceReader, instanceStore, bundleNftId, netAmount);
 
         emit LogPoolServiceBundleStaked(instanceNftId, poolNftId, bundleNftId, amount, netAmount);
 
@@ -244,7 +252,8 @@ contract PoolService is
         ) = PoolLib.checkAndGetPoolInfo(getRegistry(), msg.sender, bundleNftId);
 
         // call bundle service for bookkeeping and additional checks
-        Amount unstakedAmount = _bundleService.unstake(instanceStore, bundleNftId, amount);
+        PoolServiceStorage storage $ = _getPoolServiceStorage();
+        Amount unstakedAmount = $._bundleService.unstake(instanceStore, bundleNftId, amount);
 
         // Important: from now on work only with unstakedAmount as it is the only reliable amount.
         // if amount was max, this was set to the available amount
@@ -252,8 +261,8 @@ contract PoolService is
         // TODO: handle performance fees (issue #477)
         netAmount = unstakedAmount;
 
-        // update pool bookkeeping - performance fees stay in the pool, but as fees 
-        _accountingService.decreasePoolBalance(
+        // update pool bookkeeping - performance fees stay in the pool, but as fees
+        $._accountingService.decreasePoolBalance(
             instanceStore, 
             poolNftId, 
             unstakedAmount, 
@@ -350,13 +359,14 @@ contract PoolService is
         Amount bundleNetAmount = premium.netPremiumAmount;
 
         InstanceStore instanceStore = instance.getInstanceStore();
-        _accountingService.increasePoolBalance(
+        PoolServiceStorage storage $ = _getPoolServiceStorage();
+        $._accountingService.increasePoolBalance(
             instanceStore,
             poolNftId,
             bundleNetAmount + bundleFeeAmount, 
             poolFeeAmount);
 
-        _accountingService.increaseBundleBalanceForPool(
+        $._accountingService.increaseBundleBalanceForPool(
             instanceStore,
             bundleNftId,
             bundleNetAmount, 
@@ -399,14 +409,15 @@ contract PoolService is
             sumInsuredAmount);
 
         // lock collateral amount from involved bundle
-        _bundleService.lockCollateral(
+        PoolServiceStorage storage $ = _getPoolServiceStorage();
+        $._bundleService.lockCollateral(
             instance,
             applicationNftId, 
             bundleNftId,
             localCollateralAmount);
 
         // update value locked with staking service
-        _staking.increaseTotalValueLocked(
+        $._staking.increaseTotalValueLocked(
             instance.getNftId(),
             token,
             totalCollateralAmount);
@@ -455,20 +466,21 @@ contract PoolService is
 
         // effects
         NftId poolNftId = getRegistry().getParentNftId(bundleNftId);
+        PoolServiceStorage storage $ = _getPoolServiceStorage();
         
-        _accountingService.decreasePoolBalance(
+        $._accountingService.decreasePoolBalance(
             instanceStore,
             poolNftId,
             payoutAmount, 
             AmountLib.zero());
 
-        _accountingService.decreaseBundleBalanceForPool(
+        $._accountingService.decreaseBundleBalanceForPool(
             instanceStore,
             bundleNftId,
             payoutAmount, 
             AmountLib.zero());
 
-        _bundleService.releaseCollateral(
+        $._bundleService.releaseCollateral(
             instanceStore, 
             policyNftId, 
             bundleNftId, 
@@ -477,7 +489,7 @@ contract PoolService is
         // update value locked with staking service
         TokenHandler poolTokenHandler = instanceReader.getTokenHandler(poolNftId);
 
-        _staking.decreaseTotalValueLocked(
+        $._staking.decreaseTotalValueLocked(
             instanceReader.getInstanceNftId(), 
             address(poolTokenHandler.TOKEN()),
             payoutAmount);
@@ -494,7 +506,7 @@ contract PoolService is
             payoutBeneficiary);
         
         if (processingFeeAmount.gtz()) {
-            _accountingService.increaseProductFeesForPool(
+            $._accountingService.increaseProductFeesForPool(
                 instanceStore,
                 productNftId,
                 processingFeeAmount);
@@ -541,10 +553,11 @@ contract PoolService is
         // decrease fee counters by withdrawnAmount
         {
             InstanceStore store = instance.getInstanceStore();
+            PoolServiceStorage storage $ = _getPoolServiceStorage();
             // decrease fee amount of the bundle
-            _accountingService.decreaseBundleBalanceForPool(store, bundleNftId, AmountLib.zero(), withdrawnAmount);
+            $._accountingService.decreaseBundleBalanceForPool(store, bundleNftId, AmountLib.zero(), withdrawnAmount);
             // decrease pool balance 
-            _accountingService.decreasePoolBalance(store, poolNftId, withdrawnAmount, AmountLib.zero());
+            $._accountingService.decreasePoolBalance(store, poolNftId, withdrawnAmount, AmountLib.zero());
         }
 
         // interactions
@@ -575,7 +588,9 @@ contract PoolService is
 
         Amount remainingCollateralAmount = policyInfo.sumInsuredAmount - policyInfo.claimAmount;
 
-        _bundleService.releaseCollateral(
+        // effects
+        PoolServiceStorage storage $ = _getPoolServiceStorage();
+        $._bundleService.releaseCollateral(
             instance.getInstanceStore(), 
             policyNftId, 
             policyInfo.bundleNftId, 
@@ -583,7 +598,7 @@ contract PoolService is
 
         // update value locked with staking service
         InstanceReader instanceReader = instance.getInstanceReader();
-        _staking.decreaseTotalValueLocked(
+        $._staking.decreaseTotalValueLocked(
             instanceReader.getInstanceNftId(),
             address(instanceReader.getToken(policyInfo.productNftId)),
             remainingCollateralAmount);
@@ -605,6 +620,12 @@ contract PoolService is
         )
     {
         return PoolLib.getAndVerifyActivePool(getRegistry(), msg.sender);
+    }
+
+    function _getPoolServiceStorage() private pure returns (PoolServiceStorage storage $) {
+        assembly {
+            $.slot := POOL_SERVICE_STORAGE_LOCATION_V3_0
+        }
     }
 
 
