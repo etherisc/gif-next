@@ -295,7 +295,6 @@ contract FlightProductTest is FlightBaseTest {
             address(flightProduct),
             "FDPLCY",
             "Flight Delay Policy",
-            flightOwner,
             "https://flightdelay.etherisc.app/api/nft/");
         vm.stopPrank();
 
