@@ -11,7 +11,7 @@ contract ChainNft is ERC721Enumerable {
     event LogTokenInterceptorAddress(uint256 tokenId, address interceptor);
 
     // constants
-    string public constant NAME = "Dezentralized Insurance Protocol NFT";
+    string public constant NAME = "Decentralized Insurance Protocol NFT";
     string public constant SYMBOL = "DIPNFT";
 
     uint256 public constant PROTOCOL_NFT_ID = 1101;
