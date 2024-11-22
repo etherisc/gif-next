@@ -86,6 +86,7 @@ contract Staking is
             address(this),
             dipToken, 
             getRegistry().getAuthority());
+        emit LogStakingTokenHandlerDeployed(getNftId(), address($._tokenHandler), dipToken);
     }
 
 
