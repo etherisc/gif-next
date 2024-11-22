@@ -5,8 +5,8 @@ on:
     branches: [main, develop]
     tags: '*'
   pull_request:
-  # schedule:
-  #   - cron: "33 3 * * *"
+  schedule:
+    - cron: "33 3 * * 0"
 
 jobs:
   build_hardhat:

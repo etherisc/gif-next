@@ -25,6 +25,8 @@ interface IStaking is
     IVersionable
 {
 
+    event LogStakingTokenHandlerDeployed(NftId componentNftId, address tokenHandler, address token);
+    
     // owner functions
     event LogStakingStakingRateSet(ChainId chainId, address token, UFixed newStakingRate, UFixed oldStakingRate, Blocknumber lastUpdateIn);
     event LogStakingStakingServiceSet(address stakingService, VersionPart release, address oldStakingService);

@@ -543,6 +543,11 @@ contract ComponentService is
             address(component), // initially, component is its own wallet
             token, 
             instanceAdmin.authority());
+
+        emit LogComponentServiceTokenHandlerDeployed(
+            componentNftId, 
+            address(componentInfo.tokenHandler), 
+            token);
         
         // register component with instance
         instanceStore.createComponent(
