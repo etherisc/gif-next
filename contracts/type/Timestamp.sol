@@ -23,6 +23,7 @@ using {
     TimestampLib.gtz,
     TimestampLib.eqz,
     TimestampLib.addSeconds,
+    TimestampLib.subtractSeconds,
     TimestampLib.toInt
 } for Timestamp global;
 
@@ -129,12 +130,20 @@ library TimestampLib {
         return Timestamp.unwrap(timestamp) > 0;
     }
 
-    /// @dev return true if Timestamp a is not equal to Timestamp b
+    /// @dev return a new timestamp that is duration seconds later than the provided timestamp.
     function addSeconds(
         Timestamp timestamp,
         Seconds duration
     ) public pure returns (Timestamp) {
         return toTimestamp(Timestamp.unwrap(timestamp) + duration.toInt());
+    }
+
+    /// @dev return a new timestamp that is duration seconds earlier than the provided timestamp.
+    function subtractSeconds(
+        Timestamp timestamp,
+        Seconds duration
+    ) public pure returns (Timestamp) {
+        return toTimestamp(Timestamp.unwrap(timestamp) - duration.toInt());
     }
 
     function toInt(Timestamp timestamp) public pure returns (uint256) {

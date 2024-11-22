@@ -45,7 +45,7 @@ export async function executeTx(
     errorInterfaces?: Interface[]
 ): Promise<ethers.TransactionReceipt> {
     if (txId !== null) {
-        logger.info(`executing tx with id: ${txId}`);
+        logger.debug(`executing tx with id: ${txId}`);
     }
 
     // if the deployment is resumable and the transaction id is not null, check if the transaction was already mined or if not, then wait for it to be mined
@@ -56,7 +56,7 @@ export async function executeTx(
             if (transaction === null) {
                 throw new Error(`Transaction not found: ${txHash}`);
             }
-            logger.info(`Resuming transaction: ${txHash}`);
+            logger.debug(`Resuming transaction: ${txHash}`);
             const tx = await transaction.wait();
             const rcpt = (await hhEthers.provider.getTransactionReceipt(transaction.hash))!;
             if (tx === null) {

@@ -72,7 +72,14 @@ contract ReleaseAdmin is
                 release);
 
         IServiceAuthorization serviceAuthorization = IServiceAuthorization(authorization);
-        _checkAuthorization(address(serviceAuthorization), RELEASE(), release, true, true);
+        AccessAdminLib.checkAuthorization(
+            address(_authorization),
+            address(serviceAuthorization), 
+            RELEASE(), 
+            release, 
+            true, // expectServiceAuthorization
+            true); // checkAlreadyInitialized);
+
         _serviceAuthorization = serviceAuthorization;
 
         // link nft ownability to registry

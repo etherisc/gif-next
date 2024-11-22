@@ -62,4 +62,34 @@ library StrLib {
     function length(Str str) public pure returns (uint256 byteLength) {
         return ShortStrings.byteLength(ShortString.wrap(Str.unwrap(str)));
     }
+
+    /// @dev Returns the provied int as a string
+    function uintToString(uint256 value) public pure returns (string memory name) {
+
+        if (value == 0) {
+            return "0";
+        }
+
+        uint256 temp = value;
+        uint256 digits = 0;
+        while (temp != 0) {
+            digits++;
+            temp /= 10;
+        }
+
+        bytes memory buffer = new bytes(digits);
+        uint256 index = digits - 1;
+
+        temp = value;
+        while (temp != 0) {
+            buffer[index] = bytes1(uint8(48 + temp % 10));
+            temp /= 10;
+
+            if (index > 0) {
+                index--;
+            }
+        }
+
+        return string(buffer);
+    }
 }

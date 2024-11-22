@@ -95,13 +95,14 @@ library PolicyServiceLib {
     {
         if (policyState != COLLATERALIZED()) { 
             revert IPolicyService.ErrorPolicyServicePolicyNotActive(policyNftId, policyState);
-        } 
-        if (TimestampLib.current() < policyInfo.activatedAt) { 
+        }
+
+        if (policyInfo.activatedAt.eqz() || TimestampLib.current() < policyInfo.activatedAt) { 
             revert IPolicyService.ErrorPolicyServicePolicyNotActive(policyNftId, policyState);
         } 
 
         // check expiredAt represents a valid expiry time
-        if (newExpiredAt >= policyInfo.expiredAt) {
+        if (newExpiredAt > policyInfo.expiredAt) {
             revert IPolicyService.ErrorPolicyServicePolicyExpirationTooLate(policyNftId, policyInfo.expiredAt, newExpiredAt);
         }
 
@@ -109,6 +110,7 @@ library PolicyServiceLib {
             revert IPolicyService.ErrorPolicyServicePolicyExpirationTooEarly(policyNftId, TimestampLib.current(), newExpiredAt);
         }
     }
+
 
     function policyIsCloseable(InstanceReader instanceReader, NftId policyNftId)
         external 

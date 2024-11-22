@@ -135,7 +135,6 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
                 ContractLib: libraries.contractLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
-                SelectorLib: libraries.selectorLibAddress,
                 SelectorSetLib: libraries.selectorSetLibAddress,
                 StrLib: libraries.strLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
@@ -180,7 +179,6 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
                 NftIdLib: libraries.nftIdLibAddress,
                 ObjectTypeLib: libraries.objectTypeLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
-                SelectorLib: libraries.selectorLibAddress,
                 SelectorSetLib: libraries.selectorSetLibAddress,
                 StateIdLib: libraries.stateIdLibAddress,
                 StrLib: libraries.strLibAddress,
@@ -277,6 +275,12 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         });
 
     const targetHandler = targetHandlerBaseContract as TargetHandler;
+
+    await executeTx(async () =>
+        await stakingStore.initialize(targetHandlerAddress, getTxOpts()),
+        "stakingstore.initialize",
+        [stakingStore.interface]
+    );
 
     logger.info("-------- Starting deployment StakingManager ----------------");
 

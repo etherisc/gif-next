@@ -7,16 +7,17 @@ import {IAccess} from "./IAccess.sol";
 import {IAccessAdmin} from "./IAccessAdmin.sol";
 import {IAuthorization} from "./IAuthorization.sol";
 import {IComponent} from "../shared/IComponent.sol";
-import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
+import {IAuthorizedComponent} from "../shared/IAuthorizedComponent.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IService} from "../shared/IService.sol";
 import {IServiceAuthorization} from "./IServiceAuthorization.sol";
 
+import {AccessManagerCloneable} from "./AccessManagerCloneable.sol";
 import {BlocknumberLib} from "../type/Blocknumber.sol";
 import {ContractLib} from "../shared/ContractLib.sol";
 import {ObjectType} from "../type/ObjectType.sol";
 import {RoleId, RoleIdLib, ADMIN_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
-import {SelectorLib} from "../type/Selector.sol";
+import {Selector, SelectorLib} from "../type/Selector.sol";
 import {Str, StrLib} from "../type/String.sol";
 import {TimestampLib} from "../type/Timestamp.sol";
 import {VersionPart, VersionPartLib} from "../type/Version.sol";
@@ -338,7 +339,7 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
         checkIsRegistered(address(accessAdmin.getRegistry()), componentAddress, expectedType);
 
         VersionPart expecteRelease = accessAdmin.getRelease();
-        IInstanceLinkedComponent component = IInstanceLinkedComponent(componentAddress);
+        IAuthorizedComponent component = IAuthorizedComponent(componentAddress);
         componentAuthorization = component.getAuthorization();
 
         checkAuthorization(
@@ -478,6 +479,22 @@ library AccessAdminLib { // ACCESS_ADMIN_LIB
     {
         string memory roleName = authorization.getRoleInfo(roleId).name.toString();
         (authorizedRoleId, ) = accessAdmin.getRoleForName(roleName);
+    }
+
+
+    function getFunctionRoleId(
+        AccessManagerCloneable authority,
+        address target,
+        Selector selector
+    )
+        public
+        view
+        returns (RoleId functionRoleId)
+    {
+        return RoleIdLib.toRoleId(
+            authority.getTargetFunctionRole(
+                target, 
+                selector.toBytes4()));
     }
 
 

@@ -7,7 +7,7 @@ import {IProductComponent} from "./IProductComponent.sol";
 
 import {Authorization} from "../authorization/Authorization.sol";
 import {BasicProduct} from "./BasicProduct.sol"; 
-import {COMPONENT, PRODUCT, POLICY} from "../type/ObjectType.sol";
+import {COMPONENT, ORACLE, PRODUCT, POLICY} from "../type/ObjectType.sol";
 import {RoleId, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 
@@ -30,7 +30,8 @@ contract BasicProductAuthorization
           virtual override
      {
           _authorizeServiceDomain(COMPONENT(), address(10));
-          _authorizeServiceDomain(POLICY(), address(11));
+          _authorizeServiceDomain(ORACLE(), address(11));
+          _authorizeServiceDomain(POLICY(), address(12));
      }
 
      function _setupTokenHandlerAuthorizations() internal virtual override {

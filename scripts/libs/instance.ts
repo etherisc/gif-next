@@ -81,7 +81,6 @@ export async function deployAndRegisterMasterInstance(
                 ContractLib: libraries.contractLibAddress,
                 NftIdLib: libraries.nftIdLibAddress, 
                 RoleIdLib: libraries.roleIdLibAddress,
-                SelectorLib: libraries.selectorLibAddress,
                 SelectorSetLib: libraries.selectorSetLibAddress,
                 StrLib: libraries.strLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
@@ -176,8 +175,10 @@ export async function deployAndRegisterMasterInstance(
                 PayoutIdLib: libraries.payoutIdLibAddress,
                 PolicyServiceLib: libraries.policyServiceLibAddress,
                 ReferralLib: libraries.referralLibAddress,
+                RequestIdLib: libraries.requestIdLibAddress,
                 RiskIdLib: libraries.riskIdLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
+                StrLib: libraries.strLibAddress,
                 UFixedLib: libraries.uFixedLibAddress,
             }
         }

@@ -13,6 +13,7 @@ using {
     eqReferralId as ==, 
     neReferralId as !=,
     ReferralLib.eqz,
+    ReferralLib.toInt,
     ReferralLib.toKey32
 } for ReferralId global;
 
@@ -72,6 +73,11 @@ library ReferralLib {
 
     function toReferralStatus(uint8 status) public pure returns (ReferralStatus) {
         return ReferralStatus.wrap(status);
+    }
+
+    /// @dev Converts a referral id into a uint256.
+    function toInt(ReferralId referralId) public pure returns (uint256) {
+        return uint64(ReferralId.unwrap(referralId));
     }
 
     /// @dev Returns the key32 value for the specified nft id and object type.

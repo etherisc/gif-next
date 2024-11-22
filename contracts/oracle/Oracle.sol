@@ -140,9 +140,9 @@ abstract contract Oracle is
         internal
         virtual
     {
-        _getOracleStorage()._oracleService.respond(
-            requestId, responseData);
+        _getOracleStorage()._oracleService.respond(requestId, responseData);
     }
+
 
     function _getOracleStorage() private pure returns (OracleStorage storage $) {
         assembly {
