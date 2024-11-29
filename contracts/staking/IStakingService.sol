@@ -17,7 +17,7 @@ interface IStakingService is IService
 {
 
     event LogStakingServiceProtocolTargetRegistered(NftId protocolNftId);
-    event LogStakingServiceInstanceTargetRegistered(NftId instanceNftId, uint256 chainId);
+    event LogStakingServiceInstanceTargetRegistered(NftId instanceNftId, uint256 chainId, Seconds initialLockingPeriod, UFixed initialRewardRate);
     event LogStakingServiceLockingPeriodSet(NftId targetNftId, Seconds oldLockingDuration, Seconds lockingDuration);
     event LogStakingServiceRewardRateSet(NftId targetNftId, UFixed oldRewardRate, UFixed rewardRate);
 
