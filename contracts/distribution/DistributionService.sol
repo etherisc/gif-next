@@ -112,7 +112,7 @@ contract DistributionService is
 
         instance.getInstanceStore().createDistributorType(distributorType, info);
 
-        emit LogDistributionServiceDistributorTypeCreated(distributionNftId, name);
+        emit LogDistributionServiceDistributorTypeCreated(distributionNftId, name, commissionPercentage);
     }
 
 
@@ -236,7 +236,7 @@ contract DistributionService is
 
             instance.getInstanceStore().createReferral(referralId, info);
 
-            emit LogDistributionServiceReferralCreated(distributionNftId, distributorNftId, referralId, code);
+            emit LogDistributionServiceReferralCreated(distributionNftId, distributorNftId, referralId, code, discountPercentage, maxReferrals, expiryAt);
         }
     }
 
@@ -295,12 +295,14 @@ contract DistributionService is
             IDistribution.DistributorInfo memory distributorInfo = reader.getDistributorInfo(referralInfo.distributorNftId);
             distributorInfo.numPoliciesSold += 1;
             store.updateDistributor(referralInfo.distributorNftId, distributorInfo, KEEP_STATE());
+            emit LogDistributionServiceSaleProcessedWithReferral(distributionNftId, referralInfo.distributorNftId, referralId, distributorInfo.numPoliciesSold, premium.premiumAmount, distributionOwnerFee, commissionAmount);
         } else {
             // increase distribution balance by distribution owner fee
             _accountingService.increaseDistributionBalance(store, distributionNftId, AmountLib.zero(), distributionOwnerFee);
+            emit LogDistributionServiceSaleProcessed(distributionNftId, referralId, premium.premiumAmount, distributionOwnerFee);
         }
 
-        emit LogDistributionServiceSaleProcessed(distributionNftId, referralId);
+        
     }
 
     /// @inheritdoc IDistributionService
