@@ -130,7 +130,7 @@ contract BundleService is
         BundleSet bundleManager = instance.getBundleSet();
         bundleManager.add(bundleNftId);
 
-        emit LogBundleServiceBundleCreated(bundleNftId, poolNftId, lifetime);
+        emit LogBundleServiceBundleCreated(bundleNftId, poolNftId, lifetime, bundleFee.fixedFee, bundleFee.fractionalFee);
     }
 
 
