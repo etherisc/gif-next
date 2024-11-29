@@ -9,7 +9,7 @@ import {InstanceStore} from "../instance/InstanceStore.sol";
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {Fee} from "../type/Fee.sol";
 import {NftId} from "../type/NftId.sol";
-import {ObjectType, ACCOUNTING, BUNDLE, DISTRIBUTION, DISTRIBUTOR, POOL, PRODUCT} from "../type/ObjectType.sol";
+import {ObjectType, ACCOUNTING, BUNDLE, COMPONENT, DISTRIBUTION, DISTRIBUTOR, POOL, PRODUCT} from "../type/ObjectType.sol";
 import {Service} from "../shared/Service.sol";
 
 
@@ -46,7 +46,7 @@ contract AccountingService is
         virtual
         restricted()
     {
-        _changeTargetBalance(DECREASE, instanceStore, componentNftId, AmountLib.zero(), feeAmount);    
+        _changeTargetBalance(DECREASE, instanceStore, componentNftId, COMPONENT(), AmountLib.zero(), feeAmount);    
     }
 
 
@@ -60,7 +60,7 @@ contract AccountingService is
         restricted()
     {
         _checkNftType(productNftId, PRODUCT());
-        _changeTargetBalance(INCREASE, instanceStore, productNftId, AmountLib.zero(), feeAmount);
+        _changeTargetBalance(INCREASE, instanceStore, productNftId, PRODUCT(), AmountLib.zero(), feeAmount);
     }
 
     function increaseProductFeesForPool(
@@ -73,7 +73,7 @@ contract AccountingService is
         restricted()
     {
         _checkNftType(productNftId, PRODUCT());
-        _changeTargetBalance(INCREASE, instanceStore, productNftId, AmountLib.zero(), feeAmount);
+        _changeTargetBalance(INCREASE, instanceStore, productNftId, PRODUCT(), AmountLib.zero(), feeAmount);
     }
 
 
@@ -83,7 +83,7 @@ contract AccountingService is
         restricted()
     {
         _checkNftType(productNftId, PRODUCT());
-        _changeTargetBalance(DECREASE, instanceStore, productNftId, AmountLib.zero(), feeAmount);
+        _changeTargetBalance(DECREASE, instanceStore, productNftId, PRODUCT(), AmountLib.zero(), feeAmount);
     }
 
     function increaseDistributionBalance(
@@ -97,7 +97,7 @@ contract AccountingService is
         restricted()
     {
         _checkNftType(distributionNftId, DISTRIBUTION());
-        _changeTargetBalance(INCREASE, instanceStore, distributionNftId, amount, feeAmount);
+        _changeTargetBalance(INCREASE, instanceStore, distributionNftId, DISTRIBUTION(), amount, feeAmount);
     }
 
 
@@ -112,7 +112,7 @@ contract AccountingService is
         restricted()
     {
         _checkNftType(distributionNftId, DISTRIBUTION());
-        _changeTargetBalance(DECREASE, instanceStore, distributionNftId, amount, feeAmount);
+        _changeTargetBalance(DECREASE, instanceStore, distributionNftId, DISTRIBUTION(), amount, feeAmount);
     }
 
     function increaseDistributorBalance(
@@ -126,7 +126,7 @@ contract AccountingService is
         restricted()
     {
         _checkNftType(distributorNftId, DISTRIBUTOR());
-        _changeTargetBalance(INCREASE, instanceStore, distributorNftId, amount, feeAmount);
+        _changeTargetBalance(INCREASE, instanceStore, distributorNftId, DISTRIBUTOR(), amount, feeAmount);
     }
 
     function decreaseDistributorBalance(
@@ -140,7 +140,7 @@ contract AccountingService is
         restricted()
     {
         _checkNftType(distributorNftId, DISTRIBUTOR());
-        _changeTargetBalance(DECREASE, instanceStore, distributorNftId, amount, feeAmount);
+        _changeTargetBalance(DECREASE, instanceStore, distributorNftId, DISTRIBUTOR(), amount, feeAmount);
     }
 
     function increasePoolBalance(
@@ -154,7 +154,7 @@ contract AccountingService is
         restricted()
     {
         _checkNftType(poolNftId, POOL());
-        _changeTargetBalance(INCREASE, instanceStore, poolNftId, amount, feeAmount);
+        _changeTargetBalance(INCREASE, instanceStore, poolNftId, POOL(), amount, feeAmount);
     }
 
     function decreasePoolBalance(
@@ -168,7 +168,7 @@ contract AccountingService is
         restricted()
     {
         _checkNftType(poolNftId, POOL());
-        _changeTargetBalance(DECREASE, instanceStore, poolNftId, amount, feeAmount);
+        _changeTargetBalance(DECREASE, instanceStore, poolNftId, POOL(), amount, feeAmount);
     }
 
     function increaseBundleBalance(
@@ -182,7 +182,7 @@ contract AccountingService is
         restricted()
     {
         _checkNftType(bundleNftId, BUNDLE());
-        _changeTargetBalance(INCREASE, instanceStore, bundleNftId, amount, feeAmount);
+        _changeTargetBalance(INCREASE, instanceStore, bundleNftId, BUNDLE(), amount, feeAmount);
     }
 
     function decreaseBundleBalance(
@@ -196,7 +196,7 @@ contract AccountingService is
         restricted()
     {
         _checkNftType(bundleNftId, BUNDLE());
-        _changeTargetBalance(DECREASE, instanceStore, bundleNftId, amount, feeAmount);
+        _changeTargetBalance(DECREASE, instanceStore, bundleNftId, BUNDLE(), amount, feeAmount);
     }
 
     function increaseBundleBalanceForPool(
@@ -210,7 +210,7 @@ contract AccountingService is
         restricted()
     {
         _checkNftType(bundleNftId, BUNDLE());
-        _changeTargetBalance(INCREASE, instanceStore, bundleNftId, amount, feeAmount);
+        _changeTargetBalance(INCREASE, instanceStore, bundleNftId, BUNDLE(), amount, feeAmount);
     }
 
     function decreaseBundleBalanceForPool(
@@ -224,7 +224,7 @@ contract AccountingService is
         restricted()
     {
         _checkNftType(bundleNftId, BUNDLE());
-        _changeTargetBalance(DECREASE, instanceStore, bundleNftId, amount, feeAmount);
+        _changeTargetBalance(DECREASE, instanceStore, bundleNftId, BUNDLE(), amount, feeAmount);
     }
 
 
@@ -234,6 +234,7 @@ contract AccountingService is
         bool increase,
         InstanceStore instanceStore, 
         NftId targetNftId, 
+        ObjectType objectType,
         Amount amount, 
         Amount feeAmount
     )
@@ -249,21 +250,8 @@ contract AccountingService is
             if(totalAmount.gtz()) { instanceStore.decreaseBalance(targetNftId, totalAmount); }
             if(feeAmount.gtz()) { instanceStore.decreaseFees(targetNftId, feeAmount); }
         }
-    }
 
-
-    function _logUpdateFee(NftId productNftId, string memory name, Fee memory feeBefore, Fee memory feeAfter)
-        internal
-        virtual
-    {
-        emit LogComponentServiceUpdateFee(
-            productNftId, 
-            name,
-            feeBefore.fractionalFee,
-            feeBefore.fixedFee,
-            feeAfter.fractionalFee,
-            feeAfter.fixedFee
-        );
+        emit LogAccountingServiceBalanceChanged(targetNftId, amount, feeAmount, increase, objectType);
     }
 
     function _getDomain() internal pure virtual override returns(ObjectType) {
