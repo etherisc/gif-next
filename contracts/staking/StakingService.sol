@@ -22,9 +22,8 @@ contract StakingService is
     Service, 
     IStakingService
 {
-    // TODO decide and implement string spec for location calculation
-    // keccak256(abi.encode(uint256(keccak256("gif-next.contracts.shared.StakingService.sol")) - 1)) & ~bytes32(uint256(0xff));
-    bytes32 public constant STAKING_SERVICE_LOCATION_V1 = 0x6548005c3f4340f82f348c576c0ff69f7f529cadd5ad41f96aae61abceeaa300;
+    // keccak256(abi.encode(uint256(keccak256("etherisc.gif.StakingService@3.0.0")) - 1)) & ~bytes32(uint256(0xff));
+    bytes32 public constant STAKING_SERVICE_STORAGE_LOCATION_V3_0 = 0x5744a630cd832cc833bbcbacd41a5b85ea7e62a359f2b0312fec3efecead1700;
 
     struct StakingServiceStorage {
         RegistryService _registryService;
@@ -310,7 +309,7 @@ contract StakingService is
 
     function _getStakingServiceStorage() private pure returns (StakingServiceStorage storage $) {
         assembly {
-            $.slot := STAKING_SERVICE_LOCATION_V1
+            $.slot := STAKING_SERVICE_STORAGE_LOCATION_V3_0
         }
     }
 

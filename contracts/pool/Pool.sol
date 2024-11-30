@@ -23,8 +23,8 @@ abstract contract Pool is
     InstanceLinkedComponent, 
     IPoolComponent 
 {
-    // keccak256(abi.encode(uint256(keccak256("etherisc.storage.Pool")) - 1)) & ~bytes32(uint256(0xff));
-    bytes32 public constant POOL_STORAGE_LOCATION_V1 = 0x25e3e51823fbfffb988e0a2744bb93722d9f3e906c07cc0a9e77884c46c58300;
+    // keccak256(abi.encode(uint256(keccak256("etherisc.gif.Pool@3.0.0")) - 1)) & ~bytes32(uint256(0xff));
+    bytes32 public constant POOL_STORAGE_LOCATION_V3_0 = 0xceba0dc57a322ad9ac8622c7bbee3a223850780710333daffeacd4b6d53d6e00;
 
     struct PoolStorage {
         IComponents.PoolInfo _poolInfo;
@@ -325,7 +325,7 @@ abstract contract Pool is
 
     function _getPoolStorage() private pure returns (PoolStorage storage $) {
         assembly {
-            $.slot := POOL_STORAGE_LOCATION_V1
+            $.slot := POOL_STORAGE_LOCATION_V3_0
         }
     }
 }

@@ -38,6 +38,8 @@ contract ProxyManager is
 
     UpgradableProxyWithAdmin internal _proxy;
 
+    bytes internal _deployData;
+
     // state to keep version history
     mapping(Version version => VersionInfo info) internal _versionHistory;
     Version [] internal _versions;
@@ -66,7 +68,7 @@ contract ProxyManager is
         address initialImplementation, 
         bytes memory initializationData
     )
-        public
+        internal
         virtual
         onlyInitializing()
         returns (IVersionable versionable)
@@ -76,10 +78,12 @@ contract ProxyManager is
             address initialProxyAdminOwner
         ) = _preDeployChecksAndSetup(registry);
 
+        _deployData = getDeployData(currentProxyOwner, initializationData);
+
         _proxy = new UpgradableProxyWithAdmin(
             initialImplementation,
             initialProxyAdminOwner,
-            getDeployData(currentProxyOwner, initializationData)
+            _deployData
         );
 
         versionable = _updateVersionHistory(
@@ -95,7 +99,7 @@ contract ProxyManager is
         bytes memory initializationData, 
         bytes32 salt
     )
-        public
+        internal
         virtual
         onlyInitializing()
         returns (IVersionable versionable)
@@ -105,10 +109,12 @@ contract ProxyManager is
             address initialProxyAdminOwner
         ) = _preDeployChecksAndSetup(registry);
 
+        _deployData = getDeployData(currentProxyOwner, initializationData);
+
         _proxy = new UpgradableProxyWithAdmin{salt: salt}(
             initialImplementation,
             initialProxyAdminOwner,
-            getDeployData(currentProxyOwner, initializationData)
+            _deployData
         );
 
         versionable = _updateVersionHistory(
@@ -193,6 +199,10 @@ contract ProxyManager is
 
     function getVersionInfo(Version _version) external view returns(VersionInfo memory) {
         return _versionHistory[_version];
+    }
+
+    function getDeployData() external view returns (bytes memory) { 
+        return _deployData; 
     }
 
     function _preDeployChecksAndSetup(address registry)

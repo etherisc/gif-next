@@ -29,9 +29,13 @@ contract ClaimService is
     Service, 
     IClaimService
 {
+    // keccak256(abi.encode(uint256(keccak256("etherisc.gif.ClaimService@3.0.0")) - 1)) & ~bytes32(uint256(0xff));
+    bytes32 public constant CLAIM_SERVICE_STORAGE_LOCATION_V3_0 = 0x4771e227a17c94c5fcc3dc9ac7f68c26e56ef575e6191f6a42c4520a600ee000;
 
-    IPolicyService internal _policyService;
-    IPoolService internal _poolService;
+    struct ClaimServiceStorage {
+        IPolicyService _policyService;
+        IPoolService _poolService;
+    }
 
     function _initialize(
         address owner, 
@@ -48,8 +52,9 @@ contract ClaimService is
 
         __Service_init(authority, registry, owner);
 
-        _policyService = IPolicyService(getRegistry().getServiceAddress(POLICY(), getVersion().toMajorPart()));
-        _poolService = IPoolService(getRegistry().getServiceAddress(POOL(), getVersion().toMajorPart()));
+        ClaimServiceStorage storage $ = _getClaimServiceStorage();
+        $._policyService = IPolicyService(getRegistry().getServiceAddress(POLICY(), getVersion().toMajorPart()));
+        $._poolService = IPoolService(getRegistry().getServiceAddress(POOL(), getVersion().toMajorPart()));
 
         _registerInterface(type(IClaimService).interfaceId);
     }
@@ -140,7 +145,8 @@ contract ClaimService is
 
         // should policy still be active it needs to become expired
         if (policyInfo.claimAmount >= policyInfo.sumInsuredAmount) {
-            _policyService.expirePolicy(instance, policyNftId, TimestampLib.current());
+            ClaimServiceStorage storage $ = _getClaimServiceStorage();
+            $._policyService.expirePolicy(instance, policyNftId, TimestampLib.current());
         }
 
         emit LogClaimServiceClaimConfirmed(policyNftId, claimId, confirmedAmount);
@@ -314,39 +320,40 @@ contract ClaimService is
             IPolicy.PolicyInfo memory policyInfo
         ) = _verifyCallerWithPolicy(policyNftId);
 
-        IPolicy.ClaimInfo memory claimInfo;
-        address payoutBeneficiary;
-        Amount payoutAmount;
-        
+        // check that payout exists and is open
         {
-            // check that payout exists and is open
-            IPolicy.PayoutInfo memory payoutInfo = instanceContracts.instanceReader.getPayoutInfo(policyNftId, payoutId);
-            payoutBeneficiary = payoutInfo.beneficiary;
-            payoutAmount = payoutInfo.amount;
             StateId payoutState = instanceContracts.instanceReader.getPayoutState(policyNftId, payoutId);
             if(payoutState != EXPECTED()) {
                 revert ErrorClaimServicePayoutNotExpected(policyNftId, payoutId, payoutState);
             }
+        }
+
+        Amount payoutAmount;
+        address payoutBeneficiary;
+
+        {
+            ClaimId claimId = payoutId.toClaimId();
+            IPolicy.ClaimInfo memory claimInfo = instanceContracts.instanceReader.getClaimInfo(policyNftId, claimId);
+            IPolicy.PayoutInfo memory payoutInfo = instanceContracts.instanceReader.getPayoutInfo(policyNftId, payoutId);
+
+            payoutAmount = payoutInfo.amount;
+            payoutBeneficiary = payoutInfo.beneficiary;
 
             // check that payout amount does not violate claim amount
-            claimInfo = instanceContracts.instanceReader.getClaimInfo(policyNftId, payoutId.toClaimId());
-            if(claimInfo.paidAmount + payoutInfo.amount > claimInfo.claimAmount) {
+            if(claimInfo.paidAmount + payoutAmount > claimInfo.claimAmount) {
                 revert ErrorClaimServicePayoutExceedsClaimAmount(
                     policyNftId, 
-                    payoutId.toClaimId(), 
+                    claimId, 
                     claimInfo.claimAmount, 
-                    claimInfo.paidAmount + payoutInfo.amount);
+                    claimInfo.paidAmount + payoutAmount);
             }
 
             // effects
             // update and save payout info with instance
             payoutInfo.paidAt = TimestampLib.current();
             instanceContracts.productStore.updatePayout(policyNftId, payoutId, payoutInfo, PAID());
-        }
 
-        // update and save claim info with instance
-        {
-            ClaimId claimId = payoutId.toClaimId();
+            // update and save claim info with instance
             claimInfo.paidAmount = claimInfo.paidAmount.add(payoutAmount);
             claimInfo.openPayoutsCount -= 1;
 
@@ -370,15 +377,18 @@ contract ClaimService is
 
         // effects + interactions (push tokens to beneficiary, product)
         // delegate to pool to update book keeping and moving tokens payout
-        (netPayoutAmount, processingFeeAmount) = _poolService.processPayout(
-            instanceContracts.instanceReader,
-            instanceContracts.instanceStore, 
-            policyInfo.productNftId, // product nft id 
-            policyNftId, 
-            policyInfo.bundleNftId, 
-            payoutId,
-            payoutAmount,
-            payoutBeneficiary);
+        {
+            ClaimServiceStorage storage $ = _getClaimServiceStorage();
+            (netPayoutAmount, processingFeeAmount) = $._poolService.processPayout(
+                instanceContracts.instanceReader,
+                instanceContracts.instanceStore, 
+                policyInfo.productNftId, // product nft id 
+                policyNftId, 
+                policyInfo.bundleNftId, 
+                payoutId,
+                payoutAmount,
+                payoutBeneficiary);
+        }
     }
 
     function cancelPayout(
@@ -619,6 +629,12 @@ contract ClaimService is
         }
     }
 
+    function _getClaimServiceStorage() private pure returns (ClaimServiceStorage storage $) {
+        // solhint-disable-next-line no-inline-assembly
+        assembly {
+            $.slot := CLAIM_SERVICE_STORAGE_LOCATION_V3_0
+        }
+    }
 
     function _getDomain() internal pure override returns(ObjectType) {
         return CLAIM();

@@ -18,8 +18,8 @@ abstract contract Oracle is
     InstanceLinkedComponent,
     IOracleComponent
 {
-    // keccak256(abi.encode(uint256(keccak256("etherisc.storage.Oracle")) - 1)) & ~bytes32(uint256(0xff));
-    bytes32 public constant ORACLE_STORAGE_LOCATION_V1 = 0xaab7c0ea03d290e56d6c060e0733d3ebcbe647f7694616a2ec52738a64b2f900;
+    // keccak256(abi.encode(uint256(keccak256("etherisc.gif.Oracle@3.0.0")) - 1)) & ~bytes32(uint256(0xff));
+    bytes32 public constant ORACLE_STORAGE_LOCATION_V3_0 = 0x189f66bb26b02fde8f3e50c7c928f45e0131f04edebf4d58daf0aee756df0e00;
 
     struct OracleStorage {
         IComponentService _componentService;
@@ -146,7 +146,7 @@ abstract contract Oracle is
 
     function _getOracleStorage() private pure returns (OracleStorage storage $) {
         assembly {
-            $.slot := ORACLE_STORAGE_LOCATION_V1
+            $.slot := ORACLE_STORAGE_LOCATION_V3_0
         }
     }
 }

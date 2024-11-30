@@ -28,9 +28,14 @@ contract ApplicationService is
     Service, 
     IApplicationService
 {
-    IDistributionService private _distributionService;
-    IPricingService private _pricingService;
-    IRegistryService private _registryService;
+    // keccak256(abi.encode(uint256(keccak256("etherisc.gif.ApplicationService@3.0.0")) - 1)) & ~bytes32(uint256(0xff));
+    bytes32 public constant APPLICATION_SERVICE_STORAGE_LOCATION_V3_0 = 0x24398a4c04c22224171b7c40b992e9eaa2a85b3256e3f65fd9ba6cedb9459300;
+
+    struct ApplicationServiceStorage {
+        IDistributionService _distributionService;
+        IPricingService _pricingService;
+        IRegistryService _registryService;
+    }
 
     function _initialize(
         address owner, 
@@ -47,9 +52,10 @@ contract ApplicationService is
 
         __Service_init(authority, registry, owner);
 
-        _distributionService = IDistributionService(_getServiceAddress(DISTRIBUTION()));
-        _pricingService = IPricingService(_getServiceAddress(PRICE()));
-        _registryService = IRegistryService(_getServiceAddress(REGISTRY()));
+        ApplicationServiceStorage storage $ = _getApplicationServiceStorage();
+        $._distributionService = IDistributionService(_getServiceAddress(DISTRIBUTION()));
+        $._pricingService = IPricingService(_getServiceAddress(PRICE()));
+        $._registryService = IRegistryService(_getServiceAddress(REGISTRY()));
 
         _registerInterface(type(IApplicationService).interfaceId);
     }
@@ -88,7 +94,8 @@ contract ApplicationService is
         // check referral with distribution
         {
             if (productInfo.hasDistribution && ! referralId.eqz()) {
-                if (!_distributionService.referralIsValid(productInfo.distributionNftId, referralId)) {
+                ApplicationServiceStorage storage $ = _getApplicationServiceStorage();
+                if (!$._distributionService.referralIsValid(productInfo.distributionNftId, referralId)) {
                     revert ErrorApplicationServiceReferralInvalid(productNftId, productInfo.distributionNftId, referralId);
                 }
             }
@@ -113,7 +120,8 @@ contract ApplicationService is
             applicationOwner,
             "");
 
-        applicationNftId = _registryService.registerPolicy(objectInfo);
+        ApplicationServiceStorage storage $ = _getApplicationServiceStorage();
+        applicationNftId = $._registryService.registerPolicy(objectInfo);
     }
 
 
@@ -125,7 +133,9 @@ contract ApplicationService is
         view
         returns (Amount premiumAmount)
     {
-        return _pricingService.calculatePremium(
+        ApplicationServiceStorage storage $ = _getApplicationServiceStorage();
+
+        return $._pricingService.calculatePremium(
                 info.productNftId,
                 info.riskId,
                 info.sumInsuredAmount,
@@ -320,6 +330,12 @@ contract ApplicationService is
         instance = IInstance(instanceAddress);
     }
 
+    function _getApplicationServiceStorage() private pure returns (ApplicationServiceStorage storage $) {
+        // solhint-disable-next-line no-inline-assembly
+        assembly {
+            $.slot := APPLICATION_SERVICE_STORAGE_LOCATION_V3_0
+        }
+    }
 
     function _getDomain() internal pure override returns(ObjectType) {
         return APPLICATION();

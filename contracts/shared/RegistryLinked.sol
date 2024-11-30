@@ -11,9 +11,9 @@ contract RegistryLinked is
     Initializable,
     IRegistryLinked
 {
-
     // priorize simplicity and size over using standard upgradeability structs
-    IRegistry private _registry;
+    // may interfere with proxy storage when used for upgradeable contracts
+    IRegistry private _registry; 
 
     /// @dev initialization for upgradable contracts
     // used in _initializeRegisterable
