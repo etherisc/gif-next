@@ -6,20 +6,19 @@ import {Amount} from "../type/Amount.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
 import {IService} from "../shared/IService.sol";
 import {NftId} from "../type/NftId.sol";
-import {UFixed} from "../type/UFixed.sol";
+import {ObjectType} from "../type/ObjectType.sol";
 
 /// @dev component base class
 /// component examples are staking, product, distribution, pool and oracle
 interface IAccountingService is 
     IService
 {
-    event LogComponentServiceUpdateFee(
-        NftId nftId, 
-        string feeName, 
-        UFixed previousFractionalFee, 
-        Amount previousFixedFee,
-        UFixed newFractionalFee, 
-        Amount newFixedFee
+    event LogAccountingServiceBalanceChanged(
+        NftId indexed nftId,
+        Amount indexed amount,
+        Amount indexed feeAmount,
+        bool increase,
+        ObjectType objectType
     );
 
     function decreaseComponentFees(InstanceStore instanceStore, NftId componentNftId, Amount feeAmount) external;

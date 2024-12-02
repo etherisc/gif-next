@@ -42,6 +42,8 @@ abstract contract BaseStore is
         metadata.objectType = objectType;
         metadata.state = initialState;
         metadata.updatedIn = blocknumber;
+
+        emit LogBaseStoreMetadataCreated(key32, objectType, initialState);
     }
 
     function _updateState(
@@ -73,6 +75,8 @@ abstract contract BaseStore is
 
         // update metadata
         metadata.updatedIn = BlocknumberLib.current();
+        
+        emit LogBaseStoreMetadataUpdated(key32, oldState, state);
     }
 
     function exists(Key32 key32) public view returns (bool) {

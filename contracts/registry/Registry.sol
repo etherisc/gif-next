@@ -231,7 +231,7 @@ contract Registry is
 
         _service[version][domain] = service;
 
-        emit LogRegistryServiceRegistered(version, domain);
+        emit LogRegistryServiceRegistered(info.nftId,version, domain);
 
         nftId = _register(info);
     }
