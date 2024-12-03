@@ -24,7 +24,7 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: NPM install globals
         run:  npm install -g hardhat-shorthand solhint
@@ -118,7 +118,7 @@ jobs:
       - name: Setup node environment
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           registry-url: 'https://registry.npmjs.org'
       
       # latest npm required for provenance
@@ -153,7 +153,7 @@ jobs:
       - name: Setup node environment
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
