@@ -98,7 +98,7 @@ contract PoolService is
             unstakedAmount +  feeAmount, 
             AmountLib.zero());
         
-        emit LogPoolServiceBundleClosed(instance.getNftId(), poolNftId, bundleNftId);
+        emit LogPoolServiceBundleClosed(instance.getNftId(), poolNftId, bundleNftId, unstakedAmount, feeAmount);
 
         if ((unstakedAmount + feeAmount).gtz()){
             IComponents.ComponentInfo memory poolComponentInfo = instance.getInstanceReader().getComponentInfo(poolNftId);

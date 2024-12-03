@@ -247,7 +247,7 @@ contract PolicyService is
         instance.getProductStore().updatePremiumState(policyNftId, PAID());
 
         // log premium collection before interactions with token
-        emit LogPolicyServicePolicyPremiumCollected(policyNftId, premium.premiumAmount);
+        emit LogPolicyServicePolicyPremiumCollected(policyNftId, policyInfo.productNftId, premium.premiumAmount, activateAt);
 
         // interactions
         _transferPremiumAmounts(instanceReader, policyNftId, policyInfo.productNftId, premium);

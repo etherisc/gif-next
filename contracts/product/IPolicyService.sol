@@ -13,7 +13,7 @@ interface IPolicyService is IService {
 
     event LogPolicyServicePolicyCreated(NftId policyNftId, Amount premiumAmount, Timestamp activatedAt);
     event LogPolicyServicePolicyDeclined(NftId policyNftId);
-    event LogPolicyServicePolicyPremiumCollected(NftId policyNftId, Amount premiumAmount);
+    event LogPolicyServicePolicyPremiumCollected(NftId policyNftId, NftId productNftId, Amount premiumAmount, Timestamp activateAt);
     event LogPolicyServicePolicyActivated(NftId policyNftId, Timestamp activatedAt);
     event LogPolicyServicePolicyActivatedUpdated(NftId policyNftId, Timestamp activatedAt);
     event LogPolicyServicePolicyExpirationUpdated(NftId policyNftId, Timestamp expiredAt);

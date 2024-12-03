@@ -20,7 +20,7 @@ interface IRegistry is
 {
 
     event LogRegistryObjectRegistered(NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, address objectAddress, address initialOwner);
-    event LogRegistryServiceRegistered(VersionPart majorVersion, ObjectType domain);
+    event LogRegistryServiceRegistered(NftId nftId, VersionPart majorVersion, ObjectType domain);
     event LogRegistryChainRegistryRegistered(NftId nftId, uint256 chainId, address chainRegistryAddress);
 
     // initialize

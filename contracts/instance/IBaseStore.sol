@@ -17,6 +17,14 @@ interface IBaseStore is ILifecycle {
     error ErrorBaseStoreStateZero(Key32 key);
     error ErrorBaseStoreNotExisting(Key32 key);
 
+    event LogBaseStoreMetadataCreated(
+        Key32 indexed key,
+        ObjectType indexed objectType,
+        StateId indexed state);
+    event LogBaseStoreMetadataUpdated(
+        Key32 indexed key,
+        StateId indexed oldState,
+        StateId indexed newState);
 
     struct Metadata {
         // slot 0

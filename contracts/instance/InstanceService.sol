@@ -372,6 +372,10 @@ contract InstanceService is
             IInstance masterInstance = IInstance(_masterInstance);
             IRegistry.ObjectInfo memory info = _registryService.registerInstance(masterInstance, getOwner());
             masterInstanceNftId = info.nftId;
+            
+            emit LogInstanceServiceMasterInstanceRegistered(
+                masterInstanceNftId, _masterInstance, _masterInstanceAdmin, _masterAccessManager, 
+                _masterInstanceReader, _masterInstanceBundleSet, _masterInstanceRiskSet, _masterInstanceStore, _masterProductStore);
         }
     }
 

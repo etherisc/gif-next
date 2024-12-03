@@ -1271,7 +1271,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             );
 
             vm.expectEmit(address(registry));
-            emit IRegistry.LogRegistryServiceRegistered(version, domain);
+            emit IRegistry.LogRegistryServiceRegistered(expectedNftId, version, domain);
 
             vm.expectEmit(address(registry));
             emit IRegistry.LogRegistryObjectRegistered(

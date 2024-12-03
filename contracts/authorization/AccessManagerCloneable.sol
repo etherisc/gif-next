@@ -24,6 +24,8 @@ contract AccessManagerCloneable is
     error ErrorAccessManagerTargetAdminLocked(address target);
     error ErrorAccessManagerCallerAdminLocked(address caller);
 
+    event LogAccessManagerLocked(address indexed accessManager, bool indexed locked);
+
     VersionPart private _release;
     bool private _isLocked;
 
@@ -94,6 +96,7 @@ contract AccessManagerCloneable is
         onlyAdminRole() 
     {
         _isLocked = locked;
+        emit LogAccessManagerLocked(address(this), locked);
     }
 
 

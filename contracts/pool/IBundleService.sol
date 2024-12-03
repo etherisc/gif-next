@@ -30,7 +30,7 @@ interface IBundleService is IService {
 
     error ErrorBundleServiceExtensionLifetimeIsZero();
 
-    event LogBundleServiceBundleCreated(NftId bundleNftId, NftId poolNftId, Seconds lifetime);
+    event LogBundleServiceBundleCreated(NftId bundleNftId, NftId poolNftId, Seconds lifetime, Amount fixedFee, UFixed fractionalFee);
     event LogBundleServiceBundleClosed(NftId bundleNftId);
     event LogBundleServiceBundleLocked(NftId bundleNftId);
     event LogBundleServiceBundleUnlocked(NftId bundleNftId);
