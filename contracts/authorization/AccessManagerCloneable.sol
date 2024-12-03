@@ -41,6 +41,7 @@ contract AccessManagerCloneable is
 
     function initialize(address admin)
         public
+        override
         initializer()
     {
         __ERC165_init();
