@@ -164,7 +164,9 @@ contract InstanceReader {
 
 
     /// @dev Returns the currently locked amount for the given NFT ID.
-    /// The target NFT ID may reference a pool or a bundle.
+    /// Locked amounts are only tracked for bundles, not for pool. To get the 
+    /// pool locked amount, then locked amounts of the bundles contained in the 
+    /// pool must be summed up. The target NFT ID may only a bundle. 
     function getLockedAmount(NftId targetNftId) external view returns (Amount) { 
         return _store.getLockedAmount(targetNftId);
     }
