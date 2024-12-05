@@ -32,6 +32,7 @@ function parseContract(file: string, listener: SolidityFileListener) {
     const parser = new SolidityParser(tokenStream);
     parser.addParseListener(listener);
     parser.sourceUnit();
+    listener.fileFinished(file);
 }
 
 export class SolidityFileListener extends SolidityListener {
@@ -42,4 +43,7 @@ export class SolidityFileListener extends SolidityListener {
         super();
         this.filename = filename;
     }
+
+    public fileFinished(filename: string) {
+    };
 }
