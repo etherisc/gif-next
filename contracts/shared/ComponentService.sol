@@ -312,9 +312,28 @@ contract ComponentService is
             productNftId, 
             initialProductInfo);
 
+        emit LogComponentServiceProductCreated(
+            productNftId, productAddress, initialProductInfo.hasDistribution);
+
+        IComponents.FeeInfo memory initialFeeInfo = product.getInitialFeeInfo();
+        
         productStore.createFee(
             productNftId, 
-            product.getInitialFeeInfo());
+            initialFeeInfo);
+
+        emit LogComponentServiceProductInitialProductFeesSet(
+            productNftId, 
+            initialFeeInfo.productFee.fixedFee, initialFeeInfo.productFee.fractionalFee,
+            initialFeeInfo.processingFee.fixedFee, initialFeeInfo.processingFee.fractionalFee);
+        emit LogComponentServiceProductInitialDistributionFeesSet(
+            productNftId, 
+            initialFeeInfo.distributionFee.fixedFee, initialFeeInfo.distributionFee.fractionalFee,
+            initialFeeInfo.minDistributionOwnerFee.fixedFee, initialFeeInfo.minDistributionOwnerFee.fractionalFee);
+        emit LogComponentServiceProductInitialPoolFeesSet(
+            productNftId, 
+            initialFeeInfo.poolFee.fixedFee, initialFeeInfo.poolFee.fractionalFee,
+            initialFeeInfo.stakingFee.fixedFee, initialFeeInfo.stakingFee.fractionalFee,
+            initialFeeInfo.performanceFee.fixedFee, initialFeeInfo.performanceFee.fractionalFee);
     }
 
     //-------- distribution -------------------------------------------------//
