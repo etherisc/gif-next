@@ -83,6 +83,8 @@ interface IComponentService is
         bool isExternallyManaged, bool isVerifyingApplications);
     event LogComponentServiceDistributionCreated(
         NftId indexed distributionNftId, NftId indexed productNftId);
+    event LogComponentServiceOracleCreated(
+        NftId indexed oracleNftId, NftId indexed productNftId);
     
     //-------- component ----------------------------------------------------//
 

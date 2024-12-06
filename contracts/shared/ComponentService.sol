@@ -420,6 +420,8 @@ contract ComponentService is
         productInfo.oracleNftId[productInfo.numberOfOracles] = oracleNftId;
         productInfo.numberOfOracles++;
         productStore.updateProduct(productNftId, productInfo, KEEP_STATE());
+
+        emit LogComponentServiceOracleCreated(oracleNftId, productNftId);
     }
 
     //-------- pool ---------------------------------------------------------//
