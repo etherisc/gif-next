@@ -359,6 +359,8 @@ contract ComponentService is
         // set distribution in product info
         productInfo.distributionNftId = distributionNftId;
         productStore.updateProduct(productNftId, productInfo, KEEP_STATE());
+
+        emit LogComponentServiceDistributionCreated(distributionNftId, productNftId);
     }
 
 

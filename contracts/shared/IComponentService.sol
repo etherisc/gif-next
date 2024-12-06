@@ -63,24 +63,26 @@ interface IComponentService is
         Amount newFixedFee
     );
     event LogComponentServiceProductCreated(
-            NftId indexed productNftId, address indexed productAddress, bool indexed hasDistribution, uint8 expectedNumberOfOracles);
+        NftId indexed productNftId, address indexed productAddress, bool indexed hasDistribution, uint8 expectedNumberOfOracles);
     event LogComponentServiceProductInitialProductFeesSet(
-            NftId indexed productNftId, 
-            Amount indexed productFeeFixed, UFixed indexed productFeeFractional,
-            Amount processingFeeFixed, UFixed processingFeeFractional);
+        NftId indexed productNftId, 
+        Amount indexed productFeeFixed, UFixed indexed productFeeFractional,
+        Amount processingFeeFixed, UFixed processingFeeFractional);
     event LogComponentServiceProductInitialDistributionFeesSet(
-            NftId indexed productNftId, 
-            Amount indexed distributionFeeFixed, UFixed indexed distributionFeeFractional,
-            Amount minDistributionOwnerFeeFixed, UFixed minDistributionOwnerFeeFractional);
+        NftId indexed productNftId, 
+        Amount indexed distributionFeeFixed, UFixed indexed distributionFeeFractional,
+        Amount minDistributionOwnerFeeFixed, UFixed minDistributionOwnerFeeFractional);
     event LogComponentServiceProductInitialPoolFeesSet(
-            NftId indexed productNftId, 
-            Amount indexed poolFeeFixed, UFixed indexed poolFeeFractional,
-            Amount stakingFeeFixed, UFixed stakingFeeFractional,
-            Amount performanceFeeFixed, UFixed performanceFeeFractional);
+        NftId indexed productNftId, 
+        Amount indexed poolFeeFixed, UFixed indexed poolFeeFractional,
+        Amount stakingFeeFixed, UFixed stakingFeeFractional,
+        Amount performanceFeeFixed, UFixed performanceFeeFractional);
     event LogComponentServicePoolCreated(
-            NftId indexed poolNftId, NftId indexed productNftId, address indexed componentAddress, 
-            Amount maxBalanceAmount, UFixed collateralizationLevel, UFixed retentionLevel, 
-            bool isExternallyManaged, bool isVerifyingApplications);
+        NftId indexed poolNftId, NftId indexed productNftId, address indexed componentAddress, 
+        Amount maxBalanceAmount, UFixed collateralizationLevel, UFixed retentionLevel, 
+        bool isExternallyManaged, bool isVerifyingApplications);
+    event LogComponentServiceDistributionCreated(
+        NftId indexed distributionNftId, NftId indexed productNftId);
     
     //-------- component ----------------------------------------------------//
 
