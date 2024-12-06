@@ -77,6 +77,10 @@ interface IComponentService is
             Amount indexed poolFeeFixed, UFixed indexed poolFeeFractional,
             Amount stakingFeeFixed, UFixed stakingFeeFractional,
             Amount performanceFeeFixed, UFixed performanceFeeFractional);
+    event LogComponentServicePoolCreated(
+            NftId indexed poolNftId, NftId indexed productNftId, address indexed componentAddress, 
+            Amount maxBalanceAmount, UFixed collateralizationLevel, UFixed retentionLevel, 
+            bool isExternallyManaged, bool isVerifyingApplications);
     
     //-------- component ----------------------------------------------------//
 

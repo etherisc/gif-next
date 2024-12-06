@@ -441,13 +441,20 @@ contract ComponentService is
 
         // create info
         IPoolComponent pool = IPoolComponent(componentAddress);
+        IComponents.PoolInfo memory initialPoolInfo = pool.getInitialPoolInfo();
         instanceStore.createPool(
             poolNftId, 
-            pool.getInitialPoolInfo());
+            initialPoolInfo);
 
         // update pool in product info
         productInfo.poolNftId = poolNftId;
         productStore.updateProduct(productNftId, productInfo, KEEP_STATE());
+
+        emit LogComponentServicePoolCreated(
+            poolNftId, productNftId, componentAddress, 
+            initialPoolInfo.maxBalanceAmount, initialPoolInfo.collateralizationLevel, 
+            initialPoolInfo.retentionLevel, initialPoolInfo.isExternallyManaged, 
+            initialPoolInfo.isVerifyingApplications);
     }
 
 
