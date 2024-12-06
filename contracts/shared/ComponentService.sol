@@ -312,8 +312,7 @@ contract ComponentService is
             productNftId, 
             initialProductInfo);
 
-        emit LogComponentServiceProductCreated(
-            productNftId, productAddress, initialProductInfo.hasDistribution);
+        emit LogComponentServiceProductCreated(productNftId, productAddress, initialProductInfo.hasDistribution, initialProductInfo.expectedNumberOfOracles);
 
         IComponents.FeeInfo memory initialFeeInfo = product.getInitialFeeInfo();
         

@@ -63,7 +63,7 @@ interface IComponentService is
         Amount newFixedFee
     );
     event LogComponentServiceProductCreated(
-            NftId indexed productNftId, address indexed productAddress, bool indexed hasDistribution);
+            NftId indexed productNftId, address indexed productAddress, bool indexed hasDistribution, uint8 expectedNumberOfOracles);
     event LogComponentServiceProductInitialProductFeesSet(
             NftId indexed productNftId, 
             Amount indexed productFeeFixed, UFixed indexed productFeeFractional,
