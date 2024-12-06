@@ -2,7 +2,6 @@
 pragma solidity ^0.8.20;
 
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManaged.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
@@ -16,7 +15,6 @@ import {IRelease} from "./IRelease.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
 import {IStaking} from "../staking/IStaking.sol";
 import {ReleaseRegistry} from "./ReleaseRegistry.sol";
-import {TokenRegistry} from "./TokenRegistry.sol";
 import {RegistryAdmin} from "./RegistryAdmin.sol";
 
 /// @dev IMPORTANT
@@ -566,6 +564,8 @@ contract Registry is
                 initialOwner: NFT_LOCK_ADDRESS,
                 data: ""}),
             true);
+
+        emit LogRegistryObjectRegistered(protocolNftId, NftIdLib.zero(), PROTOCOL(), false, address(0), NFT_LOCK_ADDRESS);
     }
 
     /// @dev register this registry
@@ -671,6 +671,8 @@ contract Registry is
 
         // calls nft receiver
         CHAIN_NFT.mint(info.initialOwner, info.nftId.toInt());
+
+        emit LogRegistryObjectRegistered(info.nftId, info.parentNftId, info.objectType, info.isInterceptor, info.objectAddress, info.initialOwner);
     }
 
     function _setAddressForNftId(NftId nftId, address objectAddress)
