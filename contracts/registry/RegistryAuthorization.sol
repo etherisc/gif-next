@@ -144,8 +144,6 @@ contract RegistryAuthorization
           _setupStakingThAuthorization();
      }
 
-     event LogAccessAdminDebug(string message, string custom, uint256 value);
-
      function _setupRegistryAuthorization() internal {
           IAccess.FunctionInfo[] storage functions;
 
