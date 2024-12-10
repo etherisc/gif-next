@@ -29,20 +29,20 @@ contract ProductStore is
     ObjectCounter,
     ObjectLifecycle
 {
-    event LogProductStoreProductInfoCreated(NftId productNftId, StateId state, address createdBy, address txOrigin);
-    event LogProductStoreProductInfoUpdated(NftId productNftId, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
-    event LogProductStoreFeeInfoCreated(NftId productNftId, StateId state, address createdBy, address txOrigin);
-    event LogProductStoreFeeInfoUpdated(NftId productNftId, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
-    event LogProductStoreRiskInfoCreated(RiskId riskId, StateId state, address createdBy, address txOrigin);
-    event LogProductStoreRiskInfoUpdated(RiskId riskId, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
-    event LogProductStorePolicyInfoCreated(NftId policyNftId, StateId state, address createdBy, address txOrigin);
-    event LogProductStorePolicyInfoUpdated(NftId policyNftId, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
-    event LogProductStorePremiumInfoCreated(NftId policyNftId, StateId state, address createdBy, address txOrigin);
-    event LogProductStorePremiumInfoUpdated(NftId policyNftId, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
-    event LogProductStoreClaimInfoCreated(NftId policyNftId, ClaimId claimId, StateId state, address createdBy, address txOrigin);
-    event LogProductStoreClaimInfoUpdated(NftId policyNftId, ClaimId claimId, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
-    event LogProductStorePayoutInfoCreated(NftId policyNftId, PayoutId payoutId, StateId state, address createdBy, address txOrigin);
-    event LogProductStorePayoutInfoUpdated(NftId policyNftId, PayoutId payoutId, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
+    event LogProductStoreProductInfoCreated(NftId indexed productNftId, StateId indexed state, address indexed createdBy, address txOrigin);
+    event LogProductStoreProductInfoUpdated(NftId indexed productNftId, StateId indexed oldState, StateId indexed newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
+    event LogProductStoreFeeInfoCreated(NftId indexed productNftId, StateId indexed state, address indexed createdBy, address txOrigin);
+    event LogProductStoreFeeInfoUpdated(NftId indexed productNftId, address indexed updatedBy, address indexed txOrigin, Blocknumber lastUpdatedIn);
+    event LogProductStoreRiskInfoCreated(RiskId indexed riskId, StateId indexed state, address indexed createdBy, address txOrigin);
+    event LogProductStoreRiskInfoUpdated(RiskId indexed riskId, StateId indexed oldState, StateId indexed newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
+    event LogProductStorePolicyInfoCreated(NftId indexed policyNftId, StateId indexed state, address indexed createdBy, address txOrigin);
+    event LogProductStorePolicyInfoUpdated(NftId indexed policyNftId, StateId indexed oldState, StateId indexed newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
+    event LogProductStorePremiumInfoCreated(NftId indexed policyNftId, StateId indexed state, address indexed createdBy, address txOrigin);
+    event LogProductStorePremiumInfoUpdated(NftId indexed policyNftId, StateId indexed oldState, StateId indexed newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
+    event LogProductStoreClaimInfoCreated(NftId indexed policyNftId, ClaimId indexed claimId, StateId indexed state, address createdBy, address txOrigin);
+    event LogProductStoreClaimInfoUpdated(NftId indexed policyNftId, ClaimId indexed claimId, StateId indexed oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
+    event LogProductStorePayoutInfoCreated(NftId indexed policyNftId, PayoutId indexed payoutId, StateId indexed state, address createdBy, address txOrigin);
+    event LogProductStorePayoutInfoUpdated(NftId indexed policyNftId, PayoutId indexed payoutId, StateId indexed oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
 
     mapping(Key32 key32 => IComponents.ProductInfo) private _products;
     mapping(Key32 key32 => IComponents.FeeInfo) private _fees;
