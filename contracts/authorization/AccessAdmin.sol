@@ -367,7 +367,7 @@ contract AccessAdmin is
         // add role to list of roles
         _roleIds.push(roleId);
 
-        emit LogAccessAdminRoleCreated(_adminName, roleId, info.targetType, info.adminRoleId, info.name.toString());
+        emit LogAccessAdminRoleCreated(roleId, info.adminRoleId, info.targetType, info.name.toString(), _adminName);
     }
 
 
@@ -387,7 +387,7 @@ contract AccessAdmin is
         Blocknumber lastUpdateIn = _roleInfo[roleId].lastUpdateIn;
         _roleInfo[roleId].lastUpdateIn = BlocknumberLib.current();
 
-        emit LogAccessAdminRoleActivatedSet(_adminName, roleId, active, lastUpdateIn);
+        emit LogAccessAdminRoleActivatedSet(roleId, active, _adminName, lastUpdateIn);
     }
 
 
@@ -418,9 +418,9 @@ contract AccessAdmin is
             0);
         
         emit LogAccessAdminRoleGranted(
-            _adminName, 
             account, 
-            AccessAdminLib.getRoleName(this, roleId));
+            AccessAdminLib.getRoleName(this, roleId),
+            _adminName);
     }
 
 
@@ -441,7 +441,7 @@ contract AccessAdmin is
             RoleId.unwrap(roleId), 
             account);
 
-        emit LogAccessAdminRoleRevoked(_adminName, account, _roleInfo[roleId].name.toString());
+        emit LogAccessAdminRoleRevoked(account, _roleInfo[roleId].name.toString(), _adminName);
     }
 
 
@@ -557,7 +557,7 @@ contract AccessAdmin is
         // grant contract role to target
         _grantRoleToAccount(targetRoleId, target);
 
-        emit LogAccessAdminTargetCreated(_adminName, targetName, managed, target, targetRoleId);
+        emit LogAccessAdminTargetCreated(target, targetRoleId, managed, targetName, _adminName);
     }
 
 
@@ -571,7 +571,7 @@ contract AccessAdmin is
         Blocknumber lastUpdateIn = _targetInfo[target].lastUpdateIn;
         _targetInfo[target].lastUpdateIn = BlocknumberLib.current();
 
-        emit LogAccessAdminTargetLockedSet(_adminName, target, locked, lastUpdateIn);
+        emit LogAccessAdminTargetLockedSet(target, locked, _adminName, lastUpdateIn);
     }
 
 
@@ -652,9 +652,11 @@ contract AccessAdmin is
 
         // logging
         emit LogAccessAdminFunctionGranted(
-            _adminName, 
             target, 
+            selector,
+            roleId,
             AccessAdminLib.toFunctionGrantingString(this, func.name, roleId),
+            _adminName, 
             lastUpdateIn);
     }
 }
