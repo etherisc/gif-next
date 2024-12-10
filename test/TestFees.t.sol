@@ -306,8 +306,8 @@ contract TestFees is GifTest {
         emit IDistributionService.LogDistributionServiceCommissionWithdrawn(
             distributorNftId,
             distributor,
-            address(token),
-            withdrawAmount
+            withdrawAmount,
+            address(token)
         );
         
         // WHEN - the distributor withdraws part of his commission
@@ -372,8 +372,8 @@ contract TestFees is GifTest {
         emit IDistributionService.LogDistributionServiceCommissionWithdrawn(
             distributorNftId,
             distributor,
-            address(token),
-            expectedWithdrawnAmount
+            expectedWithdrawnAmount,
+            address(token)
         );
         
         // WHEN - the distributor withdraws part of his commission
