@@ -25,10 +25,6 @@ interface IComponent is
     error ErrorComponentWalletAddressIsSameAsCurrent();
     error ErrorComponentWalletNotComponent();
 
-    event LogComponentWalletAddressChanged(address oldWallet, address newWallet);
-    event LogComponentWalletTokensTransferred(address from, address to, uint256 amount);
-    event LogComponentTokenHandlerApproved(address tokenHandler, address token, Amount limit, bool isMaxAmount);
-
     /// @dev returns the name of this component
     /// to successfully register the component with an instance the name MUST be unique in the linked instance
     function getName() external view returns (string memory name);
