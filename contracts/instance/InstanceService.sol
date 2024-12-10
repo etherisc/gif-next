@@ -306,11 +306,13 @@ contract InstanceService is
         InstanceReader upgradedInstanceReaderClone = InstanceReader(
             Clones.clone(address(_masterInstanceReader)));
 
+        address oldInstanceReaderAddress = address(instance.getInstanceReader());
         upgradedInstanceReaderClone.initializeWithInstance(instanceAddress);
         instance.setInstanceReader(upgradedInstanceReaderClone);
 
         emit LogInstanceServiceInstanceReaderUpgraded(
             getRegistry().getNftIdForAddress(instanceAddress),
+            oldInstanceReaderAddress,
             address(upgradedInstanceReaderClone));
     }
 
@@ -415,10 +417,12 @@ contract InstanceService is
         InstanceReader instanceReader = InstanceReader(instanceReaderAddress);
         if(instanceReader.getInstance() != IInstance(_masterInstance)) { revert ErrorInstanceServiceInstanceReaderInstanceMismatch(); }
 
+        address oldMasterInstanceReaderAddress = _masterInstanceReader;
         _masterInstanceReader = instanceReaderAddress;
 
         emit LogInstanceServiceMasterInstanceReaderUpgraded(
             getRegistry().getNftIdForAddress(_masterInstance),
+            oldMasterInstanceReaderAddress,
             instanceReaderAddress);
     }
 

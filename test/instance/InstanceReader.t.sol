@@ -21,11 +21,12 @@ contract InstanceReaderTest is GifTest {
     function test_instanceReaderUpgradeMasterInstanceReader() public {
         // GIVEN
         vm.startPrank(registryOwner);
+        address oldMasterInstanceReaderAddress = address(masterInstanceReader);
         InstanceReader newMasterInstanceReader = _createNewMasterInstanceReader();
         // address newMasterInstanceReaderAddress = address(newMasterInstanceReader);
         
         vm.expectEmit();
-        emit IInstanceService.LogInstanceServiceMasterInstanceReaderUpgraded(masterInstanceNftId, address(newMasterInstanceReader));
+        emit IInstanceService.LogInstanceServiceMasterInstanceReaderUpgraded(masterInstanceNftId, oldMasterInstanceReaderAddress, address(newMasterInstanceReader));
 
         // WHEN
         instanceService.upgradeMasterInstanceReader(address(newMasterInstanceReader));
@@ -78,7 +79,7 @@ contract InstanceReaderTest is GifTest {
         vm.startPrank(instanceOwner);
 
         vm.expectEmit(true, false, false, false);
-        emit IInstanceService.LogInstanceServiceInstanceReaderUpgraded(instanceNftId, address(newMasterInstanceReader));
+        emit IInstanceService.LogInstanceServiceInstanceReaderUpgraded(instanceNftId, oldInstanceReaderAddress, address(newMasterInstanceReader));
 
         instance.upgradeInstanceReader();
         vm.stopPrank();

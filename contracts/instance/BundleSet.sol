@@ -14,13 +14,13 @@ contract BundleSet is
 {
     using LibNftIdSet for LibNftIdSet.Set;
 
-    event LogBundleSetPolicyLinked(NftId bundleNftId, NftId policyNftId);
-    event LogBundleSetPolicyUnlinked(NftId bundleNftId, NftId policyNftId);
+    event LogBundleSetPolicyLinked(NftId indexed bundleNftId, NftId indexed policyNftId);
+    event LogBundleSetPolicyUnlinked(NftId indexed bundleNftId, NftId indexed policyNftId);
 
-    event LogBundleSetBundleAdded(NftId poolNftId, NftId bundleNftId);
-    event LogBundleSetBundleUnlocked(NftId poolNftId, NftId bundleNftId);
-    event LogBundleSetBundleLocked(NftId poolNftId, NftId bundleNftId);
-    event LogBundleSetBundleClosed(NftId poolNftId, NftId bundleNftId);
+    event LogBundleSetBundleAdded(NftId indexed poolNftId, NftId indexed bundleNftId);
+    event LogBundleSetBundleUnlocked(NftId indexed poolNftId, NftId indexed bundleNftId);
+    event LogBundleSetBundleLocked(NftId indexed poolNftId, NftId indexed bundleNftId);
+    event LogBundleSetBundleClosed(NftId indexed poolNftId, NftId indexed bundleNftId);
 
     error ErrorBundleSetPolicyAlreadyActivated(NftId policyNftId);
     error ErrorBundleSetBundleLocked(NftId bundleNftId, NftId policyNftId);
