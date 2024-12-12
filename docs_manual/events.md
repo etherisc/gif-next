@@ -6,15 +6,6 @@
 
 
 ===============
-contracts/product/IPolicyService.sol: LogPolicyServicePolicyCreated(NftId indexed policyNftId, Amount indexed premiumAmount, Timestamp indexed activatedAt)
-contracts/product/IPolicyService.sol: LogPolicyServicePolicyDeclined(NftId indexed policyNftId)
-contracts/product/IPolicyService.sol: LogPolicyServicePolicyPremiumCollected(NftId indexed policyNftId, NftId indexed productNftId, Amount indexed premiumAmount, Timestamp activateAt)
-contracts/product/IPolicyService.sol: LogPolicyServicePolicyActivated(NftId indexed policyNftId, Timestamp indexed activatedAt)
-contracts/product/IPolicyService.sol: LogPolicyServicePolicyActivationUpdated(NftId indexed policyNftId, Timestamp indexed activatedAt)
-contracts/product/IPolicyService.sol: LogPolicyServicePolicyExpirationUpdated(NftId indexed policyNftId, Timestamp indexed expiredAt)
-contracts/product/IPolicyService.sol: LogPolicyServicePolicyClosed(NftId indexed policyNftId)
-
-===============
 contracts/product/IRiskService.sol: LogRiskServiceRiskCreated(NftId indexed productNftId, RiskId indexed riskId)
 contracts/product/IRiskService.sol: LogRiskServiceRiskUpdated(NftId indexed productNftId, RiskId indexed riskId)
 contracts/product/IRiskService.sol: LogRiskServiceRiskLocked(NftId indexed productNftId, RiskId indexed riskId)
