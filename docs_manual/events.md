@@ -4,21 +4,6 @@
 
 
 
-===============
-contracts/product/IApplicationService.sol: LogApplicationServiceApplicationCreated(NftId indexed applicationNftId, NftId indexed productNftId, NftId indexed bundleNftId, RiskId riskId, ReferralId referralId, address applicationOwner, Amount sumInsuredAmount, Amount premiumAmount, Seconds lifetime)
-contracts/product/IApplicationService.sol: LogApplicationServiceApplicationRenewed(NftId indexed policyNftId, NftId indexed bundleNftId)
-contracts/product/IApplicationService.sol: LogApplicationServiceApplicationAdjusted(NftId indexed applicationNftId, NftId indexed bundleNftId, RiskId indexed riskId, ReferralId referralId, Amount sumInsuredAmount, Seconds lifetime)
-contracts/product/IApplicationService.sol: LogApplicationServiceApplicationRevoked(NftId indexed applicationNftId)
-
-===============
-contracts/product/IClaimService.sol: LogClaimServiceClaimSubmitted(NftId indexed policyNftId, ClaimId indexed claimId, Amount indexed claimAmount)
-contracts/product/IClaimService.sol: LogClaimServiceClaimConfirmed(NftId indexed policyNftId, ClaimId indexed claimId, Amount indexed confirmedAmount)
-contracts/product/IClaimService.sol: LogClaimServiceClaimDeclined(NftId indexed policyNftId, ClaimId indexed claimId)
-contracts/product/IClaimService.sol: LogClaimServiceClaimRevoked(NftId indexed policyNftId, ClaimId indexed claimId)
-contracts/product/IClaimService.sol: LogClaimServiceClaimCancelled(NftId indexed policyNftId, ClaimId indexed claimId)
-contracts/product/IClaimService.sol: LogClaimServicePayoutCreated(NftId indexed policyNftId, ClaimId indexed claimId, PayoutId indexed payoutId, Amount indexed amount, address beneficiary)
-contracts/product/IClaimService.sol: LogClaimServicePayoutProcessed(NftId indexed policyNftId, PayoutId indexed payoutId, Amount indexed amount)
-contracts/product/IClaimService.sol: LogClaimServicePayoutCancelled(NftId indexed policyNftId, PayoutId indexed payoutId)
 
 ===============
 contracts/product/IPolicyService.sol: LogPolicyServicePolicyCreated(NftId indexed policyNftId, Amount indexed premiumAmount, Timestamp indexed activatedAt)
