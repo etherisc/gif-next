@@ -14,25 +14,25 @@ import {PayoutId} from "../type/PayoutId.sol";
 
 interface IPoolService is IService {
 
-    event LogPoolServiceMaxBalanceAmountUpdated(NftId poolNftId, Amount previousMaxCapitalAmount, Amount currentMaxCapitalAmount);
-    event LogPoolServiceWalletFunded(NftId poolNftId, address poolOwner, Amount amount);
-    event LogPoolServiceWalletDefunded(NftId poolNftId, address poolOwner, Amount amount);
+    event LogPoolServiceMaxBalanceAmountUpdated(NftId indexed poolNftId, Amount indexed previousMaxCapitalAmount, Amount indexed currentMaxCapitalAmount);
+    event LogPoolServiceWalletFunded(NftId indexed poolNftId, address indexed poolOwner, Amount indexed amount);
+    event LogPoolServiceWalletDefunded(NftId indexed poolNftId, address indexed poolOwner, Amount indexed amount);
 
-    event LogPoolServiceBundleCreated(NftId instanceNftId, NftId poolNftId, NftId bundleNftId);
-    event LogPoolServiceBundleClosed(NftId instanceNftId, NftId poolNftId, NftId bundleNftId, Amount balanceAmount, Amount feeAmount);
+    event LogPoolServiceBundleCreated(NftId indexed instanceNftId, NftId indexed poolNftId, NftId indexed bundleNftId);
+    event LogPoolServiceBundleClosed(NftId indexed instanceNftId, NftId indexed poolNftId, NftId indexed bundleNftId, Amount balanceAmount, Amount feeAmount);
 
-    event LogPoolServiceBundleStaked(NftId instanceNftId, NftId poolNftId, NftId bundleNftId, Amount amount, Amount netAmount);
-    event LogPoolServiceBundleUnstaked(NftId instanceNftId, NftId poolNftId, NftId bundleNftId, Amount amount, Amount netAmount);
+    event LogPoolServiceBundleStaked(NftId indexed instanceNftId, NftId indexed poolNftId, NftId indexed bundleNftId, Amount amount, Amount netAmount);
+    event LogPoolServiceBundleUnstaked(NftId indexed instanceNftId, NftId indexed poolNftId, NftId indexed bundleNftId, Amount amount, Amount netAmount);
 
-    event LogPoolServiceFeesWithdrawn(NftId bundleNftId, address recipient, address tokenAddress, Amount amount);
+    event LogPoolServiceFeesWithdrawn(NftId indexed bundleNftId, address indexed recipient, Amount indexed amount, address tokenAddress);
 
-    event LogPoolServiceProcessFundedClaim(NftId policyNftId, ClaimId claimId, Amount availableAmount);
+    event LogPoolServiceProcessFundedClaim(NftId indexed policyNftId, ClaimId indexed claimId, Amount indexed availableAmount);
 
-    event LogPoolServiceApplicationVerified(NftId poolNftId, NftId bundleNftId, NftId applicationNftId, Amount totalCollateralAmount);
-    event LogPoolServiceCollateralLocked(NftId poolNftId, NftId bundleNftId, NftId applicationNftId, Amount totalCollateralAmount, Amount lockedCollateralAmount);
-    event LogPoolServiceCollateralReleased(NftId bundleNftId, NftId policyNftId, Amount remainingCollateralAmount);
-    event LogPoolServiceSaleProcessed(NftId poolNftId, NftId bundleNftId, Amount bundleNetAmount, Amount bundleFeeAmount, Amount poolFeeAmount);
-    event LogPoolServicePayoutProcessed(NftId poolNftId, NftId bundleNftId, NftId policyNftId, PayoutId payoutId, Amount netPayoutAmount, Amount processingFeeAmount, address payoutBeneficiary);
+    event LogPoolServiceApplicationVerified(NftId indexed poolNftId, NftId indexed bundleNftId, NftId indexed applicationNftId, Amount totalCollateralAmount);
+    event LogPoolServiceCollateralLocked(NftId indexed poolNftId, NftId indexed bundleNftId, NftId indexed applicationNftId, Amount totalCollateralAmount, Amount lockedCollateralAmount);
+    event LogPoolServiceCollateralReleased(NftId indexed bundleNftId, NftId indexed policyNftId, Amount indexed releasedCollateralAmount);
+    event LogPoolServiceSaleProcessed(NftId indexed poolNftId, NftId indexed bundleNftId, Amount indexed bundleNetAmount, Amount bundleFeeAmount, Amount poolFeeAmount);
+    event LogPoolServicePayoutProcessed(NftId indexed poolNftId, NftId indexed bundleNftId, NftId indexed policyNftId, PayoutId payoutId, Amount netPayoutAmount, Amount processingFeeAmount, address payoutBeneficiary);
 
     error ErrorPoolServicePoolNotExternallyManaged(NftId poolNftId);
     error ErrorPoolServicePolicyPoolMismatch(NftId policyNftId, NftId productNftId, NftId expectedProductNftId);

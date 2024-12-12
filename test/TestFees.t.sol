@@ -478,8 +478,8 @@ contract TestFees is GifTest {
         emit IPoolService.LogPoolServiceFeesWithdrawn(
             bundleNftId,
             investor,
-            address(token),
-            withdrawAmount
+            withdrawAmount,
+            address(token)
         );
         
         // WHEN - the investor withdraws part of the bundle fee
@@ -520,8 +520,8 @@ contract TestFees is GifTest {
         emit IPoolService.LogPoolServiceFeesWithdrawn(
             bundleNftId,
             investor,
-            address(token),
-            withdrawAmount
+            withdrawAmount,
+            address(token)
         );
         
         // WHEN - the investor withdraws part of his bundle fee from the locked bundle
@@ -576,8 +576,8 @@ contract TestFees is GifTest {
         emit IPoolService.LogPoolServiceFeesWithdrawn(
             bundleNftId,
             investor,
-            address(token),
-            bundleFeeBefore
+            bundleFeeBefore,
+            address(token)
         );
         
         // WHEN - the investor withdraws the maximum available bundle fee amount

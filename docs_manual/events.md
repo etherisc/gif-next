@@ -2,36 +2,7 @@
 
 ```
 
-===============
-contracts/pool/IBundleService.sol: LogBundleServiceBundleCreated(NftId indexed bundleNftId, NftId indexed poolNftId, Seconds indexed lifetime, Amount fixedFee, UFixed fractionalFee)
-contracts/pool/IBundleService.sol: LogBundleServiceBundleClosed(NftId indexed bundleNftId)
-contracts/pool/IBundleService.sol: LogBundleServiceBundleLocked(NftId indexed bundleNftId)
-contracts/pool/IBundleService.sol: LogBundleServiceBundleUnlocked(NftId indexed bundleNftId)
-contracts/pool/IBundleService.sol: LogBundleServiceBundleExtended(NftId indexed bundleNftId, Seconds indexed lifetimeExtension, Timestamp indexed extendedExpiredAt)
-contracts/pool/IBundleService.sol: LogBundleServiceBundleFeeUpdated(NftId indexed bundleNftId, Amount indexed fixedFee, UFixed indexed fractionalFee)
-contracts/pool/IBundleService.sol: LogBundleServiceCollateralLocked(NftId indexed bundleNftId, NftId indexed policyNftId, Amount indexed collateralAmount)
-contracts/pool/IBundleService.sol: LogBundleServiceCollateralReleased(NftId indexed bundleNftId, NftId indexed policyNftId, Amount indexed collateralAmount)
-contracts/pool/IBundleService.sol: LogBundleServiceBundleStaked(NftId indexed bundleNftId, Amount indexed amount)
-contracts/pool/IBundleService.sol: LogBundleServiceBundleUnstaked(NftId indexed bundleNftId, Amount indexed amount)
 
-===============
-contracts/pool/IPoolComponent.sol: LogPoolVerifiedByPool(NftId indexed poolNftId, NftId indexed applicationNftId, Amount indexed collateralizationAmount)
-
-===============
-contracts/pool/IPoolService.sol: LogPoolServiceMaxBalanceAmountUpdated(NftId indexed poolNftId, Amount indexed previousMaxCapitalAmount, Amount indexed currentMaxCapitalAmount)
-contracts/pool/IPoolService.sol: LogPoolServiceWalletFunded(NftId indexed poolNftId, address indexed poolOwner, Amount indexed amount)
-contracts/pool/IPoolService.sol: LogPoolServiceWalletDefunded(NftId indexed poolNftId, address indexed poolOwner, Amount indexed amount)
-contracts/pool/IPoolService.sol: LogPoolServiceBundleCreated(NftId indexed instanceNftId, NftId indexed poolNftId, NftId indexed bundleNftId)
-contracts/pool/IPoolService.sol: LogPoolServiceBundleClosed(NftId indexed instanceNftId, NftId indexed poolNftId, NftId indexed bundleNftId, Amount balanceAmount, Amount feeAmount)
-contracts/pool/IPoolService.sol: LogPoolServiceBundleStaked(NftId indexed instanceNftId, NftId indexed poolNftId, NftId indexed bundleNftId, Amount amount, Amount netAmount)
-contracts/pool/IPoolService.sol: LogPoolServiceBundleUnstaked(NftId indexed instanceNftId, NftId indexed poolNftId, NftId indexed bundleNftId, Amount amount, Amount netAmount)
-contracts/pool/IPoolService.sol: LogPoolServiceFeesWithdrawn(NftId indexed bundleNftId, address indexed recipient, Amount indexed amount, address tokenAddress)
-contracts/pool/IPoolService.sol: LogPoolServiceProcessFundedClaim(NftId indexed policyNftId, ClaimId indexed claimId, Amount indexed availableAmount)
-contracts/pool/IPoolService.sol: LogPoolServiceApplicationVerified(NftId indexed poolNftId, NftId indexed bundleNftId, NftId indexed applicationNftId, Amount totalCollateralAmount)
-contracts/pool/IPoolService.sol: LogPoolServiceCollateralLocked(NftId indexed poolNftId, NftId indexed bundleNftId, NftId indexed applicationNftId, Amount totalCollateralAmount, Amount lockedCollateralAmount)
-contracts/pool/IPoolService.sol: LogPoolServiceCollateralReleased(NftId indexed bundleNftId, NftId indexed policyNftId, Amount indexed releasedCollateralAmount)
-contracts/pool/IPoolService.sol: LogPoolServiceSaleProcessed(NftId indexed poolNftId, NftId indexed bundleNftId, Amount indexed bundleNetAmount, Amount bundleFeeAmount, Amount poolFeeAmount)
-contracts/pool/IPoolService.sol: LogPoolServicePayoutProcessed(NftId indexed poolNftId, NftId indexed bundleNftId, NftId indexed policyNftId, PayoutId payoutId, Amount netPayoutAmount, Amount processingFeeAmount, address payoutBeneficiary)
 
 ===============
 contracts/product/IApplicationService.sol: LogApplicationServiceApplicationCreated(NftId indexed applicationNftId, NftId indexed productNftId, NftId indexed bundleNftId, RiskId riskId, ReferralId referralId, address applicationOwner, Amount sumInsuredAmount, Amount premiumAmount, Seconds lifetime)
