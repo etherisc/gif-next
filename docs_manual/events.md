@@ -3,31 +3,6 @@
 ```
 
 ===============
-
-===============
-
-===============
-
-===============
-
-===============
-
-===============
-
-===============
-
-===============
-
-===============
-
-===============
-contracts/oracle/IOracleService.sol: LogOracleServiceRequestCreated(RequestId indexed requestId, NftId indexed requesterNftId, NftId indexed oracleNftId, Timestamp expiryAt)
-contracts/oracle/IOracleService.sol: LogOracleServiceResponseProcessed(RequestId indexed requestId, NftId indexed requesterNftId, NftId indexed oracleNftId)
-contracts/oracle/IOracleService.sol: LogOracleServiceDeliveryFailed(RequestId indexed requestId, NftId indexed requesterNftId, string indexed functionSignature)
-contracts/oracle/IOracleService.sol: LogOracleServiceResponseResent(RequestId indexed requestId, NftId indexed requesterNftId)
-contracts/oracle/IOracleService.sol: LogOracleServiceRequestCancelled(RequestId indexed requestId, NftId indexed requesterNftId)
-
-===============
 contracts/pool/IBundleService.sol: LogBundleServiceBundleCreated(NftId indexed bundleNftId, NftId indexed poolNftId, Seconds indexed lifetime, Amount fixedFee, UFixed fractionalFee)
 contracts/pool/IBundleService.sol: LogBundleServiceBundleClosed(NftId indexed bundleNftId)
 contracts/pool/IBundleService.sol: LogBundleServiceBundleLocked(NftId indexed bundleNftId)

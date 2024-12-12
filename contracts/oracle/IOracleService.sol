@@ -11,11 +11,11 @@ import {Timestamp} from "../type/Timestamp.sol";
 
 interface IOracleService is IService {
 
-    event LogOracleServiceRequestCreated(RequestId requestId, NftId requesterNftId, NftId oracleNftId, Timestamp expiryAt);
-    event LogOracleServiceResponseProcessed(RequestId requestId, NftId oracleNftId);
-    event LogOracleServiceDeliveryFailed(RequestId requestId, address requesterAddress, string functionSignature);
-    event LogOracleServiceResponseResent(RequestId requestId, NftId requesterNftId);
-    event LogOracleServiceRequestCancelled(RequestId requestId, NftId requesterNftId);
+    event LogOracleServiceRequestCreated(RequestId indexed requestId, NftId indexed requesterNftId, NftId indexed oracleNftId, Timestamp expiryAt);
+    event LogOracleServiceResponseProcessed(RequestId indexed requestId, NftId indexed requesterNftId, NftId indexed oracleNftId);
+    event LogOracleServiceDeliveryFailed(RequestId indexed requestId, address indexed requesterAddress, string indexed functionSignature);
+    event LogOracleServiceResponseResent(RequestId indexed requestId, NftId indexed requesterNftId);
+    event LogOracleServiceRequestCancelled(RequestId indexed requestId, NftId indexed requesterNftId);
 
     // create request
     error ErrorOracleServiceProductMismatch(ObjectType callerObjectType, NftId productNft, NftId oracleParentNftId);

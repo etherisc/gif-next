@@ -147,7 +147,7 @@ contract OracleService is
             emit LogOracleServiceDeliveryFailed(requestId, requesterInfo.objectAddress, functionSignature);
         }
 
-        emit LogOracleServiceResponseProcessed(requestId, oracleNftId);
+        emit LogOracleServiceResponseProcessed(requestId, request.requesterNftId, oracleNftId);
     }
 
 
