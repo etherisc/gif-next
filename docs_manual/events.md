@@ -3,13 +3,6 @@
 ```
 
 
-===============
-contracts/registry/ChainNft.sol: LogChainNftInterceptorAddress(uint256 indexed tokenId, address indexed interceptor)
-
-===============
-contracts/registry/IRegistry.sol: LogRegistryObjectRegistered(NftId indexed nftId, NftId indexed parentNftId, ObjectType indexed objectType, bool isInterceptor, address objectAddress, address initialOwner)
-contracts/registry/IRegistry.sol: LogRegistryServiceRegistered(NftId indexed nftId, VersionPart indexed majorVersion, ObjectType indexed domain)
-contracts/registry/IRegistry.sol: LogRegistryChainRegistryRegistered(NftId indexed nftId, uint256 indexed chainId, address indexed chainRegistryAddress)
 
 ===============
 contracts/registry/ReleaseAdmin.sol: LogReleaseAdminReleaseLocked(VersionPart indexed release, bool indexed locked)
