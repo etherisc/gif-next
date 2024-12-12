@@ -3,10 +3,6 @@
 ```
 
 
-===============
-contracts/registry/TokenRegistry.sol: LogTokenRegistryTokenRegistered(ChainId indexed chainId, address indexed token, string indexed symbol, uint256 decimals)
-contracts/registry/TokenRegistry.sol: LogTokenRegistryTokenGlobalStateSet(ChainId indexed chainId, address indexed token, bool indexed active)
-contracts/registry/TokenRegistry.sol: LogTokenRegistryTokenStateSet(ChainId indexed chainId, address indexed token, bool indexed active, VersionPart release)
 
 ===============
 contracts/shared/IComponentService.sol: LogComponentServiceComponentLocked(address component, bool locked)
