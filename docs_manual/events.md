@@ -30,8 +30,7 @@ contracts/distribution/IDistributionService.sol: LogDistributionServiceSaleProce
 contracts/instance/BundleSet.sol: LogBundleSetPolicyLinked(NftId indexed bundleNftId, NftId indexed policyNftId)
 contracts/instance/BundleSet.sol: LogBundleSetPolicyUnlinked(NftId indexed bundleNftId, NftId indexed policyNftId)
 contracts/instance/BundleSet.sol: LogBundleSetBundleAdded(NftId indexed poolNftId, NftId indexed bundleNftId)
-contracts/instance/BundleSet.sol: LogBundleSetBundleUnlocked(NftId indexed poolNftId, NftId indexed bundleNftId)
-contracts/instance/BundleSet.sol: LogBundleSetBundleLocked(NftId indexed poolNftId, NftId indexed bundleNftId)
+contracts/instance/BundleSet.sol: LogBundleSetBundleLocked(NftId indexed poolNftId, NftId indexed bundleNftId, bool locked)
 contracts/instance/BundleSet.sol: LogBundleSetBundleClosed(NftId indexed poolNftId, NftId indexed bundleNftId)
 
 ===============
@@ -90,8 +89,7 @@ contracts/instance/ProductStore.sol: LogProductStorePayoutInfoUpdated(NftId inde
 contracts/instance/RiskSet.sol: LogRiskSetPolicyLinked(RiskId indexed riskId, NftId indexed policyNftId)
 contracts/instance/RiskSet.sol: LogRiskSetPolicyUnlinked(RiskId indexed riskId, NftId indexed policyNftId)
 contracts/instance/RiskSet.sol: LogRiskSetRiskAdded(NftId indexed productNftId, RiskId indexed riskId)
-contracts/instance/RiskSet.sol: LogRiskSetRiskActivated(NftId indexed poolNftId, RiskId indexed riskId)
-contracts/instance/RiskSet.sol: LogRiskSetRiskPaused(NftId indexed poolNftId, RiskId indexed riskId)
+contracts/instance/RiskSet.sol: LogRiskSetRiskActivated(NftId indexed poolNftId, RiskId indexed riskId, bool indexed active)
 
 ===============
 contracts/oracle/IOracleService.sol: LogOracleServiceRequestCreated(RequestId indexed requestId, NftId indexed requesterNftId, NftId indexed oracleNftId, Timestamp expiryAt)
@@ -159,8 +157,7 @@ contracts/product/IPolicyService.sol: LogPolicyServicePolicyClosed(NftId indexed
 ===============
 contracts/product/IRiskService.sol: LogRiskServiceRiskCreated(NftId indexed productNftId, RiskId indexed riskId)
 contracts/product/IRiskService.sol: LogRiskServiceRiskUpdated(NftId indexed productNftId, RiskId indexed riskId)
-contracts/product/IRiskService.sol: LogRiskServiceRiskLocked(NftId indexed productNftId, RiskId indexed riskId)
-contracts/product/IRiskService.sol: LogRiskServiceRiskUnlocked(NftId indexed productNftId, RiskId indexed riskId)
+contracts/product/IRiskService.sol: LogRiskServiceRiskLocked(NftId indexed productNftId, RiskId indexed riskId, bool indexed locked)
 contracts/product/IRiskService.sol: LogRiskServiceRiskClosed(NftId indexed productNftId, RiskId indexed riskId)
 
 ===============
@@ -178,8 +175,7 @@ contracts/registry/ReleaseAdmin.sol: LogReleaseAdminServiceLocked(VersionPart in
 ===============
 contracts/registry/ReleaseRegistry.sol: LogReleaseCreated(IAccessAdmin indexed admin, VersionPart indexed release, bytes32 indexed salt)
 contracts/registry/ReleaseRegistry.sol: LogReleaseActivated(VersionPart indexed release)
-contracts/registry/ReleaseRegistry.sol: LogReleaseDisabled(VersionPart indexed release)
-contracts/registry/ReleaseRegistry.sol: LogReleaseEnabled(VersionPart indexed release)
+contracts/registry/ReleaseRegistry.sol: LogReleaseEnabled(VersionPart indexed release, bool indexed active)
 
 ===============
 contracts/registry/TokenRegistry.sol: LogTokenRegistryTokenRegistered(ChainId indexed chainId, address indexed token, uint256 indexed decimals, string symbol)

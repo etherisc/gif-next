@@ -32,8 +32,7 @@ interface IBundleService is IService {
 
     event LogBundleServiceBundleCreated(NftId indexed bundleNftId, NftId indexed poolNftId, Seconds indexed lifetime, Amount fixedFee, UFixed fractionalFee);
     event LogBundleServiceBundleClosed(NftId indexed bundleNftId);
-    event LogBundleServiceBundleLocked(NftId indexed bundleNftId);
-    event LogBundleServiceBundleUnlocked(NftId indexed bundleNftId);
+    event LogBundleServiceBundleLocked(NftId indexed bundleNftId, bool indexed locked);
     event LogBundleServiceBundleExtended(NftId indexed bundleNftId, Seconds indexed lifetimeExtension, Timestamp indexed extendedExpiredAt);
     event LogBundleServiceBundleFeeUpdated(NftId indexed bundleNftId, Amount indexed fixedFee, UFixed indexed fractionalFee);
     event LogBundleServiceCollateralLocked(NftId indexed bundleNftId, NftId indexed policyNftId, Amount indexed collateralAmount);
