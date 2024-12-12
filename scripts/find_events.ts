@@ -5,6 +5,7 @@ import { logger } from "./logger";
 import * as fs from 'fs';
 import { straightThroughStringTask } from "simple-git/dist/src/lib/tasks/task";
 import { ConsoleErrorListener } from "antlr4ng";
+import { transferableAbortSignal } from "util";
 
 
 async function main() {
@@ -22,6 +23,7 @@ class RestrictedMissingListener extends SolidityFileListener {
     isEventParameter = false;
     isTypeName = false;
     eventName = "";
+    paramName = "";
     type = "";
     
     public enterEventDefinition = (ctx: EventDefinitionContext) => {
@@ -63,6 +65,12 @@ class RestrictedMissingListener extends SolidityFileListener {
 
     public exitEventParameter = (ctx: EventParameterContext) => {
         this.isEventParameter = false;
+        let indexed = "";
+        // console.log(`Parameter: ${ctx.getText()}`);
+        if (ctx.getTokens(SolidityParser.IndexedKeyword).length > 0) {
+            indexed = "indexed ";
+        }
+        this.arguments.push(`${this.type} ${indexed}${this.paramName}`);
     }
 
     public exitIdentifier = (ctx: IdentifierContext) => {
@@ -70,8 +78,7 @@ class RestrictedMissingListener extends SolidityFileListener {
             if (this.isTypeName) {
                 // console.log(`Type: ${ctx.getText()}`);
             } else if (this.isEventParameter) {
-                // console.log(`Parameter: ${ctx.getText()}`);
-                this.arguments.push(`${this.type} ${ctx.getText()}`);
+                this.paramName = ctx.getText();
             } else {
                 // console.log(`Event: ${ctx.getText()}`);
                 this.eventName = ctx.getText();
