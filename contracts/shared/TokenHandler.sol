@@ -19,14 +19,14 @@ import {SERVICE} from "../type/ObjectType.sol";
 contract TokenHandlerBase {
 
     // _setWallet
-    event LogTokenHandlerWalletAddressChanged(NftId componentNftId, address oldWallet, address newWallet);
-    event LogTokenHandlerWalletTokensTransferred(NftId componentNftId, address oldWallet, address newWallet, Amount amount);
+    event LogTokenHandlerWalletAddressChanged(NftId indexed componentNftId, address indexed oldWallet, address indexed newWallet);
+    event LogTokenHandlerWalletTokensTransferred(NftId indexed componentNftId, address indexed oldWallet, address indexed newWallet, Amount amount);
 
     // _approveTokenHandler
-    event LogTokenHandlerTokenApproved(NftId nftId, address tokenHandler, address token, Amount amount, bool isMaxAmount);
+    event LogTokenHandlerTokenApproved(NftId indexed nftId, address indexed tokenHandler, address indexed token, Amount amount, bool isMaxAmount);
 
     // _transfer
-    event LogTokenHandlerTokenTransfer(address token, address from, address to, Amount amount);
+    event LogTokenHandlerTokenTransferred(address indexed token, address indexed from, address indexed to, Amount amount);
 
     // constructor
     error ErrorTokenHandlerNotRegistry(address registry);
@@ -204,7 +204,7 @@ contract TokenHandlerBase {
         }
 
         // transfer the tokens
-        emit LogTokenHandlerTokenTransfer(address(TOKEN), from, to, amount);
+        emit LogTokenHandlerTokenTransferred(address(TOKEN), from, to, amount);
 
         SafeERC20.safeTransferFrom(
             TOKEN, 
