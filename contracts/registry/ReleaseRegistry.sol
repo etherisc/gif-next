@@ -38,10 +38,10 @@ contract ReleaseRegistry is
 {
     uint256 public constant INITIAL_GIF_VERSION = 3;// first active release version  
 
-    event LogReleaseCreation(IAccessAdmin admin, VersionPart release, bytes32 salt); 
-    event LogReleaseActivation(VersionPart release);
-    event LogReleaseDisabled(VersionPart release);
-    event LogReleaseEnabled(VersionPart release);
+    event LogReleaseCreated(IAccessAdmin indexed admin, VersionPart indexed release, bytes32 indexed salt); 
+    event LogReleaseActivated(VersionPart indexed release);
+    event LogReleaseDisabled(VersionPart indexed release);
+    event LogReleaseEnabled(VersionPart indexed release);
 
     // constructor
     error ErrorReleaseRegistryNotRegistry(Registry registry);
@@ -168,7 +168,7 @@ contract ReleaseRegistry is
         _releaseInfo[releaseVersion].auth = serviceAuthorization;
         _releaseInfo[releaseVersion].releaseAdmin = address(releaseAdmin);
 
-        emit LogReleaseCreation(releaseAdmin, releaseVersion, releaseSalt);
+        emit LogReleaseCreated(releaseAdmin, releaseVersion, releaseSalt);
     }
 
     function registerService(IService service) 
@@ -270,7 +270,7 @@ contract ReleaseRegistry is
 
         _setReleaseLocked(release, false);
 
-        emit LogReleaseActivation(release);
+        emit LogReleaseActivated(release);
     }
 
     /// @dev stop/resume operations with restricted functions

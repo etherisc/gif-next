@@ -3,17 +3,6 @@
 ```
 
 
-
-===============
-contracts/registry/ReleaseAdmin.sol: LogReleaseAdminReleaseLocked(VersionPart indexed release, bool indexed locked)
-contracts/registry/ReleaseAdmin.sol: LogReleaseAdminServiceLocked(VersionPart indexed release, address indexed service, bool indexed locked)
-
-===============
-contracts/registry/ReleaseRegistry.sol: LogReleaseCreation(IAccessAdmin indexed admin, VersionPart indexed release, bytes32 indexed salt)
-contracts/registry/ReleaseRegistry.sol: LogReleaseActivation(VersionPart indexed release)
-contracts/registry/ReleaseRegistry.sol: LogReleaseDisabled(VersionPart indexed release)
-contracts/registry/ReleaseRegistry.sol: LogReleaseEnabled(VersionPart indexed release)
-
 ===============
 contracts/registry/TokenRegistry.sol: LogTokenRegistryTokenRegistered(ChainId indexed chainId, address indexed token, string indexed symbol, uint256 decimals)
 contracts/registry/TokenRegistry.sol: LogTokenRegistryTokenGlobalStateSet(ChainId indexed chainId, address indexed token, bool indexed active)
