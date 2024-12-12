@@ -27,8 +27,8 @@ contract ProxyManager is
         address activatedBy;
     }
 
-    event LogProxyManagerVersionableDeployed(address indexed proxy, address initialImplementation);
-    event LogProxyManagerVersionableUpgraded(address indexed proxy, address upgradedImplementation);
+    event LogProxyManagerVersionableDeployed(address indexed proxy, address indexed initialImplementation);
+    event LogProxyManagerVersionableUpgraded(address indexed proxy, address indexed upgradedImplementation);
 
     error ErrorProxyManagerAlreadyDeployed();
     error ErrorProxyManagerNotYetDeployed();
