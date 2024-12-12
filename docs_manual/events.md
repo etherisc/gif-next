@@ -4,15 +4,6 @@
 
 
 
-===============
-contracts/shared/IComponentService.sol: LogComponentServiceComponentLocked(address component, bool locked)
-contracts/shared/IComponentService.sol: LogComponentServiceTokenHandlerDeployed(NftId componentNftId, address tokenHandler, address token)
-contracts/shared/IComponentService.sol: LogComponentServiceComponentRegistered(NftId instanceNftId, NftId componentNftId, ObjectType componentType, address component, address token, address initialOwner)
-contracts/shared/IComponentService.sol: LogComponentServiceComponentFeesWithdrawn(NftId componentNftId, address recipient, address token, Amount withdrawnAmount)
-contracts/shared/IComponentService.sol: LogComponentServiceProductFeesUpdated(NftId productNftId)
-contracts/shared/IComponentService.sol: LogComponentServiceDistributionFeesUpdated(NftId distributionNftId)
-contracts/shared/IComponentService.sol: LogComponentServicePoolFeesUpdated(NftId poolNftId)
-contracts/shared/IComponentService.sol: LogComponentServiceUpdateFee(NftId nftId, string feeName, UFixed previousFractionalFee, Amount previousFixedFee, UFixed newFractionalFee, Amount newFixedFee)
 
 ===============
 contracts/shared/INftOwnable.sol: LogNftOwnableNftLinkedToAddress(NftId nftId, address owner)

@@ -189,8 +189,8 @@ contract ComponentService is
         emit LogComponentServiceComponentFeesWithdrawn(
             componentNftId, 
             componentOwner, 
-            address(tokenHandler.TOKEN()), 
-            withdrawnAmount);
+            withdrawnAmount,
+            address(tokenHandler.TOKEN()));
 
         // interactions
         // transfer amount to component owner

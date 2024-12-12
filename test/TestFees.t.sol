@@ -51,8 +51,8 @@ contract TestFees is GifTest {
         emit IComponentService.LogComponentServiceComponentFeesWithdrawn(
             distributionNftId,
             distributionOwner,
-            address(token),
-            withdrawAmount
+            withdrawAmount,
+            address(token)
         );
         
         // WHEN
