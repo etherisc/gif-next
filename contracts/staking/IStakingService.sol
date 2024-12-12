@@ -16,13 +16,13 @@ import {UFixed} from "../type/UFixed.sol";
 interface IStakingService is IService
 {
 
-    event LogStakingServiceProtocolTargetRegistered(NftId protocolNftId);
-    event LogStakingServiceInstanceTargetRegistered(NftId instanceNftId, uint256 chainId, Seconds initialLockingPeriod, UFixed initialRewardRate);
+    event LogStakingServiceProtocolTargetRegistered(NftId indexed protocolNftId);
+    event LogStakingServiceInstanceTargetRegistered(NftId indexed instanceNftId, Seconds indexed initialLockingPeriod, UFixed indexed initialRewardRate);
 
-    event LogStakingServiceRewardReservesIncreased(NftId targetNftId, address rewardProvider, Amount dipAmount, Amount newBalance);
-    event LogStakingServiceRewardReservesDecreased(NftId targetNftId, address targetOwner, Amount dipAmount, Amount newBalance);
+    event LogStakingServiceRewardReservesIncreased(NftId indexed targetNftId, address indexed rewardProvider, Amount indexed dipAmount, Amount newBalance);
+    event LogStakingServiceRewardReservesDecreased(NftId indexed targetNftId, address indexed targetOwner, Amount indexed dipAmount, Amount newBalance);
 
-    event LogStakingServiceStakeObjectCreated(NftId stakeNftId, NftId targetNftId, address stakeOwner);
+    event LogStakingServiceStakeCreated(NftId indexed stakeNftId, NftId indexed targetNftId, address indexed stakeOwner);
 
     // modifiers
     error ErrorStakingServiceNotStakingOwner(address account);
