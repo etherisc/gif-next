@@ -1,97 +1,24 @@
 # Log events
 
 ```
-===============
-contracts/accounting/IAccountingService.sol: LogAccountingServiceBalanceChanged(NftId indexed nftId, Amount indexed amount, Amount indexed feeAmount, bool increase, ObjectType objectType)
 
 ===============
-contracts/authorization/AccessManagerCloneable.sol: LogAccessManagerLocked(address indexed accessManager, bool indexed locked)
 
 ===============
-contracts/authorization/IAccessAdmin.sol: LogAccessAdminRoleCreated(RoleId indexed roleId, RoleId indexed roleAdminId, TargetType indexed targetType, string name, string admin)
-contracts/authorization/IAccessAdmin.sol: LogAccessAdminRoleActivatedSet(RoleId indexed roleId, bool indexed active, string admin, Blocknumber lastUpdateIn)
-contracts/authorization/IAccessAdmin.sol: LogAccessAdminRoleGranted(address indexed account, RoleId indexed roleId, string roleName, string admin)
-contracts/authorization/IAccessAdmin.sol: LogAccessAdminRoleRevoked(address indexed account, RoleId indexed roleId, string roleName, string admin)
-contracts/authorization/IAccessAdmin.sol: LogAccessAdminTargetCreated(address indexed target, RoleId indexed roleId, bool indexed managed, string name, string admin)
-contracts/authorization/IAccessAdmin.sol: LogAccessAdminTargetLockedSet(address indexed target, bool indexed locked, string admin, Blocknumber lastUpdateIn)
-contracts/authorization/IAccessAdmin.sol: LogAccessAdminFunctionGranted(address indexed target, Selector indexed selector, RoleId indexed roleId, string func, string admin, Blocknumber lastUpdateIn)
 
 ===============
-contracts/distribution/IDistributionService.sol: LogDistributionServiceCommissionWithdrawn(NftId indexed distributorNftId, address indexed recipient, Amount indexed  amount, address tokenAddress)
-contracts/distribution/IDistributionService.sol: LogDistributionServiceDistributorTypeCreated(NftId indexed distributionNftId, DistributorType distributorType, string indexed name, UFixed indexed commissionPercentage)
-contracts/distribution/IDistributionService.sol: LogDistributionServiceDistributorCreated(NftId indexed distributionNftId, NftId indexed distributorNftId, address indexed distributor, DistributorType distributorType)
-contracts/distribution/IDistributionService.sol: LogDistributionServiceDistributorTypeChanged(NftId indexed distributorNftId, DistributorType indexed oldDistributorType, DistributorType indexed newDistributorType)
-contracts/distribution/IDistributionService.sol: LogDistributionServiceReferralCreated(NftId indexed distributorNftId, ReferralId indexed referralId, string code, UFixed discountPercentage, uint32 maxReferrals, Timestamp expiryAt)
-contracts/distribution/IDistributionService.sol: LogDistributionServiceReferralProcessed(NftId indexed distributorNftId, ReferralId indexed referralId, uint32 usedReferrals)
-contracts/distribution/IDistributionService.sol: LogDistributionServiceSaleProcessed(NftId indexed distributionNftId, Amount indexed premium, Amount indexed distributionOwnerFee)
-contracts/distribution/IDistributionService.sol: LogDistributionServiceSaleProcessedWithReferral(NftId indexed distributionNftId, NftId indexed distributorNftId, ReferralId indexed referralId, uint32 numPoliciesSold, Amount premium, Amount distributionOwnerFee, Amount commissionAmount)
 
 ===============
-contracts/instance/BundleSet.sol: LogBundleSetPolicyLinked(NftId indexed bundleNftId, NftId indexed policyNftId)
-contracts/instance/BundleSet.sol: LogBundleSetPolicyUnlinked(NftId indexed bundleNftId, NftId indexed policyNftId)
-contracts/instance/BundleSet.sol: LogBundleSetBundleAdded(NftId indexed poolNftId, NftId indexed bundleNftId)
-contracts/instance/BundleSet.sol: LogBundleSetBundleUnlocked(NftId indexed poolNftId, NftId indexed bundleNftId)
-contracts/instance/BundleSet.sol: LogBundleSetBundleLocked(NftId indexed poolNftId, NftId indexed bundleNftId)
-contracts/instance/BundleSet.sol: LogBundleSetBundleClosed(NftId indexed poolNftId, NftId indexed bundleNftId)
 
 ===============
-contracts/instance/IBaseStore.sol: LogBaseStoreMetadataCreated(Key32 indexed key, ObjectType indexed objectType, StateId indexed state)
-contracts/instance/IBaseStore.sol: LogBaseStoreMetadataUpdated(Key32 indexed key, StateId indexed oldState, StateId indexed newState)
 
 ===============
-contracts/instance/IInstance.sol: LogInstanceCustomRoleCreated(RoleId indexed roleId, string indexed roleName, RoleId indexed adminRoleId, uint32 maxMemberCount)
-contracts/instance/IInstance.sol: LogInstanceCustomRoleActiveSet(RoleId indexed roleId, bool indexed active, address indexed caller)
-contracts/instance/IInstance.sol: LogInstanceCustomRoleGranted(RoleId indexed roleId, address indexed account, address indexed caller)
-contracts/instance/IInstance.sol: LogInstanceCustomRoleRevoked(RoleId indexed roleId, address indexed account, address indexed caller)
-contracts/instance/IInstance.sol: LogInstanceCustomTargetCreated(address indexed target, RoleId indexed targetRoleId, string indexed name)
-contracts/instance/IInstance.sol: LogInstanceTargetLocked(address indexed target, bool indexed locked)
-contracts/instance/IInstance.sol: LogInstanceCustomTargetFunctionRoleSet(address indexed target, bytes4[] indexed selectors, RoleId indexed roleId)
 
 ===============
-contracts/instance/IInstanceService.sol: LogInstanceServiceInstanceLocked(NftId indexed instanceNftId, bool indexed locked)
-contracts/instance/IInstanceService.sol: LogInstanceServiceInstanceCreated(NftId indexed instanceNftId, address indexed instance)
-contracts/instance/IInstanceService.sol: LogInstanceServiceMasterInstanceRegistered(NftId indexed masterInstanceNftId, address indexed masterInstance, address indexed masterInstanceAdmin, address masterAccessManager, address masterInstanceReader, address masterInstanceBundleSet, address masterInstanceRiskSet, address masterInstanceStore, address masterProductStore)
-contracts/instance/IInstanceService.sol: LogInstanceServiceMasterInstanceReaderUpgraded(NftId indexed instanceNfId, address indexed oldInstanceReader, address indexed newInstanceReader)
-contracts/instance/IInstanceService.sol: LogInstanceServiceInstanceReaderUpgraded(NftId indexed instanceNfId, address indexed oldInstanceReader, address indexed newInstanceReader)
 
 ===============
-contracts/instance/InstanceStore.sol: LogProductStoreComponentInfoCreated(NftId indexed componentNftId, StateId indexed state, address indexed createdby, address txOrigin)
-contracts/instance/InstanceStore.sol: LogProductStoreComponentInfoUpdated(NftId indexed componentNftId, StateId indexed oldState, StateId indexed newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn)
-contracts/instance/InstanceStore.sol: LogProductStorePoolInfoCreated(NftId indexed poolNftId, StateId indexed state, address indexed createdBy, address txOrigin)
-contracts/instance/InstanceStore.sol: LogProductStorePoolInfoUpdated(NftId indexed poolNftId, StateId indexed oldState, StateId indexed newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn)
-contracts/instance/InstanceStore.sol: LogProductStoreDistributorTypeInfoCreated(DistributorType indexed distributorType, StateId indexed state, address indexed createdBy, address txOrigin)
-contracts/instance/InstanceStore.sol: LogProductStoreDistributorTypeInfoUpdated(DistributorType indexed distributorType, StateId indexed oldState, StateId indexed newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn)
-contracts/instance/InstanceStore.sol: LogProductStoreDistributorInfoCreated(NftId indexed distributorNftId, StateId indexed state, address indexed createdBy, address txOrigin)
-contracts/instance/InstanceStore.sol: LogProductStoreDistributorInfoUpdated(NftId indexed distributorNftId, StateId indexed oldState, StateId indexed newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn)
-contracts/instance/InstanceStore.sol: LogProductStoreReferralInfoCreated(ReferralId indexed referralId, StateId indexed state, address indexed createdBy, address txOrigin)
-contracts/instance/InstanceStore.sol: LogProductStoreReferralInfoUpdated(ReferralId indexed referralId, StateId indexed oldState, StateId indexed newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn)
-contracts/instance/InstanceStore.sol: LogProductStoreBundleInfoCreated(NftId indexed bundleNftId, StateId indexed state, address indexed createdBy, address txOrigin)
-contracts/instance/InstanceStore.sol: LogProductStoreBundleInfoUpdated(NftId indexed bundleNftId, StateId indexed oldState, StateId indexed newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn)
-contracts/instance/InstanceStore.sol: LogProductStoreRequestInfoCreated(RequestId indexed requestId, StateId indexed state, address indexed createdBy, address txOrigin)
-contracts/instance/InstanceStore.sol: LogProductStoreRequestInfoUpdated(RequestId indexed requestId, StateId indexed oldState, StateId indexed newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn)
 
 ===============
-contracts/instance/ProductStore.sol: LogProductStoreProductInfoCreated(NftId indexed productNftId, StateId indexed state, address indexed createdBy, address txOrigin)
-contracts/instance/ProductStore.sol: LogProductStoreProductInfoUpdated(NftId indexed productNftId, StateId indexed oldState, StateId indexed newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn)
-contracts/instance/ProductStore.sol: LogProductStoreFeeInfoCreated(NftId indexed productNftId, StateId indexed state, address indexed createdBy, address txOrigin)
-contracts/instance/ProductStore.sol: LogProductStoreFeeInfoUpdated(NftId indexed productNftId, address indexed updatedBy, address indexed txOrigin, Blocknumber lastUpdatedIn)
-contracts/instance/ProductStore.sol: LogProductStoreRiskInfoCreated(RiskId indexed riskId, StateId indexed state, address indexed createdBy, address txOrigin)
-contracts/instance/ProductStore.sol: LogProductStoreRiskInfoUpdated(RiskId indexed riskId, StateId indexed oldState, StateId indexed newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn)
-contracts/instance/ProductStore.sol: LogProductStorePolicyInfoCreated(NftId indexed policyNftId, StateId indexed state, address indexed createdBy, address txOrigin)
-contracts/instance/ProductStore.sol: LogProductStorePolicyInfoUpdated(NftId indexed policyNftId, StateId indexed oldState, StateId indexed newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn)
-contracts/instance/ProductStore.sol: LogProductStorePremiumInfoCreated(NftId indexed policyNftId, StateId indexed state, address indexed createdBy, address txOrigin)
-contracts/instance/ProductStore.sol: LogProductStorePremiumInfoUpdated(NftId indexed policyNftId, StateId indexed oldState, StateId indexed newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn)
-contracts/instance/ProductStore.sol: LogProductStoreClaimInfoCreated(NftId indexed policyNftId, ClaimId indexed claimId, StateId indexed state, address createdBy, address txOrigin)
-contracts/instance/ProductStore.sol: LogProductStoreClaimInfoUpdated(NftId indexed policyNftId, ClaimId indexed claimId, StateId indexed oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn)
-contracts/instance/ProductStore.sol: LogProductStorePayoutInfoCreated(NftId indexed policyNftId, PayoutId indexed payoutId, StateId indexed state, address createdBy, address txOrigin)
-contracts/instance/ProductStore.sol: LogProductStorePayoutInfoUpdated(NftId indexed policyNftId, PayoutId indexed payoutId, StateId indexed oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn)
-
-===============
-contracts/instance/RiskSet.sol: LogRiskSetPolicyLinked(RiskId indexed riskId, NftId indexed policyNftId)
-contracts/instance/RiskSet.sol: LogRiskSetPolicyUnlinked(RiskId indexed riskId, NftId indexed policyNftId)
-contracts/instance/RiskSet.sol: LogRiskSetRiskAdded(NftId indexed productNftId, RiskId indexed riskId)
-contracts/instance/RiskSet.sol: LogRiskSetRiskActivated(NftId indexed poolNftId, RiskId indexed riskId)
-contracts/instance/RiskSet.sol: LogRiskSetRiskPaused(NftId indexed poolNftId, RiskId indexed riskId)
 
 ===============
 contracts/oracle/IOracleService.sol: LogOracleServiceRequestCreated(RequestId indexed requestId, NftId indexed requesterNftId, NftId indexed oracleNftId, Timestamp expiryAt)

@@ -13,12 +13,12 @@ contract RiskSet is
     ObjectSet
 {
 
-    event LogRiskSetPolicyLinked(RiskId riskId, NftId policyNftId);
-    event LogRiskSetPolicyUnlinked(RiskId riskId, NftId policyNftId);
+    event LogRiskSetPolicyLinked(RiskId indexed riskId, NftId indexed policyNftId);
+    event LogRiskSetPolicyUnlinked(RiskId indexed riskId, NftId indexed policyNftId);
 
-    event LogRiskSetRiskAdded(NftId productNftId, RiskId riskId);
-    event LogRiskSetRiskActive(NftId poolNftId,  RiskId riskId);
-    event LogRiskSetRiskPaused(NftId poolNftId,  RiskId riskId);
+    event LogRiskSetRiskAdded(NftId indexed productNftId, RiskId indexed riskId);
+    event LogRiskSetRiskActivated(NftId indexed poolNftId,  RiskId indexed riskId);
+    event LogRiskSetRiskPaused(NftId indexed poolNftId,  RiskId indexed riskId);
 
     error ErrorRiskSetRiskLocked(RiskId riskId, NftId policyNftId); 
     error ErrorRiskSetRiskUnknown(RiskId riskId);
@@ -68,7 +68,7 @@ contract RiskSet is
     function activate(RiskId riskId) external restricted() {
         NftId productNftId = ObjectSetHelperLib.getProductNftId(_instanceAddress, riskId);
         _activate(productNftId, riskId.toKey32());
-        emit LogRiskSetRiskActive(productNftId, riskId);
+        emit LogRiskSetRiskActivated(productNftId, riskId);
     }
 
     /// @dev Applications linked to paused/archived risks may not be underwritten
