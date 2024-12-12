@@ -17,8 +17,7 @@ contract RiskSet is
     event LogRiskSetPolicyUnlinked(RiskId indexed riskId, NftId indexed policyNftId);
 
     event LogRiskSetRiskAdded(NftId indexed productNftId, RiskId indexed riskId);
-    event LogRiskSetRiskActivated(NftId indexed poolNftId,  RiskId indexed riskId);
-    event LogRiskSetRiskPaused(NftId indexed poolNftId,  RiskId indexed riskId);
+    event LogRiskSetRiskActivated(NftId indexed poolNftId,  RiskId indexed riskId, bool indexed active);
 
     error ErrorRiskSetRiskLocked(RiskId riskId, NftId policyNftId); 
     error ErrorRiskSetRiskUnknown(RiskId riskId);
@@ -68,14 +67,14 @@ contract RiskSet is
     function activate(RiskId riskId) external restricted() {
         NftId productNftId = ObjectSetHelperLib.getProductNftId(_instanceAddress, riskId);
         _activate(productNftId, riskId.toKey32());
-        emit LogRiskSetRiskActivated(productNftId, riskId);
+        emit LogRiskSetRiskActivated(productNftId, riskId, true);
     }
 
     /// @dev Applications linked to paused/archived risks may not be underwritten
     function deactivate(RiskId riskId) external restricted() {
         NftId productNftId = ObjectSetHelperLib.getProductNftId(_instanceAddress, riskId);
         _deactivate(productNftId, riskId.toKey32());
-        emit LogRiskSetRiskPaused(productNftId, riskId);
+        emit LogRiskSetRiskActivated(productNftId, riskId, false);
     }
 
     function checkRisk(NftId productNftId, RiskId riskId)

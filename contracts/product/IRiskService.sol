@@ -11,8 +11,7 @@ interface IRiskService is IService {
 
     event LogRiskServiceRiskCreated(NftId indexed productNftId, RiskId indexed riskId);
     event LogRiskServiceRiskUpdated(NftId indexed productNftId, RiskId indexed riskId);
-    event LogRiskServiceRiskLocked(NftId indexed productNftId, RiskId indexed riskId);
-    event LogRiskServiceRiskUnlocked(NftId indexed productNftId, RiskId indexed riskId);
+    event LogRiskServiceRiskLocked(NftId indexed productNftId, RiskId indexed riskId, bool indexed locked);
     event LogRiskServiceRiskClosed(NftId indexed productNftId, RiskId indexed riskId);
     
     error ErrorRiskServiceRiskProductMismatch(RiskId riskId, NftId riskProductNftId, NftId productNftId);

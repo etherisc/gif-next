@@ -40,8 +40,7 @@ contract ReleaseRegistry is
 
     event LogReleaseCreated(IAccessAdmin indexed admin, VersionPart indexed release, bytes32 indexed salt); 
     event LogReleaseActivated(VersionPart indexed release);
-    event LogReleaseDisabled(VersionPart indexed release);
-    event LogReleaseEnabled(VersionPart indexed release);
+    event LogReleaseEnabled(VersionPart indexed release, bool indexed active);
 
     // constructor
     error ErrorReleaseRegistryNotRegistry(Registry registry);
@@ -284,12 +283,12 @@ contract ReleaseRegistry is
             checkTransition(state, RELEASE(), PAUSED(), ACTIVE());
             _releaseInfo[release].state = ACTIVE();
             _releaseInfo[release].disabledAt = TimestampLib.max();
-            emit LogReleaseEnabled(release);
+            emit LogReleaseEnabled(release, true);
         } else {
             checkTransition(state, RELEASE(), ACTIVE(), PAUSED());
             _releaseInfo[release].state = PAUSED();
             _releaseInfo[release].disabledAt = TimestampLib.current();
-            emit LogReleaseDisabled(release);
+            emit LogReleaseEnabled(release, false);
         }
 
         _setReleaseLocked(release, !active);

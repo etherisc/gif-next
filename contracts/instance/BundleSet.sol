@@ -18,8 +18,7 @@ contract BundleSet is
     event LogBundleSetPolicyUnlinked(NftId indexed bundleNftId, NftId indexed policyNftId);
 
     event LogBundleSetBundleAdded(NftId indexed poolNftId, NftId indexed bundleNftId);
-    event LogBundleSetBundleUnlocked(NftId indexed poolNftId, NftId indexed bundleNftId);
-    event LogBundleSetBundleLocked(NftId indexed poolNftId, NftId indexed bundleNftId);
+    event LogBundleSetBundleLocked(NftId indexed poolNftId, NftId indexed bundleNftId, bool locked);
     event LogBundleSetBundleClosed(NftId indexed poolNftId, NftId indexed bundleNftId);
 
     error ErrorBundleSetPolicyAlreadyActivated(NftId policyNftId);
@@ -76,14 +75,14 @@ contract BundleSet is
     function unlock(NftId bundleNftId) external restricted() {
         NftId poolNftId = ObjectSetHelperLib.getPoolNftId(_instanceAddress, bundleNftId);
         _activate(poolNftId, _toBundleKey32(bundleNftId));
-        emit LogBundleSetBundleUnlocked(poolNftId, bundleNftId);
+        emit LogBundleSetBundleLocked(poolNftId, bundleNftId, false);
     }
 
     /// @dev locked (deactivated) bundles may not collateralize any new policies
     function lock(NftId bundleNftId) external restricted() {
         NftId poolNftId = ObjectSetHelperLib.getPoolNftId(_instanceAddress, bundleNftId);
         _deactivate(poolNftId, _toBundleKey32(bundleNftId));
-        emit LogBundleSetBundleLocked(poolNftId, bundleNftId);
+        emit LogBundleSetBundleLocked(poolNftId, bundleNftId, true);
     }
 
 
