@@ -8,9 +8,11 @@ import {IComponentService} from "../shared/IComponentService.sol";
 import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
 import {IOracleComponent} from "./IOracleComponent.sol";
 import {IOracleService} from "./IOracleService.sol";
+import {LibRequestIdSet} from "../type/RequestIdSet.sol";
 import {NftId} from "../type/NftId.sol";
 import {InstanceLinkedComponent} from "../shared/InstanceLinkedComponent.sol";
 import {RequestId} from "../type/RequestId.sol";
+import {FULFILLED} from "../type/StateId.sol";
 import {Timestamp} from "../type/Timestamp.sol";
 
 
@@ -20,6 +22,10 @@ abstract contract Oracle is
 {
     // keccak256(abi.encode(uint256(keccak256("etherisc.storage.Oracle")) - 1)) & ~bytes32(uint256(0xff));
     bytes32 public constant ORACLE_STORAGE_LOCATION_V1 = 0xaab7c0ea03d290e56d6c060e0733d3ebcbe647f7694616a2ec52738a64b2f900;
+
+    // TODO decide if this variable should be moved to instance store
+    // if so it need to manage active requests by requestor nft id
+    LibRequestIdSet.Set internal _activeRequests;
 
     struct OracleStorage {
         IComponentService _componentService;
@@ -74,6 +80,33 @@ abstract contract Oracle is
         revert ErrorOracleNotImplemented("withdrawFees");
     }
 
+    // TODO decide if the code below should be moved to GIF
+    function activeRequests()
+        external
+        view
+        returns(uint256 numberOfRequests)
+    {
+        return LibRequestIdSet.size(_activeRequests);
+    }
+
+
+    // TODO decide if the code below should be moved to GIF
+    function getActiveRequest(uint256 idx)
+        external
+        view
+        returns(RequestId requestId)
+    {
+        return LibRequestIdSet.getElementAt(_activeRequests, idx);
+    }
+
+    // TODO decide if the code below should be moved to GIF
+    function isActiveRequest(RequestId requestId)
+        external
+        view
+        returns(bool isActive)
+    {
+        return LibRequestIdSet.contains(_activeRequests, requestId);
+    }
 
     function __Oracle_init(
         address registry,
@@ -102,34 +135,6 @@ abstract contract Oracle is
         _registerInterface(type(IOracleComponent).interfaceId);
     }
 
-
-    /// @dev Internal function for handling requests.
-    /// Empty implementation.
-    /// Overwrite this function to implement use case specific handling for oracle calls.
-    function _request(
-        RequestId requestId,
-        NftId requesterId,
-        bytes calldata requestData,
-        Timestamp expiryAt
-    )
-        internal
-        virtual
-    {
-    }
-
-
-    /// @dev Internal function for cancelling requests.
-    /// Empty implementation.
-    /// Overwrite this function to implement use case specific cancelling.
-    function _cancel(
-        RequestId requestId
-    )
-        internal
-        virtual
-    {
-    }
-
-
     /// @dev Internal function for handling oracle responses.
     /// Default implementation sends response back to oracle service.
     /// Use this function in use case specific external/public functions to handle use case specific response handling.
@@ -141,6 +146,53 @@ abstract contract Oracle is
         virtual
     {
         _getOracleStorage()._oracleService.respond(requestId, responseData);
+    }
+
+        // TODO decide if the code below should be moved to GIF
+    // check callback result
+    function _updateRequestState(
+        RequestId requestId
+    )
+        internal
+    {
+        bool requestFulfilled = _getInstanceReader().getRequestState(
+            requestId) == FULFILLED();
+
+        // remove from active requests when successful
+        if (requestFulfilled && LibRequestIdSet.contains(_activeRequests, requestId)) {
+            LibRequestIdSet.remove(_activeRequests, requestId);
+        } 
+    }
+
+
+    /// @dev use case specific handling of oracle requests
+    /// for now only log is emitted to verify that request has been received by oracle component 
+    function _request(
+        RequestId requestId,
+        NftId requesterId,
+        bytes calldata requestData,
+        Timestamp expiryAt
+    )
+        internal
+        virtual 
+    {
+        // TODO decide if the line below should be moved to GIF
+        LibRequestIdSet.add(_activeRequests, requestId);
+        emit LogOracleRequestReceived(requestId, requesterId);
+    }
+
+
+    /// @dev use case specific handling of oracle requests
+    /// for now only log is emitted to verify that cancelling has been received by oracle component 
+    function _cancel(
+        RequestId requestId
+    )
+        internal
+        virtual 
+    {
+        // TODO decide if the line below should be moved to GIF
+        LibRequestIdSet.remove(_activeRequests, requestId);
+        emit LogOracleRequestCancelled(requestId);
     }
 
 

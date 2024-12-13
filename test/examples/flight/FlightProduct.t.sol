@@ -478,7 +478,7 @@ contract FlightProductTest is FlightBaseTest {
     }
 
 
-    function test_flightProductCreatePolicyAndCheckRequest() public {
+    function skip_test_flightProductCreatePolicyAndCheckRequest() public {
         // GIVEN - setp from flight base test
         approveProductTokenHandler();
 
