@@ -590,7 +590,7 @@ contract FlightProductTest is FlightBaseTest {
 
         // WHEN resend request (with sufficient gas)
         vm.startPrank(flightOwner);
-        flightProduct.resendRequest(requestId);
+        flightProduct.resendResponse(requestId);
         vm.stopPrank();
 
         // THEN
@@ -870,7 +870,7 @@ contract FlightProductTest is FlightBaseTest {
         _transferTokenToPoolWallet(5000 *  10 ** flightUSD.decimals(), true);
 
         vm.startPrank(statusProvider);
-        flightProduct.resendRequest(requestId);
+        flightProduct.resendResponse(requestId);
         vm.stopPrank();
 
         // check intermediate state

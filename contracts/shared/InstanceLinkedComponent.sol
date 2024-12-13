@@ -92,7 +92,7 @@ abstract contract InstanceLinkedComponent is
     }
 
 
-    function _resendRequest(RequestId requestId)
+    function _resendResponse(RequestId requestId)
         internal
         virtual
     {
