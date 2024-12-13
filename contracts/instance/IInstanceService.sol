@@ -46,9 +46,11 @@ interface IInstanceService is IService {
     error ErrorInstanceServiceInstanceAuthorityMismatch();
     error ErrorInstanceServiceBundleSetAuthorityMismatch();
     error ErrorInstanceServiceRiskSetAuthorityMismatch();
+    error ErrorInstanceServiceRequestSetAuthorityMismatch();
     error ErrorInstanceServiceInstanceReaderInstanceMismatch2();
     error ErrorInstanceServiceBundleSetInstanceMismatch();
     error ErrorInstanceServiceRiskSetInstanceMismatch();
+    error ErrorInstanceServiceRequestSetInstanceMismatch();
     error ErrorInstanceServiceInstanceStoreAuthorityMismatch();
     error ErrorInstanceServiceProductStoreAuthorityMismatch();
 

@@ -9,7 +9,7 @@ import {LibRequestIdSet} from "../type/RequestIdSet.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectSet} from "./base/ObjectSet.sol";
 import {ObjectSetHelperLib} from "./base/ObjectSetHelperLib.sol";
-import {RequestId} from "../type/RequestId.sol";
+import {RequestId, RequestIdLib} from "../type/RequestId.sol";
 
 contract RequestSet is 
     ObjectSet
@@ -43,5 +43,21 @@ contract RequestSet is
 
     function _toRequestKey32(RequestId requestId) private pure returns (Key32) {
         return requestId.toKey32();
+    }
+
+    function activeRequests(NftId oracleNftId) external view returns (uint256 numberOfRequests) {
+        return _objects(oracleNftId);
+    }
+
+    function activeRequestAt(NftId oracleNftId, uint256 idx) external view returns (RequestId requestId) {
+        return _toRequestId(_getActiveObject(oracleNftId, idx));
+    }
+
+    function contains(NftId oracleNftId, RequestId requestId) external view returns (bool) {
+        return _contains(oracleNftId, _toRequestKey32(requestId));
+    }
+
+    function _toRequestId(Key32 key) private pure returns (RequestId) {
+        return RequestIdLib.toRequestId(key.toKeyId());
     }
 }

@@ -2,16 +2,14 @@
 pragma solidity ^0.8.20;
 
 import {ContractLib} from "../shared/ContractLib.sol";
-import {IComponent} from "../shared/IComponent.sol";
 import {IInstance} from "../instance/IInstance.sol";
-import {IInstanceService} from "../instance/IInstanceService.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {IOracle} from "./IOracle.sol";
 import {IOracleComponent} from "./IOracleComponent.sol";
 import {IOracleService} from "./IOracleService.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {NftId} from "../type/NftId.sol";
-import {ObjectType, COMPONENT, ORACLE, PRODUCT} from "../type/ObjectType.sol";
+import {ObjectType, ORACLE, PRODUCT} from "../type/ObjectType.sol";
 import {RequestId} from "../type/RequestId.sol";
 import {Service} from "../shared/Service.sol";
 import {StateId, ACTIVE, KEEP_STATE, FULFILLED, FAILED, CANCELLED} from "../type/StateId.sol";
@@ -217,6 +215,84 @@ contract OracleService is
         emit LogOracleServiceRequestCancelled(requestId, requesterNftId);
     }
 
+    function activeRequests() 
+        external 
+        view 
+        virtual 
+        returns(uint256 numberOfRequests) 
+    {
+        (
+            IRegistry.ObjectInfo memory info, 
+            address instanceAddress
+        ) = ContractLib.getAndVerifyAnyComponent(
+            getRegistry(), msg.sender, true);
+        IInstance instance = IInstance(instanceAddress);
+
+
+        return instance.getRequestSet().activeRequests(info.nftId);
+    }
+
+    function activeRequestAt(uint256 idx) 
+        external 
+        view 
+        virtual 
+        returns(RequestId requestId) 
+    {
+        (
+            IRegistry.ObjectInfo memory info, 
+            address instanceAddress
+        ) = ContractLib.getAndVerifyAnyComponent(
+            getRegistry(), msg.sender, true);
+        IInstance instance = IInstance(instanceAddress);
+
+        return instance.getRequestSet().activeRequestAt(info.nftId, idx);
+    }
+
+    function isActiveRequest(RequestId requestId) 
+        external 
+        view 
+        virtual 
+        returns(bool isActive) 
+    {
+        (
+            IRegistry.ObjectInfo memory info, 
+            address instanceAddress
+        ) = ContractLib.getAndVerifyAnyComponent(
+            getRegistry(), msg.sender, true);
+        IInstance instance = IInstance(instanceAddress);
+
+        return instance.getRequestSet().contains(info.nftId, requestId);
+    }
+
+    function addRequest(RequestId requestId) 
+        external 
+        virtual 
+        restricted()
+    {
+        (
+            IRegistry.ObjectInfo memory info, 
+            address instanceAddress
+        ) = ContractLib.getAndVerifyAnyComponent(
+            getRegistry(), msg.sender, true);
+        IInstance instance = IInstance(instanceAddress);
+
+        instance.getRequestSet().add(info.nftId, requestId);
+    }
+
+    function removeRequest(RequestId requestId) 
+        external 
+        virtual 
+        restricted()
+    {
+        (
+            IRegistry.ObjectInfo memory info, 
+            address instanceAddress
+        ) = ContractLib.getAndVerifyAnyComponent(
+            getRegistry(), msg.sender, true);
+        IInstance instance = IInstance(instanceAddress);
+
+        instance.getRequestSet().remove(info.nftId, requestId);
+    }
 
     function _checkRequestParams(
         IRegistry registry,

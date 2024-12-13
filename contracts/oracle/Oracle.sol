@@ -2,13 +2,12 @@
 pragma solidity ^0.8.20;
 
 import {Amount} from "../type/Amount.sol";
-import {COMPONENT, PRODUCT, ORACLE} from "../type/ObjectType.sol";
+import {COMPONENT, ORACLE} from "../type/ObjectType.sol";
 import {IAuthorization} from "../authorization/IAuthorization.sol";
 import {IComponentService} from "../shared/IComponentService.sol";
 import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
 import {IOracleComponent} from "./IOracleComponent.sol";
 import {IOracleService} from "./IOracleService.sol";
-import {LibRequestIdSet} from "../type/RequestIdSet.sol";
 import {NftId} from "../type/NftId.sol";
 import {InstanceLinkedComponent} from "../shared/InstanceLinkedComponent.sol";
 import {RequestId} from "../type/RequestId.sol";
@@ -22,10 +21,6 @@ abstract contract Oracle is
 {
     // keccak256(abi.encode(uint256(keccak256("etherisc.storage.Oracle")) - 1)) & ~bytes32(uint256(0xff));
     bytes32 public constant ORACLE_STORAGE_LOCATION_V1 = 0xaab7c0ea03d290e56d6c060e0733d3ebcbe647f7694616a2ec52738a64b2f900;
-
-    // TODO decide if this variable should be moved to instance store
-    // if so it need to manage active requests by requestor nft id
-    LibRequestIdSet.Set internal _activeRequests;
 
     struct OracleStorage {
         IComponentService _componentService;
@@ -80,32 +75,32 @@ abstract contract Oracle is
         revert ErrorOracleNotImplemented("withdrawFees");
     }
 
-    // TODO decide if the code below should be moved to GIF
     function activeRequests()
         external
         view
         returns(uint256 numberOfRequests)
     {
-        return LibRequestIdSet.size(_activeRequests);
+        OracleStorage storage $ = _getOracleStorage();
+        return $._oracleService.activeRequests();
     }
 
 
-    // TODO decide if the code below should be moved to GIF
     function getActiveRequest(uint256 idx)
         external
         view
         returns(RequestId requestId)
     {
-        return LibRequestIdSet.getElementAt(_activeRequests, idx);
+        OracleStorage storage $ = _getOracleStorage();
+        return $._oracleService.activeRequestAt(idx);
     }
 
-    // TODO decide if the code below should be moved to GIF
     function isActiveRequest(RequestId requestId)
         external
         view
         returns(bool isActive)
     {
-        return LibRequestIdSet.contains(_activeRequests, requestId);
+        OracleStorage storage $ = _getOracleStorage();
+        return $._oracleService.isActiveRequest(requestId);
     }
 
     function __Oracle_init(
@@ -148,7 +143,6 @@ abstract contract Oracle is
         _getOracleStorage()._oracleService.respond(requestId, responseData);
     }
 
-        // TODO decide if the code below should be moved to GIF
     // check callback result
     function _updateRequestState(
         RequestId requestId
@@ -157,10 +151,11 @@ abstract contract Oracle is
     {
         bool requestFulfilled = _getInstanceReader().getRequestState(
             requestId) == FULFILLED();
+        OracleStorage storage $ = _getOracleStorage();
 
         // remove from active requests when successful
-        if (requestFulfilled && LibRequestIdSet.contains(_activeRequests, requestId)) {
-            LibRequestIdSet.remove(_activeRequests, requestId);
+        if (requestFulfilled && $._oracleService.isActiveRequest(requestId)) {
+            $._oracleService.removeRequest(requestId);
         } 
     }
 
@@ -176,8 +171,8 @@ abstract contract Oracle is
         internal
         virtual 
     {
-        // TODO decide if the line below should be moved to GIF
-        LibRequestIdSet.add(_activeRequests, requestId);
+        OracleStorage storage $ = _getOracleStorage();
+        $._oracleService.addRequest(requestId);
         emit LogOracleRequestReceived(requestId, requesterId);
     }
 
@@ -190,8 +185,8 @@ abstract contract Oracle is
         internal
         virtual 
     {
-        // TODO decide if the line below should be moved to GIF
-        LibRequestIdSet.remove(_activeRequests, requestId);
+        OracleStorage storage $ = _getOracleStorage();
+        $._oracleService.removeRequest(requestId);
         emit LogOracleRequestCancelled(requestId);
     }
 

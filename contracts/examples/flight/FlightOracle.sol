@@ -96,7 +96,6 @@ contract FlightOracle is
         // effects + interaction (via framework to receiving component)
         _respond(requestId, responseData);
 
-        // TODO decide if the code below should be moved to GIF
         _updateRequestState(requestId);
     }
 

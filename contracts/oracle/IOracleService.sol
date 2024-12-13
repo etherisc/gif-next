@@ -63,4 +63,19 @@ interface IOracleService is IService {
     /// Permissioned: only the requester may cancel a request
     function cancel(RequestId requestId) external;
 
+    // FIXME: this should be done by request
+    function addRequest(RequestId requestId) external;
+
+    // FIXME: this could be done by respond, resend, cancel
+    function removeRequest(RequestId requestId) external;
+
+    // FIXME: move to instance reader
+    function activeRequests() external view returns(uint256 numberOfRequests);
+
+    // FIXME: move to instance reader
+    function activeRequestAt(uint256 idx) external view returns(RequestId requestId);
+
+    // FIXME: move to instance reader
+    function isActiveRequest(RequestId requestId) external view returns(bool isActive);
+
 }

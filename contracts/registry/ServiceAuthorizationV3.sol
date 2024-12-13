@@ -308,6 +308,8 @@ contract ServiceAuthorizationV3
           _authorize(functions, IOracleService.respond.selector, "respond");
           _authorize(functions, IOracleService.resend.selector, "resend");
           _authorize(functions, IOracleService.cancel.selector, "cancel");
+          _authorize(functions, IOracleService.addRequest.selector, "addRequest");
+          _authorize(functions, IOracleService.removeRequest.selector, "removeRequest");
      }
 
      function _setupApplicationServiceAuthorization()

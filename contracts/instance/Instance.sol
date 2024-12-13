@@ -98,6 +98,7 @@ contract Instance is
         _productStore.initialize();
         _bundleSet.initialize(instanceContracts.instanceAdmin.authority(), address(registry));
         _riskSet.initialize(instanceContracts.instanceAdmin.authority(), address(registry));
+        _requestSet.initialize(instanceContracts.instanceAdmin.authority(), address(registry));
         _instanceReader.initialize();
 
         _componentService = IComponentService(

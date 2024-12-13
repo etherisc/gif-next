@@ -332,7 +332,7 @@ contract InstanceService is
             IInstance instance = IInstance(instanceAddress);
             address accessManagerAddress = instance.authority();
             InstanceAdmin instanceAdmin = instance.getInstanceAdmin();
-                
+            
             {
                 address instanceAdminAddress = address(instanceAdmin);
                 InstanceReader instanceReader = instance.getInstanceReader();
@@ -364,8 +364,10 @@ contract InstanceService is
                 if(requestSetAddress == address(0)) { revert ErrorInstanceServiceRequestSetZero(); }
                 if(bundleSet.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceBundleSetAuthorityMismatch(); }
                 if(riskSet.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceRiskSetAuthorityMismatch(); }
+                if(requestSet.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceRequestSetAuthorityMismatch(); }
                 if(bundleSet.getInstanceAddress() != address(instance)) { revert ErrorInstanceServiceBundleSetInstanceMismatch(); }
                 if(riskSet.getInstanceAddress() != address(instance)) { revert ErrorInstanceServiceRiskSetInstanceMismatch(); }
+                if(requestSet.getInstanceAddress() != address(instance)) { revert ErrorInstanceServiceRequestSetInstanceMismatch(); }
 
                 _masterInstanceBundleSet = bundleSetAddress;
                 _masterInstanceRiskSet = riskSetAddress;
