@@ -95,18 +95,6 @@ contract FlightOracle is
 
         // effects + interaction (via framework to receiving component)
         _respond(requestId, responseData);
-
-        _updateRequestState(requestId);
-    }
-
-
-    function updateRequestState(
-        RequestId requestId
-    )
-        external
-        restricted()
-    {
-        _updateRequestState(requestId);
     }
 
     //--- view functions ----------------------------------------------------//

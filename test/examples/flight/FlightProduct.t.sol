@@ -4,26 +4,23 @@ pragma solidity ^0.8.20;
 import {console} from "../../../lib/forge-std/src/Test.sol";
 
 import {IAccess} from "../../../contracts/authorization/IAccess.sol";
-import {INftOwnable} from "../../../contracts/shared/INftOwnable.sol";
 import {IOracle} from "../../../contracts/oracle/IOracle.sol";
 import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
 
-import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
-import {BUNDLE} from "../../../contracts/type/ObjectType.sol";
+import {Amount} from "../../../contracts/type/Amount.sol";
 import {COLLATERALIZED, PAID} from "../../../contracts/type/StateId.sol";
 import {FlightBaseTest} from "./FlightBase.t.sol";
 import {FlightLib} from "../../../contracts/examples/flight/FlightLib.sol";
 import {FlightNft} from "../../../contracts/examples/flight/FlightNft.sol";
 import {FlightProduct} from "../../../contracts/examples/flight/FlightProduct.sol";
 import {FlightOracle} from "../../../contracts/examples/flight/FlightOracle.sol";
-import {IBundle} from "../../../contracts/instance/module/IBundle.sol";
 import {NftId} from "../../../contracts/type/NftId.sol";
 import {RiskId} from "../../../contracts/type/RiskId.sol";
-import {RequestId, RequestIdLib} from "../../../contracts/type/RequestId.sol";
+import {RequestId} from "../../../contracts/type/RequestId.sol";
 import {RoleId} from "../../../contracts/type/RoleId.sol";
 import {Seconds, SecondsLib} from "../../../contracts/type/Seconds.sol";
 import {StateId, ACTIVE, FAILED, FULFILLED} from "../../../contracts/type/StateId.sol";
-import {Str, StrLib} from "../../../contracts/type/String.sol";
+import {StrLib} from "../../../contracts/type/String.sol";
 import {Timestamp, TimestampLib} from "../../../contracts/type/Timestamp.sol";
 
 // solhint-disable func-name-mixedcase
@@ -113,7 +110,9 @@ contract FlightProductTest is FlightBaseTest {
         vm.prank(instanceOwner);
         instance.authorizeFunctions(address(flightProduct), publicRoleId, functions);
 
+        // solhint-disable-next-line no-console
         console.log("setTestMode selector");
+        // solhint-disable-next-line no-console
         console.logBytes4(FlightProduct.setTestMode.selector);
 
         // WHEN
@@ -874,24 +873,17 @@ contract FlightProductTest is FlightBaseTest {
         vm.stopPrank();
 
         // check intermediate state
-        assertEq(flightOracle.activeRequests(), 1, "unexpected number of active requests before updateRequestState");
-
-        // update request state -> will remove request from active requests if state is fulfilled
-        flightOracle.updateRequestState(requestId);
-
-        // THEN
-        assertEq(flightOracle.activeRequests(), 0, "unexpected number of active requests after resend request");
+        assertEq(flightOracle.activeRequests(), 0, "unexpected number of active requests before updateRequestState");
         assertEq(instanceReader.getRequestState(requestId).toInt(), FULFILLED().toInt(), "request state not FAILED resend request");
 
         policyInfo = instanceReader.getPolicyInfo(policyNftId);
         assertEq(policyInfo.claimsCount, 1, "unexpected number of claims (after resending request with sufficient wallet balance)");
         assertEq(policyInfo.closedAt.toInt(), TimestampLib.current().toInt(), "unexpected closed at (after resending request with sufficient wallet balance)");
 
+        // solhint-disable-next-line no-console
         console.log("--- state after pool funding and resending request ---");
+        // solhint-disable-next-line no-console
         console.log("policy closed at", policyInfo.closedAt.toInt());
-
-        // WHEN - check that function may be called more than once without reverts
-        flightOracle.updateRequestState(requestId);
 
         requestInfo = instanceReader.getRequestInfo(requestId);
         _printRequest(requestId, requestInfo);

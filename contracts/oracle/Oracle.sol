@@ -11,7 +11,6 @@ import {IOracleService} from "./IOracleService.sol";
 import {NftId} from "../type/NftId.sol";
 import {InstanceLinkedComponent} from "../shared/InstanceLinkedComponent.sol";
 import {RequestId} from "../type/RequestId.sol";
-import {FULFILLED} from "../type/StateId.sol";
 import {Timestamp} from "../type/Timestamp.sol";
 
 
@@ -103,6 +102,7 @@ abstract contract Oracle is
         return $._oracleService.isActiveRequest(requestId);
     }
 
+    // solhint-disable-next-line func-name-mixedcase
     function __Oracle_init(
         address registry,
         NftId productNftId,
@@ -143,23 +143,6 @@ abstract contract Oracle is
         _getOracleStorage()._oracleService.respond(requestId, responseData);
     }
 
-    // check callback result
-    function _updateRequestState(
-        RequestId requestId
-    )
-        internal
-    {
-        bool requestFulfilled = _getInstanceReader().getRequestState(
-            requestId) == FULFILLED();
-        OracleStorage storage $ = _getOracleStorage();
-
-        // remove from active requests when successful
-        if (requestFulfilled && $._oracleService.isActiveRequest(requestId)) {
-            $._oracleService.removeRequest(requestId);
-        } 
-    }
-
-
     /// @dev use case specific handling of oracle requests
     /// for now only log is emitted to verify that request has been received by oracle component 
     function _request(
@@ -171,8 +154,6 @@ abstract contract Oracle is
         internal
         virtual 
     {
-        OracleStorage storage $ = _getOracleStorage();
-        $._oracleService.addRequest(requestId);
         emit LogOracleRequestReceived(requestId, requesterId);
     }
 
@@ -185,13 +166,12 @@ abstract contract Oracle is
         internal
         virtual 
     {
-        OracleStorage storage $ = _getOracleStorage();
-        $._oracleService.removeRequest(requestId);
         emit LogOracleRequestCancelled(requestId);
     }
 
 
     function _getOracleStorage() private pure returns (OracleStorage storage $) {
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             $.slot := ORACLE_STORAGE_LOCATION_V1
         }

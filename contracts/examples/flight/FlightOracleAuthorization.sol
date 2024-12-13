@@ -49,9 +49,8 @@ contract FlightOracleAuthorization
         functions = _authorizeForTarget(getMainTargetName(), STATUS_PROVIDER_ROLE);
         _authorize(functions, FlightOracle.respondWithFlightStatus.selector, "respondWithFlightStatus");
 
-        // authorize public role (additional authz via onlyOwner)
-        functions = _authorizeForTarget(getMainTargetName(), PUBLIC_ROLE());
-        _authorize(functions, FlightOracle.updateRequestState.selector, "updateRequestState");
+        // // authorize public role (additional authz via onlyOwner)
+        // functions = _authorizeForTarget(getMainTargetName(), PUBLIC_ROLE());
     }
 }
 
