@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import {IAuthorization} from "../../authorization/IAuthorization.sol";
 
-import {ACTIVE, FULFILLED, FAILED} from "../../type/StateId.sol";
+import {ACTIVE, FAILED} from "../../type/StateId.sol";
 import {NftId} from "../../type/NftId.sol";
 import {BasicOracle} from "../../oracle/BasicOracle.sol";
 import {RequestId} from "../../type/RequestId.sol";

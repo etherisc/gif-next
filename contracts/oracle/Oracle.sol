@@ -63,7 +63,7 @@ abstract contract Oracle is
     }
 
     /// @dev Not relevant for oracle components
-    function withdrawFees(Amount amount)
+    function withdrawFees(Amount)
         external
         virtual
         override(IInstanceLinkedComponent, InstanceLinkedComponent)
@@ -145,8 +145,8 @@ abstract contract Oracle is
     function _request(
         RequestId requestId,
         NftId requesterId,
-        bytes calldata requestData,
-        Timestamp expiryAt
+        bytes calldata,
+        Timestamp
     )
         internal
         virtual 
