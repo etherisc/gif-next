@@ -43,6 +43,14 @@ contract ObjectSet is
         activeSet.add(key);
     }
 
+    function _remove(NftId componentNftId, Key32 key) internal {
+        LibKey32Set.Set storage allSet = _allObjects[componentNftId];
+        LibKey32Set.Set storage activeSet = _activeObjects[componentNftId];
+
+        allSet.remove(key);
+        activeSet.remove(key);
+    }
+
     function _activate(NftId componentNftId, Key32 key) internal {
         _activeObjects[componentNftId].add(key);
     }

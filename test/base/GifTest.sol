@@ -45,6 +45,7 @@ import {Instance} from "../../contracts/instance/Instance.sol";
 import {InstanceReader} from "../../contracts/instance/InstanceReader.sol";
 import {BundleSet} from "../../contracts/instance/BundleSet.sol";
 import {RiskSet} from "../../contracts/instance/RiskSet.sol";
+import {RequestSet} from "../../contracts/instance/RequestSet.sol";
 import {InstanceStore} from "../../contracts/instance/InstanceStore.sol";
 import {ProductStore} from "../../contracts/instance/ProductStore.sol";
 
@@ -77,6 +78,7 @@ contract GifTest is GifDeployer {
     InstanceAuthorizationV3 public instanceAuthorizationV3;
     BundleSet public masterBundleSet;
     RiskSet public masterRiskSet;
+    RequestSet public masterRequestSet;
     InstanceStore public masterInstanceStore;
     ProductStore public masterProductStore;
     Instance public masterInstance;
@@ -86,6 +88,7 @@ contract GifTest is GifDeployer {
     InstanceAdmin public instanceAdmin;
     BundleSet public instanceBundleSet;
     RiskSet public instanceRiskSet;
+    RequestSet public instanceRequestSet;
     InstanceStore public instanceStore;
     IInstance public instance;
     NftId public instanceNftId;
@@ -261,6 +264,7 @@ contract GifTest is GifDeployer {
         masterProductStore = new ProductStore();
         masterBundleSet = new BundleSet();
         masterRiskSet = new RiskSet();
+        masterRequestSet = new RequestSet();
         masterInstanceReader = new InstanceReader();
 
         // crate instance
@@ -272,6 +276,7 @@ contract GifTest is GifDeployer {
                 productStore: masterProductStore,
                 bundleSet: masterBundleSet,
                 riskSet: masterRiskSet,
+                requestSet: masterRequestSet,
                 instanceReader: masterInstanceReader
             }),
             registry,
@@ -306,6 +311,7 @@ contract GifTest is GifDeployer {
         console.log("master instance reader deployed at", address(masterInstanceReader));
         console.log("master bundle set deployed at", address(masterBundleSet));
         console.log("master risk set deployed at", address(masterRiskSet));
+        console.log("master request set deployed at", address(masterRequestSet));
         console.log("master instance store deployed at", address(masterInstanceStore));
         // solhint-enable
     }
@@ -322,6 +328,7 @@ contract GifTest is GifDeployer {
         instanceStore = instance.getInstanceStore();
         instanceBundleSet = instance.getBundleSet();
         instanceRiskSet = instance.getRiskSet();
+        instanceRequestSet = instance.getRequestSet();
         instanceStore = instance.getInstanceStore();
         
         // solhint-disable
@@ -331,6 +338,7 @@ contract GifTest is GifDeployer {
         console.log("cloned instance reader deployed at", address(instanceReader));
         console.log("cloned bundle set deployed at", address(instanceBundleSet));
         console.log("cloned risk set deployed at", address(instanceRiskSet));
+        console.log("cloned request set deployed at", address(instanceRequestSet));
         console.log("cloned instance store deployed at", address(instanceStore));
         // solhint-enable
     }
