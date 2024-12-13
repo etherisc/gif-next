@@ -79,8 +79,7 @@ abstract contract Oracle is
         view
         returns(uint256 numberOfRequests)
     {
-        OracleStorage storage $ = _getOracleStorage();
-        return $._oracleService.activeRequests();
+        return _getInstanceReader().getActiveRequests(getNftId());
     }
 
 
@@ -89,8 +88,7 @@ abstract contract Oracle is
         view
         returns(RequestId requestId)
     {
-        OracleStorage storage $ = _getOracleStorage();
-        return $._oracleService.activeRequestAt(idx);
+        return _getInstanceReader().getActiveRequestAt(getNftId(), idx);
     }
 
     function isActiveRequest(RequestId requestId)
@@ -98,8 +96,7 @@ abstract contract Oracle is
         view
         returns(bool isActive)
     {
-        OracleStorage storage $ = _getOracleStorage();
-        return $._oracleService.isActiveRequest(requestId);
+        return _getInstanceReader().isRequestActive(getNftId(), requestId);
     }
 
     // solhint-disable-next-line func-name-mixedcase

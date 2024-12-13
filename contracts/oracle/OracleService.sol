@@ -221,55 +221,6 @@ contract OracleService is
         emit LogOracleServiceRequestCancelled(requestId, requesterNftId);
     }
 
-    function activeRequests() 
-        external 
-        view 
-        virtual 
-        returns(uint256 numberOfRequests) 
-    {
-        (
-            IRegistry.ObjectInfo memory info, 
-            address instanceAddress
-        ) = ContractLib.getAndVerifyAnyComponent(
-            getRegistry(), msg.sender, true);
-        IInstance instance = IInstance(instanceAddress);
-
-
-        return instance.getRequestSet().activeRequests(info.nftId);
-    }
-
-    function activeRequestAt(uint256 idx) 
-        external 
-        view 
-        virtual 
-        returns(RequestId requestId) 
-    {
-        (
-            IRegistry.ObjectInfo memory info, 
-            address instanceAddress
-        ) = ContractLib.getAndVerifyAnyComponent(
-            getRegistry(), msg.sender, true);
-        IInstance instance = IInstance(instanceAddress);
-
-        return instance.getRequestSet().activeRequestAt(info.nftId, idx);
-    }
-
-    function isActiveRequest(RequestId requestId) 
-        external 
-        view 
-        virtual 
-        returns(bool isActive) 
-    {
-        (
-            IRegistry.ObjectInfo memory info, 
-            address instanceAddress
-        ) = ContractLib.getAndVerifyAnyComponent(
-            getRegistry(), msg.sender, true);
-        IInstance instance = IInstance(instanceAddress);
-
-        return instance.getRequestSet().contains(info.nftId, requestId);
-    }
-
     function _checkRequestParams(
         IRegistry registry,
         NftId oracleNftId,
