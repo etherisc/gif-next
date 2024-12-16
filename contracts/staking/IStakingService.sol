@@ -17,10 +17,10 @@ interface IStakingService is IService
 {
 
     event LogStakingServiceProtocolTargetRegistered(NftId indexed protocolNftId);
-    event LogStakingServiceInstanceTargetRegistered(NftId indexed instanceNftId, Seconds indexed initialLockingPeriod, UFixed indexed initialRewardRate);
+    event LogStakingServiceInstanceTargetRegistered(NftId indexed instanceNftId, Seconds initialLockingPeriod, UFixed initialRewardRate);
 
-    event LogStakingServiceRewardReservesIncreased(NftId indexed targetNftId, address indexed rewardProvider, Amount indexed dipAmount, Amount newBalance);
-    event LogStakingServiceRewardReservesDecreased(NftId indexed targetNftId, address indexed targetOwner, Amount indexed dipAmount, Amount newBalance);
+    event LogStakingServiceRewardReservesIncreased(NftId indexed targetNftId, address indexed rewardProvider, Amount dipAmount, Amount newBalance);
+    event LogStakingServiceRewardReservesDecreased(NftId indexed targetNftId, address indexed targetOwner, Amount dipAmount, Amount newBalance);
 
     event LogStakingServiceStakeCreated(NftId indexed stakeNftId, NftId indexed targetNftId, address indexed stakeOwner);
 

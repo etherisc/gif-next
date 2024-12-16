@@ -20,7 +20,7 @@ contract TargetHandler is
     ITargetLimitHandler
 {
 
-    event LogTargetHandlerUpdateTriggersSet(uint16 indexed tvlUpdatesTrigger, UFixed indexed minTvlRatioTrigger, Blocknumber indexed lastUpdateIn);
+    event LogTargetHandlerUpdateTriggersSet(uint16 tvlUpdatesTrigger, UFixed minTvlRatioTrigger, Blocknumber lastUpdateIn);
 
     IRegistry private _registry;
     StakingStore private _store;

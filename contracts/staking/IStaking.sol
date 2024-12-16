@@ -28,19 +28,19 @@ interface IStaking is
     event LogStakingTokenHandlerDeployed(NftId indexed componentNftId, address indexed tokenHandler, address indexed token);
     
     // owner functions
-    event LogStakingStakingRateSet(ChainId indexed chainId, address indexed token, UFixed indexed oldStakingRate, UFixed newStakingRate, Blocknumber lastUpdateIn);
+    event LogStakingStakingRateSet(ChainId indexed chainId, address indexed token, UFixed oldStakingRate, UFixed newStakingRate, Blocknumber lastUpdateIn);
     event LogStakingStakingServiceSet(address indexed oldStakingService, address indexed  stakingService, VersionPart indexed release);
     event LogStakingStakingReaderSet(address indexed oldStakingReader, address indexed stakingReader);
     event LogStakingTargetHandlerSet(address indexed oldTargetHandler, address indexed targetManager);
-    event LogStakingTokenHandlerApproved(Amount indexed oldApprovalAmount, Amount indexed approvalAmount, address indexed token);
+    event LogStakingTokenHandlerApproved(Amount oldApprovalAmount, Amount approvalAmount, address indexed token);
 
     // token
     event LogStakingTokenAdded(ChainId indexed chainId, address indexed token);
     event LogStakingTargetTokenAdded(NftId indexed targetNftId, address indexed token);
 
     // total value locked
-    event LogStakingTvlIncreased(NftId indexed targetNftId, address indexed token, Amount indexed amount, Amount newBalance, Blocknumber lastUpdateIn);
-    event LogStakingTvlDecreased(NftId indexed targetNftId, address indexed token, Amount indexed amount, Amount newBalance, Blocknumber lastUpdateIn);
+    event LogStakingTvlIncreased(NftId indexed targetNftId, address indexed token, Amount amount, Amount newBalance, Blocknumber lastUpdateIn);
+    event LogStakingTvlDecreased(NftId indexed targetNftId, address indexed token, Amount amount, Amount newBalance, Blocknumber lastUpdateIn);
 
     // targets
     event LogStakingSupportInfoSet(

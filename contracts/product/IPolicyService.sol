@@ -11,12 +11,12 @@ import {Timestamp} from "../type/Timestamp.sol";
 
 interface IPolicyService is IService {
 
-    event LogPolicyServicePolicyCreated(NftId indexed policyNftId, Amount indexed premiumAmount, Timestamp indexed activatedAt);
+    event LogPolicyServicePolicyCreated(NftId indexed policyNftId, Amount premiumAmount, Timestamp activatedAt);
     event LogPolicyServicePolicyDeclined(NftId indexed policyNftId);
-    event LogPolicyServicePolicyPremiumCollected(NftId indexed policyNftId, NftId indexed productNftId, Amount indexed premiumAmount, Timestamp activateAt);
-    event LogPolicyServicePolicyActivated(NftId indexed policyNftId, Timestamp indexed activatedAt);
-    event LogPolicyServicePolicyActivatedUpdated(NftId indexed policyNftId, Timestamp indexed activatedAt);
-    event LogPolicyServicePolicyExpirationUpdated(NftId indexed policyNftId, Timestamp indexed expiredAt);
+    event LogPolicyServicePolicyPremiumCollected(NftId indexed policyNftId, NftId indexed productNftId, Amount premiumAmount, Timestamp activateAt);
+    event LogPolicyServicePolicyActivated(NftId indexed policyNftId, Timestamp activatedAt);
+    event LogPolicyServicePolicyActivatedUpdated(NftId indexed policyNftId, Timestamp activatedAt);
+    event LogPolicyServicePolicyExpirationUpdated(NftId indexed policyNftId, Timestamp expiredAt);
     event LogPolicyServicePolicyClosed(NftId indexed policyNftId);
 
     error LogPolicyServiceMaxPremiumAmountExceeded(NftId policyNftId, Amount maxPremiumAmount, Amount premiumAmount);

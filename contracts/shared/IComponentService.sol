@@ -48,7 +48,7 @@ interface IComponentService is
     event LogComponentServiceComponentLocked(address indexed component, bool indexed locked);
     event LogComponentServiceTokenHandlerDeployed(NftId indexed componentNftId, address indexed tokenHandler, address indexed token);
     event LogComponentServiceRegistered(NftId indexed instanceNftId, NftId indexed componentNftId, ObjectType indexed componentType, address component, address token, address initialOwner); 
-    event LogComponentServiceComponentFeesWithdrawn(NftId indexed componentNftId, address indexed recipient, Amount indexed withdrawnAmount, address token);
+    event LogComponentServiceComponentFeesWithdrawn(NftId indexed componentNftId, address indexed recipient, Amount withdrawnAmount, address indexed token);
     event LogComponentServiceProductFeesUpdated(NftId indexed productNftId);
     event LogComponentServiceDistributionFeesUpdated(NftId indexed distributionNftId);
     event LogComponentServicePoolFeesUpdated(NftId indexed poolNftId);
@@ -57,22 +57,22 @@ interface IComponentService is
         string feeName, 
         UFixed previousFractionalFee, 
         Amount previousFixedFee,
-        UFixed indexed newFractionalFee, 
-        Amount indexed newFixedFee
+        UFixed newFractionalFee, 
+        Amount newFixedFee
     );
     event LogComponentServiceProductCreated(
         NftId indexed productNftId, address indexed productAddress, bool indexed hasDistribution, uint8 expectedNumberOfOracles);
     event LogComponentServiceProductInitialProductFeesSet(
         NftId indexed productNftId, 
-        Amount indexed productFeeFixed, UFixed indexed productFeeFractional,
+        Amount productFeeFixed, UFixed productFeeFractional,
         Amount processingFeeFixed, UFixed processingFeeFractional);
     event LogComponentServiceProductInitialDistributionFeesSet(
         NftId indexed productNftId, 
-        Amount indexed distributionFeeFixed, UFixed indexed distributionFeeFractional,
+        Amount distributionFeeFixed, UFixed distributionFeeFractional,
         Amount minDistributionOwnerFeeFixed, UFixed minDistributionOwnerFeeFractional);
     event LogComponentServiceProductInitialPoolFeesSet(
         NftId indexed productNftId, 
-        Amount indexed poolFeeFixed, UFixed indexed poolFeeFractional,
+        Amount poolFeeFixed, UFixed poolFeeFractional,
         Amount stakingFeeFixed, UFixed stakingFeeFractional,
         Amount performanceFeeFixed, UFixed performanceFeeFractional);
     event LogComponentServicePoolCreated(

@@ -19,14 +19,14 @@ import {Fee} from "../type/Fee.sol";
 interface IClaimService is
     IService
 {
-    event LogClaimServiceClaimSubmitted(NftId indexed policyNftId, ClaimId indexed claimId, Amount indexed claimAmount);
-    event LogClaimServiceClaimConfirmed(NftId indexed policyNftId, ClaimId indexed claimId, Amount indexed confirmedAmount);
+    event LogClaimServiceClaimSubmitted(NftId indexed policyNftId, ClaimId indexed claimId, Amount claimAmount);
+    event LogClaimServiceClaimConfirmed(NftId indexed policyNftId, ClaimId indexed claimId, Amount confirmedAmount);
     event LogClaimServiceClaimDeclined(NftId indexed policyNftId, ClaimId indexed claimId);
     event LogClaimServiceClaimRevoked(NftId indexed policyNftId, ClaimId indexed claimId);
     event LogClaimServiceClaimCancelled(NftId indexed policyNftId, ClaimId indexed claimId);
 
     event LogClaimServicePayoutCreated(NftId indexed policyNftId, ClaimId indexed claimId, PayoutId indexed payoutId, Amount amount, address beneficiary);
-    event LogClaimServicePayoutProcessed(NftId indexed policyNftId, PayoutId indexed payoutId, Amount indexed amount);
+    event LogClaimServicePayoutProcessed(NftId indexed policyNftId, PayoutId indexed payoutId, Amount amount);
     event LogClaimServicePayoutCancelled(NftId indexed policyNftId, PayoutId indexed payoutId);
 
     error ErrorClaimServiceBeneficiarySet(NftId policyNftId, PayoutId payoutId, address beneficiary);
