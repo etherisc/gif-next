@@ -39,13 +39,13 @@ interface IDistributionService is IService {
     error ErrorDistributionServiceInvalidFeeTransferred(Amount transferredDistributionFeeAmount, Amount expectedDistributionFeeAmount);
     error ErrorDistributionServiceReferralDistributionMismatch(ReferralId referralId, NftId referralDistributionNft, NftId distributionNftId);
 
-    event LogDistributionServiceCommissionWithdrawn(NftId indexed distributorNftId, address indexed recipient, Amount indexed amount, address tokenAddress);
-    event LogDistributionServiceDistributorTypeCreated(NftId indexed distributionNftId, DistributorType indexed distributorType, string name, UFixed indexed commissionPercentage);
+    event LogDistributionServiceCommissionWithdrawn(NftId indexed distributorNftId, address indexed recipient, Amount amount, address indexed tokenAddress);
+    event LogDistributionServiceDistributorTypeCreated(NftId indexed distributionNftId, DistributorType indexed distributorType, string name, UFixed commissionPercentage);
     event LogDistributionServiceDistributorCreated(NftId indexed distributionNftId, NftId indexed distributorNftId, address indexed distributor, DistributorType distributorType);
     event LogDistributionServiceDistributorTypeChanged(NftId indexed distributorNftId, DistributorType indexed oldDistributorType, DistributorType indexed newDistributorType);
-    event LogDistributionServiceReferralCreated(NftId indexed distributorNftId, ReferralId indexed referralId, string code, UFixed indexed discountPercentage, uint32 maxReferrals, Timestamp expiryAt);
-    event LogDistributionServiceReferralProcessed(NftId indexed distributorNftId, ReferralId indexed referralId, uint32 indexed usedReferrals);
-    event LogDistributionServiceSaleProcessed(NftId indexed distributionNftId, Amount indexed premium, Amount indexed distributionOwnerFee);
+    event LogDistributionServiceReferralCreated(NftId indexed distributorNftId, ReferralId indexed referralId, string code, UFixed discountPercentage, uint32 maxReferrals, Timestamp expiryAt);
+    event LogDistributionServiceReferralProcessed(NftId indexed distributorNftId, ReferralId indexed referralId, uint32 usedReferrals);
+    event LogDistributionServiceSaleProcessed(NftId indexed distributionNftId, Amount premium, Amount distributionOwnerFee);
     event LogDistributionServiceSaleProcessedWithReferral(NftId indexed distributionNftId, NftId indexed distributorNftId, ReferralId indexed referralId, uint32 numPoliciesSold, Amount premium, Amount distributionOwnerFee, Amount commissionAmount);
 
     function createDistributorType(
