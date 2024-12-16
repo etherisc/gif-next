@@ -30,15 +30,15 @@ interface IBundleService is IService {
 
     error ErrorBundleServiceExtensionLifetimeIsZero();
 
-    event LogBundleServiceBundleCreated(NftId indexed bundleNftId, NftId indexed poolNftId, Seconds indexed lifetime, Amount fixedFee, UFixed fractionalFee);
+    event LogBundleServiceBundleCreated(NftId indexed bundleNftId, NftId indexed poolNftId, Seconds lifetime, Amount fixedFee, UFixed fractionalFee);
     event LogBundleServiceBundleClosed(NftId indexed bundleNftId);
     event LogBundleServiceBundleLocked(NftId indexed bundleNftId, bool indexed locked);
-    event LogBundleServiceBundleExtended(NftId indexed bundleNftId, Seconds indexed lifetimeExtension, Timestamp indexed extendedExpiredAt);
-    event LogBundleServiceBundleFeeUpdated(NftId indexed bundleNftId, Amount indexed fixedFee, UFixed indexed fractionalFee);
-    event LogBundleServiceCollateralLocked(NftId indexed bundleNftId, NftId indexed policyNftId, Amount indexed collateralAmount);
-    event LogBundleServiceCollateralReleased(NftId indexed bundleNftId, NftId indexed policyNftId, Amount indexed collateralAmount);
-    event LogBundleServiceBundleStaked(NftId indexed bundleNftId, Amount indexed amount);
-    event LogBundleServiceBundleUnstaked(NftId indexed bundleNftId, Amount indexed amount);
+    event LogBundleServiceBundleExtended(NftId indexed bundleNftId, Seconds lifetimeExtension, Timestamp extendedExpiredAt);
+    event LogBundleServiceBundleFeeUpdated(NftId indexed bundleNftId, Amount fixedFee, UFixed fractionalFee);
+    event LogBundleServiceCollateralLocked(NftId indexed bundleNftId, NftId indexed policyNftId, Amount collateralAmount);
+    event LogBundleServiceCollateralReleased(NftId indexed bundleNftId, NftId indexed policyNftId, Amount collateralAmount);
+    event LogBundleServiceBundleStaked(NftId indexed bundleNftId, Amount amount);
+    event LogBundleServiceBundleUnstaked(NftId indexed bundleNftId, Amount amount);
 
     /// @dev Create a new bundle for the specified attributes.
     function create(

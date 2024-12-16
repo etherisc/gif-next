@@ -12,14 +12,14 @@ contract BalanceStore {
 
     event LogBalanceStoreTargetRegistered(NftId indexed targetNftId);
 
-    event LogBalanceStoreFeesIncreased(NftId indexed targetNftId, Amount indexed addedAmount, Amount indexed newBalance, Blocknumber lastUpdatedIn);
-    event LogBalanceStoreFeesDecreased(NftId indexed targetNftId, Amount indexed addedAmount, Amount indexed newBalance, Blocknumber lastUpdatedIn);
+    event LogBalanceStoreFeesIncreased(NftId indexed targetNftId, Amount addedAmount, Amount newBalance, Blocknumber lastUpdatedIn);
+    event LogBalanceStoreFeesDecreased(NftId indexed targetNftId, Amount addedAmount, Amount newBalance, Blocknumber lastUpdatedIn);
 
-    event LogBalanceStoreLockedIncreased(NftId indexed targetNftId, Amount indexed addedAmount, Amount indexed newBalance, Blocknumber lastUpdatedIn);
-    event LogBalanceStoreLockedDecreased(NftId indexed targetNftId, Amount indexed addedAmount, Amount indexed newBalance, Blocknumber lastUpdatedIn);
+    event LogBalanceStoreLockedIncreased(NftId indexed targetNftId, Amount addedAmount, Amount newBalance, Blocknumber lastUpdatedIn);
+    event LogBalanceStoreLockedDecreased(NftId indexed targetNftId, Amount addedAmount, Amount newBalance, Blocknumber lastUpdatedIn);
 
-    event LogBalanceStoreBalanceIncreased(NftId indexed targetNftId, Amount indexed addedAmount, Amount indexed newBalance, Blocknumber lastUpdatedIn);
-    event LogBalanceStoreBalanceDecreased(NftId indexed targetNftId, Amount indexed addedAmount, Amount indexed newBalance, Blocknumber lastUpdatedIn);
+    event LogBalanceStoreBalanceIncreased(NftId indexed targetNftId, Amount addedAmount, Amount newBalance, Blocknumber lastUpdatedIn);
+    event LogBalanceStoreBalanceDecreased(NftId indexed targetNftId, Amount addedAmount, Amount newBalance, Blocknumber lastUpdatedIn);
 
     mapping(NftId nftId => Amount balance) private _balanceAmount;
     mapping(NftId nftId => Amount locked) private _lockedAmount;
