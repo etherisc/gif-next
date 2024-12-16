@@ -80,11 +80,7 @@ contract TestProductClaim is GifTest {
         assertEq(entries[4].topics[0], keccak256("LogClaimServiceClaimSubmitted(uint96,uint16,uint96)"), "unexpected log signature");
         uint96 nftIdInt = uint96(uint256(entries[4].topics[1]));
         uint24 claimIdInt = uint24(uint256(entries[4].topics[2]));
-<<<<<<< HEAD
-        (uint96 claimAmountInt ) = abi.decode(entries[4].data, (uint96));
-=======
         uint96 claimAmountInt = abi.decode(entries[4].data, (uint96));
->>>>>>> 9cc31631 (cleanup remaining unintended indexed event properties)
         assertEq(nftIdInt, policyNftId.toInt(), "unexpected policy nft id");
         assertEq(claimIdInt, claimId.toInt(), "unexpected claim id");
         assertEq(claimAmountInt, claimAmount.toInt(), "unexpected claim amount");
