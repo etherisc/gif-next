@@ -13,7 +13,7 @@ import {ObjectType, INSTANCE} from "../type/ObjectType.sol";
 import {RoleId, ADMIN_ROLE} from "../type/RoleId.sol";
 import {Str} from "../type/String.sol";
 import {VersionPart} from "../type/Version.sol";
-import {INSTANCE_TARGET_NAME, INSTANCE_ADMIN_TARGET_NAME, INSTANCE_STORE_TARGET_NAME, PRODUCT_STORE_TARGET_NAME, BUNDLE_SET_TARGET_NAME, RISK_SET_TARGET_NAME} from "./TargetNames.sol";
+import {INSTANCE_TARGET_NAME, INSTANCE_ADMIN_TARGET_NAME, INSTANCE_STORE_TARGET_NAME, PRODUCT_STORE_TARGET_NAME, BUNDLE_SET_TARGET_NAME, RISK_SET_TARGET_NAME, REQUEST_SET_TARGET_NAME} from "./TargetNames.sol";
 
 
 contract InstanceAdmin is
@@ -123,6 +123,7 @@ contract InstanceAdmin is
         _createInstanceTarget(address(_instance.getProductStore()), PRODUCT_STORE_TARGET_NAME); 
         _createInstanceTarget(address(_instance.getBundleSet()), BUNDLE_SET_TARGET_NAME); 
         _createInstanceTarget(address(_instance.getRiskSet()), RISK_SET_TARGET_NAME); 
+        _createInstanceTarget(address(_instance.getRequestSet()), REQUEST_SET_TARGET_NAME); 
     }
 
 

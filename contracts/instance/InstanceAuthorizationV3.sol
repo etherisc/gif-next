@@ -10,9 +10,10 @@ import {ACCOUNTING, ORACLE, POOL, INSTANCE, COMPONENT, DISTRIBUTION, APPLICATION
 import {BundleSet} from "../instance/BundleSet.sol";
 import {InstanceAdmin} from "../instance/InstanceAdmin.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
-import {INSTANCE_TARGET_NAME, INSTANCE_ADMIN_TARGET_NAME, INSTANCE_STORE_TARGET_NAME, PRODUCT_STORE_TARGET_NAME, BUNDLE_SET_TARGET_NAME, RISK_SET_TARGET_NAME} from "./TargetNames.sol";
+import {INSTANCE_TARGET_NAME, INSTANCE_ADMIN_TARGET_NAME, INSTANCE_STORE_TARGET_NAME, PRODUCT_STORE_TARGET_NAME, BUNDLE_SET_TARGET_NAME, RISK_SET_TARGET_NAME, REQUEST_SET_TARGET_NAME} from "./TargetNames.sol";
 import {ProductStore} from "../instance/ProductStore.sol";
 import {ADMIN_ROLE, INSTANCE_OWNER_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
+import {RequestSet} from "../instance/RequestSet.sol";
 import {RiskSet} from "../instance/RiskSet.sol"; 
 
 
@@ -71,6 +72,7 @@ contract InstanceAuthorizationV3
           _addInstanceTarget(PRODUCT_STORE_TARGET_NAME);
           _addInstanceTarget(BUNDLE_SET_TARGET_NAME);
           _addInstanceTarget(RISK_SET_TARGET_NAME);
+          _addInstanceTarget(REQUEST_SET_TARGET_NAME);
      }
 
 
@@ -84,6 +86,18 @@ contract InstanceAuthorizationV3
           _setupProductStoreAuthorization();
           _setupBundleSetAuthorization();
           _setUpRiskSetAuthorization();
+          _setUpRequestIdSetAuthorization();
+     }
+
+     function _setUpRequestIdSetAuthorization()
+          internal
+     {
+          IAccess.FunctionInfo[] storage functions;
+
+          // authorize oracle service role
+          functions = _authorizeForTarget(REQUEST_SET_TARGET_NAME, getServiceRole(ORACLE()));
+          _authorize(functions, RequestSet.add.selector, "add");
+          _authorize(functions, RequestSet.remove.selector, "remove");
      }
 
 

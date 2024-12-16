@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {Amount} from "../type/Amount.sol";
-import {COMPONENT, PRODUCT, ORACLE} from "../type/ObjectType.sol";
+import {COMPONENT, ORACLE} from "../type/ObjectType.sol";
 import {IAuthorization} from "../authorization/IAuthorization.sol";
 import {IComponentService} from "../shared/IComponentService.sol";
 import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
@@ -63,7 +63,7 @@ abstract contract Oracle is
     }
 
     /// @dev Not relevant for oracle components
-    function withdrawFees(Amount amount)
+    function withdrawFees(Amount)
         external
         virtual
         override(IInstanceLinkedComponent, InstanceLinkedComponent)
@@ -74,7 +74,32 @@ abstract contract Oracle is
         revert ErrorOracleNotImplemented("withdrawFees");
     }
 
+    function activeRequests()
+        external
+        view
+        returns(uint256 numberOfRequests)
+    {
+        return _getInstanceReader().getActiveRequests(getNftId());
+    }
 
+
+    function getActiveRequest(uint256 idx)
+        external
+        view
+        returns(RequestId requestId)
+    {
+        return _getInstanceReader().getActiveRequestAt(getNftId(), idx);
+    }
+
+    function isActiveRequest(RequestId requestId)
+        external
+        view
+        returns(bool isActive)
+    {
+        return _getInstanceReader().isRequestActive(getNftId(), requestId);
+    }
+
+    // solhint-disable-next-line func-name-mixedcase
     function __Oracle_init(
         address registry,
         NftId productNftId,
@@ -102,34 +127,6 @@ abstract contract Oracle is
         _registerInterface(type(IOracleComponent).interfaceId);
     }
 
-
-    /// @dev Internal function for handling requests.
-    /// Empty implementation.
-    /// Overwrite this function to implement use case specific handling for oracle calls.
-    function _request(
-        RequestId requestId,
-        NftId requesterId,
-        bytes calldata requestData,
-        Timestamp expiryAt
-    )
-        internal
-        virtual
-    {
-    }
-
-
-    /// @dev Internal function for cancelling requests.
-    /// Empty implementation.
-    /// Overwrite this function to implement use case specific cancelling.
-    function _cancel(
-        RequestId requestId
-    )
-        internal
-        virtual
-    {
-    }
-
-
     /// @dev Internal function for handling oracle responses.
     /// Default implementation sends response back to oracle service.
     /// Use this function in use case specific external/public functions to handle use case specific response handling.
@@ -143,8 +140,35 @@ abstract contract Oracle is
         _getOracleStorage()._oracleService.respond(requestId, responseData);
     }
 
+    /// @dev use case specific handling of oracle requests
+    /// for now only log is emitted to verify that request has been received by oracle component 
+    function _request(
+        RequestId requestId,
+        NftId requesterId,
+        bytes calldata,
+        Timestamp
+    )
+        internal
+        virtual 
+    {
+        emit LogOracleRequestReceived(requestId, requesterId);
+    }
+
+
+    /// @dev use case specific handling of oracle requests
+    /// for now only log is emitted to verify that cancelling has been received by oracle component 
+    function _cancel(
+        RequestId requestId
+    )
+        internal
+        virtual 
+    {
+        emit LogOracleRequestCancelled(requestId);
+    }
+
 
     function _getOracleStorage() private pure returns (OracleStorage storage $) {
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             $.slot := ORACLE_STORAGE_LOCATION_V1
         }

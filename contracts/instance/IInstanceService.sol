@@ -26,6 +26,7 @@ interface IInstanceService is IService {
     error ErrorInstanceServiceMasterInstanceAdminAlreadySet();
     error ErrorInstanceServiceMasterBundleSetAlreadySet();
     error ErrorInstanceServiceMasterRiskSetAlreadySet();
+    error ErrorInstanceServiceMasterRequestSetAlreadySet();
     error ErrorInstanceServiceInstanceAddressZero();
 
     error ErrorInstanceServiceMasterInstanceReaderNotSet();
@@ -38,15 +39,18 @@ interface IInstanceService is IService {
     error ErrorInstanceServiceInstanceReaderZero();
     error ErrorInstanceServiceBundleSetZero();
     error ErrorInstanceServiceRiskSetZero();
+    error ErrorInstanceServiceRequestSetZero();
     error ErrorInstanceServiceInstanceStoreZero();
     error ErrorInstanceServiceProductStoreZero();
 
     error ErrorInstanceServiceInstanceAuthorityMismatch();
     error ErrorInstanceServiceBundleSetAuthorityMismatch();
     error ErrorInstanceServiceRiskSetAuthorityMismatch();
+    error ErrorInstanceServiceRequestSetAuthorityMismatch();
     error ErrorInstanceServiceInstanceReaderInstanceMismatch2();
     error ErrorInstanceServiceBundleSetInstanceMismatch();
     error ErrorInstanceServiceRiskSetInstanceMismatch();
+    error ErrorInstanceServiceRequestSetInstanceMismatch();
     error ErrorInstanceServiceInstanceStoreAuthorityMismatch();
     error ErrorInstanceServiceProductStoreAuthorityMismatch();
 
@@ -59,7 +63,7 @@ interface IInstanceService is IService {
     event LogInstanceServiceInstanceLocked(NftId instanceNftId, bool locked);
     event LogInstanceServiceInstanceCreated(NftId instanceNftId, address instance);
     event LogInstanceServiceMasterInstanceRegistered(NftId masterInstanceNftId, address masterInstance, address masterInstanceAdmin, address masterAccessManager, 
-                address masterInstanceReader, address masterInstanceBundleSet, address masterInstanceRiskSet, address masterInstanceStore, address masterProductStore);
+                address masterInstanceReader, address masterInstanceBundleSet, address masterInstanceRiskSet, address masterInstanceRequestSet, address masterInstanceStore, address masterProductStore);
     event LogInstanceServiceMasterInstanceReaderUpgraded(NftId instanceNfId, address newInstanceReader);
     event LogInstanceServiceInstanceReaderUpgraded(NftId instanceNfId, address newInstanceReader);
 

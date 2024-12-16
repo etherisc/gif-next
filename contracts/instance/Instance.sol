@@ -17,6 +17,7 @@ import {InstanceStore} from "./InstanceStore.sol";
 import {NftId} from "../type/NftId.sol";
 import {ProductStore} from "./ProductStore.sol";
 import {Registerable} from "../shared/Registerable.sol";
+import {RequestSet} from "./RequestSet.sol";
 import {RoleId} from "../type/RoleId.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {UFixed} from "../type/UFixed.sol";
@@ -35,6 +36,7 @@ contract Instance is
     InstanceReader internal _instanceReader;
     BundleSet internal _bundleSet;
     RiskSet internal _riskSet;
+    RequestSet internal _requestSet;
     InstanceStore internal _instanceStore;
     ProductStore internal _productStore;
     NftId [] internal _products;
@@ -88,6 +90,7 @@ contract Instance is
         _productStore = instanceContracts.productStore;
         _bundleSet = instanceContracts.bundleSet;
         _riskSet = instanceContracts.riskSet;
+        _requestSet = instanceContracts.requestSet;
         _instanceReader = instanceContracts.instanceReader;
 
         // initialize instance supporting contracts
@@ -95,6 +98,7 @@ contract Instance is
         _productStore.initialize();
         _bundleSet.initialize(instanceContracts.instanceAdmin.authority(), address(registry));
         _riskSet.initialize(instanceContracts.instanceAdmin.authority(), address(registry));
+        _requestSet.initialize(instanceContracts.instanceAdmin.authority(), address(registry));
         _instanceReader.initialize();
 
         _componentService = IComponentService(
@@ -331,6 +335,10 @@ contract Instance is
 
     function getRiskSet() external view returns (RiskSet) {
         return _riskSet;
+    }
+
+    function getRequestSet() external view returns (RequestSet) {
+        return _requestSet;
     }
 
     function getInstanceAdmin() external view returns (InstanceAdmin) {

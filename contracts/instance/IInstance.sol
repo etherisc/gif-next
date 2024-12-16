@@ -12,6 +12,7 @@ import {InstanceReader} from "./InstanceReader.sol";
 import {InstanceStore} from "./InstanceStore.sol";
 import {NftId} from "../type/NftId.sol";
 import {ProductStore} from "./ProductStore.sol";
+import {RequestSet} from "./RequestSet.sol";
 import {RoleId} from "../type/RoleId.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {UFixed} from "../type/UFixed.sol";
@@ -58,6 +59,7 @@ interface IInstance is
         ProductStore productStore;
         BundleSet bundleSet;
         RiskSet riskSet;
+        RequestSet requestSet;
         InstanceReader instanceReader;
     }
 
@@ -149,6 +151,7 @@ interface IInstance is
     function getInstanceReader() external view returns (InstanceReader);
     function getBundleSet() external view returns (BundleSet);
     function getRiskSet() external view returns (RiskSet);
+    function getRequestSet() external view returns (RequestSet);
     function getInstanceAdmin() external view returns (InstanceAdmin);
     function getInstanceStore() external view returns (InstanceStore);
     function getProductStore() external view returns (ProductStore);

@@ -30,6 +30,7 @@ import {PolicyServiceLib} from "../product/PolicyServiceLib.sol";
 import {ProductStore} from "./ProductStore.sol";
 import {ReferralId, ReferralStatus, ReferralLib} from "../type/Referral.sol";
 import {RequestId} from "../type/RequestId.sol";
+import {RequestSet} from "./RequestSet.sol";
 import {RiskId} from "../type/RiskId.sol";
 import {RiskSet} from "./RiskSet.sol";
 import {RoleId, INSTANCE_OWNER_ROLE} from "../type/RoleId.sol";
@@ -56,6 +57,7 @@ contract InstanceReader {
     ProductStore internal _productStore;
     BundleSet internal _bundleSet;
     RiskSet internal _riskSet;
+    RequestSet internal _requestSet;
     IDistributionService internal _distributionService;
 
     /// @dev This initializer needs to be called from the instance itself.
@@ -85,6 +87,7 @@ contract InstanceReader {
         _productStore = _instance.getProductStore();
         _bundleSet = _instance.getBundleSet();
         _riskSet = _instance.getRiskSet();
+        _requestSet = _instance.getRequestSet();
         _distributionService = IDistributionService(_registry.getServiceAddress(DISTRIBUTION(), _instance.getRelease()));
     }
 
@@ -364,6 +367,18 @@ contract InstanceReader {
     /// @dev Returns the request info for the given oracle request ID.
     function getRequestState(RequestId requestId) public view returns (StateId state) {
         return getState(requestId.toKey32());
+    }
+
+    function getActiveRequests(NftId oracleNftId) external view returns(uint256 numberOfRequests) {
+        return _requestSet.activeRequests(oracleNftId);
+    }
+
+    function getActiveRequestAt(NftId oracleNftId, uint256 idx) external view returns(RequestId requestId) {
+        return _requestSet.activeRequestAt(oracleNftId, idx);
+    }
+
+    function isRequestActive(NftId oracleNftId, RequestId requestId) external view returns(bool isActive) {
+        return _requestSet.contains(oracleNftId, requestId);
     }
 
     //--- pool functions -----------------------------------------------------------//
