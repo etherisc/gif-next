@@ -19,7 +19,7 @@ interface IPoolComponent is IInstanceLinkedComponent {
     error ErrorPoolNotPoolService(address caller);
     error ErrorPoolApplicationBundleMismatch(NftId applicationNftId);
 
-    event LogPoolVerifiedByPool(address indexed pool, NftId indexed applicationNftId, Amount indexed collateralizationAmount);
+    event LogPoolVerifiedByPool(address indexed pool, NftId indexed applicationNftId, Amount collateralizationAmount);
 
     /// @dev This is a callback function that is called by the product service when underwriting a policy.
     /// The pool has the option to check the details and object to underwriting by reverting.

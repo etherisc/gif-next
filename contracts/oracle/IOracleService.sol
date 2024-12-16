@@ -13,7 +13,7 @@ interface IOracleService is IService {
 
     event LogOracleServiceRequestCreated(RequestId indexed requestId, NftId indexed requesterNftId, NftId indexed oracleNftId, Timestamp expiryAt);
     event LogOracleServiceResponseProcessed(RequestId indexed requestId, NftId indexed requesterNftId, NftId indexed oracleNftId);
-    event LogOracleServiceDeliveryFailed(RequestId indexed requestId, address indexed requesterAddress, string indexed functionSignature);
+    event LogOracleServiceDeliveryFailed(RequestId indexed requestId, address indexed requesterAddress, string functionSignature);
     event LogOracleServiceResponseResent(RequestId indexed requestId, NftId indexed requesterNftId);
     event LogOracleServiceRequestCancelled(RequestId indexed requestId, NftId indexed requesterNftId);
 

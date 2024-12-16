@@ -38,7 +38,7 @@ contract ReleaseRegistry is
 {
     uint256 public constant INITIAL_GIF_VERSION = 3;// first active release version  
 
-    event LogReleaseCreated(IAccessAdmin indexed admin, VersionPart indexed release, bytes32 indexed salt); 
+    event LogReleaseCreated(address indexed releaseAdmin, VersionPart indexed release, bytes32 indexed salt); 
     event LogReleaseActivated(VersionPart indexed release);
     event LogReleaseEnabled(VersionPart indexed release, bool indexed active);
 
@@ -167,7 +167,7 @@ contract ReleaseRegistry is
         _releaseInfo[releaseVersion].auth = serviceAuthorization;
         _releaseInfo[releaseVersion].releaseAdmin = address(releaseAdmin);
 
-        emit LogReleaseCreated(releaseAdmin, releaseVersion, releaseSalt);
+        emit LogReleaseCreated(address(releaseAdmin), releaseVersion, releaseSalt);
     }
 
     function registerService(IService service) 

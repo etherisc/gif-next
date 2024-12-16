@@ -56,31 +56,31 @@ interface IStaking is
         UFixed maxRewardRate,
         Blocknumber lastUpdateIn);
 
-    event LogStakingTargetCreated(NftId indexed targetNftId, ObjectType indexed objectType, Seconds indexed lockingPeriod, UFixed rewardRate);
-    event LogStakingLimitsSet(NftId indexed targetNftId, Amount indexed marginAmount, Amount indexed hardLimitAmount, Blocknumber lastUpdateIn);
-    event LogStakingTargetLimitsUpdated(NftId indexed targetNftId, Amount indexed marginAmount, Amount indexed hardLimitAmount, Blocknumber lastUpdateIn);
-    event LogStakingTargetLimitUpdated(NftId indexed targetNftId, Amount indexed limitAmount, Amount indexed hardLimitAmount, Amount requiredStakeAmount, Amount actualStakeAmount, Blocknumber lastUpdateIn);
+    event LogStakingTargetCreated(NftId indexed targetNftId, ObjectType indexed objectType, Seconds lockingPeriod, UFixed rewardRate);
+    event LogStakingLimitsSet(NftId indexed targetNftId, Amount marginAmount, Amount hardLimitAmount, Blocknumber lastUpdateIn);
+    event LogStakingTargetLimitsUpdated(NftId indexed targetNftId, Amount marginAmount, Amount hardLimitAmount, Blocknumber lastUpdateIn);
+    event LogStakingTargetLimitUpdated(NftId indexed targetNftId, Amount limitAmount, Amount hardLimitAmount, Amount requiredStakeAmount, Amount actualStakeAmount, Blocknumber lastUpdateIn);
 
     // target parameters
-    event LogStakingTargetLockingPeriodSet(NftId indexed targetNftId, Seconds indexed oldLockingPeriod, Seconds indexed lockingPeriod, Blocknumber lastUpdateIn);
-    event LogStakingTargetRewardRateSet(NftId indexed targetNftId, UFixed indexed oldRewardRate, UFixed indexed rewardRate, Blocknumber lastUpdateIn);
-    event LogStakingTargetMaxStakedAmountSet(NftId indexed targetNftId, Amount indexed stakeLimitAmount, Blocknumber indexed lastUpdateIn);
-    event LogStakingTargetLimitsSet(NftId indexed targetNftId, Amount indexed stakeLimitAmount, Amount indexed marginAmount, Amount limitAmount);
+    event LogStakingTargetLockingPeriodSet(NftId indexed targetNftId, Seconds oldLockingPeriod, Seconds lockingPeriod, Blocknumber lastUpdateIn);
+    event LogStakingTargetRewardRateSet(NftId indexed targetNftId, UFixed oldRewardRate, UFixed rewardRate, Blocknumber lastUpdateIn);
+    event LogStakingTargetMaxStakedAmountSet(NftId indexed targetNftId, Amount stakeLimitAmount, Blocknumber indexed lastUpdateIn);
+    event LogStakingTargetLimitsSet(NftId indexed targetNftId, Amount stakeLimitAmount, Amount marginAmount, Amount limitAmount);
 
     // reward reserves
-    event LogStakingRewardReservesRefilled(NftId indexed targetNftId, Amount indexed dipAmount, address indexed targetOwner, Amount reserveBalance, Blocknumber lastUpdateIn);
-    event LogStakingRewardReservesWithdrawn(NftId indexed targetNftId, Amount indexed dipAmount, address indexed targetOwner, Amount reserveBalance, Blocknumber lastUpdateIn);
-    event LogStakingRewardReservesSpent(NftId indexed targetNftId, Amount indexed dipAmount, Amount indexed reserveBalance, Blocknumber lastUpdateIn);
+    event LogStakingRewardReservesRefilled(NftId indexed targetNftId, Amount dipAmount, address indexed targetOwner, Amount reserveBalance, Blocknumber lastUpdateIn);
+    event LogStakingRewardReservesWithdrawn(NftId indexed targetNftId, Amount dipAmount, address indexed targetOwner, Amount reserveBalance, Blocknumber lastUpdateIn);
+    event LogStakingRewardReservesSpent(NftId indexed targetNftId, Amount dipAmount, Amount reserveBalance, Blocknumber lastUpdateIn);
 
     // stakes
-    event LogStakingStakeCreated(NftId indexed stakeNftId, NftId indexed targetNftId, Amount indexed stakeAmount, Timestamp lockedUntil, address stakeOwner);
-    event LogStakingStakeRewardsUpdated(NftId indexed stakeNftId, Amount indexed rewardIncrementAmount, Amount indexed stakeBalance, Amount rewardBalance, Timestamp lockedUntil, Blocknumber lastUpdateIn);
-    event LogStakingRewardsRestaked(NftId indexed stakeNftId, Amount indexed restakedAmount, Amount indexed stakeBalance, Amount rewardBalance, Timestamp lockedUntil, Blocknumber lastUpdateIn);
-    event LogStakingStaked(NftId indexed stakeNftId, Amount indexed stakedAmount, Amount indexed stakeBalance, Amount rewardBalance, Timestamp lockedUntil, Blocknumber lastUpdateIn);
-    event LogStakingUnstaked(NftId indexed stakeNftId, Amount indexed unstakedAmount, Amount indexed stakeBalance, Amount rewardBalance, Timestamp lockedUntil, Blocknumber lastUpdateIn);
-    event LogStakingRewardsClaimed(NftId indexed stakeNftId, Amount indexed claimedAmount, Amount indexed stakeBalance, Amount rewardBalance, Timestamp lockedUntil, Blocknumber lastUpdateIn);
+    event LogStakingStakeCreated(NftId indexed stakeNftId, NftId indexed targetNftId, Amount stakeAmount, Timestamp lockedUntil, address stakeOwner);
+    event LogStakingStakeRewardsUpdated(NftId indexed stakeNftId, Amount rewardIncrementAmount, Amount stakeBalance, Amount rewardBalance, Timestamp lockedUntil, Blocknumber lastUpdateIn);
+    event LogStakingRewardsRestaked(NftId indexed stakeNftId, Amount restakedAmount, Amount stakeBalance, Amount rewardBalance, Timestamp lockedUntil, Blocknumber lastUpdateIn);
+    event LogStakingStaked(NftId indexed stakeNftId, Amount stakedAmount, Amount stakeBalance, Amount rewardBalance, Timestamp lockedUntil, Blocknumber lastUpdateIn);
+    event LogStakingUnstaked(NftId indexed stakeNftId, Amount unstakedAmount, Amount stakeBalance, Amount rewardBalance, Timestamp lockedUntil, Blocknumber lastUpdateIn);
+    event LogStakingRewardsClaimed(NftId indexed stakeNftId, Amount claimedAmount, Amount stakeBalance, Amount rewardBalance, Timestamp lockedUntil, Blocknumber lastUpdateIn);
 
-    event LogStakingStakeRestaked(NftId indexed stakeNftId, NftId indexed targetNftId, Amount indexed stakeAmount, address owner, NftId oldStakeNftId);
+    event LogStakingStakeRestaked(NftId indexed stakeNftId, NftId indexed targetNftId, Amount stakeAmount, address owner, NftId oldStakeNftId);
 
     // modifiers
     error ErrorStakingNotStake(NftId stakeNftId);

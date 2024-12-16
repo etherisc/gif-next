@@ -18,7 +18,7 @@ contract TokenRegistry is
     AccessManaged,
     IRegistryLinked
 {
-    event LogTokenRegistryTokenRegistered(ChainId indexed chainId, address indexed token, uint256 indexed decimals, string symbol);
+    event LogTokenRegistryTokenRegistered(ChainId indexed chainId, address indexed token, uint256 decimals, string symbol);
     event LogTokenRegistryTokenGlobalStateSet(ChainId indexed chainId, address indexed token, bool indexed active);
     event LogTokenRegistryTokenStateSet(ChainId indexed chainId, address indexed token, VersionPart indexed release, bool active);
 
