@@ -30,7 +30,7 @@ interface IInstance is
     // target handling
     event LogInstanceCustomTargetCreated(address indexed target, RoleId indexed targetRoleId, string indexed name);
     event LogInstanceTargetLocked(address indexed target, bool indexed locked);
-    event LogInstanceCustomTargetFunctionRoleSet(address indexed target, bytes4[] indexed selectors, RoleId indexed roleId);
+    event LogInstanceCustomTargetFunctionRoleSet(address indexed target, bytes4[] selectors, RoleId indexed roleId);
 
     // modifier is onlyRoleAdmin
     error ErrorInstanceNotCustomRole(RoleId roleId);
