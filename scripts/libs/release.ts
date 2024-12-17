@@ -208,9 +208,9 @@ export async function createRelease(owner: Signer, registry: RegistryAddresses, 
         "releaseRegistry.prepareNextRelease",
         [releaseRegistry.interface]);
 
-    let logCreationInfo = getFieldFromTxRcptLogs(rcpt!, registry.releaseRegistry.interface, "LogReleaseCreated", "admin");
+    let logCreationInfo = getFieldFromTxRcptLogs(rcpt!, registry.releaseRegistry.interface, "LogReleaseCreated", "releaseAdmin");
     const releaseAdminAddress = logCreationInfo as AddressLike;
-    logCreationInfo = getFieldFromTxRcptLogs(rcpt!, registry.releaseRegistry.interface, "LogReleaseCreated", "version");
+    logCreationInfo = getFieldFromTxRcptLogs(rcpt!, registry.releaseRegistry.interface, "LogReleaseCreated", "release");
     const releaseVersion = logCreationInfo as BigNumberish;
     logCreationInfo = getFieldFromTxRcptLogs(rcpt!, registry.releaseRegistry.interface, "LogReleaseCreated", "salt");
     const releaseSalt = logCreationInfo as BytesLike;
