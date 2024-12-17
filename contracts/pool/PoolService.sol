@@ -553,7 +553,7 @@ contract PoolService is
             address bundleOwner = getRegistry().ownerOf(bundleNftId);
             TokenHandler tokenHandler = reader.getTokenHandler(poolNftId);
             address token = address(tokenHandler.TOKEN());
-            emit LogPoolServiceFeesWithdrawn(bundleNftId, bundleOwner, token, withdrawnAmount);
+            emit LogPoolServiceFeesWithdrawn(bundleNftId, bundleOwner, withdrawnAmount, token);
 
             tokenHandler.pushToken(bundleOwner, withdrawnAmount);
         }

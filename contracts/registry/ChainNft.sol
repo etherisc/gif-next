@@ -8,7 +8,7 @@ import {ITransferInterceptor} from "./ITransferInterceptor.sol";
 
 contract ChainNft is ERC721Enumerable {
 
-    event LogTokenInterceptorAddress(uint256 tokenId, address interceptor);
+    event LogTokenInterceptorAddress(uint256 indexed tokenId, address indexed interceptor);
 
     // constants
     string public constant NAME = "Decentralized Insurance Protocol NFT";

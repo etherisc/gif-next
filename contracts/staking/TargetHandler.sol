@@ -20,7 +20,7 @@ contract TargetHandler is
     ITargetLimitHandler
 {
 
-    event LogTargetHandlerUpdateTriggersSet(uint16 tvlUpdatesTrigger, UFixed minTvlRatioTrigger, Blocknumber lastUpdateIn);
+    event LogTargetHandlerUpdateTriggersSet(uint16 tvlUpdatesTrigger, UFixed minTvlRatioTrigger, Blocknumber indexed lastUpdateIn);
 
     IRegistry private _registry;
     StakingStore private _store;
@@ -45,7 +45,7 @@ contract TargetHandler is
 
         // set default trigger values
         _setUpdateTriggers(
-            10, // check after 2 TVL updates
+            10, // check after 10 TVL updates
             UFixedLib.toUFixed(1, -1)); // 10% deviation from baseline TVL
     }
 

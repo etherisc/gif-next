@@ -160,7 +160,7 @@ contract ChainNftTest is Test {
 
     function test_chainNftMintHappyCase() public {
         string memory uri = "ipfs://someHash";
-        uint expectedTokenId = 43133705;
+        uint256 expectedTokenId = 43133705;
 
         assertEq(chainNft.totalMinted(), 0, "minted > 0 after contract deploy");
         assertEq(chainNft.balanceOf(outsider), 0, "unexpected nft balance for outsider");
@@ -169,7 +169,7 @@ contract ChainNftTest is Test {
         emit Transfer(address(0), outsider, expectedTokenId);
 
         vm.expectEmit(address(chainNft));
-        emit LogTokenInterceptorAddress(expectedTokenId, address(0));
+        emit ChainNft.LogTokenInterceptorAddress(expectedTokenId, address(0));
 
         vm.recordLogs();
 
@@ -260,8 +260,6 @@ contract ChainNftTest is Test {
         chainNft.mint(outsider, address(interceptor), uri);
     }
 
-    // keep identical to ChainNft events
-    event LogTokenInterceptorAddress(uint256 tokenId, address interceptor);
     // keep identical to IERC721 events
     event Transfer(address indexed from, address indexed to, uint256 indexed value);    
 
@@ -277,7 +275,7 @@ contract ChainNftTest is Test {
         emit Transfer(address(0), outsider, expectedTokenId);
 
         vm.expectEmit(address(chainNft));
-        emit LogTokenInterceptorAddress(expectedTokenId, address(interceptor));
+        emit ChainNft.LogTokenInterceptorAddress(expectedTokenId, address(interceptor));
 
         vm.recordLogs();
 

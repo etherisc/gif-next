@@ -22,15 +22,15 @@ interface IInstance is
     IRegisterable
 {
     // role handling
-    event LogInstanceCustomRoleCreated(RoleId roleId, string roleName, RoleId adminRoleId, uint32 maxMemberCount);
-    event LogInstanceCustomRoleActiveSet(RoleId roleId, bool active, address caller);
-    event LogInstanceCustomRoleGranted(RoleId roleId, address account, address caller);
-    event LogInstanceCustomRoleRevoked(RoleId roleId, address account, address caller);
+    event LogInstanceCustomRoleCreated(RoleId indexed roleId, string indexed roleName, RoleId indexed adminRoleId, uint32 maxMemberCount);
+    event LogInstanceCustomRoleActiveSet(RoleId indexed roleId, bool indexed active, address indexed caller);
+    event LogInstanceCustomRoleGranted(RoleId indexed roleId, address indexed account, address indexed caller);
+    event LogInstanceCustomRoleRevoked(RoleId indexed roleId, address indexed account, address indexed caller);
 
     // target handling
-    event LogInstanceCustomTargetCreated(address target, RoleId targetRoleId, string name);
-    event LogInstanceTargetLocked(address target, bool locked);
-    event LogInstanceCustomTargetFunctionRoleSet(address target, bytes4[] selectors, RoleId roleId);
+    event LogInstanceCustomTargetCreated(address indexed target, RoleId indexed targetRoleId, string indexed name);
+    event LogInstanceTargetLocked(address indexed target, bool indexed locked);
+    event LogInstanceCustomTargetFunctionRoleSet(address indexed target, bytes4[] selectors, RoleId indexed roleId);
 
     // modifier is onlyRoleAdmin
     error ErrorInstanceNotCustomRole(RoleId roleId);

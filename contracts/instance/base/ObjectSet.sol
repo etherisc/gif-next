@@ -12,7 +12,7 @@ contract ObjectSet is
 {
     using LibKey32Set for LibKey32Set.Set;
 
-    event LogObjectSetInitialized(address instance);
+    event LogObjectSetInitialized(address indexed instance);
 
     error ErrorObjectSetNftIdInvalid(NftId instanceNftId);
 

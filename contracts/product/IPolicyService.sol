@@ -11,13 +11,13 @@ import {Timestamp} from "../type/Timestamp.sol";
 
 interface IPolicyService is IService {
 
-    event LogPolicyServicePolicyCreated(NftId policyNftId, Amount premiumAmount, Timestamp activatedAt);
-    event LogPolicyServicePolicyDeclined(NftId policyNftId);
-    event LogPolicyServicePolicyPremiumCollected(NftId policyNftId, NftId productNftId, Amount premiumAmount, Timestamp activateAt);
-    event LogPolicyServicePolicyActivated(NftId policyNftId, Timestamp activatedAt);
-    event LogPolicyServicePolicyActivatedUpdated(NftId policyNftId, Timestamp activatedAt);
-    event LogPolicyServicePolicyExpirationUpdated(NftId policyNftId, Timestamp expiredAt);
-    event LogPolicyServicePolicyClosed(NftId policyNftId);
+    event LogPolicyServicePolicyCreated(NftId indexed policyNftId, Amount premiumAmount, Timestamp activatedAt);
+    event LogPolicyServicePolicyDeclined(NftId indexed policyNftId);
+    event LogPolicyServicePolicyPremiumCollected(NftId indexed policyNftId, NftId indexed productNftId, Amount premiumAmount, Timestamp activateAt);
+    event LogPolicyServicePolicyActivated(NftId indexed policyNftId, Timestamp activatedAt);
+    event LogPolicyServicePolicyActivatedUpdated(NftId indexed policyNftId, Timestamp activatedAt);
+    event LogPolicyServicePolicyExpirationUpdated(NftId indexed policyNftId, Timestamp expiredAt);
+    event LogPolicyServicePolicyClosed(NftId indexed policyNftId);
 
     error LogPolicyServiceMaxPremiumAmountExceeded(NftId policyNftId, Amount maxPremiumAmount, Amount premiumAmount);
     error ErrorPolicyServicePolicyProductMismatch(NftId applicationNftId, NftId expectedProductNftId, NftId actualProductNftId);

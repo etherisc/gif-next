@@ -9,20 +9,20 @@ contracts/authorization/AccessManagerCloneable.sol: LogAccessManagerLocked(addre
 
 ===============
 contracts/authorization/IAccessAdmin.sol: LogAccessAdminRoleCreated(RoleId indexed roleId, RoleId indexed roleAdminId, TargetType indexed targetType, string name, string admin)
-contracts/authorization/IAccessAdmin.sol: LogAccessAdminRoleActivatedSet(RoleId indexed roleId, bool indexed active, string admin, Blocknumber lastUpdateIn)
-contracts/authorization/IAccessAdmin.sol: LogAccessAdminRoleGranted(address indexed account, RoleId indexed roleId, string roleName, string admin)
-contracts/authorization/IAccessAdmin.sol: LogAccessAdminRoleRevoked(address indexed account, RoleId indexed roleId, string roleName, string admin)
 contracts/authorization/IAccessAdmin.sol: LogAccessAdminTargetCreated(address indexed target, RoleId indexed roleId, bool indexed managed, string name, string admin)
-contracts/authorization/IAccessAdmin.sol: LogAccessAdminTargetLockedSet(address indexed target, bool indexed locked, string admin, Blocknumber lastUpdateIn)
+contracts/authorization/IAccessAdmin.sol: LogAccessAdminRoleActivatedSet(RoleId indexed roleId, bool indexed active, string admin, Blocknumber indexed lastUpdateIn)
+contracts/authorization/IAccessAdmin.sol: LogAccessAdminRoleGranted(address indexed account, string roleName, string admin)
+contracts/authorization/IAccessAdmin.sol: LogAccessAdminRoleRevoked(address indexed account, string roleName, string admin)
+contracts/authorization/IAccessAdmin.sol: LogAccessAdminTargetLockedSet(address indexed target, bool indexed locked, string admin, Blocknumber indexed lastUpdateIn)
 contracts/authorization/IAccessAdmin.sol: LogAccessAdminFunctionGranted(address indexed target, Selector indexed selector, RoleId indexed roleId, string func, string admin, Blocknumber lastUpdateIn)
 
 ===============
-contracts/distribution/IDistributionService.sol: LogDistributionServiceCommissionWithdrawn(NftId indexed distributorNftId, address indexed recipient, Amount indexed  amount, address tokenAddress)
-contracts/distribution/IDistributionService.sol: LogDistributionServiceDistributorTypeCreated(NftId indexed distributionNftId, DistributorType distributorType, string indexed name, UFixed indexed commissionPercentage)
+contracts/distribution/IDistributionService.sol: LogDistributionServiceCommissionWithdrawn(NftId indexed distributorNftId, address indexed recipient, Amount indexed amount, address tokenAddress)
+contracts/distribution/IDistributionService.sol: LogDistributionServiceDistributorTypeCreated(NftId indexed distributionNftId, DistributorType indexed distributorType, string name, UFixed indexed commissionPercentage)
 contracts/distribution/IDistributionService.sol: LogDistributionServiceDistributorCreated(NftId indexed distributionNftId, NftId indexed distributorNftId, address indexed distributor, DistributorType distributorType)
 contracts/distribution/IDistributionService.sol: LogDistributionServiceDistributorTypeChanged(NftId indexed distributorNftId, DistributorType indexed oldDistributorType, DistributorType indexed newDistributorType)
-contracts/distribution/IDistributionService.sol: LogDistributionServiceReferralCreated(NftId indexed distributorNftId, ReferralId indexed referralId, string code, UFixed discountPercentage, uint32 maxReferrals, Timestamp expiryAt)
-contracts/distribution/IDistributionService.sol: LogDistributionServiceReferralProcessed(NftId indexed distributorNftId, ReferralId indexed referralId, uint32 usedReferrals)
+contracts/distribution/IDistributionService.sol: LogDistributionServiceReferralCreated(NftId indexed distributorNftId, ReferralId indexed referralId, string code, UFixed indexed discountPercentage, uint32 maxReferrals, Timestamp expiryAt)
+contracts/distribution/IDistributionService.sol: LogDistributionServiceReferralProcessed(NftId indexed distributorNftId, ReferralId indexed referralId, uint32 indexed usedReferrals)
 contracts/distribution/IDistributionService.sol: LogDistributionServiceSaleProcessed(NftId indexed distributionNftId, Amount indexed premium, Amount indexed distributionOwnerFee)
 contracts/distribution/IDistributionService.sol: LogDistributionServiceSaleProcessedWithReferral(NftId indexed distributionNftId, NftId indexed distributorNftId, ReferralId indexed referralId, uint32 numPoliciesSold, Amount premium, Amount distributionOwnerFee, Amount commissionAmount)
 
@@ -30,8 +30,7 @@ contracts/distribution/IDistributionService.sol: LogDistributionServiceSaleProce
 contracts/instance/BundleSet.sol: LogBundleSetPolicyLinked(NftId indexed bundleNftId, NftId indexed policyNftId)
 contracts/instance/BundleSet.sol: LogBundleSetPolicyUnlinked(NftId indexed bundleNftId, NftId indexed policyNftId)
 contracts/instance/BundleSet.sol: LogBundleSetBundleAdded(NftId indexed poolNftId, NftId indexed bundleNftId)
-contracts/instance/BundleSet.sol: LogBundleSetBundleUnlocked(NftId indexed poolNftId, NftId indexed bundleNftId)
-contracts/instance/BundleSet.sol: LogBundleSetBundleLocked(NftId indexed poolNftId, NftId indexed bundleNftId)
+contracts/instance/BundleSet.sol: LogBundleSetBundleLocked(NftId indexed poolNftId, NftId indexed bundleNftId, bool locked)
 contracts/instance/BundleSet.sol: LogBundleSetBundleClosed(NftId indexed poolNftId, NftId indexed bundleNftId)
 
 ===============
@@ -90,13 +89,12 @@ contracts/instance/ProductStore.sol: LogProductStorePayoutInfoUpdated(NftId inde
 contracts/instance/RiskSet.sol: LogRiskSetPolicyLinked(RiskId indexed riskId, NftId indexed policyNftId)
 contracts/instance/RiskSet.sol: LogRiskSetPolicyUnlinked(RiskId indexed riskId, NftId indexed policyNftId)
 contracts/instance/RiskSet.sol: LogRiskSetRiskAdded(NftId indexed productNftId, RiskId indexed riskId)
-contracts/instance/RiskSet.sol: LogRiskSetRiskActivated(NftId indexed poolNftId, RiskId indexed riskId)
-contracts/instance/RiskSet.sol: LogRiskSetRiskPaused(NftId indexed poolNftId, RiskId indexed riskId)
+contracts/instance/RiskSet.sol: LogRiskSetRiskActivated(NftId indexed poolNftId, RiskId indexed riskId, bool indexed active)
 
 ===============
 contracts/oracle/IOracleService.sol: LogOracleServiceRequestCreated(RequestId indexed requestId, NftId indexed requesterNftId, NftId indexed oracleNftId, Timestamp expiryAt)
 contracts/oracle/IOracleService.sol: LogOracleServiceResponseProcessed(RequestId indexed requestId, NftId indexed requesterNftId, NftId indexed oracleNftId)
-contracts/oracle/IOracleService.sol: LogOracleServiceDeliveryFailed(RequestId indexed requestId, NftId indexed requesterNftId, string indexed functionSignature)
+contracts/oracle/IOracleService.sol: LogOracleServiceDeliveryFailed(RequestId indexed requestId, address indexed requesterAddress, string indexed functionSignature)
 contracts/oracle/IOracleService.sol: LogOracleServiceResponseResent(RequestId indexed requestId, NftId indexed requesterNftId)
 contracts/oracle/IOracleService.sol: LogOracleServiceRequestCancelled(RequestId indexed requestId, NftId indexed requesterNftId)
 
@@ -113,7 +111,7 @@ contracts/pool/IBundleService.sol: LogBundleServiceBundleStaked(NftId indexed bu
 contracts/pool/IBundleService.sol: LogBundleServiceBundleUnstaked(NftId indexed bundleNftId, Amount indexed amount)
 
 ===============
-contracts/pool/IPoolComponent.sol: LogPoolVerifiedByPool(NftId indexed poolNftId, NftId indexed applicationNftId, Amount indexed collateralizationAmount)
+contracts/pool/IPoolComponent.sol: LogPoolVerifiedByPool(address indexed pool, NftId indexed applicationNftId, Amount indexed collateralizationAmount)
 
 ===============
 contracts/pool/IPoolService.sol: LogPoolServiceMaxBalanceAmountUpdated(NftId indexed poolNftId, Amount indexed previousMaxCapitalAmount, Amount indexed currentMaxCapitalAmount)
@@ -143,7 +141,7 @@ contracts/product/IClaimService.sol: LogClaimServiceClaimConfirmed(NftId indexed
 contracts/product/IClaimService.sol: LogClaimServiceClaimDeclined(NftId indexed policyNftId, ClaimId indexed claimId)
 contracts/product/IClaimService.sol: LogClaimServiceClaimRevoked(NftId indexed policyNftId, ClaimId indexed claimId)
 contracts/product/IClaimService.sol: LogClaimServiceClaimCancelled(NftId indexed policyNftId, ClaimId indexed claimId)
-contracts/product/IClaimService.sol: LogClaimServicePayoutCreated(NftId indexed policyNftId, ClaimId indexed claimId, PayoutId indexed payoutId, Amount indexed amount, address beneficiary)
+contracts/product/IClaimService.sol: LogClaimServicePayoutCreated(NftId indexed policyNftId, ClaimId indexed claimId, PayoutId indexed payoutId, Amount amount, address beneficiary)
 contracts/product/IClaimService.sol: LogClaimServicePayoutProcessed(NftId indexed policyNftId, PayoutId indexed payoutId, Amount indexed amount)
 contracts/product/IClaimService.sol: LogClaimServicePayoutCancelled(NftId indexed policyNftId, PayoutId indexed payoutId)
 
@@ -152,19 +150,18 @@ contracts/product/IPolicyService.sol: LogPolicyServicePolicyCreated(NftId indexe
 contracts/product/IPolicyService.sol: LogPolicyServicePolicyDeclined(NftId indexed policyNftId)
 contracts/product/IPolicyService.sol: LogPolicyServicePolicyPremiumCollected(NftId indexed policyNftId, NftId indexed productNftId, Amount indexed premiumAmount, Timestamp activateAt)
 contracts/product/IPolicyService.sol: LogPolicyServicePolicyActivated(NftId indexed policyNftId, Timestamp indexed activatedAt)
-contracts/product/IPolicyService.sol: LogPolicyServicePolicyActivationUpdated(NftId indexed policyNftId, Timestamp indexed activatedAt)
+contracts/product/IPolicyService.sol: LogPolicyServicePolicyActivatedUpdated(NftId indexed policyNftId, Timestamp indexed activatedAt)
 contracts/product/IPolicyService.sol: LogPolicyServicePolicyExpirationUpdated(NftId indexed policyNftId, Timestamp indexed expiredAt)
 contracts/product/IPolicyService.sol: LogPolicyServicePolicyClosed(NftId indexed policyNftId)
 
 ===============
 contracts/product/IRiskService.sol: LogRiskServiceRiskCreated(NftId indexed productNftId, RiskId indexed riskId)
 contracts/product/IRiskService.sol: LogRiskServiceRiskUpdated(NftId indexed productNftId, RiskId indexed riskId)
-contracts/product/IRiskService.sol: LogRiskServiceRiskLocked(NftId indexed productNftId, RiskId indexed riskId)
-contracts/product/IRiskService.sol: LogRiskServiceRiskUnlocked(NftId indexed productNftId, RiskId indexed riskId)
+contracts/product/IRiskService.sol: LogRiskServiceRiskLocked(NftId indexed productNftId, RiskId indexed riskId, bool indexed locked)
 contracts/product/IRiskService.sol: LogRiskServiceRiskClosed(NftId indexed productNftId, RiskId indexed riskId)
 
 ===============
-contracts/registry/ChainNft.sol: LogChainNftInterceptorAddress(uint256 indexed tokenId, address indexed interceptor)
+contracts/registry/ChainNft.sol: LogTokenInterceptorAddress(uint256 indexed tokenId, address indexed interceptor)
 
 ===============
 contracts/registry/IRegistry.sol: LogRegistryObjectRegistered(NftId indexed nftId, NftId indexed parentNftId, ObjectType indexed objectType, bool isInterceptor, address objectAddress, address initialOwner)
@@ -176,79 +173,85 @@ contracts/registry/ReleaseAdmin.sol: LogReleaseAdminReleaseLocked(VersionPart in
 contracts/registry/ReleaseAdmin.sol: LogReleaseAdminServiceLocked(VersionPart indexed release, address indexed service, bool indexed locked)
 
 ===============
-contracts/registry/ReleaseRegistry.sol: LogReleaseCreation(IAccessAdmin indexed admin, VersionPart indexed release, bytes32 indexed salt)
-contracts/registry/ReleaseRegistry.sol: LogReleaseActivation(VersionPart indexed release)
-contracts/registry/ReleaseRegistry.sol: LogReleaseDisabled(VersionPart indexed release)
-contracts/registry/ReleaseRegistry.sol: LogReleaseEnabled(VersionPart indexed release)
+contracts/registry/ReleaseRegistry.sol: LogReleaseCreated(IAccessAdmin indexed admin, VersionPart indexed release, bytes32 indexed salt)
+contracts/registry/ReleaseRegistry.sol: LogReleaseActivated(VersionPart indexed release)
+contracts/registry/ReleaseRegistry.sol: LogReleaseEnabled(VersionPart indexed release, bool indexed active)
 
 ===============
-contracts/registry/TokenRegistry.sol: LogTokenRegistryTokenRegistered(ChainId indexed chainId, address indexed token, string indexed symbol, uint256 decimals)
+contracts/registry/TokenRegistry.sol: LogTokenRegistryTokenRegistered(ChainId indexed chainId, address indexed token, uint256 indexed decimals, string symbol)
 contracts/registry/TokenRegistry.sol: LogTokenRegistryTokenGlobalStateSet(ChainId indexed chainId, address indexed token, bool indexed active)
-contracts/registry/TokenRegistry.sol: LogTokenRegistryTokenStateSet(ChainId indexed chainId, address indexed token, bool indexed active, VersionPart release)
+contracts/registry/TokenRegistry.sol: LogTokenRegistryTokenStateSet(ChainId indexed chainId, address indexed token, VersionPart indexed release, bool active)
 
 ===============
-contracts/shared/IComponentService.sol: LogComponentServiceComponentLocked(address component, bool locked)
-contracts/shared/IComponentService.sol: LogComponentServiceTokenHandlerDeployed(NftId componentNftId, address tokenHandler, address token)
-contracts/shared/IComponentService.sol: LogComponentServiceComponentRegistered(NftId instanceNftId, NftId componentNftId, ObjectType componentType, address component, address token, address initialOwner)
-contracts/shared/IComponentService.sol: LogComponentServiceComponentFeesWithdrawn(NftId componentNftId, address recipient, address token, Amount withdrawnAmount)
-contracts/shared/IComponentService.sol: LogComponentServiceProductFeesUpdated(NftId productNftId)
-contracts/shared/IComponentService.sol: LogComponentServiceDistributionFeesUpdated(NftId distributionNftId)
-contracts/shared/IComponentService.sol: LogComponentServicePoolFeesUpdated(NftId poolNftId)
-contracts/shared/IComponentService.sol: LogComponentServiceUpdateFee(NftId nftId, string feeName, UFixed previousFractionalFee, Amount previousFixedFee, UFixed newFractionalFee, Amount newFixedFee)
+contracts/shared/IComponentService.sol: LogComponentServiceComponentLocked(address indexed component, bool indexed locked)
+contracts/shared/IComponentService.sol: LogComponentServiceTokenHandlerDeployed(NftId indexed componentNftId, address indexed tokenHandler, address indexed token)
+contracts/shared/IComponentService.sol: LogComponentServiceRegistered(NftId indexed instanceNftId, NftId indexed componentNftId, ObjectType indexed componentType, address component, address token, address initialOwner)
+contracts/shared/IComponentService.sol: LogComponentServiceComponentFeesWithdrawn(NftId indexed componentNftId, address indexed recipient, Amount indexed withdrawnAmount, address token)
+contracts/shared/IComponentService.sol: LogComponentServiceProductFeesUpdated(NftId indexed productNftId)
+contracts/shared/IComponentService.sol: LogComponentServiceDistributionFeesUpdated(NftId indexed distributionNftId)
+contracts/shared/IComponentService.sol: LogComponentServicePoolFeesUpdated(NftId indexed poolNftId)
+contracts/shared/IComponentService.sol: LogComponentServiceUpdateFee(NftId indexed nftId, string feeName, UFixed previousFractionalFee, Amount previousFixedFee, UFixed indexed newFractionalFee, Amount indexed newFixedFee)
+contracts/shared/IComponentService.sol: LogComponentServiceProductCreated(NftId indexed productNftId, address indexed productAddress, bool indexed hasDistribution, uint8 expectedNumberOfOracles)
+contracts/shared/IComponentService.sol: LogComponentServiceProductInitialProductFeesSet(NftId indexed productNftId, Amount indexed productFeeFixed, UFixed indexed productFeeFractional, Amount processingFeeFixed, UFixed processingFeeFractional)
+contracts/shared/IComponentService.sol: LogComponentServiceProductInitialDistributionFeesSet(NftId indexed productNftId, Amount indexed distributionFeeFixed, UFixed indexed distributionFeeFractional, Amount minDistributionOwnerFeeFixed, UFixed minDistributionOwnerFeeFractional)
+contracts/shared/IComponentService.sol: LogComponentServiceProductInitialPoolFeesSet(NftId indexed productNftId, Amount indexed poolFeeFixed, UFixed indexed poolFeeFractional, Amount stakingFeeFixed, UFixed stakingFeeFractional, Amount performanceFeeFixed, UFixed performanceFeeFractional)
+contracts/shared/IComponentService.sol: LogComponentServicePoolCreated(NftId indexed poolNftId, NftId indexed productNftId, address indexed componentAddress, Amount maxBalanceAmount, UFixed collateralizationLevel, UFixed retentionLevel, bool isExternallyManaged, bool isVerifyingApplications)
+contracts/shared/IComponentService.sol: LogComponentServiceDistributionCreated(NftId indexed distributionNftId, NftId indexed productNftId)
+contracts/shared/IComponentService.sol: LogComponentServiceOracleCreated(NftId indexed oracleNftId, NftId indexed productNftId)
 
 ===============
-contracts/shared/INftOwnable.sol: LogNftOwnableNftLinkedToAddress(NftId nftId, address owner)
+contracts/shared/INftOwnable.sol: LogNftOwnableNftLinkedToAddress(NftId indexed nftId, address indexed owner)
 
 ===============
-contracts/shared/TokenHandler.sol: LogTokenHandlerWalletAddressChanged(NftId componentNftId, address oldWallet, address newWallet)
-contracts/shared/TokenHandler.sol: LogTokenHandlerWalletTokensTransferred(NftId componentNftId, address oldWallet, address newWallet, Amount amount)
-contracts/shared/TokenHandler.sol: LogTokenHandlerTokenApproved(NftId nftId, address tokenHandler, address token, Amount amount, bool isMaxAmount)
-contracts/shared/TokenHandler.sol: LogTokenHandlerTokenTransfer(address token, address from, address to, Amount amount)
+contracts/shared/TokenHandler.sol: LogTokenHandlerWalletAddressChanged(NftId indexed componentNftId, address indexed oldWallet, address indexed newWallet)
+contracts/shared/TokenHandler.sol: LogTokenHandlerWalletTokensTransferred(NftId indexed componentNftId, address indexed oldWallet, address indexed newWallet, Amount amount)
+contracts/shared/TokenHandler.sol: LogTokenHandlerTokenApproved(NftId indexed nftId, address indexed tokenHandler, address indexed token, Amount amount, bool isMaxAmount)
+contracts/shared/TokenHandler.sol: LogTokenHandlerTokenTransferred(address indexed token, address indexed from, address indexed to, Amount amount)
 
 ===============
-contracts/staking/IStaking.sol: LogStakingTokenHandlerDeployed(NftId componentNftId, address tokenHandler, address token)
-contracts/staking/IStaking.sol: LogStakingStakingRateSet(ChainId chainId, address token, UFixed oldStakingRate, UFixed newStakingRate, Blocknumber lastUpdateIn)
-contracts/staking/IStaking.sol: LogStakingStakingServiceSet(address stakingService, VersionPart release, address oldStakingService)
-contracts/staking/IStaking.sol: LogStakingStakingReaderSet(address stakingReader, address oldStakingReader)
-contracts/staking/IStaking.sol: LogStakingTargetHandlerSet(address targetManager, address oldTargetHandler)
-contracts/staking/IStaking.sol: LogStakingTokenHandlerApproved(address token, Amount approvalAmount, Amount oldApprovalAmount)
-contracts/staking/IStaking.sol: LogStakingTokenAdded(ChainId chainId, address token)
-contracts/staking/IStaking.sol: LogStakingTargetTokenAdded(NftId targetNftId, address token)
-contracts/staking/IStaking.sol: LogStakingTvlIncreased(NftId targetNftId, address token, Amount amount, Amount newBalance, Blocknumber lastUpdateIn)
-contracts/staking/IStaking.sol: LogStakingTvlDecreased(NftId targetNftId, address token, Amount amount, Amount newBalance, Blocknumber lastUpdateIn)
-contracts/staking/IStaking.sol: LogStakingSupportInfoSet(ObjectType objectType, bool isSupported, bool allowNewTargets, bool allowCrossChain, Amount minStakingAmount, Amount maxStakingAmount, Seconds minLockingPeriod, Seconds maxLockingPeriod, UFixed minRewardRate, UFixed maxRewardRate, Blocknumber lastUpdateIn)
-contracts/staking/IStaking.sol: LogStakingTargetCreated(NftId targetNftId, ObjectType objectType, Seconds lockingPeriod, UFixed rewardRate)
-contracts/staking/IStaking.sol: LogStakingLimitsSet(NftId targetNftId, Amount marginAmount, Amount hardLimitAmount, Blocknumber lastUpdateIn)
-contracts/staking/IStaking.sol: LogStakingTargetLimitsUpdated(NftId targetNftId, Amount marginAmount, Amount hardLimitAmount, Blocknumber lastUpdateIn)
-contracts/staking/IStaking.sol: LogStakingTargetLimitUpdated(NftId targetNftId, Amount limitAmount, Amount hardLimitAmount, Amount requiredStakeAmount, Amount actualStakeAmount, Blocknumber lastUpdateIn)
-contracts/staking/IStaking.sol: LogStakingTargetLockingPeriodSet(NftId targetNftId, Seconds oldLockingPeriod, Seconds newLockingPeriod, Blocknumber lastUpdateIn)
-contracts/staking/IStaking.sol: LogStakingTargetRewardRateSet(NftId targetNftId, UFixed oldRewardRate, UFixed newRewardRate, Blocknumber lastUpdateIn)
-contracts/staking/IStaking.sol: LogStakingTargetMaxStakedAmountSet(NftId targetNftId, Amount stakeLimitAmount, Blocknumber lastUpdateIn)
-contracts/staking/IStaking.sol: LogStakingTargetLimitsSet(NftId targetNftId, Amount stakeLimitAmount, Amount marginAmount, Amount limitAmount)
-contracts/staking/IStaking.sol: LogStakingRewardReservesRefilled(NftId targetNftId, Amount dipAmount, address targetOwner, Amount reserveBalance, Blocknumber lastUpdateIn)
-contracts/staking/IStaking.sol: LogStakingRewardReservesWithdrawn(NftId targetNftId, Amount dipAmount, address targetOwner, Amount reserveBalance, Blocknumber lastUpdateIn)
-contracts/staking/IStaking.sol: LogStakingRewardReservesSpent(NftId targetNftId, Amount dipAmount, Amount reserveBalance, Blocknumber lastUpdateIn)
-contracts/staking/IStaking.sol: LogStakingStakeCreated(NftId stakeNftId, NftId targetNftId, Amount stakeAmount, Timestamp lockedUntil, address stakeOwner)
-contracts/staking/IStaking.sol: LogStakingStakeRewardsUpdated(NftId stakeNftId, Amount rewardIncrementAmount, Amount stakeBalance, Amount rewardBalance, Timestamp lockedUntil, Blocknumber lastUpdateIn)
-contracts/staking/IStaking.sol: LogStakingRewardsRestaked(NftId stakeNftId, Amount restakedAmount, Amount stakeBalance, Amount rewardBalance, Timestamp lockedUntil, Blocknumber lastUpdateIn)
-contracts/staking/IStaking.sol: LogStakingStaked(NftId stakeNftId, Amount stakedAmount, Amount stakeBalance, Amount rewardBalance, Timestamp lockedUntil, Blocknumber lastUpdateIn)
-contracts/staking/IStaking.sol: LogStakingUnstaked(NftId stakeNftId, Amount unstakedAmount, Amount stakeBalance, Amount rewardBalance, Timestamp lockedUntil, Blocknumber lastUpdateIn)
-contracts/staking/IStaking.sol: LogStakingRewardsClaimed(NftId stakeNftId, Amount claimedAmount, Amount stakeBalance, Amount rewardBalance, Timestamp lockedUntil, Blocknumber lastUpdateIn)
-contracts/staking/IStaking.sol: LogStakingStakeRestaked(NftId stakeNftId, NftId targetNftId, Amount stakeAmount, address owner, NftId oldStakeNftId)
+contracts/staking/IStaking.sol: LogStakingTokenHandlerDeployed(NftId indexed componentNftId, address indexed tokenHandler, address indexed token)
+contracts/staking/IStaking.sol: LogStakingStakingRateSet(ChainId indexed chainId, address indexed token, UFixed indexed oldStakingRate, UFixed newStakingRate, Blocknumber lastUpdateIn)
+contracts/staking/IStaking.sol: LogStakingStakingServiceSet(address indexed oldStakingService, address indexed stakingService, VersionPart indexed release)
+contracts/staking/IStaking.sol: LogStakingStakingReaderSet(address indexed oldStakingReader, address indexed stakingReader)
+contracts/staking/IStaking.sol: LogStakingTargetHandlerSet(address indexed oldTargetHandler, address indexed targetManager)
+contracts/staking/IStaking.sol: LogStakingTokenHandlerApproved(Amount indexed oldApprovalAmount, Amount indexed approvalAmount, address indexed token)
+contracts/staking/IStaking.sol: LogStakingTokenAdded(ChainId indexed chainId, address indexed token)
+contracts/staking/IStaking.sol: LogStakingTargetTokenAdded(NftId indexed targetNftId, address indexed token)
+contracts/staking/IStaking.sol: LogStakingTvlIncreased(NftId indexed targetNftId, address indexed token, Amount indexed amount, Amount newBalance, Blocknumber lastUpdateIn)
+contracts/staking/IStaking.sol: LogStakingTvlDecreased(NftId indexed targetNftId, address indexed token, Amount indexed amount, Amount newBalance, Blocknumber lastUpdateIn)
+contracts/staking/IStaking.sol: LogStakingSupportInfoSet(ObjectType indexed objectType, bool indexed isSupported, bool indexed allowNewTargets, bool allowCrossChain, Amount minStakingAmount, Amount maxStakingAmount, Seconds minLockingPeriod, Seconds maxLockingPeriod, UFixed minRewardRate, UFixed maxRewardRate, Blocknumber lastUpdateIn)
+contracts/staking/IStaking.sol: LogStakingTargetCreated(NftId indexed targetNftId, ObjectType indexed objectType, Seconds indexed lockingPeriod, UFixed rewardRate)
+contracts/staking/IStaking.sol: LogStakingLimitsSet(NftId indexed targetNftId, Amount indexed marginAmount, Amount indexed hardLimitAmount, Blocknumber lastUpdateIn)
+contracts/staking/IStaking.sol: LogStakingTargetLimitsUpdated(NftId indexed targetNftId, Amount indexed marginAmount, Amount indexed hardLimitAmount, Blocknumber lastUpdateIn)
+contracts/staking/IStaking.sol: LogStakingTargetLimitUpdated(NftId indexed targetNftId, Amount indexed limitAmount, Amount indexed hardLimitAmount, Amount requiredStakeAmount, Amount actualStakeAmount, Blocknumber lastUpdateIn)
+contracts/staking/IStaking.sol: LogStakingTargetLockingPeriodSet(NftId indexed targetNftId, Seconds indexed oldLockingPeriod, Seconds indexed lockingPeriod, Blocknumber lastUpdateIn)
+contracts/staking/IStaking.sol: LogStakingTargetRewardRateSet(NftId indexed targetNftId, UFixed indexed oldRewardRate, UFixed indexed rewardRate, Blocknumber lastUpdateIn)
+contracts/staking/IStaking.sol: LogStakingTargetMaxStakedAmountSet(NftId indexed targetNftId, Amount indexed stakeLimitAmount, Blocknumber indexed lastUpdateIn)
+contracts/staking/IStaking.sol: LogStakingTargetLimitsSet(NftId indexed targetNftId, Amount indexed stakeLimitAmount, Amount indexed marginAmount, Amount limitAmount)
+contracts/staking/IStaking.sol: LogStakingRewardReservesRefilled(NftId indexed targetNftId, Amount indexed dipAmount, address indexed targetOwner, Amount reserveBalance, Blocknumber lastUpdateIn)
+contracts/staking/IStaking.sol: LogStakingRewardReservesWithdrawn(NftId indexed targetNftId, Amount indexed dipAmount, address indexed targetOwner, Amount reserveBalance, Blocknumber lastUpdateIn)
+contracts/staking/IStaking.sol: LogStakingRewardReservesSpent(NftId indexed targetNftId, Amount indexed dipAmount, Amount indexed reserveBalance, Blocknumber lastUpdateIn)
+contracts/staking/IStaking.sol: LogStakingStakeCreated(NftId indexed stakeNftId, NftId indexed targetNftId, Amount indexed stakeAmount, Timestamp lockedUntil, address stakeOwner)
+contracts/staking/IStaking.sol: LogStakingStakeRewardsUpdated(NftId indexed stakeNftId, Amount indexed rewardIncrementAmount, Amount indexed stakeBalance, Amount rewardBalance, Timestamp lockedUntil, Blocknumber lastUpdateIn)
+contracts/staking/IStaking.sol: LogStakingRewardsRestaked(NftId indexed stakeNftId, Amount indexed restakedAmount, Amount indexed stakeBalance, Amount rewardBalance, Timestamp lockedUntil, Blocknumber lastUpdateIn)
+contracts/staking/IStaking.sol: LogStakingStaked(NftId indexed stakeNftId, Amount indexed stakedAmount, Amount indexed stakeBalance, Amount rewardBalance, Timestamp lockedUntil, Blocknumber lastUpdateIn)
+contracts/staking/IStaking.sol: LogStakingUnstaked(NftId indexed stakeNftId, Amount indexed unstakedAmount, Amount indexed stakeBalance, Amount rewardBalance, Timestamp lockedUntil, Blocknumber lastUpdateIn)
+contracts/staking/IStaking.sol: LogStakingRewardsClaimed(NftId indexed stakeNftId, Amount indexed claimedAmount, Amount indexed stakeBalance, Amount rewardBalance, Timestamp lockedUntil, Blocknumber lastUpdateIn)
+contracts/staking/IStaking.sol: LogStakingStakeRestaked(NftId indexed stakeNftId, NftId indexed targetNftId, Amount indexed stakeAmount, address owner, NftId oldStakeNftId)
 
 ===============
-contracts/staking/IStakingService.sol: LogStakingServiceProtocolTargetRegistered(NftId protocolNftId)
-contracts/staking/IStakingService.sol: LogStakingServiceInstanceTargetRegistered(NftId instanceNftId, Seconds initialLockingPeriod, UFixed initialRewardRate)
-contracts/staking/IStakingService.sol: LogStakingServiceRewardReservesIncreased(NftId targetNftId, address rewardProvider, Amount dipAmount, Amount newBalance)
-contracts/staking/IStakingService.sol: LogStakingServiceRewardReservesDecreased(NftId targetNftId, address targetOwner, Amount dipAmount, Amount newBalance)
-contracts/staking/IStakingService.sol: LogStakingServiceStakeCreated(NftId stakeNftId, NftId targetNftId, address stakeOwner)
+contracts/staking/IStakingService.sol: LogStakingServiceProtocolTargetRegistered(NftId indexed protocolNftId)
+contracts/staking/IStakingService.sol: LogStakingServiceInstanceTargetRegistered(NftId indexed instanceNftId, Seconds indexed initialLockingPeriod, UFixed indexed initialRewardRate)
+contracts/staking/IStakingService.sol: LogStakingServiceRewardReservesIncreased(NftId indexed targetNftId, address indexed rewardProvider, Amount indexed dipAmount, Amount newBalance)
+contracts/staking/IStakingService.sol: LogStakingServiceRewardReservesDecreased(NftId indexed targetNftId, address indexed targetOwner, Amount indexed dipAmount, Amount newBalance)
+contracts/staking/IStakingService.sol: LogStakingServiceStakeCreated(NftId indexed stakeNftId, NftId indexed targetNftId, address indexed stakeOwner)
 
 ===============
-contracts/staking/TargetHandler.sol: LogTargetHandlerUpdateTriggersSet(uint16 tvlUpdatesTrigger, UFixed minTvlRatioTrigger, Blocknumber lastUpdateIn)
+contracts/staking/TargetHandler.sol: LogTargetHandlerUpdateTriggersSet(uint16 indexed tvlUpdatesTrigger, UFixed indexed minTvlRatioTrigger, Blocknumber indexed lastUpdateIn)
 
 ===============
-contracts/upgradeability/ProxyManager.sol: LogProxyManagerVersionableDeployed(address proxy, address initialImplementation)
-contracts/upgradeability/ProxyManager.sol: LogProxyManagerVersionableUpgraded(address proxy, address upgradedImplementation)
+contracts/upgradeability/ProxyManager.sol: LogProxyManagerVersionableDeployed(address indexed proxy, address indexed initialImplementation)
+contracts/upgradeability/ProxyManager.sol: LogProxyManagerVersionableUpgraded(address indexed proxy, address indexed upgradedImplementation)
 
 ===============
 contracts/examples/flight/FlightLib.sol: LogFlightProductErrorUnprocessableStatus(RequestId requestId, RiskId riskId, bytes1 status)
@@ -287,14 +290,14 @@ contracts/examples/unpermissioned/SimpleProduct.sol: LogSimpleProductRequestAsyn
 contracts/examples/unpermissioned/SimpleProduct.sol: LogSimpleProductRequestSyncFulfilled(RequestId requestId, string responseText, uint256 responseDataLength)
 
 ===============
-contracts/instance/base/BalanceStore.sol: LogBalanceStoreTargetRegistered(NftId targetNftId)
-contracts/instance/base/BalanceStore.sol: LogBalanceStoreFeesIncreased(NftId targetNftId, Amount addedAmount, Amount newBalance, Blocknumber lastUpdatedIn)
-contracts/instance/base/BalanceStore.sol: LogBalanceStoreFeesDecreased(NftId targetNftId, Amount addedAmount, Amount newBalance, Blocknumber lastUpdatedIn)
-contracts/instance/base/BalanceStore.sol: LogBalanceStoreLockedIncreased(NftId targetNftId, Amount addedAmount, Amount newBalance, Blocknumber lastUpdatedIn)
-contracts/instance/base/BalanceStore.sol: LogBalanceStoreLockedDecreased(NftId targetNftId, Amount addedAmount, Amount newBalance, Blocknumber lastUpdatedIn)
-contracts/instance/base/BalanceStore.sol: LogBalanceStoreBalanceIncreased(NftId targetNftId, Amount addedAmount, Amount newBalance, Blocknumber lastUpdatedIn)
-contracts/instance/base/BalanceStore.sol: LogBalanceStoreBalanceDecreased(NftId targetNftId, Amount addedAmount, Amount newBalance, Blocknumber lastUpdatedIn)
+contracts/instance/base/BalanceStore.sol: LogBalanceStoreTargetRegistered(NftId indexed targetNftId)
+contracts/instance/base/BalanceStore.sol: LogBalanceStoreFeesIncreased(NftId indexed targetNftId, Amount indexed addedAmount, Amount indexed newBalance, Blocknumber lastUpdatedIn)
+contracts/instance/base/BalanceStore.sol: LogBalanceStoreFeesDecreased(NftId indexed targetNftId, Amount indexed addedAmount, Amount indexed newBalance, Blocknumber lastUpdatedIn)
+contracts/instance/base/BalanceStore.sol: LogBalanceStoreLockedIncreased(NftId indexed targetNftId, Amount indexed addedAmount, Amount indexed newBalance, Blocknumber lastUpdatedIn)
+contracts/instance/base/BalanceStore.sol: LogBalanceStoreLockedDecreased(NftId indexed targetNftId, Amount indexed addedAmount, Amount indexed newBalance, Blocknumber lastUpdatedIn)
+contracts/instance/base/BalanceStore.sol: LogBalanceStoreBalanceIncreased(NftId indexed targetNftId, Amount indexed addedAmount, Amount indexed newBalance, Blocknumber lastUpdatedIn)
+contracts/instance/base/BalanceStore.sol: LogBalanceStoreBalanceDecreased(NftId indexed targetNftId, Amount indexed addedAmount, Amount indexed newBalance, Blocknumber lastUpdatedIn)
 
 ===============
-contracts/instance/base/ObjectSet.sol: LogObjectSetInitialized(address instance)
+contracts/instance/base/ObjectSet.sol: LogObjectSetInitialized(address indexed instance)
 ```

@@ -86,10 +86,14 @@ contract TestProductClaim is GifTest {
         // checking last of 4 logs
         assertEq(entries.length, 5, "unexpected number of logs");
         assertEq(entries[4].emitter, address(claimService), "unexpected emitter");
-        assertEq(entries[4].topics[0], keccak256("LogClaimServicePayoutCreated(uint96,uint40,uint96,address)"), "unexpected log signature");
-        (uint96 nftIdInt ,uint40 payoutIdInt, uint96 payoutAmountInt, address beneficiary) = abi.decode(entries[4].data, (uint96,uint40,uint96, address));
-
+        assertEq(entries[4].topics[0], keccak256("LogClaimServicePayoutCreated(uint96,uint16,uint40,uint96,address)"), "unexpected log signature (1)");
+        (uint96 payoutAmountInt, address beneficiary) = abi.decode(entries[4].data, (uint96,address));
+        uint96 nftIdInt = uint96(uint256(entries[4].topics[1]));
+        uint16 claimIdInt = uint16(uint256(entries[4].topics[2]));
+        uint40 payoutIdInt = uint40(uint256(entries[4].topics[3]));
+        
         assertEq(nftIdInt, policyNftId.toInt(), "unexpected policy nft id");
+        assertEq(claimIdInt, claimId.toInt(), "unexpected claim id");
         assertEq(payoutIdInt, payoutId.toInt(), "unexpected payout id");
         assertEq(payoutAmountInt, payoutAmount.toInt(), "unexpected payout amount");
         assertEq(beneficiary, customer, "unexpected beneficiary");

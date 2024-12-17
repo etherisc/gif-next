@@ -38,10 +38,9 @@ contract ReleaseRegistry is
 {
     uint256 public constant INITIAL_GIF_VERSION = 3;// first active release version  
 
-    event LogReleaseCreation(IAccessAdmin admin, VersionPart release, bytes32 salt); 
-    event LogReleaseActivation(VersionPart release);
-    event LogReleaseDisabled(VersionPart release);
-    event LogReleaseEnabled(VersionPart release);
+    event LogReleaseCreated(address indexed releaseAdmin, VersionPart indexed release, bytes32 indexed salt); 
+    event LogReleaseActivated(VersionPart indexed release);
+    event LogReleaseEnabled(VersionPart indexed release, bool indexed active);
 
     // constructor
     error ErrorReleaseRegistryNotRegistry(Registry registry);
@@ -168,7 +167,7 @@ contract ReleaseRegistry is
         _releaseInfo[releaseVersion].auth = serviceAuthorization;
         _releaseInfo[releaseVersion].releaseAdmin = address(releaseAdmin);
 
-        emit LogReleaseCreation(releaseAdmin, releaseVersion, releaseSalt);
+        emit LogReleaseCreated(address(releaseAdmin), releaseVersion, releaseSalt);
     }
 
     function registerService(IService service) 
@@ -270,7 +269,7 @@ contract ReleaseRegistry is
 
         _setReleaseLocked(release, false);
 
-        emit LogReleaseActivation(release);
+        emit LogReleaseActivated(release);
     }
 
     /// @dev stop/resume operations with restricted functions
@@ -284,12 +283,12 @@ contract ReleaseRegistry is
             checkTransition(state, RELEASE(), PAUSED(), ACTIVE());
             _releaseInfo[release].state = ACTIVE();
             _releaseInfo[release].disabledAt = TimestampLib.max();
-            emit LogReleaseEnabled(release);
+            emit LogReleaseEnabled(release, true);
         } else {
             checkTransition(state, RELEASE(), ACTIVE(), PAUSED());
             _releaseInfo[release].state = PAUSED();
             _releaseInfo[release].disabledAt = TimestampLib.current();
-            emit LogReleaseDisabled(release);
+            emit LogReleaseEnabled(release, false);
         }
 
         _setReleaseLocked(release, !active);

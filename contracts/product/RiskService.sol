@@ -119,10 +119,10 @@ contract RiskService is
 
         if (locked) {
             instance.getRiskSet().deactivate(riskId);
-            emit LogRiskServiceRiskLocked(productNftId, riskId);
+            emit LogRiskServiceRiskLocked(productNftId, riskId, true);
         } else {
             instance.getRiskSet().activate(riskId);
-            emit LogRiskServiceRiskUnlocked(productNftId, riskId);
+            emit LogRiskServiceRiskLocked(productNftId, riskId, false);
         }
     }
 

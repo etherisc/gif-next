@@ -18,18 +18,11 @@ import {Seconds, SecondsLib} from "../../contracts/type/Seconds.sol";
 import {StakingLib} from "../../contracts/staking/StakingLib.sol";
 import {TargetManagerLib} from "../../contracts/staking/TargetManagerLib.sol";
 import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
-import {UFixed, UFixedLib} from "../../contracts/type/UFixed.sol";import {VersionPart} from "../../contracts/type/Version.sol";
+import {UFixed, UFixedLib} from "../../contracts/type/UFixed.sol";
+import {VersionPart} from "../../contracts/type/Version.sol";
 
 
 contract StakingRateManagement is GifTest {
-
-    // TODO find better solution than copying event from IStaking
-    event LogStakingProtocolLockingPeriodSet(NftId targetNftId, Seconds newLockingPeriod, Seconds oldLockingPeriod, Blocknumber lastUpdatedIn);
-    event LogStakingProtocolRewardRateSet(NftId targetNftId, UFixed newRewardRate, UFixed oldRewardRate, Blocknumber lastUpdatedIn);
-    event LogStakingStakingRateSet(ChainId chainId, address token, UFixed newStakingRate, UFixed oldStakingRate, Blocknumber lastUpdatedIn);
-    event LogStakingStakingServiceSet(address stakingService, VersionPart release, address oldStakingService);
-    event LogStakingStakingReaderSet(address stakingReader, address oldStakingReader);
-    event LogStakingTokenHandlerApproved(address token, Amount approvalAmount, Amount oldApprovalAmount);
 
     address public tokenAddress;
     address public stakingStoreAddress;
@@ -85,11 +78,11 @@ contract StakingRateManagement is GifTest {
         ChainId currentChainId = ChainIdLib.current();
         Blocknumber currentBlock = BlocknumberLib.current();
         vm.expectEmit(address(staking));
-        emit LogStakingStakingRateSet(
+        emit IStaking.LogStakingStakingRateSet(
             currentChainId, 
             tokenAddress, 
-            newStakingRate, // new staking rate
             tokenStakingRate, // old stakig rate
+            newStakingRate, // new staking rate
             currentBlock);
 
         vm.startPrank(registryOwner);

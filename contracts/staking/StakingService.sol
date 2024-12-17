@@ -59,7 +59,7 @@ contract StakingService is
             initialLockingPeriod,
             initialRewardRate);
 
-        emit LogStakingServiceInstanceTargetRegistered(targetNftId, chainId, initialLockingPeriod, initialRewardRate);
+        emit LogStakingServiceInstanceTargetRegistered(targetNftId, initialLockingPeriod, initialRewardRate);
     }
 
 
@@ -164,7 +164,7 @@ contract StakingService is
                 data: ""
             }));
 
-        emit LogStakingServiceStakeObjectCreated(stakeNftId, targetNftId, stakeOwner);
+        emit LogStakingServiceStakeCreated(stakeNftId, targetNftId, stakeOwner);
     }
 
 

@@ -15,8 +15,8 @@ interface IAccountingService is
 {
     event LogAccountingServiceBalanceChanged(
         NftId indexed nftId,
-        Amount indexed amount,
-        Amount indexed feeAmount,
+        Amount amount,
+        Amount feeAmount,
         bool increase,
         ObjectType objectType
     );

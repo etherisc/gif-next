@@ -30,16 +30,15 @@ interface IBundleService is IService {
 
     error ErrorBundleServiceExtensionLifetimeIsZero();
 
-    event LogBundleServiceBundleCreated(NftId bundleNftId, NftId poolNftId, Seconds lifetime, Amount fixedFee, UFixed fractionalFee);
-    event LogBundleServiceBundleClosed(NftId bundleNftId);
-    event LogBundleServiceBundleLocked(NftId bundleNftId);
-    event LogBundleServiceBundleUnlocked(NftId bundleNftId);
-    event LogBundleServiceBundleExtended(NftId bundleNftId, Seconds lifetimeExtension, Timestamp extendedExpiredAt);
-    event LogBundleServiceBundleFeeUpdated(NftId bundleNftId, Amount fixedFee, UFixed fractionalFee);
-    event LogBundleServiceCollateralLocked(NftId bundleNftId, NftId policyNftId, Amount collateralAmount);
-    event LogBundleServiceCollateralReleased(NftId bundleNftId, NftId policyNftId, Amount collateralAmount);
-    event LogBundleServiceBundleStaked(NftId bundleNftId, Amount amount);
-    event LogBundleServiceBundleUnstaked(NftId bundleNftId, Amount amount);
+    event LogBundleServiceBundleCreated(NftId indexed bundleNftId, NftId indexed poolNftId, Seconds lifetime, Amount fixedFee, UFixed fractionalFee);
+    event LogBundleServiceBundleClosed(NftId indexed bundleNftId);
+    event LogBundleServiceBundleLocked(NftId indexed bundleNftId, bool indexed locked);
+    event LogBundleServiceBundleExtended(NftId indexed bundleNftId, Seconds lifetimeExtension, Timestamp extendedExpiredAt);
+    event LogBundleServiceBundleFeeUpdated(NftId indexed bundleNftId, Amount fixedFee, UFixed fractionalFee);
+    event LogBundleServiceCollateralLocked(NftId indexed bundleNftId, NftId indexed policyNftId, Amount collateralAmount);
+    event LogBundleServiceCollateralReleased(NftId indexed bundleNftId, NftId indexed policyNftId, Amount collateralAmount);
+    event LogBundleServiceBundleStaked(NftId indexed bundleNftId, Amount amount);
+    event LogBundleServiceBundleUnstaked(NftId indexed bundleNftId, Amount amount);
 
     /// @dev Create a new bundle for the specified attributes.
     function create(

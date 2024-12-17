@@ -496,7 +496,7 @@ contract ClaimService is
         claimInfo.openPayoutsCount += 1;
         instanceContracts.productStore.updateClaim(policyNftId, claimId, claimInfo, KEEP_STATE());
 
-        emit LogClaimServicePayoutCreated(policyNftId, payoutId, amount, beneficiary);
+        emit LogClaimServicePayoutCreated(policyNftId, claimId, payoutId, amount, beneficiary);
     }
 
     /// @dev Verifies the caller is a product and the policy is active. 

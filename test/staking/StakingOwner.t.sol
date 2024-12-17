@@ -190,8 +190,8 @@ contract StakingOwnerTest is GifTest {
         vm.expectEmit(address(staking.getStakingStore()));
         emit IStaking.LogStakingTargetRewardRateSet(
             protocolNftId,
-            newProtocolRewardRate,
             protocolRewardRate,
+            newProtocolRewardRate,
             currentBlock);
 
         vm.startPrank(stakingOwner);

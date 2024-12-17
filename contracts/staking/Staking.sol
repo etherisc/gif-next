@@ -177,7 +177,7 @@ contract Staking is
             Blocknumber lastUpdateIn
         )  = _getStakingStorage()._store.setStakingRate(chainId, token, stakingRate);
 
-        emit LogStakingStakingRateSet(chainId, token, stakingRate, oldStakingRate, lastUpdateIn);
+        emit LogStakingStakingRateSet(chainId, token, oldStakingRate, stakingRate, lastUpdateIn);
     }
 
 
@@ -193,7 +193,7 @@ contract Staking is
         address oldStakingService = address($._stakingService);
         $._stakingService = StakingLib.checkAndGetStakingService(getRegistry(), release);
 
-        emit LogStakingStakingServiceSet(address($._stakingService), release, oldStakingService);
+        emit LogStakingStakingServiceSet(oldStakingService, address($._stakingService), release);
     }
 
 
@@ -250,7 +250,7 @@ contract Staking is
             token, 
             amount);
 
-        emit LogStakingTokenHandlerApproved(address(token), amount, oldAllowanceAmount);
+        emit LogStakingTokenHandlerApproved(oldAllowanceAmount, amount, address(token));
     }
 
     //--- target management -------------------------------------------------//
@@ -422,7 +422,7 @@ contract Staking is
         $._store.addTargetToken(targetNftId, token);
 
         // TODO move logging to store
-        emit LogStakingTargetTokenAdded(targetNftId, chainId, token);
+        emit LogStakingTargetTokenAdded(targetNftId, token);
     }
 
 

@@ -34,20 +34,20 @@ contract InstanceStore is
     BaseStore
 {
 
-    event LogProductStoreComponentInfoCreated(NftId componentNftId, StateId state, address createdby, address txOrigin);
-    event LogProductStoreComponentInfoUpdated(NftId componentNftId, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
-    event LogProductStorePoolInfoCreated(NftId poolNftId, StateId state, address createdBy, address txOrigin);
-    event LogProductStorePoolInfoUpdated(NftId poolNftId, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
-    event LogProductStoreDistributorTypeInfoCreated(DistributorType distributorType, StateId state, address createdBy, address txOrigin);
-    event LogProductStoreDistributorTypeInfoUpdated(DistributorType distributorType, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
-    event LogProductStoreDistributorInfoCreated(NftId distributorNftId, StateId state, address createdBy, address txOrigin);
-    event LogProductStoreDistributorInfoUpdated(NftId distributorNftId, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
-    event LogProductStoreReferralInfoCreated(ReferralId referralId, StateId state, address createdBy, address txOrigin);
-    event LogProductStoreReferralInfoUpdated(ReferralId referralId, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
-    event LogProductStoreBundleInfoCreated(NftId bundleNftId, StateId state, address createdBy, address txOrigin);
-    event LogProductStoreBundleInfoUpdated(NftId bundleNftId, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
-    event LogProductStoreRequestInfoCreated(RequestId requestId, StateId state, address createdBy, address txOrigin);
-    event LogProductStoreRequestInfoUpdated(RequestId requestId, StateId oldState, StateId newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
+    event LogProductStoreComponentInfoCreated(NftId indexed componentNftId, StateId indexed state, address indexed createdby, address txOrigin);
+    event LogProductStoreComponentInfoUpdated(NftId indexed componentNftId, StateId indexed oldState, StateId indexed newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
+    event LogProductStorePoolInfoCreated(NftId indexed poolNftId, StateId indexed state, address indexed createdBy, address txOrigin);
+    event LogProductStorePoolInfoUpdated(NftId indexed poolNftId, StateId indexed oldState, StateId indexed newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
+    event LogProductStoreDistributorTypeInfoCreated(DistributorType indexed distributorType, StateId indexed state, address indexed createdBy, address txOrigin);
+    event LogProductStoreDistributorTypeInfoUpdated(DistributorType indexed distributorType, StateId indexed oldState, StateId indexed newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
+    event LogProductStoreDistributorInfoCreated(NftId indexed distributorNftId, StateId indexed state, address indexed createdBy, address txOrigin);
+    event LogProductStoreDistributorInfoUpdated(NftId indexed distributorNftId, StateId indexed oldState, StateId indexed newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
+    event LogProductStoreReferralInfoCreated(ReferralId indexed referralId, StateId indexed state, address indexed createdBy, address txOrigin);
+    event LogProductStoreReferralInfoUpdated(ReferralId indexed referralId, StateId indexed oldState, StateId indexed newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
+    event LogProductStoreBundleInfoCreated(NftId indexed bundleNftId, StateId indexed state, address indexed createdBy, address txOrigin);
+    event LogProductStoreBundleInfoUpdated(NftId indexed bundleNftId, StateId indexed oldState, StateId indexed newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
+    event LogProductStoreRequestInfoCreated(RequestId indexed requestId, StateId indexed state, address indexed createdBy, address txOrigin);
+    event LogProductStoreRequestInfoUpdated(RequestId indexed requestId, StateId indexed oldState, StateId indexed newState, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
 
 
     mapping(Key32 => IComponents.ComponentInfo) private _components;
