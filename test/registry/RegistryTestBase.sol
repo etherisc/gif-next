@@ -17,6 +17,7 @@ import {ObjectType, ObjectTypeLib, PROTOCOL, REGISTRY, STAKING, SERVICE, INSTANC
 
 import {IAccessAdmin} from "../../contracts/authorization/IAccessAdmin.sol";
 
+import {ChainId, ChainIdLib} from "../../contracts/type/ChainId.sol";
 import {ChainNft} from "../../contracts/registry/ChainNft.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
@@ -34,10 +35,11 @@ import {RegistryServiceMock} from "../mock/RegistryServiceMock.sol";
 import {ServiceAuthorizationMockWithRegistryService} from "../mock/ServiceAuthorizationMock.sol";
 
 import {GifDeployer} from "../base/GifDeployer.sol";
+import {GifTestHelper} from "../base/GifTestHelper.sol";
 
 
 
-contract RegistryTestBase is GifDeployer, FoundryRandom {
+contract RegistryTestBase is GifDeployer, FoundryRandom, GifTestHelper {
 
     // keep identical to ChainNft events
     event LogTokenInterceptorAddress(uint256 tokenId, address interceptor);
@@ -539,7 +541,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         assertTrue(registryAddress != address(0), "Test error: _afterRegistryRegistration() is called with 0 registry address");
         //assertNotEq(registry, globalRegistryInfo.objectAddress, "Test error: _afterRegistryRegistration() called with globalRegistry address"); // chain registry can have global address
 
-        assertEq(nftId.toInt(), chainNft.calculateTokenId(registry.REGISTRY_TOKEN_SEQUENCE_ID(), chainId), "Test error: _registryNftIdByChainId[chainId] inconsictent with chainNft.calculateTokenId[REGISTRY_TOKEN_SEQUENCE_ID, chainId]");
+        assertEq(nftId.toInt(), chainNft.calculateTokenId(registry.REGISTRY_TOKEN_SEQUENCE_ID(), ChainIdLib.toChainId(chainId)), "Test error: _registryNftIdByChainId[chainId] inconsictent with chainNft.calculateTokenId[REGISTRY_TOKEN_SEQUENCE_ID, chainId]");
         assertTrue(_registryNftIdByChainId[chainId].eqz(), "Test error: _registryNftIdByChainId[chainId] already set");
         assertFalse(EnumerableSet.contains(_chainIds, chainId), "Test error: _chainIds[] already contains chainId"); 
 
@@ -704,10 +706,10 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         assertEq(registry.chainIds(), EnumerableSet.length(_chainIds), "getChainIds() returned unexpected value");
         for(uint i = 0; i < EnumerableSet.length(_chainIds); i++)
         {
-            uint64 chainId = uint64(EnumerableSet.at(_chainIds, i));
-            assertEq(registry.getChainId(i), chainId, "getChainId(i) returned unexpected value");
+            ChainId chainId = ChainIdLib.toChainId(uint64(EnumerableSet.at(_chainIds, i)));
+            assertEqChainId(registry.getChainId(i), chainId, "getChainId(i) returned unexpected value");
 
-            NftId nftId = _registryNftIdByChainId[chainId];
+            NftId nftId = _registryNftIdByChainId[chainId.toInt()];
             assertEq(registry.getRegistryNftId(chainId).toInt(), nftId.toInt(), "getRegistryNftId(chainId) returned unexpected value");
 
             // redundant calls?
@@ -784,7 +786,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             assertEq(registry.isRegisteredService(protocolInfo.objectAddress), false, "isRegisteredService(address) returned unexpected value #1");
             assertEq(registry.getServiceAddress(expectedDomain, expectedVersion) , address(0), "getServiceAddress(domain, version) returned unexpected value #1");
 
-            assertEq(registry.getRegistryNftId(expectedChainId).toInt(), 0, "getRegistryNftId(chainId) returned unexpected value #1");
+            assertEq(registry.getRegistryNftId(ChainIdLib.toChainId(expectedChainId)).toInt(), 0, "getRegistryNftId(chainId) returned unexpected value #1");
         } 
         else if(nftId == globalRegistryNftId) 
         {
@@ -847,7 +849,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
                 }
             }
 
-            assertEq(registry.getRegistryNftId(expectedChainId).toInt(), globalRegistryNftId.toInt(), "getRegistryNftId(chainId) returned unexpected value #2");
+            assertEq(registry.getRegistryNftId(ChainIdLib.toChainId(expectedChainId)).toInt(), globalRegistryNftId.toInt(), "getRegistryNftId(chainId) returned unexpected value #2");
         } 
         else if(nftId == registryNftId)
         {// not mainnet, registry have address lookup set
@@ -866,7 +868,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             assertEq(registry.isRegisteredService(registryInfo.objectAddress), false, "isRegisteredService(address) returned unexpected value #3");
             assertEq(registry.getServiceAddress(expectedDomain, expectedVersion) , address(0), "getServiceAddress(domain, version) returned unexpected value #3");
 
-            assertEq(registry.getRegistryNftId(expectedChainId).toInt(), registryNftId.toInt(), "getRegistryNftId(chainId) returned unexpected value #3"); 
+            assertEq(registry.getRegistryNftId(ChainIdLib.toChainId(expectedChainId)).toInt(), registryNftId.toInt(), "getRegistryNftId(chainId) returned unexpected value #3"); 
         } 
         else if(expectedInfo.objectType == REGISTRY()) 
         {// mainnet, chain registry
@@ -917,7 +919,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
                 assertEq(registry.getServiceAddress(expectedDomain, expectedVersion) , address(0), "getServiceAddress(domain, version) returned unexpected value #4.4");
             }
 
-            assertEq(registry.getRegistryNftId(expectedChainId).toInt(), expectedInfo.nftId.toInt(), "getRegistryNftId(chainId) returned unexpected value #4");
+            assertEq(registry.getRegistryNftId(ChainIdLib.toChainId(expectedChainId)).toInt(), expectedInfo.nftId.toInt(), "getRegistryNftId(chainId) returned unexpected value #4");
         }
         else if(expectedInfo.objectType == SERVICE()) 
         {
@@ -938,7 +940,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             assertEq(registry.isRegisteredService(expectedInfo.objectAddress), true, "isRegisteredService(address) returned unexpected value #5");
             assertEq(registry.getServiceAddress(expectedDomain, expectedVersion) , expectedInfo.objectAddress, "getServiceAddress(domain, version) returned unexpected value #5");
 
-            assertEq(registry.getRegistryNftId(expectedChainId).toInt(), 0, "getRegistryNftId(chainId) returned unexpected value #5");
+            assertEq(registry.getRegistryNftId(ChainIdLib.toChainId(expectedChainId)).toInt(), 0, "getRegistryNftId(chainId) returned unexpected value #5");
         } 
         else if(expectedParentType == INSTANCE()) 
         {
@@ -973,7 +975,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             assertEq(registry.isRegisteredService(expectedInfo.objectAddress), false, "isRegisteredService(address) returned unexpected value #6");
             assertEq(registry.getServiceAddress(expectedDomain, expectedVersion) , address(0), "getServiceAddress(domain, version) returned unexpected value #6"); 
 
-            assertEq(registry.getRegistryNftId(expectedChainId).toInt(), 0, "getRegistryNftId(chainId) returned unexpected value #6");
+            assertEq(registry.getRegistryNftId(ChainIdLib.toChainId(expectedChainId)).toInt(), 0, "getRegistryNftId(chainId) returned unexpected value #6");
         }
         else if(expectedInfo.objectAddress > address(0)) 
         {// the rest contracts
@@ -991,7 +993,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             assertEq(registry.isRegisteredService(expectedInfo.objectAddress), false, "isRegisteredService(address) returned unexpected value #7");
             assertEq(registry.getServiceAddress(expectedDomain, expectedVersion) , address(0), "getServiceAddress(domain, version) returned unexpected value #7");
 
-            assertEq(registry.getRegistryNftId(expectedChainId).toInt(), 0, "getRegistryNftId(chainId) returned unexpected value #7"); 
+            assertEq(registry.getRegistryNftId(ChainIdLib.toChainId(expectedChainId)).toInt(), 0, "getRegistryNftId(chainId) returned unexpected value #7"); 
         }
         else 
         { // the rest objects, some checks are redundant?
@@ -1010,7 +1012,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             assertEq(registry.isRegisteredService(expectedInfo.objectAddress), false, "isRegisteredService(address) returned unexpected value #8");
             assertEq(registry.getServiceAddress(expectedDomain, expectedVersion) , address(0), "getServiceAddress(domain, version) returned unexpected value #8");
 
-            assertEq(registry.getRegistryNftId(expectedChainId).toInt(), 0, "getRegistryNftId(chainId) returned unexpected value #8"); 
+            assertEq(registry.getRegistryNftId(ChainIdLib.toChainId(expectedChainId)).toInt(), 0, "getRegistryNftId(chainId) returned unexpected value #8"); 
         }
     }
 
@@ -1055,7 +1057,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
 
     function _assert_registerRegistry(
         NftId nftId,
-        uint64 chainId, 
+        ChainId chainId, 
         address registryAddress,
         bool expectRevert, 
         bytes memory revertMsg) internal
@@ -1085,7 +1087,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
 
         if(expectRevert == false)
         {
-            _afterRegistryRegistration(nftId, chainId, registryAddress); 
+            _afterRegistryRegistration(nftId, uint64(chainId.toInt()), registryAddress); 
 
             _checkRegistryGetters();
 
@@ -1098,7 +1100,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         }
     }
 
-    function _assert_registerRegistry_withChecks(NftId nftId, uint64 chainId, address registry) public
+    function _assert_registerRegistry_withChecks(NftId nftId, ChainId chainId, address registry) public
     {
         bool expectRevert;
         bytes memory expectedRevertMsg;
@@ -1110,7 +1112,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         _assert_registerRegistry(nftId, chainId, registry, expectRevert, expectedRevertMsg);
     }
 
-    function _registerRegistryChecks(NftId nftId, uint64 chainId, address registryAddress) internal view returns (bool expectRevert, bytes memory expectedRevertMsg)
+    function _registerRegistryChecks(NftId nftId, ChainId chainId, address registryAddress) internal view returns (bool expectRevert, bytes memory expectedRevertMsg)
     {
         if(_sender != gifAdmin) 
         {// auth check
@@ -1121,7 +1123,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             //assertTrue(false, "_registerRegistryChecks() check 2 is reached");
             expectedRevertMsg = abi.encodeWithSelector(IRegistry.ErrorRegistryNotOnMainnet.selector, block.chainid);
             expectRevert = true;
-        } else if(chainId == 0) {
+        } else if(chainId.eqz()) {
             //assertTrue(false, "_registerRegistryChecks() check 3 is reached");
             expectedRevertMsg = abi.encodeWithSelector(IRegistry.ErrorRegistryChainRegistryChainIdZero.selector, nftId);
             expectRevert = true;
@@ -1137,7 +1139,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             //assertTrue(false, "_registerRegistryChecks() check 6 is reached");
             expectedRevertMsg = abi.encodeWithSelector(IRegistry.ErrorRegistryChainRegistryAlreadyRegistered.selector, nftId, chainId);
             expectRevert = true;
-        } else if(_registryNftIdByChainId[chainId].gtz()) {
+        } else if(_registryNftIdByChainId[chainId.toInt()].gtz()) {
             assertTrue(false, "_registerRegistryChecks check 7 is reached"); // MUST not get here       
         }  
     }
@@ -1145,7 +1147,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
     function registerRegistry_testFunction(
         address sender,
         NftId nftId,
-        uint64 chainId,
+        ChainId chainId,
         address registry) public
     {
         _startPrank(sender);
