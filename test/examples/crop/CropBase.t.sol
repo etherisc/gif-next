@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import {console} from "../../../lib/forge-std/src/Test.sol";
 
-import {IOracle} from "../../../contracts/oracle/IOracle.sol";
+import {IBaseStore} from "../../../contracts/instance/IBaseStore.sol";
 import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
 
 import {AccountingToken} from "../../../contracts/examples/crop/AccountingToken.sol";
@@ -176,6 +176,12 @@ contract CropBaseTest is GifTest {
         _fundAccount(cropOwner, 100000 * 10 ** accountingToken.decimals());
         _fundAccount(productOperator, 100000 * 10 ** accountingToken.decimals());
         _fundAccount(customer, 10000 * 10 ** accountingToken.decimals());
+
+        vm.startPrank(customer);
+        accountingToken.approve(
+            address(cropProduct.getTokenHandler()), 
+            accountingToken.balanceOf(customer));
+        vm.stopPrank();
     }
 
 
@@ -219,7 +225,20 @@ contract CropBaseTest is GifTest {
         console.log("- locationId", cropRisk.locationId.toString());
         console.log("- crop", cropRisk.crop.toString());
         console.log("- seasonEndAt", cropRisk.seasonEndAt.toInt());
-        console.log("- payoutFactor (x100)", (cropRisk.payoutFactor * UFixedLib.toUFixed(100)).toInt());
+        console.log("- payoutFactor (%)", (cropRisk.payoutFactor * UFixedLib.toUFixed(100)).toInt());
+        console.log("- payoutDefined", cropRisk.payoutDefined);
+
+        CropProduct.Season memory season = cropProduct.getSeason(cropRisk.seasonId);
+        console.log("- season", season.year);
+        console.log("  - season name", season.name.toString());
+        console.log("  - season start", season.seasonStart.toString());
+        console.log("  - season end", season.seasonEnd.toString());
+        console.log("  - season days", season.seasonDays);
+
+        Location location = cropProduct.getLocation(cropRisk.locationId);
+        console.log("- location");
+        console.log("  - latitude", location.latitude());
+        console.log("  - longitude", location.longitude());
         // solhint-enable
     }
 
@@ -230,12 +249,23 @@ contract CropBaseTest is GifTest {
         console.log("- productNftId", policyInfo.productNftId.toInt());
         console.log("- bundleNftId", policyInfo.bundleNftId.toInt());
         console.log("- riskId referralId", policyInfo.riskId.toInt(), policyInfo.referralId.toInt());
+        console.log("- state", instanceReader.getPolicyState(policyNftId).toInt());
         console.log("- activatedAt lifetime", policyInfo.activatedAt.toInt(), policyInfo.lifetime.toInt());
         console.log("- expiredAt closedAt", policyInfo.expiredAt.toInt(), policyInfo.closedAt.toInt());
         console.log("- sumInsuredAmount", policyInfo.sumInsuredAmount.toInt());
         console.log("- premiumAmount", policyInfo.premiumAmount.toInt());
         console.log("- claimsCount claimAmount", policyInfo.claimsCount, policyInfo.claimAmount.toInt());
         console.log("- payoutAmount", policyInfo.payoutAmount.toInt());
+        // solhint-enable
+    }
+
+
+    function _printMetadata(IBaseStore.Metadata memory metadata) internal {
+        // solhint-disable
+        console.log("metadata");
+        console.log("- objectType", metadata.objectType.toInt());
+        console.log("- state", metadata.state.toInt());
+        console.log("- updatedIn", metadata.updatedIn.toInt());
         // solhint-enable
     }
 

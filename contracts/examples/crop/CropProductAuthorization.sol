@@ -54,10 +54,11 @@ contract CropProductAuthorization
         _authorize(functions, CropProduct.createCrop.selector, "createCrop");
         _authorize(functions, CropProduct.createRisk.selector, "createRisk");
         _authorize(functions, CropProduct.createPolicy.selector, "createPolicy");
+        _authorize(functions, CropProduct.updatePayoutFactor.selector, "updatePayoutFactor"); 
+        _authorize(functions, CropProduct.processPolicy.selector, "processPolicy");
 
         // authorize public role (additional authz via onlyOwner)
         functions = _authorizeForTarget(getMainTargetName(), PUBLIC_ROLE());
-        _authorize(functions, CropProduct.processPayoutsAndClosePolicies.selector, "processPayoutsAndClosePolicies");
         _authorize(functions, CropProduct.setDefaultBundle.selector, "setDefaultBundle");
         _authorize(functions, CropProduct.setConstants.selector, "setConstants");
         _authorize(functions, CropProduct.approveTokenHandler.selector, "approveTokenHandler");

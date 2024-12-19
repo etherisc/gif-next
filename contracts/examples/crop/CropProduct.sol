@@ -5,6 +5,7 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 
 import {IAuthorization} from "../../authorization/IAuthorization.sol";
 import {IComponents} from "../../instance/module/IComponents.sol";
+import {IPolicy} from "../../instance/module/IPolicy.sol";
 
 import {Amount, AmountLib} from "../../type/Amount.sol";
 import {ClaimId} from "../../type/ClaimId.sol";
@@ -49,6 +50,8 @@ contract CropProduct is
     error ErrorInvalidSumInsured(Amount sumInsuredAmount);
     error ErrorInvalidPremium(Amount premiumAmount);
 
+    error ErrorUndefinedRiskPayout(RiskId riskId);
+
     // solhint-disable var-name-mixedcase
     Amount public MIN_PREMIUM;
     Amount public MAX_PREMIUM;
@@ -74,6 +77,7 @@ contract CropProduct is
         Str crop;
         Timestamp seasonEndAt;
         UFixed payoutFactor;
+        bool payoutDefined;
     }
 
     // Seasons
@@ -196,7 +200,8 @@ contract CropProduct is
             locationId: locationId,
             crop: crop,
             seasonEndAt: seasonEndAt,
-            payoutFactor: UFixedLib.zero()
+            payoutFactor: UFixedLib.zero(),
+            payoutDefined: false
         });
 
         riskId = _createRisk(riskKey, abi.encode(cropRisk));
@@ -215,6 +220,8 @@ contract CropProduct is
         if (!exists) { revert ErrorInvalidRiskId(riskId); }
 
         cropRisk.payoutFactor = payoutFactor;
+        cropRisk.payoutDefined = true;
+
         _updateRisk(riskId, abi.encode(cropRisk));
     }
 
@@ -257,7 +264,7 @@ contract CropProduct is
             lifetime,
             _defaultBundleNftId, 
             ReferralLib.zero(), 
-            ""); // application data
+            abi.encode(premiumAmount)); // application data: premium amount, see calculateNetPremium
 
         // underwrite and activate policy
         _createPolicy(
@@ -271,33 +278,24 @@ contract CropProduct is
     }
 
 
-
-    /// @dev Manual fallback function for product owner.
-    function processPayoutsAndClosePolicies(
-        RiskId riskId, 
-        uint8 maxPoliciesToProcess
-    )
-        external
-        virtual
-        restricted()
-        onlyOwner()
+    function processPolicy(NftId policyNftId)
+        external 
+        restricted() 
     {
-        _processPayoutsAndClosePolicies(
-            riskId, 
-            maxPoliciesToProcess);
+        _processAndClosePolicy(policyNftId);
     }
 
 
     //--- owner functions ---------------------------------------------------//
 
-
-    function resendResponse(RequestId requestId)
-        external
-        virtual
-        restricted()
-    {
-        _resendResponse(requestId);
-    }
+    // TODO cleanup
+    // function resendResponse(RequestId requestId)
+    //     external
+    //     virtual
+    //     restricted()
+    // {
+    //     _resendResponse(requestId);
+    // }
 
     /// @dev Call after product registration with the instance
     /// when the product token/tokenhandler is available
@@ -374,7 +372,26 @@ contract CropProduct is
         view 
         returns (Amount netPremiumAmount)
     {
-        (netPremiumAmount, ) = abi.decode(applicationData, (Amount, Amount[5]));
+        (netPremiumAmount) = abi.decode(applicationData, (Amount));
+    }
+
+
+    function calculatePayout(
+        IPolicy.PolicyInfo memory info,
+        CropRisk memory cropRisk
+    )
+        public
+        pure
+        returns (Amount payoutAmount)
+    {
+        Amount sumInsuredAmount = info.sumInsuredAmount;
+        UFixed payoutFactor = cropRisk.payoutFactor;
+
+        if (payoutFactor.eqz()) {
+            return AmountLib.zero();
+        }
+
+        return sumInsuredAmount.multiplyWith(payoutFactor);
     }
 
 
@@ -383,108 +400,6 @@ contract CropProduct is
     function getRequestForRisk(RiskId riskId) public view returns (RequestId requestId) { return _requests[riskId]; }
 
     //--- internal functions ------------------------------------------------//
-
-
-    // TODO cleanup
-    // function createPolicy(
-    //     address policyHolder,
-    //     Str flightData, 
-    //     Timestamp departureTime,
-    //     string memory departureTimeLocal,
-    //     Timestamp arrivalTime,
-    //     string memory arrivalTimeLocal,
-    //     Amount premiumAmount,
-    //     uint256[6] memory statistics
-    // )
-    //     internal
-    //     virtual
-    //     returns (
-    //         RiskId riskId,
-    //         NftId policyNftId
-    //     )
-    // {
-
-    //     (riskId, policyNftId) = _prepareApplication(
-    //         policyHolder, 
-    //         flightData,
-    //         departureTime,
-    //         departureTimeLocal,
-    //         arrivalTime,
-    //         arrivalTimeLocal,
-    //         premiumAmount,
-    //         statistics);
-
-    //     _createPolicy(
-    //         policyNftId, 
-    //         TimestampLib.zero(), // do not ativate yet 
-    //         premiumAmount); // max premium amount
-
-    //     // interactions (token transfer + callback to token holder, if contract)
-    //     _collectPremium(
-    //         policyNftId, 
-    //         departureTime); // activate at scheduled departure time of flight
-
-    //     // send oracle request for for new risk 
-    //     // if (_requests[riskId].eqz()) {
-    //     //     _requests[riskId] = _sendRequest(
-    //     //         _oracleNftId, 
-    //     //         abi.encode(
-    //     //             FlightOracle.FlightStatusRequest(
-    //     //                 riskId,
-    //     //                 flightData,
-    //     //                 departureTime)),
-    //     //         // allow up to 30 days to process the claim
-    //     //         arrivalTime.addSeconds(SecondsLib.fromDays(30)), 
-    //     //         "flightStatusCallback");
-    //     // }
-    // }
-
-
-    // function _prepareApplication(
-    //     address policyHolder,
-    //     Str flightData, 
-    //     Timestamp departureTime,
-    //     string memory departureTimeLocal,
-    //     Timestamp arrivalTime,
-    //     string memory arrivalTimeLocal,
-    //     Amount premiumAmount,
-    //     uint256[6] memory statistics
-    // )
-    //     internal
-    //     virtual
-    //     returns (
-    //         RiskId riskId,
-    //         NftId policyNftId
-    //     )
-    // {
-    //     Amount[5] memory payoutAmounts;
-    //     Amount sumInsuredAmount;
-
-    //     (
-    //         riskId, 
-    //         payoutAmounts,
-    //         sumInsuredAmount
-    //     ) = _createRiskAndPayoutAmounts(
-    //         flightData,
-    //         departureTime,
-    //         departureTimeLocal,
-    //         arrivalTime,
-    //         arrivalTimeLocal,
-    //         premiumAmount,
-    //         statistics);
-
-    //     policyNftId = _createApplication(
-    //         policyHolder, 
-    //         riskId, 
-    //         sumInsuredAmount,
-    //         premiumAmount,
-    //         SecondsLib.toSeconds(180 * 24 * 3600), // 30 days
-    //         _defaultBundleNftId, 
-    //         ReferralLib.zero(), 
-    //         abi.encode(
-    //             premiumAmount,
-    //             payoutAmounts)); // application data
-    // }
 
 
     function _processPayoutsAndClosePolicies(
@@ -501,7 +416,8 @@ contract CropProduct is
     {
         // determine numbers of policies to process
         InstanceReader reader = _getInstanceReader();
-        // (riskExists, statusAvailable, payoutOption) = FlightLib.getPayoutOption(reader, getNftId(), riskId);
+        CropRisk memory cropRisk;
+        (riskExists, cropRisk) = getRisk(riskId);
 
         // return with default values if risk does not exist or status is not yet available
         if (!riskExists || !statusAvailable) {
@@ -520,28 +436,37 @@ contract CropProduct is
         // go through policies
         for (uint256 i = 0; i < policiesProcessed; i++) {
             NftId policyNftId = policies[i];
-            Amount payoutAmount = AmountLib.zero();
-
-            // create claim/payout (if applicable)
-            _resolvePayout(
-                policyNftId, 
-                payoutAmount); 
-
-            // expire and close policy
-            _expire(policyNftId, TimestampLib.current());
-            _close(policyNftId);
+            _processAndClosePolicy(policyNftId);
         }
     }
 
 
-    function _resolvePayout(
-        NftId policyNftId,
-        Amount payoutAmount
-    )
+    function _processAndClosePolicy(NftId policyNftId)
         internal
         virtual
     {
-        // no action if no payout
+        IPolicy.PolicyInfo memory info = _getInstanceReader().getPolicyInfo(policyNftId);
+        (bool exists, CropRisk memory cropRisk) = getRisk(info.riskId);
+        if (!exists) { revert ErrorInvalidRiskId(info.riskId); }
+        if (!cropRisk.payoutDefined) { revert ErrorUndefinedRiskPayout(info.riskId); }
+
+        // create claim/payout (if applicable), then expire and close policy
+        _handlePayout(policyNftId, info, cropRisk); 
+        _expire(policyNftId, TimestampLib.current());
+        _close(policyNftId);
+    }
+
+
+    function _handlePayout(
+        NftId policyNftId,
+        IPolicy.PolicyInfo memory info,
+        CropRisk memory cropRisk
+    )
+        internal
+    {
+        Amount payoutAmount = calculatePayout(info, cropRisk);
+
+        // if payout amount > 0: create and process claim and payout
         if (payoutAmount.eqz()) {
             return;
         }
