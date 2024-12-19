@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import { FoundryRandom } from "foundry-random/FoundryRandom.sol";
 
 import {console} from "../../lib/forge-std/src/Test.sol";
+import {ChainId, ChainIdLib} from "../../contracts/type/ChainId.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {Timestamp} from "../../contracts/type/Timestamp.sol";
 import {ObjectType, PROTOCOL, REGISTRY, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, DISTRIBUTOR, BUNDLE, POLICY, STAKE, STAKING} from "../../contracts/type/ObjectType.sol";
@@ -21,7 +22,7 @@ contract RegistryTestBaseWithPreset is RegistryTestBase
 
     NftId _chainRegistryNftId; // use on mainnet only
     address _chainRegistryAddress;
-    uint64 _chainRegistryChainId;
+    ChainId _chainRegistryChainId;
 
     NftId _instanceNftId;
     NftId _productNftId;
@@ -87,7 +88,7 @@ contract RegistryTestBaseWithPreset is RegistryTestBase
     {
         assert(block.chainid == 1);
 
-        _chainRegistryChainId = _getRandomNotRegisteredChainId();
+        _chainRegistryChainId = ChainIdLib.toChainId(_getRandomNotRegisteredChainId());
         NftId nftId = NftIdLib.toNftId(
             chainNft.calculateTokenId(registry.REGISTRY_TOKEN_SEQUENCE_ID(), _chainRegistryChainId)
         );

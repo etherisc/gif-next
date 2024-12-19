@@ -52,7 +52,6 @@ contract StakingService is
         virtual
         restricted()
     {
-        uint256 chainId = block.chainid;
         _getStakingServiceStorage()._staking.registerTarget(
             targetNftId,
             INSTANCE(),

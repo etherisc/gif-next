@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {ERC721, ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
+import {ChainId, ChainIdLib} from "../type/ChainId.sol";
 import {ITransferInterceptor} from "./ITransferInterceptor.sol";
 
 contract ChainNft is ERC721Enumerable {
@@ -53,7 +54,7 @@ contract ChainNft is ERC721Enumerable {
         // NFT contract is deployed by the registry
         _registry = registry;
 
-        _chainIdDigits = _calculateChainIdDigits(block.chainid);
+        _chainIdDigits = _calculateChainIdDigits(ChainIdLib.toChainId(block.chainid));
         _chainIdMultiplier = 10 ** _chainIdDigits;
 
         // the first object registered through normal registration starts with id 4
@@ -200,12 +201,12 @@ contract ChainNft is ERC721Enumerable {
     * (42 * 10 ** 10 + 9876543210) * 100 + 10
     * (index * 10 ** digits + chainid) * 100 + digits (1 < digits < 100)
     */
-    function calculateTokenId(uint256 idIndex, uint256 chainId) public view returns (uint256 id) {
-        if(chainId == block.chainid) {
-            return 100 * (idIndex * _chainIdMultiplier + chainId) + _chainIdDigits;
+    function calculateTokenId(uint256 idIndex, ChainId chainId) public view returns (uint256 id) {
+        if(chainId.toInt() == block.chainid) {
+            return 100 * (idIndex * _chainIdMultiplier + chainId.toInt()) + _chainIdDigits;
         } else {
             uint256 chainIdDigits = _calculateChainIdDigits(chainId);
-            return 100 * (idIndex * (10 ** chainIdDigits) + chainId) + chainIdDigits;
+            return 100 * (idIndex * (10 ** chainIdDigits) + chainId.toInt()) + chainIdDigits;
         }
     }
 
@@ -224,8 +225,8 @@ contract ChainNft is ERC721Enumerable {
         _idNext++;
     }
 
-    function _calculateChainIdDigits(uint256 chainId) private pure returns (uint256) {
-        uint256 num = chainId;
+    function _calculateChainIdDigits(ChainId chainId) private pure returns (uint256) {
+        uint256 num = chainId.toInt();
         uint256 digits = 0;
         while (num != 0) {
             digits++;
