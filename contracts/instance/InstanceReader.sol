@@ -18,12 +18,12 @@ import {IRisk} from "../instance/module/IRisk.sol";
 import {AccessAdminLib} from "../authorization/AccessAdminLib.sol";
 import {Amount} from "../type/Amount.sol";
 import {BundleSet} from "./BundleSet.sol";
-import {BUNDLE, COMPONENT, DISTRIBUTION, PREMIUM, POLICY} from "../type/ObjectType.sol";
+import {BUNDLE, COMPONENT, DISTRIBUTION, PREMIUM, POLICY, PRODUCT, FEE, RISK, CLAIM, PAYOUT, ObjectType} from "../type/ObjectType.sol";
 import {ClaimId, ClaimIdLib} from "../type/ClaimId.sol";
 import {DistributorType} from "../type/DistributorType.sol";
 import {InstanceAdmin} from "./InstanceAdmin.sol";
 import {InstanceStore} from "./InstanceStore.sol";
-import {Key32} from "../type/Key32.sol";
+import {Key32, Key32Lib} from "../type/Key32.sol";
 import {NftId} from "../type/NftId.sol";
 import {PayoutId, PayoutIdLib} from "../type/PayoutId.sol";
 import {PolicyServiceLib} from "../product/PolicyServiceLib.sol";
@@ -610,7 +610,25 @@ contract InstanceReader {
 
 
     function getMetadata(Key32 key) public view returns (IBaseStore.Metadata memory metadata) {
-        return _store.getMetadata(key);
+        ObjectType objectType = Key32Lib.toObjectType(key);
+
+        if (objectType == PRODUCT()) {
+            return _productStore.getMetadata(key);
+        } else if (objectType == FEE()) {
+            return _productStore.getMetadata(key);
+        } else if (objectType == RISK()) {
+            return _productStore.getMetadata(key);
+        } else if (objectType == POLICY()) {
+            return _productStore.getMetadata(key);
+        } else if (objectType == PREMIUM()) {
+            return _productStore.getMetadata(key);
+        } else if (objectType == CLAIM()) {
+            return _productStore.getMetadata(key);
+        } else if (objectType == PAYOUT()) {
+            return _productStore.getMetadata(key);
+        } else {
+            return _store.getMetadata(key);        
+        }
     }
 
 

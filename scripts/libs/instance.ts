@@ -186,6 +186,7 @@ export async function deployAndRegisterMasterInstance(
                 AccessAdminLib: libraries.accessAdminLibAddress,
                 AmountLib: libraries.amountLibAddress,
                 ClaimIdLib: libraries.claimIdLibAddress,
+                Key32Lib: libraries.key32LibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
                 PayoutIdLib: libraries.payoutIdLibAddress,
                 PolicyServiceLib: libraries.policyServiceLibAddress,
