@@ -96,7 +96,6 @@ contract CropProduct is
 
     // GIF V3 specifics
     NftId internal _defaultBundleNftId;
-    NftId internal _oracleNftId;
 
 
     constructor(
@@ -279,23 +278,48 @@ contract CropProduct is
 
 
     function processPolicy(NftId policyNftId)
-        external 
-        restricted() 
+        external
+        restricted()
     {
-        _processAndClosePolicy(policyNftId);
+        _processPolicy(policyNftId);
+    }
+
+    function processPoliciesForRisk(
+        RiskId riskId, 
+        uint8 maxPoliciesToProcess
+    )
+        internal
+        virtual
+        returns (
+            bool success,
+            bool riskExists, 
+            bool payoutDefined,
+            uint256 policiesProcessed
+        )
+    {
+        // determine numbers of policies to process
+        CropRisk memory cropRisk;
+        (riskExists, cropRisk) = getRisk(riskId);
+
+        // return if risk does not exist or payout is not defined yet
+        if (!riskExists) { return (false, false, false, 0); }
+        if (!cropRisk.payoutDefined)  { return (false, true, false, 0); }
+
+        InstanceReader reader = _getInstanceReader();
+        uint256 policiesToProcess = reader.policiesForRisk(riskId);
+        policiesProcessed = policiesToProcess < maxPoliciesToProcess ? policiesToProcess : maxPoliciesToProcess;
+
+        // go through policies
+        for (uint256 i = 0; i < policiesProcessed; i++) {
+            NftId policyNftId = reader.getPolicyForRisk(riskId, i);
+            _processPolicy(policyNftId);
+        }
+
+        return (true, true, true, policiesProcessed);
     }
 
 
     //--- owner functions ---------------------------------------------------//
-
-    // TODO cleanup
-    // function resendResponse(RequestId requestId)
-    //     external
-    //     virtual
-    //     restricted()
-    // {
-    //     _resendResponse(requestId);
-    // }
 
     /// @dev Call after product registration with the instance
     /// when the product token/tokenhandler is available
@@ -325,13 +349,6 @@ contract CropProduct is
     function setWallet(address newWallet) external restricted() onlyOwner() { _setWallet(newWallet); }
 
     //--- unpermissioned functions ------------------------------------------//
-
-    function setOracleNftId()
-        external
-    {
-        _oracleNftId = _getInstanceReader().getProductInfo(
-            getNftId()).oracleNftId[0];
-    }
 
     //--- view functions ----------------------------------------------------//
 
@@ -394,54 +411,12 @@ contract CropProduct is
         return sumInsuredAmount.multiplyWith(payoutFactor);
     }
 
-
-    function getOracleNftId() public view returns (NftId oracleNftId) { return _oracleNftId; }
-
     function getRequestForRisk(RiskId riskId) public view returns (RequestId requestId) { return _requests[riskId]; }
 
     //--- internal functions ------------------------------------------------//
 
 
-    function _processPayoutsAndClosePolicies(
-        RiskId riskId, 
-        uint8 maxPoliciesToProcess
-    )
-        internal
-        virtual
-        returns (
-            bool riskExists, 
-            bool statusAvailable,
-            uint8 payoutOption
-        )
-    {
-        // determine numbers of policies to process
-        InstanceReader reader = _getInstanceReader();
-        CropRisk memory cropRisk;
-        (riskExists, cropRisk) = getRisk(riskId);
-
-        // return with default values if risk does not exist or status is not yet available
-        if (!riskExists || !statusAvailable) {
-            return (riskExists, statusAvailable, payoutOption);
-        }
-
-        uint256 policiesToProcess = reader.policiesForRisk(riskId);
-        uint256 policiesProcessed = policiesToProcess < maxPoliciesToProcess ? policiesToProcess : maxPoliciesToProcess;
-
-        // assemble array with policies to process
-        NftId [] memory policies = new NftId[](policiesProcessed);
-        for (uint256 i = 0; i < policiesProcessed; i++) {
-            policies[i] = reader.getPolicyForRisk(riskId, i);
-        }
-
-        // go through policies
-        for (uint256 i = 0; i < policiesProcessed; i++) {
-            NftId policyNftId = policies[i];
-            _processAndClosePolicy(policyNftId);
-        }
-    }
-
-
-    function _processAndClosePolicy(NftId policyNftId)
+    function _processPolicy(NftId policyNftId)
         internal
         virtual
     {
@@ -515,6 +490,6 @@ contract CropProduct is
                 performanceFee: FeeLib.zero()
             }),
             authorization,
-            initialOwner);  // number of oracles
+            initialOwner);
     }
 }

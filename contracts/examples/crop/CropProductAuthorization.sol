@@ -35,7 +35,7 @@ contract CropProductAuthorization
             AccessAdminLib.roleInfo(
                 ADMIN_ROLE(),
                 TargetType.Custom,
-                1, // max member count special case: instance nft owner is sole role owner
+                100, // max member count
                 PRODUCT_OPERATOR_ROLE_NAME));
     }
 

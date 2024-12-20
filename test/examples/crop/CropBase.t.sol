@@ -109,7 +109,7 @@ contract CropBaseTest is GifTest {
             AmountLib.toAmount(99 * 10 ** accountingToken.decimals()), // max premium
             AmountLib.toAmount(200 * 10 ** accountingToken.decimals()), // min sum insured
             AmountLib.toAmount(1000 * 10 ** accountingToken.decimals()), // max sum insured
-            1 // max policies to process
+            5 // max policies to process
         );
         vm.stopPrank();
     }
@@ -131,33 +131,6 @@ contract CropBaseTest is GifTest {
             cropProduct, 
             address(cropPool), 
             "cropPool");
-    }
-
-
-    function _deployFlightOracle() internal {
-        // vm.startPrank(cropOwner);
-        // FlightOracleAuthorization oracleAuthz = new FlightOracleAuthorization("FlightOracle", COMMIT_HASH);
-        // flightOracle = new FlightOracle(
-        //     address(registry),
-        //     cropProductNftId,
-        //     "FlightOracle",
-        //     oracleAuthz
-        // );
-        // vm.stopPrank();
-
-        // flightOracleNftId = _registerComponent(
-        //     cropOwner, 
-        //     cropProduct, 
-        //     address(flightOracle), 
-        //     "FlightOracle");
-
-        // // grant status provider role to status provider
-        // (RoleId statusProviderRoleId, bool exists) = instanceReader.getRoleForName(
-        //     oracleAuthz.STATUS_PROVIDER_ROLE_NAME());
-
-        // vm.startPrank(instanceOwner);
-        // instance.grantRole(statusProviderRoleId, statusProvider);
-        // vm.stopPrank();
     }
 
 
