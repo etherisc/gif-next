@@ -52,7 +52,7 @@ export async function deployCropComponentContracts(
     resetBalances();
     resetGasSpent();
     
-    logger.info("===== deploying crop insurance components on a new instance ...");
+    logger.info("===== deploying crop insurance components ...");
     
     const accessAdminLibAddress = libraries.accessAdminLibAddress;
     const amountLibAddress = libraries.amountLibAddress;
@@ -62,8 +62,6 @@ export async function deployCropComponentContracts(
     const nftIdLibAddress = libraries.nftIdLibAddress;
     const objectTypeLibAddress = libraries.objectTypeLibAddress;
     const referralLibAddress = libraries.referralLibAddress;
-    const requestIdLibAddress = libraries.requestIdLibAddress;
-    const riskIdLibAddress = libraries.riskIdLibAddress;
     const roleIdLibAddress = libraries.roleIdLibAddress;
     const secondsLibAddress = libraries.secondsLibAddress;
     const selectorLibAddress = libraries.selectorLibAddress;
