@@ -1,22 +1,19 @@
 import { AddressLike, resolveAddress, Signer } from "ethers";
-import { IInstance__factory, IInstanceService__factory, IRegistry__factory, TokenRegistry__factory, FlightProduct, FlightProduct__factory, FlightPool, FlightOracle, IInstance, CropProduct, InstanceReader__factory, AccountingToken, AccountingToken__factory, CropProduct__factory } from "../typechain-types";
+import { ethers } from "hardhat";
+import { AccountingToken, AccountingToken__factory, CropPool, CropProduct, CropProduct__factory, IInstance, IInstance__factory, IInstanceService__factory, InstanceReader__factory, IRegistry__factory, TokenRegistry__factory } from "../typechain-types";
 import { getNamedAccounts } from "./libs/accounts";
 import { deployContract } from "./libs/deployment";
+import { printBalances, printGasSpent, resetBalances, resetGasSpent, setBalanceAfter } from "./libs/gas_and_balance_tracker";
 import { LibraryAddresses } from "./libs/libraries";
 import { ServiceAddresses } from "./libs/services";
 import { executeTx, getFieldFromLogs, getTxOpts } from "./libs/transaction";
 import { loadVerificationQueueState } from './libs/verification_queue';
 import { logger } from "./logger";
-import simpleGit from "simple-git";
-import { printBalances, printGasSpent, resetBalances, resetGasSpent, setBalanceAfter } from "./libs/gas_and_balance_tracker";
-import { ethers } from "hardhat";
-import { instance } from "../typechain-types/contracts";
-import { crop } from "../typechain-types/contracts/examples";
 
 async function main() {
     loadVerificationQueueState();
 
-    const { protocolOwner, productOwner: cropOwner, instanceOwner, productOperator } = await getNamedAccounts();
+    const { protocolOwner, productOwner: cropOwner, productOperator } = await getNamedAccounts();
 
     await deployCropComponentContracts(
         {
@@ -235,115 +232,56 @@ export async function deployCropComponentContracts(
         [CropProduct__factory.createInterface()]
     );
 
-    // logger.info(`----- FlightPool -----`);
-    // const poolName = "FDPool_" + deploymentId;
-    // const { address: flightPoolAuthAddress } = await deployContract(
-    //     "FlightPoolAuthorization",
-    //     flightOwner,
-    //     [poolName],
-    //     {
-    //         libraries: {
-    //             AccessAdminLib: accessAdminLibAddress,
-    //             BlocknumberLib: blocknumberLibAddress,
-    //             ObjectTypeLib: objectTypeLibAddress,
-    //             RoleIdLib: roleIdLibAddress,
-    //             SelectorLib: selectorLibAddress,
-    //             StrLib: strLibAddress,
-    //             TimestampLib: timestampLibAddress,
-    //             VersionPartLib: versionPartLibAddress,
-    //         }
-    //     },
-    //     "contracts/examples/flight/FlightPoolAuthorization.sol:FlightPoolAuthorization");
+    logger.info(`----- CropPool -----`);
+    const poolName = "CropPool_" + deploymentId;
+    const { address: cropPoolAuthAddress } = await deployContract(
+        "CropPoolAuthorization",
+        cropOwner,
+        [poolName],
+        {
+            libraries: {
+                AccessAdminLib: accessAdminLibAddress,
+                BlocknumberLib: blocknumberLibAddress,
+                ObjectTypeLib: objectTypeLibAddress,
+                RoleIdLib: roleIdLibAddress,
+                SelectorLib: selectorLibAddress,
+                StrLib: strLibAddress,
+                TimestampLib: timestampLibAddress,
+                VersionPartLib: versionPartLibAddress,
+            }
+        },
+        "contracts/examples/crop/CropPoolAuthorization.sol:CropPoolAuthorization");
 
-    // const { address: flightPoolAddress, contract: flightPoolBaseContract } = await deployContract(
-    //     "FlightPool",
-    //     flightOwner,
-    //     [
-    //         await instance.getRegistry(),
-    //         flightProductNftId,
-    //         poolName,
-    //         flightPoolAuthAddress,
-    //     ],
-    //     {
-    //         libraries: {
-    //             AmountLib: amountLibAddress,
-    //             ContractLib: contractLibAddress,
-    //             FeeLib: feeLibAddress,
-    //             NftIdLib: nftIdLibAddress,
-    //             ObjectTypeLib: objectTypeLibAddress,
-    //             SecondsLib: secondsLibAddress,
-    //             UFixedLib: ufixedLibAddress,
-    //             VersionLib: versionLibAddress,
-    //         }
-    //     });
-    // const flightPool = flightPoolBaseContract as FlightPool;
+    const { address: cropPoolAddress, contract: cropPoolBaseContract } = await deployContract(
+        "CropPool",
+        cropOwner,
+        [
+            await instance.getRegistry(),
+            cropProductNftId,
+            poolName,
+            cropPoolAuthAddress,
+        ],
+        {
+            libraries: {
+                AmountLib: amountLibAddress,
+                ContractLib: contractLibAddress,
+                FeeLib: feeLibAddress,
+                NftIdLib: nftIdLibAddress,
+                ObjectTypeLib: objectTypeLibAddress,
+                SecondsLib: secondsLibAddress,
+                UFixedLib: ufixedLibAddress,
+                VersionLib: versionLibAddress,
+            }
+        });
+    const cropPool = cropPoolBaseContract as CropPool;
     
-    // logger.info(`registering FlightPool on FlightProduct`);
-    // await executeTx(async () => 
-    //     await flightProduct.registerComponent(flightPoolAddress, getTxOpts()),
-    //     "fd - registerComponent pool",
-    //     [FlightProduct__factory.createInterface()]
-    // );
-    // const flightPoolNftId = await flightPool.getNftId();
-
-    // logger.info(`----- FlightOracle -----`);
-    // const oracleName = "FDOracle_" + deploymentId;
-    // const commitHash = await simpleGit().revparse(["HEAD"]);
-    
-    // const { address: flightOracleAuthAddress } = await deployContract(
-    //     "FlightOracleAuthorization",
-    //     flightOwner,
-    //     [
-    //         oracleName,
-    //         commitHash,
-    //     ],
-    //     {
-    //         libraries: {
-    //             AccessAdminLib: accessAdminLibAddress,
-    //             BlocknumberLib: blocknumberLibAddress,
-    //             ObjectTypeLib: objectTypeLibAddress,
-    //             RoleIdLib: roleIdLibAddress,
-    //             SelectorLib: selectorLibAddress,
-    //             StrLib: strLibAddress,
-    //             TimestampLib: timestampLibAddress,
-    //             VersionPartLib: versionPartLibAddress,
-    //         }
-    //     },
-    //     "contracts/examples/flight/FlightOracleAuthorization.sol:FlightOracleAuthorization");
-
-    // const { address: flightOracleAddress, contract: flightOracleBaseContract } = await deployContract(
-    //     "FlightOracle",
-    //     flightOwner,
-    //     [
-    //         await instance.getRegistry(),
-    //         flightProductNftId,
-    //         oracleName,
-    //         flightOracleAuthAddress,
-    //     ],
-    //     {
-    //         libraries: {
-    //             ContractLib: contractLibAddress,
-    //             NftIdLib: nftIdLibAddress,
-    //             StrLib: strLibAddress,
-    //             TimestampLib: timestampLibAddress,
-    //             VersionLib: versionLibAddress,
-    //         }
-    //     });
-    // const flightOracle = flightOracleBaseContract as FlightOracle;
-    
-    // logger.info(`registering FlightOracle on FlightProduct`);
-    // await executeTx(async () => 
-    //     await flightProduct.registerComponent(flightOracleAddress, getTxOpts()),
-    //     "fd - registerComponent oracle",
-    //     [FlightProduct__factory.createInterface()]
-    // );
-    // const flightOracleNftId = await flightOracle.getNftId();
-
-    // await executeTx(async () =>
-    //     await flightProduct.setOracleNftId(getTxOpts()),
-    //     "fd - setOracleNftId",
-    //     [FlightProduct__factory.createInterface()]
-    // );
+    logger.info(`registering CropPool on CropProduct`);
+    await executeTx(async () => 
+        await cropProduct.registerComponent(cropPoolAddress, getTxOpts()),
+        "crop - registerComponent pool",
+        [CropProduct__factory.createInterface()]
+    );
+    const cropPoolNftId = await cropPool.getNftId();
 
     setBalanceAfter(await resolveAddress(registryOwner), await ethers.provider.getBalance(registryOwner));
     setBalanceAfter(await resolveAddress(cropOwner), await ethers.provider.getBalance(cropOwner));
@@ -354,7 +292,7 @@ export async function deployCropComponentContracts(
     logger.info(`===== AccountingToken deployed at ${accountingTokenAddress}`);
     logger.info(`===== LocationLib deployed at ${locationLibAddress}`);
     logger.info(`===== CropProduct deployed at ${cropProductAddress} and registered with NFT ID ${cropProductNftId}`);
-    // logger.info(`===== FlightPool deployed at ${flightPoolAddress} and registered with NFT ID ${flightPoolNftId}`);
+    logger.info(`===== CropPool deployed at ${cropPoolAddress} and registered with NFT ID ${cropPoolNftId}`);
 }
 
 if (require.main === module) {
