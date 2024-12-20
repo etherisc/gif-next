@@ -15,6 +15,7 @@ export async function getNamedAccounts(): Promise<{
     instanceOwner: HardhatEthersSigner;
     customer: HardhatEthersSigner;
     investor: HardhatEthersSigner;
+    productOperator: HardhatEthersSigner;
 }> {
     const signers = await ethers.getSigners();
     const protocolOwner = signers[0];
@@ -26,6 +27,7 @@ export async function getNamedAccounts(): Promise<{
     const customer = signers[6];
     const investor = signers[7];
     const instanceOwner = signers[10];
+    const productOperator = signers[11];
     await printBalance(
         ["protocolOwner", protocolOwner] ,
         // ["masterInstanceOwner", masterInstanceOwner] , 
@@ -40,7 +42,7 @@ export async function getNamedAccounts(): Promise<{
     setBalanceBefore(await resolveAddress(productOwner), await ethers.provider.getBalance(productOwner));
     setBalanceBefore(await resolveAddress(instanceOwner), await ethers.provider.getBalance(instanceOwner));
 
-    return { protocolOwner, masterInstanceOwner, productOwner, poolOwner, distributionOwner, instanceServiceOwner, instanceOwner, customer, investor }; 
+    return { protocolOwner, masterInstanceOwner, productOwner, poolOwner, distributionOwner, instanceServiceOwner, instanceOwner, customer, investor, productOperator }; 
 }
 
 export async function printBalance(...signers: [string,HardhatEthersSigner][]) {
