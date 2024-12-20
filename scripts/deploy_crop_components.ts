@@ -13,7 +13,7 @@ import { logger } from "./logger";
 async function main() {
     loadVerificationQueueState();
 
-    const { protocolOwner, productOwner: cropOwner, productOperator } = await getNamedAccounts();
+    const { protocolOwner, productOwner: cropOwner } = await getNamedAccounts();
 
     await deployCropComponentContracts(
         {
@@ -41,14 +41,13 @@ async function main() {
             instanceServiceAddress: process.env.INSTANCE_SERVICE_ADDRESS!,
         } as ServiceAddresses,
         cropOwner,
-        productOperator,
         protocolOwner,
     );
 }
 
 
 export async function deployCropComponentContracts(
-    libraries: LibraryAddresses, services: ServiceAddresses, cropOwner: Signer, productOperator: Signer, registryOwner: Signer) {
+    libraries: LibraryAddresses, services: ServiceAddresses, cropOwner: Signer, registryOwner: Signer) {
     resetBalances();
     resetGasSpent();
     
@@ -209,7 +208,7 @@ export async function deployCropComponentContracts(
     await executeTx(async () =>
         await instance.grantRole(
             roleId, 
-            await productOperator.getAddress(), 
+            await cropOwner.getAddress(), 
             getTxOpts()),
         "crop - grantProductOperator",
         [IInstance__factory.createInterface()]

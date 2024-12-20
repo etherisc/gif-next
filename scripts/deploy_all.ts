@@ -25,7 +25,7 @@ async function main() {
 
     await deployFlightDelayComponentContracts(libraries, services, fireOwner, protocolOwner);
 
-    await deployCropComponentContracts(libraries, services, fireOwner, productOperator, protocolOwner);
+    await deployCropComponentContracts(libraries, services, fireOwner, protocolOwner);
 }
 
 if (require.main === module) {
