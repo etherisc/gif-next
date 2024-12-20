@@ -286,9 +286,9 @@ contract CropProduct is
 
     function processPoliciesForRisk(
         RiskId riskId, 
-        uint8 maxPoliciesToProcess
+        uint256 maxPoliciesToProcess
     )
-        internal
+        external
         virtual
         returns (
             bool success,

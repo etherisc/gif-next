@@ -229,7 +229,7 @@ contract CropProductTest is CropBaseTest {
     }
 
 
-    function test_cropProductPolicyClose() public {
+    function test_cropProductPolicyProcess() public {
         // GIVEN
         NftId policyNftId = _createPolicy(customer);
 
@@ -284,6 +284,51 @@ contract CropProductTest is CropBaseTest {
     }
 
 
+    function test_cropProductRiskProcessPolicies() public {
+        // GIVEN
+        RiskId riskId = _createRisk("kDho7606IRdr");
+        NftId policyNftId1 = _createPolicy(customer, riskId);
+        NftId policyNftId2 = _createPolicy(customer, riskId);
+        NftId policyNftId3 = _createPolicy(customer, riskId);
+
+        UFixed payoutFactor = UFixedLib.toUFixed(35, -2); // 35%
+        uint256 maxPoliciesToProcess = 2;
+
+        // WHEN
+        vm.startPrank(productOperator);
+        cropProduct.updatePayoutFactor(riskId, payoutFactor);
+        (bool success, bool riskExists, bool payoutDefined, uint256 processedPolicies) = cropProduct.processPoliciesForRisk(riskId, maxPoliciesToProcess);
+        vm.stopPrank();
+
+        // THEN
+        assertTrue(success, "policy processing failed");
+        assertTrue(riskExists, "risk not found");
+        assertTrue(payoutDefined, "payout not defined");
+        assertEq(processedPolicies, 2, "unexpected processed policies count");
+        assertEq(instanceReader.policiesForRisk(riskId), 1, "unexpected policy count");
+
+        assertEq(instanceReader.getPolicyState(policyNftId1).toInt(), CLOSED().toInt(), "unexpected policy state 1 (1)");
+        assertEq(instanceReader.getPolicyState(policyNftId2).toInt(), CLOSED().toInt(), "unexpected policy state 2 (1)");
+        assertEq(instanceReader.getPolicyState(policyNftId3).toInt(), COLLATERALIZED().toInt(), "unexpected policy state 3 (1)");
+
+        // WHEN (2)
+        vm.startPrank(productOperator);
+        (success, riskExists, payoutDefined, processedPolicies) = cropProduct.processPoliciesForRisk(riskId, maxPoliciesToProcess);
+        vm.stopPrank();
+
+        // THEN (2)
+        assertTrue(success, "policy processing failed (2)");
+        assertTrue(riskExists, "risk not found (2)");
+        assertTrue(payoutDefined, "payout not defined (2)");
+        assertEq(processedPolicies, 1, "unexpected processed policies count (2)");
+        assertEq(instanceReader.policiesForRisk(riskId), 0, "unexpected policy count (2)");
+
+        assertEq(instanceReader.getPolicyState(policyNftId1).toInt(), CLOSED().toInt(), "unexpected policy state 1 (2)");
+        assertEq(instanceReader.getPolicyState(policyNftId2).toInt(), CLOSED().toInt(), "unexpected policy state 2 (2)");
+        assertEq(instanceReader.getPolicyState(policyNftId3).toInt(), CLOSED().toInt(), "unexpected policy state 3 (2)");
+    }
+
+
     function _createSeason(string memory nanoId) internal returns (Str seasonId) {
         seasonId = StrLib.toStr(nanoId);
         uint16 year = 2025;
@@ -333,6 +378,12 @@ contract CropProductTest is CropBaseTest {
     function _createPolicy(address policyHolder) internal returns (NftId policyNftId) {
         string memory nanoId = "kDho7606IRdr";
         RiskId riskId = _createRisk(nanoId);
+
+        return _createPolicy(policyHolder, riskId);
+    }
+
+
+    function _createPolicy(address policyHolder, RiskId riskId) internal returns (NftId policyNftId) {
         Timestamp activateAt = TimestampLib.current();
         Amount sumInsuredAmount = AmountLib.toAmount(400 * 10 ** accountingToken.decimals());
         Amount premiumAmount = AmountLib.toAmount(25 * 10 ** accountingToken.decimals());
