@@ -1,0 +1,1819 @@
+:github-icon: pass:[<svg class="icon"><use href="#github-icon"/></svg>]
+
+= Types
+
+Contains the types contracts. 
+
+== Contracts
+
+:Set: pass:normal[xref:#LibAddressSet-Set[`++Set++`]]
+:add: pass:normal[xref:#LibAddressSet-add-struct-LibAddressSet-Set-address-[`++add++`]]
+:remove: pass:normal[xref:#LibAddressSet-remove-struct-LibAddressSet-Set-address-[`++remove++`]]
+:isEmpty: pass:normal[xref:#LibAddressSet-isEmpty-struct-LibAddressSet-Set-[`++isEmpty++`]]
+:contains: pass:normal[xref:#LibAddressSet-contains-struct-LibAddressSet-Set-address-[`++contains++`]]
+:getLength: pass:normal[xref:#LibAddressSet-getLength-struct-LibAddressSet-Set-[`++getLength++`]]
+:getElementAt: pass:normal[xref:#LibAddressSet-getElementAt-struct-LibAddressSet-Set-uint256-[`++getElementAt++`]]
+
+[.contract]
+[[LibAddressSet]]
+=== `++LibAddressSet++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/type/AddressSet.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/type/AddressSet.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++add(set, element)++`]
+* [`++remove(set, element)++`]
+* [`++isEmpty(set)++`]
+* [`++contains(set, element)++`]
+* [`++getLength(set)++`]
+* [`++getElementAt(set, index)++`]
+
+--
+
+[.contract-item]
+[[LibAddressSet-add-struct-LibAddressSet-Set-address-]]
+==== `[.contract-item-name]#++add++#++(struct LibAddressSet.Set set, address element) → bool added++` [.item-kind]#external#
+
+[.contract-item]
+[[LibAddressSet-remove-struct-LibAddressSet-Set-address-]]
+==== `[.contract-item-name]#++remove++#++(struct LibAddressSet.Set set, address element) → bool removed++` [.item-kind]#external#
+
+[.contract-item]
+[[LibAddressSet-isEmpty-struct-LibAddressSet-Set-]]
+==== `[.contract-item-name]#++isEmpty++#++(struct LibAddressSet.Set set) → bool empty++` [.item-kind]#external#
+
+[.contract-item]
+[[LibAddressSet-contains-struct-LibAddressSet-Set-address-]]
+==== `[.contract-item-name]#++contains++#++(struct LibAddressSet.Set set, address element) → bool inSet++` [.item-kind]#external#
+
+[.contract-item]
+[[LibAddressSet-getLength-struct-LibAddressSet-Set-]]
+==== `[.contract-item-name]#++getLength++#++(struct LibAddressSet.Set set) → uint256 length++` [.item-kind]#external#
+
+[.contract-item]
+[[LibAddressSet-getElementAt-struct-LibAddressSet-Set-uint256-]]
+==== `[.contract-item-name]#++getElementAt++#++(struct LibAddressSet.Set set, uint256 index) → address element++` [.item-kind]#external#
+
+ 
+:ErrorAmountLibValueTooBig: pass:normal[xref:#AmountLib-ErrorAmountLibValueTooBig-uint256-[`++ErrorAmountLibValueTooBig++`]]
+:zero: pass:normal[xref:#AmountLib-zero--[`++zero++`]]
+:max: pass:normal[xref:#AmountLib-max--[`++max++`]]
+:toAmount: pass:normal[xref:#AmountLib-toAmount-uint256-[`++toAmount++`]]
+:eqz: pass:normal[xref:#AmountLib-eqz-Amount-[`++eqz++`]]
+:eq: pass:normal[xref:#AmountLib-eq-Amount-Amount-[`++eq++`]]
+:lt: pass:normal[xref:#AmountLib-lt-Amount-Amount-[`++lt++`]]
+:lte: pass:normal[xref:#AmountLib-lte-Amount-Amount-[`++lte++`]]
+:gt: pass:normal[xref:#AmountLib-gt-Amount-Amount-[`++gt++`]]
+:gte: pass:normal[xref:#AmountLib-gte-Amount-Amount-[`++gte++`]]
+:min: pass:normal[xref:#AmountLib-min-Amount-Amount-[`++min++`]]
+:gtz: pass:normal[xref:#AmountLib-gtz-Amount-[`++gtz++`]]
+:add: pass:normal[xref:#AmountLib-add-Amount-Amount-[`++add++`]]
+:sub: pass:normal[xref:#AmountLib-sub-Amount-Amount-[`++sub++`]]
+:toInt: pass:normal[xref:#AmountLib-toInt-Amount-[`++toInt++`]]
+:toUFixed: pass:normal[xref:#AmountLib-toUFixed-Amount-[`++toUFixed++`]]
+:multiplyWith: pass:normal[xref:#AmountLib-multiplyWith-Amount-UFixed-[`++multiplyWith++`]]
+:_max: pass:normal[xref:#AmountLib-_max--[`++_max++`]]
+
+[.contract]
+[[AmountLib]]
+=== `++AmountLib++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/type/Amount.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/type/Amount.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++zero()++`]
+* [`++max()++`]
+* [`++toAmount(amount)++`]
+* [`++eqz(amount)++`]
+* [`++eq(amount1, amount2)++`]
+* [`++lt(a1, a2)++`]
+* [`++lte(a1, a2)++`]
+* [`++gt(a1, a2)++`]
+* [`++gte(a1, a2)++`]
+* [`++min(a1, a2)++`]
+* [`++gtz(amount)++`]
+* [`++add(a1, a2)++`]
+* [`++sub(a1, a2)++`]
+* [`++toInt(amount)++`]
+* [`++toUFixed(amount)++`]
+* [`++multiplyWith(amount, factor)++`]
+* [`++_max()++`]
+
+--
+
+[.contract-item]
+[[AmountLib-zero--]]
+==== `[.contract-item-name]#++zero++#++() → Amount++` [.item-kind]#public#
+
+[.contract-item]
+[[AmountLib-max--]]
+==== `[.contract-item-name]#++max++#++() → Amount++` [.item-kind]#public#
+
+[.contract-item]
+[[AmountLib-toAmount-uint256-]]
+==== `[.contract-item-name]#++toAmount++#++(uint256 amount) → Amount++` [.item-kind]#public#
+
+converts the uint amount into Amount
+function reverts if value is exceeding max Amount value
+
+[.contract-item]
+[[AmountLib-eqz-Amount-]]
+==== `[.contract-item-name]#++eqz++#++(Amount amount) → bool++` [.item-kind]#public#
+
+return true if amount equals 0
+
+[.contract-item]
+[[AmountLib-eq-Amount-Amount-]]
+==== `[.contract-item-name]#++eq++#++(Amount amount1, Amount amount2) → bool++` [.item-kind]#public#
+
+return true if amount1 equals amount2
+
+[.contract-item]
+[[AmountLib-lt-Amount-Amount-]]
+==== `[.contract-item-name]#++lt++#++(Amount a1, Amount a2) → bool++` [.item-kind]#public#
+
+return true if amount a1 is less than a2
+
+[.contract-item]
+[[AmountLib-lte-Amount-Amount-]]
+==== `[.contract-item-name]#++lte++#++(Amount a1, Amount a2) → bool++` [.item-kind]#public#
+
+return true if amount a1 is less or equal than a2
+
+[.contract-item]
+[[AmountLib-gt-Amount-Amount-]]
+==== `[.contract-item-name]#++gt++#++(Amount a1, Amount a2) → bool++` [.item-kind]#public#
+
+return true if amount a1 is greater than a2
+
+[.contract-item]
+[[AmountLib-gte-Amount-Amount-]]
+==== `[.contract-item-name]#++gte++#++(Amount a1, Amount a2) → bool++` [.item-kind]#public#
+
+return true if amount a1 is greater or equal than a2
+
+[.contract-item]
+[[AmountLib-min-Amount-Amount-]]
+==== `[.contract-item-name]#++min++#++(Amount a1, Amount a2) → Amount++` [.item-kind]#public#
+
+return minimum of a1 and a2.
+
+[.contract-item]
+[[AmountLib-gtz-Amount-]]
+==== `[.contract-item-name]#++gtz++#++(Amount amount) → bool++` [.item-kind]#public#
+
+return true if amount is larger than 0
+
+[.contract-item]
+[[AmountLib-add-Amount-Amount-]]
+==== `[.contract-item-name]#++add++#++(Amount a1, Amount a2) → Amount++` [.item-kind]#public#
+
+[.contract-item]
+[[AmountLib-sub-Amount-Amount-]]
+==== `[.contract-item-name]#++sub++#++(Amount a1, Amount a2) → Amount++` [.item-kind]#public#
+
+[.contract-item]
+[[AmountLib-toInt-Amount-]]
+==== `[.contract-item-name]#++toInt++#++(Amount amount) → uint256++` [.item-kind]#public#
+
+[.contract-item]
+[[AmountLib-toUFixed-Amount-]]
+==== `[.contract-item-name]#++toUFixed++#++(Amount amount) → UFixed++` [.item-kind]#public#
+
+[.contract-item]
+[[AmountLib-multiplyWith-Amount-UFixed-]]
+==== `[.contract-item-name]#++multiplyWith++#++(Amount amount, UFixed factor) → Amount++` [.item-kind]#public#
+
+[.contract-item]
+[[AmountLib-_max--]]
+==== `[.contract-item-name]#++_max++#++() → uint96++` [.item-kind]#internal#
+
+ 
+:zero: pass:normal[xref:#BlocknumberLib-zero--[`++zero++`]]
+:max: pass:normal[xref:#BlocknumberLib-max--[`++max++`]]
+:current: pass:normal[xref:#BlocknumberLib-current--[`++current++`]]
+:toBlocknumber: pass:normal[xref:#BlocknumberLib-toBlocknumber-uint256-[`++toBlocknumber++`]]
+:eqz: pass:normal[xref:#BlocknumberLib-eqz-Blocknumber-[`++eqz++`]]
+:gtz: pass:normal[xref:#BlocknumberLib-gtz-Blocknumber-[`++gtz++`]]
+:gt: pass:normal[xref:#BlocknumberLib-gt-Blocknumber-Blocknumber-[`++gt++`]]
+:gte: pass:normal[xref:#BlocknumberLib-gte-Blocknumber-Blocknumber-[`++gte++`]]
+:lt: pass:normal[xref:#BlocknumberLib-lt-Blocknumber-Blocknumber-[`++lt++`]]
+:lte: pass:normal[xref:#BlocknumberLib-lte-Blocknumber-Blocknumber-[`++lte++`]]
+:eq: pass:normal[xref:#BlocknumberLib-eq-Blocknumber-Blocknumber-[`++eq++`]]
+:ne: pass:normal[xref:#BlocknumberLib-ne-Blocknumber-Blocknumber-[`++ne++`]]
+:toInt: pass:normal[xref:#BlocknumberLib-toInt-Blocknumber-[`++toInt++`]]
+
+[.contract]
+[[BlocknumberLib]]
+=== `++BlocknumberLib++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/type/Blocknumber.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/type/Blocknumber.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++zero()++`]
+* [`++max()++`]
+* [`++current()++`]
+* [`++toBlocknumber(blocknum)++`]
+* [`++eqz(blocknumber)++`]
+* [`++gtz(blocknumber)++`]
+* [`++gt(a, b)++`]
+* [`++gte(a, b)++`]
+* [`++lt(a, b)++`]
+* [`++lte(a, b)++`]
+* [`++eq(a, b)++`]
+* [`++ne(a, b)++`]
+* [`++toInt(blocknumber)++`]
+
+--
+
+[.contract-item]
+[[BlocknumberLib-zero--]]
+==== `[.contract-item-name]#++zero++#++() → Blocknumber++` [.item-kind]#public#
+
+[.contract-item]
+[[BlocknumberLib-max--]]
+==== `[.contract-item-name]#++max++#++() → Blocknumber++` [.item-kind]#public#
+
+[.contract-item]
+[[BlocknumberLib-current--]]
+==== `[.contract-item-name]#++current++#++() → Blocknumber++` [.item-kind]#public#
+
+[.contract-item]
+[[BlocknumberLib-toBlocknumber-uint256-]]
+==== `[.contract-item-name]#++toBlocknumber++#++(uint256 blocknum) → Blocknumber++` [.item-kind]#public#
+
+[.contract-item]
+[[BlocknumberLib-eqz-Blocknumber-]]
+==== `[.contract-item-name]#++eqz++#++(Blocknumber blocknumber) → bool++` [.item-kind]#public#
+
+return true iff blocknumber is 0
+
+[.contract-item]
+[[BlocknumberLib-gtz-Blocknumber-]]
+==== `[.contract-item-name]#++gtz++#++(Blocknumber blocknumber) → bool++` [.item-kind]#public#
+
+return true iff blocknumber is > 0
+
+[.contract-item]
+[[BlocknumberLib-gt-Blocknumber-Blocknumber-]]
+==== `[.contract-item-name]#++gt++#++(Blocknumber a, Blocknumber b) → bool isAfter++` [.item-kind]#public#
+
+return true if Blocknumber a is greater than Blocknumber b
+
+[.contract-item]
+[[BlocknumberLib-gte-Blocknumber-Blocknumber-]]
+==== `[.contract-item-name]#++gte++#++(Blocknumber a, Blocknumber b) → bool isAfterOrSame++` [.item-kind]#public#
+
+return true if Blocknumber a is greater than or equal to Blocknumber b
+
+[.contract-item]
+[[BlocknumberLib-lt-Blocknumber-Blocknumber-]]
+==== `[.contract-item-name]#++lt++#++(Blocknumber a, Blocknumber b) → bool isBefore++` [.item-kind]#public#
+
+return true if Blocknumber a is less than Blocknumber b
+
+[.contract-item]
+[[BlocknumberLib-lte-Blocknumber-Blocknumber-]]
+==== `[.contract-item-name]#++lte++#++(Blocknumber a, Blocknumber b) → bool isBeforeOrSame++` [.item-kind]#public#
+
+return true if Blocknumber a is less than or equal to Blocknumber b
+
+[.contract-item]
+[[BlocknumberLib-eq-Blocknumber-Blocknumber-]]
+==== `[.contract-item-name]#++eq++#++(Blocknumber a, Blocknumber b) → bool isSame++` [.item-kind]#public#
+
+return true if Blocknumber a is equal to Blocknumber b
+
+[.contract-item]
+[[BlocknumberLib-ne-Blocknumber-Blocknumber-]]
+==== `[.contract-item-name]#++ne++#++(Blocknumber a, Blocknumber b) → bool isDifferent++` [.item-kind]#public#
+
+return true if Blocknumber a is not equal to Blocknumber b
+
+[.contract-item]
+[[BlocknumberLib-toInt-Blocknumber-]]
+==== `[.contract-item-name]#++toInt++#++(Blocknumber blocknumber) → uint256++` [.item-kind]#public#
+
+converts the Blocknumber to a uint256
+
+:ErrorChainIdLibValueTooBig: pass:normal[xref:#ChainIdLib-ErrorChainIdLibValueTooBig-uint256-[`++ErrorChainIdLibValueTooBig++`]]
+:zero: pass:normal[xref:#ChainIdLib-zero--[`++zero++`]]
+:max: pass:normal[xref:#ChainIdLib-max--[`++max++`]]
+:current: pass:normal[xref:#ChainIdLib-current--[`++current++`]]
+:eqz: pass:normal[xref:#ChainIdLib-eqz-ChainId-[`++eqz++`]]
+:gtz: pass:normal[xref:#ChainIdLib-gtz-ChainId-[`++gtz++`]]
+:toChainId: pass:normal[xref:#ChainIdLib-toChainId-uint256-[`++toChainId++`]]
+:isCurrentChain: pass:normal[xref:#ChainIdLib-isCurrentChain-NftId-[`++isCurrentChain++`]]
+:fromNftId: pass:normal[xref:#ChainIdLib-fromNftId-NftId-[`++fromNftId++`]]
+:toInt: pass:normal[xref:#ChainIdLib-toInt-ChainId-[`++toInt++`]]
+:_fromNftId: pass:normal[xref:#ChainIdLib-_fromNftId-NftId-[`++_fromNftId++`]]
+:_max: pass:normal[xref:#ChainIdLib-_max--[`++_max++`]]
+
+[.contract]
+[[ChainIdLib]]
+=== `++ChainIdLib++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/type/ChainId.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/type/ChainId.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++zero()++`]
+* [`++max()++`]
+* [`++current()++`]
+* [`++eqz(chainId)++`]
+* [`++gtz(chainId)++`]
+* [`++toChainId(chainId)++`]
+* [`++isCurrentChain(nftId)++`]
+* [`++fromNftId(nftId)++`]
+* [`++toInt(chainId)++`]
+* [`++_fromNftId(nftId)++`]
+* [`++_max()++`]
+
+--
+
+[.contract-item]
+[[ChainIdLib-zero--]]
+==== `[.contract-item-name]#++zero++#++() → ChainId++` [.item-kind]#public#
+
+[.contract-item]
+[[ChainIdLib-max--]]
+==== `[.contract-item-name]#++max++#++() → ChainId++` [.item-kind]#public#
+
+[.contract-item]
+[[ChainIdLib-current--]]
+==== `[.contract-item-name]#++current++#++() → ChainId++` [.item-kind]#public#
+
+[.contract-item]
+[[ChainIdLib-eqz-ChainId-]]
+==== `[.contract-item-name]#++eqz++#++(ChainId chainId) → bool++` [.item-kind]#public#
+
+return true iff chainId is 0
+
+[.contract-item]
+[[ChainIdLib-gtz-ChainId-]]
+==== `[.contract-item-name]#++gtz++#++(ChainId chainId) → bool++` [.item-kind]#public#
+
+return true iff chainId is > 0
+
+[.contract-item]
+[[ChainIdLib-toChainId-uint256-]]
+==== `[.contract-item-name]#++toChainId++#++(uint256 chainId) → ChainId++` [.item-kind]#public#
+
+converts the uint into ChainId
+function reverts if value is exceeding max ChainId value
+
+[.contract-item]
+[[ChainIdLib-isCurrentChain-NftId-]]
+==== `[.contract-item-name]#++isCurrentChain++#++(NftId nftId) → bool++` [.item-kind]#public#
+
+returns true iff NFT ID is from the current chain.
+
+[.contract-item]
+[[ChainIdLib-fromNftId-NftId-]]
+==== `[.contract-item-name]#++fromNftId++#++(NftId nftId) → ChainId++` [.item-kind]#public#
+
+[.contract-item]
+[[ChainIdLib-toInt-ChainId-]]
+==== `[.contract-item-name]#++toInt++#++(ChainId chainId) → uint256++` [.item-kind]#public#
+
+converts the ChainId to a uint256
+
+[.contract-item]
+[[ChainIdLib-_fromNftId-NftId-]]
+==== `[.contract-item-name]#++_fromNftId++#++(NftId nftId) → uint256 chainIdInt++` [.item-kind]#internal#
+
+[.contract-item]
+[[ChainIdLib-_max--]]
+==== `[.contract-item-name]#++_max++#++() → uint96++` [.item-kind]#internal#
+
+:zero: pass:normal[xref:#ClaimIdLib-zero--[`++zero++`]]
+:max: pass:normal[xref:#ClaimIdLib-max--[`++max++`]]
+:toClaimId: pass:normal[xref:#ClaimIdLib-toClaimId-uint256-[`++toClaimId++`]]
+:toInt: pass:normal[xref:#ClaimIdLib-toInt-ClaimId-[`++toInt++`]]
+:toKey32: pass:normal[xref:#ClaimIdLib-toKey32-ClaimId-NftId-[`++toKey32++`]]
+:toKeyId: pass:normal[xref:#ClaimIdLib-toKeyId-ClaimId-NftId-[`++toKeyId++`]]
+:gtz: pass:normal[xref:#ClaimIdLib-gtz-ClaimId-[`++gtz++`]]
+:eq: pass:normal[xref:#ClaimIdLib-eq-ClaimId-ClaimId-[`++eq++`]]
+:eqz: pass:normal[xref:#ClaimIdLib-eqz-ClaimId-[`++eqz++`]]
+
+[.contract]
+[[ClaimIdLib]]
+=== `++ClaimIdLib++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/type/ClaimId.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/type/ClaimId.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++zero()++`]
+* [`++max()++`]
+* [`++toClaimId(a)++`]
+* [`++toInt(a)++`]
+* [`++toKey32(claimId, policyNftId)++`]
+* [`++toKeyId(claimId, policyNftId)++`]
+* [`++gtz(a)++`]
+* [`++eq(a, b)++`]
+* [`++eqz(a)++`]
+
+--
+
+[.contract-item]
+[[ClaimIdLib-zero--]]
+==== `[.contract-item-name]#++zero++#++() → ClaimId++` [.item-kind]#public#
+
+claim id min value (0), use only for non-initialized values
+
+[.contract-item]
+[[ClaimIdLib-max--]]
+==== `[.contract-item-name]#++max++#++() → ClaimId++` [.item-kind]#public#
+
+claim id max value (2**16-1), use only for non-initialized values
+
+[.contract-item]
+[[ClaimIdLib-toClaimId-uint256-]]
+==== `[.contract-item-name]#++toClaimId++#++(uint256 a) → ClaimId++` [.item-kind]#public#
+
+Converts an uint into a ClaimId.
+
+[.contract-item]
+[[ClaimIdLib-toInt-ClaimId-]]
+==== `[.contract-item-name]#++toInt++#++(ClaimId a) → uint16++` [.item-kind]#public#
+
+Converts the ClaimId to a uint.
+
+[.contract-item]
+[[ClaimIdLib-toKey32-ClaimId-NftId-]]
+==== `[.contract-item-name]#++toKey32++#++(ClaimId claimId, NftId policyNftId) → Key32++` [.item-kind]#public#
+
+Converts the ClaimId and NftId to a Key32.
+
+[.contract-item]
+[[ClaimIdLib-toKeyId-ClaimId-NftId-]]
+==== `[.contract-item-name]#++toKeyId++#++(ClaimId claimId, NftId policyNftId) → KeyId++` [.item-kind]#public#
+
+Converts the ClaimId and NftId to a Key32.
+
+[.contract-item]
+[[ClaimIdLib-gtz-ClaimId-]]
+==== `[.contract-item-name]#++gtz++#++(ClaimId a) → bool++` [.item-kind]#public#
+
+Returns true if the value is non-zero (> 0).
+
+[.contract-item]
+[[ClaimIdLib-eq-ClaimId-ClaimId-]]
+==== `[.contract-item-name]#++eq++#++(ClaimId a, ClaimId b) → bool++` [.item-kind]#public#
+
+[.contract-item]
+[[ClaimIdLib-eqz-ClaimId-]]
+==== `[.contract-item-name]#++eqz++#++(ClaimId a) → bool++` [.item-kind]#public#
+
+Returns true if the value is zero (== 0).
+
+:zero: pass:normal[xref:#DistributorTypeLib-zero--[`++zero++`]]
+:toDistributorType: pass:normal[xref:#DistributorTypeLib-toDistributorType-NftId-string-[`++toDistributorType++`]]
+:toKey32: pass:normal[xref:#DistributorTypeLib-toKey32-DistributorType-[`++toKey32++`]]
+:toKeyId: pass:normal[xref:#DistributorTypeLib-toKeyId-DistributorType-[`++toKeyId++`]]
+
+[.contract]
+[[DistributorTypeLib]]
+=== `++DistributorTypeLib++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/type/DistributorType.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/type/DistributorType.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++zero()++`]
+* [`++toDistributorType(distributionNftId, name)++`]
+* [`++toKey32(id)++`]
+* [`++toKeyId(id)++`]
+
+--
+
+[.contract-item]
+[[DistributorTypeLib-zero--]]
+==== `[.contract-item-name]#++zero++#++() → DistributorType++` [.item-kind]#public#
+
+[.contract-item]
+[[DistributorTypeLib-toDistributorType-NftId-string-]]
+==== `[.contract-item-name]#++toDistributorType++#++(NftId distributionNftId, string name) → DistributorType++` [.item-kind]#public#
+
+[.contract-item]
+[[DistributorTypeLib-toKey32-DistributorType-]]
+==== `[.contract-item-name]#++toKey32++#++(DistributorType id) → Key32 key++` [.item-kind]#public#
+
+Returns the key32 value for the specified nft id and object type.
+
+[.contract-item]
+[[DistributorTypeLib-toKeyId-DistributorType-]]
+==== `[.contract-item-name]#++toKeyId++#++(DistributorType id) → KeyId keyId++` [.item-kind]#public#
+
+Returns the key id value for the specified nft id
+
+:zero: pass:normal[xref:#FeeLib-zero--[`++zero++`]]
+:toFee: pass:normal[xref:#FeeLib-toFee-UFixed-uint256-[`++toFee++`]]
+:calculateFee: pass:normal[xref:#FeeLib-calculateFee-struct-Fee-Amount-[`++calculateFee++`]]
+:percentageFee: pass:normal[xref:#FeeLib-percentageFee-uint8-[`++percentageFee++`]]
+:eq: pass:normal[xref:#FeeLib-eq-struct-Fee-struct-Fee-[`++eq++`]]
+:gtz: pass:normal[xref:#FeeLib-gtz-struct-Fee-[`++gtz++`]]
+:eqz: pass:normal[xref:#FeeLib-eqz-struct-Fee-[`++eqz++`]]
+
+[.contract]
+[[FeeLib]]
+=== `++FeeLib++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/type/Fee.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/type/Fee.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++zero()++`]
+* [`++toFee(fractionalFee, fixedFee)++`]
+* [`++calculateFee(fee, amount)++`]
+* [`++percentageFee(percent)++`]
+* [`++eq(a, b)++`]
+* [`++gtz(fee)++`]
+* [`++eqz(fee)++`]
+
+--
+
+[.contract-item]
+[[FeeLib-zero--]]
+==== `[.contract-item-name]#++zero++#++() → struct Fee fee++` [.item-kind]#public#
+
+Return a zero fee struct (0, 0)
+
+[.contract-item]
+[[FeeLib-toFee-UFixed-uint256-]]
+==== `[.contract-item-name]#++toFee++#++(UFixed fractionalFee, uint256 fixedFee) → struct Fee fee++` [.item-kind]#public#
+
+Converts the uint256 to a fee struct.
+
+[.contract-item]
+[[FeeLib-calculateFee-struct-Fee-Amount-]]
+==== `[.contract-item-name]#++calculateFee++#++(struct Fee fee, Amount amount) → Amount feeAmount, Amount netAmount++` [.item-kind]#public#
+
+Calculates fee and net amounts for the provided parameters
+
+[.contract-item]
+[[FeeLib-percentageFee-uint8-]]
+==== `[.contract-item-name]#++percentageFee++#++(uint8 percent) → struct Fee fee++` [.item-kind]#public#
+
+Return the percent fee struct (x%, 0)
+
+[.contract-item]
+[[FeeLib-eq-struct-Fee-struct-Fee-]]
+==== `[.contract-item-name]#++eq++#++(struct Fee a, struct Fee b) → bool isSame++` [.item-kind]#public#
+
+[.contract-item]
+[[FeeLib-gtz-struct-Fee-]]
+==== `[.contract-item-name]#++gtz++#++(struct Fee fee) → bool++` [.item-kind]#public#
+
+[.contract-item]
+[[FeeLib-eqz-struct-Fee-]]
+==== `[.contract-item-name]#++eqz++#++(struct Fee fee) → bool++` [.item-kind]#public#
+
+:TYPE_SHIFT: pass:normal[xref:#Key32Lib-TYPE_SHIFT-uint8[`++TYPE_SHIFT++`]]
+:ID_SHIFT: pass:normal[xref:#Key32Lib-ID_SHIFT-uint8[`++ID_SHIFT++`]]
+:TYPE_MASK: pass:normal[xref:#Key32Lib-TYPE_MASK-bytes32[`++TYPE_MASK++`]]
+:ID_MASK: pass:normal[xref:#Key32Lib-ID_MASK-bytes32[`++ID_MASK++`]]
+:toKey32: pass:normal[xref:#Key32Lib-toKey32-ObjectType-KeyId-[`++toKey32++`]]
+:toObjectType: pass:normal[xref:#Key32Lib-toObjectType-Key32-[`++toObjectType++`]]
+:toKeyId: pass:normal[xref:#Key32Lib-toKeyId-Key32-[`++toKeyId++`]]
+
+[.contract]
+[[Key32Lib]]
+=== `++Key32Lib++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/type/Key32.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/type/Key32.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++toKey32(objectType, id)++`]
+* [`++toObjectType(key)++`]
+* [`++toKeyId(key)++`]
+
+--
+
+[.contract-item]
+[[Key32Lib-toKey32-ObjectType-KeyId-]]
+==== `[.contract-item-name]#++toKey32++#++(ObjectType objectType, KeyId id) → Key32++` [.item-kind]#public#
+
+[.contract-item]
+[[Key32Lib-toObjectType-Key32-]]
+==== `[.contract-item-name]#++toObjectType++#++(Key32 key) → ObjectType objectType++` [.item-kind]#public#
+
+[.contract-item]
+[[Key32Lib-toKeyId-Key32-]]
+==== `[.contract-item-name]#++toKeyId++#++(Key32 key) → KeyId id++` [.item-kind]#public#
+
+:Set: pass:normal[xref:#LibNftIdSet-Set[`++Set++`]]
+:ErrorNftIdSetAlreadyAdded: pass:normal[xref:#LibNftIdSet-ErrorNftIdSetAlreadyAdded-NftId-[`++ErrorNftIdSetAlreadyAdded++`]]
+:ErrorNftIdSetNotInSet: pass:normal[xref:#LibNftIdSet-ErrorNftIdSetNotInSet-NftId-[`++ErrorNftIdSetNotInSet++`]]
+:add: pass:normal[xref:#LibNftIdSet-add-struct-LibNftIdSet-Set-NftId-[`++add++`]]
+:remove: pass:normal[xref:#LibNftIdSet-remove-struct-LibNftIdSet-Set-NftId-[`++remove++`]]
+:isEmpty: pass:normal[xref:#LibNftIdSet-isEmpty-struct-LibNftIdSet-Set-[`++isEmpty++`]]
+:contains: pass:normal[xref:#LibNftIdSet-contains-struct-LibNftIdSet-Set-NftId-[`++contains++`]]
+:size: pass:normal[xref:#LibNftIdSet-size-struct-LibNftIdSet-Set-[`++size++`]]
+:getElementAt: pass:normal[xref:#LibNftIdSet-getElementAt-struct-LibNftIdSet-Set-uint256-[`++getElementAt++`]]
+
+[.contract]
+[[LibNftIdSet]]
+=== `++LibNftIdSet++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/type/NftIdSet.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/type/NftIdSet.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++add(set, nftId)++`]
+* [`++remove(set, nftId)++`]
+* [`++isEmpty(set)++`]
+* [`++contains(set, nftId)++`]
+* [`++size(set)++`]
+* [`++getElementAt(set, index)++`]
+
+--
+
+[.contract-item]
+[[LibNftIdSet-add-struct-LibNftIdSet-Set-NftId-]]
+==== `[.contract-item-name]#++add++#++(struct LibNftIdSet.Set set, NftId nftId)++` [.item-kind]#external#
+
+[.contract-item]
+[[LibNftIdSet-remove-struct-LibNftIdSet-Set-NftId-]]
+==== `[.contract-item-name]#++remove++#++(struct LibNftIdSet.Set set, NftId nftId)++` [.item-kind]#external#
+
+[.contract-item]
+[[LibNftIdSet-isEmpty-struct-LibNftIdSet-Set-]]
+==== `[.contract-item-name]#++isEmpty++#++(struct LibNftIdSet.Set set) → bool empty++` [.item-kind]#external#
+
+[.contract-item]
+[[LibNftIdSet-contains-struct-LibNftIdSet-Set-NftId-]]
+==== `[.contract-item-name]#++contains++#++(struct LibNftIdSet.Set set, NftId nftId) → bool inSet++` [.item-kind]#external#
+
+[.contract-item]
+[[LibNftIdSet-size-struct-LibNftIdSet-Set-]]
+==== `[.contract-item-name]#++size++#++(struct LibNftIdSet.Set set) → uint256 length++` [.item-kind]#external#
+
+[.contract-item]
+[[LibNftIdSet-getElementAt-struct-LibNftIdSet-Set-uint256-]]
+==== `[.contract-item-name]#++getElementAt++#++(struct LibNftIdSet.Set set, uint256 index) → NftId nftId++` [.item-kind]#external#
+
+:zero: pass:normal[xref:#NftIdLib-zero--[`++zero++`]]
+:toNftId: pass:normal[xref:#NftIdLib-toNftId-uint256-[`++toNftId++`]]
+:toInt: pass:normal[xref:#NftIdLib-toInt-NftId-[`++toInt++`]]
+:gtz: pass:normal[xref:#NftIdLib-gtz-NftId-[`++gtz++`]]
+:eqz: pass:normal[xref:#NftIdLib-eqz-NftId-[`++eqz++`]]
+:eq: pass:normal[xref:#NftIdLib-eq-NftId-NftId-[`++eq++`]]
+:ne: pass:normal[xref:#NftIdLib-ne-NftId-NftId-[`++ne++`]]
+:toKey32: pass:normal[xref:#NftIdLib-toKey32-NftId-ObjectType-[`++toKey32++`]]
+:toKeyId: pass:normal[xref:#NftIdLib-toKeyId-NftId-[`++toKeyId++`]]
+:toNftId: pass:normal[xref:#NftIdLib-toNftId-KeyId-[`++toNftId++`]]
+
+[.contract]
+[[NftIdLib]]
+=== `++NftIdLib++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/type/NftId.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/type/NftId.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++zero()++`]
+* [`++toNftId(id)++`]
+* [`++toInt(nftId)++`]
+* [`++gtz(a)++`]
+* [`++eqz(a)++`]
+* [`++eq(a, b)++`]
+* [`++ne(a, b)++`]
+* [`++toKey32(id, objectType)++`]
+* [`++toKeyId(id)++`]
+* [`++toNftId(keyId)++`]
+
+--
+
+[.contract-item]
+[[NftIdLib-zero--]]
+==== `[.contract-item-name]#++zero++#++() → NftId++` [.item-kind]#public#
+
+the zero nft id
+is never a valid nft id and implies a non-initialized value
+
+[.contract-item]
+[[NftIdLib-toNftId-uint256-]]
+==== `[.contract-item-name]#++toNftId++#++(uint256 id) → NftId++` [.item-kind]#public#
+
+Converts the uint256 to a NftId.
+
+[.contract-item]
+[[NftIdLib-toInt-NftId-]]
+==== `[.contract-item-name]#++toInt++#++(NftId nftId) → uint96++` [.item-kind]#public#
+
+Converts the NftId to a uint256.
+
+[.contract-item]
+[[NftIdLib-gtz-NftId-]]
+==== `[.contract-item-name]#++gtz++#++(NftId a) → bool++` [.item-kind]#public#
+
+Returns true if the value is non-zero (> 0).
+
+[.contract-item]
+[[NftIdLib-eqz-NftId-]]
+==== `[.contract-item-name]#++eqz++#++(NftId a) → bool++` [.item-kind]#public#
+
+Returns true if the value is zero (== 0).
+
+[.contract-item]
+[[NftIdLib-eq-NftId-NftId-]]
+==== `[.contract-item-name]#++eq++#++(NftId a, NftId b) → bool isSame++` [.item-kind]#public#
+
+Returns true if the values are equal (==).
+
+[.contract-item]
+[[NftIdLib-ne-NftId-NftId-]]
+==== `[.contract-item-name]#++ne++#++(NftId a, NftId b) → bool isSame++` [.item-kind]#public#
+
+Returns true if the values are not equal (!=).
+
+[.contract-item]
+[[NftIdLib-toKey32-NftId-ObjectType-]]
+==== `[.contract-item-name]#++toKey32++#++(NftId id, ObjectType objectType) → Key32 key++` [.item-kind]#public#
+
+Returns the key32 value for the specified nft id and object type.
+
+[.contract-item]
+[[NftIdLib-toKeyId-NftId-]]
+==== `[.contract-item-name]#++toKeyId++#++(NftId id) → KeyId keyId++` [.item-kind]#public#
+
+Returns the key id value for the specified nft id
+
+[.contract-item]
+[[NftIdLib-toNftId-KeyId-]]
+==== `[.contract-item-name]#++toNftId++#++(KeyId keyId) → NftId nftId++` [.item-kind]#public#
+
+:zero: pass:normal[xref:#ObjectTypeLib-zero--[`++zero++`]]
+:toObjectType: pass:normal[xref:#ObjectTypeLib-toObjectType-uint256-[`++toObjectType++`]]
+:toInt: pass:normal[xref:#ObjectTypeLib-toInt-ObjectType-[`++toInt++`]]
+:gtz: pass:normal[xref:#ObjectTypeLib-gtz-ObjectType-[`++gtz++`]]
+:eqz: pass:normal[xref:#ObjectTypeLib-eqz-ObjectType-[`++eqz++`]]
+:eq: pass:normal[xref:#ObjectTypeLib-eq-ObjectType-ObjectType-[`++eq++`]]
+:ne: pass:normal[xref:#ObjectTypeLib-ne-ObjectType-ObjectType-[`++ne++`]]
+:toName: pass:normal[xref:#ObjectTypeLib-toName-ObjectType-[`++toName++`]]
+:toVersionedName: pass:normal[xref:#ObjectTypeLib-toVersionedName-string-string-VersionPart-[`++toVersionedName++`]]
+
+[.contract]
+[[ObjectTypeLib]]
+=== `++ObjectTypeLib++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/type/ObjectType.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/type/ObjectType.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++zero()++`]
+* [`++toObjectType(objectType)++`]
+* [`++toInt(objectType)++`]
+* [`++gtz(a)++`]
+* [`++eqz(a)++`]
+* [`++eq(a, b)++`]
+* [`++ne(a, b)++`]
+* [`++toName(objectType)++`]
+* [`++toVersionedName(name, suffix, release)++`]
+
+--
+
+[.contract-item]
+[[ObjectTypeLib-zero--]]
+==== `[.contract-item-name]#++zero++#++() → ObjectType++` [.item-kind]#public#
+
+[.contract-item]
+[[ObjectTypeLib-toObjectType-uint256-]]
+==== `[.contract-item-name]#++toObjectType++#++(uint256 objectType) → ObjectType++` [.item-kind]#public#
+
+Converts the uint256 into ObjectType.
+
+[.contract-item]
+[[ObjectTypeLib-toInt-ObjectType-]]
+==== `[.contract-item-name]#++toInt++#++(ObjectType objectType) → uint96++` [.item-kind]#public#
+
+Converts the NftId to a uint256.
+
+[.contract-item]
+[[ObjectTypeLib-gtz-ObjectType-]]
+==== `[.contract-item-name]#++gtz++#++(ObjectType a) → bool++` [.item-kind]#public#
+
+Returns true if the value is non-zero (> 0).
+
+[.contract-item]
+[[ObjectTypeLib-eqz-ObjectType-]]
+==== `[.contract-item-name]#++eqz++#++(ObjectType a) → bool++` [.item-kind]#public#
+
+Returns true if the value is zero (== 0).
+
+[.contract-item]
+[[ObjectTypeLib-eq-ObjectType-ObjectType-]]
+==== `[.contract-item-name]#++eq++#++(ObjectType a, ObjectType b) → bool isSame++` [.item-kind]#public#
+
+Returns true if the values are equal (==).
+
+[.contract-item]
+[[ObjectTypeLib-ne-ObjectType-ObjectType-]]
+==== `[.contract-item-name]#++ne++#++(ObjectType a, ObjectType b) → bool isSame++` [.item-kind]#public#
+
+Returns true if the values are not equal (!=).
+
+[.contract-item]
+[[ObjectTypeLib-toName-ObjectType-]]
+==== `[.contract-item-name]#++toName++#++(ObjectType objectType) → string name++` [.item-kind]#public#
+
+Returns the type/domain name for the provided object type
+
+[.contract-item]
+[[ObjectTypeLib-toVersionedName-string-string-VersionPart-]]
+==== `[.contract-item-name]#++toVersionedName++#++(string name, string suffix, VersionPart release) → string versionedName++` [.item-kind]#external#
+
+:zero: pass:normal[xref:#PayoutIdLib-zero--[`++zero++`]]
+:toPayoutId: pass:normal[xref:#PayoutIdLib-toPayoutId-ClaimId-uint24-[`++toPayoutId++`]]
+:toClaimId: pass:normal[xref:#PayoutIdLib-toClaimId-PayoutId-[`++toClaimId++`]]
+:toPayoutNo: pass:normal[xref:#PayoutIdLib-toPayoutNo-PayoutId-[`++toPayoutNo++`]]
+:toInt: pass:normal[xref:#PayoutIdLib-toInt-PayoutId-[`++toInt++`]]
+:gtz: pass:normal[xref:#PayoutIdLib-gtz-PayoutId-[`++gtz++`]]
+:eqz: pass:normal[xref:#PayoutIdLib-eqz-PayoutId-[`++eqz++`]]
+:toKey32: pass:normal[xref:#PayoutIdLib-toKey32-PayoutId-NftId-[`++toKey32++`]]
+:toKeyId: pass:normal[xref:#PayoutIdLib-toKeyId-PayoutId-NftId-[`++toKeyId++`]]
+
+[.contract]
+[[PayoutIdLib]]
+=== `++PayoutIdLib++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/type/PayoutId.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/type/PayoutId.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++zero()++`]
+* [`++toPayoutId(claimId, payoutNo)++`]
+* [`++toClaimId(payoutId)++`]
+* [`++toPayoutNo(payoutId)++`]
+* [`++toInt(a)++`]
+* [`++gtz(a)++`]
+* [`++eqz(a)++`]
+* [`++toKey32(payoutId, policyNftId)++`]
+* [`++toKeyId(payoutId, policyNftId)++`]
+
+--
+
+[.contract-item]
+[[PayoutIdLib-zero--]]
+==== `[.contract-item-name]#++zero++#++() → PayoutId++` [.item-kind]#public#
+
+Converts the PayoutId to a uint.
+
+[.contract-item]
+[[PayoutIdLib-toPayoutId-ClaimId-uint24-]]
+==== `[.contract-item-name]#++toPayoutId++#++(ClaimId claimId, uint24 payoutNo) → PayoutId++` [.item-kind]#public#
+
+Converts an uint into a PayoutId.
+
+[.contract-item]
+[[PayoutIdLib-toClaimId-PayoutId-]]
+==== `[.contract-item-name]#++toClaimId++#++(PayoutId payoutId) → ClaimId++` [.item-kind]#public#
+
+[.contract-item]
+[[PayoutIdLib-toPayoutNo-PayoutId-]]
+==== `[.contract-item-name]#++toPayoutNo++#++(PayoutId payoutId) → uint24++` [.item-kind]#public#
+
+[.contract-item]
+[[PayoutIdLib-toInt-PayoutId-]]
+==== `[.contract-item-name]#++toInt++#++(PayoutId a) → uint40++` [.item-kind]#public#
+
+Converts the PayoutId to a uint.
+
+[.contract-item]
+[[PayoutIdLib-gtz-PayoutId-]]
+==== `[.contract-item-name]#++gtz++#++(PayoutId a) → bool++` [.item-kind]#public#
+
+Returns true if the value is non-zero (> 0).
+
+[.contract-item]
+[[PayoutIdLib-eqz-PayoutId-]]
+==== `[.contract-item-name]#++eqz++#++(PayoutId a) → bool++` [.item-kind]#public#
+
+Returns true if the value is zero (== 0).
+
+[.contract-item]
+[[PayoutIdLib-toKey32-PayoutId-NftId-]]
+==== `[.contract-item-name]#++toKey32++#++(PayoutId payoutId, NftId policyNftId) → Key32++` [.item-kind]#public#
+
+Converts the PayoutId and NftId to a Key32.
+
+[.contract-item]
+[[PayoutIdLib-toKeyId-PayoutId-NftId-]]
+==== `[.contract-item-name]#++toKeyId++#++(PayoutId payoutId, NftId policyNftId) → KeyId++` [.item-kind]#public#
+
+Converts the PayoutId and NftId to a Key32.
+
+:zero: pass:normal[xref:#ReferralLib-zero--[`++zero++`]]
+:toReferralId: pass:normal[xref:#ReferralLib-toReferralId-NftId-string-[`++toReferralId++`]]
+:toReferralStatus: pass:normal[xref:#ReferralLib-toReferralStatus-uint8-[`++toReferralStatus++`]]
+:toInt: pass:normal[xref:#ReferralLib-toInt-ReferralId-[`++toInt++`]]
+:toKey32: pass:normal[xref:#ReferralLib-toKey32-ReferralId-[`++toKey32++`]]
+:toKeyId: pass:normal[xref:#ReferralLib-toKeyId-ReferralId-[`++toKeyId++`]]
+:eqz: pass:normal[xref:#ReferralLib-eqz-ReferralId-[`++eqz++`]]
+
+[.contract]
+[[ReferralLib]]
+=== `++ReferralLib++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/type/Referral.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/type/Referral.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++zero()++`]
+* [`++toReferralId(distributionNftId, referral)++`]
+* [`++toReferralStatus(status)++`]
+* [`++toInt(referralId)++`]
+* [`++toKey32(id)++`]
+* [`++toKeyId(id)++`]
+* [`++eqz(id)++`]
+
+--
+
+[.contract-item]
+[[ReferralLib-zero--]]
+==== `[.contract-item-name]#++zero++#++() → ReferralId++` [.item-kind]#public#
+
+[.contract-item]
+[[ReferralLib-toReferralId-NftId-string-]]
+==== `[.contract-item-name]#++toReferralId++#++(NftId distributionNftId, string referral) → ReferralId++` [.item-kind]#public#
+
+[.contract-item]
+[[ReferralLib-toReferralStatus-uint8-]]
+==== `[.contract-item-name]#++toReferralStatus++#++(uint8 status) → ReferralStatus++` [.item-kind]#public#
+
+[.contract-item]
+[[ReferralLib-toInt-ReferralId-]]
+==== `[.contract-item-name]#++toInt++#++(ReferralId referralId) → uint256++` [.item-kind]#public#
+
+Converts a referral id into a uint256.
+
+[.contract-item]
+[[ReferralLib-toKey32-ReferralId-]]
+==== `[.contract-item-name]#++toKey32++#++(ReferralId id) → Key32 key++` [.item-kind]#public#
+
+Returns the key32 value for the specified nft id and object type.
+
+[.contract-item]
+[[ReferralLib-toKeyId-ReferralId-]]
+==== `[.contract-item-name]#++toKeyId++#++(ReferralId id) → KeyId keyId++` [.item-kind]#public#
+
+Returns the key id value for the specified nft id
+
+[.contract-item]
+[[ReferralLib-eqz-ReferralId-]]
+==== `[.contract-item-name]#++eqz++#++(ReferralId id) → bool++` [.item-kind]#public#
+
+:zero: pass:normal[xref:#RiskIdLib-zero--[`++zero++`]]
+:toInt: pass:normal[xref:#RiskIdLib-toInt-RiskId-[`++toInt++`]]
+:toRiskId: pass:normal[xref:#RiskIdLib-toRiskId-NftId-bytes32-[`++toRiskId++`]]
+:toKey32: pass:normal[xref:#RiskIdLib-toKey32-RiskId-[`++toKey32++`]]
+:toKeyId: pass:normal[xref:#RiskIdLib-toKeyId-RiskId-[`++toKeyId++`]]
+:toRiskId: pass:normal[xref:#RiskIdLib-toRiskId-KeyId-[`++toRiskId++`]]
+:eq: pass:normal[xref:#RiskIdLib-eq-RiskId-RiskId-[`++eq++`]]
+:eqz: pass:normal[xref:#RiskIdLib-eqz-RiskId-[`++eqz++`]]
+:gtz: pass:normal[xref:#RiskIdLib-gtz-RiskId-[`++gtz++`]]
+
+[.contract]
+[[RiskIdLib]]
+=== `++RiskIdLib++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/type/RiskId.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/type/RiskId.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++zero()++`]
+* [`++toInt(riskId)++`]
+* [`++toRiskId(productNftId, risk)++`]
+* [`++toKey32(riskId)++`]
+* [`++toKeyId(id)++`]
+* [`++toRiskId(keyId)++`]
+* [`++eq(a, b)++`]
+* [`++eqz(a)++`]
+* [`++gtz(a)++`]
+
+--
+
+[.contract-item]
+[[RiskIdLib-zero--]]
+==== `[.contract-item-name]#++zero++#++() → RiskId++` [.item-kind]#public#
+
+[.contract-item]
+[[RiskIdLib-toInt-RiskId-]]
+==== `[.contract-item-name]#++toInt++#++(RiskId riskId) → uint256++` [.item-kind]#public#
+
+[.contract-item]
+[[RiskIdLib-toRiskId-NftId-bytes32-]]
+==== `[.contract-item-name]#++toRiskId++#++(NftId productNftId, bytes32 risk) → RiskId++` [.item-kind]#public#
+
+[.contract-item]
+[[RiskIdLib-toKey32-RiskId-]]
+==== `[.contract-item-name]#++toKey32++#++(RiskId riskId) → Key32 key++` [.item-kind]#public#
+
+Returns the key32 value for the specified risk id.
+
+[.contract-item]
+[[RiskIdLib-toKeyId-RiskId-]]
+==== `[.contract-item-name]#++toKeyId++#++(RiskId id) → KeyId keyId++` [.item-kind]#public#
+
+Returns the key id value for the specified nft id
+
+[.contract-item]
+[[RiskIdLib-toRiskId-KeyId-]]
+==== `[.contract-item-name]#++toRiskId++#++(KeyId keyId) → RiskId riskId++` [.item-kind]#public#
+
+[.contract-item]
+[[RiskIdLib-eq-RiskId-RiskId-]]
+==== `[.contract-item-name]#++eq++#++(RiskId a, RiskId b) → bool isSame++` [.item-kind]#public#
+
+[.contract-item]
+[[RiskIdLib-eqz-RiskId-]]
+==== `[.contract-item-name]#++eqz++#++(RiskId a) → bool isZero++` [.item-kind]#public#
+
+[.contract-item]
+[[RiskIdLib-gtz-RiskId-]]
+==== `[.contract-item-name]#++gtz++#++(RiskId a) → bool isZero++` [.item-kind]#public#
+
+:ErrorRoleIdTooBig: pass:normal[xref:#RoleIdLib-ErrorRoleIdTooBig-uint256-[`++ErrorRoleIdTooBig++`]]
+:SERVICE_ROLE_MIN: pass:normal[xref:#RoleIdLib-SERVICE_ROLE_MIN-uint64[`++SERVICE_ROLE_MIN++`]]
+:SERVICE_ROLE_MAX: pass:normal[xref:#RoleIdLib-SERVICE_ROLE_MAX-uint64[`++SERVICE_ROLE_MAX++`]]
+:SERVICE_ROLE_FACTOR: pass:normal[xref:#RoleIdLib-SERVICE_ROLE_FACTOR-uint64[`++SERVICE_ROLE_FACTOR++`]]
+:zero: pass:normal[xref:#RoleIdLib-zero--[`++zero++`]]
+:toRoleId: pass:normal[xref:#RoleIdLib-toRoleId-uint256-[`++toRoleId++`]]
+:isServiceRole: pass:normal[xref:#RoleIdLib-isServiceRole-RoleId-[`++isServiceRole++`]]
+:toGenericServiceRoleId: pass:normal[xref:#RoleIdLib-toGenericServiceRoleId-ObjectType-[`++toGenericServiceRoleId++`]]
+:toServiceRoleId: pass:normal[xref:#RoleIdLib-toServiceRoleId-ObjectType-VersionPart-[`++toServiceRoleId++`]]
+:toInt: pass:normal[xref:#RoleIdLib-toInt-RoleId-[`++toInt++`]]
+:gtz: pass:normal[xref:#RoleIdLib-gtz-RoleId-[`++gtz++`]]
+:eqz: pass:normal[xref:#RoleIdLib-eqz-RoleId-[`++eqz++`]]
+
+[.contract]
+[[RoleIdLib]]
+=== `++RoleIdLib++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/type/RoleId.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/type/RoleId.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++zero()++`]
+* [`++toRoleId(a)++`]
+* [`++isServiceRole(roleId)++`]
+* [`++toGenericServiceRoleId(objectType)++`]
+* [`++toServiceRoleId(serviceDomain, release)++`]
+* [`++toInt(a)++`]
+* [`++gtz(a)++`]
+* [`++eqz(a)++`]
+
+--
+
+[.contract-item]
+[[RoleIdLib-zero--]]
+==== `[.contract-item-name]#++zero++#++() → RoleId++` [.item-kind]#public#
+
+Converts the RoleId to a uint.
+
+[.contract-item]
+[[RoleIdLib-toRoleId-uint256-]]
+==== `[.contract-item-name]#++toRoleId++#++(uint256 a) → RoleId++` [.item-kind]#public#
+
+Converts an uint into a role id.
+
+[.contract-item]
+[[RoleIdLib-isServiceRole-RoleId-]]
+==== `[.contract-item-name]#++isServiceRole++#++(RoleId roleId) → bool++` [.item-kind]#public#
+
+[.contract-item]
+[[RoleIdLib-toGenericServiceRoleId-ObjectType-]]
+==== `[.contract-item-name]#++toGenericServiceRoleId++#++(ObjectType objectType) → RoleId++` [.item-kind]#public#
+
+[.contract-item]
+[[RoleIdLib-toServiceRoleId-ObjectType-VersionPart-]]
+==== `[.contract-item-name]#++toServiceRoleId++#++(ObjectType serviceDomain, VersionPart release) → RoleId serviceRoleId++` [.item-kind]#public#
+
+[.contract-item]
+[[RoleIdLib-toInt-RoleId-]]
+==== `[.contract-item-name]#++toInt++#++(RoleId a) → uint64++` [.item-kind]#public#
+
+Converts the role id to a uint.
+
+[.contract-item]
+[[RoleIdLib-gtz-RoleId-]]
+==== `[.contract-item-name]#++gtz++#++(RoleId a) → bool++` [.item-kind]#public#
+
+Returns true if the value is non-zero (> 0).
+
+[.contract-item]
+[[RoleIdLib-eqz-RoleId-]]
+==== `[.contract-item-name]#++eqz++#++(RoleId a) → bool++` [.item-kind]#public#
+
+Returns true if the value is zero (== 0).
+
+:ErrorSecondsLibDurationTooBig: pass:normal[xref:#SecondsLib-ErrorSecondsLibDurationTooBig-uint256-[`++ErrorSecondsLibDurationTooBig++`]]
+:zero: pass:normal[xref:#SecondsLib-zero--[`++zero++`]]
+:max: pass:normal[xref:#SecondsLib-max--[`++max++`]]
+:fromHours: pass:normal[xref:#SecondsLib-fromHours-uint32-[`++fromHours++`]]
+:oneDay: pass:normal[xref:#SecondsLib-oneDay--[`++oneDay++`]]
+:fromDays: pass:normal[xref:#SecondsLib-fromDays-uint32-[`++fromDays++`]]
+:oneYear: pass:normal[xref:#SecondsLib-oneYear--[`++oneYear++`]]
+:toSeconds: pass:normal[xref:#SecondsLib-toSeconds-uint256-[`++toSeconds++`]]
+:eqz: pass:normal[xref:#SecondsLib-eqz-Seconds-[`++eqz++`]]
+:gtz: pass:normal[xref:#SecondsLib-gtz-Seconds-[`++gtz++`]]
+:eq: pass:normal[xref:#SecondsLib-eq-Seconds-Seconds-[`++eq++`]]
+:gt: pass:normal[xref:#SecondsLib-gt-Seconds-Seconds-[`++gt++`]]
+:lt: pass:normal[xref:#SecondsLib-lt-Seconds-Seconds-[`++lt++`]]
+:min: pass:normal[xref:#SecondsLib-min-Seconds-Seconds-[`++min++`]]
+:add: pass:normal[xref:#SecondsLib-add-Seconds-Seconds-[`++add++`]]
+:toInt: pass:normal[xref:#SecondsLib-toInt-Seconds-[`++toInt++`]]
+:_max: pass:normal[xref:#SecondsLib-_max--[`++_max++`]]
+
+[.contract]
+[[SecondsLib]]
+=== `++SecondsLib++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/type/Seconds.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/type/Seconds.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++zero()++`]
+* [`++max()++`]
+* [`++fromHours(numberOfHours)++`]
+* [`++oneDay()++`]
+* [`++fromDays(numberOfDays)++`]
+* [`++oneYear()++`]
+* [`++toSeconds(duration)++`]
+* [`++eqz(duration)++`]
+* [`++gtz(duration)++`]
+* [`++eq(duration1, duration2)++`]
+* [`++gt(duration1, duration2)++`]
+* [`++lt(duration1, duration2)++`]
+* [`++min(duration1, duration2)++`]
+* [`++add(duration1, duration2)++`]
+* [`++toInt(duration)++`]
+* [`++_max()++`]
+
+--
+
+[.contract-item]
+[[SecondsLib-zero--]]
+==== `[.contract-item-name]#++zero++#++() → Seconds++` [.item-kind]#public#
+
+[.contract-item]
+[[SecondsLib-max--]]
+==== `[.contract-item-name]#++max++#++() → Seconds++` [.item-kind]#public#
+
+[.contract-item]
+[[SecondsLib-fromHours-uint32-]]
+==== `[.contract-item-name]#++fromHours++#++(uint32 numberOfHours) → Seconds duration++` [.item-kind]#public#
+
+[.contract-item]
+[[SecondsLib-oneDay--]]
+==== `[.contract-item-name]#++oneDay++#++() → Seconds duration++` [.item-kind]#public#
+
+[.contract-item]
+[[SecondsLib-fromDays-uint32-]]
+==== `[.contract-item-name]#++fromDays++#++(uint32 numberOfDays) → Seconds duration++` [.item-kind]#public#
+
+[.contract-item]
+[[SecondsLib-oneYear--]]
+==== `[.contract-item-name]#++oneYear++#++() → Seconds duration++` [.item-kind]#public#
+
+[.contract-item]
+[[SecondsLib-toSeconds-uint256-]]
+==== `[.contract-item-name]#++toSeconds++#++(uint256 duration) → Seconds++` [.item-kind]#public#
+
+converts the uint duration into Seconds
+function reverts if duration is exceeding max Seconds value
+
+[.contract-item]
+[[SecondsLib-eqz-Seconds-]]
+==== `[.contract-item-name]#++eqz++#++(Seconds duration) → bool++` [.item-kind]#public#
+
+return true if duration equals 0
+
+[.contract-item]
+[[SecondsLib-gtz-Seconds-]]
+==== `[.contract-item-name]#++gtz++#++(Seconds duration) → bool++` [.item-kind]#public#
+
+return true if duration is larger than 0
+
+[.contract-item]
+[[SecondsLib-eq-Seconds-Seconds-]]
+==== `[.contract-item-name]#++eq++#++(Seconds duration1, Seconds duration2) → bool++` [.item-kind]#public#
+
+return true iff duration1 and duration2 are the same
+
+[.contract-item]
+[[SecondsLib-gt-Seconds-Seconds-]]
+==== `[.contract-item-name]#++gt++#++(Seconds duration1, Seconds duration2) → bool++` [.item-kind]#public#
+
+return true if duration1 is larger than duration2
+
+[.contract-item]
+[[SecondsLib-lt-Seconds-Seconds-]]
+==== `[.contract-item-name]#++lt++#++(Seconds duration1, Seconds duration2) → bool++` [.item-kind]#public#
+
+return true if duration1 is smaller than duration2
+
+[.contract-item]
+[[SecondsLib-min-Seconds-Seconds-]]
+==== `[.contract-item-name]#++min++#++(Seconds duration1, Seconds duration2) → Seconds++` [.item-kind]#public#
+
+returns the smaller of the duration
+
+[.contract-item]
+[[SecondsLib-add-Seconds-Seconds-]]
+==== `[.contract-item-name]#++add++#++(Seconds duration1, Seconds duration2) → Seconds++` [.item-kind]#public#
+
+return add duration1 and duration2
+
+[.contract-item]
+[[SecondsLib-toInt-Seconds-]]
+==== `[.contract-item-name]#++toInt++#++(Seconds duration) → uint256++` [.item-kind]#public#
+
+[.contract-item]
+[[SecondsLib-_max--]]
+==== `[.contract-item-name]#++_max++#++() → uint40++` [.item-kind]#internal#
+
+:zero: pass:normal[xref:#StateIdLib-zero--[`++zero++`]]
+:toInt: pass:normal[xref:#StateIdLib-toInt-StateId-[`++toInt++`]]
+:gtz: pass:normal[xref:#StateIdLib-gtz-StateId-[`++gtz++`]]
+:eqz: pass:normal[xref:#StateIdLib-eqz-StateId-[`++eqz++`]]
+:eq: pass:normal[xref:#StateIdLib-eq-StateId-StateId-[`++eq++`]]
+
+[.contract]
+[[StateIdLib]]
+=== `++StateIdLib++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/type/StateId.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/type/StateId.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++zero()++`]
+* [`++toInt(stateId)++`]
+* [`++gtz(a)++`]
+* [`++eqz(a)++`]
+* [`++eq(a, b)++`]
+
+--
+
+[.contract-item]
+[[StateIdLib-zero--]]
+==== `[.contract-item-name]#++zero++#++() → StateId++` [.item-kind]#public#
+
+[.contract-item]
+[[StateIdLib-toInt-StateId-]]
+==== `[.contract-item-name]#++toInt++#++(StateId stateId) → uint96++` [.item-kind]#public#
+
+Converts the NftId to a uint256.
+
+[.contract-item]
+[[StateIdLib-gtz-StateId-]]
+==== `[.contract-item-name]#++gtz++#++(StateId a) → bool++` [.item-kind]#public#
+
+Returns true if the value is non-zero (> 0).
+
+[.contract-item]
+[[StateIdLib-eqz-StateId-]]
+==== `[.contract-item-name]#++eqz++#++(StateId a) → bool++` [.item-kind]#public#
+
+Returns true if the value is zero (== 0).
+
+[.contract-item]
+[[StateIdLib-eq-StateId-StateId-]]
+==== `[.contract-item-name]#++eq++#++(StateId a, StateId b) → bool isSame++` [.item-kind]#public#
+
+Returns true if the values are equal (==).
+
+:zero: pass:normal[xref:#TimestampLib-zero--[`++zero++`]]
+:max: pass:normal[xref:#TimestampLib-max--[`++max++`]]
+:current: pass:normal[xref:#TimestampLib-current--[`++current++`]]
+:toTimestamp: pass:normal[xref:#TimestampLib-toTimestamp-uint256-[`++toTimestamp++`]]
+:gt: pass:normal[xref:#TimestampLib-gt-Timestamp-Timestamp-[`++gt++`]]
+:gte: pass:normal[xref:#TimestampLib-gte-Timestamp-Timestamp-[`++gte++`]]
+:lt: pass:normal[xref:#TimestampLib-lt-Timestamp-Timestamp-[`++lt++`]]
+:lte: pass:normal[xref:#TimestampLib-lte-Timestamp-Timestamp-[`++lte++`]]
+:eq: pass:normal[xref:#TimestampLib-eq-Timestamp-Timestamp-[`++eq++`]]
+:ne: pass:normal[xref:#TimestampLib-ne-Timestamp-Timestamp-[`++ne++`]]
+:eqz: pass:normal[xref:#TimestampLib-eqz-Timestamp-[`++eqz++`]]
+:gtz: pass:normal[xref:#TimestampLib-gtz-Timestamp-[`++gtz++`]]
+:addSeconds: pass:normal[xref:#TimestampLib-addSeconds-Timestamp-Seconds-[`++addSeconds++`]]
+:subtractSeconds: pass:normal[xref:#TimestampLib-subtractSeconds-Timestamp-Seconds-[`++subtractSeconds++`]]
+:toInt: pass:normal[xref:#TimestampLib-toInt-Timestamp-[`++toInt++`]]
+
+[.contract]
+[[TimestampLib]]
+=== `++TimestampLib++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/type/Timestamp.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/type/Timestamp.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++zero()++`]
+* [`++max()++`]
+* [`++current()++`]
+* [`++toTimestamp(timestamp)++`]
+* [`++gt(a, b)++`]
+* [`++gte(a, b)++`]
+* [`++lt(a, b)++`]
+* [`++lte(a, b)++`]
+* [`++eq(a, b)++`]
+* [`++ne(a, b)++`]
+* [`++eqz(timestamp)++`]
+* [`++gtz(timestamp)++`]
+* [`++addSeconds(timestamp, duration)++`]
+* [`++subtractSeconds(timestamp, duration)++`]
+* [`++toInt(timestamp)++`]
+
+--
+
+[.contract-item]
+[[TimestampLib-zero--]]
+==== `[.contract-item-name]#++zero++#++() → Timestamp++` [.item-kind]#public#
+
+[.contract-item]
+[[TimestampLib-max--]]
+==== `[.contract-item-name]#++max++#++() → Timestamp++` [.item-kind]#public#
+
+[.contract-item]
+[[TimestampLib-current--]]
+==== `[.contract-item-name]#++current++#++() → Timestamp++` [.item-kind]#public#
+
+[.contract-item]
+[[TimestampLib-toTimestamp-uint256-]]
+==== `[.contract-item-name]#++toTimestamp++#++(uint256 timestamp) → Timestamp++` [.item-kind]#public#
+
+[.contract-item]
+[[TimestampLib-gt-Timestamp-Timestamp-]]
+==== `[.contract-item-name]#++gt++#++(Timestamp a, Timestamp b) → bool isAfter++` [.item-kind]#public#
+
+return true if Timestamp a is after Timestamp b
+
+[.contract-item]
+[[TimestampLib-gte-Timestamp-Timestamp-]]
+==== `[.contract-item-name]#++gte++#++(Timestamp a, Timestamp b) → bool isAfterOrSame++` [.item-kind]#public#
+
+return true if Timestamp a is after or the same than Timestamp b
+
+[.contract-item]
+[[TimestampLib-lt-Timestamp-Timestamp-]]
+==== `[.contract-item-name]#++lt++#++(Timestamp a, Timestamp b) → bool isBefore++` [.item-kind]#public#
+
+return true if Timestamp a is before Timestamp b
+
+[.contract-item]
+[[TimestampLib-lte-Timestamp-Timestamp-]]
+==== `[.contract-item-name]#++lte++#++(Timestamp a, Timestamp b) → bool isBeforeOrSame++` [.item-kind]#public#
+
+return true if Timestamp a is before or the same than Timestamp b
+
+[.contract-item]
+[[TimestampLib-eq-Timestamp-Timestamp-]]
+==== `[.contract-item-name]#++eq++#++(Timestamp a, Timestamp b) → bool isSame++` [.item-kind]#public#
+
+return true if Timestamp a is equal to Timestamp b
+
+[.contract-item]
+[[TimestampLib-ne-Timestamp-Timestamp-]]
+==== `[.contract-item-name]#++ne++#++(Timestamp a, Timestamp b) → bool isDifferent++` [.item-kind]#public#
+
+return true if Timestamp a is not equal to Timestamp b
+
+[.contract-item]
+[[TimestampLib-eqz-Timestamp-]]
+==== `[.contract-item-name]#++eqz++#++(Timestamp timestamp) → bool++` [.item-kind]#public#
+
+return true if Timestamp equals 0
+
+[.contract-item]
+[[TimestampLib-gtz-Timestamp-]]
+==== `[.contract-item-name]#++gtz++#++(Timestamp timestamp) → bool++` [.item-kind]#public#
+
+return true if Timestamp is larger than 0
+
+[.contract-item]
+[[TimestampLib-addSeconds-Timestamp-Seconds-]]
+==== `[.contract-item-name]#++addSeconds++#++(Timestamp timestamp, Seconds duration) → Timestamp++` [.item-kind]#public#
+
+return a new timestamp that is duration seconds later than the provided timestamp.
+
+[.contract-item]
+[[TimestampLib-subtractSeconds-Timestamp-Seconds-]]
+==== `[.contract-item-name]#++subtractSeconds++#++(Timestamp timestamp, Seconds duration) → Timestamp++` [.item-kind]#public#
+
+return a new timestamp that is duration seconds earlier than the provided timestamp.
+
+[.contract-item]
+[[TimestampLib-toInt-Timestamp-]]
+==== `[.contract-item-name]#++toInt++#++(Timestamp timestamp) → uint256++` [.item-kind]#public#
+
+:UFixedLibNegativeResult: pass:normal[xref:#UFixedLib-UFixedLibNegativeResult--[`++UFixedLibNegativeResult++`]]
+:UFixedLibDivisionByZero: pass:normal[xref:#UFixedLib-UFixedLibDivisionByZero--[`++UFixedLibDivisionByZero++`]]
+:UFixedLibExponentTooSmall: pass:normal[xref:#UFixedLib-UFixedLibExponentTooSmall-int8-[`++UFixedLibExponentTooSmall++`]]
+:UFixedLibExponentTooLarge: pass:normal[xref:#UFixedLib-UFixedLibExponentTooLarge-int8-[`++UFixedLibExponentTooLarge++`]]
+:UFixedLibNumberTooLarge: pass:normal[xref:#UFixedLib-UFixedLibNumberTooLarge-uint256-[`++UFixedLibNumberTooLarge++`]]
+:EXP: pass:normal[xref:#UFixedLib-EXP-int8[`++EXP++`]]
+:MULTIPLIER: pass:normal[xref:#UFixedLib-MULTIPLIER-uint256[`++MULTIPLIER++`]]
+:MULTIPLIER_HALF: pass:normal[xref:#UFixedLib-MULTIPLIER_HALF-uint256[`++MULTIPLIER_HALF++`]]
+:ROUNDING_DOWN: pass:normal[xref:#UFixedLib-ROUNDING_DOWN--[`++ROUNDING_DOWN++`]]
+:ROUNDING_UP: pass:normal[xref:#UFixedLib-ROUNDING_UP--[`++ROUNDING_UP++`]]
+:ROUNDING_HALF_UP: pass:normal[xref:#UFixedLib-ROUNDING_HALF_UP--[`++ROUNDING_HALF_UP++`]]
+:toUFixed: pass:normal[xref:#UFixedLib-toUFixed-uint256-[`++toUFixed++`]]
+:toUFixed: pass:normal[xref:#UFixedLib-toUFixed-uint256-int8-[`++toUFixed++`]]
+:decimals: pass:normal[xref:#UFixedLib-decimals--[`++decimals++`]]
+:toInt: pass:normal[xref:#UFixedLib-toInt-UFixed-[`++toInt++`]]
+:toInt1000: pass:normal[xref:#UFixedLib-toInt1000-UFixed-[`++toInt1000++`]]
+:toIntWithRounding: pass:normal[xref:#UFixedLib-toIntWithRounding-UFixed-uint8-[`++toIntWithRounding++`]]
+:add: pass:normal[xref:#UFixedLib-add-UFixed-UFixed-[`++add++`]]
+:sub: pass:normal[xref:#UFixedLib-sub-UFixed-UFixed-[`++sub++`]]
+:mul: pass:normal[xref:#UFixedLib-mul-UFixed-UFixed-[`++mul++`]]
+:div: pass:normal[xref:#UFixedLib-div-UFixed-UFixed-[`++div++`]]
+:gt: pass:normal[xref:#UFixedLib-gt-UFixed-UFixed-[`++gt++`]]
+:gte: pass:normal[xref:#UFixedLib-gte-UFixed-UFixed-[`++gte++`]]
+:lt: pass:normal[xref:#UFixedLib-lt-UFixed-UFixed-[`++lt++`]]
+:lte: pass:normal[xref:#UFixedLib-lte-UFixed-UFixed-[`++lte++`]]
+:eq: pass:normal[xref:#UFixedLib-eq-UFixed-UFixed-[`++eq++`]]
+:gtz: pass:normal[xref:#UFixedLib-gtz-UFixed-[`++gtz++`]]
+:eqz: pass:normal[xref:#UFixedLib-eqz-UFixed-[`++eqz++`]]
+:zero: pass:normal[xref:#UFixedLib-zero--[`++zero++`]]
+:one: pass:normal[xref:#UFixedLib-one--[`++one++`]]
+:max: pass:normal[xref:#UFixedLib-max--[`++max++`]]
+:delta: pass:normal[xref:#UFixedLib-delta-UFixed-UFixed-[`++delta++`]]
+
+[.contract]
+[[UFixedLib]]
+=== `++UFixedLib++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/type/UFixed.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/type/UFixed.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++ROUNDING_DOWN()++`]
+* [`++ROUNDING_UP()++`]
+* [`++ROUNDING_HALF_UP()++`]
+* [`++toUFixed(a)++`]
+* [`++toUFixed(a, exp)++`]
+* [`++decimals()++`]
+* [`++toInt(a)++`]
+* [`++toInt1000(a)++`]
+* [`++toIntWithRounding(a, rounding)++`]
+* [`++add(a, b)++`]
+* [`++sub(a, b)++`]
+* [`++mul(a, b)++`]
+* [`++div(a, b)++`]
+* [`++gt(a, b)++`]
+* [`++gte(a, b)++`]
+* [`++lt(a, b)++`]
+* [`++lte(a, b)++`]
+* [`++eq(a, b)++`]
+* [`++gtz(a)++`]
+* [`++eqz(a)++`]
+* [`++zero()++`]
+* [`++one()++`]
+* [`++max()++`]
+* [`++delta(a, b)++`]
+
+--
+
+[.contract-item]
+[[UFixedLib-ROUNDING_DOWN--]]
+==== `[.contract-item-name]#++ROUNDING_DOWN++#++() → uint8++` [.item-kind]#public#
+
+returns the rounding mode DOWN - 0.4 becomes 0, 0.5 becomes 0, 0.6 becomes 0
+
+[.contract-item]
+[[UFixedLib-ROUNDING_UP--]]
+==== `[.contract-item-name]#++ROUNDING_UP++#++() → uint8++` [.item-kind]#public#
+
+returns the rounding mode UP - 0.4 becomes 1, 0.5 becomes 1, 0.6 becomes 1
+
+[.contract-item]
+[[UFixedLib-ROUNDING_HALF_UP--]]
+==== `[.contract-item-name]#++ROUNDING_HALF_UP++#++() → uint8++` [.item-kind]#public#
+
+returns the rounding mode HALF_UP - 0.4 becomes 0, 0.5 becomes 1, 0.6 becomes 1
+
+[.contract-item]
+[[UFixedLib-toUFixed-uint256-]]
+==== `[.contract-item-name]#++toUFixed++#++(uint256 a) → UFixed++` [.item-kind]#public#
+
+Converts the uint256 to a uint160 based UFixed. 
+This method reverts if the number is too large to fit in a uint160.
+
+[.contract-item]
+[[UFixedLib-toUFixed-uint256-int8-]]
+==== `[.contract-item-name]#++toUFixed++#++(uint256 a, int8 exp) → UFixed++` [.item-kind]#public#
+
+Converts the uint256 to a UFixed with given exponent.
+
+[.contract-item]
+[[UFixedLib-decimals--]]
+==== `[.contract-item-name]#++decimals++#++() → uint256++` [.item-kind]#public#
+
+returns the decimals precision of the UFixed type
+
+[.contract-item]
+[[UFixedLib-toInt-UFixed-]]
+==== `[.contract-item-name]#++toInt++#++(UFixed a) → uint256++` [.item-kind]#public#
+
+Converts a UFixed to a uint256.
+
+[.contract-item]
+[[UFixedLib-toInt1000-UFixed-]]
+==== `[.contract-item-name]#++toInt1000++#++(UFixed a) → uint256++` [.item-kind]#public#
+
+Converts a UFixed to a uint256.
+
+[.contract-item]
+[[UFixedLib-toIntWithRounding-UFixed-uint8-]]
+==== `[.contract-item-name]#++toIntWithRounding++#++(UFixed a, uint8 rounding) → uint256++` [.item-kind]#public#
+
+Converts a UFixed to a uint256 with given rounding mode.
+
+[.contract-item]
+[[UFixedLib-add-UFixed-UFixed-]]
+==== `[.contract-item-name]#++add++#++(UFixed a, UFixed b) → UFixed++` [.item-kind]#public#
+
+adds two UFixed numbers
+
+[.contract-item]
+[[UFixedLib-sub-UFixed-UFixed-]]
+==== `[.contract-item-name]#++sub++#++(UFixed a, UFixed b) → UFixed++` [.item-kind]#public#
+
+subtracts two UFixed numbers
+
+[.contract-item]
+[[UFixedLib-mul-UFixed-UFixed-]]
+==== `[.contract-item-name]#++mul++#++(UFixed a, UFixed b) → UFixed++` [.item-kind]#public#
+
+multiplies two UFixed numbers
+
+[.contract-item]
+[[UFixedLib-div-UFixed-UFixed-]]
+==== `[.contract-item-name]#++div++#++(UFixed a, UFixed b) → UFixed++` [.item-kind]#public#
+
+divides two UFixed numbers
+
+[.contract-item]
+[[UFixedLib-gt-UFixed-UFixed-]]
+==== `[.contract-item-name]#++gt++#++(UFixed a, UFixed b) → bool isGreaterThan++` [.item-kind]#public#
+
+return true if UFixed a is greater than UFixed b
+
+[.contract-item]
+[[UFixedLib-gte-UFixed-UFixed-]]
+==== `[.contract-item-name]#++gte++#++(UFixed a, UFixed b) → bool isGreaterThan++` [.item-kind]#public#
+
+return true if UFixed a is greater than or equal to UFixed b
+
+[.contract-item]
+[[UFixedLib-lt-UFixed-UFixed-]]
+==== `[.contract-item-name]#++lt++#++(UFixed a, UFixed b) → bool isGreaterThan++` [.item-kind]#public#
+
+return true if UFixed a is less than UFixed b
+
+[.contract-item]
+[[UFixedLib-lte-UFixed-UFixed-]]
+==== `[.contract-item-name]#++lte++#++(UFixed a, UFixed b) → bool isGreaterThan++` [.item-kind]#public#
+
+return true if UFixed a is less than or equal to UFixed b
+
+[.contract-item]
+[[UFixedLib-eq-UFixed-UFixed-]]
+==== `[.contract-item-name]#++eq++#++(UFixed a, UFixed b) → bool isEqual++` [.item-kind]#public#
+
+return true if UFixed a is equal to UFixed b
+
+[.contract-item]
+[[UFixedLib-gtz-UFixed-]]
+==== `[.contract-item-name]#++gtz++#++(UFixed a) → bool isZero++` [.item-kind]#public#
+
+return true if UFixed a is not zero
+
+[.contract-item]
+[[UFixedLib-eqz-UFixed-]]
+==== `[.contract-item-name]#++eqz++#++(UFixed a) → bool isZero++` [.item-kind]#public#
+
+return true if UFixed a is zero
+
+[.contract-item]
+[[UFixedLib-zero--]]
+==== `[.contract-item-name]#++zero++#++() → UFixed++` [.item-kind]#public#
+
+[.contract-item]
+[[UFixedLib-one--]]
+==== `[.contract-item-name]#++one++#++() → UFixed++` [.item-kind]#public#
+
+[.contract-item]
+[[UFixedLib-max--]]
+==== `[.contract-item-name]#++max++#++() → UFixed++` [.item-kind]#public#
+
+[.contract-item]
+[[UFixedLib-delta-UFixed-UFixed-]]
+==== `[.contract-item-name]#++delta++#++(UFixed a, UFixed b) → UFixed++` [.item-kind]#public#
+
+return the absolute delta between two UFixed numbers
+
+:toInt: pass:normal[xref:#VersionLib-toInt-Version-[`++toInt++`]]
+:toUint64: pass:normal[xref:#VersionLib-toUint64-Version-[`++toUint64++`]]
+:toMajorPart: pass:normal[xref:#VersionLib-toMajorPart-Version-[`++toMajorPart++`]]
+:toVersionParts: pass:normal[xref:#VersionLib-toVersionParts-Version-[`++toVersionParts++`]]
+:toVersion: pass:normal[xref:#VersionLib-toVersion-uint256-uint256-uint256-[`++toVersion++`]]
+:toVersion: pass:normal[xref:#VersionLib-toVersion-uint64-[`++toVersion++`]]
+:zeroVersion: pass:normal[xref:#VersionLib-zeroVersion--[`++zeroVersion++`]]
+
+[.contract]
+[[VersionLib]]
+=== `++VersionLib++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/type/Version.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/type/Version.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++toInt(version)++`]
+* [`++toUint64(version)++`]
+* [`++toMajorPart(version)++`]
+* [`++toVersionParts(version)++`]
+* [`++toVersion(major, minor, patch)++`]
+* [`++toVersion(versionNumber)++`]
+* [`++zeroVersion()++`]
+
+--
+
+[.contract-item]
+[[VersionLib-toInt-Version-]]
+==== `[.contract-item-name]#++toInt++#++(Version version) → uint256++` [.item-kind]#external#
+
+[.contract-item]
+[[VersionLib-toUint64-Version-]]
+==== `[.contract-item-name]#++toUint64++#++(Version version) → uint64++` [.item-kind]#external#
+
+[.contract-item]
+[[VersionLib-toMajorPart-Version-]]
+==== `[.contract-item-name]#++toMajorPart++#++(Version version) → VersionPart major++` [.item-kind]#external#
+
+[.contract-item]
+[[VersionLib-toVersionParts-Version-]]
+==== `[.contract-item-name]#++toVersionParts++#++(Version version) → VersionPart major, VersionPart minor, VersionPart patch++` [.item-kind]#external#
+
+[.contract-item]
+[[VersionLib-toVersion-uint256-uint256-uint256-]]
+==== `[.contract-item-name]#++toVersion++#++(uint256 major, uint256 minor, uint256 patch) → Version++` [.item-kind]#external#
+
+[.contract-item]
+[[VersionLib-toVersion-uint64-]]
+==== `[.contract-item-name]#++toVersion++#++(uint64 versionNumber) → Version++` [.item-kind]#external#
+
+[.contract-item]
+[[VersionLib-zeroVersion--]]
+==== `[.contract-item-name]#++zeroVersion++#++() → Version++` [.item-kind]#external#
+
+:ErrorReleaseTooBig: pass:normal[xref:#VersionPartLib-ErrorReleaseTooBig-VersionPart-VersionPart-[`++ErrorReleaseTooBig++`]]
+:releaseMin: pass:normal[xref:#VersionPartLib-releaseMin--[`++releaseMin++`]]
+:releaseMax: pass:normal[xref:#VersionPartLib-releaseMax--[`++releaseMax++`]]
+:isValidRelease: pass:normal[xref:#VersionPartLib-isValidRelease-VersionPart-[`++isValidRelease++`]]
+:toString: pass:normal[xref:#VersionPartLib-toString-VersionPart-[`++toString++`]]
+:eqz: pass:normal[xref:#VersionPartLib-eqz-VersionPart-[`++eqz++`]]
+:gtz: pass:normal[xref:#VersionPartLib-gtz-VersionPart-[`++gtz++`]]
+:toInt: pass:normal[xref:#VersionPartLib-toInt-VersionPart-[`++toInt++`]]
+:toVersionPart: pass:normal[xref:#VersionPartLib-toVersionPart-uint256-[`++toVersionPart++`]]
+
+[.contract]
+[[VersionPartLib]]
+=== `++VersionPartLib++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/type/Version.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/type/Version.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++releaseMin()++`]
+* [`++releaseMax()++`]
+* [`++isValidRelease(release)++`]
+* [`++toString(a)++`]
+* [`++eqz(a)++`]
+* [`++gtz(a)++`]
+* [`++toInt(a)++`]
+* [`++toVersionPart(a)++`]
+
+--
+
+[.contract-item]
+[[VersionPartLib-releaseMin--]]
+==== `[.contract-item-name]#++releaseMin++#++() → VersionPart++` [.item-kind]#public#
+
+[.contract-item]
+[[VersionPartLib-releaseMax--]]
+==== `[.contract-item-name]#++releaseMax++#++() → VersionPart++` [.item-kind]#public#
+
+[.contract-item]
+[[VersionPartLib-isValidRelease-VersionPart-]]
+==== `[.contract-item-name]#++isValidRelease++#++(VersionPart release) → bool++` [.item-kind]#external#
+
+[.contract-item]
+[[VersionPartLib-toString-VersionPart-]]
+==== `[.contract-item-name]#++toString++#++(VersionPart a) → string++` [.item-kind]#external#
+
+[.contract-item]
+[[VersionPartLib-eqz-VersionPart-]]
+==== `[.contract-item-name]#++eqz++#++(VersionPart a) → bool++` [.item-kind]#external#
+
+[.contract-item]
+[[VersionPartLib-gtz-VersionPart-]]
+==== `[.contract-item-name]#++gtz++#++(VersionPart a) → bool++` [.item-kind]#external#
+
+[.contract-item]
+[[VersionPartLib-toInt-VersionPart-]]
+==== `[.contract-item-name]#++toInt++#++(VersionPart a) → uint256++` [.item-kind]#external#
+
+[.contract-item]
+[[VersionPartLib-toVersionPart-uint256-]]
+==== `[.contract-item-name]#++toVersionPart++#++(uint256 a) → VersionPart++` [.item-kind]#public#
+
