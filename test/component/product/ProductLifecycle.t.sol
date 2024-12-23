@@ -43,7 +43,7 @@ contract TestProductLifecycle
 
         // create risk
         vm.startPrank(productOwner);
-        riskId = product.createRisk("Risk_1", "");
+        riskId = product.createRisk("");
         vm.stopPrank();
 
         policyHolder = new MyPolicyHolder(address(registry));

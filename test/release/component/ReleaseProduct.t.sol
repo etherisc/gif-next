@@ -86,7 +86,7 @@ contract ReleaseProductTest is GifTest {
                 address(product)));
 
         vm.startPrank(productOwner);
-        RiskId riskId2 = product.createRisk("RiskWhileReleaseInactive", "");
+        RiskId riskId2 = product.createRisk("");
         vm.stopPrank();
 
         assertTrue(instanceReader.getRiskInfo(riskId2).createdAt.eqz(), "new risk unexpectedly created");
@@ -182,7 +182,7 @@ contract ReleaseProductTest is GifTest {
 
     function _createRisk(string memory riskName) internal returns (RiskId rskId) {
         vm.startPrank(productOwner);
-        rskId = product.createRisk(riskName, "");
+        rskId = product.createRisk("");
         vm.stopPrank();
     }
 

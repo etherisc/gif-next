@@ -33,7 +33,7 @@ contract PolicyServiceLibTest is GifTest {
 
         // create test specific risk
         bytes memory data = "bla di blubb";
-        RiskId riskId = product.createRisk("42x4711", data);
+        RiskId riskId = product.createRisk(data);
 
         // crete application
         uint256 sumInsuredAmount = 1000;
@@ -97,7 +97,7 @@ contract PolicyServiceLibTest is GifTest {
 
         // create test specific risk
         bytes memory data = "bla di blubb";
-        RiskId riskId = product.createRisk("42x4711", data);
+        RiskId riskId = product.createRisk(data);
 
         // crete application
         uint256 sumInsuredAmount = 1000;
@@ -150,7 +150,7 @@ contract PolicyServiceLibTest is GifTest {
 
         // create test specific risk
         bytes memory data = "bla di blubb";
-        RiskId riskId = product.createRisk("42x4711", data);
+        RiskId riskId = product.createRisk(data);
 
         // crete application
         uint256 sumInsuredAmount = 1000;

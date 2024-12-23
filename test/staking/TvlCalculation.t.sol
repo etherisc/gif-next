@@ -42,7 +42,7 @@ contract TvlCalculation is GifTest {
 
         // create risk
         vm.startPrank(productOwner);
-        riskId = product.createRisk("Risk_1", "");
+        riskId = product.createRisk("");
         vm.stopPrank();
 
         // fund customer

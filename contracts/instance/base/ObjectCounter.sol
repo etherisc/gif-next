@@ -7,7 +7,7 @@ import {RiskId, RiskIdLib} from "../../type/RiskId.sol";
 
 contract ObjectCounter {
 
-    mapping(NftId productNftId => uint64 risks) private _riskCounter;
+    uint64 private _riskCounter = 0;
     uint256 private _requestCounter = 0;
 
     function _createNextRequestId() internal returns (RequestId requestId) {
@@ -15,8 +15,8 @@ contract ObjectCounter {
         requestId = RequestIdLib.toRequestId(_requestCounter);
     }
 
-    function _createNextRiskId(NftId productNftId) internal returns (RiskId riskId) {
-        _riskCounter[productNftId]++;
-        riskId = RiskIdLib.toRiskId(_riskCounter[productNftId]);
+    function _createNextRiskId() internal returns (RiskId riskId) {
+        _riskCounter++;
+        riskId = RiskIdLib.toRiskId(_riskCounter);
     }
 }

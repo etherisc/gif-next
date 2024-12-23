@@ -86,7 +86,7 @@ contract PoolWithReinsurance is
         reinsuranceProduct = product;
 
         // step 1. create risk
-        RiskId riskId = reinsuranceProduct.createRisk("default", "");
+        RiskId riskId = reinsuranceProduct.createRisk("");
 
         // step 1. create application
         InstanceReader instanceReader = reinsuranceProduct.getInstance().getInstanceReader();

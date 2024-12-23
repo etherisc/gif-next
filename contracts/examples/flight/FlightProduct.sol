@@ -522,6 +522,8 @@ contract FlightProduct is
         if (!exists) {
             riskId = _createRisk(abi.encode(flightRisk));
             _risks[riskKey] = riskId;
+        } else {
+            riskId = _risks[riskKey];
         }
 
         FlightLib.checkClusterRisk(

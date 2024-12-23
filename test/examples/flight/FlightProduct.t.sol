@@ -528,7 +528,7 @@ contract FlightProductTest is FlightBaseTest {
         // solhint-disable
         console.log("--- after policy creation (before departure) ---");
         console.log("request id", requestId.toInt(), "risk id");
-        console.logBytes8(RiskId.unwrap(riskId));
+        console.logUint(RiskId.unwrap(riskId));
         console.log("flight data", flightData, "request state", requestState.toInt());
         // console.log("request state", requestState.toInt());
         console.log("readyForResponse, waitingForResend", readyForResponse, waitingForResend);
@@ -577,7 +577,7 @@ contract FlightProductTest is FlightBaseTest {
         // solhint-disable
         console.log("--- after response with insufficient gas ---");
         console.log("request id", requestId.toInt(), "risk id");
-        console.logBytes8(RiskId.unwrap(riskId));
+        console.logUint(RiskId.unwrap(riskId));
         console.log("flight data", flightData, "request state", requestState.toInt());
         // console.log("request state", requestState.toInt());
         console.log("readyForResponse, waitingForResend", readyForResponse, waitingForResend);
@@ -604,7 +604,7 @@ contract FlightProductTest is FlightBaseTest {
         // solhint-disable
         console.log("--- after resend ---");
         console.log("request id", requestId.toInt(), "risk id");
-        console.logBytes8(RiskId.unwrap(riskId));
+        console.logUint(RiskId.unwrap(riskId));
         console.log("flight data", flightData, "request state", requestState.toInt());
         // console.log("request state", requestState.toInt());
         console.log("readyForResponse, waitingForResend", readyForResponse, waitingForResend);

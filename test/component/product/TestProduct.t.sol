@@ -105,7 +105,7 @@ contract TestProduct is GifTest {
 
         bytes memory data = "bla di blubb";
         SimpleProduct dproduct = SimpleProduct(address(product));
-        RiskId riskId = dproduct.createRisk("42x4711", data);
+        RiskId riskId = dproduct.createRisk(data);
 
         Amount sumInsured = AmountLib.toAmount(1000);
         Seconds  lifetime = SecondsLib.toSeconds(30);
@@ -136,7 +136,7 @@ contract TestProduct is GifTest {
 
         // SimpleProduct dproduct = SimpleProduct(address(product));
         vm.startPrank(productOwner);
-        RiskId riskId = product.createRisk("42x4711", data);
+        RiskId riskId = product.createRisk(data);
         vm.stopPrank();
 
         IRisk.RiskInfo memory riskInfo = instanceReader.getRiskInfo(riskId);
@@ -150,7 +150,7 @@ contract TestProduct is GifTest {
         bytes memory data = "bla di blubb";
 
         vm.startPrank(productOwner);
-        RiskId riskId = product.createRisk("42x4711", data);
+        RiskId riskId = product.createRisk(data);
         IRisk.RiskInfo memory riskInfo = instanceReader.getRiskInfo(riskId);
 
         assertTrue(riskInfo.productNftId.eq(productNftId), "productNftId not set");
