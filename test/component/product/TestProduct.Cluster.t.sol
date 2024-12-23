@@ -69,7 +69,7 @@ contract TestProductClusterTest is GifClusterTest {
         vm.stopPrank();
 
         vm.startPrank(instanceOwner);
-        RiskId riskId = myProduct2.createRisk("42x4711", "");
+        RiskId riskId = myProduct2.createRisk("");
         vm.stopPrank();
 
         Seconds lifetime = SecondsLib.toSeconds(30);

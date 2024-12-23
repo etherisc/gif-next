@@ -40,7 +40,6 @@ contract RiskService is
 
     /// @inheritdoc IRiskService
     function createRisk(
-        bytes32 id,
         bytes memory data
     )
         external 
@@ -52,16 +51,12 @@ contract RiskService is
         (NftId productNftId, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
 
         // effects
-        riskId = RiskIdLib.toRiskId(productNftId, id);
         IRisk.RiskInfo memory riskInfo = IRisk.RiskInfo({
             productNftId: productNftId, 
             createdAt: TimestampLib.current(),
             data: data});
 
-        instance.getProductStore().createRisk(
-            riskId,
-            riskInfo
-        );
+        riskId = instance.getProductStore().createRisk(riskInfo);
 
         // add risk to RiskSet
         RiskSet riskSet = instance.getRiskSet();

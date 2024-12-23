@@ -3,22 +3,12 @@ pragma solidity ^0.8.20;
 
 import {console} from "../../../lib/forge-std/src/Test.sol";
 
-import {INftOwnable} from "../../../contracts/shared/INftOwnable.sol";
-import {IOracle} from "../../../contracts/oracle/IOracle.sol";
-import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
 
 import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
-import {BUNDLE} from "../../../contracts/type/ObjectType.sol";
-import {COLLATERALIZED, PAID} from "../../../contracts/type/StateId.sol";
 import {FlightBaseTest} from "./FlightBase.t.sol";
 import {FlightLib} from "../../../contracts/examples/flight/FlightLib.sol";
-import {FlightProduct} from "../../../contracts/examples/flight/FlightProduct.sol";
-import {FlightOracle} from "../../../contracts/examples/flight/FlightOracle.sol";
-import {IBundle} from "../../../contracts/instance/module/IBundle.sol";
-import {NftId} from "../../../contracts/type/NftId.sol";
-import {RiskId} from "../../../contracts/type/RiskId.sol";
+import {RiskId, RiskIdLib} from "../../../contracts/type/RiskId.sol";
 import {RequestId, RequestIdLib} from "../../../contracts/type/RequestId.sol";
-import {SecondsLib} from "../../../contracts/type/Seconds.sol";
 import {Str, StrLib} from "../../../contracts/type/String.sol";
 import {Timestamp, TimestampLib} from "../../../contracts/type/Timestamp.sol";
 
@@ -82,9 +72,7 @@ contract FlightPricingTest is FlightBaseTest {
     function test_flightPricingPayoutOptions() public {
         // GIVEN
         RequestId rqId = RequestIdLib.toRequestId(1);
-        RiskId rkId = FlightLib.getRiskId(
-            flightProductNftId,
-            flightData);
+        RiskId rkId = RiskIdLib.toRiskId(1);
 
         // solhint-disable
         console.log("X 42", FlightLib.checkAndGetPayoutOption(rqId, rkId, "X", 42));

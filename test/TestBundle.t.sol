@@ -1098,7 +1098,7 @@ contract TestBundle is GifTest {
 
     function _createRisk(string memory riskIdStr) internal returns (RiskId riskId) {
         vm.startPrank(productOwner);
-        riskId = product.createRisk(riskIdStr, "");
+        riskId = product.createRisk("");
         vm.stopPrank();
     }
 

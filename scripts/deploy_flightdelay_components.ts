@@ -142,7 +142,6 @@ export async function deployFlightDelayComponentContracts(libraries: LibraryAddr
         {
             libraries: {
                 AmountLib: amountLibAddress,
-                RiskIdLib: riskIdLibAddress,
                 TimestampLib: timestampLibAddress,
             }
         });
@@ -188,6 +187,7 @@ export async function deployFlightDelayComponentContracts(libraries: LibraryAddr
                 ObjectTypeLib: objectTypeLibAddress,
                 ReferralLib: referralLibAddress,
                 RequestIdLib: requestIdLibAddress,
+                RiskIdLib: riskIdLibAddress,
                 SecondsLib: secondsLibAddress,
                 StrLib: strLibAddress,
                 TimestampLib: timestampLibAddress,
