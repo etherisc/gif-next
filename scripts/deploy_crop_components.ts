@@ -269,7 +269,8 @@ export async function deployCropComponentContracts(
                 UFixedLib: ufixedLibAddress,
                 VersionLib: versionLibAddress,
             }
-        });
+        },
+        "contracts/examples/crop/CropPool.sol:CropPool");
     const cropPool = cropPoolBaseContract as CropPool;
     
     logger.info(`registering CropPool on CropProduct`);
