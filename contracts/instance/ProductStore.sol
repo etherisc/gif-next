@@ -113,7 +113,8 @@ contract ProductStore is
     }
 
     //--- Risk --------------------------------------------------------------//
-    function createRisk(RiskId riskId, IRisk.RiskInfo memory info) external restricted() {
+    function createRisk(IRisk.RiskInfo memory info) external restricted() returns (RiskId riskId) {
+        riskId = _createNextRiskId(info.productNftId);
         Key32 key = riskId.toKey32();
         _createMetadata(key);
         _risks[key] = info;

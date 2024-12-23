@@ -195,7 +195,6 @@ contract CropProduct is
         if (seasonEndAt < TimestampLib.current()) { revert ErrorInvalidSeasonEndAt(seasonEndAt); }
 
         // create risk, if new
-        bytes32 riskKey = keccak256(abi.encode(id));
         CropRisk memory cropRisk = CropRisk({
             seasonId: seasonId,
             locationId: locationId,
@@ -205,7 +204,7 @@ contract CropProduct is
             payoutDefined: false
         });
 
-        riskId = _createRisk(riskKey, abi.encode(cropRisk));
+        riskId = _createRisk(abi.encode(cropRisk));
         _riskId[id] = riskId;
     }
 

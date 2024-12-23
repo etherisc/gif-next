@@ -67,6 +67,7 @@ contract FlightProduct is
     bool internal _testMode;
 
     mapping(RiskId riskId => RequestId requestId) internal _requests;
+    mapping(bytes32 encodedRisk => RiskId) internal _risks;
 
     // GIF V3 specifics
     NftId internal _defaultBundleNftId;
@@ -507,20 +508,20 @@ contract FlightProduct is
         returns (RiskId riskId)
     {
         bool exists;
-        FlightRisk memory flightRisk;
-        (riskId, exists, flightRisk) = FlightLib.getFlightRisk(
-            _getInstanceReader(), 
-            getNftId(), 
+        FlightRisk memory flightRisk = FlightLib.getFlightRisk(
             flightData, 
             departureTime, 
             departureTimeLocal,
             arrivalTime,
             arrivalTimeLocal);
 
+        bytes32 riskKey = FlightLib.getRiskKey(flightData);
+        exists = _risks[riskKey].gtz();
+
         // create risk, if new
         if (!exists) {
-            bytes32 riskKey = FlightLib.getRiskKey(flightData);
-            _createRisk(riskKey, abi.encode(flightRisk));
+            riskId = _createRisk(abi.encode(flightRisk));
+            _risks[riskKey] = riskId;
         }
 
         FlightLib.checkClusterRisk(
