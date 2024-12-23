@@ -19,7 +19,7 @@ import {ReferralLib} from "../../type/Referral.sol";
 import {RiskId} from "../../type/RiskId.sol";
 import {RequestId} from "../../type/RequestId.sol";
 import {Seconds, SecondsLib} from "../../type/Seconds.sol";
-import {Str} from "../../type/String.sol";
+import {Str, StrLib} from "../../type/String.sol";
 import {Timestamp, TimestampLib} from "../../type/Timestamp.sol";
 import {UFixed, UFixedLib} from "../../type/UFixed.sol";
 
@@ -28,6 +28,9 @@ import {UFixed, UFixedLib} from "../../type/UFixed.sol";
 contract CropProduct is
     Product
 {
+
+    // Events
+    event LogCropPolicyCreated(NftId policyNftId);
 
     // Custom errors
     error ErrorInvalidId(string id);
@@ -92,7 +95,6 @@ contract CropProduct is
     Str [] internal _crops;
 
     mapping(Str id => RiskId riskId) internal _riskId;
-    mapping(RiskId riskId => RequestId requestId) internal _requests;
 
     // GIF V3 specifics
     NftId internal _defaultBundleNftId;
@@ -274,6 +276,8 @@ contract CropProduct is
         _collectPremium(
             policyNftId, 
             TimestampLib.zero()); // keep activation timestamp
+        
+        emit LogCropPolicyCreated(policyNftId);
     }
 
 
@@ -358,6 +362,14 @@ contract CropProduct is
     function seasons() public view returns (Str [] memory) { return _seasons; }
     function crops() public view returns (Str [] memory) { return _crops; }
 
+    function getRiskId(Str id)
+        external
+        view
+        returns (RiskId riskId)
+    { 
+        return _riskId[id]; 
+    }
+
     function getRisk(RiskId riskId)
         public
         view
@@ -411,7 +423,13 @@ contract CropProduct is
         return sumInsuredAmount.multiplyWith(payoutFactor);
     }
 
-    function getRequestForRisk(RiskId riskId) public view returns (RequestId requestId) { return _requests[riskId]; }
+    function toStr(string memory str) public pure returns (Str) {
+        return StrLib.toStr(str);
+    }
+
+    function toString(Str str) public pure returns (string memory) {
+        return StrLib.toString(str);
+    }
 
     //--- internal functions ------------------------------------------------//
 

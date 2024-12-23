@@ -36,19 +36,15 @@ contract CropProductTest is CropBaseTest {
     }
 
 
-    function approveProductTokenHandler() public {
-        // approve flight product to buy policies
-        vm.startPrank(customer);
-        accountingToken.approve(
-            address(cropProduct.getTokenHandler()), 
-            accountingToken.balanceOf(customer));
-        vm.stopPrank();
+    function test_setUp() public {
+        assertEq(address(cropProduct), registry.getObjectAddress(cropProductNftId), "unexpected product address");
+        assertEq(address(cropProduct.getToken()), address(accountingToken), "unexpected token address");
     }
 
 
     function test_cropProductSetup() public {
         // GIVEN - setp from flight base test
-        approveProductTokenHandler();
+        _approveProductTokenHandler();
         
         _printAuthz(instance.getInstanceAdmin(), "instance");
 
@@ -155,6 +151,8 @@ contract CropProductTest is CropBaseTest {
         vm.stopPrank();
 
         // THEN
+        assertTrue(riskId.toInt() > 0, "unexpected risk id (zero)");
+        assertEq(riskId.toInt(), cropProduct.getRiskId(riskIdStr).toInt(), "unexpected risk id");
         assertEq(instanceReader.risks(cropProductNftId), 1, "unexpected risk count");
         assertTrue(instanceReader.getRiskId(cropProductNftId, 0) == riskId, "unexpected risk id");
 
@@ -329,6 +327,20 @@ contract CropProductTest is CropBaseTest {
     }
 
 
+    function test_cropProductStringHelper() public {
+        // GIVEN
+        // string memory helloString = unicode"hello wörld!";
+        string memory helloString = "hello world!";
+
+        // WHEN
+        Str helloStr = cropProduct.toStr(helloString);
+
+        // THEN
+        assertEq(helloStr.toString(), helloString, "unexpected string (a)");
+        assertEq(cropProduct.toString(helloStr), helloString, "unexpected string (b)");
+    }
+
+
     function _createSeason(string memory nanoId) internal returns (Str seasonId) {
         seasonId = StrLib.toStr(nanoId);
         uint16 year = 2025;
@@ -396,6 +408,15 @@ contract CropProductTest is CropBaseTest {
             activateAt,
             sumInsuredAmount,
             premiumAmount);
+        vm.stopPrank();
+    }
+
+
+    function _approveProductTokenHandler() internal {
+        vm.startPrank(customer);
+        accountingToken.approve(
+            address(cropProduct.getTokenHandler()), 
+            accountingToken.balanceOf(customer));
         vm.stopPrank();
     }
 }
