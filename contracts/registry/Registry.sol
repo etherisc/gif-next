@@ -2,7 +2,6 @@
 pragma solidity ^0.8.20;
 
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManaged.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
@@ -10,13 +9,13 @@ import {NftId, NftIdLib} from "../type/NftId.sol";
 import {VersionPart, VersionPartLib} from "../type/Version.sol";
 import {ObjectType, ObjectTypeLib, PROTOCOL, REGISTRY, SERVICE, INSTANCE, STAKE, STAKING, PRODUCT, DISTRIBUTION, DISTRIBUTOR, ORACLE, POOL, POLICY, BUNDLE} from "../type/ObjectType.sol";
 
+import {ChainId, ChainIdLib} from "../type/ChainId.sol";
 import {ChainNft} from "./ChainNft.sol";
 import {IRegistry} from "./IRegistry.sol";
 import {IRelease} from "./IRelease.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
 import {IStaking} from "../staking/IStaking.sol";
 import {ReleaseRegistry} from "./ReleaseRegistry.sol";
-import {TokenRegistry} from "./TokenRegistry.sol";
 import {RegistryAdmin} from "./RegistryAdmin.sol";
 
 /// @dev IMPORTANT
@@ -65,8 +64,8 @@ contract Registry is
     string public constant EMPTY_URI = "";
 
     /// @dev keep track of different registries on different chains
-    mapping(uint256 chainId => NftId registryNftId) private _registryNftIdByChainId;
-    uint256[] private _chainId;
+    mapping(ChainId chainId => NftId registryNftId) private _registryNftIdByChainId;
+    ChainId[] private _chainId;
 
     /// @dev keep track of object info and address reverse lookup
     mapping(NftId nftId => ObjectInfo info) private _info;
@@ -145,7 +144,7 @@ contract Registry is
     /// @inheritdoc IRegistry
     function registerRegistry(
         NftId nftId,
-        uint256 chainId, 
+        ChainId chainId, 
         address registryAddress
     )
         external
@@ -153,11 +152,11 @@ contract Registry is
     {
         // registration of chain registries only allowed on mainnet
         if (block.chainid != 1) {
-            revert ErrorRegistryNotOnMainnet(block.chainid);
+            revert ErrorRegistryNotOnMainnet(ChainIdLib.toChainId(block.chainid));
         }
 
         // registry chain id is not zero
-        if(chainId == 0) {
+        if(chainId.eqz()) {
             revert ErrorRegistryChainRegistryChainIdZero(nftId);
         }
 
@@ -322,11 +321,11 @@ contract Registry is
         return _chainId.length;
     }
 
-    function getChainId(uint256 idx) public view returns (uint256) {
+    function getChainId(uint256 idx) public view returns (ChainId) {
         return _chainId[idx];
     }
 
-    function getRegistryNftId(uint256 chainId) public view returns (NftId nftId) {
+    function getRegistryNftId(ChainId chainId) public view returns (NftId nftId) {
         return _registryNftIdByChainId[chainId];
     }
 
@@ -566,6 +565,8 @@ contract Registry is
                 initialOwner: NFT_LOCK_ADDRESS,
                 data: ""}),
             true);
+
+        emit LogRegistryObjectRegistered(protocolNftId, NftIdLib.zero(), PROTOCOL(), false, address(0), NFT_LOCK_ADDRESS);
     }
 
     /// @dev register this registry
@@ -579,7 +580,7 @@ contract Registry is
 
         // register global registry
         _registerRegistryForNft(
-            1, // mainnet chain id
+            ChainIdLib.toChainId(1), // mainnet chain id
             ObjectInfo({
                 nftId: GLOBAL_REGISTRY_NFT_ID,
                 parentNftId: PROTOCOL_NFT_ID,
@@ -598,7 +599,7 @@ contract Registry is
                 CHAIN_NFT.calculateTokenId(REGISTRY_TOKEN_SEQUENCE_ID));
 
             _registerRegistryForNft(
-                block.chainid, 
+                ChainIdLib.toChainId(block.chainid), 
                 ObjectInfo({
                     nftId: registryNftId,
                     parentNftId: GLOBAL_REGISTRY_NFT_ID,
@@ -613,7 +614,7 @@ contract Registry is
 
     /// @dev staking registration
     function _registerRegistryForNft(
-        uint256 chainId,
+        ChainId chainId,
         ObjectInfo memory info,
         bool updateAddressLookup
     )
@@ -671,6 +672,8 @@ contract Registry is
 
         // calls nft receiver
         CHAIN_NFT.mint(info.initialOwner, info.nftId.toInt());
+
+        emit LogRegistryObjectRegistered(info.nftId, info.parentNftId, info.objectType, info.isInterceptor, info.objectAddress, info.initialOwner);
     }
 
     function _setAddressForNftId(NftId nftId, address objectAddress)

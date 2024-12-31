@@ -201,10 +201,10 @@ contract BundleService is
 
         if (locked) {
             bundleManager.lock(bundleNftId);
-            emit LogBundleServiceBundleLocked(bundleNftId);
+            emit LogBundleServiceBundleLocked(bundleNftId, true);
         } else {
             bundleManager.unlock(bundleNftId);
-            emit LogBundleServiceBundleUnlocked(bundleNftId);
+            emit LogBundleServiceBundleLocked(bundleNftId, false);
         }
     }
     

@@ -12,6 +12,7 @@ import {Blocknumber} from "../type/Blocknumber.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType} from "../type/ObjectType.sol";
 import {RoleId} from "../type/RoleId.sol";
+import {Selector} from "../type/Selector.sol";
 import {Str} from "../type/String.sol";
 import {VersionPart} from "../type/Version.sol";
 
@@ -24,14 +25,14 @@ interface IAccessAdmin is
 {
 
     // roles, targets and functions
-    event LogAccessAdminRoleCreated(string admin, RoleId roleId, TargetType targetType, RoleId roleAdminId, string name);
-    event LogAccessAdminTargetCreated(string admin, string name, bool managed, address target, RoleId roleId);
+    event LogAccessAdminRoleCreated(RoleId indexed roleId, RoleId indexed roleAdminId, TargetType indexed targetType, string name, string admin);
+    event LogAccessAdminTargetCreated(address indexed target, RoleId indexed roleId, bool indexed managed, string name, string admin);
 
-    event LogAccessAdminRoleActivatedSet(string admin, RoleId roleId, bool active, Blocknumber lastUpdateIn);
-    event LogAccessAdminRoleGranted(string admin, address account, string roleName);
-    event LogAccessAdminRoleRevoked(string admin, address account, string roleName);
-    event LogAccessAdminTargetLockedSet(string admin, address target, bool locked, Blocknumber lastUpdateIn);
-    event LogAccessAdminFunctionGranted(string admin, address target, string func, Blocknumber lastUpdateIn);
+    event LogAccessAdminRoleActivatedSet(RoleId indexed roleId, bool indexed active, string admin, Blocknumber indexed lastUpdateIn);
+    event LogAccessAdminRoleGranted(address indexed account, string roleName, string admin);
+    event LogAccessAdminRoleRevoked(address indexed account, string roleName, string admin);
+    event LogAccessAdminTargetLockedSet(address indexed target, bool indexed locked, string admin, Blocknumber indexed lastUpdateIn);
+    event LogAccessAdminFunctionGranted(address indexed target, Selector indexed selector, RoleId indexed roleId, string func, string admin, Blocknumber lastUpdateIn);
 
     // only deployer modifier
     error ErrorAccessAdminNotDeployer();

@@ -15,24 +15,24 @@ import {Seconds} from "../type/Seconds.sol";
 interface IApplicationService is IService {
     
     event LogApplicationServiceApplicationCreated(
-        NftId applicationNftId,
-        NftId productNftId,
-        NftId bundleNftId, 
+        NftId indexed applicationNftId,
+        NftId indexed productNftId,
+        NftId indexed bundleNftId, 
         RiskId riskId,
         ReferralId referralId,
         address applicationOwner,
         Amount sumInsuredAmount,
         Amount premiumAmount,
         Seconds lifetime);
-    event LogApplicationServiceApplicationRenewed(NftId policyNftId, NftId bundleNftId);
+    event LogApplicationServiceApplicationRenewed(NftId indexed policyNftId, NftId indexed bundleNftId);
     event LogApplicationServiceApplicationAdjusted(
-        NftId applicationNftId, 
-        NftId bundleNftId, 
-        RiskId riskId, 
+        NftId indexed applicationNftId, 
+        NftId indexed bundleNftId, 
+        RiskId indexed riskId, 
         ReferralId referralId, 
         Amount sumInsuredAmount, 
         Seconds lifetime);
-    event LogApplicationServiceApplicationRevoked(NftId applicationNftId);
+    event LogApplicationServiceApplicationRevoked(NftId indexed applicationNftId);
 
     // _checkLinkedApplicationParameters
     error ErrorApplicationServiceRiskProductMismatch(RiskId riskId, NftId riskProductNftId, NftId productNftId);

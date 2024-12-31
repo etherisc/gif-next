@@ -13,6 +13,10 @@ import {Timestamp} from "../type/Timestamp.sol";
 interface IOracleComponent is IInstanceLinkedComponent {
     error ErrorOracleNotImplemented(string methodName);
     
+    event LogOracleRequestReceived(RequestId indexed requestId, NftId indexed requesterId);
+    event LogOracleRequestCancelled(RequestId indexed requestId);
+
+
     /// @dev callback method for requesting some data from the oracle
     function request(
         RequestId requestId,
@@ -30,4 +34,10 @@ interface IOracleComponent is IInstanceLinkedComponent {
 
     /// @dev returns true iff the component needs to be called when selling/renewing policis
     function isVerifying() external view returns (bool verifying);
+
+    function activeRequests() external view returns(uint256 numberOfRequests);
+    
+    function getActiveRequest(uint256 idx) external view returns(RequestId requestId);
+
+    function isActiveRequest(RequestId requestId) external view returns(bool isActive);
 }

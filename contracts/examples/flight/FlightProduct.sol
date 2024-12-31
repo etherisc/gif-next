@@ -216,12 +216,12 @@ contract FlightProduct is
     }
 
 
-    function resendRequest(RequestId requestId)
+    function resendResponse(RequestId requestId)
         external
         virtual
         restricted()
     {
-        _resendRequest(requestId);
+        _resendResponse(requestId);
     }
 
 

@@ -5,6 +5,7 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 import {IRelease} from "./IRelease.sol";
 
+import {ChainId} from "../type/ChainId.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType} from "../type/ObjectType.sol";
 import {VersionPart} from "../type/Version.sol";
@@ -19,9 +20,9 @@ interface IRegistry is
     IERC165
 {
 
-    event LogRegistryObjectRegistered(NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, address objectAddress, address initialOwner);
-    event LogRegistryServiceRegistered(NftId nftId, VersionPart majorVersion, ObjectType domain);
-    event LogRegistryChainRegistryRegistered(NftId nftId, uint256 chainId, address chainRegistryAddress);
+    event LogRegistryObjectRegistered(NftId indexed nftId, NftId indexed parentNftId, ObjectType indexed objectType, bool isInterceptor, address objectAddress, address initialOwner);
+    event LogRegistryServiceRegistered(NftId indexed nftId, VersionPart indexed majorVersion, ObjectType indexed domain);
+    event LogRegistryChainRegistryRegistered(NftId indexed nftId, ChainId indexed chainId, address indexed chainRegistryAddress);
 
     // initialize
     error ErrorRegistryCallerNotDeployer();
@@ -30,11 +31,11 @@ interface IRegistry is
     error ErrorRegistryObjectTypeNotSupported(ObjectType objectType);
 
     // registerRegistry()
-    error ErrorRegistryNotOnMainnet(uint256 chainId);
+    error ErrorRegistryNotOnMainnet(ChainId chainId);
     error ErrorRegistryChainRegistryChainIdZero(NftId nftId);
-    error ErrorRegistryChainRegistryAddressZero(NftId nftId, uint256 chainId);
-    error ErrorRegistryChainRegistryNftIdInvalid(NftId nftId, uint256 chainId);
-    error ErrorRegistryChainRegistryAlreadyRegistered(NftId nftId, uint256 chainId);
+    error ErrorRegistryChainRegistryAddressZero(NftId nftId, ChainId chainId);
+    error ErrorRegistryChainRegistryNftIdInvalid(NftId nftId, ChainId chainId);
+    error ErrorRegistryChainRegistryAlreadyRegistered(NftId nftId, ChainId chainId);
 
     // registerService()
     error ErrorRegistryServiceAddressZero(); 
@@ -71,7 +72,7 @@ interface IRegistry is
     /// Only one chain registry may be registered per chain
     function registerRegistry(
         NftId nftId, 
-        uint256 chainId, 
+        ChainId chainId, 
         address chainRegistryAddress
     ) external;
 
@@ -107,10 +108,10 @@ interface IRegistry is
     function chainIds() external view returns (uint256);
 
     /// @dev Returns the chain id at the specified index.
-    function getChainId(uint256 idx) external view returns (uint256);
+    function getChainId(uint256 idx) external view returns (ChainId);
 
     /// @dev Returns the NFT ID of the registry for the specified chain.
-    function getRegistryNftId(uint256 chainId) external returns (NftId nftId); 
+    function getRegistryNftId(ChainId chainId) external returns (NftId nftId); 
 
     function getObjectCount() external view returns (uint256);
 

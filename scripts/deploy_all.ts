@@ -1,3 +1,4 @@
+import { deployCropComponentContracts } from "./deploy_crop_components";
 import { deployFireComponentContracts } from "./deploy_fire_components";
 import { deployFlightDelayComponentContracts } from "./deploy_flightdelay_components";
 import { deployGifContracts } from "./deploy_gif";
@@ -11,9 +12,10 @@ import { logger } from "./logger";
  * - Deploys all contracts for fire 
  * - Creates a fire bundle and policy
  * - Deploys all contracts for flight delay
+ * - Deploys all contracts for crop
  */
 async function main() {
-    const { protocolOwner, masterInstanceOwner, instanceOwner, productOwner: fireOwner, investor, customer } = await getNamedAccounts();
+    const { protocolOwner, instanceOwner, productOwner: fireOwner, investor, customer, productOperator } = await getNamedAccounts();
     loadVerificationQueueState();
     
     const {services, libraries } = await deployGifContracts(protocolOwner, instanceOwner);
@@ -22,6 +24,8 @@ async function main() {
     await createFireBundleAndPolicy(fireOwner, investor, customer, fireUsd, fireProduct, firePool);
 
     await deployFlightDelayComponentContracts(libraries, services, fireOwner, protocolOwner);
+
+    await deployCropComponentContracts(libraries, services, fireOwner, protocolOwner);
 }
 
 if (require.main === module) {

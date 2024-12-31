@@ -3,11 +3,10 @@ pragma solidity ^0.8.20;
 
 import {IAuthorization} from "../../authorization/IAuthorization.sol";
 
-import {ACTIVE, FULFILLED, FAILED} from "../../type/StateId.sol";
+import {ACTIVE, FAILED} from "../../type/StateId.sol";
 import {NftId} from "../../type/NftId.sol";
 import {BasicOracle} from "../../oracle/BasicOracle.sol";
 import {RequestId} from "../../type/RequestId.sol";
-import {LibRequestIdSet} from "../../type/RequestIdSet.sol";
 import {RiskId} from "../../type/RiskId.sol";
 import {StateId} from "../../type/StateId.sol";
 import {Str} from "../../type/String.sol";
@@ -33,9 +32,6 @@ contract FlightOracle is
     event LogFlightOracleResponseSent(RequestId requestId, bytes1 status, int256 delay);
     event LogFlightOracleRequestCancelled(RequestId requestId);
 
-    // TODO decide if this variable should be moved to instance store
-    // if so it need to manage active requests by requestor nft id
-    LibRequestIdSet.Set internal _activeRequests;
 
 
     constructor(
@@ -99,51 +95,9 @@ contract FlightOracle is
 
         // effects + interaction (via framework to receiving component)
         _respond(requestId, responseData);
-
-        // TODO decide if the code below should be moved to GIF
-        _updateRequestState(requestId);
-    }
-
-
-    function updateRequestState(
-        RequestId requestId
-    )
-        external
-        restricted()
-    {
-        _updateRequestState(requestId);
     }
 
     //--- view functions ----------------------------------------------------//
-
-    // TODO decide if the code below should be moved to GIF
-    function activeRequests()
-        external
-        view
-        returns(uint256 numberOfRequests)
-    {
-        return LibRequestIdSet.size(_activeRequests);
-    }
-
-
-    // TODO decide if the code below should be moved to GIF
-    function getActiveRequest(uint256 idx)
-        external
-        view
-        returns(RequestId requestId)
-    {
-        return LibRequestIdSet.getElementAt(_activeRequests, idx);
-    }
-
-
-    function isActiveRequest(RequestId requestId)
-        external
-        view
-        returns(bool isActive)
-    {
-        return LibRequestIdSet.contains(_activeRequests, requestId);
-    }
-
 
     function getRequestState(RequestId requestId)
         external
@@ -172,55 +126,4 @@ contract FlightOracle is
         return abi.decode(data, (FlightStatusRequest));
     }
 
-    //--- internal functions ------------------------------------------------//
-
-
-    // TODO decide if the code below should be moved to GIF
-    // check callback result
-    function _updateRequestState(
-        RequestId requestId
-    )
-        internal
-    {
-        bool requestFulfilled = _getInstanceReader().getRequestState(
-            requestId) == FULFILLED();
-
-        // remove from active requests when successful
-        if (requestFulfilled && LibRequestIdSet.contains(_activeRequests, requestId)) {
-            LibRequestIdSet.remove(_activeRequests, requestId);
-        } 
-    }
-
-
-    /// @dev use case specific handling of oracle requests
-    /// for now only log is emitted to verify that request has been received by oracle component 
-    function _request(
-        RequestId requestId,
-        NftId requesterId,
-        bytes calldata requestData,
-        Timestamp expiryAt
-    )
-        internal
-        virtual override
-    {
-        FlightStatusRequest memory request = abi.decode(requestData, (FlightStatusRequest));
-
-        // TODO decide if the line below should be moved to GIF
-        LibRequestIdSet.add(_activeRequests, requestId);
-        emit LogFlightOracleRequestReceived(requestId, requesterId);
-    }
-
-
-    /// @dev use case specific handling of oracle requests
-    /// for now only log is emitted to verify that cancelling has been received by oracle component 
-    function _cancel(
-        RequestId requestId
-    )
-        internal
-        virtual override
-    {
-        // TODO decide if the line below should be moved to GIF
-        LibRequestIdSet.remove(_activeRequests, requestId);
-        emit LogFlightOracleRequestCancelled(requestId);
-    }
 }

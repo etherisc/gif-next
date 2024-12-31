@@ -21,8 +21,8 @@ import {VersionPart} from "../type/Version.sol";
 contract ReleaseAdmin is
     AccessAdmin
 {
-    event LogReleaseAdminReleaseLockChanged(VersionPart release, bool locked);
-    event LogReleaseAdminServiceLockChanged(VersionPart release, address service, bool locked);
+    event LogReleaseAdminReleaseLocked(VersionPart indexed release, bool indexed locked);
+    event LogReleaseAdminServiceLocked(VersionPart indexed release, address indexed service, bool indexed locked);
 
     error ErrorReleaseAdminCallerNotReleaseRegistry(address caller);
     error ErrorReleaseAdminNotService(address notService);
@@ -137,7 +137,7 @@ contract ReleaseAdmin is
         // effects
         accessManager.setLocked(locked);
 
-        emit LogReleaseAdminReleaseLockChanged(getRelease(), locked);
+        emit LogReleaseAdminReleaseLocked(getRelease(), locked);
     }
 
 
@@ -155,7 +155,7 @@ contract ReleaseAdmin is
 
         _setTargetLocked(address(service), locked);
 
-        emit LogReleaseAdminServiceLockChanged(service.getRelease(), address(service), locked);
+        emit LogReleaseAdminServiceLocked(service.getRelease(), address(service), locked);
     }
 
     //--- private functions -------------------------------------------------//

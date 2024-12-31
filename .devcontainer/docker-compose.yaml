@@ -7,8 +7,8 @@ services:
       dockerfile: .devcontainer/Dockerfile.anvil
     volumes:
       - anvil-state:/anvil
-    # ports:
-    #   - "7545:7545"
+    ports:
+      - "7545:7545"
   contracts:
     # See https://aka.ms/vscode-remote/containers/non-root for details.
     user: node

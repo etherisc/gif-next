@@ -18,18 +18,19 @@ import {IRisk} from "../instance/module/IRisk.sol";
 import {AccessAdminLib} from "../authorization/AccessAdminLib.sol";
 import {Amount} from "../type/Amount.sol";
 import {BundleSet} from "./BundleSet.sol";
-import {BUNDLE, COMPONENT, DISTRIBUTION, PREMIUM, POLICY} from "../type/ObjectType.sol";
+import {BUNDLE, COMPONENT, DISTRIBUTION, PREMIUM, POLICY, PRODUCT, FEE, RISK, CLAIM, PAYOUT, ObjectType} from "../type/ObjectType.sol";
 import {ClaimId, ClaimIdLib} from "../type/ClaimId.sol";
 import {DistributorType} from "../type/DistributorType.sol";
 import {InstanceAdmin} from "./InstanceAdmin.sol";
 import {InstanceStore} from "./InstanceStore.sol";
-import {Key32} from "../type/Key32.sol";
+import {Key32, Key32Lib} from "../type/Key32.sol";
 import {NftId} from "../type/NftId.sol";
 import {PayoutId, PayoutIdLib} from "../type/PayoutId.sol";
 import {PolicyServiceLib} from "../product/PolicyServiceLib.sol";
 import {ProductStore} from "./ProductStore.sol";
 import {ReferralId, ReferralStatus, ReferralLib} from "../type/Referral.sol";
 import {RequestId} from "../type/RequestId.sol";
+import {RequestSet} from "./RequestSet.sol";
 import {RiskId} from "../type/RiskId.sol";
 import {RiskSet} from "./RiskSet.sol";
 import {RoleId, INSTANCE_OWNER_ROLE} from "../type/RoleId.sol";
@@ -56,6 +57,7 @@ contract InstanceReader {
     ProductStore internal _productStore;
     BundleSet internal _bundleSet;
     RiskSet internal _riskSet;
+    RequestSet internal _requestSet;
     IDistributionService internal _distributionService;
 
     /// @dev This initializer needs to be called from the instance itself.
@@ -85,6 +87,7 @@ contract InstanceReader {
         _productStore = _instance.getProductStore();
         _bundleSet = _instance.getBundleSet();
         _riskSet = _instance.getRiskSet();
+        _requestSet = _instance.getRequestSet();
         _distributionService = IDistributionService(_registry.getServiceAddress(DISTRIBUTION(), _instance.getRelease()));
     }
 
@@ -366,6 +369,18 @@ contract InstanceReader {
         return getState(requestId.toKey32());
     }
 
+    function getActiveRequests(NftId oracleNftId) external view returns(uint256 numberOfRequests) {
+        return _requestSet.activeRequests(oracleNftId);
+    }
+
+    function getActiveRequestAt(NftId oracleNftId, uint256 idx) external view returns(RequestId requestId) {
+        return _requestSet.activeRequestAt(oracleNftId, idx);
+    }
+
+    function isRequestActive(NftId oracleNftId, RequestId requestId) external view returns(bool isActive) {
+        return _requestSet.contains(oracleNftId, requestId);
+    }
+
     //--- pool functions -----------------------------------------------------------//
 
     /// @dev Returns the pool info for the given pool NFT ID.
@@ -595,7 +610,25 @@ contract InstanceReader {
 
 
     function getMetadata(Key32 key) public view returns (IBaseStore.Metadata memory metadata) {
-        return _store.getMetadata(key);
+        ObjectType objectType = Key32Lib.toObjectType(key);
+
+        if (objectType == PRODUCT()) {
+            return _productStore.getMetadata(key);
+        } else if (objectType == FEE()) {
+            return _productStore.getMetadata(key);
+        } else if (objectType == RISK()) {
+            return _productStore.getMetadata(key);
+        } else if (objectType == POLICY()) {
+            return _productStore.getMetadata(key);
+        } else if (objectType == PREMIUM()) {
+            return _productStore.getMetadata(key);
+        } else if (objectType == CLAIM()) {
+            return _productStore.getMetadata(key);
+        } else if (objectType == PAYOUT()) {
+            return _productStore.getMetadata(key);
+        } else {
+            return _store.getMetadata(key);        
+        }
     }
 
 

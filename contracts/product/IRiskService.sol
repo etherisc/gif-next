@@ -9,11 +9,10 @@ import {StateId} from "../type/StateId.sol";
 
 interface IRiskService is IService {
 
-    event LogRiskServiceRiskCreated(NftId productNftId, RiskId riskId);
-    event LogRiskServiceRiskUpdated(NftId productNftId, RiskId riskId);
-    event LogRiskServiceRiskLocked(NftId productNftId, RiskId riskId);
-    event LogRiskServiceRiskUnlocked(NftId productNftId, RiskId riskId);
-    event LogRiskServiceRiskClosed(NftId productNftId, RiskId riskId);
+    event LogRiskServiceRiskCreated(NftId indexed productNftId, RiskId indexed riskId);
+    event LogRiskServiceRiskUpdated(NftId indexed productNftId, RiskId indexed riskId);
+    event LogRiskServiceRiskLocked(NftId indexed productNftId, RiskId indexed riskId, bool indexed locked);
+    event LogRiskServiceRiskClosed(NftId indexed productNftId, RiskId indexed riskId);
     
     error ErrorRiskServiceRiskProductMismatch(RiskId riskId, NftId riskProductNftId, NftId productNftId);
     error ErrorRiskServiceRiskNotActive(NftId productNftId, RiskId riskId);

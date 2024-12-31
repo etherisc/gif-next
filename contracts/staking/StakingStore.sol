@@ -151,7 +151,7 @@ contract StakingStore is
         address oldReader = address(_reader);
         _reader = StakingReader(reader);
 
-        emit IStaking.LogStakingStakingReaderSet(reader, oldReader);
+        emit IStaking.LogStakingStakingReaderSet(oldReader, reader);
     }
 
 
@@ -162,7 +162,7 @@ contract StakingStore is
         address oldTargetHandler = address(_targetLimitHandler);
         _targetLimitHandler = ITargetLimitHandler(targetLimitHandler );
 
-        emit IStaking.LogStakingTargetHandlerSet(targetLimitHandler , oldTargetHandler);
+        emit IStaking.LogStakingTargetHandlerSet(oldTargetHandler, targetLimitHandler);
     }
 
     //--- target support management -----------------------------------------//
@@ -387,7 +387,7 @@ contract StakingStore is
         targetInfo.lastUpdateIn = BlocknumberLib.current();
 
         // logging
-        emit IStaking.LogStakingTargetRewardRateSet(targetNftId, rewardRate, oldRewardRate, lastUpdateIn);
+        emit IStaking.LogStakingTargetRewardRateSet(targetNftId, oldRewardRate, rewardRate, lastUpdateIn);
     }
 
 

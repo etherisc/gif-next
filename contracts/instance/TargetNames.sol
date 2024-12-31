@@ -7,4 +7,5 @@ string constant INSTANCE_STORE_TARGET_NAME = "InstanceStore";
 string constant PRODUCT_STORE_TARGET_NAME = "ProductStore";
 string constant BUNDLE_SET_TARGET_NAME = "BundleSet";
 string constant RISK_SET_TARGET_NAME = "RiskSet";
+string constant REQUEST_SET_TARGET_NAME = "RequestSet";
 

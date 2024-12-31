@@ -49,7 +49,7 @@ contract StakingOwnerTest is GifTest {
     function setUp() public override {
         super.setUp();
 
-        stakingNftIdInt = chainNft.calculateTokenId(registry.STAKING_TOKEN_SEQUENCE_ID(), block.chainid);
+        stakingNftIdInt = chainNft.calculateTokenId(registry.STAKING_TOKEN_SEQUENCE_ID(), ChainIdLib.toChainId(block.chainid));
         expectedStakingNftId = NftIdLib.toNftId(stakingNftIdInt);
     }
 
@@ -59,7 +59,7 @@ contract StakingOwnerTest is GifTest {
         // solhint-disable
         console.log("staking seq", registry.STAKING_TOKEN_SEQUENCE_ID());
         console.log("chain id", ChainIdLib.current().toInt());
-        console.log("staking id (expected)", chainNft.calculateTokenId(registry.STAKING_TOKEN_SEQUENCE_ID(), block.chainid));
+        console.log("staking id (expected)", chainNft.calculateTokenId(registry.STAKING_TOKEN_SEQUENCE_ID(), ChainIdLib.toChainId(block.chainid)));
         console.log("staking nft id (actual)", staking.getNftId().toInt());
 
         // check staking owner
@@ -190,8 +190,8 @@ contract StakingOwnerTest is GifTest {
         vm.expectEmit(address(staking.getStakingStore()));
         emit IStaking.LogStakingTargetRewardRateSet(
             protocolNftId,
-            newProtocolRewardRate,
             protocolRewardRate,
+            newProtocolRewardRate,
             currentBlock);
 
         vm.startPrank(stakingOwner);

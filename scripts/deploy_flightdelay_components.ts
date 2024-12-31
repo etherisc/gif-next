@@ -320,7 +320,6 @@ export async function deployFlightDelayComponentContracts(libraries: LibraryAddr
             libraries: {
                 ContractLib: contractLibAddress,
                 NftIdLib: nftIdLibAddress,
-                LibRequestIdSet: libRequestIdSetAddress,
                 StrLib: strLibAddress,
                 TimestampLib: timestampLibAddress,
                 VersionLib: versionLibAddress,

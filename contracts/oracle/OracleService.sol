@@ -2,16 +2,14 @@
 pragma solidity ^0.8.20;
 
 import {ContractLib} from "../shared/ContractLib.sol";
-import {IComponent} from "../shared/IComponent.sol";
 import {IInstance} from "../instance/IInstance.sol";
-import {IInstanceService} from "../instance/IInstanceService.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {IOracle} from "./IOracle.sol";
 import {IOracleComponent} from "./IOracleComponent.sol";
 import {IOracleService} from "./IOracleService.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {NftId} from "../type/NftId.sol";
-import {ObjectType, COMPONENT, ORACLE, PRODUCT} from "../type/ObjectType.sol";
+import {ObjectType, ORACLE, PRODUCT} from "../type/ObjectType.sol";
 import {RequestId} from "../type/RequestId.sol";
 import {Service} from "../shared/Service.sol";
 import {StateId, ACTIVE, KEEP_STATE, FULFILLED, FAILED, CANCELLED} from "../type/StateId.sol";
@@ -56,7 +54,7 @@ contract OracleService is
         // get and check active caller
         (
             IRegistry.ObjectInfo memory requesterInfo, 
-            address instance
+            address instanceAddress
         ) = ContractLib.getAndVerifyAnyComponent(
             getRegistry(), msg.sender, true);
 
@@ -69,7 +67,7 @@ contract OracleService is
         // effects
         {
             // create request info
-            IOracle.RequestInfo memory request = IOracle.RequestInfo({
+            IOracle.RequestInfo memory requestInfo = IOracle.RequestInfo({
                 requesterNftId: requesterNftId,
                 callbackMethodName: callbackMethodName,
                 oracleNftId: oracleNftId,
@@ -80,8 +78,9 @@ contract OracleService is
                 isCancelled: false
             });
 
-            // store request with instance
-            requestId = IInstance(instance).getInstanceStore().createRequest(request);
+            // store request with instance 
+            requestId = IInstance(instanceAddress).getInstanceStore().createRequest(requestInfo);
+            IInstance(instanceAddress).getRequestSet().add(oracleNftId, requestId);
         }
 
         emit LogOracleServiceRequestCreated(requestId, requesterNftId, oracleNftId, expiryAt);
@@ -116,22 +115,23 @@ contract OracleService is
         NftId oracleNftId = info.nftId;
         IInstance instance = IInstance(instanceAddress);
         bool callerIsOracle = true;
-        IOracle.RequestInfo memory request = _checkAndGetRequestInfo(instance, requestId, oracleNftId, callerIsOracle);
-        request.responseData = responseData;
-        request.respondedAt = TimestampLib.current();
+        IOracle.RequestInfo memory requestInfo = _checkAndGetRequestInfo(instance, requestId, oracleNftId, callerIsOracle);
+        requestInfo.responseData = responseData;
+        requestInfo.respondedAt = TimestampLib.current();
 
         instance.getInstanceStore().updateRequest(
-            requestId, request, KEEP_STATE());
+            requestId, requestInfo, KEEP_STATE());
 
         IRegistry.ObjectInfo memory requesterInfo = getRegistry().getObjectInfo(
-            request.requesterNftId);
+            requestInfo.requesterNftId);
 
         string memory functionSignature = string(
             abi.encodePacked(
-                request.callbackMethodName,
+                requestInfo.callbackMethodName,
                 "(uint64,bytes)"
             ));
 
+        // solhint-disable-next-line avoid-low-level-calls
         (success, ) = requesterInfo.objectAddress.call(
             abi.encodeWithSignature(
                 functionSignature, 
@@ -141,12 +141,13 @@ contract OracleService is
         // check that calling requestor was successful
         if (success) {
             instance.getInstanceStore().updateRequestState(requestId, FULFILLED());
+            instance.getRequestSet().remove(oracleNftId, requestId);
         } else {
             instance.getInstanceStore().updateRequestState(requestId, FAILED());
             emit LogOracleServiceDeliveryFailed(requestId, requesterInfo.objectAddress, functionSignature);
         }
 
-        emit LogOracleServiceResponseProcessed(requestId, oracleNftId);
+        emit LogOracleServiceResponseProcessed(requestId, requesterInfo.nftId, oracleNftId);
     }
 
 
@@ -164,24 +165,26 @@ contract OracleService is
         NftId requesterNftId = info.nftId;
         IInstance instance = IInstance(instanceAddress);
         bool callerIsOracle = false;
-        IOracle.RequestInfo memory request = _checkAndGetRequestInfo(instance, requestId, requesterNftId, callerIsOracle);
+        IOracle.RequestInfo memory requestInfo = _checkAndGetRequestInfo(instance, requestId, requesterNftId, callerIsOracle);
 
         // attempt to deliver response to requester
         string memory functionSignature = string(
             abi.encodePacked(
-                request.callbackMethodName,
+                requestInfo.callbackMethodName,
                 "(uint64,bytes)"
             ));
 
-        (bool success, bytes memory returnData) = info.objectAddress.call(
+        // solhint-disable-next-line avoid-low-level-calls
+        (bool success, ) = info.objectAddress.call(
             abi.encodeWithSignature(
                 functionSignature, 
                 requestId,
-                request.responseData));
+                requestInfo.responseData));
 
         // check that calling requestor was successful
         if (success) {
             instance.getInstanceStore().updateRequestState(requestId, FULFILLED());
+            instance.getRequestSet().remove(requestInfo.oracleNftId, requestId);
             emit LogOracleServiceResponseResent(requestId, requesterNftId);
         } else {
             emit LogOracleServiceDeliveryFailed(requestId, info.objectAddress, functionSignature);
@@ -204,19 +207,19 @@ contract OracleService is
         IInstance instance = IInstance(instanceAddress);
         bool callerIsOracle = false;
         // TODO property isCancelled and state update to CANCELLED are redundant, get rid of isCancelled
-        IOracle.RequestInfo memory request = _checkAndGetRequestInfo(instance, requestId, requesterNftId, callerIsOracle);
-        request.isCancelled = true;
+        IOracle.RequestInfo memory requestInfo = _checkAndGetRequestInfo(instance, requestId, requesterNftId, callerIsOracle);
+        requestInfo.isCancelled = true;
 
-        instance.getInstanceStore().updateRequest(requestId, request, CANCELLED());
+        instance.getInstanceStore().updateRequest(requestId, requestInfo, CANCELLED());
+        instance.getRequestSet().remove(requestInfo.oracleNftId, requestId);
 
         // call oracle component
         // TODO add check that oracle is active?
-        address oracleAddress = getRegistry().getObjectAddress(request.oracleNftId);
+        address oracleAddress = getRegistry().getObjectAddress(requestInfo.oracleNftId);
         IOracleComponent(oracleAddress).cancel(requestId);
 
         emit LogOracleServiceRequestCancelled(requestId, requesterNftId);
     }
-
 
     function _checkRequestParams(
         IRegistry registry,

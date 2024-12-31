@@ -98,21 +98,24 @@ contract DistributionService is
         }
 
         distributorType = DistributorTypeLib.toDistributorType(distributionNftId, name);
-        IDistribution.DistributorTypeInfo memory info = IDistribution.DistributorTypeInfo({
-            name: name,
-            distributionNftId: distributionNftId,
-            minDiscountPercentage: minDiscountPercentage,
-            maxDiscountPercentage: maxDiscountPercentage,
-            commissionPercentage: commissionPercentage,
-            maxReferralCount: maxReferralCount,
-            maxReferralLifetime: maxReferralLifetime,
-            allowSelfReferrals: allowSelfReferrals,
-            allowRenewals: allowRenewals,
-            data: data});
+        
+        {
+            IDistribution.DistributorTypeInfo memory info = IDistribution.DistributorTypeInfo({
+                name: name,
+                distributionNftId: distributionNftId,
+                minDiscountPercentage: minDiscountPercentage,
+                maxDiscountPercentage: maxDiscountPercentage,
+                commissionPercentage: commissionPercentage,
+                maxReferralCount: maxReferralCount,
+                maxReferralLifetime: maxReferralLifetime,
+                allowSelfReferrals: allowSelfReferrals,
+                allowRenewals: allowRenewals,
+                data: data});
 
-        instance.getInstanceStore().createDistributorType(distributorType, info);
+            instance.getInstanceStore().createDistributorType(distributorType, info);
+        }
 
-        emit LogDistributionServiceDistributorTypeCreated(distributionNftId, name, commissionPercentage);
+        emit LogDistributionServiceDistributorTypeCreated(distributionNftId, distributorType, name, commissionPercentage);
     }
 
 
@@ -148,7 +151,7 @@ contract DistributionService is
 
         instance.getInstanceStore().createDistributor(distributorNftId, info);
 
-        emit LogDistributionServiceDistributorCreated(distributionNftId, distributorNftId, distributorType, distributor);
+        emit LogDistributionServiceDistributorCreated(distributionNftId, distributorNftId, distributor, distributorType);
     }
 
     function changeDistributorType(
@@ -236,7 +239,7 @@ contract DistributionService is
 
             instance.getInstanceStore().createReferral(referralId, info);
 
-            emit LogDistributionServiceReferralCreated(distributionNftId, distributorNftId, referralId, code, discountPercentage, maxReferrals, expiryAt);
+            emit LogDistributionServiceReferralCreated(distributorNftId, referralId, code, discountPercentage, maxReferrals, expiryAt);
         }
     }
 
@@ -258,7 +261,7 @@ contract DistributionService is
             referralInfo.usedReferrals += 1;
             instance.getInstanceStore().updateReferral(referralId, referralInfo, KEEP_STATE());
 
-            emit LogDistributionServiceReferralProcessed(distributionNftId, referralInfo.distributorNftId, referralId, referralInfo.usedReferrals);
+            emit LogDistributionServiceReferralProcessed(referralInfo.distributorNftId, referralId, referralInfo.usedReferrals);
         }
     }
 
@@ -299,7 +302,7 @@ contract DistributionService is
         } else {
             // increase distribution balance by distribution owner fee
             _accountingService.increaseDistributionBalance(store, distributionNftId, AmountLib.zero(), distributionOwnerFee);
-            emit LogDistributionServiceSaleProcessed(distributionNftId, referralId, premium.premiumAmount, distributionOwnerFee);
+            emit LogDistributionServiceSaleProcessed(distributionNftId, premium.premiumAmount, distributionOwnerFee);
         }
 
         
@@ -343,7 +346,7 @@ contract DistributionService is
         // transfer amount to distributor
         {
             address distributor = getRegistry().ownerOf(distributorNftId);
-            emit LogDistributionServiceCommissionWithdrawn(distributorNftId, distributor, address(distributionInfo.tokenHandler.TOKEN()), withdrawnAmount);
+            emit LogDistributionServiceCommissionWithdrawn(distributorNftId, distributor, withdrawnAmount, address(distributionInfo.tokenHandler.TOKEN()));
             distributionInfo.tokenHandler.pushToken(distributor, withdrawnAmount);
         }
     }

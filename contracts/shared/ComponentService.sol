@@ -189,8 +189,8 @@ contract ComponentService is
         emit LogComponentServiceComponentFeesWithdrawn(
             componentNftId, 
             componentOwner, 
-            address(tokenHandler.TOKEN()), 
-            withdrawnAmount);
+            withdrawnAmount,
+            address(tokenHandler.TOKEN()));
 
         // interactions
         // transfer amount to component owner
@@ -312,9 +312,27 @@ contract ComponentService is
             productNftId, 
             initialProductInfo);
 
+        emit LogComponentServiceProductCreated(productNftId, productAddress, initialProductInfo.hasDistribution, initialProductInfo.expectedNumberOfOracles);
+
+        IComponents.FeeInfo memory initialFeeInfo = product.getInitialFeeInfo();
+        
         productStore.createFee(
             productNftId, 
-            product.getInitialFeeInfo());
+            initialFeeInfo);
+
+        emit LogComponentServiceProductInitialProductFeesSet(
+            productNftId, 
+            initialFeeInfo.productFee.fixedFee, initialFeeInfo.productFee.fractionalFee,
+            initialFeeInfo.processingFee.fixedFee, initialFeeInfo.processingFee.fractionalFee);
+        emit LogComponentServiceProductInitialDistributionFeesSet(
+            productNftId, 
+            initialFeeInfo.distributionFee.fixedFee, initialFeeInfo.distributionFee.fractionalFee,
+            initialFeeInfo.minDistributionOwnerFee.fixedFee, initialFeeInfo.minDistributionOwnerFee.fractionalFee);
+        emit LogComponentServiceProductInitialPoolFeesSet(
+            productNftId, 
+            initialFeeInfo.poolFee.fixedFee, initialFeeInfo.poolFee.fractionalFee,
+            initialFeeInfo.stakingFee.fixedFee, initialFeeInfo.stakingFee.fractionalFee,
+            initialFeeInfo.performanceFee.fixedFee, initialFeeInfo.performanceFee.fractionalFee);
     }
 
     //-------- distribution -------------------------------------------------//
@@ -341,6 +359,8 @@ contract ComponentService is
         // set distribution in product info
         productInfo.distributionNftId = distributionNftId;
         productStore.updateProduct(productNftId, productInfo, KEEP_STATE());
+
+        emit LogComponentServiceDistributionCreated(distributionNftId, productNftId);
     }
 
 
@@ -400,6 +420,8 @@ contract ComponentService is
         productInfo.oracleNftId[productInfo.numberOfOracles] = oracleNftId;
         productInfo.numberOfOracles++;
         productStore.updateProduct(productNftId, productInfo, KEEP_STATE());
+
+        emit LogComponentServiceOracleCreated(oracleNftId, productNftId);
     }
 
     //-------- pool ---------------------------------------------------------//
@@ -423,13 +445,20 @@ contract ComponentService is
 
         // create info
         IPoolComponent pool = IPoolComponent(componentAddress);
+        IComponents.PoolInfo memory initialPoolInfo = pool.getInitialPoolInfo();
         instanceStore.createPool(
             poolNftId, 
-            pool.getInitialPoolInfo());
+            initialPoolInfo);
 
         // update pool in product info
         productInfo.poolNftId = poolNftId;
         productStore.updateProduct(productNftId, productInfo, KEEP_STATE());
+
+        emit LogComponentServicePoolCreated(
+            poolNftId, productNftId, componentAddress, 
+            initialPoolInfo.maxBalanceAmount, initialPoolInfo.collateralizationLevel, 
+            initialPoolInfo.retentionLevel, initialPoolInfo.isExternallyManaged, 
+            initialPoolInfo.isVerifyingApplications);
     }
 
 

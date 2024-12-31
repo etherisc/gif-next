@@ -12,7 +12,7 @@ contract ObjectSet is
 {
     using LibKey32Set for LibKey32Set.Set;
 
-    event LogObjectSetInitialized(address instance);
+    event LogObjectSetInitialized(address indexed instance);
 
     error ErrorObjectSetNftIdInvalid(NftId instanceNftId);
 
@@ -41,6 +41,14 @@ contract ObjectSet is
 
         allSet.add(key);
         activeSet.add(key);
+    }
+
+    function _remove(NftId componentNftId, Key32 key) internal {
+        LibKey32Set.Set storage allSet = _allObjects[componentNftId];
+        LibKey32Set.Set storage activeSet = _activeObjects[componentNftId];
+
+        allSet.remove(key);
+        activeSet.remove(key);
     }
 
     function _activate(NftId componentNftId, Key32 key) internal {

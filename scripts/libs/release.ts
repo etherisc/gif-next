@@ -208,12 +208,12 @@ export async function createRelease(owner: Signer, registry: RegistryAddresses, 
         "releaseRegistry.prepareNextRelease",
         [releaseRegistry.interface]);
 
-    let logCreationInfo = getFieldFromTxRcptLogs(rcpt!, registry.releaseRegistry.interface, "LogReleaseCreation", "admin");
-    const releaseAdminAddress = (logCreationInfo as AddressLike);
-    logCreationInfo = getFieldFromTxRcptLogs(rcpt!, registry.releaseRegistry.interface, "LogReleaseCreation", "version");
-    const releaseVersion = (logCreationInfo as BigNumberish);
-    logCreationInfo = getFieldFromTxRcptLogs(rcpt!, registry.releaseRegistry.interface, "LogReleaseCreation", "salt");
-    const releaseSalt = (logCreationInfo as BytesLike);
+    let logCreationInfo = getFieldFromTxRcptLogs(rcpt!, registry.releaseRegistry.interface, "LogReleaseCreated", "releaseAdmin");
+    const releaseAdminAddress = logCreationInfo as AddressLike;
+    logCreationInfo = getFieldFromTxRcptLogs(rcpt!, registry.releaseRegistry.interface, "LogReleaseCreated", "release");
+    const releaseVersion = logCreationInfo as BigNumberish;
+    logCreationInfo = getFieldFromTxRcptLogs(rcpt!, registry.releaseRegistry.interface, "LogReleaseCreated", "salt");
+    const releaseSalt = logCreationInfo as BytesLike;
 
     const releaseAdminBasecontract = await ethers.getContractAt("ReleaseAdmin", releaseAdminAddress, owner);
     const releaseAdmin = releaseAdminBasecontract as ReleaseAdmin;

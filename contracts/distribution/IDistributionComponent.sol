@@ -11,8 +11,6 @@ import {UFixed} from "../type/UFixed.sol";
 
 interface IDistributionComponent is IInstanceLinkedComponent {
 
-    event LogDistributorUpdated(address to, address operator);
-
     function getDiscountPercentage(
         string memory referralCode
     ) external view returns (UFixed discountPercentage, ReferralStatus status);

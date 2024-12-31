@@ -40,11 +40,6 @@ contract TestOracle is GifTest {
     event LogSimpleProductRequestAsyncFulfilled(RequestId requestId, string responseText, uint256 responseDataLength);
     event LogSimpleProductRequestSyncFulfilled(RequestId requestId, string responseText, uint256 responseDataLength);
 
-    // from IOracleService
-    event LogOracleServiceResponseProcessed(RequestId requestId, NftId oracleNftId);
-    event LogOracleServiceDeliveryFailed(RequestId requestId, address requesterAddress, string functionSignature);
-    event LogOracleServiceResponseResent(RequestId requestId, NftId requesterNftId);
-
 
     function setUp() public override {
         super.setUp();
@@ -303,15 +298,16 @@ contract TestOracle is GifTest {
         // check product fulfillOracleRequestAsync has been called
         Timestamp revertUntil = TimestampLib.max();
         vm.expectEmit(address(oracleService));
-        emit LogOracleServiceDeliveryFailed(
+        emit IOracleService.LogOracleServiceDeliveryFailed(
             requestId, 
             address(product),
             "fulfillOracleRequestAsync(uint64,bytes)");
 
         // check that oracle component has received oracle request
         vm.expectEmit(address(oracleService));
-        emit LogOracleServiceResponseProcessed(
-            requestId, 
+        emit IOracleService.LogOracleServiceResponseProcessed(
+            requestId,
+            productNftId, 
             oracleNftId);
 
         // WHEN
@@ -385,7 +381,7 @@ contract TestOracle is GifTest {
             bytes(responseText).length);
 
         vm.expectEmit(address(oracleService));
-        emit LogOracleServiceResponseResent(
+        emit IOracleService.LogOracleServiceResponseResent(
             requestId, 
             productNftId);
 

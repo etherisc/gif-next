@@ -19,15 +19,15 @@ import {Fee} from "../type/Fee.sol";
 interface IClaimService is
     IService
 {
-    event LogClaimServiceClaimSubmitted(NftId policyNftId, ClaimId claimId, Amount claimAmount);
-    event LogClaimServiceClaimConfirmed(NftId policyNftId, ClaimId claimId, Amount confirmedAmount);
-    event LogClaimServiceClaimDeclined(NftId policyNftId, ClaimId claimId);
-    event LogClaimServiceClaimRevoked(NftId policyNftId, ClaimId claimId);
-    event LogClaimServiceClaimCancelled(NftId policyNftId, ClaimId claimId);
+    event LogClaimServiceClaimSubmitted(NftId indexed policyNftId, ClaimId indexed claimId, Amount claimAmount);
+    event LogClaimServiceClaimConfirmed(NftId indexed policyNftId, ClaimId indexed claimId, Amount confirmedAmount);
+    event LogClaimServiceClaimDeclined(NftId indexed policyNftId, ClaimId indexed claimId);
+    event LogClaimServiceClaimRevoked(NftId indexed policyNftId, ClaimId indexed claimId);
+    event LogClaimServiceClaimCancelled(NftId indexed policyNftId, ClaimId indexed claimId);
 
-    event LogClaimServicePayoutCreated(NftId policyNftId, PayoutId payoutId, Amount amount, address beneficiary);
-    event LogClaimServicePayoutProcessed(NftId policyNftId, PayoutId payoutId, Amount amount);
-    event LogClaimServicePayoutCancelled(NftId policyNftId, PayoutId payoutId);
+    event LogClaimServicePayoutCreated(NftId indexed policyNftId, ClaimId indexed claimId, PayoutId indexed payoutId, Amount amount, address beneficiary);
+    event LogClaimServicePayoutProcessed(NftId indexed policyNftId, PayoutId indexed payoutId, Amount amount);
+    event LogClaimServicePayoutCancelled(NftId indexed policyNftId, PayoutId indexed payoutId);
 
     error ErrorClaimServiceBeneficiarySet(NftId policyNftId, PayoutId payoutId, address beneficiary);
 

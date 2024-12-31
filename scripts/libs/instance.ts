@@ -162,6 +162,21 @@ export async function deployAndRegisterMasterInstance(
     );
     const masterInstanceRiskSet = masterRiskSetContrat as RiskSet;
 
+    const {address: masterInstanceRequestSetAddress, contract: masterRequestSetContrat} = await deployContract(
+        "RequestSet",
+        owner,
+        [],
+        { 
+            libraries: {
+                Key32Lib: libraries.key32LibAddress,
+                LibKey32Set: libraries.libKey32SetAddress,
+                ObjectSetHelperLib: libraries.objectSetHelperLibAddress,
+                RequestIdLib: libraries.requestIdLibAddress,
+            }
+        }
+    );
+    const masterInstanceRequestSet = masterRequestSetContrat as RiskSet;
+
     const { address: masterInstanceReaderAddress, contract: masterInstanceReaderContract } = await deployContract(
         "InstanceReader",
         owner,
@@ -171,6 +186,7 @@ export async function deployAndRegisterMasterInstance(
                 AccessAdminLib: libraries.accessAdminLibAddress,
                 AmountLib: libraries.amountLibAddress,
                 ClaimIdLib: libraries.claimIdLibAddress,
+                Key32Lib: libraries.key32LibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
                 PayoutIdLib: libraries.payoutIdLibAddress,
                 PolicyServiceLib: libraries.policyServiceLibAddress,
@@ -200,17 +216,13 @@ export async function deployAndRegisterMasterInstance(
 
     await executeTx(
         () => masterInstance.initialize(
-            // masterInstanceAdmin,
-            // masterInstanceStore,
-            // masterInstanceBundleSet,
-            // masterInstanceRiskSet,
-            // masterInstanceReader,
             {
                 instanceAdmin: masterInstanceAdminAddress,
                 instanceStore: masterInstanceStoreAddress,
                 productStore: masterProductStoreAddress,
                 bundleSet: masterInstanceBundleSetAddress,
                 riskSet: masterInstanceRiskSetAddress,
+                requestSet: masterInstanceRequestSetAddress,
                 instanceReader: masterInstanceReaderAddress
             },
             registry.registryAddress,

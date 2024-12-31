@@ -72,4 +72,10 @@ library RequestIdLib {
     function toKeyId(RequestId id) public pure returns (KeyId keyId) {
         return KeyId.wrap(bytes31(uint248(RequestId.unwrap(id))));
     }
+
+    function toRequestId(KeyId keyId) public pure returns (RequestId requestId) {
+        uint248 keyIdInt = uint248(bytes31(KeyId.unwrap(keyId)));
+        assert(keyIdInt < type(uint64).max);
+        return RequestId.wrap(uint64(keyIdInt));
+    }
 }

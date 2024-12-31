@@ -153,6 +153,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         [registryAdminAddress, globalRegistry], 
         {
             libraries: {
+                ChainIdLib: libraries.chainIdLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
                 ObjectTypeLib: libraries.objectTypeLibAddress,
                 VersionPartLib: libraries.versionPartLibAddress,

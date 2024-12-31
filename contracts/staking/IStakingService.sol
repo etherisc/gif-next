@@ -16,22 +16,13 @@ import {UFixed} from "../type/UFixed.sol";
 interface IStakingService is IService
 {
 
-    event LogStakingServiceProtocolTargetRegistered(NftId protocolNftId);
-    event LogStakingServiceInstanceTargetRegistered(NftId instanceNftId, uint256 chainId, Seconds initialLockingPeriod, UFixed initialRewardRate);
-    event LogStakingServiceLockingPeriodSet(NftId targetNftId, Seconds oldLockingDuration, Seconds lockingDuration);
-    event LogStakingServiceRewardRateSet(NftId targetNftId, UFixed oldRewardRate, UFixed rewardRate);
+    event LogStakingServiceProtocolTargetRegistered(NftId indexed protocolNftId);
+    event LogStakingServiceInstanceTargetRegistered(NftId indexed instanceNftId, Seconds initialLockingPeriod, UFixed initialRewardRate);
 
-    event LogStakingServiceRewardReservesIncreased(NftId targetNftId, address rewardProvider, Amount dipAmount, Amount newBalance);
-    event LogStakingServiceRewardReservesDecreased(NftId targetNftId, address targetOwner, Amount dipAmount, Amount newBalance);
+    event LogStakingServiceRewardReservesIncreased(NftId indexed targetNftId, address indexed rewardProvider, Amount dipAmount, Amount newBalance);
+    event LogStakingServiceRewardReservesDecreased(NftId indexed targetNftId, address indexed targetOwner, Amount dipAmount, Amount newBalance);
 
-    event LogStakingServiceStakeObjectCreated(NftId stakeNftId, NftId targetNftId, address stakeOwner);
-    event LogStakingServiceStakeCreated(NftId stakeNftId, NftId targetNftId, address owner, Amount stakedAmount);
-    event LogStakingServiceStakeIncreased(NftId stakeNftId, address owner, Amount stakedAmount, Amount stakeBalance);
-    event LogStakingServiceUnstaked(NftId stakeNftId, address stakeOwner, Amount totalAmount);
-    event LogStakingServiceStakeRestaked(address stakeOwner, NftId indexed stakeNftId, NftId newStakeNftId, NftId indexed newTargetNftId, Amount indexed newStakeBalance);
-
-    event LogStakingServiceRewardsUpdated(NftId stakeNftId);
-    event LogStakingServiceRewardsClaimed(NftId stakeNftId, address stakeOwner, Amount rewardsClaimedAmount);
+    event LogStakingServiceStakeCreated(NftId indexed stakeNftId, NftId indexed targetNftId, address indexed stakeOwner);
 
     // modifiers
     error ErrorStakingServiceNotStakingOwner(address account);

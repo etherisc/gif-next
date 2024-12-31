@@ -26,6 +26,7 @@ interface IInstanceService is IService {
     error ErrorInstanceServiceMasterInstanceAdminAlreadySet();
     error ErrorInstanceServiceMasterBundleSetAlreadySet();
     error ErrorInstanceServiceMasterRiskSetAlreadySet();
+    error ErrorInstanceServiceMasterRequestSetAlreadySet();
     error ErrorInstanceServiceInstanceAddressZero();
 
     error ErrorInstanceServiceMasterInstanceReaderNotSet();
@@ -38,15 +39,18 @@ interface IInstanceService is IService {
     error ErrorInstanceServiceInstanceReaderZero();
     error ErrorInstanceServiceBundleSetZero();
     error ErrorInstanceServiceRiskSetZero();
+    error ErrorInstanceServiceRequestSetZero();
     error ErrorInstanceServiceInstanceStoreZero();
     error ErrorInstanceServiceProductStoreZero();
 
     error ErrorInstanceServiceInstanceAuthorityMismatch();
     error ErrorInstanceServiceBundleSetAuthorityMismatch();
     error ErrorInstanceServiceRiskSetAuthorityMismatch();
+    error ErrorInstanceServiceRequestSetAuthorityMismatch();
     error ErrorInstanceServiceInstanceReaderInstanceMismatch2();
     error ErrorInstanceServiceBundleSetInstanceMismatch();
     error ErrorInstanceServiceRiskSetInstanceMismatch();
+    error ErrorInstanceServiceRequestSetInstanceMismatch();
     error ErrorInstanceServiceInstanceStoreAuthorityMismatch();
     error ErrorInstanceServiceProductStoreAuthorityMismatch();
 
@@ -56,12 +60,13 @@ interface IInstanceService is IService {
     error ErrorInstanceServiceInstanceComponentMismatch(NftId instanceNftId, NftId componentNftId);
     error ErrorInstanceServiceInvalidComponentType(address componentAddress, ObjectType expectedType, ObjectType componentType);
     
-    event LogInstanceServiceInstanceLocked(NftId instanceNftId, bool locked);
-    event LogInstanceServiceInstanceCreated(NftId instanceNftId, address instance);
-    event LogInstanceServiceMasterInstanceRegistered(NftId masterInstanceNftId, address masterInstance, address masterInstanceAdmin, address masterAccessManager, 
-                address masterInstanceReader, address masterInstanceBundleSet, address masterInstanceRiskSet, address masterInstanceStore, address masterProductStore);
-    event LogInstanceServiceMasterInstanceReaderUpgraded(NftId instanceNfId, address newInstanceReader);
-    event LogInstanceServiceInstanceReaderUpgraded(NftId instanceNfId, address newInstanceReader);
+
+    event LogInstanceServiceInstanceLocked(NftId indexed instanceNftId, bool indexed locked);
+    event LogInstanceServiceInstanceCreated(NftId indexed instanceNftId, address indexed instance);
+    event LogInstanceServiceMasterInstanceRegistered(NftId indexed masterInstanceNftId, address indexed masterInstance, address indexed masterInstanceAdmin, address masterAccessManager, 
+                address masterInstanceReader, address masterInstanceBundleSet, address masterInstanceRiskSet, address masterInstanceRequestSet, address masterInstanceStore, address masterProductStore);
+    event LogInstanceServiceMasterInstanceReaderUpgraded(NftId indexed instanceNfId, address indexed oldInstanceReader, address indexed newInstanceReader);
+    event LogInstanceServiceInstanceReaderUpgraded(NftId indexed instanceNfId, address indexed oldInstanceReader, address indexed newInstanceReader);
 
     /// @dev Creates a new custom role for the calling instance.
     function createRole(string memory roleName, RoleId adminRoleId, uint32 maxMemberCount) external returns (RoleId roleId);

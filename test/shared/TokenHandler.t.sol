@@ -78,7 +78,7 @@ contract TokenHandlerTest is GifTest {
         
         // THEN
         vm.expectEmit();
-        emit TokenHandlerBase.LogTokenHandlerTokenTransfer(
+        emit TokenHandlerBase.LogTokenHandlerTokenTransferred(
             address(dip), 
             sender, 
             tokenHandlerWallet, 
@@ -102,7 +102,7 @@ contract TokenHandlerTest is GifTest {
         
         // THEN
         vm.expectEmit();
-        emit TokenHandlerBase.LogTokenHandlerTokenTransfer(address(dip), sender, tokenHandlerWallet, amount);
+        emit TokenHandlerBase.LogTokenHandlerTokenTransferred(address(dip), sender, tokenHandlerWallet, amount);
 
         // WHEN
         tokenHandlerEx.pullToken(sender, amount);
@@ -123,7 +123,7 @@ contract TokenHandlerTest is GifTest {
         
         // THEN
         vm.expectEmit();
-        emit TokenHandlerBase.LogTokenHandlerTokenTransfer(address(dip), sender, tokenHandlerWallet, amount);
+        emit TokenHandlerBase.LogTokenHandlerTokenTransferred(address(dip), sender, tokenHandlerWallet, amount);
 
         // WHEN
         tokenHandlerEx.pullToken(sender, amount);
@@ -241,7 +241,7 @@ contract TokenHandlerTest is GifTest {
 
         // THEN
         vm.expectEmit();
-        emit TokenHandlerBase.LogTokenHandlerTokenTransfer(address(dip), sender, recipient, amount);
+        emit TokenHandlerBase.LogTokenHandlerTokenTransferred(address(dip), sender, recipient, amount);
 
         // WHEN
         tokenHandlerEx.pushToken(recipient, amount);
