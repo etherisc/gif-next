@@ -35,3 +35,8 @@ deployments/
 soljson*.js
 deployment.env
 storage_layout.*
+
+# python
+__pycache__/
+*.py[cod]
+*$py.class

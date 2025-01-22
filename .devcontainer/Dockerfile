@@ -33,3 +33,6 @@ RUN curl -L https://foundry.paradigm.xyz | bash
 RUN echo 'export PATH="$PATH:/home/node/.foundry/bin"' >> ~/.zshrc
 RUN echo 'export PATH="$PATH:/home/node/.foundry/bin"' >> ~/.bashrc
 RUN /home/node/.foundry/bin/foundryup
+
+# Install uv/python
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
