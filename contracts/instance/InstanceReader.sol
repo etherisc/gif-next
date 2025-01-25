@@ -588,10 +588,10 @@ contract InstanceReader {
     }
 
 
-    /// @dev Returns a function info for the given function signature and function name.
-    /// The function signature must not be zero and the function name must not be empty.
-    function toFunction(bytes4 signature, string memory name) public view returns (IAccess.FunctionInfo memory) {
-        return AccessAdminLib.toFunction(signature, name);
+    /// @dev Returns a function info for the given function selector and function name.
+    /// The function selector must not be zero and the function name must not be empty.
+    function toFunction(bytes4 selector, string memory name) public view returns (IAccess.FunctionInfo memory) {
+        return AccessAdminLib.toFunction(selector, name);
     }
 
     //--- low level function ----------------------------------------------------//
