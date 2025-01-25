@@ -1,6 +1,7 @@
 import json
 import logging
 
+from functools import wraps
 from typing import Any, Dict
 
 from web3 import Web3
@@ -62,13 +63,25 @@ class Contract:
                 modified_args = [arg.address if isinstance(arg, Wallet) else arg for arg in args]
                 return getattr(self.contract.functions, func_name)(*modified_args, **kwargs).call()
             except Exception as e:
-                logging.warn(f"Error calling function '{func_name}': {e}")
+                logging.warning(f"Error calling function '{func_name}': {e}")
                 return None
 
-        # Optionally, add docstrings or additional attributes here
-        read_method.__name__ = func_name
-        read_method.__doc__ = f"Calls the '{func_name}' function of the contract."
+        # add docstrings signature and selector
+        self._amend_method(read_method, func_name)
+
         return read_method
+
+    def _amend_method(self, method, name):
+        method.__name__ = name
+        method.__doc__ = f"Calls the '{name}' contract function."
+
+        signature = getattr(self.contract.functions, name).signature
+        method.signature = signature
+        method.argument_names = getattr(self.contract.functions, name).argument_names
+        method.inputs = getattr(self.contract.functions, name).abi['inputs']
+        method.outputs = getattr(self.contract.functions, name).abi['outputs']
+        method.selector = Web3.keccak(text=signature)[:4]
+        method.selector_hex = method.selector.hex()
 
     def _get_tx_params(self, args:tuple) -> Dict[str, Any]:
         if len(args) == 0:
@@ -142,8 +155,9 @@ class Contract:
                 logging.warning(f"Error sending transaction for function '{func_name}': {e}")
                 return tx_hash.hex()
 
-        write_method.__name__ = func_name
-        write_method.__doc__ = f"Sends a transaction to the '{func_name}' function of the contract."
+        # add docstrings signature and selector
+        self._amend_method(write_method, func_name)
+
         return write_method
 
     def _load_abi(self, contract:str, out_path:str) -> Dict[str, Any]:

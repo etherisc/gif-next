@@ -11,13 +11,17 @@ class Chain:
         """
         self.w3 = w3
 
-    def id(self) -> str:
+    def id(self) -> int:
         """Get the network ID."""
-        return self.w3.net.version
+        chain_id = self.w3.net.version
+        try:
+            return int(chain_id)
+        except Exception as e:
+            raise ValueError(f"Chain Id {chain_id} is not an integer. Error: {e}")
 
     def latest_block(self) -> int:
         """Get the number of the latest block."""
-        return self.w3.eth.block_number
+        self.w3.eth.block_number
 
     def block(self, block_id='latest') -> dict:
         """Get a block by its ID."""
