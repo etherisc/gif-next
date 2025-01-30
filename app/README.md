@@ -32,16 +32,8 @@ assert chain.id() == 8453, f"Not Base Mainnet. Chain ID {chain.id()}, expected 8
 # get flight contracts
 (product, usdc, instance, admin, reader, registry) = from_product(w3, "FlightProduct", os.getenv("FLIGHT_PRODUCT_ADDRESS"))
 pool = pool_for_product(registry, reader, product, "FlightPool")
-# product = Contract(w3, "FlightProduct", os.getenv("FLIGHT_PRODUCT_ADDRESS"))
-# usdc = Contract(w3, "FlightUSD", product.getToken())
-# instance = Contract(w3, "Instance", product.getInstance())
-# admin = Contract(w3, "InstanceAdmin", instance.getInstanceAdmin())
-# reader = Contract(w3, "InstanceReader", instance.getInstanceReader())
-# registry = Contract(w3, "Registry", instance.getRegistry())
-
 pool_nft = pool.getNftId()
 bundle_nft = reader.getActiveBundleNftId(pool_nft, 0)
-# pool = Contract(w3, "FlightPool", registry.getObjectAddress(pool_nft))
 
 # amounts
 usdc.balanceOf(pool.getWallet())/10**usdc.decimals()
@@ -56,4 +48,8 @@ expired_at < chain.timestamp()
 # check instance owner is bundle owner
 instance_owner = Wallet.from_mnemonic(<mnemonic>, index=2, w3=w3)
 registry.ownerOf(bundle_nft) == instance_owner.address
+
+# stake additional usdc 1000 to bundle (remember to also transfer usdc to pool.getWallet())
+assert registry.ownerOf(bundle_nft) == instance_owner.address, "instance owner not bundle owner"
+pool.stake(bundle_nft, 1000 * 10 ** usdc.decimals(), {'from': instance_owner})
 ```
