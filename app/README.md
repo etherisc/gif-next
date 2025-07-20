@@ -21,15 +21,22 @@ from web3utils.contract import Contract
 from web3utils.wallet import Wallet
 from web3utils.chain import Chain
 
-load_dotenv("../.env")
+load_dotenv("./.env")
 
 # get w3 provider/node
 w3_uri = os.getenv("NETWORK_URL")
 w3 = Web3(Web3.HTTPProvider(w3_uri))
 chain = Chain(w3)
+
+# check network connection
+assert chain.id() == 80002, f"Not Polygon Amoy. Chain ID {chain.id()}, expected 80002"
 assert chain.id() == 8453, f"Not Base Mainnet. Chain ID {chain.id()}, expected 8453"
 
-# get flight contracts
+# get crop contract
+(product, usdc, instance, admin, reader, registry) = from_product(w3, "CropProduct", os.getenv("PRODUCT_CONTRACT_ADDRESS"))
+pool = pool_for_product(registry, reader, product, "CropPool")
+
+# get flight contract
 (product, usdc, instance, admin, reader, registry) = from_product(w3, "FlightProduct", os.getenv("FLIGHT_PRODUCT_ADDRESS"))
 pool = pool_for_product(registry, reader, product, "FlightPool")
 pool_nft = pool.getNftId()

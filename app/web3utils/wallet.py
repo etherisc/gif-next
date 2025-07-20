@@ -71,6 +71,7 @@ class Wallet:
             to = to.address
 
         nonce = self.nonce()
+        chain_id = self.w3.eth.chain_id
         gas = 21000
         gas_price = gas_price or self.w3.eth.gas_price
 
@@ -78,6 +79,7 @@ class Wallet:
             "to": to,
             "value": amount,
             "nonce": nonce,
+            "chainId": chain_id, # only replay-protected (EIP-155) transactions allowed over RPC
             "gas": gas,
             "gasPrice": gas_price,
         }
