@@ -81,13 +81,9 @@ contract SimpleProduct is
 
 
     function createRisk(
-        string memory id,
         bytes memory data
     ) public returns (RiskId) {
-        return _createRisk(
-            bytes32(abi.encodePacked(id)),
-            data
-        );
+        return _createRisk(data);
     }
 
     function updateRisk(

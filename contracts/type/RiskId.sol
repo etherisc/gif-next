@@ -2,10 +2,9 @@
 pragma solidity ^0.8.20;
 
 import {Key32, KeyId, Key32Lib} from "./Key32.sol";
-import {NftId} from "./NftId.sol";
 import {RISK} from "./ObjectType.sol";
 
-type RiskId is bytes8;
+type RiskId is uint64;
 
 // type bindings
 using {
@@ -33,7 +32,7 @@ function neRiskId(RiskId a, RiskId b) pure returns (bool isDifferent) {
 
 library RiskIdLib {
     function zero() public pure returns (RiskId) {
-        return RiskId.wrap(bytes8(0));
+        return RiskId.wrap(uint64(0));
     }
 
     // @dev Converts a risk id into a uint256.
@@ -42,8 +41,8 @@ library RiskIdLib {
     }
 
     // @dev Converts a risk id string with a product NftId into a risk id.
-    function toRiskId(NftId productNftId, bytes32 risk) public pure returns (RiskId) {
-        return RiskId.wrap(bytes8(keccak256(abi.encode(productNftId, risk))));
+    function toRiskId(uint256 id) public pure returns (RiskId) {
+        return RiskId.wrap(uint64(id));
     }
 
     /// @dev Returns the key32 value for the specified risk id.
@@ -53,12 +52,13 @@ library RiskIdLib {
 
     /// @dev Returns the key id value for the specified nft id
     function toKeyId(RiskId id) public pure returns (KeyId keyId) {
-        return KeyId.wrap(bytes31(RiskId.unwrap(id)));
+        return KeyId.wrap(bytes31(uint248(RiskId.unwrap(id))));
     }
 
     function toRiskId(KeyId keyId) public pure returns (RiskId riskId) {
-        riskId = RiskId.wrap(bytes8(KeyId.unwrap(keyId)));
-        assert(toInt(riskId) < 2**64);
+        uint248 keyIdInt = uint248(bytes31(KeyId.unwrap(keyId)));
+        assert(keyIdInt < type(uint64).max);
+        return RiskId.wrap(uint64(keyIdInt));
     }
 
     function eq(RiskId a, RiskId b) public pure returns (bool isSame) {

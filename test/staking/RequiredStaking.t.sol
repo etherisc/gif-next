@@ -476,7 +476,7 @@ contract RequiredStakingTest is GifTest {
     function _configureProduct(uint bundleCapital) internal {
         vm.startPrank(productOwner);
         bytes memory data = "bla di blubb";
-        riskId = product.createRisk("42x4711", data);
+        riskId = product.createRisk(data);
         policyLifetime = SecondsLib.toSeconds(30);
         vm.stopPrank();
 

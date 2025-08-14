@@ -27,8 +27,8 @@ contract ProductClusterRiskTest is GifClusterTest {
         string memory riskName = "Risk1";
 
         // WHEN
-        riskId1 = myProduct1.createRisk(riskName, abi.encode(1,2,3));
-        riskId2 = myProduct2.createRisk(riskName, abi.encode(1,2,3));
+        riskId1 = myProduct1.createRisk(abi.encode(1,2,3));
+        riskId2 = myProduct2.createRisk(abi.encode(1,2,3));
 
         // THEN
         assertFalse(riskId1.eq(riskId2), "riskId1 and riskid2 should not be equal");

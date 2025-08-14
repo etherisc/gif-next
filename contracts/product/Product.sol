@@ -181,17 +181,13 @@ abstract contract Product is
 
 
     function _createRisk(
-        bytes32 id,
         bytes memory data
     )
         internal
         virtual
         returns (RiskId riskId)
     {
-        return _getProductStorage()._riskService.createRisk(
-            id,
-            data
-        );
+        return _getProductStorage()._riskService.createRisk(data);
     }
 
     function _updateRisk(

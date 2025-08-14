@@ -701,7 +701,7 @@ contract TestFees is GifTest {
             FeeLib.zero());
         
         bytes memory data = "bla di blubb";
-        RiskId riskId = product.createRisk("42x4711", data);
+        RiskId riskId = product.createRisk(data);
         vm.stopPrank();
 
         if (purchaseWithReferral) {

@@ -89,7 +89,7 @@ contract ReferralTest is ReferralTestBase {
         // create risk
         vm.startPrank(productOwner);
         bytes memory data = "bla di blubb";
-        RiskId riskId = product.createRisk("42x4711", data);
+        RiskId riskId = product.createRisk(data);
         vm.stopPrank();
 
         vm.startPrank(customer);
@@ -187,7 +187,7 @@ contract ReferralTest is ReferralTestBase {
 
         vm.startPrank(productOwner);
         bytes memory data = "bla di blubb";
-        RiskId riskId = product.createRisk("42x4711", data);
+        RiskId riskId = product.createRisk(data);
         vm.stopPrank();
 
         vm.startPrank(customer);

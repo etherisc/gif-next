@@ -204,7 +204,7 @@ contract ProductClusterTest is GifClusterTest {
 
     function _createRisk(SimpleProduct prd, string memory riskName) internal returns (RiskId riskId) {
         vm.startPrank(instanceOwner);
-        riskId = prd.createRisk(riskName, "");
+        riskId = prd.createRisk("");
         vm.stopPrank();
     }
 

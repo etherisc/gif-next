@@ -50,7 +50,7 @@ contract ProductApplicationTest is GifTest {
 
         bytes memory data = "bla di blubb";
         SimpleProduct dproduct = SimpleProduct(address(product));
-        RiskId riskId = dproduct.createRisk("42x4711", data);
+        RiskId riskId = dproduct.createRisk(data);
 
         NftId policyNftId = dproduct.createApplication(
             customer,
@@ -77,8 +77,8 @@ contract ProductApplicationTest is GifTest {
     function test_Product_createApplication_invalidRisk() public {
         vm.startPrank(productOwner);
 
-        RiskId riskId = product.createRisk("42x4711", "bla di blubb");
-        RiskId riskId2 = RiskIdLib.toRiskId(productNftId, "42x4712");
+        RiskId riskId = product.createRisk("bla di blubb");
+        RiskId riskId2 = RiskIdLib.toRiskId(888);
         Seconds lifetime = SecondsLib.toSeconds(30);
         ReferralId noReferral = ReferralLib.zero();
         Amount sumInsured = AmountLib.toAmount(1000);
@@ -103,7 +103,7 @@ contract ProductApplicationTest is GifTest {
     function test_Product_createApplication_lockedRisk() public {
         vm.startPrank(productOwner);
 
-        RiskId riskId = product.createRisk("42x4711", "bla di blubb");
+        RiskId riskId = product.createRisk("bla di blubb");
         Seconds lifetime = SecondsLib.toSeconds(30);
         ReferralId noReferral = ReferralLib.zero();
         Amount sumInsured = AmountLib.toAmount(1000);
@@ -131,7 +131,7 @@ contract ProductApplicationTest is GifTest {
         // GIVEN
         vm.startPrank(productOwner);
 
-        RiskId riskId = product.createRisk("42x4711", "bla di blubb");
+        RiskId riskId = product.createRisk("bla di blubb");
         Seconds lifetime = SecondsLib.toSeconds(30);
         ReferralId noReferral = ReferralLib.zero();
         Amount sumInsured = AmountLib.toAmount(1000);
@@ -168,7 +168,7 @@ contract ProductApplicationTest is GifTest {
         // GIVEN
         vm.startPrank(productOwner);
 
-        RiskId riskId = product.createRisk("42x4711", "bla di blubb");
+        RiskId riskId = product.createRisk("bla di blubb");
         Seconds lifetime = SecondsLib.toSeconds(30);
         ReferralId referralId = ReferralLib.toReferralId(distributionNftId, "UNKNOWN");
         Amount sumInsured = AmountLib.toAmount(1000);
@@ -201,7 +201,7 @@ contract ProductApplicationTest is GifTest {
 
         vm.startPrank(productOwner);
         bytes memory data = "bla di blubb";
-        RiskId riskId = product.createRisk("42x4711", data);
+        RiskId riskId = product.createRisk(data);
         vm.stopPrank();
 
         vm.startPrank(customer);
@@ -241,7 +241,7 @@ contract ProductApplicationTest is GifTest {
 
         vm.startPrank(productOwner);
         bytes memory data = "bla di blubb";
-        RiskId riskId = product.createRisk("42x4711", data);
+        RiskId riskId = product.createRisk(data);
         vm.stopPrank();
 
         vm.startPrank(customer);

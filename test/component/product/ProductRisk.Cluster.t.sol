@@ -27,7 +27,7 @@ contract ProductRiskClusterTest is GifClusterTest {
 
     function test_updateRisk_fromOtherProductCluster() public {
         // GIVEN
-        RiskId riskId = myProduct1.createRisk("risk1", "risk1data");
+        RiskId riskId = myProduct1.createRisk("risk1data");
         
         // THEN 
         vm.expectRevert(abi.encodeWithSelector(
@@ -41,7 +41,7 @@ contract ProductRiskClusterTest is GifClusterTest {
 
     function test_setRiskLocked_fromOtherProductCluster() public {
         // GIVEN
-        RiskId riskId = myProduct1.createRisk("risk1", "risk1data");
+        RiskId riskId = myProduct1.createRisk("risk1data");
         
         // THEN 
         vm.expectRevert(abi.encodeWithSelector(
@@ -55,7 +55,7 @@ contract ProductRiskClusterTest is GifClusterTest {
 
     function test_closeRisk_fromOtherProductCluster() public {
         // GIVEN
-        RiskId riskId = myProduct1.createRisk("risk1", "risk1data");
+        RiskId riskId = myProduct1.createRisk("risk1data");
         
         // THEN 
         vm.expectRevert(abi.encodeWithSelector(

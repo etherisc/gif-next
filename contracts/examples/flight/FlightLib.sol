@@ -243,8 +243,6 @@ library FlightLib {
 
 
     function getFlightRisk(
-        InstanceReader reader,
-        NftId productNftId, 
         Str flightData,
         Timestamp departureTime, 
         string memory departureTimeLocal,
@@ -254,28 +252,20 @@ library FlightLib {
         public
         view
         returns (
-            RiskId riskId,
-            bool exists,
             FlightProduct.FlightRisk memory flightRisk
         )
     {
-        riskId = getRiskId(productNftId, flightData);
-        (exists, flightRisk) = getFlightRisk(reader, productNftId, riskId, false);
-
-        // create new risk if not existing
-        if (!exists) {
-            flightRisk = FlightProduct.FlightRisk({
-                flightData: flightData,
-                departureTime: departureTime,
-                departureTimeLocal: departureTimeLocal,
-                arrivalTime: arrivalTime,
-                arrivalTimeLocal: arrivalTimeLocal,
-                sumOfSumInsuredAmounts: AmountLib.toAmount(0),
-                status: bytes1(0),
-                delayMinutes: 0,
-                payoutOption: uint8(0),
-                statusUpdatedAt: TimestampLib.zero()});
-        }
+        flightRisk = FlightProduct.FlightRisk({
+            flightData: flightData,
+            departureTime: departureTime,
+            departureTimeLocal: departureTimeLocal,
+            arrivalTime: arrivalTime,
+            arrivalTimeLocal: arrivalTimeLocal,
+            sumOfSumInsuredAmounts: AmountLib.toAmount(0),
+            status: bytes1(0),
+            delayMinutes: 0,
+            payoutOption: uint8(0),
+            statusUpdatedAt: TimestampLib.zero()});
     }
 
 
@@ -306,20 +296,6 @@ library FlightLib {
         }
     }
 
-
-    function getRiskId(
-        NftId productNftId,
-        Str flightData
-    )
-        public
-        view 
-        returns (RiskId riskId)
-    {
-        bytes32 riskKey = getRiskKey(flightData);
-        riskId = getRiskId(productNftId, riskKey);
-    }
-
-
     function getRiskKey(
         Str flightData
     )
@@ -330,8 +306,4 @@ library FlightLib {
         return keccak256(abi.encode(flightData));
     }
 
-
-    function getRiskId(NftId productNftId, bytes32 riskKey) internal view returns (RiskId riskId) {
-        return RiskIdLib.toRiskId(productNftId, riskKey);
-    }
 }
